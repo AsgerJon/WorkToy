@@ -35,7 +35,7 @@ class _IntFactory:
     lowerKwarg = kwargs.get('lower', **kwargs)
     upperKwarg = kwargs.get('upper', **kwargs)
     lowerArg, upperArg = intArgs
-    lowerDefault, upperDefault = 0, 2 ** 64 - 1
+    lowerDefault, upperDefault = 0, 2 ** 16 - 1
     _lower = maybe(lowerKwarg, lowerArg, lowerDefault)
     _upper = maybe(upperKwarg, upperArg, upperDefault)
     return (_lower, _upper)
@@ -55,7 +55,7 @@ class _IntFactory:
     """Getter-function for upper limit"""
     return self._upper
 
-  def _setUpper(self, upper: int) -> NoReturn:
+  def setUpper(self, upper: int) -> NoReturn:
     """Setter-function for upper limit"""
     self._upper = upper
 
@@ -63,12 +63,13 @@ class _IntFactory:
     """Getter-function for lower limit"""
     return self._lower
 
-  def _setLower(self, lower: int) -> NoReturn:
+  def setLower(self, lower: int) -> NoReturn:
     """Setter-function for lower limit"""
     self._lower = lower
 
   def coPrimeTest(self, n: int = None) -> float:
     """Collects n unique instances. """
+    n = maybe(n, 16)
     while len(self._numbers) < n:
       self.getNumber()
     coPrime = 0
@@ -89,6 +90,23 @@ class _IntFactory:
     number = randint(self._getLower(), self._getUpper())
     self._numbers.append(number)
     return number
+
+  def __rshift__(self, other: tuple | list) -> int:
+    """Returns a single new number in the given range"""
+    intArgs = maybeTypes(int, *other, padLen=2, padChar=None)
+    a, b = intArgs
+    a = maybe(a, self._getLower())
+    b = maybe(b, self._getUpper())
+    return randint(a, b)
+
+  def __len__(self, ) -> int:
+    """The length of the instance is taken to mean the length of the list
+    of numbers so far obtained."""
+    return len(self._numbers)
+
+  def __call__(self, *args, **kwargs) -> list[int]:
+    """Calling the instance returns a sample of sampleSize given as a
+    positional argument or at the keyword argument sampleSize."""
 
 
 _intFactory = _IntFactory.intFactory
