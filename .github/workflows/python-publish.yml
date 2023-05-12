@@ -33,8 +33,8 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          python -m build --version ${{ github.ref }}
-          twine upload dist/
+          python -m build --version 0.15
+          twine upload dist/*
       - name: Clear pip cache
         run: |
           python -m pip cache purge
