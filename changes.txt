@@ -1,0 +1,6 @@
+Version 0.1.0
+    - worktoy
+    worktoy provides the most basic functionalities
+
+    - mockdata
+    worktoy.mockdata provide functions for creating mock data.
