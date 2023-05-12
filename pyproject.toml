@@ -1,8 +1,3 @@
 [build-system]
-requires = ['setuptools>=63.2', "wheel>=0.37.0"]
+requires = ['setuptools>=63.2']
 build-backend = 'setuptools.build_meta'
-
-[metadata]
-name = 'worktoy'
-version = '0.13'
-description = 'WorkToy provides general utilities'
