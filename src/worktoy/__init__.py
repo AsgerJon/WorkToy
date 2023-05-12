@@ -8,3 +8,4 @@ from ._maybe import maybe
 from ._maybeType import maybeType
 from ._searchKeys import searchKeys
 from ._maybeTypes import maybeTypes
+from ._stringlist import stringList
