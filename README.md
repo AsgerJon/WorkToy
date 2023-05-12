@@ -112,7 +112,7 @@ default value, the parentheses may be omitted.
 
 ### `CallMeMaybe`
 
-This abstract metaclass registers any callable object as an instance.
+This abstract baseclass registers any callable object as an instance.
 This makes it stronger than the built-in `callable` and even the
 `Callable` from the `typing` package. If a custom class implements the
 `__call__` method, instances of this class may still not be recognized as

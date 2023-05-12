@@ -20,7 +20,6 @@ class TestIntFactory(TestCase):
   def testBasic(self) -> int:
     """Tests for basic functionality"""
     val = self.factory >> (2 ** 31, 2 ** 32 - 1)
-    print(val)
     self.assertLess(val, 2 ** 32 - 1)
     self.assertGreaterEqual(val, 2 ** 31)
 

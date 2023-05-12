@@ -9,3 +9,5 @@ from ._maybeType import maybeType
 from ._searchKeys import searchKeys
 from ._maybeTypes import maybeTypes
 from ._stringlist import stringList
+from ._anywayuwantit import AnywayUWantIt
+from ._callmemaybe import CallMeMaybe
