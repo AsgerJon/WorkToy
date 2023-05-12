@@ -37,18 +37,6 @@ class _SearchKeys:
       if isinstance(key, str):
         self._keys.append(key)
 
-  def _validateByType(self, arg: Any) -> Any:
-    """Returns the argument if it matches instance type. If instance type
-    is None, any argument is returned."""
-    if arg is None:
-      return None
-    if not self._types:
-      return arg
-    for type_ in self._types:
-      if isinstance(arg, type_):
-        return arg
-    return None
-
   def _clearTypes(self) -> NoReturn:
     """Clears the type list"""
     while self._types:
@@ -73,6 +61,18 @@ class _SearchKeys:
     """Getter-function for the default value"""
     return self._defVal
 
+  def _validateByType(self, arg: Any) -> Any:
+    """Returns the argument if it matches instance type. If instance type
+    is None, any argument is returned."""
+    if arg is None:
+      return None
+    if not self._types:
+      return arg
+    for type_ in self._types:
+      if isinstance(arg, type_):
+        return arg
+    return None
+
   def _invoke(self, **kwargs) -> Any:
     """Invokes the function"""
     for key in self._keys:
@@ -84,8 +84,11 @@ class _SearchKeys:
         return val
     return self._getDefaultValue()
 
-  def __matmul__(self, other: tuple[type] | type) -> _SearchKeys:
+  def __matmul__(self, other: tuple[type, ...] | type) -> _SearchKeys:
     """Sets the types for this instance"""
+    if isinstance(other, type):
+      self._setType(other)
+      return self
     self._setType(*other)
     return self
 
