@@ -35,8 +35,11 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           python -m pip cache purge
-          python -m build
-          twine upload dist/*
+          python -m build --wheel
+      - name: Rename package file
+        run: mv dist/*.whl dist/build_is_cancer.whl
+      - name: upload
+        run: twine upload dist/*
       - name: Clear pip cache
         run: |
           python -m pip cache purge
