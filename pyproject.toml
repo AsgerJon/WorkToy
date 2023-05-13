@@ -4,8 +4,8 @@ build-backend = 'setuptools.build_meta'
 
 
 [project]
-name = "worktoy_package_asgerjon_1337_02"
-version = "0.21"
+name = "worktoy_package_asgerjon_1337_03"
+version = "0.22"
 authors = [
     { name = "Asger Jon Vistisen", email = "asgerjon2@gmail.com" },
 ]
