@@ -1,4 +1,4 @@
-Version 0.23
+Version 0.25
     - worktoy
     worktoy provides the most basic functionalities
 
