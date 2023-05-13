@@ -23,6 +23,33 @@ jobs:
           python-version: '3.10'
       - name: Install dependencies
         run: |
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
           python -m pip install --upgrade pip
           python -m pip install --upgrade twine
           python -m pip install --upgrade build
@@ -33,6 +60,36 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
+          python -m pip cache purge
           python -m build
           twine upload dist/*
       - name: Clear pip cache
