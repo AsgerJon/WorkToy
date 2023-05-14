@@ -8,7 +8,12 @@ import string
 from typing import NoReturn, Callable, Any
 from unittest import TestCase
 
-from worktoy import searchKeys
+from worktoy import searchKeys, CallMeMaybe
+
+
+def _someFunc() -> NoReturn:
+  """Hi there, I'm a function!"""
+  return None
 
 
 class TestSearchKeys(TestCase):
@@ -112,6 +117,12 @@ class TestSearchKeys(TestCase):
       float: .1337,
       str  : 'lol',
     }
+
+  def testCallMeMaybe(self) -> NoReturn:
+    """Testing if searchKeys can handle searching for callables"""
+    testKwarg = {'here': _someFunc, 'lol': 77777, 'blabla': 777777777}
+    res = searchKeys('here', 'there') @ CallMeMaybe >> testKwarg
+    self.assertEqual(res, _someFunc)
 
   def testSimpleKeys(self) -> NoReturn:
     """Testing good keys. The simplest case"""

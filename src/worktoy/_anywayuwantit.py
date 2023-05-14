@@ -17,10 +17,14 @@ class AnywayUWantIt(ABCMeta):
     cls = super().__new__(mcls, *args, **kwargs)
     return cls
 
-  def __instancecheck__(cls, instance: Any) -> bool:
+  def __instancecheck__(cls, instance: Any = None) -> bool:
     """On the subclass, implement a function named 'recognizeInstance' to
     explicitly define if an instance is to be regarded as an instance of
     it."""
+    if instance == cls:
+      return True
+    if instance is None:
+      return True
     recognizeInstance = getattr(cls, 'recognizeInstance', None)
     if recognizeInstance is None:
       return super().__instancecheck__(instance)
