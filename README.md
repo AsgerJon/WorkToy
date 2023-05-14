@@ -1,6 +1,9 @@
 # WorkToy
 
 Collection of General Utilities
+```
+pip install worktoy
+```
 
 ## The None-aware 'maybe'
 
