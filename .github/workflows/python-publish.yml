@@ -1,6 +1,6 @@
 name: Python Project from GitHub to PyPi
 
-on: push
+on: release
 
 jobs:
   build-n-publish:
