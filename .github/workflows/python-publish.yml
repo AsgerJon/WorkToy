@@ -32,10 +32,8 @@ jobs:
           skip-existing: true
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
-          publish-arg: --skip-existing --skip-existing-subversion
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
           password: ${{ secrets.PYPI_API_TOKEN }}
-          publish-arg: --skip-existing --skip-existing-subversion
