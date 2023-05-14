@@ -1,6 +1,3 @@
-Version 0.26
+Version 0.27
     - worktoy
-    worktoy provides the most basic functionalities
-
-    - mockdata
-    worktoy.mockdata provide functions for creating mock data.
+    Fixed searchKey not recognizing CallMeMaybe as a type
