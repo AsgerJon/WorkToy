@@ -1,6 +1,8 @@
 name: Python Project from GitHub to PyPi
 
-on: release
+on:
+  release:
+    types: [ created ]
 
 jobs:
   build-n-publish:
@@ -27,7 +29,15 @@ jobs:
           --wheel
           --outdir dist/
           .
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - id: get-event-id
+        uses: actions/event-id@v1
         with:
-          skip-existing: true
+          event-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish distribution to PyPI
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ steps.get-event-id.outputs.event_id }}
+        run: >-
+          curl -X POST
+          -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          -F "content=@dist/*"
+          https://upload.pypi.org/legacy/
