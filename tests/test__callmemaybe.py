@@ -78,6 +78,12 @@ class InCognitoClass:
     """f... da police!"""
     return 'f... da police!'
 
+  def __str__(self, *args, **kwargs) -> str:
+    """I know I'm callable, but I'm supposed to not be recognized as
+    callable!"""
+    return """I know I'm callable, but I'm supposed to not be recognized as
+    callable!"""
+
 
 class TestCallMeMaybe(TestCase):
   """Testing CallMeMaybe
@@ -91,6 +97,18 @@ class TestCallMeMaybe(TestCase):
     self.notCallable = ThisIsCrazy()
     self.inCognitoClassInstance = InCognitoClass()
     self.inCognitoFunction = inCognitoFunction
+
+  def testTypeError(self) -> NoReturn:
+    """Testing error raised when calling something other than a type,
+    class or callable."""
+    with self.assertRaises(TypeError):
+      CallMeMaybe()(777)
+
+    with self.assertRaises(TypeError):
+      CallMeMaybe()(.777)
+
+    with self.assertRaises(TypeError):
+      CallMeMaybe()(1j)
 
   def testCallables(self) -> NoReturn:
     """Testing the type name of print"""
