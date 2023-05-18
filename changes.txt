@@ -1,3 +1,7 @@
+Version 0.30.0
+    Added metaclass WorkMeta. Several new additions are not ready for general
+     use.
+
 Version 0.28.8
     - worktoy
     Fixed searchKey not recognizing CallMeMaybe as a type
