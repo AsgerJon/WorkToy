@@ -69,7 +69,7 @@ class Parsify:
 
   def _getByIndex(self, index: int) -> Any:
     """Item getter by index"""
-    raise NotImplementedError
+    return self._posArgs
 
   def _setByIndex(self, index: int, val: Any) -> NoReturn:
     """Item getter by index"""

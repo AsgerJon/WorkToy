@@ -1,6 +1,7 @@
 # WorkToy
 
 Collection of General Utilities
+
 ```
 pip install worktoy
 ```
@@ -172,7 +173,7 @@ beginning of the second line, a `'\n'` has been inserted. Instead, use
 
     msgLine = monoSpace(msg)  # msg as defined above
 
-Now `msgLine` contains now new lines and no repeated spaces. To
+Now `msgLine` contains no new lines and no repeated spaces. To
 explicitly set a line break in the string, insert `'<br>'` in the text.
 Set a different string to denote a line break, give that string as the
 second argument.
