@@ -45,7 +45,7 @@ Convert text to monospaced format with consistent spacing and line
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy import maybe
+from worktoy.parsify import maybe
 
 
 def monoSpace(text: str, newLine: str = None) -> str:

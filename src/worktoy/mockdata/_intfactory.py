@@ -6,10 +6,10 @@ from __future__ import annotations
 from random import randint
 from typing import NoReturn
 
-from worktoy import maybeTypes, maybe
+from worktoy.parsify import maybeTypes, maybe
 
 
-class _IntFactory:
+class IntFactory:
   """The intFactory generates random integers
   #  MIT License
   #  Copyright (c) 2023 Asger Jon Vistisen"""
@@ -18,15 +18,15 @@ class _IntFactory:
   _numbers = []
 
   @classmethod
-  def intFactory(cls, *args, **kwargs) -> _IntFactory:
+  def intFactory(cls, *args, **kwargs) -> IntFactory:
     """Integer factory function"""
-    if _IntFactory._singleTon is None:
-      _IntFactory._singleTon = cls(*args, **kwargs)
-      return _IntFactory.intFactory()
-    lower, upper = _IntFactory._parseLimits(*args, **kwargs)
-    _IntFactory._singleTon.setUpper(upper)
-    _IntFactory._singleTon.setLower(lower)
-    return _IntFactory._singleTon
+    if IntFactory._singleTon is None:
+      IntFactory._singleTon = cls(*args, **kwargs)
+      return IntFactory.intFactory()
+    lower, upper = IntFactory._parseLimits(*args, **kwargs)
+    IntFactory._singleTon.setUpper(upper)
+    IntFactory._singleTon.setLower(lower)
+    return IntFactory._singleTon
 
   @staticmethod
   def _parseLimits(*args, **kwargs) -> tuple[int, int]:
@@ -44,7 +44,7 @@ class _IntFactory:
   def gcd(a: int, b: int) -> int:
     """Greatest common divisor"""
     if max([a, b]) % min([a, b]):
-      return _IntFactory.gcd(min([a, b]), max([a, b]) % min(a, b))
+      return IntFactory.gcd(min([a, b]), max([a, b]) % min(a, b))
     else:
       return min([a, b])
 
@@ -109,4 +109,4 @@ class _IntFactory:
     positional argument or at the keyword argument sampleSize."""
 
 
-_intFactory = _IntFactory.intFactory
+intFactory = IntFactory.intFactory

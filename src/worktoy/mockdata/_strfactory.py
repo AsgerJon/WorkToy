@@ -6,7 +6,7 @@ from __future__ import annotations
 from random import choice
 import string
 
-from worktoy import maybe
+from worktoy.parsify import maybe
 
 
 def strFactory(n: int = None, *skipChars, ) -> str:

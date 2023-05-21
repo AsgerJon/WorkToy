@@ -8,8 +8,6 @@ import string
 from typing import NoReturn, Callable, Any
 from unittest import TestCase
 
-from worktoy import searchKeys, CallMeMaybe
-
 
 def _someFunc() -> NoReturn:
   """Hi there, I'm a function!"""

@@ -7,8 +7,6 @@ from math import sin
 from typing import NoReturn
 from unittest import TestCase
 
-from worktoy import CallMeMaybe
-
 
 def func() -> NoReturn:
   """General function"""

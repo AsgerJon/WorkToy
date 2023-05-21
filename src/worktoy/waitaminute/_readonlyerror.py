@@ -5,7 +5,9 @@ from __future__ import annotations
 import inspect
 from typing import Never
 from icecream import ic
-from worktoy import monoSpace, searchKeys, maybe
+
+from worktoy.parsify import searchKeys, maybe
+from worktoy.stringtools import monoSpace
 
 ic.configureOutput(includeContext=True)
 
@@ -24,9 +26,9 @@ class ReadOnlyError(Exception):
   @classmethod
   def yoDawg(cls) -> Exception:
     """Create an exception instance of ReadOnlyError."""
-    msg = "Heard you like read-only exceptions, so we put a read-only " \
-          "error in your read-only error!"
-    return Exception(msg)
+    msg = """Heard you like ReadOnlyError, so we put a ReadOnlyError
+          in your ReadOnlyError!"""
+    return Exception(monoSpace(msg))
 
   def __init__(self, *args, **kwargs) -> None:
     """Initialize the ReadOnlyError exception.

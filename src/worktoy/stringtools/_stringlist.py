@@ -8,7 +8,7 @@ Use stringList: numbers = stringList('one, two, three, four')"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy import searchKeys, maybeTypes, maybe
+from worktoy.parsify import searchKeys, maybe, maybeTypes
 from worktoy.mockdata import strFactory
 
 

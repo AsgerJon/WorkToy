@@ -38,8 +38,6 @@ returning it
 from __future__ import annotations
 import unittest
 
-from loremify import lorem
-
 from worktoy import searchTerm
 
 

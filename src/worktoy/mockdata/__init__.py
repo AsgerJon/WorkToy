@@ -4,4 +4,4 @@
 from __future__ import annotations
 
 from ._strfactory import strFactory
-from ._intfactory import _intFactory as intFactory
+from ._intfactory import intFactory

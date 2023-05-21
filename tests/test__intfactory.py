@@ -17,7 +17,7 @@ class TestIntFactory(TestCase):
     """Sets up the tests"""
     self.factory = intFactory()
 
-  def testBasic(self) -> int:
+  def testBasic(self) -> NoReturn:
     """Tests for basic functionality"""
     val = self.factory >> (2 ** 31, 2 ** 32 - 1)
     self.assertLess(val, 2 ** 32 - 1)
