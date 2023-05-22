@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import unittest
 
-from worktoy import maybeTypes
+from worktoy.core import maybeTypes
 
 
 class TestMaybeTypes(unittest.TestCase):

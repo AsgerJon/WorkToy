@@ -8,6 +8,8 @@ import string
 from typing import NoReturn, Callable, Any
 from unittest import TestCase
 
+from worktoy.core import searchKeys, CallMeMaybe
+
 
 def _someFunc() -> NoReturn:
   """Hi there, I'm a function!"""
@@ -145,7 +147,7 @@ class TestSearchKeys(TestCase):
     floatVal = searchKeys(*self.goodKeys) @ float >> self.valueDicts
     self.assertIsInstance(floatVal, float)
     strVal = searchKeys(*self.goodKeys) @ str >> self.valueDicts
-    self.assertIsInstance(strVal, str)
+    self.assertIsInstance(strVal, str, strVal)
 
   def testSingleTypeMultiKey(self) -> NoReturn:
     """Testing good keys, but bad combinations of types"""

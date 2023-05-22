@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import Any, NoReturn
 
+from worktoy.core import CallMeMaybe
+
 
 class _SearchKeys:
   """The searchKeys function provides a flexible way of extracting values
@@ -89,8 +91,12 @@ class _SearchKeys:
     if isinstance(other, type):
       self._setType(other)
       return self
-    self._setType(*other)
-    return self
+    if isinstance(other, (list, tuple)):
+      self._setType(*other)
+      return self
+    if other is CallMeMaybe:
+      self._setType(CallMeMaybe)
+      return self
 
   def __rshift__(self, other: tuple[dict, Any] | dict) -> Any:
     """Evaluates the keyword arguments given. If a tuple is given,
@@ -105,27 +111,6 @@ class _SearchKeys:
         self._setDefaultValue(other[1])
       return self._invoke(**kwargs)
     return self._invoke(**other)
-
-
-def maybeTypes(type_, *args, **kwargs) -> list[Any]:
-  """The maybeTypes function finds all arguments of given type"""
-  #  MIT License
-  #  Copyright (c) 2023 Asger Jon Vistisen
-
-  out = []
-  for arg in args:
-    if isinstance(arg, type_):
-      out.append(arg)
-
-  padLen = searchKeys('pad', 'padLen') @ int >> kwargs
-  if padLen is None or padLen == len(out):
-    return out
-  if padLen < len(out):
-    return out[:padLen]
-  padChar = searchKeys('padChar') >> kwargs
-  while len(out) < padLen:
-    out.append(padChar)
-  return out
 
 
 searchKeys = _SearchKeys.searchKeys

@@ -2,11 +2,13 @@
 #  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
+
 import inspect
 from typing import Never
+
 from icecream import ic
 
-from worktoy.parsify import searchKeys, maybe
+from worktoy.core import searchKeys, maybe
 from worktoy.stringtools import monoSpace
 
 ic.configureOutput(includeContext=True)
@@ -24,7 +26,7 @@ class ReadOnlyError(Exception):
       occurred."""
 
   @classmethod
-  def yoDawg(cls) -> Exception:
+  def yoDawg(cls) -> ReadOnlyError:
     """Create an exception instance of ReadOnlyError."""
     msg = """Heard you like ReadOnlyError, so we put a ReadOnlyError
           in your ReadOnlyError!"""
@@ -39,7 +41,7 @@ class ReadOnlyError(Exception):
         None
     Returns:
         None"""
-    args = maybe(args, [None, ])
+    args = [*args, None]
     variableKwarg = searchKeys('variable', 'var') @ str >> kwargs
     variableArg = args[0]
     self._variableName = maybe(variableKwarg, variableArg, None)

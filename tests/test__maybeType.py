@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import NoReturn
 import unittest
 
-from worktoy import maybeType
+from worktoy.core import maybeType
 
 
 class TestMaybeType(unittest.TestCase):

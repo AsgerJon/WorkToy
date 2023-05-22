@@ -9,10 +9,9 @@ from typing import Any, Never
 
 from icecream import ic
 
-from worktoy.parsify import searchKeys, maybeType, maybe, maybeTypes
-from worktoy.parsify import SomeType
+from worktoy.core import searchKeys, maybeType, maybe, maybeTypes, SomeType
+from worktoy.core import CallMeMaybe
 from worktoy.stringtools import stringList
-from worktoy.typify import CallMeMaybe
 from worktoy.waitaminute import ReadOnlyError, ProceduralError
 
 ic.configureOutput(includeContext=True)
@@ -133,7 +132,7 @@ class Field:
   def badSetterFactory(self, ) -> CallMeMaybe:
     """Creates bad setter-function which raises ReadOnlyError"""
 
-    def func(instance: Any, *_) -> Never:
+    def func(_, *__) -> Never:
       """Illegal setter function"""
       raise ReadOnlyError(self._getFieldName(NameFormat.NAME))
 
@@ -144,7 +143,7 @@ class Field:
   def badDeleterFactory(self) -> CallMeMaybe:
     """Creates bad deleter function which raises ReadOnlyError"""
 
-    def func(instance: Any, ) -> Never:
+    def func(_, ) -> Never:
       """Illegal deleter function"""
       raise ReadOnlyError(self._getFieldName(NameFormat.NAME))
 

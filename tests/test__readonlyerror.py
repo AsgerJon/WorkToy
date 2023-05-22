@@ -6,7 +6,7 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
-from worktoy import monoSpace
+from worktoy.stringtools import monoSpace
 
 
 class ReadOnlyError(Exception):
