@@ -13,12 +13,16 @@ instantiate a class illegally. For example to create new instances of a
 singleton class. It then makes use of the 'insClass' property to inform
 the user, which class contained the error.
 """
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
-from ._exceptioncoreproperties import _ExceptionCoreProperties
 from ._exceptioncore import ExceptionCore
+from ._annotationerror import AnnotationError
+from ._n00berror import n00bError
+from ._wrongtypeerror import WrongTypeError
+from ._typeguard import typeGuard
+from ._typeguardfunction import typeGuardFunction
 from ._instantiationerror import InstantiationError
 from ._proceduralerror import ProceduralError
 from ._readonlyerror import ReadOnlyError

@@ -1,6 +1,6 @@
 """Documentation: ReadOnlyError"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 import inspect
@@ -9,12 +9,12 @@ from typing import Never
 from icecream import ic
 
 from worktoy.core import searchKeys, maybe
-from worktoy.stringtools import monoSpace
+from worktoy.waitaminute import ExceptionCore
 
 ic.configureOutput(includeContext=True)
 
 
-class ReadOnlyError(Exception):
+class ReadOnlyError(ExceptionCore):
   """Custom exception for read-only operations.
   Attributes:
       varName (str): Name of the variable.
@@ -26,11 +26,12 @@ class ReadOnlyError(Exception):
       occurred."""
 
   @classmethod
-  def yoDawg(cls) -> ReadOnlyError:
+  def yoDawg(cls) -> ExceptionCore:
     """Create an exception instance of ReadOnlyError."""
     msg = """Heard you like ReadOnlyError, so we put a ReadOnlyError
           in your ReadOnlyError!"""
-    return Exception(monoSpace(msg))
+    from worktoy.stringtools import monoSpace
+    return ExceptionCore(monoSpace(msg))
 
   def __init__(self, *args, **kwargs) -> None:
     """Initialize the ReadOnlyError exception.
@@ -41,6 +42,16 @@ class ReadOnlyError(Exception):
         None
     Returns:
         None"""
+    self._variableName = None
+    self._function = None
+    self._fileName = None
+    self._lineNumber = None
+    self._instance = None
+    self._instanceClass = None
+    ExceptionCore.__init__(self, *args, **kwargs)
+
+  def _createMsg(self, *args, **kwargs) -> str:
+    """Reimplementation"""
     args = [*args, None]
     variableKwarg = searchKeys('variable', 'var') @ str >> kwargs
     variableArg = args[0]
@@ -52,17 +63,11 @@ class ReadOnlyError(Exception):
     self._lineNumber = frame.f_lineno
     self._instance = frame.f_locals.get('self', )
     self._instanceClass = type(self._instance)
-    super().__init__(monoSpace(self.__str__()))
-
-  def __str__(self) -> str:
-    """Return a string representation of the exception.
-    Returns:
-        str: String representation of the exception."""
     msg = "Tried to access %s belonging to %s of class %s using %s, " \
           "which is not a permitted operation!"
-    msg = monoSpace(msg % (
+    self._msg = monoSpace(msg % (
       self.varName, self.insName, self.insCls, self.function))
-    return msg
+    return self._msg
 
   def _getVariable(self) -> str:
     """Getter-function for the name of the variable.

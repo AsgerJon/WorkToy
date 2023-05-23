@@ -1,8 +1,9 @@
 """The 'worktoy.core' module contains functionality relying only on
 builtins."""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
+from ._readtextfile import readTextFile
 from ._singletonclass import SingletonClass
 from ._maybe import maybe
 from ._plenty import plenty

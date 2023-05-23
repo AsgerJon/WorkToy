@@ -6,33 +6,7 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
-from worktoy.stringtools import monoSpace
-
-
-class ReadOnlyError(Exception):
-  """Custom exception for read-only operations."""
-
-  def __init__(self, var_name: str, function: str) -> None:
-    """Initialize the ReadOnlyError exception.
-
-    Args:
-        var_name (str): Name of the variable.
-        function (str): Name of the function invoking the error.
-    """
-    self.var_name = var_name
-    self.function = function
-    super().__init__(self.__str__())
-
-  def __str__(self) -> str:
-    """Return a string representation of the exception.
-
-    Returns:
-        str: String representation of the exception.
-    """
-    return monoSpace(
-      f"Tried to access {self.var_name} using {self.function}, which is "
-      f"not a permitted operation!"
-    )
+from worktoy.waitaminute import ReadOnlyError
 
 
 class MyClass:

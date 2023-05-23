@@ -7,13 +7,12 @@ request was sent even before instance creation time, but the instance is
 named in the namespace but assigned value None, a ProceduralError should
 also be raised. If a process sends requests to a name not yet in the
 namespace, a builtin NameError is the appropriate error."""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from typing import NoReturn
 
-from worktoy.stringtools import justify
 from worktoy.waitaminute import ExceptionCore
 
 
@@ -35,5 +34,6 @@ class ProceduralError(ExceptionCore):
 
   def _getMsg(self, ) -> NoReturn:
     """Procedural error indicates out of order operation"""
+    from worktoy.stringtools import justify
     self._msg = justify("""This exception is caused by a process trying 
     to access a process not yet ready.""")
