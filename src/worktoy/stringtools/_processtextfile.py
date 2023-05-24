@@ -31,10 +31,9 @@ def apply_function_to_file(file_path, function: CallMeMaybe):
   Returns:
       bool: True if the file processing was successful, False otherwise.
   """
-  typeGuardFunction(function, str, str)
-  typeGuard(function, CallMeMaybe)
-  typeGuard(function('sample-str'), str)
   typeGuard(file_path, str)
+  typeGuardFunction(function, str, str)
+  typeGuard(function('sample-str'), str)
   content = readTextFile(file_path)
   try:  # Create a backup of the original file
     backupResult = create_backup_file(file_path)

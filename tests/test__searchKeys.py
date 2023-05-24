@@ -1,6 +1,6 @@
 """Testing the searchKeys"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from random import randint, sample, choice, random
@@ -8,7 +8,7 @@ import string
 from typing import NoReturn, Callable, Any
 from unittest import TestCase
 
-from worktoy.core import searchKeys, CallMeMaybe
+from worktoy.core import searchKeys, CallMeMaybe, Numerical
 
 
 def _someFunc() -> NoReturn:
@@ -141,11 +141,11 @@ class TestSearchKeys(TestCase):
   def testTypeKeys(self) -> NoReturn:
     """Testing good keys, but bad types"""
     intVal = searchKeys(*self.goodKeys) @ int >> self.valueDicts
-    self.assertIsInstance(intVal, int)
+    self.assertIsInstance(intVal, Numerical)
     tupleVal = searchKeys(*self.goodKeys) @ tuple >> self.valueDicts
     self.assertIsInstance(tupleVal, tuple)
     floatVal = searchKeys(*self.goodKeys) @ float >> self.valueDicts
-    self.assertIsInstance(floatVal, float)
+    self.assertIsInstance(floatVal, Numerical)
     strVal = searchKeys(*self.goodKeys) @ str >> self.valueDicts
     self.assertIsInstance(strVal, str, strVal)
 

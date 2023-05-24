@@ -1,11 +1,12 @@
 """Testing ReadOnlyError"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 import unittest
 from typing import Any
 
+from _unittestunstupid import UnstupidTest
 from worktoy.waitaminute import ReadOnlyError
 
 
@@ -31,7 +32,7 @@ class MyClass:
     raise ReadOnlyError("value", "deleter")
 
 
-class TestReadOnlyError(unittest.TestCase):
+class TestReadOnlyError(UnstupidTest):
   """Unit tests for ReadOnlyError"""
 
   def setUp(self) -> None:

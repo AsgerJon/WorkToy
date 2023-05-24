@@ -1,11 +1,12 @@
 """The billions2one function generates random objects"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 from random import randint, uniform, choice
 import string
 
 from worktoy.core import maybe, CallMeMaybe, plenty
+from worktoy.stringtools import justify
 
 
 def randStr(n: int = None) -> str:
@@ -37,18 +38,35 @@ def randKeys(*keys, ) -> list[str]:
 
 def randList(*args, **kwargs) -> list:
   """Returns a list n instances of type_"""
-  type_ = kwargs.get('type', None)
-  n = kwargs.get('n', None)
+  typeDefault = int
+  nDefault = 16
+  typeKwarg = kwargs.get('type', None)
+  nKwarg = kwargs.get('n', None)
+  if typeKwarg is not None:
+    if not isinstance(typeKwarg, type):
+      typeKwarg = None
+  typeArg = None
+  nArg = None
   for arg in args:
-    if isinstance(arg, type) and type_ is None:
-      type_ = arg
-    if isinstance(arg, int) and n is None:
-      n = arg
-    if plenty(type_, n):
+    if isinstance(arg, type) and typeArg is None:
+      typeArg = arg
+    if isinstance(arg, int) and nArg is None:
+      nArg = arg
+    if plenty(typeArg, nArg):
       break
-  if type_ is not None:
-    if not isinstance(type_, type):
-      pass
+  type_ = maybe(typeKwarg, typeArg, typeDefault)
+  n = maybe(nKwarg, nArg, nDefault)
+  out = []
+  rng = builtinTypes.get(type_.__name__, None)
+  if rng is None:
+    raise NameError('Unable to recognize key name: %s' % (type.__name__))
+  rng = rng.get('sampleGen', None)
+  if rng is None:
+    msg = justify("""Found type name, but could not recognize sample
+                    generator function""")
+    raise NameError(msg)
+  while len(out) < n:
+    out.append(rng())
 
 
 def randDict(*keys) -> dict:
@@ -81,7 +99,7 @@ def randDict(*keys) -> dict:
   return out
 
 
-builtin_types = {
+builtinTypes = {
   int  : {"__name__": "int", "sampleGen": lambda: randint(-100, 100)},
   float: {
     "__name__" : "float",
@@ -101,7 +119,7 @@ def getData(type_: type) -> CallMeMaybe:
   if not isinstance(type_, type):
     msg = """Expected type to be of type type (lol), but received : %s"""
     raise TypeError(msg % type_)
-  for (key, val) in builtin_types.items():
+  for (key, val) in builtinTypes.items():
     name = val.get('__name__', None)
     if name is not None:
       if name == type_.__name__:

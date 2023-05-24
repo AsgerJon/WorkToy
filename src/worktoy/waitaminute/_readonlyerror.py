@@ -9,6 +9,7 @@ from typing import Never
 from icecream import ic
 
 from worktoy.core import searchKeys, maybe
+from worktoy.stringtools import monoSpace
 from worktoy.waitaminute import ExceptionCore
 
 ic.configureOutput(includeContext=True)

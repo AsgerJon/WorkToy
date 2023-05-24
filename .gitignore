@@ -75,6 +75,7 @@ docs/_build/
 .pybuilder/
 target/
 main.py
+mainOLD.py
 mainwindow.py
 
 # Jupyter Notebook
@@ -162,3 +163,4 @@ cython_debug/
 .idea/
 /src/worktoy/waitaminute/_testexception.py
 /.pypirc
+_scratcher.py

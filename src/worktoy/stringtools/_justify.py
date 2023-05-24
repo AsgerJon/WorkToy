@@ -1,8 +1,8 @@
 """The justify function works similarly to monoSpace, except for ignoring
 all new-line indicators and instead splits the string into lines separated
 by new-line at given intervals. """
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from worktoy.core import maybe
@@ -15,6 +15,8 @@ def justify(text: str, charLimit: int = None, *spaceLike: str) -> str:
   by new-line at given intervals.
   #  MIT License
   #  Copyright (c) 2023 Asger Jon Vistisen"""
+  if not text:
+    return ''
   text = text.replace(' %', '__')
   text = monoSpace(text)
   charLimit = maybe(charLimit, 77)
