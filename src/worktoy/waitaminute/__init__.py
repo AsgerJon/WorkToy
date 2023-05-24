@@ -18,6 +18,7 @@ the user, which class contained the error.
 from __future__ import annotations
 
 from ._exceptioncore import ExceptionCore
+from ._dioerror import DIOError
 from ._typeguarderror import TypeGuardError
 from ._n00berror import n00bError
 from ._typeguard import typeGuard

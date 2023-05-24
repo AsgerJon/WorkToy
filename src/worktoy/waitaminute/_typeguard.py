@@ -4,14 +4,13 @@ argument and type"""
 #  MIT Licence
 from __future__ import annotations
 
-from types import GenericAlias
 from typing import Any
 import typing
 
-from worktoy.core import unStupid, TypeBagParent
-from worktoy.waitaminute import WrongTypeError, TypeGuardError
-
 from icecream import ic
+
+from worktoy.core import unStupid, TypeBagParent
+from worktoy.waitaminute import TypeGuardError
 
 ic.configureOutput(includeContext=True)
 
@@ -43,7 +42,4 @@ def typeGuard(test: Any, *args: Any) -> Any:
       return test
 
   print(77 * '_')
-  ic(test)
-  ic(newTypes)
-  input('fuck you')
   raise TypeGuardError(test, newTypes)

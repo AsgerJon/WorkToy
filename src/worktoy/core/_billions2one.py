@@ -6,7 +6,6 @@ from random import randint, uniform, choice
 import string
 
 from worktoy.core import maybe, CallMeMaybe, plenty
-from worktoy.stringtools import justify
 
 
 def randStr(n: int = None) -> str:
@@ -62,11 +61,11 @@ def randList(*args, **kwargs) -> list:
     raise NameError('Unable to recognize key name: %s' % (type.__name__))
   rng = rng.get('sampleGen', None)
   if rng is None:
-    msg = justify("""Found type name, but could not recognize sample
-                    generator function""")
+    msg = """Found type name, but could not recognize sample function"""
     raise NameError(msg)
   while len(out) < n:
     out.append(rng())
+  return out
 
 
 def randDict(*keys) -> dict:

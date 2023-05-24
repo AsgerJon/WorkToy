@@ -1,4 +1,6 @@
-"""ExceptionCore implements basic error/warning functionality."""
+"""ExceptionCore provides a central baseclass for exceptions shared by
+modules. This allows for general adjustments that apply to the entire
+package as well as module specific error handling."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
 from __future__ import annotations

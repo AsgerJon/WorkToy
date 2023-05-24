@@ -4,8 +4,10 @@ accessor operations are to be allowed. The default is to allow setter and
 getter, but to have deleter raise a ReadOnlyError. Users are encouraged to
 subclass the Field class. This may be of particular interest if several
 classes share exactly one data type whilst remaining otherwise different."""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from ._field import Field
+from ._metajuice import MetaJuice, factory
+from ._juicify import Juicify

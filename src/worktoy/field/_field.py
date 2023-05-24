@@ -1,7 +1,7 @@
 """FieldTest. PyCharm refuses to apply formatting to non-project files and
 I don't have an hour to spend fixing that, so now it's added."""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from enum import IntEnum
@@ -9,10 +9,10 @@ from typing import Any, Never
 
 from icecream import ic
 
-from worktoy.core import searchKeys, maybeType, maybe, maybeTypes, SomeType
+from worktoy.core import searchKeys, maybeType, maybe, maybeTypes
 from worktoy.core import CallMeMaybe
 from worktoy.stringtools import stringList
-from worktoy.waitaminute import ReadOnlyError, ProceduralError
+from worktoy.waitaminute import ReadOnlyError, ExceptionCore
 
 ic.configureOutput(includeContext=True)
 
@@ -31,13 +31,20 @@ class Field:
   #  Copyright (c) 2023 Asger Jon Vistisen
   #  MIT Licence"""
 
+  @staticmethod
+  def _proceduralError(varName: str = None) -> Never:
+    """Raises the procedural error. Temporary implementation, replace with
+    dedicated ExceptionCore instance"""
+    name = maybe(varName, 'unnamed')
+    raise ExceptionCore('Variable "%s" not ready!' % name)
+
   def __init__(self, *args, **kwargs) -> None:
     nameKwarg = searchKeys('fieldName', 'name') @ str >> kwargs
     nameArg = maybeType(str, *args)
     nameDefault = None
     self._fieldName = maybe(nameKwarg, nameArg, nameDefault)
     if self._fieldName is None:
-      raise ProceduralError(self, 'name')
+      self._proceduralError('_fieldName')
     typeKwarg = searchKeys('type', 'class', 'type_') @ type >> kwargs
     typeArg = maybeType(type, *args)
     typeDefault = None
@@ -49,7 +56,7 @@ class Field:
     defValDefault = None
     defVal = maybe(defValKwarg, defValArg, defValDefault)
     if defVal is None and type_ is None:
-      raise ProceduralError('defVal', SomeType)
+      self._proceduralError('_fieldName')
     type_ = maybe(type_, type(defVal))
     self._fieldDefault = defVal
     self._fieldType = type_
@@ -70,6 +77,9 @@ class Field:
     self._allowGetter = allowGetter
     self._allowSetter = allowSetter
     self._allowDel = allowDel
+    self._useLegacyGetter = kwargs.get('legacyGetter', False)
+    self._useLegacySetter = kwargs.get('legacySetter', False)
+    self._useLegacyDeleter = kwargs.get('legacyDeleter', False)
 
   def _getFieldName(self, which: NameFormat = None) -> str:
     """Getter-function for field name"""
@@ -179,15 +189,44 @@ class Field:
     setterName = '_set%s' % Name
     deleterName = '_del%s' % Name
 
-    getterFunc = self.getterFactory()
-    if not self._allowGetter:
-      getterFunc = self.badGetterFactory()
-    setterFunc = self.setterFactory()
-    if not self._allowSetter:
-      setterFunc = self.badSetterFactory()
-    deleterFunc = self.deleterFactory()
-    if not self._allowDel:
-      deleterFunc = self.badDeleterFactory()
+    legacyGetterName = '%sLegacy' % getterName
+    legacySetterName = '%sLegacy' % setterName
+    legacyDeleterName = '%sLegacy' % deleterName
+
+    legacyGetter = getattr(cls, getterName, None)
+    legacySetter = getattr(cls, setterName, None)
+    legacyDeleter = getattr(cls, deleterName, None)
+    goodGetter = self.getterFactory()
+    goodSetter = self.setterFactory()
+    goodDeleter = self.deleterFactory()
+    badGetter = self.badGetterFactory()
+    badSetter = self.badSetterFactory()
+    badDeleter = self.badDeleterFactory()
+
+    setattr(cls, legacyGetterName, legacyGetter)
+    setattr(cls, legacySetterName, legacySetter)
+    setattr(cls, legacyDeleterName, legacyDeleter)
+
+    if self._useLegacyGetter:
+      getterFunc = legacyGetter
+    elif self._allowGetter:
+      getterFunc = goodGetter
+    else:
+      getterFunc = badGetter
+
+    if self._useLegacySetter:
+      setterFunc = legacySetter
+    elif self._allowSetter:
+      setterFunc = goodSetter
+    else:
+      setterFunc = badSetter
+
+    if self._useLegacyDeleter:
+      deleterFunc = legacyDeleter
+    elif self._allowSetter:
+      deleterFunc = goodDeleter
+    else:
+      deleterFunc = badDeleter
 
     setattr(cls, getterName, getterFunc)
     setattr(cls, setterName, setterFunc)
