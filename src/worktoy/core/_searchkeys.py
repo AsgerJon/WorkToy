@@ -1,12 +1,10 @@
 """The searchKeys function provides a flexible way of extracting values
 from keyword arguments."""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from typing import Any, NoReturn
-
-from worktoy.core import CallMeMaybe
 
 
 class _SearchKeys:
@@ -88,12 +86,15 @@ class _SearchKeys:
 
   def __matmul__(self, other: tuple[type, ...] | type) -> _SearchKeys:
     """Sets the types for this instance"""
+    if other is None:
+      return self
     if isinstance(other, type):
       self._setType(other)
       return self
     if isinstance(other, (list, tuple)):
       self._setType(*other)
       return self
+    from worktoy.core import CallMeMaybe
     if other is CallMeMaybe:
       self._setType(CallMeMaybe)
       return self

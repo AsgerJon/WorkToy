@@ -7,7 +7,7 @@ classes share exactly one data type whilst remaining otherwise different."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
 from __future__ import annotations
-
+from ._decorators import Decorator
+from ._fieldapply import FieldApply
+from ._fieldenums import Perm, NameF, Accessor
 from ._field import Field
-from ._metajuice import MetaJuice, factory
-from ._juicify import Juicify

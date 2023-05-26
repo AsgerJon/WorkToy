@@ -4,7 +4,6 @@ strings."""
 #  MIT Licence
 from __future__ import annotations
 from ._camelcase import snakeCaseToCamelCase
-from ._wordforword import wordForWord
 from ._monospace import monoSpace
 from ._stringlist import stringList
 from ._justify import justify

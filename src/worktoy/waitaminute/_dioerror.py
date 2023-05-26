@@ -3,7 +3,6 @@
 #  MIT Licence
 from __future__ import annotations
 
-from worktoy.core import maybeType
 from worktoy.waitaminute import ExceptionCore
 
 
@@ -14,7 +13,3 @@ class DIOError(ExceptionCore):
 
   def __init__(self, *args, **kwargs) -> None:
     ExceptionCore.__init__(self, *args, **kwargs)
-
-  def _createMsg(self, *args, **kwargs) -> str:
-    """Reimplementation"""
-    self._msg = maybeType(str, *args)

@@ -5,8 +5,8 @@ kwargs. For example:
   myKeys: tuple[str]
   myArg, newArgs, newKwargs = extractArg(myType, myKeys, *args, **kwargs)
 """
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from typing import TypeAlias, Union, Any
@@ -36,8 +36,11 @@ def extractArg(type_: type, keys: KEYS, *args, **kwargs) -> EXTRACTED:
     else:
       newKwargs |= {key: val}
   for item in args:
-    if isinstance(item, type_) and out is None:
-      out = item
+    if out is None:
+      if type_ == Any:
+        out = item
+      elif isinstance(item, type_):
+        out = item
     else:
       newArgs.append(item)
   return (out, newArgs, newKwargs)

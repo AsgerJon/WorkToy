@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.core import CallMeMaybe, extractArg
+from worktoy.core import extractArg
 from worktoy.stringtools import stringList
 
 
@@ -16,6 +16,7 @@ def valueGuard(test: Any, *args, **kwargs) -> Any:
   #  Copyright (c) 2023 Asger Jon Vistisen
   #  MIT Licence"""
   valKeys = stringList('validator, discriminator, domain')
+  from worktoy.core import CallMeMaybe
   validator, a, k = extractArg(CallMeMaybe, valKeys, *args, **kwargs)
   errorKeys = stringList('e, msg, error, exception, ')
   errorMsg, a, k = extractArg(str, errorKeys, *a, **k)

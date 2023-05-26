@@ -5,4 +5,3 @@ from disk."""
 from __future__ import annotations
 
 from ._loadfile import loadFile
-from ._pathify import Pathify

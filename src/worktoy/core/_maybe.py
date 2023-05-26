@@ -1,6 +1,6 @@
 """The None-aware 'maybe' implements the null-coalescence behaviour."""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from typing import Any

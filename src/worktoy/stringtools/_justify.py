@@ -17,7 +17,7 @@ def justify(text: str, charLimit: int = None, *spaceLike: str) -> str:
   #  Copyright (c) 2023 Asger Jon Vistisen"""
   if not text:
     return ''
-  text = text.replace(' %', '__')
+  text = text.replace(' %', '¤¤')
   text = monoSpace(text)
   charLimit = maybe(charLimit, 77)
   spaceLike = [' ', *spaceLike]
@@ -34,9 +34,10 @@ def justify(text: str, charLimit: int = None, *spaceLike: str) -> str:
     else:
       lines.append(line)
       line = [word, ]
+  lines.append(line)
   lineList = []
   for line in lines:
     lineList.append(' '.join(line))
   out = '\n'.join(lineList)
-  out = out.replace('__', ' %')
+  out = out.replace('¤¤', ' %')
   return out

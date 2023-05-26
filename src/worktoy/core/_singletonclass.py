@@ -29,8 +29,12 @@ class _SingletonMixin:
     return cls._instances[cls]
 
 
-class SingletonClass(_SingletonMixin, metaclass=_SingletonMeta):
+class _SingletonClass(_SingletonMixin, metaclass=_SingletonMeta):
   """This singleton is a placeholder removing the need to set a metaclass
   with a keyword argument. Instead, singleton classes should just inherit
   from this class."""
   pass
+
+
+class SingletonClass(_SingletonClass):
+  """LOL"""
