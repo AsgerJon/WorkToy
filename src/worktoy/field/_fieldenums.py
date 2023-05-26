@@ -36,7 +36,7 @@ class Perm(IntEnum):
     return Extracted(Perm.SECRET, args, kwargs)
 
 
-class NameF(IntEnum):
+class Name(IntEnum):
   """For a variable, the name can take different styles:"""
 
   @staticmethod
@@ -58,15 +58,15 @@ class NameF(IntEnum):
   def _all(name: str) -> list[str]:
     """Returns a list of name in all formats"""
     return [
-      NameF.noChange(name),
-      NameF.cap(name),
-      NameF.dash(name),
+      Name.noChange(name),
+      Name.cap(name),
+      Name.dash(name),
     ]
 
   @staticmethod
-  def privateVariableName(name: str) -> str:
+  def pvtName(name: str) -> str:
     """Suggests a private variable name for field of given name"""
-    return NameF.DASH @ name
+    return Name.DASH @ name
 
   NAME = 0
   CAP = 1
@@ -79,7 +79,7 @@ class NameF(IntEnum):
     return self @ name
 
 
-class Accessor(IntEnum):
+class Acc(IntEnum):
   """Enum defining access types"""
 
   @staticmethod
@@ -102,7 +102,7 @@ the worktoy.field module. """, """For more information, visit:""",
       """For contact, please visit my open linkedin:""",
       """https://www.linkedin.com/in/asgerjonvistisen/"""]
     lines = [justify(line) for line in lines]
-    sig = Accessor._loadDocs()
+    sig = Acc._loadDocs()
     return '%s\n%s' % ('\n'.join(lines), sig)
 
   READ = 0
@@ -123,12 +123,12 @@ the worktoy.field module. """, """For more information, visit:""",
     msg = """%s-function for field named %s of type %s 
     belonging to class %s.""" % (self, name, typeName, className)
     infoLine = msg
-    return '%s\n%s' % (infoLine, Accessor._baseDoc())
+    return '%s\n%s' % (infoLine, Acc._baseDoc())
 
-  def functionName(self, name: str) -> str:
+  def fName(self, name: str) -> str:
     """Suggests a name for an accessor function for variable of given
     name."""
-    return '%s%s' % (self._shortDash(), NameF.CAP @ name)
+    return '%s%s' % (self._shortDash(), Name.CAP @ name)
 
   def __str__(self) -> str:
     """String representation"""

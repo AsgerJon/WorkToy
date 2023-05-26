@@ -48,7 +48,7 @@ class _TypeBag(TypeBagParent, union, _root='F... da police!'):
   #  MIT Licence"""
 
   def __init_subclass__(cls, /, *args, **kwargs) -> typing.NoReturn:
-    """LOL"""
+    """ClassFail"""
 
   def __init__(self, *args, **kwargs) -> None:
     union.__init__(self, *args, **kwargs)

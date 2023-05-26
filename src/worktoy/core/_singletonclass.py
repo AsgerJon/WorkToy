@@ -37,4 +37,4 @@ class _SingletonClass(_SingletonMixin, metaclass=_SingletonMeta):
 
 
 class SingletonClass(_SingletonClass):
-  """LOL"""
+  """ClassFail"""

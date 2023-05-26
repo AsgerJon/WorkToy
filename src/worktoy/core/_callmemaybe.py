@@ -28,7 +28,7 @@ class _CallMeMaybe(_HereIsMyNumber, _root='F... da police!'):
 
   @classmethod
   def __init_subclass__(cls, /, *args, **kwargs):
-    """LOL"""
+    """ClassFail"""
 
   def __init__(self, *args, **kwargs) -> None:
     _HereIsMyNumber.__init__(self, *args, **kwargs)
