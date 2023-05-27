@@ -7,6 +7,7 @@ classes share exactly one data type whilst remaining otherwise different."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
 from __future__ import annotations
+from ._basemeta import BaseMeta
 from ._fieldmeta import FieldMeta
 from ._decorators import Decorator
 from ._fieldapply import FieldApply

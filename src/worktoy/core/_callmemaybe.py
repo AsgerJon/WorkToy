@@ -37,6 +37,7 @@ class _CallMeMaybe(_HereIsMyNumber, _root='F... da police!'):
   def __instancecheck__(cls, instance) -> bool:
     """Implementing instance check. Subclasses must reimplement this
     method!"""
+    ic()
     baseCheck = getattr(cls, '__baseclass__', None)
     if baseCheck is None:
       raise ProceduralError('__baseclass__', bool, None)
@@ -50,6 +51,9 @@ class _CallMeMaybe(_HereIsMyNumber, _root='F... da police!'):
     insCls = getattr(instance, '__class__', None)
     if insCls is None:
       raise ProceduralError(insCls, type, None)
+    if 'function' in [insCls.__name__, insCls.__qualname__]:
+      ic(insCls)
+      return True
     return True if insCls.__name__ == cls.__name__ else False
 
   def __str__(self, ) -> str:
@@ -81,7 +85,7 @@ class NothingAtAll(_CallMeMaybe):
       from worktoy.stringtools import justify
       msg = justify(msg)
       raise ProceduralError(cls, bool, '__baseclass__', info=msg)
-    if baseCheck:
+    if not baseCheck:
       msg = """Base class instance check applied to class with base class 
       flag False. This indicates that the class %s has not properly 
       implemented the '__instancecheck__' class method.""" % cls.__name__
@@ -93,21 +97,23 @@ class NothingAtAll(_CallMeMaybe):
   @classmethod
   def __instancecheck__(cls, instance: typing.Any) -> bool:
     """Reimplementation"""
-    try:
-      NothingAtAll._validateType(cls)
-    except Exception as e:
-      raise e
-    if not _CallMeMaybe.__instancecheck__(instance):
-      return False
+    return True if callable(instance) else False
 
-  def __eq__(self, other) -> bool:
+  @classmethod
+  def __eq__(cls, other) -> bool:
     """Compares the domain and range"""
-    selfDomain = getattr(self, 'domain', None)
-    otherDomain = getattr(self, 'domain', None)
+    selfDomain = getattr(cls, 'domain', None)
+    otherDomain = getattr(cls, 'domain', None)
     if selfDomain is None:
-      raise ProceduralError(self, tuple[type], 'domain')
+      raise ProceduralError(cls, tuple[type], 'domain')
     if otherDomain is None:
       raise ProceduralError(other, tuple[type], 'domain')
+    if len(selfDomain) != len(otherDomain):
+      return False
+    for (a, b) in zip(selfDomain, otherDomain):
+      if a != b:
+        return False
+    return True
 
   def __init__(self, *__, **_) -> None:
     _CallMeMaybe.__init__(self, _TryToChaseMe, (bool,))
@@ -150,12 +156,15 @@ class NothingAtAll(_CallMeMaybe):
     domain = (*maybe(domain, ()),)
     range_ = (*maybe(range_, ()),)
     cls = type(getattr(self, '__name__', 'lol'),
-               (_CallMeMaybe,),
-               dict(_CallMeMaybe.__dict__))
+               (),
+               dict(NothingAtAll.__dict__))
     setattr(cls, 'domain', domain)
     setattr(cls, 'range_', range_)
     setattr(cls, '__baseclass__', False)
+    ic(cls)
+    print(cls)
+    return cls
 
 
 newCallMeMaybe = NothingAtAll()
-CallMeMaybe = newCallMeMaybe()
+CallMeMaybe = newCallMeMaybe

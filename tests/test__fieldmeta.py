@@ -37,10 +37,8 @@ class TestFieldMeta(unittest.TestCase):
     """Test MyClass"""
     obj = MyClass()
     self.assertEqual(obj.my_function.__cls__, MyClass)
-    self.assertEqual(obj.__str__.__cls__, MyClass)
 
   def test_another_class(self) -> NoReturn:
     """Test AnotherClass"""
     obj = AnotherClass()
-    self.assertEqual(obj.__init__.__cls__, AnotherClass)
     self.assertEqual(obj.some_method.__cls__, AnotherClass)

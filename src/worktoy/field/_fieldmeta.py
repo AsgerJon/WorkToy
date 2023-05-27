@@ -5,6 +5,11 @@ decorated class and in particular its functions"""
 from __future__ import annotations
 
 
+class _FieldMethod:
+  """_FieldMethod decorates methods in classes with _FieldMeta as
+  metaclass"""
+
+
 class _FieldMeta(type):
   """_FieldMeta is a metaclass forcing a new attribute __cls__ onto the
   decorated class and in particular its functions"""
@@ -32,4 +37,5 @@ class _FieldMeta(type):
 
 class FieldMeta(metaclass=_FieldMeta):
   """Intermediary class"""
-  pass
+
+  __clc__: type

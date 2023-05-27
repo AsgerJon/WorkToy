@@ -8,7 +8,8 @@ import string
 from typing import NoReturn, Callable, Any
 from unittest import TestCase
 
-from worktoy.core import searchKeys, CallMeMaybe, Numerical
+from worktoy.core import searchKeys, CallMeMaybe, Numerical, plenty
+from worktoy.stringtools import justify
 
 
 def _someFunc() -> NoReturn:
@@ -85,7 +86,14 @@ class TestSearchKeys(TestCase):
     if which is not None:
       if isinstance(which, int):
         return types[which % len(types)]
-    return choice(types)
+    out = choice(types)
+    if plenty(out):
+      if isinstance(out[0], type):
+        if isinstance(out[1], CallMeMaybe):
+          return out
+        msg_ = """When generating type-sample pair, sample %s must be a 
+        function, but received: %s""" % (out[1], CallMeMaybe)
+        raise TypeError(justify(msg_))
 
   @staticmethod
   def getRandomValues(n: int = None) -> tuple[list[type], list[Any]]:
@@ -113,9 +121,9 @@ class TestSearchKeys(TestCase):
       self.valueDicts |= {key: val}
     self.defVal = {
       tuple: self.newTuple(3),
-      int  : 69420,
+      int: 69420,
       float: .1337,
-      str  : 'lol',
+      str: 'lol',
     }
 
   def testCallMeMaybe(self) -> NoReturn:
