@@ -8,7 +8,7 @@ from unittest import TestCase
 
 from icecream import ic
 
-from worktoy.core import extractArg, maybe
+from worktoy.core import extractArg
 from worktoy.field import BaseMeta
 from worktoy.stringtools import stringList
 
@@ -98,7 +98,14 @@ class TestBaseMeta(TestCase):
     """Tests that documentation was set"""
     self.assertTrue('Thank you for using SomeMeta' in self.instance.__doc__)
 
-  def testMeta(self) -> NoReturn:
+  def testMetaAttribute(self) -> NoReturn:
     """Tests that the class knows its meta"""
-    ic(self.cls.__meta__ == BaseMeta)
     self.assertEqual(self.cls.__meta__, SomeMeta)
+
+  def testClassAttribute(self) -> NoReturn:
+    """Testing if attributes on SomeClass was properly set"""
+    for (key, val) in self.cls.__dict__.items():
+      if not (BaseMeta.isDunder(key) or BaseMeta.isImmutable(val)):
+        attrCls = getattr(val, '__cls__', None)
+        self.assertIsNotNone(attrCls)
+        self.assertEqual(attrCls, self.cls)
