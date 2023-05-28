@@ -1,24 +1,28 @@
-"""Testing the maybe function"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
-from __future__ import annotations
-
+#  MIT Licence
+from random import shuffle
 from typing import NoReturn
-import unittest
+from unittest import TestCase
 
 from worktoy.core import maybe
 
 
-class TestMaybe(unittest.TestCase):
-  def testMaybeReturnsNoneIfAllArgsAreNone(self) -> NoReturn:
-    """Test that the maybe function returns None if all input arguments
-    are None."""
+class TestMaybe(TestCase):
+  """Testing the 'maybe' function"""
 
-    self.assertIsNone(maybe(None, None, None))
+  def setUp(self) -> NoReturn:
+    """Setting up each test"""
+    self.someFalse = [0, 0j, False, dict(), set(), tuple(), list(), '']
 
-  def testMaybeReturnsFirstArgNotNone(self) -> NoReturn:
-    """Test that the maybe function returns the first non-None argument."""
+  def testNoArgs(self) -> NoReturn:
+    """Testing the case with no arguments"""
+    self.assertIsNone(maybe())
 
-    self.assertEqual(maybe(None, "foo", "bar"), "foo")
-    self.assertEqual(maybe(None, None, "baz", None), "baz")
-    self.assertEqual(maybe(0, 1, None), 0)
+  def testingEach(self) -> NoReturn:
+    """For each type in someFalse, we check if is extracted from a pile of
+    None"""
+    pile = [None for _ in range(255)]
+    for val in self.someFalse:
+      draw = [*pile, val]
+      shuffle(draw)
+      self.assertIsInstance(maybe(*draw), type(val))

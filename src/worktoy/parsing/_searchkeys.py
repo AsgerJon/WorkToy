@@ -16,8 +16,14 @@ class _SearchKeys:
   @classmethod
   def searchKeys(cls, *keys: str) -> _SearchKeys:
     """Creates a new instance on the given keys"""
+    allKeys = []
+    for key in keys:
+      if isinstance(key, (list, tuple)):
+        allKeys = [*allKeys, *key]
+      else:
+        allKeys.append(key)
     out = cls()
-    out._setKeys(*keys)
+    out._setKeys(*allKeys)
     return out
 
   def __init__(self, ) -> None:

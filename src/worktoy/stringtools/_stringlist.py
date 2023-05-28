@@ -4,11 +4,12 @@ consistent separators, and stringList will convert it to a list of
 strings.
 Instead of: numbers = ['one', 'two', 'three', 'four']
 Use stringList: numbers = stringList('one, two, three, four')"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
-from worktoy.core import searchKeys, maybe, maybeTypes
+from worktoy.core import maybe
+from worktoy.parsing import maybeTypes, searchKeys
 
 
 def stringList(*args, **kwargs) -> list[str]:

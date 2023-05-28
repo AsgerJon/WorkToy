@@ -1,11 +1,11 @@
 """The maybeTypes function finds all arguments of given type"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from typing import Any
 
-from worktoy.core import searchKeys
+from worktoy.parsing import searchKeys
 
 
 def maybeTypes(type_, *args, **kwargs) -> list[Any]:

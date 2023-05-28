@@ -167,3 +167,4 @@ cython_debug/
 _scratcher.py
 /main.py
 *.pyi
+/gptstyle.txt

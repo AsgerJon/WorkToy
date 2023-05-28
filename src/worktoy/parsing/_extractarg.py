@@ -9,12 +9,10 @@ kwargs. For example:
 #  MIT Licence
 from __future__ import annotations
 
-from typing import TypeAlias, Union, Any
+from worktoy.typetools import TypeBag, Any
 
-from worktoy.core import Kwargs, Args
-
-KEYS: TypeAlias = Union[tuple[str, ...], list[str], str]
-EXTRACTED: TypeAlias = Union[Any, Args, Kwargs]
+EXTRACTED = tuple[Any, list, dict]
+KEYS = TypeBag(tuple[str, ...], list[str], str)
 
 
 def extractArg(type_: type, keys: KEYS, *args, **kwargs) -> EXTRACTED:

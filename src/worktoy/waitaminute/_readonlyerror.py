@@ -8,7 +8,8 @@ from typing import Never
 
 from icecream import ic
 
-from worktoy.core import searchKeys, maybe
+from worktoy.core import maybe
+from worktoy.parsing import searchKeys
 from worktoy.stringtools import monoSpace
 from worktoy.waitaminute import ExceptionCore
 
@@ -16,15 +17,14 @@ ic.configureOutput(includeContext=True)
 
 
 class ReadOnlyError(ExceptionCore):
-  """Custom exception for read-only operations.
-  Attributes:
-      varName (str): Name of the variable.
-      function (str): Name of the function invoking the error.
-      fileName (str): Name of the file where the error occurred.
-      lineNumber (int): Line number where the error occurred.
-      insName (object): Instance where the error occurred.
-      insCls (class): Class of the instance where the error
-      occurred."""
+  """Custom exception for read-only operations."""
+
+  @classmethod
+  def Field(cls, Field) -> ReadOnlyError:
+    """Creates an instance of read only error based on a field"""
+    varName = Field.getName()
+    ownerName = Field.getOwner()
+    return ReadOnlyError(varName, ownerName, )
 
   @classmethod
   def yoDawg(cls) -> ExceptionCore:

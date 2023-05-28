@@ -1,6 +1,6 @@
 """SomeType is any object other than None"""
-#  MIT License
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
 from typing import TypeAlias, Any, Never
@@ -8,16 +8,13 @@ from typing import TypeAlias, Any, Never
 AllArgs: TypeAlias = tuple[tuple[Any, ...], dict[str, Any]]
 
 
-class _SomeTypeMeta(type):
+class SomeType:
   """SomeType is every object other than None"""
 
+  @classmethod
   def __instancecheck__(cls, instance: Any) -> bool:
     """The instance check simply checks if the instance is None"""
     return False if instance is None else True
-
-
-class SomeType(metaclass=_SomeTypeMeta):
-  """SomeType is every object other than None"""
 
   def __new__(cls, *__, **_) -> Never:
     """SomeType should not be instantiated"""
@@ -29,6 +26,11 @@ class SomeType(metaclass=_SomeTypeMeta):
     raise InstantiationError(self.__class__)
 
   def __repr__(self) -> str:
+    """String representation"""
+    msg = """SomeType contains all object other than None."""
+    return msg
+
+  def __str__(self) -> str:
     """String representation"""
     msg = """SomeType contains all object other than None."""
     return msg

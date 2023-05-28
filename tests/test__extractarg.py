@@ -1,55 +1,57 @@
-"""Testing extractArg"""
-#  MIT License
+"""Testing ExtractArg"""
 #  Copyright (c) 2023 Asger Jon Vistisen
+#  MIT Licence
 from __future__ import annotations
 
-from typing import NoReturn, TypeAlias, Any
 from unittest import TestCase
-import inspect
-import inspect
 
-ARG: TypeAlias = tuple[Any, ...]
-RETURN: TypeAlias = tuple[Any, ...]
+from worktoy.parsing import extractArg
+from worktoy.typetools import Any
 
 
-def invFmt(methodName, *args, **kwargs):
-  """Formats the invocation code in a human-readable format.
-  Args:
-      methodName (str): The name of the method.
-      *args: Variable positional arguments.
-      **kwargs: Variable keyword arguments.
-  Returns:
-      str: Formatted invocation code."""
-  formattedArgs = [formatValue(arg) for arg in args]
-  formattedKwargs = [
-    "%s=%s" % (key, formatValue(value)) for key, value in kwargs.items()]
-  allArgs = formattedArgs + formattedKwargs
-  invocation = "%s(%s)" % (methodName, ', '.join(allArgs))
-  return invocation
+class TestExtractArg(TestCase):
+  def test_extract_arg_with_positional_argument(self):
+    # Tests that a positional argument is correctly extracted.
+    my_arg, new_args, new_kwargs = extractArg(str, ["my_arg"], "hello")
+    self.assertEqual(my_arg, "hello")
+    self.assertEqual(new_args, [])
+    self.assertEqual(new_kwargs, {})
 
+  def test_extract_arg_with_keyword_argument(self):
+    # Tests that a keyword argument is correctly extracted.
+    my_arg, new_args, new_kwargs = extractArg(str, ["my_arg"],
+                                              my_arg="world")
+    self.assertEqual(my_arg, "world")
+    self.assertEqual(new_args, [])
+    self.assertEqual(new_kwargs, {})
 
-def formatValue(value):
-  """Formats the value representation based on its type.
-  Args:
-      value: The value to be formatted.
-  Returns:
-      str: Formatted value representation."""
-  if inspect.isclass(value):
-    return "%s" % value.__name__
-  elif inspect.isfunction(value):
-    return "%s" % value.__name__
-  elif isinstance(value, str):
-    return "'%s'" % value
-  else:
-    return "%r" % value
+  def test_extract_arg_with_multiple_arguments(self):
+    # Tests that the first matching argument is correctly extracted.
+    my_arg, new_args, new_kwargs = extractArg(str, ["my_arg"], "hello",
+                                              "world", my_arg="universe")
+    self.assertEqual(my_arg, "universe")
+    self.assertEqual(new_args, ["hello", "world"])
+    self.assertEqual(new_kwargs, {})
 
+  def test_extract_arg_with_no_matching_argument(self):
+    # Tests that None is returned when no argument matches the criteria.
+    my_arg, new_args, new_kwargs = extractArg(str, ["my_arg"],
+                                              some_arg="value")
+    self.assertIsNone(my_arg)
+    self.assertEqual(new_args, [])
+    self.assertEqual(new_kwargs, {"some_arg": "value"})
 
-class TestExtractArgs(TestCase):
-  """Fuck unittests"""
+  def test_extract_arg_with_any_type(self):
+    # Tests that Any type matches any argument.
+    my_arg, new_args, new_kwargs = extractArg(Any, ["some_arg"],
+                                              some_arg="value")
+    self.assertEqual(my_arg, "value")
+    self.assertEqual(new_args, [])
+    self.assertEqual(new_kwargs, {})
 
-  def unstupid(self, inCode: str, inArg: ARG, expec: RETURN, ) -> NoReturn:
-    """Since the normal unittests are so bad, this function might make it
-    better"""
-
-  def testArgs(self, ) -> NoReturn:
-    """Here we test simple positional matches"""
+  def test_extract_arg_with_single_key(self):
+    # Tests that the keys parameter can be a single string.
+    my_arg, new_args, new_kwargs = extractArg(str, "my_arg", my_arg="hello")
+    self.assertEqual(my_arg, "hello")
+    self.assertEqual(new_args, [])
+    self.assertEqual(new_kwargs, {})

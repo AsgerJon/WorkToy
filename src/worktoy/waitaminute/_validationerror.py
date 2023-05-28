@@ -6,8 +6,6 @@ from __future__ import annotations
 
 from typing import NoReturn
 
-from worktoy.core import extractArg
-from worktoy.stringtools import stringList
 from worktoy.waitaminute import ExceptionCore
 
 

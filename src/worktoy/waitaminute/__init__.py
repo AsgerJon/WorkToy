@@ -17,6 +17,8 @@ relevant information.
 from __future__ import annotations
 
 from ._exceptioncore import ExceptionCore
+from ._instantiationerror import InstantiationError
+from ._unexpectedstateerror import UnexpectedStateError
 from ._validationerror import ValidationError
 from ._accesserror import AccessError
 from ._manualinterrupt import ManualInterrupt
@@ -24,6 +26,5 @@ from ._proceduralerror import ProceduralError
 from ._dioerror import DIOError
 from ._typeguarderror import TypeGuardError
 from ._n00berror import n00bError
-from ._typeguard import typeGuard
 from ._valueguard import valueGuard
 from ._readonlyerror import ReadOnlyError
