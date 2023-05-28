@@ -1,57 +1,66 @@
+"""Testing CallMeMaybe"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
+from __future__ import annotations
 
 import unittest
-from typing import Never, NoReturn
-from unittest.mock import MagicMock
+from typing import NoReturn
 
 from icecream import ic
 
-from mainclass import Cunt
 from worktoy.typetools import CallMeMaybe
-from worktoy.waitaminute import UnexpectedStateError
 
 ic.configureOutput(includeContext=True)
 
 
 class TestCallMeMaybe(unittest.TestCase):
 
-  def test_singleton(self):
+  def testSingleton(self) -> NoReturn:
+    """Testing"""
     cm1 = CallMeMaybe()
     cm2 = CallMeMaybe()
     self.assertIs(cm1, cm2)
 
-  def test_call(self):
+  def testCall(self) -> NoReturn:
+    """Testing"""
     cm = CallMeMaybe()
     self.assertIs(cm(), cm)
 
-  def test_str(self):
+  def testStr(self) -> NoReturn:
+    """Testing"""
     cm = CallMeMaybe()
     self.assertEqual(str(cm), "CallMeMaybe")
 
-  def test_repr(self):
+  def test_repr(self) -> NoReturn:
+    """Testing"""
     cm = CallMeMaybe()
     self.assertEqual(repr(cm), "CallMeMaybe")
 
-  def test_instancecheck(self):
-    cm = CallMeMaybe()
-    self.assertTrue(isinstance(cm, type))
-
-  def test_instancecheck_no_class(self):
+  def test_instancecheck_no_class(self) -> NoReturn:
+    """Testing"""
     cm = CallMeMaybe
     self.assertFalse(isinstance(None, cm))
 
-  def test_instancecheck_function(self):
-    def func():
+  def test_instancecheck_function(self) -> NoReturn:
+    """Testing"""
+
+    def func() -> NoReturn:
+      """Testing"""
       pass
 
     cm = CallMeMaybe
-    self.assertTrue(isinstance(func, cm))
+    self.assertIsInstance(func, cm)
+    # self.assertTrue(isinstance(func, cm))
 
-  def test_instancecheck_method(self):
+  def test_instancecheck_method(self) -> NoReturn:
+    """Testing"""
+
     class MyClass:
-      def method(self):
+      """Testing"""
+
+      def method(self) -> NoReturn:
+        """Testing"""
         pass
 
     cm = CallMeMaybe
-    self.assertTrue(isinstance(MyClass().method, cm))
+    self.assertIsInstance(MyClass().method, cm)

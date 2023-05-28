@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import typing
-from abc import ABC
 from typing import NoReturn
 
 from icecream import ic
@@ -27,10 +26,12 @@ class HereIsMyNumber(_HereIsMyNumber, _root='F... tha police!'):
   @classmethod
   def __init_subclass__(cls, /, *args, **kwargs) -> NoReturn:
     """ClassFail"""
+    ic(cls)
 
   @classmethod
   def __instancecheck__(cls, instance: Any) -> bool:
     """The top parent class should not take domain and range into account."""
+    ic()
     if instance is None:
       return False
     insCls = getattr(instance, '__class__', None)
@@ -58,17 +59,13 @@ class HereIsMyNumber(_HereIsMyNumber, _root='F... tha police!'):
     return 'CallMeMaybe'
 
 
-class _ThisIsCrazy(type):
-  pass
-
-
-class ThisIsCrazy(metaclass=_ThisIsCrazy):
-  pass
-
-
-class _CallMeMaybe(ThisIsCrazy, HereIsMyNumber, metaclass=type):
+class _CallMeMaybe(HereIsMyNumber):
   """Subclassing to make singleton version"""
   _instance = None
+
+  # @classmethod
+  # def __instancecheck__(cls, instance):
+  #   ic()
 
   def __new__(cls) -> _CallMeMaybe:
     """Ensures that only one instance will exist"""
@@ -82,11 +79,11 @@ class _CallMeMaybe(ThisIsCrazy, HereIsMyNumber, metaclass=type):
 
   def __str__(self, ) -> str:
     """String Representation"""
-    return HereIsMyNumber.__str__(self)
+    return 'CallMeMaybe'
 
   def __repr__(self, ) -> str:
     """Code Representation"""
-    return HereIsMyNumber.__repr__(self)
+    return 'CallMeMaybe'
 
 
 CallMeMaybe = _CallMeMaybe()
