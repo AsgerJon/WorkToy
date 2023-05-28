@@ -26,12 +26,10 @@ class HereIsMyNumber(_HereIsMyNumber, _root='F... tha police!'):
   @classmethod
   def __init_subclass__(cls, /, *args, **kwargs) -> NoReturn:
     """ClassFail"""
-    ic(cls)
 
   @classmethod
   def __instancecheck__(cls, instance: Any) -> bool:
     """The top parent class should not take domain and range into account."""
-    ic()
     if instance is None:
       return False
     insCls = getattr(instance, '__class__', None)
@@ -62,10 +60,6 @@ class HereIsMyNumber(_HereIsMyNumber, _root='F... tha police!'):
 class _CallMeMaybe(HereIsMyNumber):
   """Subclassing to make singleton version"""
   _instance = None
-
-  # @classmethod
-  # def __instancecheck__(cls, instance):
-  #   ic()
 
   def __new__(cls) -> _CallMeMaybe:
     """Ensures that only one instance will exist"""

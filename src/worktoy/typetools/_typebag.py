@@ -18,7 +18,6 @@ if union is None:
 
 ic.configureOutput(includeContext=True)
 
-# UnionType = getattr(typing, '_UnionGenericAlias')
 UnionType = getattr(typing, '_BaseGenericAlias')
 ContainerType = getattr(collections.abc, 'Container')
 
@@ -35,6 +34,15 @@ class TypeBag(UnionType, _root='F... tha police!'):
     TypeBag._subClasses.append(cls)
 
   def __init__(self, *types, **kwargs) -> None:
+    if not kwargs.get('_special', False):
+      newTypes = []
+      for type_ in types:
+        if type_ in [int, float, complex]:
+          if all([t not in newTypes for t in [int, float, complex]]):
+            newTypes = [*newTypes, int, float, complex]
+        elif isinstance(type_, type):
+          newTypes.append(type_)
+      types = newTypes
     self.__origin__ = ContainerType
     self._types = []
     name = kwargs.get('name', None)
@@ -47,10 +55,18 @@ class TypeBag(UnionType, _root='F... tha police!'):
     UnionType.__init__(self, ContainerType)
 
   def __instancecheck__(self, obj) -> bool:
+    if isinstance(obj, bool):
+      if bool in self._types:
+        return True
+      return False
     for type_ in self._types:
       if isinstance(obj, type_):
         return True
     return False
+
+  def __setattr__(self, key, value) -> typing.NoReturn:
+    """Overwrite"""
+    object.__setattr__(self, key, value)
 
   def __subclasscheck__(self, cls: type) -> bool:
     """LOL"""
@@ -70,3 +86,6 @@ class TypeBag(UnionType, _root='F... tha police!'):
     """Code representation"""
     typeNames = [type_.__name__ for type_ in self._types]
     return 'TypeBag(%s)' % ', '.join(typeNames)
+
+
+Numerical = TypeBag(int, float, complex, )

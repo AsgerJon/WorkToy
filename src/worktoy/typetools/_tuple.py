@@ -33,7 +33,6 @@ class Tuple(FakeTuple, _root='F... tha police'):
     for type_ in [*types, ]:
       if isinstance(type_, type) or getattr(type_, '__type_like__', False):
         out.append(type_)
-    ic(out)
     return out
 
   @classmethod
@@ -75,6 +74,8 @@ class Tuple(FakeTuple, _root='F... tha police'):
     if not isinstance(instance, (*self._containers,)):
       return False
     instance = [*instance, ]
+    if len(self._baseTypes) != len(instance):
+      return False
     for (obj, type_) in zip(instance, self._baseTypes):
       if not isinstance(obj, type_):
         return False

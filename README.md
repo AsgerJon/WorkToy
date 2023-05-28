@@ -1,10 +1,38 @@
-# WorkToy
+# WorkToy v0.31.0
 
 Collection of General Utilities
 
 ```
 pip install worktoy
 ```
+
+## Parsing Arguments
+
+In the present version, parse arguments with `extractArg`:
+
+    def func(*args, **kwargs) -> Any:
+        """Let us find a str indicating name in these arguments!"""
+        nameKeys = stringList('name, identifier, title, target')
+        name, args, kwargs = extractArg(str, nameKeys, *args, **kwargs)
+        #  And lets find an integer to represent the amount:
+        amountKeys = stringList('amount, count, quantity')
+        amount, args, kwargs = extractArg(int, nameKeys, *args, **kwargs
+
+In the above example, we used two powerful convenience functions from
+WorkToy to parse an arbitrary collection of positional and keyword
+arguments to a `str` and an `int`. The `stringList` splits our text on
+commas followed by a space, providing:
+
+    nameKeys
+    >>> ['name', 'identifier', 'title', 'target']
+    amountKeys
+    >>> ['amount, count, quantity']
+
+In the next part, `extractArg` finds the first keyword argument from the
+list of keys that belongs to the type given and returns it. If it finds
+no such argument, it returns the first positional argument encountered
+having the indicated type. This allows a great deal of flexibility in how
+a function is invoked.
 
 ## The None-aware 'maybe'
 
@@ -75,111 +103,3 @@ Adding an 's' returns every argument of given type. Further, it supports
 keyword arguments `pad: int` and `padChar: Any`. If `pad` is given it
 defines the length of the returned list padded with `padChar` or `None`
 by default. Setting `pad` will either pad or crop as necessary.
-
-### `searchKeys`
-
-A common way to handle optional keyword arguments is something like:
-
-    def func(*args, **kwargs) -> Any:
-        """Common function accepting arbitrary positional and keyword 
-        arguments."""
-        val = kwargs.get('key', defaultValue)
-        ...
-
-In the above code, the `get` function is used to look for a given key in
-the collection of keyword arguments along with a (optional) default value.
-Instead, `searchKeys` allows for multiple keys in order of priority:
-
-    def func(*args, **kwargs) -> Any:
-        """Common function accepting arbitrary positional and keyword 
-        arguments."""
-        dV = defaultValue
-        val = searchKeys('k1', 'k2', 'k3', **kwargs)
-        ...
-
-In addition, WorkToy provides the following syntactic pork-scratchings
-for the keto-aware programmer:
-
-    def func(*args, **kwargs) -> Any:
-        """Common function accepting arbitrary positional and keyword 
-        arguments."""
-        dV = defaultValue
-        val = searchKeys('k1', 'k2', 'k3') @ int >> (kwargs, dV)
-        ...
-
-The matrix multiplication operator `@` sets a type requirement and the
-right-shift operator `>>` invokes the search. The default value is then
-given as the second positional argument in the tuple. Please note that
-absense of `**`. This causes `kwargs` to be treated as a dictionary
-entirely contained at the first positional argument. If invoked without a
-default value, the parentheses may be omitted.
-
-### `CallMeMaybe`
-
-This abstract baseclass registers any callable object as an instance.
-This makes it stronger than the built-in `callable` and even the
-`Callable` from the `typing` package. If a custom class implements the
-`__call__` method, instances of this class may still not be recognized as
-callable by the mentioned methods.
-
-    class FilteredClass:
-        """A class requiring a callable filter before invoking some other 
-        function"""
-
-        def __init__(self, *args, **kwargs) -> None:
-            filterKwarg = searchKeys('filter') @ CallMeMaybe >> kwargs
-            filterArg = maybeType(CallMeMaybe, *args)
-            filterDefault = lambda *arg, **kwargs: (arg, kwargs)
-            self._filter = maybe(filterKwarg, filterArg, filterDefault)
-            self._func = someFunction
-        
-        def __call__(self, *args, **kwargs) -> Any:
-            """Invokes some underlying function subject to the filter"""
-            return self._func(self._filter(*args, **kwargs))
-
-Additionally, decorate functions with `CallMeMaybe` to explicitly flag
-functions as being instances of `CallMeMaybe`. As expected, instances of
-subclasses of `CallMeMaybe` are regarded as instances.
-
-## String Tools
-
-WorkToy also brings a number of convenient string related functions:
-
-### `stringList`
-
-Consider the following code:
-
-`numbers = ['one', 'two', 'three', 'four']`
-The above involve repeated use of `'`. On the Danish keyboard layout, the
-`'` key is located as indicated `jklæø'`, meaning that the right pinky
-finger must leap over two other keys. Instead, use `stringList`:
-
-    numbers = stringList('one, two, three, four', )
-    >>> ['one', 'two', 'three', 'four']
-
-### `monoSpace`
-
-Consider the following code:
-
-    msg = """Hello there! I am writing a long string right here in python 
-    that stretches in length beyond the allowable line length. Thankfully,
-    we have the triple quotation mark syntax for indication of longer 
-    strings."""
-
-The above code takes things literally meaning that new lines are inserted.
-Thus, in between 'python' at the end of the first line and 'that' at the
-beginning of the second line, a `'\n'` has been inserted. Instead, use
-`monoSpace`:
-
-    msgLine = monoSpace(msg)  # msg as defined above
-
-Now `msgLine` contains no new lines and no repeated spaces. To
-explicitly set a line break in the string, insert `'<br>'` in the text.
-Set a different string to denote a line break, give that string as the
-second argument.
-
-    rawLines = """This is the first line. <br>   Here is the second line. 
-    Don't worry about the extra spaces surrounding the tag, they are 
-    removed. """
-    
-    twoLines = monoSpace(rawLines)

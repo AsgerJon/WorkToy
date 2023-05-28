@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import Any, NoReturn
 
+from worktoy.typetools import CallMeMaybe
+
 
 class _SearchKeys:
   """The searchKeys function provides a flexible way of extracting values
@@ -100,7 +102,6 @@ class _SearchKeys:
     if isinstance(other, (list, tuple)):
       self._setType(*other)
       return self
-    from worktoy.core import CallMeMaybe
     if other is CallMeMaybe:
       self._setType(CallMeMaybe)
       return self

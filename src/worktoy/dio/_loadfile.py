@@ -35,4 +35,4 @@ def loadFile(file_path: str) -> str:
       raise other
     return content
   except Exception as e:
-    raise DIOError(e) from e
+    raise DIOError(errorMsg) from e

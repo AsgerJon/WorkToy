@@ -16,6 +16,8 @@ class _Any(metaclass=_AnyMeta):
   """Intermediary class"""
   pass
 
+  __type_like__ = True
+
 
 class Any(_Any):
   """Special type indicating an unconstrained type."""

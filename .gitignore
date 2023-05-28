@@ -76,7 +76,7 @@ docs/_build/
 target/
 mainOLD02.py
 mainOLD.py
-mainwindow.py
+../WorkToyOLD10/workstyle/_layoutwindow.py
 mainclass.py
 
 # Jupyter Notebook

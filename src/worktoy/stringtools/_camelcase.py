@@ -2,7 +2,7 @@
 #  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
 from __future__ import annotations
-import re
+from re import Match, sub
 
 
 def snakeCaseToCamelCase(string: str) -> str:
@@ -13,12 +13,16 @@ def snakeCaseToCamelCase(string: str) -> str:
   Returns:
       str: The resulting string with snake_case replaced by camelCase."""
 
-  def camelCase(match) -> str:
+  string = string.replace('_ ', ' ')
+  if string[-1] in ['_', ' ']:
+    return snakeCaseToCamelCase(string[:-1])
+
+  def camelCase(match: Match) -> str:
     """Convert snake_case match to camelCase"""
-    print(type(match))
-    return match.group(1).upper()
+    word = match.group(1)
+    return word[0].upper() + word[1:] if word else ""
 
   pattern = r'_(\w)'
-  result = re.sub(pattern, camelCase, string)
+  result = sub(pattern, camelCase, string)
 
   return result
