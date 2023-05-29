@@ -24,8 +24,10 @@ created by Asger Jon Vistisen in 2023.
 #  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
-from worktoy.typetools import Any
+if TYPE_CHECKING:
+  from worktoy.typetools import Any
 
 
 def maybe(*args) -> Any:
