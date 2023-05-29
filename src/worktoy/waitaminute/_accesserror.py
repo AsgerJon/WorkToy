@@ -4,7 +4,7 @@ and name where name failed to correspond to an attribute on object."""
 #  MIT Licence
 from __future__ import annotations
 
-from typing import Any
+from worktoy.typetools import Any
 
 from worktoy.parsing import extractArg
 from worktoy.stringtools import stringList

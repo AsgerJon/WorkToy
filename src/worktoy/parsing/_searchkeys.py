@@ -4,9 +4,9 @@ from keyword arguments."""
 #  MIT Licence
 from __future__ import annotations
 
-from typing import Any, NoReturn
+from typing import NoReturn
 
-from worktoy.typetools import CallMeMaybe
+from worktoy.typetools import CallMeMaybe, Any
 
 
 class _SearchKeys:

@@ -7,7 +7,7 @@ is still waiting."""
 #  MIT Licence
 from __future__ import annotations
 
-from typing import Any
+from worktoy.typetools import Any
 
 from worktoy.parsing import extractArg
 from worktoy.stringtools import stringList

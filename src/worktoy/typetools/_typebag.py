@@ -5,7 +5,7 @@ isinstance."""
 from __future__ import annotations
 
 import typing
-from typing import Any
+from worktoy.typetools import Any
 import collections.abc
 
 from icecream import ic

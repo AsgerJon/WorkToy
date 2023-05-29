@@ -2,10 +2,10 @@
 #  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
 from __future__ import annotations
-from typing import Any, NoReturn
+from typing import NoReturn
 
 from icecream import ic
-
+from worktoy.typetools import Any
 from worktoy.core import maybe
 from worktoy.parsing import searchKeys
 from worktoy.stringtools import stringList

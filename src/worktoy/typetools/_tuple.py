@@ -3,7 +3,7 @@
 #  MIT Licence
 from __future__ import annotations
 
-from typing import Any
+from worktoy.typetools import Any
 import typing
 
 import _collections_abc

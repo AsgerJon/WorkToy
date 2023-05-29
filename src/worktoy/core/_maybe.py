@@ -25,7 +25,7 @@ created by Asger Jon Vistisen in 2023.
 #  MIT Licence
 from __future__ import annotations
 
-from typing import Any
+from worktoy.typetools import Any
 
 
 def maybe(*args) -> Any:
