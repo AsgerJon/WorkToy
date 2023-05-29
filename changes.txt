@@ -1,5 +1,6 @@
+Version 0.31.2
 Version 0.31.1
-    Do not use the Any from typing, use worktoy.typetools.Any
+Do not use the Any from typing, use worktoy.typetools.Any
 Version 0.31.0
     Significant simplifications.
 Version 0.30.0

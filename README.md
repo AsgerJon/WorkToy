@@ -1,4 +1,4 @@
-# WorkToy v0.31.1
+# WorkToy v0.31.2
 
 Collection of General Utilities
 
