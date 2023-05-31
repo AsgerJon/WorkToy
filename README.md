@@ -1,3 +1,5 @@
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
+
 # WorkToy v0.31.2
 
 Collection of General Utilities
