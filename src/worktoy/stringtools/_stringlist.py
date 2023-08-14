@@ -4,8 +4,8 @@ consistent separators, and stringList will convert it to a list of
 strings.
 Instead of: numbers = ['one', 'two', 'three', 'four']
 Use stringList: numbers = stringList('one, two, three, four')"""
-#  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
+#  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
 from worktoy.core import maybe
@@ -35,5 +35,6 @@ def stringList(*args, **kwargs) -> list[str]:
   if source is None:
     msg = 'stringList received no string!'
     raise ValueError(msg)
-  out = source.split(separator)
-  return out
+  if isinstance(source, str) and isinstance(separator, str):
+    out = source.split(separator)
+    return out

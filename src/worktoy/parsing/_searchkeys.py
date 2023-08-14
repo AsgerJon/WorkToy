@@ -1,18 +1,20 @@
 """The searchKeys function provides a flexible way of extracting values
 from keyword arguments."""
-#  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
+#  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import NoReturn
+from typing import TYPE_CHECKING
 
-from worktoy.typetools import CallMeMaybe, Any
+if TYPE_CHECKING:
+  from typing import Any
+  from worktoy.typetools import CallMeMaybe
 
 
 class _SearchKeys:
   """The searchKeys function provides a flexible way of extracting values
   from keyword arguments.
-  #  MIT License
+  #  MIT Licence
   #  Copyright (c) 2023 Asger Jon Vistisen"""
 
   @classmethod
@@ -33,35 +35,35 @@ class _SearchKeys:
     self._types = []
     self._defVal = None
 
-  def _clearKeys(self) -> NoReturn:
+  def _clearKeys(self) -> None:
     """Deleter-function for the instance keys"""
     while self._keys:
       self._keys.pop()
 
-  def _setKeys(self, *keys: str) -> NoReturn:
+  def _setKeys(self, *keys: str) -> None:
     """Setter-function for the instance keys"""
     self._clearKeys()
     for key in keys:
       if isinstance(key, str):
         self._keys.append(key)
 
-  def _clearTypes(self) -> NoReturn:
+  def _clearTypes(self) -> None:
     """Clears the type list"""
     while self._types:
       self._types.pop()
 
-  def _setType(self, *type_: type) -> NoReturn:
+  def _setType(self, *type_: type) -> None:
     """Setter-function for type """
     self._clearTypes()
     for arg in type_:
       if isinstance(arg, type):
         self._types.append(arg)
 
-  def _resetDefaultValue(self) -> NoReturn:
+  def _resetDefaultValue(self) -> None:
     """Deleter-function for default value"""
     self._defVal = None
 
-  def _setDefaultValue(self, dV: Any) -> NoReturn:
+  def _setDefaultValue(self, dV: Any) -> None:
     """Setter-function for the default value"""
     self._defVal = dV
 
@@ -98,13 +100,11 @@ class _SearchKeys:
       return self
     if isinstance(other, type):
       self._setType(other)
-      return self
-    if isinstance(other, (list, tuple)):
+    elif isinstance(other, (list, tuple)):
       self._setType(*other)
-      return self
-    if other is CallMeMaybe:
+    elif other is CallMeMaybe:
       self._setType(CallMeMaybe)
-      return self
+    return self
 
   def __rshift__(self, other: tuple[dict, Any] | dict) -> Any:
     """Evaluates the keyword arguments given. If a tuple is given,

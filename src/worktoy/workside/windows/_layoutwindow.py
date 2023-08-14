@@ -9,7 +9,7 @@ from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QWidget
 from icecream import ic
 
-from workside.windows import BaseWindow
+from worktoy.workside.windows import BaseWindow
 
 wordStart = QTextCursor.MoveOperation.StartOfWord
 wordEnd = QTextCursor.MoveOperation.EndOfWord
