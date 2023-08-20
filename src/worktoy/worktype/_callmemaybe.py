@@ -1,8 +1,10 @@
-"""CallMeMaybe is the actual representation of those objects in python
-which are callable"""
+"""WorkToy - WorkTypes - CallMeMaybe
+Representation of callables"""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
+
+from typing import Never
 
 from worktoy.worktype import AbstractType
 
@@ -13,7 +15,7 @@ ic.configureOutput(includeContext=True)
 
 class _HereIsMyNumber(AbstractType):
   """Metaclass implementing the instance check which is an abstract
-  method.. """
+  method. """
 
   def __instancecheck__(cls, obj: object) -> bool:
     if isinstance(obj, type(lambda: None)):
@@ -35,6 +37,7 @@ class CallMeMaybe(_ThisIsCrazy):
   def __init__(self, *args, **kwargs) -> None:
     self._innerFunction = None
     self._setInnerFunction(*args, **kwargs)
+    _ThisIsCrazy.__init__(self, )
 
   def _setInnerFunction(self, *args, **kwargs) -> None:
     """Setter-function for inner function"""
@@ -76,3 +79,24 @@ class CallMeMaybe(_ThisIsCrazy):
       self._setInnerFunction(*args, **kwargs)
       return self
     return self._invokeFunction(*args, **kwargs)
+
+  def __set_name__(self, owner: type, name: str) -> None:
+    """Invoked when an instance is set on a class"""
+    ic(owner, name)
+
+  def __get__(self, obj: object, owner: type) -> CallMeMaybe:
+    """Exposes the inner function"""
+
+    def func(*args, **kwargs) -> object:
+      """LMAO"""
+      return self._innerFunction(obj, *args, **kwargs)
+
+    return func
+
+  def __set__(self, *_) -> Never:
+    """Illegal setter"""
+    raise AttributeError('CallMeMaybe cannot be set!')
+
+  def __delete__(self, *_) -> Never:
+    """Illegal deleter"""
+    raise AttributeError('CallMeMaybe cannot be deleted!')

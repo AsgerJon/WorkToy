@@ -5,56 +5,52 @@ from __future__ import annotations
 
 from worktoy.worktype import AbstractMetaType
 
+Keys = type({}.keys())
+Values = type({}.values())
+Items = type({}.items())
 
-class _MinimalNameSpace(dict):
-  """This class provides the minimum methods required by a namespace. """
 
-  def _getShadowContents(self, ) -> dict:
-    """Getter-function for the shadow_contents"""
-    existing = getattr(self, '__shadow_contents_value__', None)
-    if existing is None:
-      setattr(self, '__shadow_contents_value__', {})
-    val = getattr(self, '__shadow_contents_value__', None)
-    if val is None:
-      raise TypeError
-    return val
+class _MinimalNameSpace:
+  """Minimal namespace"""
 
-  def __getitem__(self, key: str) -> object:
-    """Item getter"""
-    if key not in self.__shadow_contents__.keys():
-      raise KeyError(key)
-    return self._explicitGetter(key)
-
-  def __setitem__(self, key: str, val: object) -> None:
-    """Item Setter"""
-    self.__shadow_contents__.update({key: val})
-    self._explicitSetter(key, val)
-
-  def __delitem__(self, key: str) -> None:
-    """Item Deleter"""
-    self.__shadow_contents__.update({key: None})
-    self._explicitDeleter(key)
+  def __init__(self, name: str, bases: tuple) -> None:
+    self._bases = bases
+    self._className = name
+    self._contents = {}
 
   def __contains__(self, key: str) -> bool:
-    """Implementation of membership check"""
-    return True if key in self.__shadow_contents__.keys() else False
+    return True if key in self._contents.keys() else False
 
-  def _explicitGetter(self, key: str) -> object:
-    """The explicit getter"""
-    val = self.__shadow_contents__.get(key, None)
-    if val is not None:
-      return val
-    raise KeyError(key)
+  def __setitem__(self, key: str, val: object) -> None:
+    self._contents[key] = val
 
-  def _explicitSetter(self, key: str, val: object) -> None:
-    """The explicit setter"""
-    self.__shadow_contents__.update({key: val})
+  def __getitem__(self, key: str) -> object:
+    if key in self._contents.keys():
+      return self._contents[key]
+    raise KeyError
 
-  def _explicitDeleter(self, key: str) -> None:
-    """The explicit deleter"""
-    self.__shadow_contents__.update({key: None})
+  def __delitem__(self, key: str) -> None:
+    newDict = {}
+    for (k, v) in self._contents.items():
+      if k != v:
+        newDict |= {k: v}
+    self._contents = newDict
 
-  __shadow_contents__ = property(_getShadowContents)
+  def keys(self) -> Keys:
+    """Implementation of keys method"""
+    return self._contents.keys()
+
+  def values(self) -> Values:
+    """Implementation of values method"""
+    return self._contents.values()
+
+  def items(self) -> Items:
+    """Implementation of items"""
+    return self._contents.items()
+
+  def asDict(self) -> dict:
+    """creates a dict version"""
+    return self._contents
 
 
 class MetaNameSpace(AbstractMetaType):
@@ -74,6 +70,7 @@ class MetaNameSpace(AbstractMetaType):
         raise KeyError(key)
       nameSpace[key] = val
     keys = ['_explicitGetter', '_explicitSetter', '_explicitDeleter']
+    keys = []
     for key in keys:
       existing = nameSpace.get(key, None)
       if existing is None:

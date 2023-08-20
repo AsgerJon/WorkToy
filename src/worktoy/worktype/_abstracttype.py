@@ -19,10 +19,12 @@ class AbstractType(AbstractMetaType):
   @classmethod
   def __prepare__(mcls, name: str, bases: tuple) -> TypeNameSpace:
     """Implementing the special type namespace class"""
-    return TypeNameSpace(name, bases)
+    out = TypeNameSpace(name, bases)
+    return out
 
-  def __new__(mcls, name: str, bases: tuple, nameSpace: dict,
+  def __new__(mcls, name: str, bases: tuple, nameSpace: TypeNameSpace,
               **kwargs) -> type:
+    nameSpace = nameSpace.asDict()
     return super().__new__(mcls, name, bases, nameSpace, **kwargs)
 
   def __init__(cls,
@@ -32,7 +34,7 @@ class AbstractType(AbstractMetaType):
                **kwargs) -> None:
     """Invokes the protocolify method on the namespace after initializing
     the super init"""
-    super().__init__(name, bases, nameSpace, **kwargs)
+    super().__init__(name, bases, nameSpace.asDict(), **kwargs)
     nameSpace.protocolify()
 
   def __contains__(cls, element: object) -> bool:
