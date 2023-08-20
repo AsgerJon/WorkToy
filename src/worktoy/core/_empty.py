@@ -13,21 +13,15 @@ statement. If an argument is not None, the function immediately returns
 False. If all the arguments are None, the function returns True.
 
 Outputs:
-The 'empty' function returns a boolean value, either True or False.
-
-Additional aspects:
-The 'empty' function is licensed under the MIT License and was created by
-Asger Jon Vistisen in 2023."""
-#  Copyright (c) 2023 Asger Jon Vistisen
+The 'empty' function returns a boolean value, either True or False."""
 #  MIT Licence
+#  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
 
 def empty(*args) -> bool:
   """The empty function returns True if all args are None. If even one is
-  not None, False is returned
-  #  MIT License
-  #  Copyright (c) 2023 Asger Jon Vistisen"""
+  not None, False is returned"""
   for arg in args:
     if arg is not None:
       return False

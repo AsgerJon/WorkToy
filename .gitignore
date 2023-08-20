@@ -168,3 +168,6 @@ _scratcher.py
 /main.py
 *.pyi
 /gptstyle.txt
+/notes/
+/statetest.py
+/_sampleclass.py
