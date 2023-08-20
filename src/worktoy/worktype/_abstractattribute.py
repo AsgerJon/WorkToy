@@ -7,7 +7,7 @@ from __future__ import annotations
 
 
 class AbstractAttribute:
-  """Pre attribute"""
+  """Abstract implementation of descriptors. """
 
   def __init__(self, *args, **kwargs) -> None:
     argType = [i for i in args if isinstance(i, type) or [None]][0]
@@ -16,9 +16,9 @@ class AbstractAttribute:
     if type_ is None:
       defVal = [i for i in args if not isinstance(i, type) or [None]][0]
     else:
-      defVal = [i for i in args if isinstance(i, argType) or [None]][0]
-      if defVal is not None:
-        type_ = type(defVal)
+      defVal = [i for i in args if isinstance(i, type_) or [None]][0]
+    if defVal is not None and type_ is None:
+      type_ = type(defVal)
     self._valueType = type_
     self._defVal = defVal
     self._name = None
@@ -30,6 +30,12 @@ class AbstractAttribute:
     if self._name is None or not isinstance(self._name, str):
       raise TypeError
     return '__%s_value__' % self._name
+
+  def _getOwner(self) -> type:
+    """Getter-function for the owner class"""
+    if self._owner is None:
+      raise TypeError
+    return self._owner
 
   def __set_name__(self, cls: type, name: str) -> None:
     """This method runs when an instance of this class is created and set
@@ -72,4 +78,4 @@ class AbstractAttribute:
 
   def _explicitDeleter(self, obj: object) -> None:
     """Explicit deleter function"""
-    setattr(obj, self._getAttributeName(), None)
+    delattr(obj, self._getAttributeName())
