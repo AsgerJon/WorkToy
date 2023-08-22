@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from icecream import ic
 
-from worktoy.worktype import CallMeMaybe
+from worktoy import CallMeMaybe
 
 ic.configureOutput(includeContext=True)
 
