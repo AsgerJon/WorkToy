@@ -3,47 +3,66 @@
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from PySide6.QtCore import QSize
-from PySide6.QtWidgets import QWidget, QMainWindow, QGridLayout, QLabel
+import os
+from typing import TYPE_CHECKING
 
-ShibokenObject = type(type(QWidget))
+from PySide6.QtCore import QSize, Qt, QKeyCombination
+from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtWidgets import QMainWindow, QGridLayout, QLabel, QWidget
+from icecream import ic
 
-
-class MetaWidget(ShibokenObject):
-  """Subclassing the metaclass used by QWidget"""
-
-  def __new__(mcls,
-              name: str,
-              bases: tuple[type],
-              namespace: dict,
-              **kwargs) -> None:
-    return ShibokenObject.__new__(mcls, name, bases, namespace, **kwargs)
-
-  def __init__(cls,
-               name: str,
-               bases: tuple[type],
-               namespace: dict,
-               **kwargs) -> None:
-    ShibokenObject.__init__(cls, name, bases, namespace, **kwargs)
+if TYPE_CHECKING:
+  pass
+else:
+  pass
 
 
-class BaseWidget(QWidget, metaclass=MetaWidget):
-  """Widget with exposed metaclass"""
+class BaseWindow(QMainWindow):
+  pass
 
 
-class BaseWindow(QMainWindow, metaclass=MetaWidget):
-  """Window class with exposed metaclass"""
+class BaseWidget(QWidget):
+  pass
 
 
 class MainWindow(BaseWindow):
   """MainWindow"""
+
+  @classmethod
+  def getRisitas(cls) -> QPixmap:
+    """Getter-function for risitas"""
+    here = os.path.dirname(__file__)
+    iconPath = os.path.join(here, 'src', 'icons')
+    iconPath = os.path.join(iconPath, 'risitas.jpg')
+    return QPixmap(iconPath)
 
   def __init__(self, *args, **kwargs) -> None:
     BaseWindow.__init__(self, *args, **kwargs)
     self.setWindowTitle('YOLO')
     self._baseWidget = None
     self._baseLayout = None
-    self._label = None
+    self._label = QLabel('FUCK YOU')
+    self._menuBar = self.menuBar()
+    self._fileMenu = self._menuBar.addMenu('Files')
+    self._editMenu = self._menuBar.addMenu('Edit')
+    self._helpMenu = self._menuBar.addMenu('Help')
+    self._debugMenu = self._menuBar.addMenu('Debug')
+    debugIcon = QIcon(MainWindow.getRisitas())
+    debugKey = Qt.Key.Key_F1
+    debugKeyCombination = QKeyCombination(debugKey)
+    shortCutContext = Qt.ShortcutContext.ApplicationShortcut
+    self._debugAction01 = self._debugMenu.addAction('DEBUG 01')
+    self._debugAction01.setIcon(debugIcon)
+    self._debugAction01.setShortcut(debugKeyCombination)
+    self._debugAction01.setShortcutContext(shortCutContext)
+    self._debugAction01.setShortcutVisibleInContextMenu(True)
+    self._debugAction01.setIconVisibleInMenu(True)
+    self._debugAction01.triggered.connect(self._debugFunc01)
+
+  def _debugFunc01(self) -> None:
+    """Debug func 01"""
+    parentLayout = self.info.parentWidget().layout()
+    ic(parentLayout)
 
   def _createBaseWidget(self, ) -> None:
     """Creator-function from BaseWidget"""
@@ -74,9 +93,11 @@ class MainWindow(BaseWindow):
   def _setupWidgets(self) -> None:
     self._label = QLabel('YOLO')
     self._getBaseLayout().addWidget(self._label, 0, 0)
+    self._getBaseLayout().addWidget(
+      self.info, 1, 1, Qt.AlignmentFlag.AlignRight)
     self._getBaseWidget().setLayout(self._getBaseLayout())
     self.setCentralWidget(self._getBaseWidget())
-    self.setBaseSize(QSize(640, 480))
+    self.setMinimumSize(QSize(640, 480))
 
   def show(self) -> None:
     """Reimplementation of show method"""

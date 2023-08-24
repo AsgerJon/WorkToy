@@ -5,20 +5,14 @@ package"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._basetypes import Keys, Values, Items, Function, Method, Type, Bases
-from ._basetypes import WrapperDescriptor, WrapperMethod, BuiltinFunction
+from ._primitiveclass import PrimitiveClass, Map, Keys, Values, Items
+from ._primitiveclass import Bases, Type, Function, Method, Type, Bases
+from ._primitiveclass import WrapperDescriptor, WrapperMethod, Method
+from ._primitiveclass import BuiltinFunction, FunctionList, Functional
+from ._parsingclass import ParsingClass
+from ._exceptionclass import ExceptionClass
 from ._defaultclass import DefaultClass
-from ._abstractmetatype import AbstractMetaType, AbstractType
-from ._metaattribute import MetaAttribute
-from ._metanamespace import MetaNameSpace, AbstractNameSpace
-from ._abstractattribute import AbstractAttribute
-from ._immutableattribute import ImmutableAttribute
-from ._mutableattribute import MutableAttribute
-from ._listattribute import ListAttribute
-from ._dictattribute import DictAttribute
-from ._numattribute import NumAttribute
-from ._intattribute import IntAttribute
-from ._floatattribute import FloatAttribute
-from ._strattribute import StrAttribute
-from ._callmemaybe import CallMeMaybe
-from ._attributenamespace import AttributeNameSpace
+from ._workthis import WorkThis
+from ._abstractdescriptor import AbstractDescriptor
+from ._decoratordescriptor import DecoratorDescriptor
+from ._abstractmetatype import MetaMetaType, AbstractMetaType, AbstractType

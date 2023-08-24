@@ -15,3 +15,7 @@ class CoreWindow(BaseWindow):
 
   def __init__(self, *args, **kwargs) -> None:
     BaseWindow.__init__(self, *args, **kwargs)
+
+  def show(self) -> None:
+    """Implementation"""
+    BaseWindow.show(self)

@@ -1,34 +1,50 @@
 """WorkSide - Widgets - CoreWidget
-This class provides the baseclass for the widgets. It should not be
-instantiated directly, but should be further subclassed. """
+Abstract baseclass for the custom widgets. """
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from abc import abstractmethod
 
-from workside.metaside import BaseWidget
+from PySide6.QtCore import QRect
+from PySide6.QtGui import QPaintEvent
+from PySide6.QtWidgets import (QWidget, QLayout)
+
+from worktoy import WorkThis, DefaultClass
 
 
-class CoreWidget(BaseWidget):
+class CoreWidget(QWidget, DefaultClass):
   """WorkSide - Widgets - CoreWidget
-  This class provides the baseclass for the widgets. It should not be
-  instantiated directly, but should be further subclassed. """
+  This class provides the baseclass for the widgets."""
+
+  @WorkThis()
+  def getParentLayout(self, this, *args, **kwargs) -> QLayout:
+    """Getter-function for the parent layout"""
 
   def __init__(self, *args, **kwargs) -> None:
-    BaseWidget.__init__(self, *args, **kwargs)
-    self._owner = None
-    self._name = None
+    self._parseParent = self.parseFactory(QWidget, 'parent', 'main')
+    parent = self._parseParent(*args, **kwargs)
+    QWidget.__init__(self, parent)
 
-  def __set_name__(self, owner: type, name: str) -> None:
-    self._name = name
-    self._owner = owner
+  @abstractmethod
+  def sizeControl(self, ) -> None:
+    """Method responsible for sizing the widget.
+    Subclasses must implement this method. """
 
-  def __get__(self, obj: object, owner: type) -> object:
-    pass
+  @abstractmethod
+  def alignmentControl(self) -> None:
+    """Method responsible for placing the widget in its available space.
+    Subclasses must implement this method."""
 
-  def __set__(self, obj: object, newValue: object) -> None:
-    pass
+  def availableSpace(self) -> QRect:
+    """Getter-function for the rectangle the parent layout makes available
+    to this widget. """
 
-  def __delete__(self, obj: object) -> None:
-    pass
+  def resetWidgets(self) -> None:
+    """Resets and creates widgets"""
+
+  def show(self) -> None:
+    """Reimplementation of the show method"""
+
+  def paintEvent(self, event: QPaintEvent) -> None:
+    """Implementation of paint event"""
