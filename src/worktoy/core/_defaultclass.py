@@ -1,13 +1,18 @@
 """WorkToy - DefaultClass
 This class provides utility as static methods.
 Classes in the package subclass this class.
-PrimitiveClass - ExceptionClass - DefaultClass
+
+Baseclasses in order of appearance:
+ - PrimitiveClass
+ - ParsingClass
+ - ExceptionClass
+ - DefaultClass (this)
 """
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy import PrimitiveClass, ExceptionClass
+from worktoy.core import ExceptionClass
 
 
 class DefaultClass(ExceptionClass):

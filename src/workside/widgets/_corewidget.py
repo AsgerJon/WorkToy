@@ -10,7 +10,8 @@ from PySide6.QtCore import QRect
 from PySide6.QtGui import QPaintEvent
 from PySide6.QtWidgets import (QWidget, QLayout)
 
-from worktoy import WorkThis, DefaultClass
+from worktoy import WorkThis
+from worktoy.core import DefaultClass
 
 
 class CoreWidget(QWidget, DefaultClass):

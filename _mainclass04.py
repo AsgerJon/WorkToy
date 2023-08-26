@@ -5,7 +5,8 @@ from __future__ import annotations
 
 from icecream import ic
 
-from worktoy import WorkThis, Function
+from worktoy.core import Function
+from worktoy import WorkThis
 
 
 class Parent:
@@ -36,12 +37,19 @@ class Child(Parent):
     self._name = name
     self._owner = owner
 
-  @WorkThis()
-  def testFunction(self, this: Function, *args, **kwargs) -> object:
+  @WorkThis
+  def testFunction(self, this: Function, a: int = None,
+                   b: int = None, *args) -> object:
     """some function"""
-    print('Instance: %s' % self)
-    print('method: %s' % this)
-    return 'lmao'
+    ic(self)
+    ic(this)
+    ic(a)
+    ic(b)
+    if not a and not b:
+      return
+    if a > b:
+      return this(self, this, b, a)
+    return b - a
 
   def childMethod(self) -> str:
     """pass"""

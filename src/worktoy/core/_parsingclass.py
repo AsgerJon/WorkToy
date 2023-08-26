@@ -4,7 +4,7 @@ Utility class inherited by DefaultClass focused on parsing."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy import PrimitiveClass, Function
+from worktoy.core import PrimitiveClass, Function
 
 
 class ParsingClass(PrimitiveClass):
@@ -44,6 +44,7 @@ class ParsingClass(PrimitiveClass):
     type_ = self.maybeType(type, *args)
     if not isinstance(type_, type):
       type_ = object
+    type_ = object
     keys = self.maybeTypes(str, *args)
     for key in keys:
       val = kwargs.get(key, None)
