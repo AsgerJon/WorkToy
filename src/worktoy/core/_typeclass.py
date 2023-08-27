@@ -15,41 +15,6 @@ class TypeClass(ParsingClass):
   """WorkToy - Core - TypeClass
   Alternative to GenericAlias supporting instance checking."""
 
-  @staticmethod
-  def flatten(notFlat: list, r=None) -> list:
-    """Flattens a nested list"""
-    if r is None:
-      r = 0
-    else:
-      r = r + 1
-    if r > 10:
-      raise RecursionError
-    out = []
-    flat = True
-    for item in notFlat:
-      if isinstance(item, list):
-        for item2 in TypeClass.flatten(item):
-          out.append(item2)
-        flat = False
-      else:
-        out.append(item)
-    return out if flat else TypeClass.flatten(out, r)
-
-  @staticmethod
-  def parse(obj: object, r: int) -> dict:
-    """Parses the entry"""
-
-    def getName(cls, ) -> str:
-      """Getter-function for the name of the type"""
-      names = [getattr(cls, '__qualname__', None),
-               getattr(cls, '__name__', None),
-               str(cls)]
-      for name in names:
-        if name is not None:
-          return name
-
-    return dict(cls=obj, nestLevel=r, name=getName(obj))
-
   def __init__(self, *args, **kwargs) -> None:
     ParsingClass.__init__(self, *args, **kwargs)
     self._signature = self.collectSignature(*args)
@@ -72,8 +37,6 @@ class TypeClass(ParsingClass):
 
   def collectSignature(self, *args) -> list:
     """Collects the signature from the arguments"""
-    typeList = self.collectTypes(*args)
-    return self.nestedTypes(self.parse, typeList)
 
   def nestedTypes(self, callBack: Function, entries: list, **kwargs) -> list:
     """Returns the nested list or type"""

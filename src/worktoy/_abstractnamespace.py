@@ -6,14 +6,14 @@ from __future__ import annotations
 
 from abc import abstractmethod
 
-from worktoy.core import ParsingClass, Items, Values, Keys
+from worktoy.core import CoreClass, Items, Values, Keys
 
 
-class AbstractNameSpace(ParsingClass):
+class AbstractNameSpace(CoreClass):
   """Namespace class for Struc class"""
 
   def __init__(self, *__, **_) -> None:
-    ParsingClass.__init__(self, *__, **_)
+    CoreClass.__init__(self, *__, **_)
     self._contents = {}
     self._entries = []
     self._iterContents = None

@@ -4,15 +4,15 @@ This module provides factories for custom exception classes."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.core import ParsingClass
+from worktoy.core import StringAware
 
 
-class ExceptionClass(ParsingClass):
+class ExceptionClass(StringAware):
   """WorkToy - ExceptionFactory
   This module provides factories for custom exception classes."""
 
   def __init__(self, *args, **kwargs) -> None:
-    ParsingClass.__init__(self, *args, **kwargs)
+    StringAware.__init__(self, *args, **kwargs)
 
   def createException(self,
                       name: str,
