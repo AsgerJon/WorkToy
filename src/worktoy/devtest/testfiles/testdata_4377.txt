@@ -1,0 +1,75 @@
+| *************************< TestClass >************************* |
+        __module_ |                            str |            type
+           __doc_ |                            str |            type
+  TestStaticMetho |                   staticmethod |            type
+   TestClassMetho |                    classmethod |            type
+          __init_ |                       function |            type
+      _underScore |                       function |            type
+               bl |                            int |            type
+           __str_ |                       function |            type
+          __repr_ |                       function |            type
+              fuc |                       function |            type
+| ************************< DefaultClass >************************ |
+        __module_ |                            str |            type
+           __doc_ |                            str |            type
+          __init_ |                       function |            type
+| ***********************< ExceptionClass >*********************** |
+        __module_ |                            str |            type
+           __doc_ |                            str |            type
+          __init_ |                       function |            type
+   createExceptio |                       function |            type
+createUnexpectedT |                       function |            type
+createUnexpectedS |                       function |            type
+createMissingFunc |                       function |            type
+| ************************< StringAware >************************ |
+        __module_ |                            str |            type
+           __doc_ |                            str |            type
+          __init_ |                       function |            type
+         monoSpac |                       function |            type
+        stringLis |                       function |            type
+           justif |                       function |            type
+    extractBetwee |                       function |            type
+    trimWhitespac |                       function |            type
+      parseFactor |                       function |            type
+          typeNam |                       function |            type
+| *************************< CoreClass >************************* |
+        __module_ |                            str |            type
+           __doc_ |                            str |            type
+          __init_ |                       function |            type
+       starWarnin |                       function |            type
+             mayb |                       function |            type
+         maybeTyp |                       function |            type
+        maybeType |                       function |            type
+          maybeKe |                       function |            type
+         maybeKey |                       function |            type
+             empt |                       function |            type
+            plent |                       function |            type
+               pa |                       function |            type
+      parseFactor |                       function |            type
+          __dict_ |              getset_descriptor |            type
+       __weakref_ |              getset_descriptor |            type
+| ***************************< object >*************************** |
+           __new_ |     builtin_function_or_method |            type
+          __repr_ |             wrapper_descriptor |            type
+          __hash_ |             wrapper_descriptor |            type
+           __str_ |             wrapper_descriptor |            type
+  __getattribute_ |             wrapper_descriptor |            type
+       __setattr_ |             wrapper_descriptor |            type
+       __delattr_ |             wrapper_descriptor |            type
+            __lt_ |             wrapper_descriptor |            type
+            __le_ |             wrapper_descriptor |            type
+            __eq_ |             wrapper_descriptor |            type
+            __ne_ |             wrapper_descriptor |            type
+            __gt_ |             wrapper_descriptor |            type
+            __ge_ |             wrapper_descriptor |            type
+          __init_ |             wrapper_descriptor |            type
+     __reduce_ex_ |              method_descriptor |            type
+        __reduce_ |              method_descriptor |            type
+      __getstate_ |              method_descriptor |            type
+  __subclasshook_ |         classmethod_descriptor |            type
+ __init_subclass_ |         classmethod_descriptor |            type
+        __format_ |              method_descriptor |            type
+        __sizeof_ |              method_descriptor |            type
+           __dir_ |              method_descriptor |            type
+         __class_ |              getset_descriptor |            type
+           __doc_ |                            str |            type

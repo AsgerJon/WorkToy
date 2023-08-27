@@ -88,6 +88,10 @@ class CoreClass:
     if not isinstance(type_, type):
       type_ = object
     keys = self.maybeTypes(str, *args)
+    if not isinstance(type_, (tuple, list)):
+      type_ = (type_,)
+    if not isinstance(keys, (tuple, list)):
+      keys = (keys,)
     if not kwargs:
       funcArgs = [*type_, *keys]
       newArgs = (*[arg for arg in args if arg not in funcArgs],)
@@ -174,3 +178,23 @@ class CoreClass:
       return out
 
     return parseKeyType
+
+  def getArgs(self) -> list:
+    """Getter-function for the list of positional arguments."""
+    return [arg for arg in self._args]
+
+  def getKwargs(self) -> dict:
+    """Getter-function for the dictionary of keyword arguments."""
+    return self._kwargs
+
+  def setArgs(self, *args) -> None:
+    """Setter-function for the positional arguments"""
+    self._args = [*args, ]
+
+  def setKwargs(self, **kwargs) -> None:
+    """Setter function for the keyword arguments"""
+    self._kwargs = kwargs
+
+  def setAllArgs(self, *args, **kwargs) -> None:
+    """Setting both positional arguments and keyword arguments."""
+    self._args, self._kwargs = self.setArgs(*args), self.setKwargs(**kwargs)

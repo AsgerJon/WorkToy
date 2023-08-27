@@ -5,7 +5,13 @@ methods."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
+from warnings import warn
+
+from icecream import ic
+
 from worktoy.core import CoreClass, Function
+
+ic.configureOutput(includeContext=True)
 
 
 class StringAware(CoreClass):
@@ -193,10 +199,13 @@ class StringAware(CoreClass):
     """Returns the name of the given type. If the argument is not a type,
     the type of the argument is used instead."""
     if not isinstance(cls, type):
-      return self.typeName(type(cls))
-    qualName = getattr(cls, '__qualName__', None)
-    name = getattr(cls, '__Name__', None)
+      msg = """Expected argument to be of type 'type', but received: %s"""
+      warn(msg % type(cls))
+    if cls is None:
+      return 'NoneClass'
+    qualName = getattr(cls, '__qualname__', None)
+    name = getattr(cls, '__name__', None)
     strRep = '%s' % (cls)
     out = self.maybe(qualName, name, strRep)
-    if isinstance(cls, str):
-      return cls
+    if isinstance(out, str):
+      return out

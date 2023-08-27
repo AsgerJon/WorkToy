@@ -1,0 +1,75 @@
+*************************< TestClass >*************************
+      __module__ |                                              str |            None
+         __doc__ |                                              str |            None
+TestStaticMethod |                                     staticmethod |            None
+ TestClassMethod |                                      classmethod |            None
+        __init__ |                                         function |            None
+    _underScored |                                         function |            None
+             bla |                                              int |            None
+         __str__ |                                         function |            None
+        __repr__ |                                         function |            None
+            fuck |                                         function |            None
+************************< DefaultClass >************************
+      __module__ |                                              str |            None
+         __doc__ |                                              str |            None
+        __init__ |                                         function |            None
+***********************< ExceptionClass >***********************
+      __module__ |                                              str |            None
+         __doc__ |                                              str |            None
+        __init__ |                                         function |            None
+ createException |                                         function |            None
+createUnexpected |                                         function |            None
+createUnexpected |                                         function |            None
+createMissingFun |                                         function |            None
+************************< StringAware >************************
+      __module__ |                                              str |            None
+         __doc__ |                                              str |            None
+        __init__ |                                         function |            None
+       monoSpace |                                         function |            None
+      stringList |                                         function |            None
+         justify |                                         function |            None
+  extractBetween |                                         function |            None
+  trimWhitespace |                                         function |            None
+    parseFactory |                                         function |            None
+        typeName |                                         function |            None
+*************************< CoreClass >*************************
+      __module__ |                                              str |            None
+         __doc__ |                                              str |            None
+        __init__ |                                         function |            None
+     starWarning |                                         function |            None
+           maybe |                                         function |            None
+       maybeType |                                         function |            None
+      maybeTypes |                                         function |            None
+        maybeKey |                                         function |            None
+       maybeKeys |                                         function |            None
+           empty |                                         function |            None
+          plenty |                                         function |            None
+             pad |                                         function |            None
+    parseFactory |                                         function |            None
+        __dict__ |                                getset_descriptor |            None
+     __weakref__ |                                getset_descriptor |            None
+***************************< object >***************************
+         __new__ |                       builtin_function_or_method |            None
+        __repr__ |                               wrapper_descriptor |            None
+        __hash__ |                               wrapper_descriptor |            None
+         __str__ |                               wrapper_descriptor |            None
+__getattribute__ |                               wrapper_descriptor |            None
+     __setattr__ |                               wrapper_descriptor |            None
+     __delattr__ |                               wrapper_descriptor |            None
+          __lt__ |                               wrapper_descriptor |            None
+          __le__ |                               wrapper_descriptor |            None
+          __eq__ |                               wrapper_descriptor |            None
+          __ne__ |                               wrapper_descriptor |            None
+          __gt__ |                               wrapper_descriptor |            None
+          __ge__ |                               wrapper_descriptor |            None
+        __init__ |                               wrapper_descriptor |            None
+   __reduce_ex__ |                                method_descriptor |            None
+      __reduce__ |                                method_descriptor |            None
+    __getstate__ |                                method_descriptor |            None
+__subclasshook__ |                           classmethod_descriptor |            None
+__init_subclass_ |                           classmethod_descriptor |            None
+      __format__ |                                method_descriptor |            None
+      __sizeof__ |                                method_descriptor |            None
+         __dir__ |                                method_descriptor |            None
+       __class__ |                                getset_descriptor |            None
+         __doc__ |                                              str |            None

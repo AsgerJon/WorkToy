@@ -6,5 +6,6 @@ package."""
 from __future__ import annotations
 
 import worktoy.core as core
-from ._abstractnamespace import AbstractNameSpace
-from ._workthis import WorkThis
+import worktoy.fields as fields
+import worktoy.metaclass as metaclass
+import worktoy.symbolics as symbolics
