@@ -1,6 +1,6 @@
-"""WorkToy - Core - StringAware
-Part of the DefaultClass chain providing string awareness and related
-methods."""
+"""WorkToy - Core - Default
+This class provides utility as static methods.
+Classes in the package subclass this class."""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
@@ -9,14 +9,17 @@ from warnings import warn
 
 from icecream import ic
 
-from worktoy.core import CoreClass, Function
+from worktoy.base import CoreClass
+from worktoy.core import Function
 
 ic.configureOutput(includeContext=True)
 
 
-class StringAware(CoreClass):
-  """WorkToy – PrimitiveClass
-  This class provides various utilities."""
+class DefaultClass(CoreClass):
+  """WorkToy - DefaultClass
+  This class provides utility as static methods.
+  Classes in the package subclass this class.
+  """
 
   def __init__(self, *args, **kwargs) -> None:
     CoreClass.__init__(self, *args, **kwargs)
@@ -55,7 +58,7 @@ class StringAware(CoreClass):
        the input `text`.
     2. Repeatedly replaces multiple consecutive spaces with a single space
        until no more consecutive spaces are found in the `text`.
-    3. Replaces the `newLine` string (or the default '<br>' if not provided)
+    3. Replace the `newLine` string (or the default '<br>' if not provided)
        with a line break '\n' character in the modified `text`.
     4. Returns the modified `text`.
 
@@ -147,7 +150,7 @@ class StringAware(CoreClass):
     the function will correctly handle this case and extract the text between
     each pair of those characters.
 
-    :param text: The text to search within, can be a multiline string.
+    :param text: The text to search within can be a multiline string.
     :param before: The character or substring that precedes the text to be
                    extracted. If multiline, can be a newline character.
     :param after: The character or substring that follows the text to be
@@ -185,7 +188,7 @@ class StringAware(CoreClass):
   def parseFactory(self, type_: type, *keys) -> Function:
     """Creates a factory for parsing based on keys and type"""
 
-    def parseKeyType(instance: StringAware, *args, **kwargs) -> object:
+    def parseKeyType(instance: DefaultClass, *args, **kwargs) -> object:
       """Parses by key and type"""
       itemKwarg = instance.maybeKey(type_, *keys, **kwargs)
       itemArg = instance.maybeType(type_, *args)

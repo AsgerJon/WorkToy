@@ -14,8 +14,8 @@ from ._coretypes import Map, Keys, Values, Items, Bases, Type
 from ._coretypes import Function, Method, WrapperDescriptor
 from ._coretypes import WrapperMethod, BuiltinFunction, Functional
 from ._coretypes import FunctionTuple, FunctionList
-
-from ._coreclass import CoreClass
-from ._stringaware import StringAware
-from ._exceptionclass import ExceptionClass
-from ._defaultclass import DefaultClass
+from ._coretypes import ARGS, KWARGS, RESULT, CALL
+from ._promise import Promise
+from ._quick import Quick
+from ._decorator import Decorator
+from ._function_decorator import FunctionDecorator

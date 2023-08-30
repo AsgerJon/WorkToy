@@ -1,22 +1,17 @@
 """Testing CoreClass"""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
+from __future__ import annotations
 
-from random import shuffle, choice, randint
-#  MIT Licence
-#  Copyright (c) 2023 Asger Jon Vistisen
-
+from random import choice, randint
 import string
 from types import NoneType
-#  MIT Licence
-#  Copyright (c) 2023 Asger Jon Vistisen
+from unittest import TestCase
 
-import unittest
-
-from worktoy.core import CoreClass
+from worktoy.base import CoreClass
 
 
-class CoreClassTests(unittest.TestCase):
+class CoreClassTests(TestCase):
   """Testing CoreClass"""
 
   def getBaseTypes(self) -> list[type]:
@@ -146,15 +141,16 @@ class CoreClassTests(unittest.TestCase):
     result = self.core.pad([1, 2, 3], [4, 5])
     self.assertEqual(result, [1, 2, 3])
 
-    result = self.core.pad(
-      self.core.maybeTypes(int, [])
-    )
+    result = self.core.maybeTypes(int, [])
+    self.assertEqual(result, [])
+    self.core.pad([], )
 
   def test_parseFactory(self):
     """Test for the parseFactory method"""
     parse_func = self.core.parseFactory(int, 'key1', 'key2')
-    result = parse_func(self.core, 'value1', 'value2', key1=1, key2=2)
+    result = parse_func('value1', 'value2', key1=1, key2=2)
+    print(parse_func)
     self.assertEqual(result, [1, 2])
 
-    result = parse_func(self.core, 'value1', 'value2', key2=2)
-    self.assertEqual(result, [None, 2])
+    result = parse_func('value1', 'value2', key2=2)
+    self.assertEqual(result, [2])

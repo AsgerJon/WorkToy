@@ -24,3 +24,8 @@ FunctionTuple = (Function, Method, WrapperDescriptor, WrapperMethod,
 FunctionList = [*FunctionTuple, ]
 Functions = Union[
   Function, Method, WrapperDescriptor, WrapperMethod, BuiltinFunction]
+
+ARGS = tuple[object, ...]
+KWARGS = dict[str, object]
+RESULT = tuple[tuple[object, ...], dict[str, object]]
+CALL = tuple[Function, ARGS, KWARGS]
