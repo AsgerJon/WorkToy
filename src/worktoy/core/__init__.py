@@ -15,7 +15,3 @@ from ._coretypes import Function, Method, WrapperDescriptor
 from ._coretypes import WrapperMethod, BuiltinFunction, Functional
 from ._coretypes import FunctionTuple, FunctionList
 from ._coretypes import ARGS, KWARGS, RESULT, CALL
-from ._promise import Promise
-from ._quick import Quick
-from ._decorator import Decorator
-from ._function_decorator import FunctionDecorator

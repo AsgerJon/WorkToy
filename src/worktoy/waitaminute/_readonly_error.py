@@ -6,25 +6,28 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.waitaminute import SecretFieldError
 from worktoy.waitaminute import MetaXcept
 
 if TYPE_CHECKING:
-  Quick = lambda x: ReadOnlyError
+  pass
 
 
-class ReadOnlyError(MetaXcept):
+class ReadOnlyError(SecretFieldError):
   """WorkToy - Wait A Minute! - ReadOnlyError
   Exception raised by trying to set the value of a protected field."""
 
-  def __init__(self, *args) -> None:
-    MetaXcept.__init__(self, *args)
-    self._readOnlyField = args[0]
-    self._targetObject = args[1]
-    self._newValue = args[2]
+  def __init__(self, *args, **kwargs) -> None:
+    SecretFieldError.__init__(self, *args, **kwargs)
 
   def __str__(self, ) -> str:
     """String Representation."""
-    m = """Attempted to overwrite value of field %s on object %s with 
-    new value %s without necessary permission level!"""
-    msg = m % (self._readOnlyField, self._targetObject, self._newValue)
-    return self.monoSpace(msg)
+    header = MetaXcept.__str__(self)
+    field = self._field
+    obj = self._targetObject
+    newValue = self._newValue
+
+    msg = """Attempted to overwrite field '%s' on object '%s' with 
+    new value '%s' with insufficient permission level!"""
+    body = msg % (field, obj, newValue)
+    return '%s\n%s' % (header, self.justify(body))

@@ -4,28 +4,34 @@ Raised when attempting to read from a secret field."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from worktoy.waitaminute import MetaXcept
 
 if TYPE_CHECKING:
-  Quick = lambda x: SecretFieldError
+  from worktoy.fields import AbstractDescriptor
 
 
 class SecretFieldError(MetaXcept):
   """WorkToy - Wait A Minute! - ProtectedFieldError
   Raised when attempting to delete a protected field."""
 
-  def __init__(self, *args) -> None:
-    MetaXcept.__init__(self, *args)
-    self._secretField = args[0]
-    self._targetObject = args[1]
-    self._ownerClass = args[2]
+  def __init__(self, field: AbstractDescriptor, obj: any, cls: type,
+               newValue: Any = None, *args, **kwargs) -> None:
+    MetaXcept.__init__(self, field, obj, cls, *args, **kwargs)
+    self._field = self.pretty(field)
+    self._targetObject = self.pretty(obj)
+    self._ownerClass = self.pretty(cls)
+    self._newValue = self.pretty(newValue)
 
   def __str__(self, ) -> str:
     """String Representation."""
-    header = 'SecretFieldError!'
-    body = """An attempt were made to read data from field %s from object 
-    %s belonging to %s with insufficient permission level."""
-    msg = body % (self._secretField, self._targetObject, self._ownerClass)
-    return '%s\n%s' % (header, self.monoSpace(msg))
+    header = MetaXcept.__str__(self)
+    field = self._field
+    obj = self._targetObject
+    cls = self._ownerClass
+
+    body = """Attempted to read data from secret field '%s' from object 
+    '%s' on class '%s' with insufficient permission level!"""
+    body = body % (field, obj, cls)
+    return '%s\n%s' % (header, self.justify(body))

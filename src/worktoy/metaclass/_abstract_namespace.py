@@ -9,13 +9,10 @@ from worktoy.core import Keys, Items, Values, Bases
 from worktoy.metaclass import MetaNameSpace
 
 
-class AbstractNameSpace(MetaNameSpace, dict):
+class AbstractNameSpace(dict, metaclass=MetaNameSpace):
   """WorkToy - MetaClass - AbstractNameSpace
   The AbstractNameSpace class provides a class with the minimal
   functionality required."""
-
-  # def __new__(cls, name: str, bases: Bases, **kwargs) -> object:
-  #   return super().__new__(cls)
 
   def __init__(self, name: str = None, bases: Bases = None,
                **kwargs) -> None:
@@ -23,14 +20,23 @@ class AbstractNameSpace(MetaNameSpace, dict):
     self._name = name
     self._bases = bases
     self._kwargs = kwargs
+    self._latestErrorGet = None
+    self._latestErrorSet = None
     self._log = []
-    dict.__setitem__(self, '__name__', '\n |> WorkToy <| \n')
+    dict.__setitem__(self, '__name__', '\n |> WorkToy <| SYM\n')
 
-  def __setitem__(self, key: str, val: object) -> None:
+  def __setitem__(self, key: str, val: object, *args, **kwargs) -> None:
+    self._log.append(['set', key, val, args, kwargs])
     dict.__setitem__(self, key, val, )
 
-  def __getitem__(self, key: str) -> object:
-    return dict.__getitem__(self, key)
+  def __getitem__(self, key: str, *args, **kwargs) -> object:
+    try:
+      val = dict.__getitem__(self, key)
+      self._recordLog(['get', key, val, ])
+      return val
+    except KeyError as e:
+      self._recordLog(['getError', key, e, ])
+      raise e
 
   def __delitem__(self, key: str) -> None:
     dict.__delitem__(self, key)
@@ -63,8 +69,10 @@ class AbstractNameSpace(MetaNameSpace, dict):
     """Getter-function for the keyword arguments"""
     return self._kwargs
 
-  def __getattribute__(self, key: str) -> object:
-    """Monitoring"""
-    val = object.__getattribute__(self, key)
-    object.__getattribute__(self, '_log').append(val)
-    return val
+  def _recordLog(self, entry: list) -> None:
+    """Records the log"""
+    self._log.append(entry)
+
+  def getLog(self) -> list:
+    """Getter-function for the log"""
+    return self._log

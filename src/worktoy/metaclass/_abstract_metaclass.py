@@ -5,6 +5,7 @@ This provides the abstract baseclass for metaclasses."""
 from __future__ import annotations
 
 from abc import abstractmethod
+from typing import Any
 
 from icecream import ic
 
@@ -20,7 +21,7 @@ class AbstractMetaClass(MetaMetaClass):
 
   @classmethod
   @abstractmethod
-  def __prepare__(mcls, name: str, bases: tuple[type], **kwargs) -> dict:
+  def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> Any:
     """Sub-metaclasses should implement the prepare method to customise
     how to metaclass receives the class body. If the default behaviour is
     sufficient, this method should return an instance of dict.
@@ -112,8 +113,7 @@ class AbstractMetaClass(MetaMetaClass):
     collect and pass the arguments to the super call."""
     MetaMetaClass.__init__(cls, name, bases, nameSpace, **kwargs)
 
-  def __call__(cls, name: str = None,
-               bases: Bases = None, *args, **kwargs) -> object:
+  def __call__(cls, *args, **kwargs) -> Any:
     """This method refers to the call method on the class itself, meaning
     instance creation. Below is shown an approximation of the steps
     involved:
@@ -128,4 +128,4 @@ class AbstractMetaClass(MetaMetaClass):
     Upon completion, the new instance is returned. Please note that this
     is a demonstration. The real implementation may not produce the same
     results."""
-    return MetaMetaClass.__call__(cls, name, bases)
+    return MetaMetaClass.__call__(cls, *args, **kwargs)

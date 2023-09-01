@@ -9,5 +9,5 @@ import worktoy.core as core
 import worktoy.base as base
 import worktoy.metaclass as metaclass
 import worktoy.fields as fields
-import worktoy.symbolics as symbolics
+import worktoy.guards as guards
 import worktoy.waitaminute as waitaminute

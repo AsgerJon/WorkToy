@@ -13,7 +13,7 @@ from worktoy.core import ParsingClass, Function
 ic.configureOutput(includeContext=True)
 
 
-class CUNT(type):
+class CUNT_(type):
   """LMAO"""
 
   def __call__(cls, *args, **kwargs) -> Never:

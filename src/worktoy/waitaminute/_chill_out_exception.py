@@ -13,11 +13,6 @@ class ChillOutException(MetaXcept):
 
   def __init__(self, *args, **kwargs) -> None:
     MetaXcept.__init__(self, *args, **kwargs)
-    self._msg = None
-
-    for arg in args:
-      if isinstance(arg, str) and self._msg is None:
-        self._msg = arg
     self.msg = 'Just chill out :)' if self._msg is None else self._msg
 
   def __str__(self) -> str:

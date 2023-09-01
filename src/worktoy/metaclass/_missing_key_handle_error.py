@@ -79,7 +79,7 @@ Now, the console outputs the following:
 
 The metaclass system implemented in the WorkToy package includes
 validation of the namespace objects returned by the __prepare__ method.
-The MissingKeyHandleError is raised when a namespace objects fails to
+The MissingKeyHandleError is raised when a namespace 'objects' fails to
 raise KeyError against missing keys in the __getitem__.
 
 Custom metaclasses are powerful, but have such odd quirks. """
@@ -88,6 +88,7 @@ Custom metaclasses are powerful, but have such odd quirks. """
 from __future__ import annotations
 
 from worktoy.base import DefaultClass
+from worktoy.core import Function
 from worktoy.waitaminute import MetaXcept
 
 
@@ -97,23 +98,21 @@ class MissingKeyHandleError(MetaXcept):
 
   monoSpace = DefaultClass().monoSpace
 
-  def __init__(self, *args, **kwargs) -> None:
-    MetaXcept.__init__(self, *args, **kwargs)
-    self._nameSpace = args[0]
-    self._nameSpaceClass = self._nameSpace.__class__
-    self.__metaClass = args[1]
+  def __init__(self, prepare: Function, **kwargs) -> None:
+    mcls = kwargs.get('metaclass')
+    MetaXcept.__init__(self, prepare, mcls)
+    self._prepare = prepare
+    self._metaClass = mcls
 
   def __str__(self) -> str:
-    header = ('<br>CRITICAL!<br>%s<br>FATAL!<br>' %
-              self.__class__.__qualname__)
-    body = """Given namespace object:<br>%s<br>of type %s provided 
-    unexpected behaviour against missing keys in the __getitem__ 
-    method!<br>Custom classes used as namespaces must raise: 
+    title = ('<br>CRITICAL!<br>%s<br>FATAL!<br>' %
+             self.__class__.__qualname__)
+    header = """The namespace produced by the given function %s during the 
+    class creation implemented by metaclass %s, """
+    header = header % (str(self._prepare), str(self._metaClass))
+    body = """returned unexpected behaviour against missing keys in the 
+    __getitem__ method!<br>Custom classes used as namespaces must raise: 
     "KeyError('key')" where 'key' is the string representing a missing 
     'key'."""
-    nameSpaceObject = str(self._nameSpace)
-    nameSpaceObject = nameSpaceObject[:min(77, len(nameSpaceObject))]
-    nameSpaceClass = self._nameSpaceClass
-    msg = body % (nameSpaceObject, nameSpaceClass)
-    out = '<br>%s<br>%s' % (header, msg)
+    out = ''.join([title, header, body])
     return self.monoSpace(out)

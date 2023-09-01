@@ -12,7 +12,7 @@ from worktoy.metaclass import AbstractMetaClass
 ic.configureOutput(includeContext=True)
 
 
-class _MetaNameSpace(AbstractMetaClass):
+class MetaNameSpace(AbstractMetaClass):
   """WorkToy - MetaClasses - MetaNameSpace
   Provides a metaclass for creation of namespaces. """
 
@@ -25,7 +25,7 @@ class _MetaNameSpace(AbstractMetaClass):
               bases: Bases,
               nameSpace: dict,
               **kw) -> type:
-    return super().__new__(mcls, name, bases, nameSpace, **kw)
+    return AbstractMetaClass.__new__(mcls, name, bases, nameSpace, **kw)
 
   def __init__(cls, name: str, bases: Bases, nameSpace: dict, **kw) -> None:
     AbstractMetaClass.__init__(cls, name, bases, nameSpace, **kw)
@@ -33,7 +33,3 @@ class _MetaNameSpace(AbstractMetaClass):
 
   def __call__(cls, *args, **kwargs) -> object:
     return AbstractMetaClass.__call__(cls, *args, **kwargs)
-
-
-class MetaNameSpace(metaclass=_MetaNameSpace):
-  """In between class exposing the metaclass."""

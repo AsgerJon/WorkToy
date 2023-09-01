@@ -21,7 +21,7 @@ class ExceptSpace(dict):
     self._name = name
     self._bases = bases
     self._kwargs = kwargs
-    dict.__setitem__(self, '__name__', 'WorkToy - Wait A Minute!')
+    dict.__setitem__(self, '__name__', '\nWorkToy - Wait A Minute!\n')
 
   def __setitem__(self, key: str, val: object) -> None:
     dict.__setitem__(self, key, val, )

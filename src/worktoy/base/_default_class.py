@@ -21,6 +21,8 @@ class DefaultClass(CoreClass):
   Classes in the package subclass this class.
   """
 
+  __core_instance__ = None
+
   def __init__(self, *args, **kwargs) -> None:
     CoreClass.__init__(self, *args, **kwargs)
 
@@ -84,7 +86,7 @@ class DefaultClass(CoreClass):
     Instead of: numbers = ['one', 'two', 'three', 'four']
     Use stringList: numbers = stringList('one, two, three, four')
     Please note that all white space around each separator will be removed.
-    Meaning that ', ' and ',' will produce the same outcome when used as
+    For example: ', ' and ',' will produce the same outcome when used as
     separators on the same text.
     #  MIT Licence
     #  Copyright (c) 2023 Asger Jon Vistisen"""
@@ -106,7 +108,8 @@ class DefaultClass(CoreClass):
     if not isinstance(source, str):
       raise TypeError
     out = source.split(str(separator))
-    return out
+    out = [self.monoSpace(arg) for arg in out]
+    return [self.trimWhitespace(arg) for arg in out]
 
   def justify(self,
               text: str,

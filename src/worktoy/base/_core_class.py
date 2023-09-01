@@ -7,52 +7,17 @@ classes as appropriate."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import Any
 from warnings import warn
 
 from icecream import ic
 
-from worktoy.core import Function, Bases
+from worktoy.core import Function
 
 ic.configureOutput(includeContext=True)
 
 
-class CoreMeta(type):
-  """Creates the __core_instance__ at the end of class initialization."""
-
-  @classmethod
-  def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> dict:
-    return dict()
-
-  def __new__(mcls, name: str, bases: Bases, nameSpace: dict, **kw) -> type:
-    return type.__new__(mcls, name, bases, nameSpace, **kw)
-
-  def __init__(cls, *args, **kwargs) -> None:
-    type.__init__(cls, *args, **kwargs)
-    setattr(cls, '__core_instance__', cls.__call__())
-  #
-  # def __getattr__(cls, key: str) -> object:
-  #   if key == '__core_instance__':
-  #     return cls()
-  #   raise AttributeError(key)
-  #
-  # def __getattribute__(cls, key: str) -> object:
-  #   func = object.__getattribute__(cls, key)
-  #   self = object.__getattribute__(cls, '__core_instance__')
-  #   if not isinstance(func, Function):
-  #     return func
-  #   if isinstance(func, Function):
-  #
-  #     def wrapper(*args, **kwargs) -> object:
-  #       """Wrapped version"""
-  #       if args and isinstance(args[0], cls):
-  #         return func(*args, **kwargs)
-  #       return func(self, *args, **kwargs)
-  #
-  #     return wrapper
-  #   raise TypeError(func)
-
-
-class CoreClass(metaclass=CoreMeta):
+class CoreClass(metaclass=type):
   """WorkToy - Core - CoreClass
   Provides utilities accessible by subclassing this CoreClass or its
   subclasses."""
@@ -65,7 +30,7 @@ class CoreClass(metaclass=CoreMeta):
                   func: Function = None,
                   funcArgs: list = None,
                   args: tuple = None,
-                  **kwargs) -> object:
+                  **kwargs) -> Any:
     """This is method is called when one of the methods fails to find an
     argument. If 'args' is a tuple or list of length one, the function is
     repeated but with a star on the first element. Similar for keyword
@@ -84,14 +49,14 @@ class CoreClass(metaclass=CoreMeta):
         newArgs, newKwargs = (*args[:-1],), args[-1]
         return func(*funcArgs, *newArgs, **newKwargs)
 
-  def maybe(self, *args, **_) -> object:
+  def maybe(self, *args, **_) -> Any:
     """Returns the first argument different from None"""
     for arg in args:
       if arg is not None:
         return arg
     return self.starWarning(self.maybe, [], args, noKwargs=True)
 
-  def maybeType(self, cls: type, *args) -> object:
+  def maybeType(self, cls: type, *args) -> Any:
     """Returns the first argument belonging to cls"""
     for arg in args:
       if isinstance(arg, cls):
@@ -114,7 +79,7 @@ class CoreClass(metaclass=CoreMeta):
     if isinstance(out, list):
       return out
 
-  def maybeKey(self, *args, **kwargs) -> object:
+  def maybeKey(self, *args, **kwargs) -> Any:
     """Finds the first object in kwargs that matches a given key. Provide
     keys as positional arguments of stringtype. Optionally provide a
     'type' in the positional arguments to return only an object of that

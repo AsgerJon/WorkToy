@@ -1,0 +1,889 @@
+BINARY_OP
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+Bytecode
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+CACHE
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+COMPILER_FLAG_NAMES
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+EXTENDED_ARG
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+FORMAT_VALUE
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+FORMAT_VALUE_CONVERTERS
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+HAVE_ARGUMENT
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+Instruction
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+JUMP_BACKWARD
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+LOAD_CONST
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+LOAD_GLOBAL
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+MAKE_FUNCTION
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+MAKE_FUNCTION_FLAGS
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+Positions
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+UNKNOWN
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_ExceptionTableEntry
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_INT_BITS
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_INT_OVERFLOW
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_Instruction
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_OPARG_WIDTH
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_OPNAME_WIDTH
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_Unknown
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__all__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__builtins__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__cached__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__doc__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__file__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__loader__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__name__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__package__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+__spec__
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_all_opmap
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_all_opname
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_cache_format
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_deoptop
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_disassemble_bytes
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_disassemble_recursive
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_disassemble_str
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_empty_slot
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_find_imports
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_find_store_names
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_format_code_info
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_get_code_array
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_get_code_object
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_get_const_info
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_get_const_value
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_get_instructions_bytes
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_get_name_info
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_have_code
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_inline_cache_entries
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_is_backward_jump
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_nb_ops
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_parse_exception_table
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_parse_varint
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_specializations
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_specialized_instructions
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_test
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_try_compile
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+_unpack_opargs
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+cmp_op
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+code_info
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+collections
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+deoptmap
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+dis
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+disassemble
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+disco
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+distb
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+findlabels
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+findlinestarts
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+get_instructions
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+hascompare
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+hasconst
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+hasfree
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+hasjabs
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+hasjrel
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+haslocal
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+hasname
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+hasnargs
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+io
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+opmap
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+opname
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+pretty_flags
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+show_code
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+spec_op
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+specialized
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+stack_effect
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+sys
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.
+| ************************************************************************* |
+types
+str(object='') -> str str(bytes_or_buffer[, encoding[, errors]]) ->
+str
+
+Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer that will be
+decoded using the given encoding and error handler. Otherwise, returns the
+result of object.__str__() (if defined) or repr(object). encoding defaults
+to sys.getdefaultencoding(). errors defaults to 'strict'.

@@ -8,24 +8,21 @@ from abc import abstractmethod
 
 from PySide6.QtCore import QRect
 from PySide6.QtGui import QPaintEvent
-from PySide6.QtWidgets import (QWidget, QLayout)
+from PySide6.QtWidgets import QWidget
+from icecream import ic
 
-from worktoy import WorkThis
-from worktoy.core import DefaultClass
+from worktoy.base import DefaultClass
+
+ic.configureOutput(includeContext=True)
 
 
 class CoreWidget(QWidget, DefaultClass):
   """WorkSide - Widgets - CoreWidget
   This class provides the baseclass for the widgets."""
 
-  @WorkThis()
-  def getParentLayout(self, this, *args, **kwargs) -> QLayout:
-    """Getter-function for the parent layout"""
-
   def __init__(self, *args, **kwargs) -> None:
-    self._parseParent = self.parseFactory(QWidget, 'parent', 'main')
-    parent = self._parseParent(*args, **kwargs)
-    QWidget.__init__(self, parent)
+    DefaultClass.__init__(self, *args, **kwargs)
+    QWidget.__init__(self, self.maybeType(QWidget, *args))
 
   @abstractmethod
   def sizeControl(self, ) -> None:

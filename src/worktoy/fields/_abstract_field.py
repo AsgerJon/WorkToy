@@ -5,11 +5,12 @@ Base class for descriptor implemented fields."""
 from __future__ import annotations
 
 from abc import abstractmethod
+from typing import Any
 from warnings import warn
 
 from icecream import ic
 
-from worktoy.core import Function, Promise
+from worktoy.core import Function
 from worktoy.fields import AbstractDescriptor
 
 ic.configureOutput(includeContext=True)
@@ -28,25 +29,11 @@ class _AbstractFieldProperties(AbstractDescriptor):
     self._newPromises = []
     self._busy = False
 
-  def getDefaultValue(self) -> object:
-    """Getter-function for the default value. """
-    if self._defaultValue is None:
-      e = type('ChillOutException', (Exception,), {})
-      raise e
-    return self._defaultValue
-
-  def setDefaultValue(self, defaultValue: object) -> None:
-    """Setter-function for default value"""
-    if self.getFieldSource() is None:
-      return self.deferCall(self.setDefaultValue, self, defaultValue)
-    self._defaultValue = defaultValue
-
-  def getFieldSource(self) -> type:
-    """Getter-function for field source"""
-    return self._fieldSource
-
   def getFieldName(self, ) -> str:
     """Getter-function for field name"""
+    if self._fieldName is None:
+      from worktoy.waitaminute import UnexpectedStateError
+      raise UnexpectedStateError('fieldName', self.getFieldName)
     return self._fieldName
 
   def getPrivateName(self, ) -> str:
@@ -67,96 +54,14 @@ class _AbstractFieldProperties(AbstractDescriptor):
 
   def getFieldOwner(self, ) -> type:
     """Getter-function for field owner class"""
+    if self._fieldOwner is None:
+      from worktoy.waitaminute import UnexpectedStateError
+      raise UnexpectedStateError('_fieldOwner')
     return self._fieldOwner
-
-  def __set_name__(self, fieldOwner: type, fieldName: str) -> None:
-    self.setFieldName(fieldName)
-    self.setFieldOwner(fieldOwner)
 
   def setFieldName(self, fieldName: str) -> None:
     """Setter-function for field name"""
     self._fieldName = fieldName
-    self.update()
-
-  def setFieldSource(self, source: type) -> None:
-    """Setter-function for field source"""
-    self._fieldSource = source
-    self.update()
-
-  def getPromises(self) -> list[Promise]:
-    """Getter-function for the list of promises deferred."""
-    return self._newPromises if self.getBusy() else self._promises
-
-  def deferCall(self, func: Function, *args, **kwargs) -> None:
-    """Creates a promise"""
-    self.getPromises().append(Promise(func.__func__, self, *args, **kwargs))
-
-  def getBusy(self) -> bool:
-    """Getter-function for the busy flag. """
-    return True if self._busy else False
-
-  def setBusy(self, value: object) -> None:
-    """Setter-function for the busy flag. """
-    self._busy = True if value else False
-
-  def activateBusy(self) -> None:
-    """Sets the busy flag True."""
-    self._busy = True
-
-  def deActivateBusy(self) -> None:
-    """Sets the busy flag False."""
-    self._busy = False
-
-  def update(self, ) -> None:
-    """Updater"""
-    promises = self.getPromises()
-    self.activateBusy()
-    while promises:
-      promise = promises.pop(0)
-      promise()
-    promises = self.getPromises()
-    self.deActivateBusy()
-    while promises:
-      self.getPromises().append(promises.pop(0))
-
-  def setFieldOwner(self, fieldOwner: type) -> None:
-    """Setter-function for field owner class."""
-    if self.getFieldName() is None:
-      return self.deferCall(self.setFieldOwner, self, fieldOwner)
-    if self.getFieldSource() is None:
-      return self.deferCall(self.setFieldOwner, self, fieldOwner)
-    self.installFieldOwner(fieldOwner)
-    self.update()
-
-  @abstractmethod
-  def installFieldOwner(self, fieldOwner: type) -> None:
-    """Installs in the field on the owner."""
-
-  def fieldInstanceCreatorFactory(self, source: type) -> Function:
-    """Creates the field default value from the given source type."""
-
-    try:
-      defVal = self.getDefaultValue()
-    except Exception as error:
-      handle = getattr(error, 'handle')
-      handle()
-      defVal = None
-
-    if defVal is not None:
-      def creator(*_) -> object:
-        """Creator Function"""
-        return defVal
-
-      return creator
-
-    def creator(*_) -> object:
-      """Creator function"""
-      func = getattr(source, '__get_default_instance__', None)
-      if func is None:
-        return source()
-      return func()
-
-    return creator
 
   @abstractmethod
   def explicitGetter(self, obj: object, cls: type) -> object:
@@ -170,6 +75,10 @@ class _AbstractFieldProperties(AbstractDescriptor):
   def explicitDeleter(self, obj: object, ) -> object:
     """Explicit deleter function. Subclasses must implement this method."""
 
+  @abstractmethod
+  def __set_name__(self, fieldOwner: type, fieldName: str) -> None:
+    """The AbstractField method does provide does method."""
+
 
 class AbstractField(_AbstractFieldProperties):
   """Field class"""
@@ -177,24 +86,36 @@ class AbstractField(_AbstractFieldProperties):
   def __init__(self, *args, **kwargs) -> None:
     _AbstractFieldProperties.__init__(self, *args, **kwargs)
 
-  def wrappedInitFactory(self, fieldOwner: type) -> Function:
-    """Creates a wrapped __init__ method."""
+  def explicitGetter(self, obj: object, cls: type) -> object:
+    """Explicit getter function. Tries to find the _get[NAME] method on
+    the object."""
+    getterKey = self.getGetterName()
+    getterFunc = getattr(obj, getterKey, None)
+    if getterFunc is None:
+      warn('Getter-function for obj %s not available!' % obj)
+      return 'Missing Getter!'
+    value = getterFunc(obj)
+    return value
 
-    source = self.getFieldSource()
-    originalInit = getattr(fieldOwner, '__init__')
-    defValFactory = self.fieldInstanceCreatorFactory(source)
+  def explicitSetter(self, obj: object, newValue: object) -> object:
+    """Explicit setter function. Tries to find the _set[NAME] method on
+    the object."""
+    setterKey = self.getSetterName()
+    setterFunc = getattr(obj, setterKey, None)
+    if setterFunc is None:
+      warn('Setter-function for obj %s not available!' % obj)
+      return
+    setterFunc(obj, newValue)
 
-    def __wrapped_init__(instance: object, *args, **kwargs):
-      originalInit(instance, *args, **kwargs)
-      privateName = self.getPrivateName()
-      defVal = None
-      for arg in args:
-        if isinstance(arg, source) and defVal is None:
-          defVal = arg
-      defVal = defValFactory() if defVal is None else defVal
-      setattr(instance, privateName, defVal)
-
-    return __wrapped_init__
+  def explicitDeleter(self, obj: object, ) -> object:
+    """Explicit deleter function. Tries to find the _set[NAME] method on
+    the object."""
+    deleterKey = self.getDeleterName()
+    deleterFunc = getattr(obj, deleterKey, None)
+    if deleterFunc is None:
+      warn('Deleter-function for obj %s not available!' % obj)
+      return
+    deleterFunc(obj)
 
   def parseInstanceFunctionFactory(self, ) -> Function:
     """Getter-function for instance parsing function."""
@@ -210,10 +131,11 @@ class AbstractField(_AbstractFieldProperties):
 
     return parseInstance
 
-  def deleterFunctionFactory(self, fieldOwner) -> Function:
+  def deleterFunctionFactory(self, ) -> Function:
     """Factory for deleter function."""
     pvtName = self.getPrivateName()
     parseInstance = self.parseInstanceFunctionFactory()
+    fieldOwner = self.getFieldOwner()
 
     def deleter(*args) -> None:
       """Deleter-function"""
@@ -222,11 +144,12 @@ class AbstractField(_AbstractFieldProperties):
 
     return deleter
 
-  def setterFunctionFactory(self, fieldOwner) -> Function:
+  def setterFunctionFactory(self, ) -> Function:
     """Factory for setter function."""
     pvtName = self.getPrivateName()
     parseInstance = self.parseInstanceFunctionFactory()
     fieldSource = self.getFieldSource()
+    fieldOwner = self.getFieldOwner()
 
     def setter(*args) -> None:
       """Setter-function."""
@@ -236,10 +159,11 @@ class AbstractField(_AbstractFieldProperties):
 
     return setter
 
-  def getterFunctionFactory(self, fieldOwner) -> Function:
+  def getterFunctionFactory(self, ) -> Function:
     """Factory for getter function"""
     pvtName = self.getPrivateName()
     parseInstance = self.parseInstanceFunctionFactory()
+    fieldOwner = self.getFieldOwner()
 
     def getter(*args) -> object:
       """Getter-function"""
@@ -248,49 +172,52 @@ class AbstractField(_AbstractFieldProperties):
 
     return getter
 
-  def installFieldOwner(self, fieldOwner: type) -> None:
+  def setFieldOwner(self, fieldOwner: type) -> None:
     """Installs in the field on the owner."""
-    if self.getFieldName() is None or self.getFieldSource() is None:
-      return self.deferCall(self.installFieldOwner, self, fieldOwner)
+    initName = '__init__'
     getName = self.getGetterName()
     setName = self.getSetterName()
     delName = self.getDeleterName()
 
-    __wrapped_init__ = self.wrappedInitFactory(fieldOwner)
-    __getter_function__ = self.getterFunctionFactory(fieldOwner)
-    __setter_function__ = self.setterFunctionFactory(fieldOwner)
-    __deleter_function__ = self.deleterFunctionFactory(fieldOwner)
+    __wrapped_init__ = self.wrappedInitFactory()
+    __getter_function__ = self.getterFunctionFactory()
+    __setter_function__ = self.setterFunctionFactory()
+    __deleter_function__ = self.deleterFunctionFactory()
 
-    setattr(fieldOwner, '__init__', __wrapped_init__)
+    setattr(fieldOwner, initName, __wrapped_init__)
     setattr(fieldOwner, getName, __getter_function__)
     setattr(fieldOwner, setName, __setter_function__)
     setattr(fieldOwner, delName, __deleter_function__)
-    self.update()
 
-  def explicitGetter(self, obj: object, cls: type) -> object:
-    """Explicit getter function. Subclasses must implement this method."""
-    getterKey = self.getGetterName()
-    getterFunc = getattr(obj, getterKey, None)
-    if getterFunc is None:
-      warn('Getter-function for obj %s not available!' % obj)
-      return 'Missing Getter!'
-    value = getterFunc(obj)
-    return value
+  def wrappedInitFactory(self, ) -> Function:
+    """Creates a wrapped __init__ method."""
+    source = self.getFieldSource()
+    originalInit = getattr(self.getFieldOwner, '__init__')
+    privateName = self.getPrivateName()
+    defValFactory = self.maybe(self.getDefValFactory, lambda *__, **_: None)
+    if not isinstance(defValFactory, Function):
+      from worktoy.waitaminute import TypeSupportError
+      raise TypeSupportError(Function, defValFactory, 'defValFactory')
 
-  def explicitSetter(self, obj: object, newValue: object) -> object:
-    """Explicit setter function. Subclasses must implement this method."""
-    setterKey = self.getSetterName()
-    setterFunc = getattr(obj, setterKey, None)
-    if setterFunc is None:
-      warn('Setter-function for obj %s not available!' % obj)
-      return
-    setterFunc(obj, newValue)
+    def __wrapped_init__(instance: object, *args, **kwargs) -> None:
+      originalInit(instance, *args, **kwargs)
+      defVal = defValFactory(instance, *args, **kwargs)
+      defValArg = self.maybeType(source, *args)
+      defVal = self.maybe(defValArg, defVal)
+      setattr(instance, privateName, defVal)
 
-  def explicitDeleter(self, obj: object, ) -> object:
-    """Explicit deleter function. Subclasses must implement this method."""
-    deleterKey = self.getDeleterName()
-    deleterFunc = getattr(obj, deleterKey, None)
-    if deleterFunc is None:
-      warn('Deleter-function for obj %s not available!' % obj)
-      return
-    deleterFunc(obj)
+    return __wrapped_init__
+
+  def __set_name__(self, fieldOwner: type, fieldName: str) -> None:
+    self.setFieldName(fieldName)
+    self.setFieldOwner(fieldOwner)
+
+  @abstractmethod
+  def getFieldSource(self) -> type:
+    """Subclasses must implement this method."""
+
+  def getDefValFactory(self, ) -> Any:
+    """This method provides a custom default value. If subclasses
+    implement this method, it should return a function creating the
+    default value.If a subclass does not implement this method, the field
+    source class is expected to provide handling the default value. """
