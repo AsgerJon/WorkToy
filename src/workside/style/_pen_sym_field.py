@@ -14,7 +14,7 @@ class PenSymField(SymField):
   Field class for the symbolic line style class."""
 
   def __init__(self, *args, **kwags) -> None:
-    SymField.__init__(self, PenSym, 1, *args, **kwags)
+    SymField.__init__(self, PenSym, 0, *args, **kwags)
 
   def getSymClass(self) -> SyMeta:
     return PenSym

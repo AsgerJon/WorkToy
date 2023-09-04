@@ -17,10 +17,11 @@ class RGB(BaseSym):
   R = IntField(127)
   G = IntField(255)
   B = IntField(0)
+  A = IntField(255)
 
   def asQColor(self) -> QColor:
     """Converts to instance of QColor."""
-    return QColor(self.R, self.G, self.B)
+    return QColor(self.R, self.G, self.B, self.A)
 
   white = SYM.auto()
   white.R = 255

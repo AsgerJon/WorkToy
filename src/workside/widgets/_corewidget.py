@@ -28,9 +28,6 @@ class CoreWidget(QWidget, DefaultClass):
   paintStart = Signal()
   paintEnd = Signal()
 
-  verticalAlignment = SymField(AlignmentSym)
-  horizontalAlignment = SymField(AlignmentSym)
-
   def __init__(self, *args, **kwargs) -> None:
     DefaultClass.__init__(self, *args, **kwargs)
     parent = self.maybeType(QWidget, *args)
@@ -47,4 +44,3 @@ class CoreWidget(QWidget, DefaultClass):
   def paintEvent(self, event: QPaintEvent) -> None:
     """Implementation of paint event"""
     self.paintStart.emit()
-    

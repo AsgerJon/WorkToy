@@ -59,7 +59,7 @@ class SymSpace(AbstractNameSpace):
     contentItems = [pair for pair in dict.items(self)]
     keyWordItems = [pair for pair in self._getKeySyms().items()]
     for (key, val) in [*contentItems, *keyWordItems]:
-      key = key.replace(' ', '_').replace('.', '')
+      key = key.replace(' ', '_').replace('.', '').lower()
       if self._validateInstance(key, val):
         self._instanceSpace |= {key: val}
       self._nameSpace |= {key: val}

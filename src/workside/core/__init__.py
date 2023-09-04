@@ -4,4 +4,4 @@ Provides the core classes for WorkSide"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._default_side import DefaultSide
+# from ._default_side import DefaultSide

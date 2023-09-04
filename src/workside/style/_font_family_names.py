@@ -38,3 +38,4 @@ _families = """Arial,
 
 data = _families.replace('\n', '').split(',')
 FAMILIES = [item.strip() for item in data]
+FAMILIES = {k: v for (v, k) in enumerate(FAMILIES)}

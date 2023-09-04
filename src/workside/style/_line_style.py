@@ -17,7 +17,8 @@ class Line(DefaultClass):
 
   color = RGBField(RGB.black)
   width = IntField(1)
-  pen = PenSymField(0)
+  # pen = PenSymField(0)
+  pen = PenSym.solid
 
   @View('style')
   def getPen(self) -> QPen:
@@ -37,6 +38,6 @@ class Line(DefaultClass):
 
 
 lineBase = Line()
-lineBase.color = RGB.BLACK
+lineBase.color = RGB.black
 lineBase.width = 1
-lineBase.pen = PenSym.SOLID
+lineBase.pen = PenSym.solid

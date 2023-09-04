@@ -6,14 +6,14 @@ from __future__ import annotations
 
 from icecream import ic
 
-from worktoy.base import DefaultClass
 from worktoy.core import Bases, Map
+from worktoy.base import DefaultClass
 from worktoy.metaclass import AbstractMetaClass
 
 ic.configureOutput(includeContext=True)
 
 
-class GeoMeta(AbstractMetaClass, DefaultClass):
+class GeoMeta(AbstractMetaClass, ):
   """WorkSide - Geometry - GeoMeta
   Metaclass for the geometries"""
 

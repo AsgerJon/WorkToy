@@ -39,6 +39,6 @@ class Font(DefaultClass):
 
 
 fontBase = Font()
-fontBase.family = FontFamily.MODERN_NO_20
+fontBase.family = FontFamily.Modern_No_20
 fontBase.fontSize = 12
-fontBase.weight = FontWeight.NORMAL
+fontBase.weight = FontWeight.normal

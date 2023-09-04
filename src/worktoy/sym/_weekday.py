@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from icecream import ic
 
-from worktoy.sym import SYM, BaseSym
+from worktoy.sym import BaseSym, SYM
 
 ic.configureOutput(includeContext=True)
 

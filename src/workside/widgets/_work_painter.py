@@ -5,9 +5,11 @@ WorkSide framwork."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
+from builtins import str
 from typing import Any
 
-from PySide6.QtGui import QPainter, QPaintDevice, QFont, QPen, QBrush
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPainter, QPaintDevice, QFont, QPen, QBrush, QColor
 
 from workside.style import Font, Line, Fill
 from workside.widgets import CoreWidget
@@ -18,6 +20,28 @@ class WorkPainter(QPainter):
   """WorkSide - Style - WorkPainter
   Subclass of QPainter implementing direct support for classes in the
   WorkSide framwork."""
+
+  @View('noLine')
+  def getEmptyPen(self) -> QPen:
+    """Getter-function for the empty pen"""
+    pen = QPen()
+    pen.setStyle(Qt.PenStyle.NoPen)
+    pen.setColor(QColor(255, 255, 255, 0))
+    pen.setWidget(1)
+    return pen
+
+  @View('noBrush')
+  def getEmptyBrush(self) -> QBrush:
+    """Getter-function for the empty brush."""
+    brush = QBrush()
+    brush.setStyle(Qt.BrushStyle.NoBrush)
+    brush.setColor(QColor(255, 255, 255, 0))
+    return brush
+
+  @View('baseFont')
+  def getBaseFont(self) -> QFont:
+    """Getter-function for a basic font."""
+    raise NotImplementedError
 
   @View('widget')
   def getWidget(self) -> CoreWidget:
@@ -55,32 +79,34 @@ class WorkPainter(QPainter):
   def setFont(self, fontData: Any) -> None:
     """Implementation of the font setter function to accept WorkSide
     classes."""
-    if isinstance(fontData, QFont):
-      return QPainter.setFont(self, fontData)
-    if isinstance(fontData, Font):
-      return QPainter.setFont(self, fontData.style)
     if isinstance(fontData, CoreWidget):
       return QPainter.setBrush(self, fontData.style.font)
 
   def setPen(self, lineData: Any) -> None:
     """Implementation of the pen setter function to accept WorkSide
     classes."""
-    if isinstance(lineData, QPen):
-      return QPainter.setPen(self, lineData)
-    if isinstance(lineData, Line):
-      return QPainter.setPen(self, lineData.style)
     if isinstance(lineData, CoreWidget):
       return QPainter.setBrush(self, lineData.style.pen)
 
   def setBrush(self, fillData: Any) -> None:
     """Implementation of the brush setter function to accept WorkSide
     classes."""
-    if isinstance(fillData, QBrush):
-      return QPainter.setBrush(self, fillData)
-    if isinstance(fillData, Fill):
-      return QPainter.setBrush(self, fillData.style)
     if isinstance(fillData, CoreWidget):
       return QPainter.setBrush(self, fillData.style.brush)
+
+  def __rmatmul__(self, other: Any) -> None:
+    if isinstance(other, QBrush):
+      return QPainter.setBrush(self, other)
+    if isinstance(other, Fill):
+      return QPainter.setBrush(self, other.style)
+    if isinstance(other, QPen):
+      return QPainter.setPen(self, other)
+    if isinstance(other, Line):
+      return QPainter.setPen(self, other.style)
+    if isinstance(other, QFont):
+      return QPainter.setFont(self, other)
+    if isinstance(other, Font):
+      return QPainter.setFont(self, other.style)
 
   def printText(self, ) -> None:
     """Custom method combining the steps required to print a text field:
@@ -93,3 +119,15 @@ class WorkPainter(QPainter):
     align = self.widget.rect.align
     viewRect = self.viewport()
     textRect = rect.align(viewRect)
+    #  Fills the background behind the text
+    self.widget.textBackgroundBrush @ self
+    self.noPen @ self
+    self.drawRect(textRect)
+    #  Draws a borderline around the text field
+    self.noBrush @ self
+    self.widget.borderPen @ self
+    self.drawRoundedRect(textRect, 4, 4)
+    #  Writes the text
+    self.widget.textPen @ self
+    self.widget.textFont @ self
+    self.drawText(textRect, text)

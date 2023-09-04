@@ -33,6 +33,5 @@ class FontWeight(BaseSym, symNames=WEIGHTS):
       other.setWeight(self.toQFontWeight())
       return other
 
-
-for weight in WEIGHTS:
-  setattr(FontWeight, weight, SYM.auto())
+# for weight in WEIGHTS:
+#   setattr(FontWeight, weight, SYM.auto())

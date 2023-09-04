@@ -16,11 +16,12 @@ class Fill(DefaultClass):
   Representation of style settings for QBrush."""
 
   color = RGBField(RGB.yellow)
-  brush = BrushSymFill(1)
+  brush = None
 
   @View('style')
   def getBrush(self) -> QBrush:
     """Getter-function for the QBrush."""
+    self.__class__.brush = BrushSymFill(1)
     brush = QBrush()
     brush.setColor(self.color)
     brush.setStyle(self.brush)
@@ -35,5 +36,5 @@ class Fill(DefaultClass):
 
 
 fillBase = Fill()
-fillBase.color = RGB.WHITE
-fillBase.brush = BrushSym.EMPTY
+fillBase.color = RGB.white
+fillBase.brush = BrushSym.empty

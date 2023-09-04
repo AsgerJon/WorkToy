@@ -14,7 +14,7 @@ class BrushSymFill(SymField):
   Field class for the symbolic brush style class."""
 
   def __init__(self, *args, **kwags) -> None:
-    SymField.__init__(self, BrushSym, 1, *args, **kwags)
+    SymField.__init__(self, BrushSym, 0, *args, **kwags)
 
   def getSymClass(self) -> SyMeta:
     return BrushSym

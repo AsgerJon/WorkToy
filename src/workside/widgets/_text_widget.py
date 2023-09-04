@@ -11,9 +11,14 @@ from icecream import ic
 
 from workside.geometry import Rect, Size
 from workside.settings import defaultFontSize
-from workside.style import FontSizeField, RGBField, FontFamily, FontWeight, \
-  fontBase, lineBase, fillBase, styleBase
+from workside.style import (FontSizeField, RGBField, FontFamily,
+                            FontWeight, \
+                            fontBase, lineBase, fillBase, styleBase, Fill,
+                            RGB, BrushSym, Line,
+                            PenSym, \
+                            Font)
 from workside.widgets import CoreWidget
+from workside.widgets._work_painter import WorkPainter
 from worktoy.core import loremSample
 from worktoy.fields import SymField, IntLabel, StrField, View
 
@@ -27,7 +32,25 @@ class TextWidget(CoreWidget):
   horizontalAlign = 'left'
   verticalAlign = 'center'
 
-  style = styleBase
+  textBackgroundBrush = Fill
+  textBackgroundBrush.color = RGB.yellow
+  textBackgroundBrush.brush = BrushSym.blank
+
+  textPen = Line()
+  textPen.color = RGB.black
+  textPen.width = 1
+  textPen.pen = PenSym.solid
+
+  borderPen = Line()
+  borderPen.color = RGB.black
+  borderPen.width = 2
+  borderPen.pen = PenSym.solid
+
+  textFont = Font()
+  textFont.family = FontFamily.modern_no_20
+  textFont.fontSize = 12
+  textFont.weight = FontWeight.normal
+
   Text = StrField('LMAO')
 
   def getFlags(self) -> Qt.AlignmentFlag:
@@ -63,7 +86,7 @@ class TextWidget(CoreWidget):
 
   def paintEvent(self, event: QPaintEvent) -> None:
     """Implementation of paint event."""
-    painter = QPainter()
+    painter = WorkPainter()
     painter.begin(self)
-
+    painter.printText()
     painter.end()

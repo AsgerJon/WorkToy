@@ -5,6 +5,8 @@ symbolic classes."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
+from icecream import ic
+
 WEIGHTS = {
   'thin': 100,
   'extraLight': 200,
@@ -16,3 +18,5 @@ WEIGHTS = {
   'extraBold': 800,
   'black': 900,
 }
+
+WEIGHTS = {k: v for (v, k) in enumerate(WEIGHTS.keys())}
