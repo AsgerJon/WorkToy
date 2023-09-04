@@ -8,6 +8,7 @@ from typing import Any
 
 from worktoy.core import Bases
 from worktoy.metaclass import AbstractNameSpace
+from worktoy.sym import SYM
 
 
 class SymSpace(AbstractNameSpace):
@@ -22,7 +23,11 @@ class SymSpace(AbstractNameSpace):
     self._symBase = None
     self._nameSpace = None
     self._instanceSpace = None
-    
+    self._keywordSym = kwargs.get('symNames', [])
+
+  def _getKeySyms(self) -> dict:
+    return {k: SYM.auto() for k in self._keywordSym}
+
   def _setSymbolicBaseclass(self, ) -> None:
     if self._symbolicBaseclass is not None:
       from worktoy.waitaminute import ValueExistsError
@@ -51,7 +56,10 @@ class SymSpace(AbstractNameSpace):
     """Parses the data removing the instance creations in the class body."""
     self._instanceSpace = {}
     self._nameSpace = {}
-    for (key, val) in dict.items(self):
+    contentItems = [pair for pair in dict.items(self)]
+    keyWordItems = [pair for pair in self._getKeySyms().items()]
+    for (key, val) in [*contentItems, *keyWordItems]:
+      key = key.replace(' ', '_').replace('.', '')
       if self._validateInstance(key, val):
         self._instanceSpace |= {key: val}
       self._nameSpace |= {key: val}

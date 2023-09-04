@@ -6,19 +6,38 @@ Metaclass implementing Symbolic classes.
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, Union, TYPE_CHECKING
 
 from worktoy.base import DefaultClass
-from worktoy.core import Bases
+from worktoy.core import Bases, Keys, Values, Items
+from worktoy.fields import AbstractField, SymField
 from worktoy.guards import TypeGuard, NoneGuard, SomeGuard
-from worktoy.metaclass import AbstractMetaClass
-from worktoy.sym import SymSpace, SYM
+from worktoy.metaclass import AbstractMetaClass, MetaMetaClass
+from worktoy.sym import SymSpace
 from icecream import ic
+
+if TYPE_CHECKING:
+  from worktoy.sym import SYM
 
 ic.configureOutput(includeContext=True)
 
 
-class _SyMeta(AbstractMetaClass):
+class SyMetaMeta(MetaMetaClass):
+  """Applies subclass check on the metaclass"""
+
+  def __subclasscheck__(cls, subclass):
+    names = ['__symbolic_class__', '__symbolic_baseclass__']
+
+    for name in names:
+      if hasattr(subclass, name):
+        return True
+    return False
+
+  def __instancecheck__(cls, instance):
+    return True if cls.__subclasscheck__(instance.__class__) else False
+
+
+class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
   """WorkToy - SYM - SyMeta
   Metaclass implementing Symbolic classes. """
 
@@ -34,9 +53,10 @@ class _SyMeta(AbstractMetaClass):
   def __new__(mcls, name: str, bases: Bases, data: SymSpace, **kw) -> type:
     nameSpace = data.getNameSpace()
     instanceSpace = data.getInstanceSpace()
-    out = AbstractMetaClass.__new__(mcls, name, bases, nameSpace, **kw)
+    out = AbstractMetaClass.__new__(mcls, name, bases, nameSpace, )
     setattr(out, '__instance_space__', instanceSpace)
     setattr(out, '__symbolic_instances__', {})
+    setattr(out, '__symbolic_class__', True)
     return out
 
   def __init__(cls, *args, **kwargs) -> None:
@@ -45,48 +65,54 @@ class _SyMeta(AbstractMetaClass):
     instanceSpace = getattr(cls, '__instance_space__', None)
     symbolicInstances = cls.dictGuard(symbolicInstances,
                                       '__symbolic_instances__')
-    instanceSpace = cls.dictGuard(instanceSpace,
-                                  '__instance_space__')
-    for (i, (key, val)) in enumerate(instanceSpace.items()):
+    instanceSpace = cls.dictGuard(instanceSpace, '__instance_space__')
+    instanceList = instanceSpace.items()
+    instances = getattr(cls, '__symbolic_instances__')
+    for (i, (key, val)) in enumerate(instanceList):
       val.setInnerClass(cls)
       val.setValue(i)
       newInstance = cls(*val.getArgs(), **val.getKwargs(), )
-      instances = getattr(cls, '__symbolic_instances__')
       val.setInnerInstance(newInstance)
       instances |= {key.lower(): val}
+    setattr(cls, '__symbolic_instances__', instances)
 
   def __call__(cls, *args, **kwargs) -> Any:
     if kwargs.get('__instance_creation__', False):
       return type.__call__(cls, *args, **kwargs)
-    strArg = None
-    intArg = None
+    index, key = None, None
     for arg in args:
-      if isinstance(arg, str) and strArg is None:
-        strArg = arg
-      if isinstance(arg, int) and intArg is None:
-        intArg = arg
-    instances = getattr(cls, '__symbolic_instances__')
-    for (key, val) in instances.items():
-      if key in [strArg, intArg]:
-        return val
+      if isinstance(arg, int) and index is None:
+        index = arg
+      if isinstance(arg, str) and key is None:
+        key = arg
+    indexVal = cls.getInstanceAtIndex(index, _allowError=True)
+    if indexVal is not None:
+      return indexVal
+    keyVal = cls.getInstanceAtKey(key, _allowError=True)
+    if keyVal is not None:
+      return keyVal
+    raise KeyError(key) from IndexError(index)
 
   def getInstances(cls, ) -> dict[str, SYM]:
     """Getter-function for symbolic instances."""
     return getattr(cls, '__symbolic_instances__')
 
-  def getInstanceAtIndex(cls, index: int) -> SYM:
+  def getInstanceAtIndex(cls, index: int, **kwargs) -> SYM:
     """Getter-function for the item at the given index."""
     for (key, val) in cls.getInstances().items():
-      if val._value == index:
+      if val.value == index:
         return val
-    raise IndexError(index)
+    if not kwargs.get('_allowError', False):
+      raise IndexError(index)
 
-  def getInstanceAtKey(cls, key: str) -> SYM:
+  def getInstanceAtKey(cls, name: str, **kwargs) -> SYM:
     """Getter-function for the item at the given key."""
     for (key, val) in cls.getInstances().items():
-      if val._name == key:
+      if val.name == name:
         return val
-    raise KeyError(key)
+    if not kwargs.get('_allowError', False):
+      raise IndexError(name)
+    raise KeyError(name)
 
   def __len__(cls, ) -> int:
     """Number of symbolic instances"""
@@ -113,7 +139,41 @@ class _SyMeta(AbstractMetaClass):
       return cls.getInstanceAtKey(key)
     raise TypeError
 
+  def keys(cls) -> Keys:
+    """Implementation of keys method."""
+    return cls.getInstances().keys()
 
-class SyMeta(DefaultClass, metaclass=_SyMeta):
+  def values(cls) -> Values:
+    """Implementation of keys method."""
+    return cls.getInstances().values()
+
+  def items(cls) -> Items:
+    """Implementation of keys method."""
+    return cls.getInstances().items()
+
+  def __contains__(cls, item: Any) -> bool:
+    return True if (len(cls) - item) ** 2 > 0 else False
+
+  def getField(cls) -> AbstractField:
+    """Getter function for the descriptor pointing to this class."""
+    return SymField(cls, 0)
+
+  def __instancecheck__(cls, instance: Any, ) -> bool:
+    return True if instance.__class__.__class__ == SyMeta else False
+
+  def __repr__(cls) -> str:
+    """Code Representation"""
+    return '%s.%s()' % (cls.__class__.__qualname__, cls.__qualname__)
+
+  def __str__(cls) -> str:
+    """String Representation"""
+    clsName = cls.__qualname__
+    mclsName = cls.__class__.__qualname__
+    return 'Symbolic Class: %s.%s' % (clsName, mclsName)
+
+
+class BaseSym(DefaultClass, metaclass=SyMeta):
   """In between class exposing the metaclass."""
-  pass
+
+  def __call__(self, *args, **kwargs) -> Any:
+    return self.__class__.__call__(*args, **kwargs)

@@ -18,8 +18,8 @@ class SomeGuard(AbstractGuard):
     if obj is None:
       return obj
     from worktoy.waitaminute import ValueExistsError
-    raise ValueExistsError(name)
+    raise ValueExistsError(name, obj)
 
   def explicitGetter(self, obj: Any, cls: type) -> Function:
     """Exposes the validate method."""
-    return lambda obj, name: self.validate(obj, name)
+    return lambda instance, name: self.validate(instance, name)

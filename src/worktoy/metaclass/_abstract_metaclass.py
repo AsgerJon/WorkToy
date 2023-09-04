@@ -108,7 +108,7 @@ class AbstractMetaClass(MetaMetaClass):
     MetaClassParams body and passes them to the super call."""
     return super().__new__(mcls, name, bases, nameSpace, **kwargs)
 
-  def __init__(cls, name, bases, nameSpace, **kwargs) -> None:
+  def __init__(cls, name=None, bases=None, nameSpace=None, **kwargs) -> None:
     """The baseclass implementation uses the MetaClassParams instance to
     collect and pass the arguments to the super call."""
     MetaMetaClass.__init__(cls, name, bases, nameSpace, **kwargs)

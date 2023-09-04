@@ -15,4 +15,9 @@ class BaseWindow(QMainWindow, DefaultClass):
 
   def __init__(self, *args, **kwargs) -> None:
     DefaultClass.__init__(self, *args, **kwargs)
-    QMainWindow.__init__(self, self.maybeType(QWidget, *args))
+    parent = self.maybeType(QWidget, *args)
+    QMainWindow.__init__(self, )
+
+  def show(self) -> None:
+    """Passes to super call"""
+    QMainWindow.show(self)

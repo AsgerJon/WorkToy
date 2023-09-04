@@ -18,7 +18,7 @@ class TypeSupportError(MetaXcept):
     MetaXcept.__init__(self, expectedType, actualValue, argName)
     self._expectedType = self.pretty(expectedType)
     self._actualValue = self.pretty(actualValue)
-    self._actualType = self.pretty(type(actualValue))
+    self._actualType = self.pretty(actualValue.__class__)
     self._argName = self.pretty(argName)
 
   def __str__(self, ) -> str:

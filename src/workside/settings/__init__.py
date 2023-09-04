@@ -5,3 +5,5 @@ This module provides default values"""
 from __future__ import annotations
 
 defaultFontFamily = 'Modern No. 20'
+defaultFontWeight = 'normal'
+defaultFontSize = 12

@@ -10,6 +10,7 @@ from typing import Never, Any
 from icecream import ic
 
 from worktoy.base import DefaultClass
+from worktoy.metaclass import AbstractNameSpace
 
 ic.configureOutput(includeContext=True)
 

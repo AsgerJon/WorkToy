@@ -5,13 +5,18 @@ Abstract baseclass for the custom widgets. """
 from __future__ import annotations
 
 from abc import abstractmethod
+from typing import Any
 
-from PySide6.QtCore import QRect
+from PySide6.QtCore import QRect, Signal
 from PySide6.QtGui import QPaintEvent
 from PySide6.QtWidgets import QWidget
 from icecream import ic
 
 from worktoy.base import DefaultClass
+
+from worktoy.fields import SymField
+from workside.geometry import Rect
+from workside.style import AlignmentSym
 
 ic.configureOutput(includeContext=True)
 
@@ -20,29 +25,26 @@ class CoreWidget(QWidget, DefaultClass):
   """WorkSide - Widgets - CoreWidget
   This class provides the baseclass for the widgets."""
 
+  paintStart = Signal()
+  paintEnd = Signal()
+
+  verticalAlignment = SymField(AlignmentSym)
+  horizontalAlignment = SymField(AlignmentSym)
+
   def __init__(self, *args, **kwargs) -> None:
     DefaultClass.__init__(self, *args, **kwargs)
-    QWidget.__init__(self, self.maybeType(QWidget, *args))
+    parent = self.maybeType(QWidget, *args)
+    QWidget.__init__(self, )
 
-  @abstractmethod
-  def sizeControl(self, ) -> None:
-    """Method responsible for sizing the widget.
-    Subclasses must implement this method. """
+  def getViewport(self) -> Rect:
+    """Getter-function for the viewport."""
+    return Rect(self.visibleRegion().boundingRect())
 
-  @abstractmethod
-  def alignmentControl(self) -> None:
-    """Method responsible for placing the widget in its available space.
-    Subclasses must implement this method."""
-
-  def availableSpace(self) -> QRect:
-    """Getter-function for the rectangle the parent layout makes available
-    to this widget. """
-
-  def resetWidgets(self) -> None:
-    """Resets and creates widgets"""
-
-  def show(self) -> None:
-    """Reimplementation of the show method"""
+  def getViewportQRect(self) -> QRect:
+    """Getter-function for QRect representation of the viewport."""
+    return self.visibleRegion().boundingRect()
 
   def paintEvent(self, event: QPaintEvent) -> None:
     """Implementation of paint event"""
+    self.paintStart.emit()
+    

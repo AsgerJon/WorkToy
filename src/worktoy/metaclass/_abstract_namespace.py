@@ -26,7 +26,7 @@ class AbstractNameSpace(dict, metaclass=MetaNameSpace):
     dict.__setitem__(self, '__name__', '\n |> WorkToy <| SYM\n')
 
   def __setitem__(self, key: str, val: object, *args, **kwargs) -> None:
-    self._log.append(['set', key, val, args, kwargs])
+    self._log.append(['set', key, val, ])
     dict.__setitem__(self, key, val, )
 
   def __getitem__(self, key: str, *args, **kwargs) -> object:

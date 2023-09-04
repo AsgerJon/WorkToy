@@ -17,7 +17,7 @@ from worktoy.core import Function
 ic.configureOutput(includeContext=True)
 
 
-class CoreClass(metaclass=type):
+class CoreClass:
   """WorkToy - Core - CoreClass
   Provides utilities accessible by subclassing this CoreClass or its
   subclasses."""
@@ -51,6 +51,8 @@ class CoreClass(metaclass=type):
 
   def maybe(self, *args, **_) -> Any:
     """Returns the first argument different from None"""
+    if not args:
+      return None
     for arg in args:
       if arg is not None:
         return arg

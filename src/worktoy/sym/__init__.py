@@ -16,7 +16,7 @@ implementation uses the 'auto' method. For example,
     ...
 
 Note that the instances are named in upper case as is convention. The base
-implementation is case insensitive, but presents instances in upper case.
+implementation is case-insensitive, but presents instances in upper case.
 This means that:
 
  WeekDay.Wednesday is 'WeekDay.WEDNESDAY'
@@ -69,7 +69,7 @@ recognized by the rest of the SYM module:
   The default implementation allows for the new class to be callable. By
   default, the instance value ('int') or the instance ('name') may be used
   to retrieve the desired instance by calling the class. For example:
-    WeekDay.Tuesday == WeekDay('tuesday')  # case insensitive
+    WeekDay.Tuesday == WeekDay('tuesday')  # case-insensitive
   If the parsing method is not defined, or the new class itself implements
   '__call__' the above will not be available.
 
@@ -110,5 +110,6 @@ from __future__ import annotations
 
 from ._sym import SYM
 from ._symspace import SymSpace
-from ._symeta import SyMeta
+from ._symeta import SyMeta, BaseSym
 from ._weekday import Weekday
+from ._month import Month

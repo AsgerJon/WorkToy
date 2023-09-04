@@ -4,10 +4,14 @@ Symbolic sample class representation of weekdays with day 0 being monday."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.sym import SyMeta, SYM
+from icecream import ic
+
+from worktoy.sym import SYM, BaseSym
+
+ic.configureOutput(includeContext=True)
 
 
-class Weekday(SyMeta):
+class Weekday(BaseSym):
   """WorkToy - SYM - Weekday
   Symbolic sample class representation of weekdays with day 0 being
   monday."""

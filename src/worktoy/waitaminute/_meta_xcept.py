@@ -99,6 +99,14 @@ class MetaXcept(Exception, DefaultClass, metaclass=_MetaXcept):
     """Getter-function for stack."""
     return self._stack
 
+  def getReversedStack(self) -> list[FrameInfo]:
+    """Getter-function for reversed stack."""
+    _stack = [i for i in self.getStack()]
+    out = []
+    while _stack:
+      out.append(_stack.pop())
+    return out
+
   def getTrace(self) -> Any:
     """Getter-function for trace"""
     return self._trace
@@ -115,15 +123,22 @@ class MetaXcept(Exception, DefaultClass, metaclass=_MetaXcept):
     """Getter-function for functions. FFS"""
     raise NotImplementedError('Intentionally unavailable. Only names.')
 
-  def getSourceFunctionName(self) -> Any:
-    """Getter-function for the function in which the error is raised.
-    Unfortunately, only the name is available from the inspect module. """
+  def getSourceFunctionStack(self) -> list:
+    """Getter-function for the function stack."""
+    out = []
     __exceptional_names__ = self.stringList("""MetaXcept, 
-    AbstractMetaClass, _MetaXcept""") + [self.__class__.__qualname__, ]
+    AbstractMetaClass, _MetaXcept, __guard_validator__""")
+    __exceptional_names__.append(self.__class__.__qualname__)
     for item in self.getFuncQualName():
       scope, func = [*item.split('.'), None, None][:2]
       if scope not in __exceptional_names__:
-        return item
+        out.append(item)
+    return out
+
+  def getSourceFunctionName(self) -> Any:
+    """Getter-function for the function in which the error is raised.
+    Unfortunately, only the name is available from the inspect module. """
+    return self.getSourceFunctionStack()[-1]
 
   def getLocals(self) -> Any:
     """Getter-function for locals"""
@@ -181,3 +196,36 @@ class MetaXcept(Exception, DefaultClass, metaclass=_MetaXcept):
     selfMessage = str(self).replace(selfHeader, '')
     otherMessage = str(other).replace(otherHeader, '')
     return '\n'.join([header, subHeader, selfMessage, otherMessage])
+
+  # def collectInfo(self, ) -> list:
+  #   """Collects details for each function step"""
+  #   out = []
+  #   for f in self.getReversedStack():
+  #     out.append(self.collectStepInfo(f))
+  #   return out
+  #
+  # def collectNames(self, ) -> list:
+  #   """Collects function names."""
+  #
+  # def collectStepInfo(self, step: Any) -> dict:
+  #   """Collects details for one step"""
+  #   globalSnapshot = globals().items()
+  #   globalSnapshot = {k: v for (k, v) in globalSnapshot}
+  #   name = step.frame.f_code.co_qualname
+  #   argNames = step.frame.f_code.co_qualname
+  #   func = globalSnapshot.get(name)
+  #   note = getattr(func, '__annotations__', None)
+  #   if note is None:
+  #     return {}
+  #   notes = {}
+  #   for arg in [*argNames, 'return']:
+  #     notes |= {arg: note.get(arg, 'None')}
+  #   return dict(name=name, func=func, notes=notes)
+  #
+  # def funcInfo(self, ) -> Any:
+  #   """Function information"""
+  #   out = []
+  #   for info in self.collectInfo():
+  #     if info.get('name', None) != '<module>':
+  #       out.append(info)
+  #   return out

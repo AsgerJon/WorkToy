@@ -5,7 +5,6 @@ circumstances."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._metaguard import MetaGuard
 from ._abstract_guard import AbstractGuard
 from ._none_guard import NoneGuard
 from ._some_guard import SomeGuard

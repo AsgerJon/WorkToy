@@ -22,4 +22,4 @@ class NoneGuard(AbstractGuard):
 
   def explicitGetter(self, obj: Any, cls: type) -> Function:
     """Exposes the validate method."""
-    return lambda obj, name: self.validate(obj, name)
+    return lambda instance, name: self.validate(instance, name)

@@ -8,3 +8,5 @@ from ._meta_metaclass import MetaMetaClass
 from ._abstract_metaclass import AbstractMetaClass
 from ._meta_namespace import MetaNameSpace
 from ._abstract_namespace import AbstractNameSpace
+from ._meta_num_space import MetaNumSpace
+from ._meta_num_class import MetaNumClass
