@@ -23,8 +23,7 @@ class SymField(IntField, ):
   def __init__(self, sym: SyMeta, defVal: Any = None,
                *args, **kwargs) -> None:
     defVal = 0 if defVal is None else defVal
-    defInstance = sym(defVal)
-    intVal = defInstance.value
+    intVal = 1
     IntField.__init__(self, intVal, *args, **kwargs)
     self._defaultValue = intVal
     self._symbolicClass = sym

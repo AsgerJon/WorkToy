@@ -52,7 +52,6 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     nameSpace = data.getNameSpace()
     instanceSpace = data.getInstanceSpace()
     instanceSpace = {k.lower(): v for (k, v) in instanceSpace.items()}
-    # instanceSpace = data.getInstanceSpace()
     out = AbstractMetaClass.__new__(mcls, name, bases, nameSpace, )
     setattr(out, '__instance_space__', instanceSpace)
     setattr(out, '__symbolic_instances__', {})
@@ -65,7 +64,7 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     for key, val in symNames.items():
       sym = SYM()
       sym.__set_name__(cls, key.lower())
-      setattr(getattr(sym, 'innerInstance'), 'value', val)
+      setattr(sym, 'value', val)
 
   def __call__(cls, *args, **kwargs) -> Any:
     if kwargs.get('__instance_creation__', False):
@@ -83,7 +82,6 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     indexVal = cls.getInstanceAtIndex(index, _allowError=True)
     if indexVal is not None:
       return indexVal
-    raise KeyError(key) from IndexError(index)
 
   def getInstances(cls, ) -> list[SYM]:
     """Getter-function for symbolic instances."""
@@ -95,8 +93,6 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     for (i, item) in enumerate(existing):
       if i == index:
         return item
-    print(cls, index, existing)
-    raise IndexError(index)
 
   def getInstanceAtKey(cls, name: str, **kwargs) -> SYM:
     """Getter-function for the item at the given key."""

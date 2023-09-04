@@ -8,7 +8,7 @@ from ._abstract_descriptor import AbstractDescriptor
 from ._abstract_field import AbstractField
 from ._float_field import FloatField, FloatLabel
 from ._noise_field import NoiseField
-from ._bool_field import BoolField, BoolLabel
+from ._flag import Flag
 from ._int_field import IntField, IntLabel
 from ._sym_field import SymField, SymLabel
 from ._str_field import StrField, StrLabel

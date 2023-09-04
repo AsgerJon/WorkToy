@@ -10,7 +10,7 @@ from icecream import ic
 
 from worktoy.base import DefaultClass
 from worktoy.core import ARGS, KWARGS, Function
-from worktoy.fields import AbstractField, StrField, IntField
+from worktoy.fields import AbstractField, StrField, IntField, View
 from worktoy.guards import TypeGuard
 
 ic.configureOutput(includeContext=True)
@@ -55,11 +55,9 @@ class SYM(DefaultClass):
     setattr(self._owner, '__symbolic_instances__', [*existing, self])
 
   def __get__(self, obj: object, cls: type) -> Any:
-    ic(cls)
     try:
       return self
     except AttributeError as e:
-      ic(self, obj, cls)
       raise e
 
   def __set__(self, obj: object, newValue: Any) -> Never:

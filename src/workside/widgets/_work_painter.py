@@ -5,15 +5,9 @@ WorkSide framwork."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from builtins import str
 from typing import Any
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPaintDevice, QFont, QPen, QBrush, QColor
-
-from workside.style import Font, Line, Fill
-from workside.widgets import CoreWidget
-from worktoy.fields import View
+from PySide6.QtGui import QPainter, QFont, QPen, QBrush
 
 
 class WorkPainter(QPainter):
@@ -21,40 +15,10 @@ class WorkPainter(QPainter):
   Subclass of QPainter implementing direct support for classes in the
   WorkSide framwork."""
 
-  @View('noLine')
-  def getEmptyPen(self) -> QPen:
-    """Getter-function for the empty pen"""
-    pen = QPen()
-    pen.setStyle(Qt.PenStyle.NoPen)
-    pen.setColor(QColor(255, 255, 255, 0))
-    pen.setWidget(1)
-    return pen
-
-  @View('noBrush')
-  def getEmptyBrush(self) -> QBrush:
-    """Getter-function for the empty brush."""
-    brush = QBrush()
-    brush.setStyle(Qt.BrushStyle.NoBrush)
-    brush.setColor(QColor(255, 255, 255, 0))
-    return brush
-
-  @View('baseFont')
-  def getBaseFont(self) -> QFont:
-    """Getter-function for a basic font."""
-    raise NotImplementedError
-
-  @View('widget')
-  def getWidget(self) -> CoreWidget:
-    """Getter-function for the actively painted widget."""
-    if isinstance(self.device(), CoreWidget):
-      return self.device()
-    from worktoy.waitaminute import TypeSupportError
-    raise TypeSupportError(CoreWidget, self.device(), 'device')
-
   def __init__(self, *args, **kwargs) -> None:
     QPainter.__init__(self, *args, **kwargs)
 
-  def begin(self, coreWidget: QPaintDevice) -> None:
+  def begin(self, coreWidget: CoreWidget) -> None:
     """Implementation of 'begin' to emit begin signal."""
     if not isinstance(coreWidget, CoreWidget):
       from worktoy.waitaminute import TypeSupportError
@@ -77,7 +41,7 @@ class WorkPainter(QPainter):
     QPainter.end(self)
 
   def setFont(self, fontData: Any) -> None:
-    """Implementation of the font setter function to accept WorkSide
+    """Implementation of the text setter function to accept WorkSide
     classes."""
     if isinstance(fontData, CoreWidget):
       return QPainter.setBrush(self, fontData.style.font)
@@ -114,7 +78,7 @@ class WorkPainter(QPainter):
     if not self.isActive():
       from worktoy.waitaminute import UnexpectedStateError
       raise UnexpectedStateError('isActive')
-    text = self.widget.text
+    text = self.widget.Text
     rect = self.widget.rect
     align = self.widget.rect.align
     viewRect = self.viewport()

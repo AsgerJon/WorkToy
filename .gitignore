@@ -74,18 +74,6 @@ docs/_build/
 # PyBuilder
 .pybuilder/
 target/
-mainOLD02.py
-mainOLD.py
-../WorkToyOLD10/workstyle/_layoutwindow.py
-mainclass.py
-_mainclass.py
-_mainclass00.py
-_mainclass01.py
-_mainclass02.py
-_mainclass03.py
-_mainclass04.py
-_mainclass05.py
-_mainclass06.py
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -190,3 +178,14 @@ _scratcher.py
 /mainclass__ (2).py
 /mainclass__ (3).py
 /mainclass__ (4).py
+/mainclass.py
+/_mainclass.py
+/_mainclass00.py
+/_mainclass01.py
+/_mainclass02.py
+/_mainclass03.py
+/_mainclass04.py
+/_mainclass05.py
+/_mainclass06.py
+/_mainclass07.py
+/_unstupid.py

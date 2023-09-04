@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QGridLayout, QWidget, QPushButton
 
+from workside.widgets._text_widget import TextWidget
 from workside.window import BaseWindow
 
 
@@ -27,6 +28,7 @@ class LayoutWindow(BaseWindow):
     self._debugButton03 = QPushButton()
     self._debugButton03.setText('Debug_3')
     self._debugButton03.clicked.connect(self._debugFunction03)
+    self._text = TextWidget()
 
   def _debugFunction01(self) -> None:
     """LMAO"""
@@ -39,6 +41,7 @@ class LayoutWindow(BaseWindow):
 
   def setupWidgets(self) -> None:
     """Sets up widgets"""
+    self._baseLayout.addWidget(self._text, 0, 0)
     self._baseLayout.addWidget(self._debugButton01, 0, 1)
     self._baseLayout.addWidget(self._debugButton02, 1, 0)
     self._baseLayout.addWidget(self._debugButton03, 1, 1)
