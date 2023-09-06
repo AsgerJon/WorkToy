@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 
-from worktoy.fields import IntField
+from worktoy.fields import ReadOnly
 from worktoy.sym import BaseSym, SYM
 
 
@@ -15,7 +15,7 @@ class LineStyleSym(BaseSym):
   Symbolic class representation of line styles."""
 
   style = Qt.PenStyle.SolidLine
-  value = IntField(0)
+  value = ReadOnly()
 
   empty = SYM.auto()
   empty.style = Qt.PenStyle.NoPen

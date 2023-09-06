@@ -15,7 +15,7 @@ class TypeSupportError(MetaXcept):
 
   def __init__(self, expectedType: type, actualValue: Any, argName: str,
                *args, **kwargs) -> None:
-    MetaXcept.__init__(self, expectedType, actualValue, argName)
+    MetaXcept.__init__(self, *args, **kwargs)
     self._expectedType = self.pretty(expectedType)
     self._actualValue = self.pretty(actualValue)
     self._actualType = self.pretty(actualValue.__class__)

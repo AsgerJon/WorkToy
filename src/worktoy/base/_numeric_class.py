@@ -12,6 +12,8 @@ from icecream import ic
 from worktoy.core import PI
 from worktoy.base import CoreClass
 
+# from worktoy.fields import FloatLabel
+
 ic.configureOutput(includeContext=True)
 
 
@@ -19,8 +21,24 @@ class NumericClass(CoreClass):
   """WorkToy - Core - NumericClass
   Provides numeric functions."""
 
+  PI = 3.141592653589793
+
   def __init__(self, *args, **kwargs) -> None:
     CoreClass.__init__(self, *args, **kwargs)
+
+  @classmethod
+  def factorial(cls, n: int) -> int:
+    """Implementation of factorial"""
+    if not isinstance(n, int):
+      from worktoy.waitaminute import TypeSupportError
+      raise TypeSupportError(int, n, 'n')
+    if n < 0:
+      msg = """Factorial implemented only for non-negative integers, 
+      but received %d!""" % n
+      raise ValueError(msg)
+    if n in [0, 1]:
+      return 1
+    return n * cls.factorial(n - 1)
 
   def valueSpace(self, *args) -> Any:
     """Collects from positional arguments the start, stop and number of

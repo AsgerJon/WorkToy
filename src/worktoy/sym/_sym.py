@@ -9,9 +9,6 @@ from typing import Any, Never
 from icecream import ic
 
 from worktoy.base import DefaultClass
-from worktoy.core import ARGS, KWARGS, Function
-from worktoy.fields import AbstractField, StrField, IntField, View
-from worktoy.guards import TypeGuard
 
 ic.configureOutput(includeContext=True)
 
@@ -46,7 +43,7 @@ class SYM(DefaultClass):
     existing = self.__class__.__decorated_classes__.get(cls, [])
     self.__class__.__decorated_classes__[cls] = [*existing, cls]
     args = self.getArgs()
-    kwargs = self.getKwargs() | dict(__instance_creation__=True)
+    kwargs = dict(__instance_creation__=True, **self.getKwargs())
     newInstance = cls(*args, **kwargs)
     setattr(self, 'innerClass', cls)
     setattr(self, 'innerInstance', newInstance)
@@ -83,5 +80,5 @@ class SYM(DefaultClass):
     return 'SYM before wrapping'
 
   def __repr__(self, ) -> str:
-    clsName = '' if self.innerClass is None else self.innerClass__qualname__
+    clsName = '' if self.innerClass is None else self.innerClass.__qualname__
     return 'SYM(%s.%s)' % (clsName, self._name)

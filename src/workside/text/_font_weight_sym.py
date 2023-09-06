@@ -4,21 +4,15 @@ Symbolic class representing text weights for use by QFont."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-from PySide6.QtGui import QFont
-
-from worktoy.fields import IntField
+from worktoy.fields import ReadOnly
 from worktoy.sym import BaseSym, SYM
-
-from workside.style import WEIGHTS
 
 
 class FontWeightSym(BaseSym, ):
   """WorkSide - Style - FontWeight
   Symbolic class representing text weights for use by QFont."""
 
-  value = IntField(3)
+  value = ReadOnly(3)
 
   thin = SYM.auto()
   thin.value = 0

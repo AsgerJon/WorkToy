@@ -5,7 +5,7 @@ Symbolic class representation of point sizes"""
 from __future__ import annotations
 
 from worktoy.base import DefaultClass
-from worktoy.fields import IntField
+from worktoy.fields import ReadOnly
 from worktoy.sym import SYM, BaseSym
 
 
@@ -13,8 +13,8 @@ class FontSizeSym(BaseSym):
   """WorkSide - Style - Font - FontSizeSym
   Symbolic class representation of point sizes"""
 
-  ptSize = IntField(12)
-  value = 0
+  ptSize = ReadOnly()
+  value = ReadOnly()
 
   paragraph = SYM.auto()
   paragraph.ptSize = 12

@@ -9,6 +9,8 @@ from typing import Any
 
 from PySide6.QtGui import QPainter, QFont, QPen, QBrush
 
+from workside.widgets import CoreWidget
+
 
 class WorkPainter(QPainter):
   """WorkSide - Style - WorkPainter
@@ -23,7 +25,7 @@ class WorkPainter(QPainter):
     if not isinstance(coreWidget, CoreWidget):
       from worktoy.waitaminute import TypeSupportError
       raise TypeSupportError(CoreWidget, coreWidget, 'coreWidget')
-    coreWidget.paintStart.emit()
+    # coreWidget.paintStart.emit()
     QPainter.begin(self, coreWidget, )
 
   def device(self) -> CoreWidget:

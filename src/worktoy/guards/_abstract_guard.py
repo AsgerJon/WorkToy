@@ -1,37 +1,42 @@
-"""WorkToy - Guard - AbstractGuard
-Abstract baseclass for the Guard classes. """
+"""WorkToy - Guards - AbstractGuard
+This package provides custom handling of exceptions."""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any
+from typing import Any, TYPE_CHECKING, Never
 
-from worktoy.core import Function
-from worktoy.fields import AbstractField
+from worktoy.base import DefaultClass
+
+if TYPE_CHECKING:
+  pass
 
 
-class AbstractGuard(AbstractField):
-  """WorkToy - Guard - AbstractGuard
-  Abstract baseclass for the Guard classes. """
+class AbstractGuard(DefaultClass):
+  """WorkToy - Guards - AbstractGuard
+  Raises a relevant error if a variable is of the wrong type. Raises a
+  different error if the variable is None. """
 
   def __init__(self, *args, **kwargs) -> None:
-    AbstractField.__init__(self, self.__guard_validator_factory__,
-                           *args, **kwargs)
-    self._defaultValue = self.__guard_validator_factory__
-    self._fieldSource = Function
-    self._fieldName = None
-    self._fieldOwner = None
+    DefaultClass.__init__(self, *args, **kwargs)
 
   @abstractmethod
-  def __guard_validator_factory__(self, obj: Any, cls: type) -> Any:
-    """Responsible for validating the obj."""
+  def argumentCheck(self, argument: Any) -> int:
+    """Subclasses must implement this method to determine if an argument is
+    acceptable. The return value is expected to be an integer where 0
+    indicates that the argument is accepted. Other values should then
+    indicate a reason why the argument is rejected. """
 
   @abstractmethod
-  def explicitGetter(self, obj: object, cls: type) -> Any:
-    """Subclasses must implement this method."""
-    return self.__guard_validator_factory__(obj, cls)
+  def exceptionFactory(self, *args, **kwargs) -> Never:
+    """For each possible rejection mode defined on the argument check,
+    this method must raise an appropriate exception. Subclass should
+    implement this to handle each, but are allowed to have a final
+    catch-all exception."""
 
-  def __set_name__(self, cls: type, name: str) -> None:
-    self._fieldName = name
-    self._fieldOwner = cls
+  @abstractmethod
+  def repairer(self, argument: Any) -> Any:
+    """Besides raising the correct error message, subclasses may provide
+    attempts at converting rejected arguments. The return value from this
+    method is passed back to the beginning of the checks."""

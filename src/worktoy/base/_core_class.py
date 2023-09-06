@@ -63,7 +63,6 @@ class CoreClass:
     for arg in args:
       if isinstance(arg, cls):
         return arg
-    return self.starWarning(self.maybeType, [cls, ], args, noKwargs=True)
 
   def maybeTypes(self, cls: type, *args, **kwargs) -> list:
     """Returns all arguments belonging to cls"""

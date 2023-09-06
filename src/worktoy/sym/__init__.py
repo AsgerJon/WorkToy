@@ -111,5 +111,6 @@ from __future__ import annotations
 from ._sym import SYM
 from ._symspace import SymSpace
 from ._symeta import SyMeta, BaseSym
+from ._accessor_sym import AccessorSym
 from ._weekday import Weekday
 from ._month import Month

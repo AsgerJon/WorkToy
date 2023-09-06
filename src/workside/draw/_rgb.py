@@ -4,9 +4,11 @@ Base class defining the red, green and blue color space."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from PySide6.QtGui import QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QBrush
 
-from worktoy.fields import IntField, AbstractField
+from worktoy.base import DefaultClass
+from worktoy.fields import ReadOnly
 from worktoy.sym import BaseSym, SYM
 
 
@@ -14,10 +16,10 @@ class RGB(BaseSym):
   """WorkSide - Style - RGB
   Base class defining the red, green and blue color space."""
 
-  R = IntField(127)
-  G = IntField(255)
-  B = IntField(0)
-  A = IntField(255)
+  R = ReadOnly()
+  G = ReadOnly()
+  B = ReadOnly()
+  A = ReadOnly()
 
   def asQColor(self) -> QColor:
     """Converts to instance of QColor."""
@@ -108,25 +110,52 @@ class RGB(BaseSym):
   pink.A = 255
 
 
-class RGBField(AbstractField):
-  """Implementation of RGB class as a field"""
+class Brush(QBrush, DefaultClass):
+  """Brush subclass"""
 
-  def __init__(self, *rgb, **kwargs) -> None:
-    defVal = RGB.white
-    AbstractField.__init__(self, defVal, **kwargs)
+  def __init__(self, *args, **kwargs) -> None:
+    DefaultClass.__init__(self, *args, **kwargs)
+    QBrush.__init__(self, )
+    rgb = None
+    col = None
+    style = None
+    for arg in args:
+      if isinstance(arg, QColor) and col is None:
+        col = arg
+      if isinstance(arg, RGB) and rgb is None:
+        rgb = arg
+      if isinstance(arg, Qt.BrushStyle) and style is None:
+        rgb = arg
+    if rgb is None and col is None:
+      raise TypeError
+    col = self.maybe(col, QColor(rgb.R, rgb.G, rgb.B))
+    if isinstance(col, QColor):
+      self.setColor(col)
+    style = self.maybe(style, Qt.BrushStyle.SolidPattern)
+    if isinstance(style, Qt.BrushStyle):
+      self.setStyle(style)
 
-  def getFieldSource(self) -> type:
-    """Integer"""
-    return RGB
-
-  def getPermissionLevel(self) -> int:
-    """Protected. """
-    return 2
-
-  def explicitSetter(self, obj: object, newValue: RGB) -> None:
-    """Explicit setter function. Tries to find the _set[NAME] method on
-    the object."""
-    return setattr(obj, self.getPrivateName(), newValue)
-
-  def explicitGetter(self, obj: object, cls: type) -> RGB:
-    return AbstractField.explicitGetter(self, obj, cls)
+#
+#
+# class RGBField(AbstractField):
+#   """Implementation of RGB class as a field"""
+#
+#   def __init__(self, *rgb, **kwargs) -> None:
+#     defVal = RGB.white
+#     AbstractField.__init__(self, defVal, **kwargs)
+#
+#   def getFieldSource(self) -> type:
+#     """Integer"""
+#     return RGB
+#
+#   def getPermissionLevel(self) -> int:
+#     """Protected. """
+#     return 2
+#
+#   def explicitSetter(self, obj: object, newValue: RGB) -> None:
+#     """Explicit setter function. Tries to find the _set[NAME] method on
+#     the object."""
+#     return setattr(obj, self.getPrivateName(), newValue)
+#
+#   def explicitGetter(self, obj: object, cls: type) -> RGB:
+#     return AbstractField.explicitGetter(self, obj, cls)

@@ -1,58 +1,59 @@
 """WorkToy - Guards - TypeGuard
-Guards against wrong arguments on the basis of types."""
+This class checks against None and a type given in the constructor. """
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from inspect import stack
-from typing import Any, Never
+from typing import Any, Never, TYPE_CHECKING
 
-from icecream import ic
-
-from worktoy.core import Function
 from worktoy.guards import AbstractGuard
 
-ic.configureOutput(includeContext=True)
+if TYPE_CHECKING:
+  pass
 
 
 class TypeGuard(AbstractGuard):
   """WorkToy - Guards - TypeGuard
-  Guards against wrong arguments on the basis of types."""
+  This class checks against None and a type given in the constructor. """
 
-  def __init__(self, *args, **kwargs) -> None:
-    _types = []
-    for arg in args:
-      if isinstance(arg, type):
-        _types.append(arg)
+  def __init__(self, type_: type, *args, **kwargs) -> None:
+    self._type = type_
     AbstractGuard.__init__(self, *args, **kwargs)
-    self._allowableTypes = _types or (object,)
 
-  def __guard_validator_factory__(self, obj: object,
-                                  cls: type, ) -> Function:
+  def __call__(self, argument: Any, name: str) -> Any:
+    """Calling the guard instance returns the argument back if it passes
+    the check."""
+    index = self.argumentCheck(argument)
+    if not index:
+      return argument
+    return self.exceptionFactory(index, argument, name)
 
-    def __guard_validator__(varValue: Any, varName: str) -> Any:
-      if varValue is None:
-        from worktoy.waitaminute import UnexpectedStateError
-        raise UnexpectedStateError(varName)
-      for type_ in self.getAllowableTypes():
-        if isinstance(varValue, type_):
-          return varValue
-      from worktoy.waitaminute import TypeGuardError
-      raise TypeGuardError(varValue, self)
+  def getType(self) -> type:
+    """Getter-function for the allowed type."""
+    return self._type
 
-    return __guard_validator__
+  def argumentCheck(self, argument: Any) -> int:
+    if argument is None:
+      return 1
+    if isinstance(argument, self.getType()):
+      return 0
+    return 2
 
-  def explicitGetter(self, obj: object, cls: type) -> Any:
-    """Subclasses must implement this method."""
-    if getattr(cls, '__debug_error__', False):
-      return self.__debug_error__
-    return self.__guard_validator_factory__(obj, cls)
+  def exceptionFactory(self, index: int, argument: Any, name: str,
+                       *args, **kwargs) -> Never:
+    """Raises one error if the argument is None, but a different one if
+    the argument is of a different type that the allowable one. """
+    if index == 1:
+      from worktoy.waitaminute import UnexpectedStateError
+      raise UnexpectedStateError(name)
+    if index == 2:
+      from worktoy.waitaminute import TypeSupportError
+      expectedType = self.getType()
+      actualValue = argument
+      argName = name
+      raise TypeSupportError(expectedType, actualValue, argName)
+    raise TypeError
 
-  def getAllowableTypes(self) -> tuple[type, ...]:
-    """Getter-function for the allowable types."""
-    return self._allowableTypes
-
-  def __debug_error__(self, ) -> Never:
-    from worktoy.waitaminute import TypeGuardError
-    e = TypeGuardError(7777, 'cunt', self)
-    print(e.funcInfo())
+  def repairer(self, argument: Any) -> Any:
+    """Not implemented."""
+    raise NotImplementedError

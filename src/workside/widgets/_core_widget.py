@@ -5,12 +5,13 @@ WorkSide framework."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from workside.settings import ClickTimes
+from PySide6.QtCore import QEvent
+from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QWidget
 
-from workside.widgets import ButtonSym, ModSym, ActSym
+from workside.widgets import ButtonSym, TimedFlag
 from worktoy.base import DefaultClass
-from worktoy.fields import Flag
 
 
 class CoreWidget(QWidget, DefaultClass):
@@ -18,15 +19,26 @@ class CoreWidget(QWidget, DefaultClass):
   The core widget is the abstract baseclass shared by the widgets in the
   WorkSide framework."""
 
-  #  States
-  position = PointField
-  #  Flags
-  underPointer = Flag(QWidget, )
-  isMoving = Flag(QWidget, )
-  #  Signals
-  pointer = Signal(QWidget, ActSym, ButtonSym, ModSym, )
+  _eventHistoryLength = 8
 
   def __init__(self, *args, **kwargs) -> None:
+    self._events = {}
     DefaultClass.__init__(self, *args, **kwargs)
     parent = self.maybe(QWidget, *args)
-    QWidget.__init__(self, parent)
+    QWidget.__init__(self)
+    self.setMouseTracking(True)
+    self._clickState = 0
+    self._pressHoldTimer = TimedFlag()
+
+  def event(self, event: QEvent) -> bool:
+    """Implementation"""
+    return QWidget.event(self, event)
+
+  def mousePressEvent(self, event: QMouseEvent) -> None:
+    """Implementation of mouse button functionalities."""
+    if not self._clickState:  # Making this the first press
+      self._clickState = 1
+      self._pressHoldTimer
+
+  def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+    """Implementation of mouse button functionalities."""

@@ -17,3 +17,4 @@ from ._coretypes import FunctionTuple, FunctionList
 from ._coretypes import ARGS, KWARGS, RESULT, CALL
 from ._constants import PI, factorial
 from ._constants import loremSample
+from ._function_decorator import FunctionDecorator

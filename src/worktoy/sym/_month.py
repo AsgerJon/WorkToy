@@ -4,9 +4,6 @@ Symbolic representation of months with 0 being January"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from icecream import ic
-
-from worktoy.fields import IntField
 from worktoy.sym import BaseSym, SYM
 
 
@@ -14,7 +11,7 @@ class Month(BaseSym):
   """WorkToy - SYM - Month
   Symbolic representation of months with 0 being January"""
 
-  numDays = IntField(30)
+  numDays = 30
 
   january = SYM.auto()
   january.numDays = 31

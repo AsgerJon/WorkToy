@@ -10,7 +10,6 @@ from icecream import ic
 
 from worktoy.base import DefaultClass
 from worktoy.core import Bases
-from worktoy.guards import TypeGuard, NoneGuard, SomeGuard
 from worktoy.metaclass import AbstractMetaClass, MetaMetaClass
 from worktoy.sym import SYM, SymSpace
 
@@ -39,10 +38,6 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
   """WorkToy - SYM - SyMeta
   Metaclass implementing Symbolic classes. """
 
-  dictGuard = TypeGuard(dict)
-  requireNone = SomeGuard()  # (arg: None) -> arg
-  requireSome = NoneGuard()  # (arg: None) -> error
-
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> dict:
     """Returning special namespace class."""
@@ -68,7 +63,10 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
 
   def __call__(cls, *args, **kwargs) -> Any:
     if kwargs.get('__instance_creation__', False):
-      return type.__call__(cls, *args, **kwargs)
+      self = type.__call__(cls, *args, **kwargs)
+      existing = getattr(cls, '__symbolic_instances__', [])
+      setattr(cls, '__symbolic_instances__', [*existing, self])
+      return self
     index, key = None, None
     for arg in args:
       if isinstance(arg, int) and index is None:
@@ -85,7 +83,8 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
 
   def getInstances(cls, ) -> list[SYM]:
     """Getter-function for symbolic instances."""
-    return getattr(cls, '__symbolic_instances__')
+    syms = [v for (k, v) in cls.__dict__.items() if isinstance(v, SYM)]
+    return [sym for sym in syms]
 
   def getInstanceAtIndex(cls, index: int, **kwargs) -> SYM:
     """Getter-function for the item at the given index."""
@@ -103,7 +102,8 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     raise KeyError(name)
 
   def __instancecheck__(cls, instance: Any, ) -> bool:
-    return True if instance.__class__.__class__ == SyMeta else False
+    test = getattr(instance, '__symbolic_class__', None)
+    return True if test else False
 
   def __repr__(cls) -> str:
     """Code Representation"""
@@ -113,7 +113,7 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     """String Representation"""
     clsName = cls.__qualname__
     mclsName = cls.__class__.__qualname__
-    return 'Symbolic Class: %s.%s' % (clsName, mclsName)
+    return 'Symbolic Class: %s.%s' % (mclsName, clsName)
 
   def __getattr__(cls, key: str) -> Any:
     try:
@@ -121,9 +121,35 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     except AttributeError as e:
       raise e
 
+  def __iter__(cls, ) -> type:
+    setattr(cls, '__current_index__', 0)
+    return cls
+
+  def __next__(cls) -> Any:
+    ind = getattr(cls, '__current_index__', None) + 1
+    if ind is None:
+      raise TypeError
+    instances = cls.getInstances()
+    if ind > len(instances):
+      raise StopIteration
+    setattr(cls, '__current_index__', ind)
+    return instances[ind - 1]
+
 
 class BaseSym(DefaultClass, metaclass=SyMeta):
   """In between class exposing the metaclass."""
 
+  def __init_subclass__(cls, **kwargs) -> None:
+    setattr(cls, '__symbolic_class__', True)
+
   def __call__(self, *args, **kwargs) -> Any:
     return self.__class__.__call__(*args, **kwargs)
+
+  def __str__(self, ) -> str:
+    key = None
+    for key, val in self.__class__.__dict__.items():
+      if isinstance(val, SYM):
+        if val.innerInstance is self:
+          break
+
+    return '%s.%s' % (self.__class__.__qualname__, key)

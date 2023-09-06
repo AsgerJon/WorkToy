@@ -1,9 +1,7 @@
-"""WorkToy - Settings
-This module provides default values"""
+"""WorkSide - Settings
+This module holds settings applied throughout the framework. """
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-defaultFontFamily = 'Modern No. 20'
-defaultFontWeight = 'normal'
-defaultFontSize = 12
+from ._click_times import ClickTimes

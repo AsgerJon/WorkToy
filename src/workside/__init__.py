@@ -4,9 +4,5 @@ module"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-import workside.geometry as geometry
-import workside.settings as settings
-import workside.core as core
-import workside.style as style
 import workside.widgets as widgets
 import workside.window as window

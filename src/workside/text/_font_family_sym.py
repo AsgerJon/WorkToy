@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from icecream import ic
 
-from worktoy.fields import IntField
+from worktoy.fields import ReadOnly
 from worktoy.sym import BaseSym, SYM
 
 ic.configureOutput(includeContext=True)
@@ -16,7 +16,7 @@ class FontFamilySym(BaseSym, ):
   """WorkToy - SYM - FontFamily
   Symbolic class representing text families for use by QFont."""
 
-  value = IntField(0)
+  value = ReadOnly()
 
   Arial = SYM.auto()
   Arial.value = 0

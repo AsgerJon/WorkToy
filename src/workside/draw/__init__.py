@@ -9,3 +9,5 @@ from ._fill_style_sym import FillStyleSym
 from ._fill_style_field import FillStyleField
 from ._line_style_sym import LineStyleSym
 from ._line_style_field import LineStyleField
+from ._brush import Brush
+from ._pen import Pen

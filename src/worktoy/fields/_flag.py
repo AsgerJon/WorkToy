@@ -1,33 +1,23 @@
 """WorkToy - Fields - Flag
-Boolean valued field."""
+Boolean descriptor class implementation."""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Never
+from typing import Any
 
-from worktoy.fields import AbstractDescriptor
+from worktoy.fields import Attribute
 
 
-class Flag(AbstractDescriptor):
+class Flag(Attribute):
   """WorkToy - Fields - Flag
-  Boolean valued field."""
+  Boolean descriptor class implementation."""
 
-  def __init__(self, defVal: Any, *args, **kwargs) -> None:
-    defVal = True if defVal else False
-    AbstractDescriptor.__init__(self, *args, **kwargs)
+  def __init__(self, *args, **kwargs) -> None:
+    Attribute.__init__(self, *args, **kwargs)
 
-  def explicitGetter(self, obj: object, cls: type) -> bool:
-    val = AbstractDescriptor.explicitGetter(self, obj, cls)
-    return True if val else False
+  def __get__(self, obj: Any, cls: type) -> bool:
+    return True if Attribute.__get__(self, obj, cls) else False
 
-  def explicitSetter(self, obj: object, newValue: Any) -> None:
-    val = True if newValue else False
-    return AbstractDescriptor.explicitSetter(self, obj, val)
-
-  def explicitDeleter(self, *_, ) -> Never:
-    return AbstractDescriptor.explicitDeleter(self, *_)
-
-  def getPermissionLevel(self) -> int:
-    """Protected, 2"""
-    return 2
+  def __set__(self, obj: Any, newValue: Any) -> None:
+    Attribute.__set__(self, obj, True if newValue else False)
