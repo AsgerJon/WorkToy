@@ -30,8 +30,8 @@ class SymSpace(AbstractNameSpace):
 
   def _setSymbolicBaseclass(self, ) -> None:
     if self._symbolicBaseclass is not None:
-      from worktoy.waitaminute import ValueExistsError
-      raise ValueExistsError('_symbolicBaseclass', self._symbolicBaseclass)
+      from worktoy.waitaminute import UnexpectedStateError
+      raise UnexpectedStateError('_symbolicBaseclass')
     for base in self._bases:
       if getattr(base, '__symbolic_baseclass__', False):
         self._symbolicBaseClass = base

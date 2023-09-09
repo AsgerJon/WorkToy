@@ -12,8 +12,6 @@ from icecream import ic
 from worktoy.core import PI
 from worktoy.base import CoreClass
 
-# from worktoy.fields import FloatLabel
-
 ic.configureOutput(includeContext=True)
 
 

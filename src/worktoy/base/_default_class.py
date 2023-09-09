@@ -9,13 +9,13 @@ from warnings import warn
 
 from icecream import ic
 
-from worktoy.base import NumericClass
+from worktoy.base import GuardClass
 from worktoy.core import Function
 
 ic.configureOutput(includeContext=True)
 
 
-class DefaultClass(NumericClass):
+class DefaultClass(GuardClass):
   """WorkToy - DefaultClass
   This class provides utility as static methods.
   Classes in the package subclass this class.
@@ -24,7 +24,7 @@ class DefaultClass(NumericClass):
   __core_instance__ = None
 
   def __init__(self, *args, **kwargs) -> None:
-    NumericClass.__init__(self, *args, **kwargs)
+    GuardClass.__init__(self, *args, **kwargs)
 
   def monoSpace(self, text: str, newLine: str = None) -> str:
     """Convert text to monospaced format with consistent spacing and line

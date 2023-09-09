@@ -4,9 +4,7 @@ Special namespace class for use with the metaclass."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Never
-
-from worktoy.core import Keys, Items, Values, Bases, Function
+from worktoy.core import Keys, Items, Values, Bases
 
 
 class ExceptSpace(dict):

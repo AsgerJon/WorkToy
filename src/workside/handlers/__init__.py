@@ -4,5 +4,5 @@ Implements handling of specific widget methods. """
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._mouse_event_sym import MouseEventSym
-from ._event_handle import EventHandler
+from ._abstract_event_handler import AbstractEventHandler
+from ._decorate_event_handler import DecorateEventHandler

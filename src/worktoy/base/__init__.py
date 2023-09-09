@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from ._core_class import CoreClass
 from ._numeric_class import NumericClass
+from ._guard_class import GuardClass
 from ._default_class import DefaultClass
 
 if __name__ != '__main__':

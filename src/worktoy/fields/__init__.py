@@ -4,8 +4,8 @@ Implementation of descriptors as fields."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._abstract_field import AbstractField
-from ._int_attribute import IntAttribute
+from ._field import Field
 from ._attribute import Attribute
-from ._flag import Flag
-from ._read_only import ReadOnly
+from ._int_attribute import IntAttribute
+from ._float_attribute import FloatAttribute
+from ._str_attribute import StrAttribute
