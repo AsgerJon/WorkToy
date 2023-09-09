@@ -209,31 +209,31 @@ The following methods are various type guards.
 
 ### WorkToyClass.noneGuard
 
-Raises UnavailableNameException if the given object is not None.
+Raises ``UnavailableNameException`` if the given object is not None.
 
 ### WorkToyClass.someGuard
 
-Raises error if given object is None
+Raises ``MissingArgumentException`` if given object is None
 
 ### WorkToyClass.overRideGuard
 
-Raises error if given object is not None
+Raises ``UnavailableNameException`` if given object is not None
 
 ### WorkToyClass.functionGuard
 
-Raises error if given object is not a function
+Raises ``TypeSupportError`` if given object is not a function
 
 ### WorkToyClass.intGuard
 
-Raises error if given object is None or not an integer
+Raises ``TypeSupportError`` if given object is None or not an integer
 
 ### WorkToyClass.floatGuard
 
-Raises error if given object is None or not a float
+Raises ``TypeSupportError`` if given object is None or not a float
 
 ### WorkToyClass.strGuard
 
-Raises error if given object is None or not a string
+Raises ``TypeSupportError`` if given object is None or not a string
 
 ## Descriptors
 
