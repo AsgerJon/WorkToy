@@ -1,5 +1,5 @@
 Version 0.40.0
-Introduction of metaclasses
+Complete overhaul. The convenient functions are now present as instance method on a central utility class from which further classes should inherit.
 Version 0.31.2
 Version 0.31.1
 Do not use the Any from typing, use worktoy.typetools.Any
