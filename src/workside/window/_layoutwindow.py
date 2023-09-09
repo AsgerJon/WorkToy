@@ -35,6 +35,24 @@ class LayoutWindow(BaseWindow):
     self._debugButton03 = QPushButton()
     self._debugButton03.setText('Debug_3')
     self._debugButton03.clicked.connect(self._debugFunction03)
+    self._cunt.singleClick.connect(self.lol)
+    self._cunt.doubleClick.connect(self.lol2)
+    self._cunt.pressHold.connect(self.lol3)
+
+  def lol(self, widget: QWidget, point: QPointF) -> None:
+    """LMAO"""
+    print('single click')
+    print(self._cunt.getPressPosition())
+
+  def lol2(self, widget: QWidget, point: QPointF) -> None:
+    """LMAO"""
+    print('double click')
+    print(self._cunt.getPressPosition())
+
+  def lol3(self, ) -> None:
+    """LMAO"""
+    print('press hold')
+    print(self._cunt.getPressPosition())
 
   def _debugFunction01(self) -> None:
     """LMAO"""
