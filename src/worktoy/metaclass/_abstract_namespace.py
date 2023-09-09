@@ -23,7 +23,11 @@ class AbstractNameSpace(dict, metaclass=MetaNameSpace):
     self._latestErrorGet = None
     self._latestErrorSet = None
     self._log = []
-    dict.__setitem__(self, '__name__', '\n |> WorkToy <| SYM\n')
+    dict.__setitem__(self, '__name__', '\n%s\n' % self.getModuleName())
+
+  def getModuleName(self) -> str:
+    """Getter-function for the module name"""
+    return 'WorkToy'
 
   def __setitem__(self, key: str, val: object, *args, **kwargs) -> None:
     self._log.append(['set', key, val, ])

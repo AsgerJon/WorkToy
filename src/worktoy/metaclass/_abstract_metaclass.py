@@ -32,7 +32,7 @@ class AbstractMetaClass(MetaMetaClass):
     The default implementation deployed by 'type' and by custom
     metaclasses not implementing __prepare__ is to return an empty
     instance of 'dict'. A custom implementation can achieve enhanced
-    functionality by prepopulating the instance of 'dict' or by returning
+    functionality by pre-populating the instance of 'dict' or by returning
     an instance of a custom class instead of 'dict'.
 
     Introducing a custom class in the place of 'dict' provides a powerful

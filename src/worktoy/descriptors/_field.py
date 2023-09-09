@@ -39,8 +39,8 @@ class Field(WorkToyClass):
   def getFieldName(self, ) -> str:
     """Getter-function for the field name."""
     if self._fieldName is None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError('_fieldName')
+      from worktoy.waitaminute import MissingArgumentException
+      raise MissingArgumentException('_fieldName')
     return self._fieldName
 
   def getPrivateFieldName(self, ) -> str:
@@ -70,8 +70,8 @@ class Field(WorkToyClass):
   def getFieldOwner(self, ) -> type:
     """Getter-function for the field owner."""
     if self._fieldOwner is None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError('fieldOwner')
+      from worktoy.waitaminute import MissingArgumentException
+      raise MissingArgumentException('fieldOwner')
     return self._fieldOwner
 
   def __set_name__(self, cls: type, name: str) -> None:
@@ -81,58 +81,36 @@ class Field(WorkToyClass):
 
   def __get__(self, obj: object, cls: type) -> Any:
     """Getter descriptor."""
-    if self._getterFunction is None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError('_getterFunction')
-    return self._getterFunction(obj, cls)
+    return self.someGuard(self._getterFunction)(obj)
 
   def __set__(self, obj: object, newValue: Any) -> None:
     """Setter-descriptor."""
-    if self._setterFunction is None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError('_setterFunction')
-    print('cunt', self.getFieldOwner(), obj, newValue, )
-    self._setterFunction(obj, newValue)
+    self.someGuard(self._setterFunction)(obj, newValue)
 
   def __delete__(self, obj: object) -> None:
     """Deleter-descriptor"""
-    if self._deleterFunction is None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError('_deleterFunction')
-    self._deleterFunction(obj)
+    self.someGuard(self._deleterFunction)(obj)
 
   def getter(self, getterFunction: Function) -> Function:
     """Sets the getter function to the decorated function before returning
     it."""
-    if self._getterFunction is not None:
-      from worktoy.waitaminute import UnavailableNameException
-      name = '_getterFunction'
-      oldVal = self._getterFunction
-      newVal = getterFunction
-      raise UnavailableNameException(name, oldVal, newVal)
+    self.overRideGuard(
+      self._getterFunction, '_getterFunction', getterFunction)
     self._getterFunction = getterFunction
     return getterFunction
 
   def setter(self, setterFunction: Function) -> Function:
     """Sets the setter function to the decorated function before returning
     it."""
-    if self._setterFunction is not None:
-      from worktoy.waitaminute import UnavailableNameException
-      name = '_setterFunction'
-      oldVal = self._setterFunction
-      newVal = setterFunction
-      raise UnavailableNameException(name, oldVal, newVal)
+    self.overRideGuard(
+      self._setterFunction, '_setterFunction', setterFunction)
     self._setterFunction = setterFunction
     return setterFunction
 
   def deleter(self, deleterFunction: Function) -> Function:
     """Sets the deleter function to the decorated function before returning
     it."""
-    if self._deleterFunction is not None:
-      from worktoy.waitaminute import UnavailableNameException
-      name = '_deleterFunction'
-      oldVal = self._deleterFunction
-      newVal = deleterFunction
-      raise UnavailableNameException(name, oldVal, newVal)
+    self.overRideGuard(
+      self._deleterFunction, '_deleterFunction', deleterFunction)
     self._deleterFunction = deleterFunction
     return deleterFunction

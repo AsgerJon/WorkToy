@@ -19,34 +19,26 @@ class GuardClass(CoreClass):
     CoreClass.__init__(self, *args, **kwargs)
 
   def noneGuard(self, obj: object, varName: str = None) -> Any:
-    """
-    Raises an UnavailableNameException if the given object is not None.
-
-    Args:
-        obj (object): The object to be checked.
-        varName (str, optional): The name of the variable being checked.
-        Defaults to None.
-
-    Raises:
-        UnavailableNameException: If the object is not None.
-
-    Returns:
-        Any: Returns the object if it is None.
-
-    Example:
-        noneGuard(None)  # No exception raised
-        noneGuard(42, 'my_var')  # Raises UnavailableNameException
-    """
+    """Raises UnavailableNameException if the given object is not None. """
     if obj is not None:
       from worktoy.waitaminute import UnavailableNameException
       raise UnavailableNameException(self.maybe(varName, 'obj'), obj)
 
-  def someGuard(self, obj: object, varName: str = None) -> Any:
+  def someGuard(self, obj: Any, varName: str = None) -> Any:
     """Raises error if given object is None."""
     if obj is None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError(self.maybe(varName, 'obj'))
+      from worktoy.waitaminute import MissingArgumentException
+      raise MissingArgumentException(self.maybe(varName, 'obj'))
     return obj
+
+  def overRideGuard(self, obj: Any, varName: str, newValue: Any) -> Any:
+    """Raises error if given object is not None. """
+    if obj is not None:
+      from worktoy.waitaminute import UnavailableNameException
+      name = varName
+      oldVal = obj
+      newVal = newValue
+      raise UnavailableNameException(name, oldVal, newVal)
 
   def functionGuard(self, func: Function, name: str = None) -> Function:
     """Raises error if given object is not a function."""

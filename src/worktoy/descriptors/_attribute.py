@@ -8,18 +8,24 @@ from abc import abstractmethod
 from typing import Any
 
 from worktoy.worktoyclass import WorkToyClass
-from worktoy.descriptors import Field
 
 
 class AbstractAttribute(WorkToyClass):
   """WorkToy - Fields - IntAttribute
   Field implementation of integer valued descriptor."""
 
-  __attribute_value__ = Field()
+  @classmethod
+  @abstractmethod
+  def getClassDefaultValue(cls) -> Any:
+    """Getter-function for default value."""
+
+  @abstractmethod
+  def getType(self) -> type:
+    """Getter-function for value type."""
 
   def __init__(self, defVal: Any = None, *args, **kwargs) -> None:
     WorkToyClass.__init__(self, *args, **kwargs)
-    self.__attribute_value__ = self.maybe(defVal, self.getDefaultValue())
+    self._defVal = self.maybe(defVal, self.getClassDefaultValue())
     self._fieldName = None
     self._fieldOwner = None
 
@@ -40,25 +46,21 @@ class AbstractAttribute(WorkToyClass):
     """Setter"""
     return self.explicitDeleter(obj)
 
-  @abstractmethod
   def explicitSetter(self, obj: Any, newValue: Any) -> None:
     """Explicit setter function. """
+    return setattr(obj, self.getPrivateName(), newValue)
 
-  @abstractmethod
   def explicitGetter(self, obj: Any, cls: type = None) -> Any:
     """Explicit getter function. """
+    return getattr(obj, self.getPrivateName(), )
 
-  @abstractmethod
   def explicitDeleter(self, obj: Any, ) -> None:
     """Explicit deleter function. """
+    return delattr(obj, self.getPrivateName(), )
 
-  @abstractmethod
   def getDefaultValue(self) -> Any:
-    """Getter-function for default value."""
-
-  @abstractmethod
-  def getType(self) -> type:
-    """Getter-function for value type."""
+    """Getter-function for instance default value."""
+    return self._defVal
 
   def getPrivateName(self) -> str:
     """Getter-function for the private name"""
@@ -71,7 +73,7 @@ class AbstractAttribute(WorkToyClass):
 
     def __new_init__(instance: Any, *args, **kwargs) -> None:
       """New initializer."""
-      setattr(instance, self.getPrivateName(), self.__attribute_value__)
+      setattr(instance, self.getPrivateName(), self.getDefaultValue())
 
     if __original_init__ is object.__init__:
       setattr(cls, '__init__', __new_init__)

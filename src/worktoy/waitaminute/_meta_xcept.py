@@ -11,7 +11,7 @@ from icecream import ic
 
 from worktoy.worktoyclass import WorkToyClass
 from worktoy.core import Function
-from worktoy.metaclass import AbstractMetaClass
+from worktoy.metaclass import AbstractMetaClass, AbstractNameSpace
 from worktoy.waitaminute import ExceptSpace
 
 ic.configureOutput(includeContext=True)
@@ -24,7 +24,7 @@ class _MetaXcept(AbstractMetaClass):
   @classmethod
   def __prepare__(mcls, *args, **kwargs) -> dict:
     name, bases = args[0], args[1]
-    return ExceptSpace(name, bases, **kwargs)
+    return AbstractNameSpace(name, bases, **kwargs)
 
   def __new__(mcls, *args, **kwargs) -> type:
     name = args[0]

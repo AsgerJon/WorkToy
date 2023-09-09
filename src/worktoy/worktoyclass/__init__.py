@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from ._core_class import CoreClass
 from ._guard_class import GuardClass
-from ._default_class import WorkToyClass
+from ._worktoy_class import WorkToyClass
 
 if __name__ != '__main__':
   WorkToyClass.__core_instance__ = WorkToyClass()

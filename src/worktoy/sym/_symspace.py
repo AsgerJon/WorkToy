@@ -25,13 +25,18 @@ class SymSpace(AbstractNameSpace):
     self._instanceSpace = None
     self._keywordSym = kwargs.get('symNames', [])
 
+  def getModuleName(self) -> str:
+    """Getter-function for the module name"""
+    return 'WorkToy - SYM'
+
   def _getKeySyms(self) -> dict:
     return {k: SYM.auto() for k in self._keywordSym}
 
-  def _setSymbolicBaseclass(self, ) -> None:
+  def _setSymbolicBaseclass(self, cls: type) -> None:
     if self._symbolicBaseclass is not None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError('_symbolicBaseclass')
+      from worktoy.waitaminute import UnavailableNameException
+      raise UnavailableNameException(
+        '_symbolicBaseclass', self._symbolicBaseclass, cls)
     for base in self._bases:
       if getattr(base, '__symbolic_baseclass__', False):
         self._symbolicBaseClass = base
@@ -40,8 +45,8 @@ class SymSpace(AbstractNameSpace):
   def _getSym(self) -> type:
     """Getter-function for the symbolic baseclass."""
     if self._symbolicBaseclass is None:
-      from worktoy.waitaminute import UnexpectedStateError
-      raise UnexpectedStateError('_symbolicBaseclass')
+      from worktoy.waitaminute import MissingArgumentException
+      raise MissingArgumentException('_symbolicBaseclass')
     return self._symbolicBaseclass
 
   def _validateInstance(self, _: str, val: Any) -> bool:
