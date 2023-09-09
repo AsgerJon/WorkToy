@@ -6,16 +6,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.base import NumericClass
+from worktoy.base import CoreClass
 from worktoy.core import Function
 
 
-class GuardClass(NumericClass):
+class GuardClass(CoreClass):
   """WorkToy - Base - GuardClass
   Provides guard methods to the DefaultClass"""
 
   def __init__(self, *args, **kwargs) -> None:
-    NumericClass.__init__(self, *args, **kwargs)
+    CoreClass.__init__(self, *args, **kwargs)
 
   def noneGuard(self, obj: object, varName: str = None) -> Any:
     """Raises error if given object is not None."""

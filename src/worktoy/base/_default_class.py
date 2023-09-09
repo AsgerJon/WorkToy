@@ -10,7 +10,6 @@ from warnings import warn
 from icecream import ic
 
 from worktoy.base import GuardClass
-from worktoy.core import Function
 
 ic.configureOutput(includeContext=True)
 
@@ -91,7 +90,7 @@ class DefaultClass(GuardClass):
     #  MIT Licence
     #  Copyright (c) 2023 Asger Jon Vistisen"""
 
-    strArgs = self.pad(self.maybeTypes(str, *args, ), 3)
+    strArgs = self.maybeTypes(str, *args, pad=3)
     sourceKeys = ['source', 'src', 'txt']
     sourceKwarg = self.maybeKey(str, *sourceKeys, **kwargs)
     separatorKeys = ['separator', 'splitHere']
@@ -187,19 +186,6 @@ class DefaultClass(GuardClass):
       str: the text string without leading and trailing whitespace.
     """
     return text.strip()
-
-  def parseFactory(self, type_: type, *keys) -> Function:
-    """Creates a factory for parsing based on keys and type"""
-
-    def parseKeyType(instance: DefaultClass, *args, **kwargs) -> object:
-      """Parses by key and type"""
-      itemKwarg = instance.maybeKey(type_, *keys, **kwargs)
-      itemArg = instance.maybeType(type_, *args)
-      item = instance.maybe(itemKwarg, itemArg)
-      if isinstance(item, type_):
-        return item
-
-    return parseKeyType
 
   def typeName(self, cls: object) -> str:
     """Returns the name of the given type. If the argument is not a type,

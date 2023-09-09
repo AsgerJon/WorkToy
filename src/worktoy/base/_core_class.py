@@ -7,12 +7,9 @@ classes as appropriate."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any
-from warnings import warn
+from typing import Any, Optional
 
 from icecream import ic
-
-from worktoy.core import Function
 
 ic.configureOutput(includeContext=True)
 
@@ -26,37 +23,11 @@ class CoreClass:
     self._args = args
     self._kwargs = kwargs
 
-  def starWarning(self,
-                  func: Function = None,
-                  funcArgs: list = None,
-                  args: tuple = None,
-                  **kwargs) -> Any:
-    """This is method is called when one of the methods fails to find an
-    argument. If 'args' is a tuple or list of length one, the function is
-    repeated but with a star on the first element. Similar for keyword
-    arguments. """
-    if kwargs.get('singleTuple', False):
-      warn('Received one positional argument of type tuple.')
-      return None
-    if kwargs.get('noKwargs', False) and len(args) == 1:
-      if isinstance(args[0], (tuple, list)):
-        warn('Missing stars?')
-        return func(*funcArgs, *(*args[0],))
-    if kwargs.get('noKwargs', False) and not args:
-      return []
-    if kwargs.get('emptyKwargs', False) and len(args) > 1:
-      if isinstance(args[-1], dict):
-        newArgs, newKwargs = (*args[:-1],), args[-1]
-        return func(*funcArgs, *newArgs, **newKwargs)
-
   def maybe(self, *args, **_) -> Any:
     """Returns the first argument different from None"""
-    if not args:
-      return None
     for arg in args:
       if arg is not None:
         return arg
-    return self.starWarning(self.maybe, [], args, noKwargs=True)
 
   def maybeType(self, cls: type, *args) -> Any:
     """Returns the first argument belonging to cls"""
@@ -66,61 +37,69 @@ class CoreClass:
 
   def maybeTypes(self, cls: type, *args, **kwargs) -> list:
     """Returns all arguments belonging to cls"""
-    if not args:
-      return []
-    out = []
-    for arg in args:
-      if isinstance(arg, cls):
-        out.append(arg)
+    out = [arg for arg in args if isinstance(arg, cls)]
     while len(out) < kwargs.get('pad', 0):
       out.append(kwargs.get('padChar', None))
-    if out:
-      return out
-    out = self.starWarning(self.maybeTypes, [cls, ], args, noKwargs=True)
-    if isinstance(out, list):
-      return out
+    return out
 
-  def maybeKey(self, *args, **kwargs) -> Any:
+  def searchKey(self, *keys, **kwargs) -> Any:
+    """Returns the first entry in 'kwargs' matching one of the keys given."""
+    for key in keys:
+      val = kwargs.get(key, None)
+      if val is not None:
+        return val
+
+  def searchKeys(self, *keys, **kwargs) -> Optional[list]:
+    """Returns a list of 'kwargs' matching a key."""
+    out = []
+    if not keys:
+      return None
+    for key in keys:
+      val = kwargs.get(key, None)
+      if val is not None:
+        out.append(val)
+    return out or None
+
+  def _maybeKey(self, allInstances: bool, *args, **kwargs) -> Any:
     """Finds the first object in kwargs that matches a given key. Provide
     keys as positional arguments of stringtype. Optionally provide a
     'type' in the positional arguments to return only an object of that
     type."""
-    type_ = self.maybeType(type, *args)
-    if not isinstance(type_, type):
-      type_ = object
-    keys = self.maybeTypes(str, *args)
-    if not isinstance(type_, (tuple, list)):
-      type_ = (type_,)
-    if not isinstance(keys, (tuple, list)):
-      keys = (keys,)
-    if not kwargs:
-      funcArgs = [*type_, *keys]
-      newArgs = (*[arg for arg in args if arg not in funcArgs],)
-      newKwargs = dict(emptyKwargs=True, )
-      return self.starWarning(self.maybeKey, funcArgs, newArgs, **newKwargs)
-    for key in keys:
-      val = kwargs.get(key, None)
-      if isinstance(val, type_) and val is not None:
-        return val
-
-  def maybeKeys(self, *args, **kwargs) -> list:
-    """Same as maybeKey, but removes every value that matches a given key."""
-    keyArgs, otherArgs = [], []
-    for arg in args:
-      if isinstance(arg, str):
-        keyArgs.append(arg)
-      else:
-        otherArgs.append(arg)
     out = []
-    for key in keyArgs:
-      out.append(self.maybeKey(key, *otherArgs, **kwargs))
-    return out
+    if not kwargs:
+      return out
+    types = [arg for arg in args if isinstance(arg, type)]
+    keys = [arg for arg in args if isinstance(arg, str)]
+    keyVals = self.searchKeys(*keys, **kwargs)
+    if keyVals is None:
+      return keyVals
+    if not types:
+      return keyVals if allInstances else keyVals[0]
+    out = []
+    for cls in types:
+      for val in keyVals:
+        if isinstance(val, cls):
+          if not allInstances:
+            return val
+          out.append(val)
+    if allInstances:
+      return out
+
+  def maybeKey(self, *args, **kwargs) -> Any:
+    """Finds the first object in kwargs that matches a given key and
+    belongs to a given type."""
+    return self._maybeKey(False, *args, **kwargs) or None
+
+  def maybeKeys(self, *args, **kwargs) -> Any:
+    """Finds all objects in kwargs matching any of the given keys and
+    belonging to any given types. If no types are given, no type check is
+    performed."""
+    return self._maybeKey(True, *args, **kwargs) or None
 
   def empty(self, *args) -> bool:
     """Returns True if every positional argument is None. The method
     returns True when receiving no positional arguments. Otherwise, the
     method returns True."""
-    self.starWarning(singleTuple=True)
     if not args:
       return True
     for arg in args:
@@ -131,7 +110,6 @@ class CoreClass:
   def plenty(self, *args) -> bool:
     """The method returns True if no positional argument is None.
     Otherwise, the method returns False. """
-    self.starWarning(singleTuple=True)
     if not args:
       return True
     for arg in args:
@@ -139,52 +117,10 @@ class CoreClass:
         return False
     return True
 
-  def pad(self, source: list, target: object = None, **kwargs) -> list:
-    """The target argument indicates the desired shape. Elements from
-    source replace from left to right in the target. If 'source' has more
-    members than target, 'source' is returned. Setting an integer for
-    target is taken to mean a 'None'-list of length given by the
-    integer."""
-    if source is None:
-      raise TypeError('source argument is missing')
-    if not target:
-      return source
-    if isinstance(target, (list, tuple)):
-      if len(target) < len(source):
-        return source
-      out = []
-      for (i, item) in enumerate(target):
-        out.append(source[i] if i < len(source) else item)
-      return out
-    padChar = kwargs.get('padChar', None)
-    if isinstance(target, int):
-      return self.pad(source, [padChar for _ in range(target)], **kwargs)
-    padLen = kwargs.get('padLen', 0)
-    return self.pad(source, padLen, **kwargs)
-
-  def parseFactory(self, type_: type, *keys) -> Function:
-    """Creates a parsing function"""
-
-    def parseKeyType(*args, **kwargs) -> list:
-      """Parses for keys and types given in positional arguments. Roughly
-      speaking, then types are used to find positional arguments and
-      strings are used to find keyword arguments:"""
-      keyArgs = []
-      for key in keys:
-        arg = kwargs.get(key, None)
-        if arg is not None:
-          keyArgs.append(arg)
-      out = []
-      for arg in keyArgs:
-        out.append(arg)
-      for arg in args:
-        out.append(arg)
-      return [arg for arg in out if isinstance(arg, type_)]
-
-    return parseKeyType
-
   def getArgs(self) -> list:
     """Getter-function for the list of positional arguments."""
+    if self._args is None:
+      return []
     return [arg for arg in self._args]
 
   def getKwargs(self) -> dict:
@@ -193,7 +129,7 @@ class CoreClass:
 
   def setArgs(self, *args) -> None:
     """Setter-function for the positional arguments"""
-    self._args = [*args, ]
+    self._args = args
 
   def setKwargs(self, **kwargs) -> None:
     """Setter function for the keyword arguments"""
