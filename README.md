@@ -1,107 +1,164 @@
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
-
-# WorkToy v0.31.2
-
-Collection of General Utilities
+# WorkToy v0.40.0
 
 ```
 pip install worktoy
 ```
 
-## Parsing Arguments
+## Table of Contents
 
-In the present version, parse arguments with `extractArg`:
+1. [WorkToyClass](#DefaultClass)
+2. [Descriptors](#Descriptors)
+3. [Metaclasses](#Metaclass)
+4. [Symbolic Classes (SYM)](#SYM)
+5. [Wait A Minute!](#Wait-A-Minute)
+6. [Core](#Core)
 
-    def func(*args, **kwargs) -> Any:
-        """Let us find a str indicating name in these arguments!"""
-        nameKeys = stringList('name, identifier, title, target')
-        name, args, kwargs = extractArg(str, nameKeys, *args, **kwargs)
-        #  And lets find an integer to represent the amount:
-        amountKeys = stringList('amount, count, quantity')
-        amount, args, kwargs = extractArg(int, nameKeys, *args, **kwargs
+## DefaultClass
 
-In the above example, we used two powerful convenience functions from
-WorkToy to parse an arbitrary collection of positional and keyword
-arguments to a `str` and an `int`. The `stringList` splits our text on
-commas followed by a space, providing:
+## Descriptors
 
-    nameKeys
-    >>> ['name', 'identifier', 'title', 'target']
-    amountKeys
-    >>> ['amount, count, quantity']
+The WorkToy Fields - Field package provides a fundamental framework for
+creating descriptor attributes in Python. Descriptor attributes allow
+developers to define how attribute values are accessed and manipulated within
+classes, offering a high level of control and customization.
 
-In the next part, `extractArg` finds the first keyword argument from the
-list of keys that belongs to the type given and returns it. If it finds
-no such argument, it returns the first positional argument encountered
-having the indicated type. This allows a great deal of flexibility in how
-a function is invoked.
+## Field
 
-## The None-aware 'maybe'
+The `Field` class serves as the core building block for creating custom
+descriptor attributes. It offers a basic implementation of a descriptor
+attribute and provides essential methods for managing attribute behavior.
+Developers can use `Field` as a starting point to create specialized
+descriptor attributes tailored to their specific requirements.
 
-In a programming language which shall rename nameless as well as typeless,
-the following syntax is available:
+### Key Features
 
-    const func = (arg = null) => {
-        let val1 = arg || 1.0;
-        let val2 = arg ?? 1.0;
-        return [val1, val2]; }
+- **Default Value**: `Field` allows you to specify a default value for the
+  attribute, ensuring that it always has an initial value when accessed.
 
-In the above code, the default argument is set to null (in this context
-null is treated the same as None in Python). The `??` operator is the
-null-coalescence operator, which is nearly the same as the `or` operator.  
-Consider the return value obtained from calling `func()`:
+- **Getter, Setter, and Deleter**: You can define custom getter, setter, and
+  deleter functions to control how the attribute is accessed, modified, and
+  deleted.
 
-    func()
-    >>> (2)  [1, 1]
+- **Decorator Support**: `Field` supports decorators for setting getter,
+  setter, and deleter functions, making it easy to customize attribute
+  behavior.
 
-This makes sense, but what happens when we call the function on a falsy
-value other than null, such as 0:
+## AbstractAttribute
 
-    func(0)
-    >>> (3)  [1, 0]
+The `AbstractAttribute` class serves as the foundation for creating
+custom attribute descriptors. It defines essential methods for attribute
+management, including getters, setters, and deleters, allowing developers to
+create attribute descriptors tailored to their specific needs. This
+abstract class provides a flexible framework for handling various data
+types, making it a powerful tool for attribute manipulation.
 
-The first value in the return value comes from using the pipes (the
-logical or operator), is not aware of the difference between null and
-other falsy values. The null-coalescence operator is able to tell the
-difference. The WorkToy module brings this to python along with several
-derived utility functions:
+### Subclasses
 
-### `maybe`
+The WorkToy Fields - Attribute package includes several subclasses that
+specialize in handling specific data types:
 
-In the below python code, we implement the same function using the maybe
-function from WorkToy:
+- **IntAttribute**: This subclass focuses on integer attribute values,
+  providing methods for managing and accessing
+  integer attributes.
 
-    def func(arg: Any = None) -> Any:
-        """Function using the maybe from the WorkToy module"""
-        val1 = arg or 1.0
-        val2 = maybe(arg, 1.0)
-        return [val1, val2]
+- **FloatAttribute**: Designed for float attribute values, this subclass
+  offers functionality tailored to floating-point
+  numbers.
 
-The implementation of maybe simply follows a common pattern:
+- **StrAttribute**: Specializing in string attribute values, this subclass
+  provides methods for working with string attributes.
 
-    def maybe(*args) -> Any:
-        """Implementation of maybe returns the first argument given that 
-        is different from None. If no such argument is found None is 
-        returned."""
-        for arg in args:
-            if arg is not None: 
-                return arg
-        return None
+These subclasses extend the capabilities of `AbstractAttribute` to cover a
+wide range of data types, making it easy to create custom attribute
+descriptors for different types of attributes.
 
-Unlike the `??` operator, the `maybe` operator handles an arbitrary
-number of arguments.
+## Metaclass
 
-### `maybeType`
+### MetaMetaClass
 
-The first of the derived functions finds the first argument of a
-particular type:
+The WorkToy Core - MetaMetaClass package introduces the concept of a "
+meta-metaclass" that enables the implementation of `__repr__` and `__str__`
+methods even for metaclasses themselves. Metaclasses are fundamental to
+Python's class hierarchy and are responsible for shaping the behavior of
+classes. However, metaclasses often lack human-readable representations for
+debugging and introspection. The `MetaMetaClass` provided in this package
+addresses this limitation by enhancing metaclasses with `__repr__`
+and `__str__` functionality.
 
-    def maybeType(type_: type, *args) -> type_:
-        """Returns the first argument of given type"""
+### Enhancing Metaclass Representation
 
-### `maybeTypes`
+Metaclasses play a crucial role in Python, allowing developers to define
+custom class behaviors and enforce design patterns. However, when working
+with metaclasses, it can be challenging to understand their structure and
+behavior, as they typically lack user-friendly representations.
+The `MetaMetaClass` addresses this issue by implementing `__repr__`
+and `__str__` methods for metaclasses, making it easier to inspect and debug
+them.
 
-Adding an 's' returns every argument of given type. Further, it supports
-keyword arguments `pad: int` and `padChar: Any`. If `pad` is given it
-defines the length of the returned list padded with `padChar` or `None`
-by default. Setting `pad` will either pad or crop as necessary.
+### AbstractMetaClass
+
+The WorkToy MetaClass - AbstractMetaClass package provides an abstract base
+class for metaclasses. Metaclasses in Python are responsible for shaping the
+behavior of classes and are a powerful tool for customizing class creation
+and behavior. This package offers a foundation for developers to create
+custom metaclasses with advanced functionality.
+
+### Custom Metaclass Creation
+
+Metaclasses are essential for defining custom class behaviors, enforcing
+design patterns, and managing class-level operations. The `AbstractMetaClass`
+serves as a starting point for creating custom metaclasses. It provides a set
+of abstract methods and a structured approach for developing metaclasses
+tailored to specific needs.
+
+### MetaNameSpace
+
+In the context of metaclasses, namespaces play a crucial role, especially
+when considering the `__prepare__` method. Metaclasses are responsible for
+creating classes, and during this process, they need to define the
+attributes and methods that will belong to the newly created class. The
+`__prepare__` method allows developers to customize how the metaclass
+receives and organizes the class body, which consists of attributes,
+methods, and other members. By providing a custom namespace via the
+`__prepare__` method, developers can have fine-grained control over how these
+class members are organized and stored. This level of control is invaluable
+when designing complex class structures, ensuring proper encapsulation, and
+improving code maintainability. Essentially, namespaces, in combination
+with the `__prepare__` method, empower metaclasses to create well-organized
+and structured classes, making them a fundamental concept in
+metaprogramming and advanced Python class design.
+
+The WorkToy MetaClasses - MetaNameSpace package provides a metaclass for the
+creation of namespaces in Python. Metaclasses are a powerful tool for
+customizing class creation, and the `MetaNameSpace` metaclass simplifies the
+creation of namespaces for classes.
+
+### Namespace Creation
+
+In Python, namespaces are essential for organizing and managing variables,
+functions, and classes within a module or class. The `MetaNameSpace`
+metaclass streamlines the process of creating namespaces for classes, making
+it easier for developers to organize their code and encapsulate
+functionality.
+
+### AbstractNameSpace
+
+The WorkToy MetaClass - AbstractNameSpace package provides
+the `AbstractNameSpace` class, which offers a minimalistic yet powerful way
+to create custom namespaces in Python. Namespaces are fundamental for
+organizing and encapsulating variables, functions, and classes within a
+module or class.
+
+The `AbstractNameSpace` class simplifies the process of creating custom
+namespaces for classes, enabling developers to define their own namespace
+structures with ease. This flexibility allows for better organization and
+encapsulation of code, making it more maintainable and readable.
+
+## SYM
+
+## Core
+
+## Wait A Minute!
+
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](
+https://wakatime.com/badge/github/AsgerJon/WorkToy)

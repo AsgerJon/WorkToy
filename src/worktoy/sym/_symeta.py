@@ -8,7 +8,7 @@ from typing import Any, TYPE_CHECKING
 
 from icecream import ic
 
-from worktoy.base import DefaultClass
+from worktoy.worktoyclass import WorkToyClass
 from worktoy.core import Bases
 from worktoy.metaclass import AbstractMetaClass, MetaMetaClass
 from worktoy.sym import SYM, SymSpace
@@ -136,7 +136,7 @@ class SyMeta(AbstractMetaClass, metaclass=SyMetaMeta):
     return instances[ind - 1]
 
 
-class BaseSym(DefaultClass, metaclass=SyMeta):
+class BaseSym(WorkToyClass, metaclass=SyMeta):
   """In between class exposing the metaclass."""
 
   def __init_subclass__(cls, **kwargs) -> None:

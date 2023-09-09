@@ -1,4 +1,4 @@
-"""WorkToy - Fields - Attribute
+"""WorkToy - Descriptors - Attribute
 Implementation of descriptor attribute."""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
@@ -7,18 +7,18 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Any
 
-from worktoy.base import DefaultClass
-from worktoy.fields import Field
+from worktoy.worktoyclass import WorkToyClass
+from worktoy.descriptors import Field
 
 
-class Attribute(DefaultClass):
+class AbstractAttribute(WorkToyClass):
   """WorkToy - Fields - IntAttribute
   Field implementation of integer valued descriptor."""
 
   __attribute_value__ = Field()
 
   def __init__(self, defVal: Any = None, *args, **kwargs) -> None:
-    DefaultClass.__init__(self, *args, **kwargs)
+    WorkToyClass.__init__(self, *args, **kwargs)
     self.__attribute_value__ = self.maybe(defVal, self.getDefaultValue())
     self._fieldName = None
     self._fieldOwner = None

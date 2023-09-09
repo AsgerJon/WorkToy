@@ -8,19 +8,19 @@ from typing import Any, Never
 
 from icecream import ic
 
-from worktoy.base import DefaultClass
+from worktoy.worktoyclass import WorkToyClass
 
 ic.configureOutput(includeContext=True)
 
 
-class SYM(DefaultClass):
+class SYM(WorkToyClass):
   """WorkToy - SYM - AUTO
   Special class denoting an instance on the class body."""
   __symbolic_baseclass__ = True
   __decorated_classes__ = {}
 
   def __init__(self, *args, **kwargs) -> None:
-    DefaultClass.__init__(self, *args, **kwargs)
+    WorkToyClass.__init__(self, *args, **kwargs)
     self._value = None
     self._name = None
     self._owner = None

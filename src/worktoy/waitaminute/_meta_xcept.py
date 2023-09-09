@@ -9,7 +9,7 @@ from typing import Never, Any
 
 from icecream import ic
 
-from worktoy.base import DefaultClass
+from worktoy.worktoyclass import WorkToyClass
 from worktoy.core import Function
 from worktoy.metaclass import AbstractMetaClass
 from worktoy.waitaminute import ExceptSpace
@@ -51,7 +51,7 @@ class _MetaXcept(AbstractMetaClass):
     return True if cls is other else False
 
 
-class MetaXcept(Exception, DefaultClass, metaclass=_MetaXcept):
+class MetaXcept(Exception, WorkToyClass, metaclass=_MetaXcept):
   """In between class exposing the metaclass."""
 
   def formatHeader(self, header: str) -> str:
@@ -91,7 +91,7 @@ class MetaXcept(Exception, DefaultClass, metaclass=_MetaXcept):
 
   def __init__(self, *args, **kwargs) -> None:
     Exception.__init__(self, *args)
-    DefaultClass.__init__(self, *args, **kwargs)
+    WorkToyClass.__init__(self, *args, **kwargs)
     self._stack = stack()
     self._trace = trace()
 

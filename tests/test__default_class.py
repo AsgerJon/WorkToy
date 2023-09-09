@@ -5,13 +5,13 @@ from __future__ import annotations
 from unittest import TestCase
 
 import unittest
-from worktoy.base import DefaultClass
+from worktoy.worktoyclass import WorkToyClass
 
 
 class TestDefaultClass(unittest.TestCase):
 
   def setUp(self):
-    self.default = DefaultClass()
+    self.default = WorkToyClass()
 
   def test_monoSpace_with_default_newline(self):
     text = 'Hello   World'

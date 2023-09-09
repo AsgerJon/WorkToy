@@ -4,7 +4,7 @@
 from __future__ import annotations
 from unittest import TestCase
 
-from worktoy.base import CoreClass
+from worktoy.worktoyclass import CoreClass
 
 
 class TestCoreClass(TestCase):

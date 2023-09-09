@@ -1,4 +1,4 @@
-"""WorkToy - Core - Default
+"""WorkToy - WorkToyClass - WorkToyClass
 This class provides utility as static methods.
 Classes in the package subclass this class."""
 #  MIT Licence
@@ -7,14 +7,10 @@ from __future__ import annotations
 
 from warnings import warn
 
-from icecream import ic
-
-from worktoy.base import GuardClass
-
-ic.configureOutput(includeContext=True)
+from worktoy.worktoyclass import GuardClass
 
 
-class DefaultClass(GuardClass):
+class WorkToyClass(GuardClass):
   """WorkToy - DefaultClass
   This class provides utility as static methods.
   Classes in the package subclass this class.
@@ -77,9 +73,9 @@ class DefaultClass(GuardClass):
     return text.replace(newLine, '\n')
 
   def stringList(self, *args, **kwargs) -> list[str]:
-    """The stringList function provides an easier way to write lists of
-    strings. Instead of wrapping each item in ticks, write on long string
-    with
+    """
+    The stringList function provides an easier way to write lists of strings.
+    Instead of wrapping each item in ticks, write on long string with
     consistent separators, and stringList will convert it to a list of
     strings.
     Instead of: numbers = ['one', 'two', 'three', 'four']

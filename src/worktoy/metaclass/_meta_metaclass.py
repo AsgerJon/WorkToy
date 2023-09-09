@@ -1,4 +1,4 @@
-"""WorkToy - Core - MetaClassParams
+"""WorkToy - Core - MetaMetaClass
 The meta-metaclass implements __repr__ and __str__ for even the
 metaclasses themselves. """
 #  MIT Licence

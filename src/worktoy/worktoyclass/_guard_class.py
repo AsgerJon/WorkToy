@@ -6,8 +6,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.base import CoreClass
-from worktoy.core import Function
+from worktoy.worktoyclass import CoreClass
+
+Function = (type(getattr(type('_', (), {'_': lambda self: self}), '_')))
 
 
 class GuardClass(CoreClass):
@@ -18,7 +19,24 @@ class GuardClass(CoreClass):
     CoreClass.__init__(self, *args, **kwargs)
 
   def noneGuard(self, obj: object, varName: str = None) -> Any:
-    """Raises error if given object is not None."""
+    """
+    Raises an UnavailableNameException if the given object is not None.
+
+    Args:
+        obj (object): The object to be checked.
+        varName (str, optional): The name of the variable being checked.
+        Defaults to None.
+
+    Raises:
+        UnavailableNameException: If the object is not None.
+
+    Returns:
+        Any: Returns the object if it is None.
+
+    Example:
+        noneGuard(None)  # No exception raised
+        noneGuard(42, 'my_var')  # Raises UnavailableNameException
+    """
     if obj is not None:
       from worktoy.waitaminute import UnavailableNameException
       raise UnavailableNameException(self.maybe(varName, 'obj'), obj)

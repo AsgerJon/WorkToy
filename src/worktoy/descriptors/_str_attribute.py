@@ -1,4 +1,4 @@
-"""WorkToy - Fields - StrAttribute
+"""WorkToy - Descriptors - StrAttribute
 String valued attribute descriptor implementation."""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
@@ -6,15 +6,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.fields import Attribute
+from worktoy.descriptors import AbstractAttribute
 
 
-class StrAttribute(Attribute):
+class StrAttribute(AbstractAttribute):
   """WorkToy - Fields - IntAttribute
   Field implementation of integer valued descriptor."""
 
   def __init__(self, value: int = None, *args, **kwargs) -> None:
-    Attribute.__init__(self, *args, **kwargs)
+    AbstractAttribute.__init__(self, *args, **kwargs)
 
   def getDefaultValue(self) -> str:
     return ''

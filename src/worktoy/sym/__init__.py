@@ -15,7 +15,8 @@ implementation uses the 'auto' method. For example,
     TUESDAY=SYM.auto()
     ...
 
-Note that the instances are named in upper case as is convention. The base
+Note that the instances are named in upper case as is convention. The
+worktoyclass
 implementation is case-insensitive, but presents instances in upper case.
 This means that:
 
@@ -57,7 +58,8 @@ recognized by the rest of the SYM module:
 
   - Instantiation. The custom implementation is responsible for creating
   the instance given a key, value pair. The default implementation creates
-  a base instance of the new class and an instance of itself that wraps
+  a worktoyclass instance of the new class and an instance of itself that
+  wraps
   it. Please note that the default implementation requires the new class
   to support instance creation with: 'instance = NewClass()'. Otherwise,
   necessary arguments must be provided in the class body, for example,

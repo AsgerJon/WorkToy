@@ -22,21 +22,32 @@ class AbstractMetaClass(MetaMetaClass):
   @classmethod
   @abstractmethod
   def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> Any:
-    """Sub-metaclasses should implement the prepare method to customise
-    how to metaclass receives the class body. If the default behaviour is
-    sufficient, this method should return an instance of dict.
-    Alternatively, an instance of a custom class may be used under the
-    following conditions:
+    """
+    The namespace for a newly created class, contains the key-value pairs
+    given in the class body. By default, the builtin 'dict' provides the
+    datastructure for the namespace. A custom metaclass may provide an
+    alternative to this behaviour by reimplementing the __prepare__
+    method.
 
-    1.  It must implement: __setitem__, __getitem__, __contains__
-    2.  The __getitem__ implementation must raise a KeyError when
+    The default implementation deployed by 'type' and by custom
+    metaclasses not implementing __prepare__ is to return an empty
+    instance of 'dict'. A custom implementation can achieve enhanced
+    functionality by prepopulating the instance of 'dict' or by returning
+    an instance of a custom class instead of 'dict'.
+
+    Introducing a custom class in the place of 'dict' provides a powerful
+    tool for customizing the class creation process. However, the custom
+    class must satisfy the following conditions:
+
+    1.  The object transmitted to the super call in the __new__ method
+        must be recognised as belonging to class 'dict' or as a subclass.
+    2.  It must implement: __setitem__, __getitem__, __contains__
+    3.  IMPORTANT: The __getitem__ implementation must raise a KeyError when
         receiving a key not matching any value. If the custom class does
-        not raise a KeyError, highly undefined behaviour will result.
-    3.  The object transmitted to the super call in the __new__ method
-        must be recognised as belonging to class 'dict' or a subclass.
+        not raise a KeyError, HIGHLY UNDEFINED BEHAVIOUR will result.
 
-    IMPORTANT: Developers implementing a custom class instead of dict for
-    the namespace are encouraged to read the above conditions carefully.
+    Developers implementing a custom class instead of dict for the
+    namespace are encouraged to read the above conditions carefully.
 
     Below is a brief description of the class creation process.
     Parameters

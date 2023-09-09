@@ -1,4 +1,4 @@
-"""WorkToy - Fields - Field
+"""WorkToy - Descriptors - Field
 Basic descriptor implementation."""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
@@ -6,16 +6,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.base import DefaultClass
+from worktoy.worktoyclass import WorkToyClass
 from worktoy.core import Function
 
 
-class Field(DefaultClass):
+class Field(WorkToyClass):
   """WorkToy - Fields - Field
   Basic descriptor implementation."""
 
   def __init__(self, *args, **kwargs) -> None:
-    DefaultClass.__init__(self, *args, **kwargs)
+    WorkToyClass.__init__(self, *args, **kwargs)
     self._defaultValue = (args or (None,))[0]
     self._fieldName = None
     self._fieldOwner = None

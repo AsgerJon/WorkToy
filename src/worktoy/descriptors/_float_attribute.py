@@ -1,4 +1,4 @@
-"""WorkToy - Fields - FloatAttribute
+"""WorkToy - Descriptors - FloatAttribute
 Float valued attribute descriptor implementation."""
 #  MIT Licence
 #  Copyright (c) 2023 Asger Jon Vistisen
@@ -6,17 +6,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.fields import Attribute
+from worktoy.descriptors import AbstractAttribute
 
 
-class FloatAttribute(Attribute):
+class FloatAttribute(AbstractAttribute):
   """WorkToy - Fields - IntAttribute
   Field implementation of integer valued descriptor."""
 
   def __init__(self, value: int = None, *args, **kwargs) -> None:
-    Attribute.__init__(self, *args, **kwargs)
+    AbstractAttribute.__init__(self, *args, **kwargs)
 
   def getDefaultValue(self) -> float:
+    """Getter-function for default value."""
     return .0
 
   def getType(self) -> type:

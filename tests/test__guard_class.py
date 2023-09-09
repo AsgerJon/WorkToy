@@ -3,7 +3,7 @@
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 import unittest
-from worktoy.base import GuardClass
+from worktoy.worktoyclass import GuardClass
 from worktoy.core import Function
 from worktoy.waitaminute import UnavailableNameException
 from worktoy.waitaminute import UnexpectedStateError, TypeSupportError
