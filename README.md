@@ -1,4 +1,4 @@
-# WorkToy v0.40.0
+# WorkToy v0.40.3
 
 ```
 pip install worktoy
