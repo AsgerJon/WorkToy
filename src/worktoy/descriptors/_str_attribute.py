@@ -20,5 +20,5 @@ class StrAttribute(AbstractAttribute):
     """Getter-function for value type."""
     return str
 
-  def __init__(self, value: int = None, *args, **kwargs) -> None:
+  def __init__(self, value: str = None, *args, **kwargs) -> None:
     AbstractAttribute.__init__(self, value, *args, **kwargs)
