@@ -9,3 +9,4 @@ from ._attribute import AbstractAttribute
 from ._int_attribute import IntAttribute
 from ._float_attribute import FloatAttribute
 from ._str_attribute import StrAttribute
+from ._flag import Flag
