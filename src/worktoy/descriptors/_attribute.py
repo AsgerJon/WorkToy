@@ -71,9 +71,11 @@ class AbstractAttribute(WorkToyClass):
 
     __original_init__ = getattr(cls, '__init__', None)
 
-    def __new_init__(instance: Any, *args, **kwargs) -> None:
+    def __new_init__(instance: Any, defVal: Any = None,
+                     *args, **kwargs) -> None:
       """New initializer."""
-      setattr(instance, self.getPrivateName(), self.getDefaultValue())
+      defVal = self.maybe(defVal, self.getDefaultValue())
+      setattr(instance, self.getPrivateName(), defVal)
 
     if __original_init__ is object.__init__:
       setattr(cls, '__init__', __new_init__)
