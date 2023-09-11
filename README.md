@@ -1,4 +1,4 @@
-# WorkToy v0.40.22
+# WorkToy v0.40.23
 
 ```
 pip install worktoy
@@ -302,12 +302,12 @@ class MyClass(WorkToyClass):
   def __init__(self, *args, **kwargs) -> None:
     WorkToyClass.__init__(self, *args, **kwargs)
 
-  @area.getter
+  @area.GET
   def getArea(self) -> float:
     """Getter-Function for the area"""
     return self.width * self.height
 
-  @area.setter
+  @area.SET
   def setArea(self, newArea: float) -> None:
     """Setter-Function for the area."""
     oldArea = self.getArea()

@@ -94,7 +94,7 @@ class Field(WorkToyClass):
     """Deleter-descriptor"""
     self.someGuard(self._deleterFunction)(obj)
 
-  def getter(self, getterFunction: Function) -> Function:
+  def GET(self, getterFunction: Function) -> Function:
     """Sets the getter function to the decorated function before returning
     it."""
     self.overRideGuard(
@@ -102,7 +102,7 @@ class Field(WorkToyClass):
     self._getterFunction = getterFunction
     return getterFunction
 
-  def setter(self, setterFunction: Function) -> Function:
+  def SET(self, setterFunction: Function) -> Function:
     """Sets the setter function to the decorated function before returning
     it."""
     self.overRideGuard(
@@ -110,7 +110,7 @@ class Field(WorkToyClass):
     self._setterFunction = setterFunction
     return setterFunction
 
-  def deleter(self, deleterFunction: Function) -> Function:
+  def DELETER(self, deleterFunction: Function) -> Function:
     """Sets the deleter function to the decorated function before returning
     it."""
     self.overRideGuard(
