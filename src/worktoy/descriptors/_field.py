@@ -61,8 +61,11 @@ class Field(WorkToyClass):
 
     def __new_init__(instance: object, *args, **kwargs) -> None:
       """Wrapper on the original init."""
-      __original_init__(instance, *args, **kwargs)
       setattr(instance, self.getPrivateFieldName(), self._getDefaultValue())
+      if __original_init__ is object.__init__:
+        __original_init__(instance)
+      else:
+        __original_init__(instance, *args, **kwargs)
 
     setattr(cls, '__init__', __new_init__)
     return cls
