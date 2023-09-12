@@ -97,18 +97,15 @@ class DataField(Field):
     existingDataFields |= {self.getFieldName(): self}
     setattr(cls, '__data_fields__', existingDataFields)
 
-  def encode(self, obj: Any) -> str:
+  def encode(self, value: Any) -> str:
     """Encodes the field"""
     encoder = self.getEncoderFunction()
+    return encoder(value)
 
-  def decode(self, obj: Any, data: str) -> None:
+  def decode(self, encodedData: str) -> None:
     """Decodes the data and applies to field on object."""
-    value = None
-    if isinstance(data, str):
-      data = json.loads(data)
-    if isinstance(data, dict):
-      value = data.get(self.getFieldName(), None)
-    return self._setterFunction(obj, value)
+    decoder = self.getDecoderFunction()
+    return decoder(encodedData)
 
   def explicitGetter(self, obj: Any) -> Any:
     """Explicit getter function"""

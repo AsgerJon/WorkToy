@@ -26,8 +26,6 @@ class MetaTypeSupportError(MetaXcept):
 
   def __str__(self, ) -> str:
     header = MetaXcept.__str__(self)
-    expMcls = self._expMetaClass
-    actVal = self._actualValue
     actCls = self._actualType
     actMcls = self._actualMetaClass
     argName = self._argName
