@@ -1,5 +1,6 @@
 [![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](
 https://wakatime.com/badge/github/AsgerJon/WorkToy)
+
 # WorkToy v0.40.24
 
 ```
@@ -24,13 +25,13 @@ pip install worktoy
     5. [intGuard](#WorkToyClassintGuard)
     6. [strGuard](#WorkToyClassstrGuard)
 3. [Descriptors](#Descriptors)
-    1. [AbstractAttribute](#AbstractAttribute)
-    2. [Field](#Field)
+    1. [Field](#Field)
+    2. [DataField](#DataField)
+    3. [DataClass](#DataClass)
 4. [Metaclass](#MetaClass)
     1. [type](#type)
     2. [NameSpace](#NameSpace)
-5. [Symbolic Classes (SYM)](#SYM)
-6. [Wait A Minute!](#Wait-A-Minute)
+5. [Wait A Minute!](#Wait-A-Minute)
     1. [MetaXcept](#MetaXcept)
     2. [MetaTypeSupportError](#MetaTypeSupportError)
     3. [MissingArgumentException](#MissingArgumentException)
@@ -39,7 +40,7 @@ pip install worktoy
     6. [UnavailableNameException](#UnavailableNameException)
     7. [UnexpectedEventException](#UnexpectedEventException)
     8. [UnsupportedSubclassException](#UnsupportedSubclassException)
-7. [Core](#Core)
+6. [Core](#Core)
 
 ## WorkToyClass
 
