@@ -248,7 +248,7 @@ using descriptors: ``Attribute`` and ``Field``.
 
 ### Field
 
-This class are defined in the class body in the same way as the
+This class is defined in the body in the same way as the
 attributes mentioned above. Unlike attributes, instances of Field defined
 on a class body must also decorate their own accessor methods.
 
