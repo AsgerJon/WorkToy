@@ -1,3 +1,5 @@
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](
+https://wakatime.com/badge/github/AsgerJon/WorkToy)
 # WorkToy v0.40.24
 
 ```
@@ -704,6 +706,3 @@ actualValue: str  # The actual value of the variable
 ## Core
 
 This module provides common types and constants.
-
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](
-https://wakatime.com/badge/github/AsgerJon/WorkToy)
