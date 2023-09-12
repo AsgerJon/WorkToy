@@ -1,11 +1,12 @@
 """MoreWorkToy - DataField
 Subclass of Field implementing json saving and loading along with the
 accessor functions."""
-#  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
+#  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
 import json
+from json import JSONDecodeError
 from typing import Any
 
 from icecream import ic
@@ -35,16 +36,43 @@ class DataField(Field):
       try:
         return json.dumps(value)
       except TypeError as e:
-        raise e
+        from worktoy.waitaminute import FieldEncoderException
+        field = self
+        owner = self.getFieldOwner()
+        raise FieldEncoderException(field, value, owner, e)
+
+    return defaultEncoder
 
   def getDefaultDecoderFunction(self) -> Function:
     """Getter-function for the default decoder function. """
 
+    def defaultDecoder(data: str) -> Any:
+      """Default decoder. This default decoder attempts to decode with
+      json.loads. If it fails, the custom exception FieldDecoderException
+      is raised."""
+      try:
+        return json.loads(data)
+      except JSONDecodeError as e:
+        from worktoy.waitaminute import FieldDecoderException
+        field = self
+        owner = self.getFieldOwner()
+        raise FieldDecoderException(field, data, owner, e)
+
+    return defaultDecoder
+
   def getEncoderFunction(self) -> Function:
     """Getter-function for the encoder function. """
 
+    if self._encoderFunction is None:
+      return self.getDefaultEncoderFunction()
+    return self._encoderFunction
+
   def getDecoderFunction(self) -> Function:
     """Setter-function for the decoder function. """
+
+    if self._decoderFunction is None:
+      return self.getDefaultDecoderFunction()
+    return self._decoderFunction
 
   def ENCODER(self, encoderFunction: Function) -> Function:
     """Sets the encoder function to the decorated function before returning
@@ -90,6 +118,16 @@ class DataField(Field):
     """Explicit getter function"""
     return self._setterFunction(obj, newValue)
 
-  def explicitEncoder(self, value: Any) -> Any:
+  def explicitEncoder(self, value: Any) -> str:
     """Explicit encoder. This method should return a 'str' from which the
     value can be decoded. """
+
+    encoder = self.getEncoderFunction()
+    return encoder(value)
+
+  def explicitDecoder(self, data: str) -> Any:
+    """Explicit decoder. This method receives a 'str' from which it should
+    decode a value of the DataField type."""
+
+    decoder = self.getDecoderFunction()
+    return decoder(data)

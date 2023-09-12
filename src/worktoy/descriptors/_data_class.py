@@ -1,8 +1,8 @@
 """MoreWorkToy - DataClass
 Class decorator combining all DataFields on the class to one
 encoder-decoder pair."""
-#  Copyright (c) 2023 Asger Jon Vistisen
 #  MIT Licence
+#  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
 import json
@@ -11,7 +11,7 @@ from typing import Any
 from icecream import ic
 from worktoy.worktoyclass import WorkToyClass
 
-from workside.moreworktoy import DataField
+from worktoy.descriptors import DataField
 
 ic.configureOutput(includeContext=True)
 
@@ -54,7 +54,9 @@ class DataClass(WorkToyClass):
       dataFields = getattr(cls, '__data_fields__', {})
       for fieldName, dataField in dataFields.items():
         if isinstance(dataField, DataField):
-          data |= {fieldName: dataField.explicitGetter(obj)}
+          value = dataField.explicitGetter(obj)
+          encodedData = dataField.explicitEncoder(value)
+          data |= {fieldName: encodedData}
       return json.dumps(data)
 
     def decodeAll(cls: type = None, data: str = None) -> Any:
@@ -72,9 +74,10 @@ class DataClass(WorkToyClass):
       data = json.loads(data)
 
       for fieldName, dataField in dataFields.items():
-        value = data.get(fieldName, None)
-        if value is None:
+        encodedData = data.get(fieldName, None)
+        if encodedData is None:
           raise ValueError
+        value = dataField.explicitDecoder(encodedData)
         dataField.explicitSetter(obj, value)
 
       return obj
