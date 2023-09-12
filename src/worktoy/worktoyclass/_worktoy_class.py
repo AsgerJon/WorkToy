@@ -193,7 +193,7 @@ class WorkToyClass(GuardClass):
       return 'NoneClass'
     qualName = getattr(cls, '__qualname__', None)
     name = getattr(cls, '__name__', None)
-    strRep = '%s' % (cls)
+    strRep = '%s' % cls
     out = self.maybe(qualName, name, strRep)
     if isinstance(out, str):
       return out

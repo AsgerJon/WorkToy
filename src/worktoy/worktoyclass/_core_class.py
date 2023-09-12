@@ -23,8 +23,6 @@ class CoreClass:
     """
   The maybe function returns the first argument that is not None.
 
-  :param *args: Pass in a tuple of arguments to the function
-  :return: The first argument that is not 'None'
   """
     for arg in args:
       if arg is not None:
@@ -35,9 +33,6 @@ class CoreClass:
     Returns the first positional argument belonging to the type given in
     the 'cls' argument.
 
-    :param cls: type: Specify that the first parameter is a type
-    :param *args: Pass a variable number of arguments to the function
-    :return: The first argument that is an instance of 'cls'
     """
     for arg in args:
       if isinstance(arg, cls):
@@ -50,10 +45,6 @@ class CoreClass:
     padding and a padding character. For example:
       maybeTypes(int, 'a', 1, 1.5, 2, pad=4, padChar=-1)
       >>> [1, 2, -1, -1]
-    :param cls: type: Specify the type of class that we are looking for
-    :param *args: Pass in a list of arguments
-    :param **kwargs: Pass keyword arguments to the function
-    :return: A list of all the arguments that are instances
     """
     out = [arg for arg in args if isinstance(arg, cls)]
     while len(out) < kwargs.get('pad', 0):
@@ -64,9 +55,6 @@ class CoreClass:
     """
     This method searches the positional arguments for an argument at each
     given key.
-    :param *keys: Pass in a list of keys to search for
-    :param **kwargs: Pass in keyword arguments to the function
-    :return: The first value that is not none
     """
     for key in keys:
       val = kwargs.get(key, None)

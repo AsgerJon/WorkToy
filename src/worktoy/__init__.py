@@ -9,5 +9,4 @@ import worktoy.core as core
 import worktoy.worktoyclass as worktoyclass
 import worktoy.metaclass as metaclass
 import worktoy.descriptors as descriptors
-import worktoy.sym as sym
 import worktoy.waitaminute as waitaminute

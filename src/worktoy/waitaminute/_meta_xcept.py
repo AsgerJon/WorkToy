@@ -12,7 +12,6 @@ from icecream import ic
 from worktoy.worktoyclass import WorkToyClass
 from worktoy.core import Function
 from worktoy.metaclass import AbstractMetaClass, AbstractNameSpace
-from worktoy.waitaminute import ExceptSpace
 
 ic.configureOutput(includeContext=True)
 

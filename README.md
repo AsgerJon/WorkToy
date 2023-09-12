@@ -301,6 +301,16 @@ decorators to specify exactly how those values should be encoded.
 DataFields holding types directly supported by ``json`` are able to rely
 on the default encoder and decoder.
 
+### DataClass
+
+The ``DataField`` class does little on its own, but by decorating owner
+classes, the class will be able to encode and decode all of its DataField
+instances directly. Keep in mind the default behaviour of relying on the
+``json`` package for encoding and decoding. This is sufficient for
+builtin types, but custom classes must either implement ``json`` support
+directly or the owned instances of ``DataField`` should specify encoding and
+decoding as described above.
+
 ## MetaClass
 
 Metaclasses are certainly the most powerful tool available in Python
@@ -672,6 +682,18 @@ expMetaClass: type  # The expected metaclass
 actualValue: Any  # The actual value received
 argName: str  # Argument name
 ```
+
+### FieldDecoderException
+
+Custom exception raised when an instance of ``DataField`` attempts to decode
+with default JSON decoder. The exception catches the ``JSONDecodeError`` and
+brings additional information.
+
+### FieldEncoderException
+
+Custom exception raised when an instance of ``DataField`` attempts to
+serialize its value to ``JSON`` format, but where the value is not
+serializable.
 
 ### MissingArgumentException
 

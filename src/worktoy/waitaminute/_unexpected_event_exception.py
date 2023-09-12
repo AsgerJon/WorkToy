@@ -26,7 +26,6 @@ class UnexpectedEventException(MetaXcept):
     header = MetaXcept.__str__(self)
     expType = self._expectedType
     actType = self._actualType
-    actVal = self._actualValue
     argName = self._argName
     funcName = self.getSourceFunctionName()
     body = """Function '%s' expected event '%s' to be of event type: '%s', 

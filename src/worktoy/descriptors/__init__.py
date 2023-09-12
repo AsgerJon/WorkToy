@@ -7,8 +7,3 @@ from __future__ import annotations
 from ._field import Field
 from ._data_field import DataField
 from ._data_class import DataClass
-from ._attribute import AbstractAttribute
-from ._int_attribute import IntAttribute
-from ._float_attribute import FloatAttribute
-from ._str_attribute import StrAttribute
-from ._flag import Flag

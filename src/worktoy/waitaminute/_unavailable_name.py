@@ -15,6 +15,7 @@ class UnavailableNameException(MetaXcept):
 
   def __init__(self, name: str, oldVal: Any, newVal: Any = None,
                *args, **kwargs) -> None:
+    MetaXcept.__init__(self, *args, **kwargs)
     self._name = name
     self._oldVal = oldVal
     self._newVal = newVal

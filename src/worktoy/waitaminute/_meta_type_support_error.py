@@ -17,7 +17,7 @@ class MetaTypeSupportError(MetaXcept):
 
   def __init__(self, expMetaClass: type, actualValue: Any, argName: str,
                *args, **kwargs) -> None:
-    MetaXcept.__init__(self, expMetaClass, actualValue, argName)
+    MetaXcept.__init__(*args, **kwargs)
     self._expMetaClass = self.pretty(expMetaClass)
     self._actualValue = self.pretty(actualValue)
     self._actualType = self.pretty(actualValue.__class__)

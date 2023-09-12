@@ -4,7 +4,6 @@ Decorator-based custom exception"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._except_space import ExceptSpace
 from ._meta_xcept import MetaXcept
 from ._field_encoder_exception import FieldEncoderException
 from ._field_decoder_exception import FieldDecoderException
