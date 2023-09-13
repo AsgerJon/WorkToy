@@ -5,8 +5,12 @@ functionality required."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
+from icecream import ic
+
 from worktoy.core import Keys, Items, Values, Bases
 from worktoy.metaclass import MetaNameSpace
+
+ic.configureOutput(includeContext=True)
 
 
 class AbstractNameSpace(dict, metaclass=MetaNameSpace):
@@ -15,10 +19,11 @@ class AbstractNameSpace(dict, metaclass=MetaNameSpace):
   functionality required."""
 
   def __init__(self, name: str = None, bases: Bases = None,
-               **kwargs) -> None:
+               nameSpace: dict = None, **kwargs) -> None:
     super().__init__()
     self._name = name
     self._bases = bases
+    self._nameSpace = nameSpace
     self._kwargs = kwargs
     self._latestErrorGet = None
     self._latestErrorSet = None

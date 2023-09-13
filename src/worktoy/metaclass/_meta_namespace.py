@@ -24,12 +24,26 @@ class MetaNameSpace(AbstractMetaClass):
               name: str,
               bases: Bases,
               nameSpace: dict,
-              **kw) -> type:
-    return AbstractMetaClass.__new__(mcls, name, bases, nameSpace, **kw)
+              **kwargs) -> type:
+    return AbstractMetaClass.__new__(mcls, name, bases, nameSpace, **kwargs)
 
   def __init__(cls, name: str, bases: Bases, nameSpace: dict, **kw) -> None:
     AbstractMetaClass.__init__(cls, name, bases, nameSpace, **kw)
     setattr(cls, '__meta_name__', name)
 
   def __call__(cls, *args, **kwargs) -> object:
+    # name, bases, nameSpace = None, None, None
+    # for arg in args:
+    #   if isinstance(arg, str) and name is None:
+    #     name = arg
+    #   if isinstance(arg, tuple) and bases is None:
+    #     bases = arg
+    #   if isinstance(arg, dict) and nameSpace is None:
+    #     nameSpace = arg
+    # name = '_' if name is None else name
+    # bases = () if bases is None else bases
+    # nameSpace = {} if nameSpace is None else nameSpace
+    # ic(name)
+    # ic(bases)
+    # ic(nameSpace)
     return AbstractMetaClass.__call__(cls, *args, **kwargs)

@@ -5,6 +5,8 @@ metaclasses themselves. """
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import Any
+
 from icecream import ic
 
 from worktoy.core import Bases
@@ -38,6 +40,9 @@ class _MetaMetaClass(type):
                **kwargs) -> None:
     type.__init__(cls, name, bases, nameSpace, **kwargs)
 
+  def __call__(cls, *args, **kwargs) -> Any:
+    return type.__call__(cls, *args, **kwargs)
+
   def __str__(cls) -> str:
     """String Representation"""
     return cls.__qualname__
@@ -63,3 +68,6 @@ class MetaMetaClass(_MetaMetaClass, metaclass=_MetaMetaClass):
                nameSpace: dict = None,
                **kwargs) -> None:
     _MetaMetaClass.__init__(cls, name, bases, nameSpace, **kwargs)
+
+  def __call__(cls, *args, **kwargs) -> Any:
+    return _MetaMetaClass.__call__(cls, *args, **kwargs)

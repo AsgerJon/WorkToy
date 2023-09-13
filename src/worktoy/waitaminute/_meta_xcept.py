@@ -34,13 +34,18 @@ class _MetaXcept(AbstractMetaClass):
     return out
 
   def __init__(cls, *args, **kwargs) -> None:
-    name = args[0]
-    bases = args[1]
-    nameSpace = args[2]
-    if isinstance(nameSpace, dict):
-      AbstractMetaClass.__init__(cls, name, bases, nameSpace, **kwargs)
-    else:
-      raise TypeError
+    name, bases, nameSpace = None, None, None
+    for arg in args:
+      if isinstance(arg, str) and name is None:
+        name = arg
+      if isinstance(arg, tuple) and bases is None:
+        bases = arg
+      if isinstance(arg, dict) and nameSpace is None:
+        nameSpace = arg
+    name = '_' if name is None else name
+    bases = () if bases is None else bases
+    nameSpace = {} if nameSpace is None else nameSpace
+    AbstractMetaClass.__init__(cls, name, bases, nameSpace, **kwargs)
 
   def __call__(cls, *args, **kwargs) -> Exception:
     return AbstractMetaClass.__call__(cls, *args, **kwargs)
@@ -195,36 +200,3 @@ class MetaXcept(Exception, WorkToyClass, metaclass=_MetaXcept):
     selfMessage = str(self).replace(selfHeader, '')
     otherMessage = str(other).replace(otherHeader, '')
     return '\n'.join([header, subHeader, selfMessage, otherMessage])
-
-  # def collectInfo(self, ) -> list:
-  #   """Collects details for each function step"""
-  #   out = []
-  #   for f in self.getReversedStack():
-  #     out.append(self.collectStepInfo(f))
-  #   return out
-  #
-  # def collectNames(self, ) -> list:
-  #   """Collects function names."""
-  #
-  # def collectStepInfo(self, step: Any) -> dict:
-  #   """Collects details for one step"""
-  #   globalSnapshot = globals().items()
-  #   globalSnapshot = {k: v for (k, v) in globalSnapshot}
-  #   name = step.frame.f_code.co_qualname
-  #   argNames = step.frame.f_code.co_qualname
-  #   func = globalSnapshot.get(name)
-  #   note = getattr(func, '__annotations__', None)
-  #   if note is None:
-  #     return {}
-  #   notes = {}
-  #   for arg in [*argNames, 'return']:
-  #     notes |= {arg: note.get(arg, 'None')}
-  #   return dict(name=name, func=func, notes=notes)
-  #
-  # def funcInfo(self, ) -> Any:
-  #   """Function information"""
-  #   out = []
-  #   for info in self.collectInfo():
-  #     if info.get('name', None) != '<module>':
-  #       out.append(info)
-  #   return out

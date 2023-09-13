@@ -117,7 +117,7 @@ class AbstractMetaClass(MetaMetaClass):
     decorator will cause undefined behaviour.
     The baseclass implementation of __new__ collects arguments in the
     MetaClassParams body and passes them to the super call."""
-    return super().__new__(mcls, name, bases, nameSpace, **kwargs)
+    return type.__new__(mcls, name, bases, nameSpace, **kwargs)
 
   def __init__(cls, name=None, bases=None, nameSpace=None, **kwargs) -> None:
     """The baseclass implementation uses the MetaClassParams instance to
@@ -139,4 +139,15 @@ class AbstractMetaClass(MetaMetaClass):
     Upon completion, the new instance is returned. Please note that this
     is a demonstration. The real implementation may not produce the same
     results."""
-    return MetaMetaClass.__call__(cls, *args, **kwargs)
+    name, bases, nameSpace = None, None, None
+    for arg in args:
+      if isinstance(arg, str) and name is None:
+        name = arg
+      if isinstance(arg, tuple) and bases is None:
+        bases = arg
+      if isinstance(arg, dict) and nameSpace is None:
+        nameSpace = arg
+    name = '_' if name is None else name
+    bases = () if bases is None else bases
+    nameSpace = {} if nameSpace is None else nameSpace
+    return MetaMetaClass.__call__(cls, name, bases, nameSpace, **kwargs)
