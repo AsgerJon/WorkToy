@@ -297,7 +297,9 @@ class MyClass(WorkToyClass):
 
   @area.SET
   def setArea(self, newArea: float) -> None:
-    """Setter-Function for the area."""
+    """Setter-Function for the area. This method scales 
+    height and width such that 'area' equals 'newArea'.
+    """
     oldArea = self.getArea()
     if not oldArea:
       raise ZeroDivisionError
