@@ -35,19 +35,22 @@ class AbstractNameSpace(dict, metaclass=MetaNameSpace):
     return 'WorkToy'
 
   def __setitem__(self, key: str, val: object, *args, **kwargs) -> None:
-    self._log.append(['set', key, val, ])
+    self._recordLog(['set', key, val, ])
     dict.__setitem__(self, key, val, )
 
   def __getitem__(self, key: str, *args, **kwargs) -> object:
     try:
+      self._recordLog(['get', key, self.get(key, None), ])
       val = dict.__getitem__(self, key)
-      self._recordLog(['get', key, val, ])
       return val
     except KeyError as e:
       self._recordLog(['getError', key, e, ])
-      raise e
+      raise KeyError('LMAO')
+    except TypeError as e:
+      self._recordLog(['Type', key, e, ])
 
   def __delitem__(self, key: str) -> None:
+    self._recordLog(['__delitem__', key, None, ])
     dict.__delitem__(self, key)
 
   def __contains__(self, key: str) -> bool:

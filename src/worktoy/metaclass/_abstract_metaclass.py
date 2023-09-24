@@ -9,7 +9,7 @@ from typing import Any
 
 from icecream import ic
 
-from worktoy.core import Bases
+from worktoy.core import Bases, Function
 from worktoy.metaclass import MetaMetaClass
 
 ic.configureOutput(includeContext=True)

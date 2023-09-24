@@ -161,7 +161,7 @@ cython_debug/
 /src/worktoy/waitaminute/_testexception.py
 /.pypirc
 _scratcher.py
-/main.py
+/main4.py
 *.pyi
 /gptstyle.txt
 /notes/
@@ -171,3 +171,12 @@ _scratcher.py
 sym.md
 mainclass.py
 main2.py
+/main6.py
+/main7.py
+/main8.py
+/main9.py
+/main10.py
+/mainclass03.py
+mainclass02.py
+main11.py
+main.py

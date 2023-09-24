@@ -4,6 +4,5 @@ Implementation of descriptors as descriptors."""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._field import Field
-from ._data_field import DataField
-from ._data_class import DataClass
+from ._attribute import Attribute
+from ._attribute_class import AttributeClass

@@ -15,15 +15,18 @@ class CoreClass:
   Provides utilities accessible by subclassing this CoreClass or its
   subclasses."""
 
+  def __init_subclass__(cls, **kwargs) -> None:
+    """This is so stupid..."""
+    super().__init_subclass__()
+
   def __init__(self, *args, **kwargs) -> None:
     self._args = args
     self._kwargs = kwargs
 
   def maybe(self, *args, ) -> Any:
     """
-  The maybe function returns the first argument that is not None.
-
-  """
+    The maybe function returns the first argument that is not None.
+    """
     for arg in args:
       if arg is not None:
         return arg
@@ -32,7 +35,6 @@ class CoreClass:
     """
     Returns the first positional argument belonging to the type given in
     the 'cls' argument.
-
     """
     for arg in args:
       if isinstance(arg, cls):
@@ -42,10 +44,10 @@ class CoreClass:
     """
     Returns each positional argument belonging to the type given in the
     'cls' argument. Use keyword arguments 'pad' and 'padChar' to set a
-    padding and a padding character. For example:
-      maybeTypes(int, 'a', 1, 1.5, 2, pad=4, padChar=-1)
-      >>> [1, 2, -1, -1]
+    padding and a padding character.
     """
+    if cls is float:
+      cls = (float, int)
     out = [arg for arg in args if isinstance(arg, cls)]
     while len(out) < kwargs.get('pad', 0):
       out.append(kwargs.get('padChar', None))
@@ -56,6 +58,8 @@ class CoreClass:
     This method searches the positional arguments for an argument at each
     given key.
     """
+    if len(keys) == 1 and isinstance(keys[0], list):
+      return self.searchKey(*keys[0], **kwargs)
     for key in keys:
       val = kwargs.get(key, None)
       if val is not None:

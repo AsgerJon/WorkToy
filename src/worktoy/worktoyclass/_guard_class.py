@@ -4,7 +4,7 @@ Provides guard methods to the DefaultClass"""
 #  Copyright (c) 2023 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from worktoy.worktoyclass import CoreClass
 
@@ -18,11 +18,12 @@ class GuardClass(CoreClass):
   def __init__(self, *args, **kwargs) -> None:
     CoreClass.__init__(self, *args, **kwargs)
 
-  def noneGuard(self, obj: object, varName: str = None) -> Any:
+  def noneGuard(self, obj: object, varName: str = None) -> bool:
     """Raises UnavailableNameException if the given object is not None. """
     if obj is not None:
       from worktoy.waitaminute import UnavailableNameException
       raise UnavailableNameException(self.maybe(varName, 'obj'), obj)
+    return True
 
   def someGuard(self, obj: Any, varName: str = None) -> Any:
     """Raises error if given object is None."""
@@ -70,8 +71,14 @@ class GuardClass(CoreClass):
       raise TypeSupportError(expectedType, actualValue, argName)
     return value
 
-  def strGuard(self, value: str, name: str = None) -> str:
+  def strGuard(self, value: str, name: str = None,
+               **kwargs) -> Optional[str]:
     """Raises error if given object is None or not a string."""
+    if value is None:
+      if not self.searchKey('allowNone', 'allow_none', **kwargs):
+        from worktoy.waitaminute import MissingArgumentException
+        raise MissingArgumentException(self.maybe(name, 'obj'))
+      return
     argName = self.maybe(name, 'text')
     if not isinstance(self.someGuard(value), str):
       from worktoy.waitaminute import TypeSupportError
@@ -79,3 +86,19 @@ class GuardClass(CoreClass):
       actualValue = value
       raise TypeSupportError(expectedType, actualValue, argName)
     return value
+
+  def createGet(self, creator: Function, name: str, **kwargs) -> Any:
+    """Creator-getter recursion guard"""
+    value = getattr(self, name, None)
+    if value is None:
+      if kwargs.get('_recursion', False):
+        from worktoy.waitaminute import RecursiveCreateGetError
+        raise RecursiveCreateGetError(creator, object, name)
+      creator()
+      return self.createGet(creator, name, recursion=True)
+    return getattr(self, name, )
+
+  @staticmethod
+  def decodeStr(data: str) -> str:
+    """Returns the string as is"""
+    return data

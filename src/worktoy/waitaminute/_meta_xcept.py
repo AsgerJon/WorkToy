@@ -9,6 +9,7 @@ from typing import Never, Any
 
 from icecream import ic
 
+# from worktoy.texttools import TextBox
 from worktoy.worktoyclass import WorkToyClass
 from worktoy.core import Function
 from worktoy.metaclass import AbstractMetaClass, AbstractNameSpace
@@ -111,6 +112,9 @@ class MetaXcept(Exception, WorkToyClass, metaclass=_MetaXcept):
       out.append(_stack.pop())
     return out
 
+  def printStack(self) -> str:
+    """Prints the stack"""
+
   def getTrace(self) -> Any:
     """Getter-function for trace"""
     return self._trace
@@ -139,10 +143,10 @@ class MetaXcept(Exception, WorkToyClass, metaclass=_MetaXcept):
         out.append(item)
     return out
 
-  def getSourceFunctionName(self) -> Any:
+  def getSourceFunctionName(self, c: int = None) -> Any:
     """Getter-function for the function in which the error is raised.
     Unfortunately, only the name is available from the inspect module. """
-    return self.getSourceFunctionStack()[-1]
+    return self.getSourceFunctionStack()
 
   def getLocals(self) -> Any:
     """Getter-function for locals"""
@@ -184,7 +188,11 @@ class MetaXcept(Exception, WorkToyClass, metaclass=_MetaXcept):
   def __str__(self) -> str:
     """String representation. The default returns the qualified name of
     the error with the new lines above and below."""
-    return self.formatHeader(self.__class__.__qualname__)
+    lines = [self.__class__.__qualname__, str.center('<>', 30, ' ')]
+    for name in self.getFuncQualName():
+      lines.append(str.center(name, 30, ' '))
+    msg = '\n'.join(lines)
+    return msg
 
   def combine(self, other: MetaXcept) -> str:
     """String representation"""

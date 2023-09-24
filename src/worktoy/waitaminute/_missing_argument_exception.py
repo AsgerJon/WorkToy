@@ -20,6 +20,7 @@ class MissingArgumentException(MetaXcept):
     header = MetaXcept.__str__(self)
     misArg = self._missingArgument
     funcName = self.getSourceFunctionName()
-    msg = """Variable: '%s' is required for function: '%s' is missing!"""
+    msg = self.monoSpace(
+      """Variable: '%s' is a required argument for function: '%s'!""")
     body = msg % (misArg, funcName)
     return '%s\n%s' % (header, self.justify(body))

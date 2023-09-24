@@ -23,24 +23,13 @@ class UnavailableNameException(MetaXcept):
   def __full_str__(self) -> str:
     """Message issued when receiving the new value."""
     header = MetaXcept.__str__(self)
-    func = self.getFuncQualName()
     newVal = self._newVal
     name = self._name
     oldVal = self._oldVal
-    msg = """Function '%s' attempted to assign new value: '%s' to name: 
-    '%s' which is already populated with: '%s'!"""
-    body = msg % (func, newVal, name, oldVal)
-    return '%s\n%s' % (header, self.justify(body))
-
-  def __name_val_str__(self) -> str:
-    """Message issue when receiving only the name and existing value."""
-    header = MetaXcept.__str__(self)
-    name = self._name
-    oldVal = self._oldVal
-    func = self.getFuncQualName()
-    msg = """Function '%s' expected variable at name '%s' to be 'None', 
-    but found value: '%s'. """
-    body = msg % (func, name, oldVal)
+    msg = """Attempted to overwrite variable named '%s'. This name was 
+    expected to refer to a variable valued 'None', but found value '%s'. 
+    The attempted new value was '%s'."""
+    body = msg % (newVal, name, oldVal)
     return '%s\n%s' % (header, self.justify(body))
 
   def __str__(self, ) -> str:
