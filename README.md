@@ -242,103 +242,59 @@ Raises ``TypeSupportError`` if given object is None or not a string
 
 ## Descriptors
 
-The Descriptors package implements descriptors. These serve as
-alternatives to the ``property`` descriptor. WorkToy provides two ways of
-using descriptors: ``Attribute`` and ``Field``.
-
-### Field
-
-This class is defined in the body in the same way as the
-attributes mentioned above. Unlike attributes, instances of Field defined
-on a class body must also decorate their own accessor methods.
-
+The ``Attribute`` class implements flexible descriptors. 
 ```python
+class Attribute(WorkToyClass):
+  """WorkToy - Fields - Field
+  Basic descriptor implementation."""
 
-from worktoy.worktoyclass import WorkToyClass
-from worktoy.descriptors import Field
-
-
-class MyClass(WorkToyClass):
-  """Example class"""
-
-  area = Field()
-  width = Field()
-  height = Field()
-
-  def __init__(self, *args, **kwargs) -> None:
+  def __init__(self, defVal: Any = None, *args, **kwargs) -> None:
     WorkToyClass.__init__(self, *args, **kwargs)
-    self._width = 1
-    self._height = 1
-
-  @width.GET
-  def getWidth(self) -> int:
-    """Getter-function for width"""
-    return self._width
-
-  @width.SET
-  def setWidth(self, width: int) -> None:
-    """Setter-function for width."""
-    self._width = width
-
-  @height.GET
-  def getHeight(self) -> int:
-    """Getter-function for height"""
-    return self._height
-
-  @height.SET
-  def setHeight(self, height: int) -> None:
-    """Setter-function for height."""
-    self._height = height
-
-  @area.GET
-  def getArea(self) -> float:
-    """Getter-Function for the area"""
-    return self.width * self.height
-
-  @area.SET
-  def setArea(self, newArea: float) -> None:
-    """Setter-Function for the area. This method scales 
-    height and width such that 'area' equals 'newArea'.
-    """
-    oldArea = self.getArea()
-    if not oldArea:
-      raise ZeroDivisionError
-    scale = (newArea / oldArea) ** 0.5
-    self.width *= scale
-    self.height *= scale
-
-
-myInstance = MyClass()
-myInstance.width  # >>> 3
-myInstance.height  # >>> 4
-myInstance.area  # >>> 12
-myInstance.area = 48
-myInstance.width  # >>> 3
-myInstance.height  # >>> 4
-
+    self._defaultValue = None
+    self._defaultType = None
 ```
 
-Notice the flexibility available by defining a setter function for the
-``area`` field.
+#### case 1: 
+Receives a default value that is not a type
+```python
+if defVal is not None and not isinstance(defVal, type):
+  self._setDefaultValue(defVal)
+  self._defaultType = type(self._defaultValue)
+```
+#### case 2: 
+Receives a default value that is a type. This is taken to
+mean that the attribute is to hold a value of that type. The type
+is then called without argument to attempt to create a default value.
+```python
+if isinstance(defVal, type):
+  self._setDefaultValue(defVal)
+  self._defaultValue = defVal()
+```
+#### case 3
+Receives no argument. In this case, the instance is
+responsible for providing a default value. For example in the
+instance `__init__` method using the public setter.
+Please note, that fields must do one of the following:
+1. Provide a default value in the Field creation call (RECOMMENDED)
+2. Define a Field type in the creation call. (NOT RECOMMENDED)
+3. Have the owning class defer default instance creation to the
+first call to the getter-function. This advanced use case allows
+the owning class to control specifically when and how to create
+instances. This is supported and encouraged, for advanced owning
+classes. (ADVANCED USE CASE)
+4. Subclass attribute to the specific type. (ADVANCED USE CASE)
 
-### DataField
-
-This is a subclass of ``Field`` implementing automatic encoding and
-decoding to json format. If the instances of DataField contain custom
-classes, it is recommended to use the ``ENCODER`` and ``DECODER``
-decorators to specify exactly how those values should be encoded.
-DataFields holding types directly supported by ``json`` are able to rely
-on the default encoder and decoder.
-
-### DataClass
-
-The ``DataField`` class does little on its own, but by decorating owner
-classes, the class will be able to encode and decode all of its DataField
-instances directly. Keep in mind the default behaviour of relying on the
-``json`` package for encoding and decoding. This is sufficient for
-builtin types, but custom classes must either implement ``json`` support
-directly or the owned instances of ``DataField`` should specify encoding and
-decoding as described above.
+#### ATTENTION!
+Doing none of the above leads to HIGHLY UNDEFINED BEHAVIOUR!
+The Attribute is intended to raise MissingArgumentException in such
+cases.
+```python
+self._fieldName = None
+    self._fieldOwner = None
+    self._getterFunctionName = None
+    self._setterFunctionName = None
+    self._deleterFunctionName = None
+```
 
 ## MetaClass
 
