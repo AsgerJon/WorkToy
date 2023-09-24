@@ -95,7 +95,7 @@ class MyClass(WorkToyClass):
 
   def instanceMethod(self, *args, **kwargs) -> int:
     """Instance method using ``maybeType`` to extract an integer from the 
-    positional arguments."""
+    positional arguments. """
     return self.maybeType(int, *args)
 
 
