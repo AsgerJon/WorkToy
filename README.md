@@ -1,7 +1,7 @@
 [![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](
 https://wakatime.com/badge/github/AsgerJon/WorkToy)
 
-# WorkToy v0.40.27
+# WorkToy v0.40.28
 
 ```
 pip install worktoy
@@ -240,7 +240,8 @@ Raises ``TypeSupportError`` if given object is None or not a string
 
 ## Descriptors
 
-The ``Attribute`` class implements flexible descriptors. 
+The ``Attribute`` class implements flexible descriptors.
+
 ```python
 class Attribute(WorkToyClass):
   """WorkToy - Fields - Field
@@ -252,46 +253,56 @@ class Attribute(WorkToyClass):
     self._defaultType = None
 ```
 
-#### case 1: 
+#### case 1:
+
 Receives a default value that is not a type
+
 ```python
 if defVal is not None and not isinstance(defVal, type):
   self._setDefaultValue(defVal)
   self._defaultType = type(self._defaultValue)
 ```
-#### case 2: 
+
+#### case 2:
+
 Receives a default value that is a type. This is taken to
 mean that the attribute is to hold a value of that type. The type
 is then called without argument to attempt to create a default value.
+
 ```python
 if isinstance(defVal, type):
   self._setDefaultValue(defVal)
   self._defaultValue = defVal()
 ```
+
 #### case 3
+
 Receives no argument. In this case, the instance is
 responsible for providing a default value. For example in the
 instance `__init__` method using the public setter.
 Please note, that fields must do one of the following:
+
 1. Provide a default value in the Field creation call (RECOMMENDED)
 2. Define a Field type in the creation call. (NOT RECOMMENDED)
 3. Have the owning class defer default instance creation to the
-first call to the getter-function. This advanced use case allows
-the owning class to control specifically when and how to create
-instances. This is supported and encouraged, for advanced owning
-classes. (ADVANCED USE CASE)
+   first call to the getter-function. This advanced use case allows
+   the owning class to control specifically when and how to create
+   instances. This is supported and encouraged, for advanced owning
+   classes. (ADVANCED USE CASE)
 4. Subclass attribute to the specific type. (ADVANCED USE CASE)
 
 #### ATTENTION!
+
 Doing none of the above leads to HIGHLY UNDEFINED BEHAVIOUR!
 The Attribute is intended to raise MissingArgumentException in such
 cases.
+
 ```python
 self._fieldName = None
-    self._fieldOwner = None
-    self._getterFunctionName = None
-    self._setterFunctionName = None
-    self._deleterFunctionName = None
+self._fieldOwner = None
+self._getterFunctionName = None
+self._setterFunctionName = None
+self._deleterFunctionName = None
 ```
 
 ## MetaClass
