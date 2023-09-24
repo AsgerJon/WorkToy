@@ -5,13 +5,13 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "worktoy"
-version = "0.40.26"
+version = "0.40.27"
 authors = [
     { name = "Asger Jon Vistisen", email = "asgerjon2@gmail.com" },
 ]
 description = "Collection of Utilities"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

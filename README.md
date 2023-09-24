@@ -1,7 +1,7 @@
 [![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](
 https://wakatime.com/badge/github/AsgerJon/WorkToy)
 
-# WorkToy v0.40.26
+# WorkToy v0.40.27
 
 ```
 pip install worktoy
