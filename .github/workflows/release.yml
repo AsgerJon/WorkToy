@@ -23,7 +23,7 @@ jobs:
         run: pip install build twine bump2version
 
       - name: Check bump2version
-        run: bump2version --version
+        run: bump2version --help  # Just checking availability
 
       - name: Configure user info
         run: |
@@ -33,7 +33,7 @@ jobs:
       - name: Bump Version and Tag
         id: version
         run: |
-          bump2version patch --commit --tag
+          bump2version patch --commit --tag --new-version $(git describe --tags --abbrev=0 | grep -oP '\d+\.\d+\.\d+')  # Assuming semantic versioning
           echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
 
       - name: Push Changes
