@@ -1,66 +1,86 @@
 """LMAO"""
-#  MIT Licence
-#  Copyright (c) 2023 Asger Jon Vistisen
+#  AGPL-3.0 license
+#  Copyright (c) 2023-2024 Asger Jon Vistisen
 from __future__ import annotations
 
-fields = """¤¤1TAB¤¤¤¤name¤¤ = Field()"""
+from typing import TYPE_CHECKING
 
-accList = [
-  '¤¤1TAB¤¤@¤¤name¤¤.GET',
-  '¤¤1TAB¤¤def get¤¤Name¤¤(self, ) -> ¤¤TYPE¤¤:',
-  '¤¤2TAB¤¤\"\"\"Getter-function for ¤¤name¤¤\"\"\"',
-  '¤¤2TAB¤¤return self._¤¤name¤¤',
-  '¤¤blank¤¤',
-  '¤¤1TAB¤¤@¤¤name¤¤.SET',
-  '¤¤1TAB¤¤def set¤¤Name¤¤(self, newValue: ¤¤TYPE¤¤) -> None:',
-  '¤¤2TAB¤¤\"\"\"Getter-function for ¤¤name¤¤\"\"\"',
-  '¤¤2TAB¤¤self._¤¤name¤¤ = newValue',
-]
-
-pvtNames = """¤¤2TAB¤¤self._¤¤name¤¤ = None"""
+from worktoy.desc import AttriBox, Instance, Owner
+from worktoy.ezdata import EZData
 
 
-def getFields(name: str, *_) -> str:
-  """Creates the fields code"""
-  out = fields.replace('¤¤name¤¤', name)
-  out = out.replace('¤¤1TAB¤¤', '  ')
-  out = out.replace('¤¤2TAB¤¤', '    ')
-  return out
+class Volume:
+  """LMAO"""
+
+  __inner_value__ = None
+
+  def __init__(self, point: Point2D) -> None:
+    """LMAO"""
+    if TYPE_CHECKING:
+      assert isinstance(point.x, int)
+      assert isinstance(point.y, int)
+      assert isinstance(point.z, int)
+    self.__inner_value__ = point.x ** 2 + point.y ** 2 + point.z ** 2
+
+  def __str__(self) -> str:
+    """LMAO"""
+    return str(self.__inner_value__)
 
 
-def getPvtNames(name: str, *_) -> str:
-  """Creates private variables"""
-  out = pvtNames.replace('¤¤name¤¤', name)
-  out = out.replace('¤¤2TAB¤¤', '    ')
-  return out
+class Name:
+  """LMAO"""
+
+  __inner_value__ = None
+
+  def __init__(self, cls: type) -> None:
+    """LMAO"""
+    self.__inner_value__ = cls.__name__
+
+  def __str__(self) -> str:
+    """LMAO"""
+    return str(self.__inner_value__)
 
 
-def getAccessors(name: str, cls: type) -> str:
-  """Creates the accessors code"""
-  Name = name[0].upper() + name[1:]
-  codeLines = []
-  for line in accList:
-    out = line.replace('¤¤name¤¤', name)
-    out = out.replace('¤¤TYPE¤¤', str(cls))
-    out = out.replace('¤¤Name¤¤', Name)
-    out = out.replace('¤¤1TAB¤¤', '  ')
-    out = out.replace('¤¤2TAB¤¤', '    ')
-    out = out.replace('¤¤blank¤¤', '\n')
-    if out:
-      codeLines.append(out)
-  out = '\n'.join(codeLines)
-  return out
-#
-#
-# fieldCodes = []
-# pvtCodes = []
-# accessorList = []
-# for NAME, type_ in zip(names, types):
-#   fieldCodes.append(getFields(NAME, type_))
-#   pvtCodes.append(getPvtNames(NAME, type_))
-#   acc = getAccessors(NAME, type_)
-#   accessorList.append(acc)
-#
-# fieldCode = '\n'.join(fieldCodes)
-# pvtCode = '\n'.join(pvtCodes)
-# accCode = ''.join(accessorList)
+class Point2D(EZData):
+  """Point is a test class!"""
+
+  x = AttriBox[int](0)
+  y = AttriBox[int](0)
+  z = AttriBox[int](0)
+
+  volume = AttriBox[Volume](Instance)
+  name = AttriBox[Name](Owner)
+
+  def __str__(self) -> str:
+    """String representation"""
+    if TYPE_CHECKING:
+      assert isinstance(self.x, int)
+      assert isinstance(self.y, int)
+      assert isinstance(self.z, int)
+    clsName = self.name
+    x, y, z = self.x, self.y, self.z
+    return """%s(%d, %d, %d) = %s""" % (clsName, x, y, z, str(self.volume))
+
+  def __getitem__(self, item: object) -> None:
+    """LMAO"""
+    args, kwargs = (), {}
+    if isinstance(item, tuple):
+      if len(item) == 1:
+        args = item
+        kwargs = {}
+      if len(item) > 1:
+        if isinstance(item[-1], dict):
+          if len(item) == 2:
+            if isinstance(item[0], (tuple, list)):
+              args = (*item[0],)
+            else:
+              args = item[0]
+            kwargs = item[1]
+          else:
+            args = (*item[:-1],)
+            kwargs = item[-1]
+        else:
+          args = item
+          kwargs = {}
+    print(args)
+    print(kwargs)
