@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # To ensure all tags are fetched
       - name: Setup Python 3.12
         uses: actions/setup-python@v4
         with:
