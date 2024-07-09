@@ -13,43 +13,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # To ensure all tags are fetched
-      - name: Setup Python 3.12
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
       - name: Configure user info
         run: |
-          git config --local user.name "Asger Jon Vistisen"
-          git config --local user.email "asgerjon2@gmail.com"
+          git config --local user.name "Your Name"
+          git config --local user.email "you@example.com"
       - name: Install dependencies
-        run: pip install build twine bump2version
-      - name: Bump Version and Tag
-        id: version
-        run: |
-          bump2version patch --commit --tag
-          echo "tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
-      - name: Push Changes
-        run: |
-          git push && git push --tags
+        run: pip install build twine
       - name: Build package
         run: python -m build
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          skip-existing: true
+      - name: Publish to PyPI without token
+        run: twine upload dist/* -u __token__ -p ${{ secrets.PYPI_PASSWORD }} --non-interactive
       - name: Create GitHub Release
         uses: actions/create-release@v1
-        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.tag }}
-          release_name: Release ${{ env.tag }}
-          body: |
-            Early version, work in progress
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: Changes in this Release
           draft: false
           prerelease: false
