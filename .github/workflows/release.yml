@@ -27,7 +27,7 @@ jobs:
         id: version
         run: |
           bump2version patch --commit --tag
-          echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
+          echo "tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
       - name: Push Changes
         run: |
           git push && git push --tags
@@ -45,8 +45,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          release_name: Release ${{ steps.version.outputs.tag }}
+          tag_name: ${{ env.tag }}
+          release_name: Release ${{ env.tag }}
           body: |
             Early version, work in progress
           draft: false
