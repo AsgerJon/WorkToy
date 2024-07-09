@@ -1,0 +1,53 @@
+name: Publish Python Package to PyPI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Configure user info
+        run: |
+          git config --local user.name "Asger Jon Vistisen"
+          git config --local user.email "asgerjon2@gmail.com"
+      - name: Install dependencies
+        run: pip install build twine bump2version
+      - name: Bump Version and Tag
+        id: version
+        run: |
+          bump2version patch --commit --tag
+          echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
+      - name: Push Changes
+        run: |
+          git push && git push --tags
+      - name: Build package
+        run: python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            Early version, work in progress
+          draft: false
+          prerelease: false
