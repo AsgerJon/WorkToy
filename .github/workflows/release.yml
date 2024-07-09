@@ -2,6 +2,9 @@ name: Publish Python Package to PyPI
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main  # Trigger on pushes to main branch
 
 permissions:
   contents: write
@@ -13,27 +16,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Python
+        with:
+          fetch-depth: 0  # Ensures tags are also fetched
+
+      - name: Setup Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
+
       - name: Configure user info
         run: |
           git config --local user.name "Your Name"
-          git config --local user.email "you@example.com"
+          git config --local user.email "your-email@example.com"
+
       - name: Install dependencies
         run: pip install build twine
+
+      - name: Bump Version and Tag
+        id: version
+        run: |
+          bump2version patch --commit --tag
+          echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
+
+      - name: Push Changes
+        run: |
+          git push && git push --tags
+
       - name: Build package
         run: python -m build
-      - name: Publish to PyPI without token
-        run: twine upload dist/* -u __token__ -p ${{ secrets.PYPI_PASSWORD }} --non-interactive
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
+        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: Changes in this Release
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: Release ${{ steps.version.outputs.tag }}
+          body: 'Early version, work in progress'
           draft: false
           prerelease: false
