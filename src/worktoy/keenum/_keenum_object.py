@@ -77,7 +77,7 @@ class KeeNumObject:
       raise AttributeError(e)
     self.__public_value__ = publicValue
 
-  def __init__(self, *args, **kwargs) -> None:
+  def __init__(self, *args, ) -> None:
     for arg in args:
       if isinstance(arg, KeeNumObject):
         self.__keenum_name__ = arg.name
@@ -113,4 +113,14 @@ class KeeNumObject:
       return self.__class__(int(self) - other)
     if isinstance(other, KeeNumObject):
       return self - int(other)
+    return NotImplemented
+
+  def __eq__(self, other: object) -> bool:
+    """Implementation of equal operator"""
+    if isinstance(other, int):
+      return False if int(self) - other else True
+    if isinstance(other, KeeNumObject):
+      return self == int(other)
+    if isinstance(other, self.__class__):
+      return self == int(other)
     return NotImplemented

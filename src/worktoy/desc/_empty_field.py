@@ -89,7 +89,7 @@ class EmptyField:
       raise RuntimeError(monoSpace(e % ownerName))
     if self.__setter_name__ is None:
       e = """The field instance at name: '%s' does not have a setter!"""
-      raise AttributeError(e)
+      raise AttributeError(monoSpace(e % fieldName))
     setter = getattr(self.__field_owner__, self.__setter_name__, None)
     if setter is None:
       e = """The owner class: '%s' does not implement a setter function
@@ -109,7 +109,7 @@ class EmptyField:
       raise RuntimeError(monoSpace(e % ownerName))
     if self.__deleter_name__ is None:
       e = """The field instance at name: '%s' does not have a deleter!"""
-      raise AttributeError(e)
+      raise AttributeError(monoSpace(e % fieldName))
     deleter = getattr(self.__field_owner__, self.__deleter_name__, None)
     if deleter is None:
       e = """The owner class: '%s' does not implement a deleter function

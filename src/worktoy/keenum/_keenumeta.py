@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Iterable
 
 from worktoy.keenum import KeeNumSpace, KeeNumObject
 from worktoy.meta import AbstractMetaclass
@@ -172,3 +172,7 @@ class KeeNumMeta(AbstractMetaclass):
 
 class KeeNum(metaclass=KeeNumMeta):
   """KeeNum provides the metaclass for the KeeNum class."""
+
+
+if TYPE_CHECKING:
+  assert isinstance(KeeNum, Iterable)

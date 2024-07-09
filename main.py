@@ -6,13 +6,10 @@ from __future__ import annotations
 import os
 import sys
 import time
+import unittest
 from typing import Never, Any, Callable
 
 from icecream import ic
-
-from mainclass02 import Point2D
-from mainclass03 import WeekDay
-from mainclass04 import Color
 
 ic.configureOutput(includeContext=True)
 
@@ -37,45 +34,26 @@ def tester01() -> int:
   return 0
 
 
-def tester02() -> int:
-  """Testing EZData class"""
-  A = Point2D()
-  B = Point2D(1, 2, 3)
-  print(A, B)
-  return 0
-
-
-def tester03() -> int:
-  """Testing EZData class"""
-  C = Point2D(4, 5, 6)
-  lol = dict(lmao=True)
-  C[((1, 2, 3), lol)]
-  return 0
-
-
-def tester04() -> int:
-  """Testing KeeNum class"""
-  for day in WeekDay:
-    print(day, int(day))
-
-  print('WeekDay.MONDAY + 69: ',
-        int(WeekDay.MONDAY + 69),
-        WeekDay.MONDAY + 69)
-  return 0
-
-
-def int2hex(num: int) -> str:
-  """Converts an integer to a hexadecimal string"""
-  return ('%2s' % hex(num).split('x')[-1].upper()).replace(' ', '0')
-
-
-def tester05() -> int:
-  """Testing KeeNum class"""
-  for color in Color:
-    r = int2hex(color.r)
-    g = int2hex(color.g)
-    b = int2hex(color.b)
-    print(color, '#%s%s%s' % (r, g, b))
+def runTests() -> int:
+  """Runs the tests"""
+  results = []
+  loader = unittest.TestLoader()
+  res = None
+  for item in os.listdir('tests'):
+    if not item.startswith('test'):
+      continue
+    testPath = os.path.join('tests', item)
+    suite = loader.discover(start_dir=testPath, pattern='test*.py')
+    runner = unittest.TextTestRunner(verbosity=0)
+    res = runner.run(suite)
+    if res.wasSuccessful():
+      results.append('Tests passed in: %s' % testPath)
+    else:
+      results.append('Tests failed in: %s' % testPath)
+  for result in results:
+    print(result)
+  if res is None:
+    return -1
   return 0
 
 
@@ -106,4 +84,4 @@ def main(*args: Callable) -> None:
 
 
 if __name__ == '__main__':
-  main(tester05)
+  main(runTests, )
