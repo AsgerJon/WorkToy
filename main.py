@@ -42,7 +42,6 @@ def tester02() -> int:
   A = Point2D()
   B = Point2D(1, 2, 3)
   print(A, B)
-
   return 0
 
 

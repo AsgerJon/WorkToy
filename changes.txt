@@ -1,5 +1,9 @@
+Version 0.49.00
+This version revamps WorkToy completely and now provides a lean collection
+of useful tools from other packages.
 Version 0.40.2x
-Complete overhaul. The convenient functions are now present as instance method on a central utility class from which further classes should inherit.
+Complete overhaul. The convenient functions are now present as instance
+method on a central utility class from which further classes should inherit.
 Version 0.31.2
 Version 0.31.1
 Do not use the Any from typing, use worktoy.typetools.Any
