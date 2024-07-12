@@ -5,8 +5,10 @@ the function returns None."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import Any
 
-def maybe(*args: object) -> object:
+
+def maybe(*args: object) -> Any:
   """The 'maybe' function receives any number of positional arguments and
   returns the first argument that is not None. If all arguments are None,
   the function returns None."""

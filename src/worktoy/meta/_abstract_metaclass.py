@@ -4,9 +4,7 @@ metaclasses. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Union
-
-from worktoy.meta import AbstractNamespace
+from worktoy.meta import AbstractNamespace, Bases, Space
 
 
 class MetaMetaclass(type):
@@ -22,19 +20,12 @@ class AbstractMetaclass(MetaMetaclass, metaclass=MetaMetaclass):
   metaclasses."""
 
   @classmethod
-  def __prepare__(mcls,
-                  name: str,
-                  bases: tuple[type, ...],
-                  **kwargs) -> Union[AbstractNamespace, dict]:
+  def __prepare__(mcls, name: str, bases: Bases, **kws) -> Space:
     """The __prepare__ method is invoked before the class is created."""
-    return AbstractNamespace(mcls, name, bases, **kwargs)
+    return AbstractNamespace(mcls, name, bases, **kws)
 
-  def __new__(mcls,
-              name: str,
-              bases: tuple[type, ...],
-              namespace: Union[AbstractNamespace, dict],
-              **kwargs) -> type:
+  def __new__(mcls, name: str, bases: Bases, space: Space, **kws) -> type:
     """The __new__ method is invoked to create the class."""
-    if hasattr(namespace, 'compile'):
-      namespace = namespace.compile()
-    return MetaMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
+    if hasattr(space, 'compile'):
+      space = space.compile()
+    return MetaMetaclass.__new__(mcls, name, bases, space, **kws)

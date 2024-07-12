@@ -7,6 +7,10 @@ import sys
 import time
 from typing import Callable
 
+from icecream import ic
+
+from worktoy.math import log
+
 
 def yolo(*args: Callable) -> None:
   """The 'yolo' function receives any number of callables and runs them."""
@@ -25,10 +29,10 @@ def yolo(*args: Callable) -> None:
   retCode = 0 if retCode is None else retCode
   print(77 * '-')
   print('Return Code: %s' % retCode)
-  toc = time.perf_counter_ns() - tic
-  if toc < 1000:
-    print('Runtime: %d nanoseconds' % (int(toc),))
-  elif toc < 1000000:
-    print('Runtime: %d microseconds' % (int(toc * 1e-03),))
-  elif toc < 1000000000:
-    print('Runtime: %d milliseconds' % (int(toc * 1e-06),))
+  toc = int(time.perf_counter_ns() - tic)
+  n = 0
+  while toc > 1e03:
+    toc *= 1e-03
+    n += 1
+  name = ['nano', 'micro', 'milli', ''][int(n)]
+  print('Runtime: %d %s-seconds' % (int(toc), name))

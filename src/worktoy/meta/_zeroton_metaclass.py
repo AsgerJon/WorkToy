@@ -15,9 +15,9 @@ class ZerotonMetaclass(AbstractMetaclass):
   objects. They are like singletons, but since they never instantiate,
   they are called zerotons. """
 
-  def __new__(mcls, name: str, _, namespace: dict[str, object]) -> type:
+  def __new__(mcls, name: str, _, space: dict[str, object]) -> type:
     """The __new__ method is invoked to create the class."""
-    cls = super().__new__(mcls, name, (), namespace)
+    cls = super().__new__(mcls, name, (), space)
     return cls
 
   def __call__(cls, *__, **_) -> Never:

@@ -10,6 +10,7 @@ from typing import Never, Any
 
 from icecream import ic
 
+from worktoy.math import jitSin, intGamma, jitCos, pi
 from worktoy.yolo import yolo, runTests
 
 ic.configureOutput(includeContext=True)
@@ -35,5 +36,25 @@ def tester01() -> int:
   return 0
 
 
+def tester02() -> int:
+  """Reviving loremify"""
+
+  def identity(x: float) -> float:
+    return jitSin(x) ** 2 + jitCos(x) ** 2
+
+  for i in range(1, 10):
+    print('%02d: %04d' % (i, intGamma(i + 1)))
+
+  print(0.42069, identity(0.42069))
+
+  return 0
+
+
+def tester03() -> int:
+  """Have some pi lol"""
+  print('pi:', pi)
+  return 0
+
+
 if __name__ == '__main__':
-  yolo(runTests, tester00)
+  yolo(tester03)
