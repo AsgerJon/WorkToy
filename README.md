@@ -16,7 +16,7 @@ Navigate with the table of contents below.
 
 ## Table of Contents
 
-- [WorkToy v0.49.xx](#worktoy-v04900)
+- [WorkToy v0.99.xx](#worktoy-v04900)
     - [LICENSE](#LICENSE)
     - [Table of Contents](#table-of-contents)
     - [Installation](#installation)
