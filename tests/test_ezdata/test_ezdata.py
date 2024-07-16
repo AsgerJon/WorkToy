@@ -7,16 +7,18 @@ from random import randint, sample
 from typing import TYPE_CHECKING, Self
 
 from worktoy.desc import AttriBox
-from worktoy.ezdata import EZData
+from worktoy.ezdata import EZData, BeginFields, EndFields
 from worktoy.worktest import WorkTest
 
 
 class Point3D(EZData):
   """Point3D is a 3D point with x, y, and z coordinates."""
 
+  BeginFields
   x = AttriBox[int](-1)
   y = AttriBox[int](-1)
   z = AttriBox[int](-1)
+  EndFields
 
   if TYPE_CHECKING:
     x: int

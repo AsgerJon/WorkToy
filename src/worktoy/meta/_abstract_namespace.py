@@ -17,6 +17,10 @@ value pair, or key, error pair."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import Self, get_type_hints
+
+from icecream import ic
+
 from worktoy.parse import maybe
 from worktoy.text import typeMsg
 
@@ -31,6 +35,7 @@ class AbstractNamespace(dict):
   __key_args__ = None
   __class_lines__ = None
   __read_only__ = False
+  __iter_contents__ = None
 
   def __init__(self, *args, **kwargs) -> None:
     mcls, name, bases = None, None, None
@@ -106,7 +111,31 @@ class AbstractNamespace(dict):
     e = """Unable to recognize key: '%s'!""" % key
     raise KeyError(e)
 
+  def __iter__(self, ) -> Self:
+    """Implementation of the iteration protocol"""
+    lines = self.getLines()
+    self.__iter_contents__ = [*lines, ]
+    return self
+
+  def __next__(self, ) -> object:
+    """Implementation of the next method in the iteration protocol"""
+    # ic(self.__iter_contents__)
+    try:
+      return self.__iter_contents__.pop(0)
+    except IndexError:
+      raise StopIteration
+
   def compile(self) -> dict:
     """The compile method creates a regular dictionary object from the
     namespace."""
     return {k: v for (k, v) in dict.items(self, )}
+
+  def getAnnotations(self) -> dict[str, type]:
+    """Returns a dictionary mapping attribute name to attribute type. This
+    is different from the dictionary stored at key '__annotations__',
+    which instead stores the name of type only, because of the use of
+    annotations from the future import. """
+    val = {}
+    if dict.__contains__(self, '__annotations__'):
+      val = dict.__getitem__(self, '__annotations__')
+    return get_type_hints(type('_', (), {'__annotations__': val})())

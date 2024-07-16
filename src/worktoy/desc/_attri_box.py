@@ -143,15 +143,27 @@ class AttriBox(TypedDescriptor):
     return innerObject
 
   def __str__(self, ) -> str:
-    ownerName = self._getFieldOwner().__name__
-    fieldName = self._getFieldName()
+    try:
+      fieldName = self._getFieldName()
+      ownerName = self._getFieldOwner().__name__
+    except AttributeError as attributeError:
+      if 'has not been assigned to a field' not in str(attributeError):
+        raise attributeError
+      ownerName = '(TBD)'
+      fieldName = '(TBD)'
     innerName = self._getInnerClass().__name__
     return '%s.%s: %s' % (ownerName, fieldName, innerName)
 
   def __repr__(self, ) -> str:
-    fieldName = self._getFieldName()
+    try:
+      fieldName = self._getFieldName()
+    except AttributeError as attributeError:
+      if 'has not been assigned to a field' not in str(attributeError):
+        raise attributeError
+      fieldName = '(TBD)'
     innerName = self._getInnerClass().__name__
-    args = ', '.join([*self.__positional_args__, *self.__keyword_args__])
+    args = [*self.__positional_args__, *self.__keyword_args__]
+    args = ', '.join([str(arg) for arg in args])
     return '%s = AttriBox[%s](%s)' % (fieldName, innerName, args)
 
   @classmethod

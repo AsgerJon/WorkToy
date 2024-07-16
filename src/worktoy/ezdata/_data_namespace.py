@@ -5,16 +5,22 @@ from __future__ import annotations
 
 from typing import Callable
 
+from icecream import ic
+
 from worktoy.desc import AttriBox
+from worktoy.ezdata import EndFields, BeginFields
 from worktoy.meta import AbstractNamespace
 from worktoy.parse import maybe
 from worktoy.text import typeMsg
+
+ic.configureOutput(includeContext=True)
 
 
 class DataNamespace(AbstractNamespace):
   """DataNamespace provides the namespace object for the DataMetaclass."""
 
   __data_fields__ = None
+  __field_section__ = False
 
   def _initFactory(self, ) -> Callable:
     """Factory function for the __init__ method"""
@@ -47,23 +53,20 @@ class DataNamespace(AbstractNamespace):
     e = typeMsg('dataFields', dataFields, dict)
     raise TypeError(e)
 
-  def _appendDataField(self, key: str, attriBox: AttriBox) -> None:
+  def _appendDataField(self, key: str, field: object) -> None:
     """Appends the AttriBox instance at the given key."""
     existing = self.getDataFields()
     if key in existing:
       e = """Name conflict at name: '%s'!""" % key
       raise NameError(e)
-    if not isinstance(attriBox, AttriBox):
-      e = typeMsg('attriBox', attriBox, AttriBox)
-      raise TypeError(e)
-    self.__data_fields__ = {**existing, key: attriBox}
+    self.__data_fields__ = {**existing, key: field}
 
   def __explicit_set__(self, key: str, value: object) -> None:
     """The __setitem__ hook collects AttriBox instances. """
     if key == '__init__':
       e = """Reimplementing __init__ is not allowed for EZData classes!"""
       raise AttributeError(e)
-    if isinstance(value, AttriBox):
+    if self.__field_section__:
       self._appendDataField(key, value)
 
   def compile(self, ) -> dict[str, object]:
@@ -73,3 +76,20 @@ class DataNamespace(AbstractNamespace):
       out[key] = val
     out['__init__'] = self._initFactory()
     return out
+
+  def __getitem__(self, key: str) -> object:
+    """The __getitem__ method returns the value at the given key."""
+    try:
+      return AbstractNamespace.__getitem__(self, key)
+    except KeyError as keyError:
+      if BeginFields == key:
+        if self.__field_section__:
+          e = """Field section already started!"""
+          raise ValueError(e)
+        self.__field_section__ = True
+      if EndFields == key:
+        if not self.__field_section__:
+          e = """Field section not started!"""
+          raise ValueError(e)
+        self.__field_section__ = False
+      raise keyError

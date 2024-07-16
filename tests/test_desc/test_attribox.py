@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 
 from worktoy.desc import AttriClass, AttriBox
-from worktoy.ezdata import EZData
+from worktoy.ezdata import EZData, EndFields, BeginFields
 from worktoy.parse import maybe
 from worktoy.worktest import WorkTest
 
@@ -18,7 +18,6 @@ class Integer(AttriClass):
   __inner_value__ = None
 
   def __init__(self, *args, **kwargs) -> None:
-    print('Creating Integer')
     for arg in args:
       if isinstance(arg, int):
         self.__inner_value__ = arg
@@ -37,9 +36,11 @@ class Integer(AttriClass):
 class Point3D(EZData):
   """Space point"""
 
+  BeginFields
   x = AttriBox[Integer](-1)
   y = AttriBox[Integer](-1)
   z = AttriBox[Integer](-1)
+  EndFields
 
   def getPrivateNames(self) -> dict[str, str]:
     """Getter for the names of the private variables. """
@@ -93,17 +94,20 @@ class TestAttriBox(WorkTest):
     self.assertIsNone(values['x'])
     self.assertIsNone(values['y'])
     self.assertIsNone(values['z'])
-    print(point.x)
+    if point.x:
+      pass
     values = point.getPrivateValues()
     self.assertEqual(values['x'], -1)
     self.assertIsNone(values['y'])
     self.assertIsNone(values['z'])
-    print(point.y)
+    if point.y:
+      pass
     values = point.getPrivateValues()
     self.assertEqual(values['x'], -1)
     self.assertEqual(values['y'], -1)
     self.assertIsNone(values['z'])
-    print(point.z)
+    if point.z:
+      pass
     values = point.getPrivateValues()
     self.assertEqual(values['x'], -1)
     self.assertEqual(values['y'], -1)

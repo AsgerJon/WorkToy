@@ -11,6 +11,8 @@ from typing import Never, Any
 from icecream import ic
 
 from worktoy.math import jitSin, intGamma, jitCos, pi
+from worktoy.stat import AbstractBaseDistribution, MomentField
+from worktoy.stream import Listener
 from worktoy.yolo import yolo, runTests
 
 ic.configureOutput(includeContext=True)
@@ -56,5 +58,63 @@ def tester03() -> int:
   return 0
 
 
+def tester04() -> int:
+  """Testing runTests"""
+  print(AbstractBaseDistribution)
+  return 0
+
+
+def tester05() -> int:
+  """Testing MomentField"""
+  print(MomentField)
+  bla = dict(a=1, b=2)
+  print(bla)
+  print(dict(bla))
+  print(bla == dict(bla))
+  print(getattr(bla, 'a', 'unable to find a'))
+  theseTypes = type('_', (), {'__annotations__': None})()
+  setattr(theseTypes, 'urmom', 'fat')
+  print(theseTypes)
+  print(getattr(theseTypes, 'urmom', 'lmao fail'))
+  return 0
+
+
+def tester06() -> int:
+  """Testing MomentField"""
+  descLol = type('descLol', (), {'__get__': lambda *_: 'fuck you!'})
+  LMAO = type('lmao', (), {'cunt': descLol()})
+  lmao = LMAO()
+  print(lmao.cunt)
+  print(object.__getattribute__(lmao, 'cunt'))
+  return 0
+
+
+def tester07() -> int:
+  """Testing the error message from object.__init__"""
+  bla = object()
+  try:
+    object.__init__(bla, 69)
+  except BaseException as baseException:
+    print(type(baseException))
+
+  try:
+    class lmao(yolo=True):
+      pass
+  except BaseException as baseException:
+    print(type(baseException))
+    print(baseException)
+
+  return 0
+
+
+def tester08() -> int:
+  """Testing error message from init subclass"""
+  listener = Listener()
+  print(listener.__consume_callback__.__name__)
+  print('before start')
+  listener.start()
+  print('after start')
+
+
 if __name__ == '__main__':
-  yolo(tester03)
+  yolo(tester08)

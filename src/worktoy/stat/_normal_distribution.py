@@ -3,16 +3,17 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import AttriBox
+from worktoy.desc import AttriBox, Instance
 from worktoy.text import stringList, typeMsg
 
 
-class Normal:
+class NormalDistribution:
   """NormalDistribution encapsulates a normally distributed random
   variable."""
 
   expectedValue = AttriBox[float](0)
   standardDeviation = AttriBox[float](1)
+  pdf = AttriBox[object](Instance)
 
   def __init__(self, *args, **kwargs) -> None:
     expKeys = stringList("""expectedValue, expected value, mean, mu""")
@@ -46,9 +47,3 @@ class Normal:
           values[name] = defaultValues[name]
     self.expectedValue = values['expectedValue']
     self.standardDeviation = values['standardDeviation']
-
-  def pdf(self) -> float:
-    """Probability density function."""
-    s = self.standardDeviation
-    m = self.expectedValue
-    

@@ -136,6 +136,8 @@ object. After this method, the class is created.
 from __future__ import annotations
 
 from ._type_names import Bases, Namespace, Space
+from ._type_names import FunctionDecorator, ClassDecorator, Decorator
+from ._base_object import BaseObject
 from ._abstract_namespace import AbstractNamespace
 from ._abstract_metaclass import AbstractMetaclass
 from ._singleton_metaclass import SingletonMetaclass

@@ -4,7 +4,7 @@ metaclasses. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.meta import AbstractNamespace, Bases, Space
+from worktoy.meta import AbstractNamespace, Bases, Space, BaseObject
 
 
 class MetaMetaclass(type):
@@ -21,8 +21,13 @@ class AbstractMetaclass(MetaMetaclass, metaclass=MetaMetaclass):
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kws) -> Space:
-    """The __prepare__ method is invoked before the class is created."""
-    return AbstractNamespace(mcls, name, bases, **kws)
+    """The __prepare__ method is invoked before the class is created. This
+    implementation ensures that the created class has access to the safe
+    __init__ and __init_subclass__ through the BaseObject class in its
+    method resolution order."""
+    if BaseObject in bases:
+      return AbstractNamespace(mcls, name, bases, **kws)
+    return AbstractNamespace(mcls, name, (*bases, BaseObject,), **kws)
 
   def __new__(mcls, name: str, bases: Bases, space: Space, **kws) -> type:
     """The __new__ method is invoked to create the class."""

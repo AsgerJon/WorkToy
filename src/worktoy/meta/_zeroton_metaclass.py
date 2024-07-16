@@ -28,6 +28,8 @@ class ZerotonMetaclass(AbstractMetaclass):
   def __eq__(cls, other: object) -> bool:
     """The __eq__ method is invoked when the class is compared
     with another object."""
+    if isinstance(other, str):
+      return False if cls.__name__ != other else True
     return False if hash(cls) - hash(other) else True
 
   def __hash__(cls, ) -> int:
