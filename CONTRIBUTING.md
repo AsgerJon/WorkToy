@@ -76,7 +76,6 @@ python main.py
 - Write clear, concise commit messages in the imperative mood, like "Add
   featureX" or "Fix bugY".
 - Begin the commit message with a capital letter.
-- Do not end the commit message with a period.
 
 ### Pull Requests
 
