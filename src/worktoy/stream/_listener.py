@@ -94,7 +94,7 @@ class Listener(AbstractLine):
     return True
 
   def main(self) -> bytes:
-    """The main method waits for a data transmission"""
+    """The main method waits for a data transmission."""
     if TYPE_CHECKING:
       assert isinstance(self.liveSocket, socket)
     return self.liveSocket.recv(1024)
