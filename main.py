@@ -11,9 +11,10 @@ from typing import Never, Any
 from icecream import ic
 
 from worktoy.math import jitSin, intGamma, jitCos, pi
+from worktoy.mineside import FromJava
 from worktoy.stat import AbstractBaseDistribution, MomentField
-from worktoy.stream import Listener
-from worktoy.yolo import yolo, runTests
+from worktoy.threading import Sentinel
+from worktoy.yolo import yolo
 
 ic.configureOutput(includeContext=True)
 
@@ -109,11 +110,26 @@ def tester07() -> int:
 
 def tester08() -> int:
   """Testing error message from init subclass"""
-  listener = Listener()
-  print(listener.__consume_callback__.__name__)
+
+  def lolPrint(data: bytes) -> None:
+    """LMAO"""
+    print(FromJava.unJava(data))
+
+  listener = FromJava()
   print('before start')
   listener.start()
   print('after start')
+
+  return 0
+
+
+def tester09() -> int:
+  """FUCK """
+  for cunt in Sentinel:
+    print(cunt, ' X ', cunt.name)
+    ic(cunt == 'Sentinel.PASS')
+
+  return 0
 
 
 if __name__ == '__main__':

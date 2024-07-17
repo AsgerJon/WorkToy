@@ -8,6 +8,8 @@ populating the data fields."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.meta import AbstractMetaclass
 from worktoy.ezdata import DataNamespace
 
@@ -33,3 +35,7 @@ class EZData(metaclass=DataMetaclass):
   """EZData provides a base class for dataclasses. Data fields must be
   instances of AttriBox and the __init__ method is created automatically.
   Subclasses are not allowed to implement the __init__ method. """
+
+  if TYPE_CHECKING:
+    def __init__(self, *args, **kwargs) -> None:
+      pass

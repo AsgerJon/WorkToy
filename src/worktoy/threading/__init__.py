@@ -3,4 +3,6 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._sentinel import Sentinel
 from ._abstract_line import AbstractLine
+from ._listener import Listener

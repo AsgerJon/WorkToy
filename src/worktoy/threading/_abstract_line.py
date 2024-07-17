@@ -56,7 +56,7 @@ class AbstractLine(Thread):
     an error is raised."""
 
   @abstractmethod
-  def main(self, *args, **kwargs) -> object:
+  def innerLoop(self, *args, **kwargs) -> object:
     """During the loop this main function defines the looping operation.
     The loop calls this method continuously. No return value is expected. """
 
@@ -67,52 +67,51 @@ class AbstractLine(Thread):
      Returning True is taken to mean that the exception is handled and
      that the loop may continue. """
 
-  def __init__(self, *args) -> None:
-    Thread.__init__(self)
-    for arg in args:
-      if callable(arg):
-        self.__consume_callback__ = arg
-        break
-    else:
-      self.__consume_callback__ = print
-
+  @abstractmethod
   def consume(self, data: object) -> object:
     """Subclasses may implement this method to receive data from the
     queue."""
-    return self.__consume_callback__(data)
 
+  @abstractmethod
   def requestQuit(self) -> None:
     """The requestQuit method is called to request the loop to stop. """
-    self.__allow_run__ = False
 
   def start(self, ) -> None:
     """If the setup method returns True, this method will invoke the
     parent method."""
+    self.__allow_run__ = True
     if self.setup():
       Thread.start(self)
     else:
       e = """Failed to setup the loop!"""
       raise RuntimeError(e)
 
-  def _loopStep(self) -> bool:
-    """This private method contains the inner loop."""
-    try:
-      return True if self.dataQueue.put(self.main()) else True
-    except BaseException as baseException:
-      if self.errorHandler(baseException):
-        return True
-      raise baseException
-
   def run(self) -> None:
     """The run method is the main loop. """
     if TYPE_CHECKING:
       assert isinstance(self.dataQueue, Queue)
-    print("""Starting the loop""")
-    self.__allow_run__ = True
     while self.__allow_run__:
-      self._loopStep()
-      while True:
-        try:
-          self.consume(self.dataQueue.get_nowait())
-        except Empty:
-          break
+      try:
+        data = self.innerLoop()
+      except TimeoutError as timeoutError:
+        continue
+      if data:
+        self.appendQueue(data)
+        self.consumeQueue()
+      else:
+        self.requestQuit()
+
+  def appendQueue(self, data: object) -> None:
+    """Appends the data to the queue."""
+    self.dataQueue.put(data)
+
+  def consumeQueue(self, ) -> None:
+    """Consumes the queue."""
+    try:
+      self.consume(self.dataQueue.get_nowait())
+      return self.consumeQueue()
+    except Empty:
+      return
+
+  def __init__(self, *args, **kwargs) -> None:
+    Thread.__init__(self)

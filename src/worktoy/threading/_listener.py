@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import sys
-from queue import Queue
 from socket import socket, AF_INET, SOCK_STREAM
 from typing import TYPE_CHECKING
 
@@ -16,8 +15,11 @@ from worktoy.threading import AbstractLine
 class Listener(AbstractLine):
   """Listener class receives data. """
 
+  def consume(self, data: object) -> object:
+    print(data)
+
   __fallback_host__ = 'localhost'
-  __fallback_port__ = 8080
+  __fallback_port__ = 42069
 
   __static_socket__ = None
   __live_socket__ = None
@@ -27,10 +29,17 @@ class Listener(AbstractLine):
 
   port = AttriBox[int](__fallback_port__)
   host = AttriBox[str](__fallback_host__)
+  timeLimit = AttriBox[float](5.)
 
   staticSocket = EmptyField()
   liveSocket = EmptyField()
   liveAddress = EmptyField()
+
+  def __init__(self, *args, **kwargs) -> None:
+    """Constructor for the Listener. It parses arguments for host,
+    port and callback, the latter of which is passed on to the parent
+    class constructor. """
+    AbstractLine.__init__(self, *args, **kwargs)
 
   @staticSocket.GET
   def _getStaticSocket(self, **kwargs) -> socket:
@@ -49,7 +58,7 @@ class Listener(AbstractLine):
     """Creates the socket."""
     self.__static_socket__ = socket(AF_INET, SOCK_STREAM)
     self.__static_socket__.bind((self.host, self.port))
-    self.__static_socket__.listen(5)
+    self.__static_socket__.listen()
 
   @liveSocket.GET
   def _getLiveSocket(self) -> socket:
@@ -87,13 +96,10 @@ class Listener(AbstractLine):
       raise baseException
     self.__live_socket__ = conn
     self.__live_address__ = ': '.join([str(arg) for arg in addr])
-    m = """Socket connection established with: '%s'"""
-    print(m % self.liveAddress)
     self.__live_socket__.settimeout(5.)
-    print("""Set socket time out""")
     return True
 
-  def main(self) -> bytes:
+  def innerLoop(self) -> bytes:
     """The main method waits for a data transmission."""
     if TYPE_CHECKING:
       assert isinstance(self.liveSocket, socket)
@@ -105,7 +111,7 @@ class Listener(AbstractLine):
       return True
     if isinstance(exception, TimeoutError):
       return True
-    print("""Exception of type: '%s' caught:""" % type(exception))
+    ("""Exception of type: '%s' caught:""" % type(exception))
     words = str(exception).split()
     line = '#   '
     while words:
@@ -114,3 +120,12 @@ class Listener(AbstractLine):
         print(line)
         line = '#   '
     sys.exit(1)
+
+  def requestQuit(self) -> None:
+    """The requestQuit method is called to request the loop to stop. """
+    if TYPE_CHECKING:
+      assert isinstance(self.liveSocket, socket)
+      assert isinstance(self.staticSocket, socket)
+    self.__allow_run__ = False
+    self.liveSocket.close()
+    self.staticSocket.close()
