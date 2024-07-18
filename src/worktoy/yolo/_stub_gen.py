@@ -24,10 +24,23 @@ def stubGen(cls: type) -> None:
                #  Copyright (c) 2024 Asger Jon Vistisen<br>
                from __future__ import annotations<br>"""
   stubClass = """<br><br>class <CLASS_NAME><BASES>:<br>
-               <tab>\"\"\"<DOCSTRING>\"\"\""""
+               <DOCSTRING>"""
   stubLine = """<tab>%s: %s"""
   importLine = """from %s import %s"""
   importLines = []
+  docstring = ['\"\"\"', *cls.__doc__.split(), '\"\"\"']
+  docLines = []
+  line = ['<tab>', ]
+  for word in docstring:
+    if len(' '.join(line)) + len(word) > 77:
+      docLines.append(' '.join(line))
+      line = ['<tab>', ]
+    line.append(word)
+  if line:
+    docLines.append(' '.join(line))
+  docstring = '<br>'.join(docLines)
+  docstring = docstring.replace('\"\"\" ', '\"\"\"')
+  docstring = docstring.replace(' \"\"\"', '\"\"\"')
   if cls.__bases__:
     bases = '(%s)' % ', '.join([base.__name__ for base in cls.__bases__])
     stubClass = stubClass.replace('<BASES>', bases)
@@ -37,7 +50,7 @@ def stubGen(cls: type) -> None:
         module = '.'.join(module.split('.')[:-1])
       importLines.append(importLine % (module, base.__name__))
   stubClass = stubClass.replace('<CLASS_NAME>', cls.__name__)
-  stubClass = stubClass.replace('<DOCSTRING>', cls.__doc__)
+  stubClass = stubClass.replace('<DOCSTRING>', docstring)
   stubLines = []
   importedTypes = [v for (k, v) in builtins.__dict__.items()]
   for (boxName, box) in boxes.items():
@@ -56,4 +69,4 @@ def stubGen(cls: type) -> None:
   stubCode = '<br>'.join([stubHead, importBody, stubClass, stubBody])
   stubFile = getfile(cls).replace('.py', '.pyi')
   with open(stubFile, 'w') as file:
-    file.write(monoSpace(stubCode))
+    file.write(monoSpace('%s<br>' % stubCode))

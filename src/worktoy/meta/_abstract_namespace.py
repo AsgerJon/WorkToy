@@ -19,8 +19,6 @@ from __future__ import annotations
 
 from typing import Self, get_type_hints
 
-from icecream import ic
-
 from worktoy.parse import maybe
 from worktoy.text import typeMsg
 

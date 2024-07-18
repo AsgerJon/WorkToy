@@ -5,7 +5,6 @@ descriptor protocol."""
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any
 
 from worktoy.text import monoSpace, typeMsg
 

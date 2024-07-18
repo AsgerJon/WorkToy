@@ -5,11 +5,8 @@ creation. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-import builtins
 import sys
-from inspect import getfile
-
-from typing import TYPE_CHECKING, Callable, Never, Any
+from typing import TYPE_CHECKING, Callable, Never
 
 from icecream import ic
 
