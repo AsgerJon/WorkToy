@@ -23,14 +23,22 @@ def stubGen(cls: type) -> None:
                #  AGPL-3.0 license<br>
                #  Copyright (c) 2024 Asger Jon Vistisen<br>
                from __future__ import annotations<br>"""
-  stubClass = """<br><br>class <CLASS_NAME>:<br>
+  stubClass = """<br><br>class <CLASS_NAME><BASES>:<br>
                <tab>\"\"\"<DOCSTRING>\"\"\""""
   stubLine = """<tab>%s: %s"""
   importLine = """from %s import %s"""
+  importLines = []
+  if cls.__bases__:
+    bases = '(%s)' % ', '.join([base.__name__ for base in cls.__bases__])
+    stubClass = stubClass.replace('<BASES>', bases)
+    for base in cls.__bases__:
+      module = base.__module__
+      if module.split('.')[-1].startswith('_'):
+        module = '.'.join(module.split('.')[:-1])
+      importLines.append(importLine % (module, base.__name__))
   stubClass = stubClass.replace('<CLASS_NAME>', cls.__name__)
   stubClass = stubClass.replace('<DOCSTRING>', cls.__doc__)
   stubLines = []
-  importLines = []
   importedTypes = [v for (k, v) in builtins.__dict__.items()]
   for (boxName, box) in boxes.items():
     boxType = box.getInnerClass(_raw=True)
