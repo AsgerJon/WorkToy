@@ -5,6 +5,7 @@ creation. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+import builtins
 import sys
 from inspect import getfile
 
@@ -14,6 +15,7 @@ from icecream import ic
 
 from worktoy.desc import TypedDescriptor, Instance, Owner
 from worktoy.text import typeMsg, monoSpace
+from worktoy.yolo import stubGen
 
 if sys.version_info.minor < 11:
   from typing_extensions import Self
@@ -136,7 +138,7 @@ class AttriBox(TypedDescriptor):
 
   def _createInnerObject(self, instance: object) -> object:
     """Creates an instance of the inner class. """
-    innerClass = self._getInnerClass()
+    innerClass = self.getInnerClass()
     args, kwargs = self._getArgs(instance), self._getKwargs(instance)
     innerObject = innerClass(*args, **kwargs)
     if TYPE_CHECKING:
@@ -156,7 +158,7 @@ class AttriBox(TypedDescriptor):
         raise attributeError
       ownerName = '(TBD)'
       fieldName = '(TBD)'
-    innerName = self._getInnerClass().__name__
+    innerName = self.getInnerClass().__name__
     return '%s.%s: %s' % (ownerName, fieldName, innerName)
 
   def __repr__(self, ) -> str:
@@ -166,7 +168,7 @@ class AttriBox(TypedDescriptor):
       if 'has not been assigned to a field' not in str(attributeError):
         raise attributeError
       fieldName = '(TBD)'
-    innerName = self._getInnerClass().__name__
+    innerName = self.getInnerClass().__name__
     args = [*self.__positional_args__, *self.__keyword_args__]
     args = ', '.join([str(arg) for arg in args])
     return '%s = AttriBox[%s](%s)' % (fieldName, innerName, args)
@@ -183,29 +185,7 @@ class AttriBox(TypedDescriptor):
     ownerListName = self._getOwnerListName()
     if not getattr(owner, '__has_boxes__', False):
       setattr(owner, '__has_boxes__', True)
-      boxes = {}
-      for (key, val) in owner.__dict__.items():
-        if isinstance(val, AttriBox):
-          boxes = {**boxes, **{key: val}}
-      stubHead = """
-            \"\"\"AUTO-GENERATED STUB FILE!\"\"\"<br>
-            #  AGPL-3.0 license<br>
-            #  Copyright (c) 2024 Asger Jon Vistisen<br>
-            from __future__ import annotations<br><br><br>
-            class <CLASS_NAME>:<br>
-            <tab>\"\"\"<DOCSTRING>\"\"\""""
-      stubLine = """<tab>%s: %s"""
-      stubHead = stubHead.replace('<CLASS_NAME>', owner.__name__)
-      stubHead = stubHead.replace('<DOCSTRING>', owner.__doc__)
-      stubLines = []
-      for (boxName, box) in boxes.items():
-        boxType = AttriBox._getInnerClass(box).__name__
-        stubLines.append(stubLine % (boxName, boxType))
-      stubBody = '<br>'.join(stubLines)
-      stubCode = '%s<br>%s' % (stubHead, stubBody)
-      stubFile = getfile(owner).replace('.py', '.pyi')
-      with open(stubFile, 'w') as file:
-        file.write(monoSpace(stubCode))
+      stubGen(owner)
 
     TypedDescriptor.__set_name__(self, owner, name)
     existing = getattr(owner, ownerListName, [])
@@ -310,3 +290,11 @@ class AttriBox(TypedDescriptor):
 #  __get__ method to type hint to 'object', as the stub file will be
 #  created automatically. What remains is to include methods in the
 #  created stub files and to support multiple files in the same stub file.
+#  UPDATE, again same day --
+#  The stub files generated are missing the import statements.
+#  UPDATE, again same day --
+#  The stub files now include import statements. These are even formatted
+#  correctly to support nested packages. Still missing is to include the
+#  methods and to handle the case of multiple classes in the same file.
+#  UPDATE, again same day --
+#  Moved stub file generation to dedicated function.

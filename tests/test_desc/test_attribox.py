@@ -149,5 +149,5 @@ class TestAttriBox(WorkTest):
         typeName = typeName.strip()
         if varName and typeName:
           self.assertIsInstance(getattr(Point3D, varName), AttriBox)
-          boxClass = AttriBox._getInnerClass(getattr(Point3D, varName))
+          boxClass = AttriBox.getInnerClass(getattr(Point3D, varName))
           self.assertIs(boxClass, Integer)

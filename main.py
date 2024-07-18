@@ -3,6 +3,7 @@
 #  Copyright (c) 2023-2024 Asger Jon Vistisen
 from __future__ import annotations
 
+import builtins
 import inspect
 import os
 import sys
@@ -39,5 +40,11 @@ def tester02() -> int:
   return 0
 
 
+def tester03() -> int:
+  """FUCK"""
+  ic(float in [v for (k, v) in builtins.__dict__.items()])
+  return 0
+
+
 if __name__ == '__main__':
-  yolo(runTests, tester02)
+  yolo(runTests, tester03)
