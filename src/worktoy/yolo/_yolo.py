@@ -7,10 +7,6 @@ import sys
 import time
 from typing import Callable
 
-from icecream import ic
-
-from worktoy.math import log
-
 
 def yolo(*args: Callable) -> None:
   """The 'yolo' function receives any number of callables and runs them."""

@@ -3,6 +3,7 @@
 #  Copyright (c) 2023-2024 Asger Jon Vistisen
 from __future__ import annotations
 
+import worktoy.parse
 import worktoy.meta
 import worktoy.text
 import worktoy.desc
