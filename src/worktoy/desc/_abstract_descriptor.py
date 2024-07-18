@@ -5,6 +5,7 @@ descriptor protocol."""
 from __future__ import annotations
 
 from abc import abstractmethod
+from typing import Any
 
 from worktoy.text import monoSpace, typeMsg
 
@@ -60,7 +61,7 @@ class AbstractDescriptor:
     """The __instance_get__ method is called when the descriptor is accessed
     via the owning instance. """
 
-  def __get__(self, instance: object, owner: type) -> object:
+  def __get__(self, instance: object, owner: type) -> object:  # Footnote
     """The __get__ method is called when the descriptor is accessed via the
     owning instance. Subclasses should not override this method, but should
     instead implement the __instance_get__ method. """

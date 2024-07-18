@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 
-from typing import TYPE_CHECKING, Callable, Never
+from typing import TYPE_CHECKING, Callable, Never, Any
 
 from worktoy.desc import TypedDescriptor, Instance, Owner
 from worktoy.text import typeMsg, monoSpace
@@ -203,7 +203,7 @@ class AttriBox(TypedDescriptor):
       setattr(cls, boxName, box)
       cls.__set_name__(box, owner, boxName)
 
-  def __get__(self, instance: object, owner: type) -> object:
+  def __get__(self, instance: object, owner: type) -> Any:  # Footnote
     """The __get__ method is called when the descriptor is accessed via the
     owning instance. """
     value = TypedDescriptor.__get__(self, instance, owner)
@@ -226,3 +226,37 @@ class AttriBox(TypedDescriptor):
     but this deleter-function is not yet implemented!"""
     msg = e % (self._getFieldName(), instance.__class__.__name__)
     raise NotImplementedError(monoSpace(msg))
+
+#  Footnote: 'Any' or 'object'? Type hinting to 'Any' tells the type
+#  checker to ignore this return value. Presently, that is the best the
+#  static type checker can manage. However, type hinting to 'object' tells
+#  the type checker that the return value cannot be assumed to belong to
+#  any type. Thus, the type checker will indicate a problem if an object
+#  is assumed belonging to a specific type when it was returned with type
+#  hinting to 'object'. This is generally preferable, but in this
+#  particular case, the type checker is not able to infer the type of the
+#  objects created with AttriBox. For example:
+
+#  class Foo:
+#    bar = AttriBox[int]()
+#
+#    def someMethod(self, ) -> int:
+#      return self.bar  # Type checker will indicate a problem here!
+#
+#  The type checker is not able to infer that the AttriBox instance is in
+#  fact an 'int'. However, this is an exception. In most cases,
+#  type hinting to 'object' is preferable. The 'correct' way to handle this
+#  would require the use of a stub file. It is possible to implement in
+#  the AttriBox class functionality that creates a stub file at the first
+#  runtime that sets the type hint to the type in the bracket. For the
+#  above example, the stub file would be:
+#
+#  class Foo:
+#    bar: int
+#
+#  Presently, having to use 'Any' instead of 'object' is a problem.
+#  Implementing dynamic stub file creation will be very powerful,
+#  but requires a significant effort. In the future, when more problems
+#  are identified that will benefit dynamic stub file creation, this will
+#  be one of the problems solved.
+#  -- Asger Jon Vistisen, July 18, 2024 --
