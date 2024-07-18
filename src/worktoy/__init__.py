@@ -8,5 +8,5 @@ import worktoy.text
 import worktoy.desc
 import worktoy.keenum
 import worktoy.ezdata
-import worktoy.math
-import worktoy.stat
+import worktoy.worktest
+import worktoy.yolo
