@@ -6,8 +6,11 @@ creation. """
 from __future__ import annotations
 
 import sys
+from inspect import getfile
 
 from typing import TYPE_CHECKING, Callable, Never, Any
+
+from icecream import ic
 
 from worktoy.desc import TypedDescriptor, Instance, Owner
 from worktoy.text import typeMsg, monoSpace
@@ -16,6 +19,8 @@ if sys.version_info.minor < 11:
   from typing_extensions import Self
 else:
   from typing import Self
+
+ic.configureOutput(includeContext=True)
 
 if TYPE_CHECKING:
   pass
@@ -176,6 +181,32 @@ class AttriBox(TypedDescriptor):
   def __set_name__(self, owner: type, name: str) -> None:
     """Sets the name of the field. """
     ownerListName = self._getOwnerListName()
+    if not getattr(owner, '__has_boxes__', False):
+      setattr(owner, '__has_boxes__', True)
+      boxes = {}
+      for (key, val) in owner.__dict__.items():
+        if isinstance(val, AttriBox):
+          boxes = {**boxes, **{key: val}}
+      stubHead = """
+            \"\"\"AUTO-GENERATED STUB FILE!\"\"\"<br>
+            #  AGPL-3.0 license<br>
+            #  Copyright (c) 2024 Asger Jon Vistisen<br>
+            from __future__ import annotations<br><br><br>
+            class <CLASS_NAME>:<br>
+            <tab>\"\"\"<DOCSTRING>\"\"\""""
+      stubLine = """<tab>%s: %s"""
+      stubHead = stubHead.replace('<CLASS_NAME>', owner.__name__)
+      stubHead = stubHead.replace('<DOCSTRING>', owner.__doc__)
+      stubLines = []
+      for (boxName, box) in boxes.items():
+        boxType = AttriBox._getInnerClass(box).__name__
+        stubLines.append(stubLine % (boxName, boxType))
+      stubBody = '<br>'.join(stubLines)
+      stubCode = '%s<br>%s' % (stubHead, stubBody)
+      stubFile = getfile(owner).replace('.py', '.pyi')
+      with open(stubFile, 'w') as file:
+        file.write(monoSpace(stubCode))
+
     TypedDescriptor.__set_name__(self, owner, name)
     existing = getattr(owner, ownerListName, [])
     if existing:
@@ -203,7 +234,7 @@ class AttriBox(TypedDescriptor):
       setattr(cls, boxName, box)
       cls.__set_name__(box, owner, boxName)
 
-  def __get__(self, instance: object, owner: type) -> Any:  # Footnote
+  def __get__(self, instance: object, owner: type) -> object:  # Footnote
     """The __get__ method is called when the descriptor is accessed via the
     owning instance. """
     value = TypedDescriptor.__get__(self, instance, owner)
@@ -236,13 +267,13 @@ class AttriBox(TypedDescriptor):
 #  hinting to 'object'. This is generally preferable, but in this
 #  particular case, the type checker is not able to infer the type of the
 #  objects created with AttriBox. For example:
-
-#  class Foo:
-#    bar = AttriBox[int]()
-#
-#    def someMethod(self, ) -> int:
-#      return self.bar  # Type checker will indicate a problem here!
-#
+#   ______________________________________________________________________
+#  | class Foo:                                                           |
+#  |   bar = AttriBox[int]()                                              |
+#  |                                                                      |
+#  |   def someMethod(self, ) -> int:                                     |
+#  |     return self.bar  # Type checker will indicate a problem here!    |
+#   ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 #  The type checker is not able to infer that the AttriBox instance is in
 #  fact an 'int'. However, this is an exception. In most cases,
 #  type hinting to 'object' is preferable. The 'correct' way to handle this
@@ -250,13 +281,32 @@ class AttriBox(TypedDescriptor):
 #  the AttriBox class functionality that creates a stub file at the first
 #  runtime that sets the type hint to the type in the bracket. For the
 #  above example, the stub file would be:
-#
-#  class Foo:
-#    bar: int
-#
+#   _____________________________________________________________________
+#  | class Foo:                                                          |
+#  |   bar: int                                                          |
+#   ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 #  Presently, having to use 'Any' instead of 'object' is a problem.
 #  Implementing dynamic stub file creation will be very powerful,
 #  but requires a significant effort. In the future, when more problems
 #  are identified that will benefit dynamic stub file creation, this will
 #  be one of the problems solved.
 #  -- Asger Jon Vistisen, July 18, 2024 --
+#  UPDATE, same day --
+#  Writing a function that dynamically creates the code required by the
+#  stub file and saving it was not as much work as the above note might
+#  have indicated. Nevertheless, a bit more work is needed to add a unit
+#  test. So far, the implementation is not able to look for an existing
+#  stub file, but a future improvement will enable different scripts to
+#  add rather than just overwrite.
+#  UPDATE, again same day --
+#  Implementation of the dynamically created stub file is now working. All
+#  that remains is to add the unit tests. This does provide somewhat of a
+#  novelty, as the unit test must test if a file is created. To ensure
+#  that a unittest is not confused by an existing class from previous runs,
+#  we use the 'setUpClass' and 'tearDownClass' methods to create and delete
+#  the stub file.
+#  UPDATE, again same day --
+#  The unit tests are now implemented. This should allow the AttriBox
+#  __get__ method to type hint to 'object', as the stub file will be
+#  created automatically. What remains is to include methods in the
+#  created stub files and to support multiple files in the same stub file.

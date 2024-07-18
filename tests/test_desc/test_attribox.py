@@ -4,6 +4,8 @@ protocol."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+import inspect
+import os
 from typing import Optional, TYPE_CHECKING
 
 from worktoy.desc import AttriClass, AttriBox
@@ -87,6 +89,28 @@ class TestAttriBox(WorkTest):
   """TestAttriBox tests the AttriBox implementation of the descriptor
   protocol. """
 
+  @classmethod
+  def getStubFileName(cls) -> str:
+    """Returns the name of the stub file. """
+    return inspect.getfile(cls).replace('.py', '.pyi')
+
+  @classmethod
+  def clearStubFile(cls) -> None:
+    """Removes the stub file. """
+    stubFile = cls.getStubFileName()
+    if os.path.exists(stubFile):
+      os.remove(stubFile)
+      print('Removed stub file: %s' % stubFile)
+
+  @classmethod
+  def setUpClass(cls, ) -> None:
+    """Set up the test class."""
+
+  @classmethod
+  def tearDownClass(cls, ) -> None:
+    """Tear down the test class."""
+    cls.clearStubFile()
+
   def test_instance_peek(self, ) -> None:
     """Tests the creation of an instance of the Point3D class. """
     point = Point3D()
@@ -112,3 +136,18 @@ class TestAttriBox(WorkTest):
     self.assertEqual(values['x'], -1)
     self.assertEqual(values['y'], -1)
     self.assertEqual(values['z'], -1)
+
+  def test_stub_file(self, ) -> None:
+    """Tests the creation of a stub file. """
+    stubFile = self.getStubFileName()
+    with open(stubFile, 'r') as f:
+      lines = f.readlines()
+    for line in lines:
+      if ':' in line:
+        varName, typeName = line.split(':')
+        varName = varName.strip()
+        typeName = typeName.strip()
+        if varName and typeName:
+          self.assertIsInstance(getattr(Point3D, varName), AttriBox)
+          boxClass = AttriBox._getInnerClass(getattr(Point3D, varName))
+          self.assertIs(boxClass, Integer)

@@ -17,7 +17,7 @@ def runTests() -> int:
       continue
     testPath = os.path.join('tests', item)
     suite = loader.discover(start_dir=testPath, pattern='test*.py')
-    runner = unittest.TextTestRunner(verbosity=0)
+    runner = unittest.TextTestRunner(verbosity=2)
     res = runner.run(suite)
     if res.wasSuccessful():
       results.append('Tests passed in: %s' % testPath)
