@@ -8,6 +8,5 @@ import worktoy.text
 import worktoy.desc
 import worktoy.keenum
 import worktoy.ezdata
-import worktoy.loremify
 import worktoy.math
 import worktoy.stat
