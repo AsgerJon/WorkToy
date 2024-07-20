@@ -3,11 +3,12 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from unittest import TestCase
+
 from worktoy.text import monoSpace
-from worktoy.worktest import WorkTest
 
 
-class TestMonoSpace(WorkTest):
+class TestMonoSpace(TestCase):
   """TestMonoSpace tests the monoSpace function."""
 
   def test_monoSpace(self) -> None:

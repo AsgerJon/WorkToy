@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 from random import shuffle
+from unittest import TestCase
 
 from worktoy.parse import maybe
-from worktoy.worktest import WorkTest
 
 
-class TestMaybe(WorkTest):
+class TestMaybe(TestCase):
   """TestMaybe tests the maybe function"""
 
   def test_maybe(self) -> None:

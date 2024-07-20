@@ -6,8 +6,10 @@ from __future__ import annotations
 import os
 import unittest
 
+from worktoy.parse import maybe
 
-def runTests() -> int:
+
+def runTests(verbosity: int = None) -> int:
   """Runs the tests"""
   results = []
   loader = unittest.TestLoader()
@@ -17,7 +19,7 @@ def runTests() -> int:
       continue
     testPath = os.path.join('tests', item)
     suite = loader.discover(start_dir=testPath, pattern='test*.py')
-    runner = unittest.TextTestRunner(verbosity=0)
+    runner = unittest.TextTestRunner(verbosity=maybe(verbosity, 0))
     res = runner.run(suite)
     if res.wasSuccessful():
       results.append('Tests passed in: %s' % testPath)

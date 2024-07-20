@@ -7,11 +7,11 @@ from __future__ import annotations
 import inspect
 import os
 from typing import Optional, TYPE_CHECKING
+from unittest import TestCase
 
 from worktoy.desc import AttriClass, AttriBox
 from worktoy.ezdata import EZData, EndFields, BeginFields
 from worktoy.parse import maybe
-from worktoy.worktest import WorkTest
 
 
 class Integer(AttriClass):
@@ -85,7 +85,7 @@ class Point3D(EZData):
     object.__setattr__(self, key, value)
 
 
-class TestAttriBox(WorkTest):
+class TestAttriBox(TestCase):
   """TestAttriBox tests the AttriBox implementation of the descriptor
   protocol. """
 

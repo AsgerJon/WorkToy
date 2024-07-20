@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from random import randint, sample
 from typing import TYPE_CHECKING, Self
+from unittest import TestCase
 
 from worktoy.desc import AttriBox
 from worktoy.ezdata import EZData, BeginFields, EndFields
-from worktoy.worktest import WorkTest
 
 
 class Point3D(EZData):
@@ -57,7 +57,7 @@ class Point3D(EZData):
     return False if abs(self @ other) else True
 
 
-class TestEZData(WorkTest):
+class TestEZData(TestCase):
   """TestEZData tests the EZData class."""
 
   def test_class_instantiation_positional(self, ) -> None:

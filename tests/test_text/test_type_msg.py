@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 from types import FunctionType
+from unittest import TestCase
 
 from worktoy.desc import AttriBox
 from worktoy.text import typeMsg
-from worktoy.worktest import WorkTest
 
 
 class IntOnly:
@@ -65,7 +65,7 @@ class NameTag:
       raise TypeError(e)
 
 
-class TestTypeMsg(WorkTest):
+class TestTypeMsg(TestCase):
   """TestTypeMsg tests the typeMsg function."""
 
   def test_int(self) -> None:

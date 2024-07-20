@@ -3,11 +3,12 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from unittest import TestCase
+
 from worktoy.text import stringList
-from worktoy.worktest import WorkTest
 
 
-class TestStringList(WorkTest):
+class TestStringList(TestCase):
   """TestStringList tests the StringList class."""
 
   def test_stringList(self) -> None:

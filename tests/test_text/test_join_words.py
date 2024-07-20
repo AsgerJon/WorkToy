@@ -3,11 +3,12 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from unittest import TestCase
+
 from worktoy.text import joinWords
-from worktoy.worktest import WorkTest
 
 
-class TestJoinWords(WorkTest):
+class TestJoinWords(TestCase):
   """TestJoinWords tests the joinWords function"""
 
   def test_empty(self) -> None:

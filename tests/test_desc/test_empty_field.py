@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 from typing import Callable
+from unittest import TestCase
 
 from worktoy.desc import EmptyField
-from worktoy.text import typeMsg, monoSpace
-from worktoy.worktest import WorkTest
+from worktoy.text import typeMsg
 
 
 class Point3D:
@@ -83,7 +83,7 @@ class Point3D:
     setattr(self.__class__, 'yolo', 'LMAO')
 
 
-class TestEmptyField(WorkTest):
+class TestEmptyField(TestCase):
   """TestEmptyField tests the EmptyField class."""
 
   def setUp(self, ) -> None:

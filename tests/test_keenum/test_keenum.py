@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 from typing import Iterable, TYPE_CHECKING
+from unittest import TestCase
 
 from worktoy.keenum import KeeNum, auto
 from worktoy.text import stringList
-from worktoy.worktest import WorkTest
 
 
 class WeekDay(KeeNum):
@@ -37,7 +37,7 @@ class Ugedag(KeeNum):
     return """%s.%s('%s')""" % (clsName, self.name, str(self.value))
 
 
-class TestKeeNum(WorkTest):
+class TestKeeNum(TestCase):
   """TestKeeNum tests the KeeNum class"""
 
   def test_iteration(self) -> None:

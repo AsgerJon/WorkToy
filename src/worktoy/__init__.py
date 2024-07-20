@@ -9,5 +9,4 @@ import worktoy.text
 import worktoy.desc
 import worktoy.keenum
 import worktoy.ezdata
-import worktoy.worktest
 import worktoy.yolo
