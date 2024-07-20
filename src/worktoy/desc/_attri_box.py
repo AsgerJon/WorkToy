@@ -6,7 +6,7 @@ creation. """
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Callable, Never
+from typing import TYPE_CHECKING, Callable, Never, Any
 
 from icecream import ic
 
@@ -211,7 +211,7 @@ class AttriBox(TypedDescriptor):
       setattr(cls, boxName, box)
       cls.__set_name__(box, owner, boxName)
 
-  def __get__(self, instance: object, owner: type) -> object:  # Footnote
+  def __get__(self, instance: object, owner: type) -> Any:  # Footnote
     """The __get__ method is called when the descriptor is accessed via the
     owning instance. """
     value = TypedDescriptor.__get__(self, instance, owner)
