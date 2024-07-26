@@ -3,6 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+import os
 import sys
 import time
 from typing import Callable
@@ -20,7 +21,33 @@ def yolo(*args: Callable) -> None:
     try:
       retCode = callMeMaybe()
     except BaseException as exception:
-      print('Exception: %s' % exception)
+      exceptionTypeName = exception.__class__.__name__
+      exceptionMessage = str(exception)
+      print('ENCOUNTERED!\n  %s: %s' % (exceptionTypeName, exceptionMessage))
+      tb = exception.__traceback__
+      while True:
+        fileName = tb.tb_frame.f_code.co_filename
+        if fileName == __file__:
+          tb = tb.tb_next
+          if tb is None:
+            break
+          continue
+        lineNumber = tb.tb_lineno
+        print("""In file: '%s', at line: %d""" % (fileName, lineNumber))
+        with open(fileName, 'r') as file:
+          data = file.readlines()
+        for i in range(lineNumber - 3, lineNumber + 3):
+          if 0 < i < len(data):
+            line = data[i].replace(os.linesep, '')
+            if i - lineNumber + 1:
+              print('  %03d:    %s   ' % (i, line))
+            else:
+              print('  %03d: >> %s << ' % (i, line))
+        if getattr(tb, 'tb_next', None):
+          tb = tb.tb_next
+        else:
+          break
+
       retCode = -1
   retCode = 0 if retCode is None else retCode
   print(77 * '-')

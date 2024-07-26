@@ -20,5 +20,10 @@ def tester00() -> int:
   return 0
 
 
+def tester01() -> int:
+  """LMAO"""
+  raise Exception('LMAO')
+
+
 if __name__ == '__main__':
-  yolo(runTests, tester00)
+  yolo(runTests, tester01)
