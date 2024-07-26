@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Callable, Never, Any
 from icecream import ic
 
 from worktoy.desc import TypedDescriptor, Instance, Owner
+from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
 if sys.version_info.minor < 11:
@@ -111,7 +112,7 @@ class AttriBox(TypedDescriptor):
   def _getArgs(self, instance: object) -> list:
     """Returns the arguments used to create the inner object. """
     out = []
-    for arg in self.__positional_args__:
+    for arg in maybe(self.__positional_args__, []):
       if arg is Instance:
         out.append(instance)
       elif arg is Owner:
@@ -123,7 +124,7 @@ class AttriBox(TypedDescriptor):
   def _getKwargs(self, instance: object) -> dict:
     """Returns the keyword arguments used to create the inner object. """
     out = {}
-    for (key, value) in self.__keyword_args__:
+    for (key, value) in maybe(self.__keyword_args__, {}).items():
       if value is Instance:
         out[key] = instance
       elif value is Owner:
