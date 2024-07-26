@@ -136,18 +136,3 @@ class TestAttriBox(TestCase):
     self.assertEqual(values['x'], -1)
     self.assertEqual(values['y'], -1)
     self.assertEqual(values['z'], -1)
-
-  def test_stub_file(self, ) -> None:
-    """Tests the creation of a stub file. """
-    stubFile = self.getStubFileName()
-    with open(stubFile, 'r') as f:
-      lines = f.readlines()
-    for line in lines:
-      if ':' in line:
-        varName, typeName = line.split(':')
-        varName = varName.strip()
-        typeName = typeName.strip()
-        if varName and typeName:
-          self.assertIsInstance(getattr(Point3D, varName), AttriBox)
-          boxClass = AttriBox.getInnerClass(getattr(Point3D, varName))
-          self.assertIs(boxClass, Integer)

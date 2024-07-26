@@ -12,7 +12,6 @@ from icecream import ic
 
 from worktoy.desc import TypedDescriptor, Instance, Owner
 from worktoy.text import typeMsg, monoSpace
-from worktoy.yolo import stubGen
 
 if sys.version_info.minor < 11:
   from typing_extensions import Self
@@ -182,7 +181,6 @@ class AttriBox(TypedDescriptor):
     ownerListName = self._getOwnerListName()
     if not getattr(owner, '__has_boxes__', False):
       setattr(owner, '__has_boxes__', True)
-      stubGen(owner)
 
     TypedDescriptor.__set_name__(self, owner, name)
     existing = getattr(owner, ownerListName, [])

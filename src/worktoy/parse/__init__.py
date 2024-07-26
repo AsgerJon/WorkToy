@@ -4,3 +4,4 @@
 from __future__ import annotations
 
 from ._maybe import maybe
+from ._maybe_type import maybeType
