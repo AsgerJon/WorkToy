@@ -12,6 +12,6 @@ class Owner(metaclass=ZerotonMetaclass):
   instance.  """
 
 
-class THIS(metaclass=ZerotonMetaclass):
+class Instance(metaclass=ZerotonMetaclass):
   """Instance is a Zeroton object indicating the instance owning the
   descriptor instance.  """
