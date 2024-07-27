@@ -97,10 +97,7 @@ class TestOverload(TestCase):
   def testDict(self, ) -> None:
     """Tests the dictionary constructor of the Color class."""
     orange = Color({'red': 255, 'green': 165, 'blue': 0})
-    ic(orange)
     orangeStr = Color('#ffa500')
-    ic(orangeStr)
     orangeFloat = Color(1.0, 0.647, 0.0)
-    ic(orangeFloat)
     self.assertEqual(str(orange).lower(), '#ffa500'.lower())
     self.assertLess(abs(orange - Color(1.0, 0.647, 0.0)), 9)
