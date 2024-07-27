@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import sys
+
 from icecream import ic
 
 from worktoy.yolo import yolo, runTests
@@ -20,10 +21,5 @@ def tester00() -> int:
   return 0
 
 
-def tester01() -> int:
-  """LMAO"""
-  raise Exception('LMAO')
-
-
 if __name__ == '__main__':
-  yolo(runTests, tester01)
+  yolo(runTests, tester00)

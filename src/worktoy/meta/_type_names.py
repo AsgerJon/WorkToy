@@ -10,6 +10,14 @@ if TYPE_CHECKING:
 else:
   AbstractNamespace = object
 
+
+def functionInstance() -> None:
+  pass
+
+
+Function = type(functionInstance)
+
+FunctionTypes: TypeAlias = Union[Function, classmethod, staticmethod]
 Bases: TypeAlias = Union[type, Tuple[type, ...]]
 Namespace: TypeAlias = Union[dict, AbstractNamespace]
 Space: TypeAlias = Namespace

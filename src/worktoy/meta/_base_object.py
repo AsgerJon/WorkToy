@@ -98,8 +98,10 @@ for raising the errors explained. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.meta import BaseMetaclass
 
-class BaseObject:
+
+class BaseObject(metaclass=BaseMetaclass):
   """BaseObject provides argument-tolerant implementations of __init__ and
   __init_subclass__ preventing the errors explained in the documentation."""
 
