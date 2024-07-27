@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Callable, Never, Any
 
 from icecream import ic
 
-from worktoy.desc import TypedDescriptor, Instance, Owner
+from worktoy.desc import TypedDescriptor, THIS, Owner
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
@@ -113,7 +113,7 @@ class AttriBox(TypedDescriptor):
     """Returns the arguments used to create the inner object. """
     out = []
     for arg in maybe(self.__positional_args__, []):
-      if arg is Instance:
+      if arg is THIS:
         out.append(instance)
       elif arg is Owner:
         out.append(self._getFieldOwner())
@@ -125,7 +125,7 @@ class AttriBox(TypedDescriptor):
     """Returns the keyword arguments used to create the inner object. """
     out = {}
     for (key, value) in maybe(self.__keyword_args__, {}).items():
-      if value is Instance:
+      if value is THIS:
         out[key] = instance
       elif value is Owner:
         out[key] = self._getFieldOwner()
