@@ -6,23 +6,16 @@ from __future__ import annotations
 
 from abc import abstractmethod
 
+from worktoy.meta import BaseObject
 from worktoy.text import monoSpace, typeMsg
 
 
-class AbstractDescriptor:
+class AbstractDescriptor(BaseObject):
   """AbstractDescriptor provides a baseclass for classes implementing the
   descriptor protocol."""
 
   __field_name__ = None
   __field_owner__ = None
-
-  def __init__(self, *__, **_) -> None:
-    """Why are we still here?"""
-    object.__init__(self)
-
-  def __init_subclass__(cls, **kwargs) -> None:
-    """Just to suffer? Or to raise errors?"""
-    super().__init_subclass__()
 
   def _getFieldName(self) -> str:
     """Returns the name of the field the descriptor is assigned to. """
