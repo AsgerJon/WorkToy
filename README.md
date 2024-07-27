@@ -723,8 +723,53 @@ class MetaClass(type):
       cls.__init__(self, *args, **kwargs)
     return self
 
-
-
-
-
 ```
+
+The above implementation of the ``MetaClass`` class is as close to the
+default metaclass ``type`` as possible. Let us now proceed examining the
+different aspects of the custom metaclass.
+
+#### The `__prepare__` method
+
+As mentioned above, the ``__prepare__`` method creates the namespace
+object used when creating new classes. Before proceeding with customizing the
+``__prepare__`` method, Python does have two requirements for the
+namespace objects: First, the namespace object must not only be a mapping
+type, it must outright be a subclass of the ``dict`` class. Secondly and
+most importantly: The namespace object must implement ``__getitem__``
+such that the method raises a ``KeyError`` when receiving an unknown key.
+Why is this so important? Because sometimes class bodies have lines that
+do not contain assignments. These lines are passed to the ``__getitem__``
+method on the namespace object instead passing the left and right hand
+sides to the ``__setitem__`` method. To ensure that no undefined
+behaviour starts, Python expects the namespace object to raise a
+``KeyError`` when receiving an unknown key. If you reimplement
+``__missing__`` in the namespace object, you are going to have a bad time.
+This author went through many hours of pain to bring you this information.
+Much pain.
+
+Having correctly created a namespace object, let us talk about what
+happens when the class body is executed. Each line that contains an
+assignment is passed to the ``__setitem__`` method on the namespace. What
+is lost by the default namespace object, is its inability handle keys
+getting overwritten. So a custom namespace object should implement
+functionality that preserves existing values when a key is overwritten.
+Then when the namespace object is returned to the metaclass, something like
+function overloading (foreshadowing) might be implemented. Besides this
+single limitation, there is not any improvements possible on the
+namespace object. Once previous key values are preserved, the metaclass
+should implement the rest of the functionality.
+
+Despite what might seem obvious, the namespace object cannot actually
+change what it means to be a class. At most, it can change how a class
+body results in a new class, but the class itself remains a class. To
+change what it means to be a class requires changes to the metaclass itself.
+
+#### The `__new__` method
+
+Why? Why should an int not be considered an instance of my newly created
+class? Why should a class body result in a new class, why not something
+entirely new? By reimplementing methods in the metaclass, in
+particular ``__new__``, the metaclass can achieve all of this, albeit
+being in a way that some may consider unnatural.
+
