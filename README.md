@@ -538,7 +538,7 @@ instantiation! Let us now see how we might create a more advanced
 graphical user interface whilst adhering to the `QObject` requirement.
 
 #### The `AttriBox` class - Lazy instantiation
- 
+
 ```python
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
@@ -571,5 +571,160 @@ if __name__ == "__main__":
   window = MainWindow()
   window.show()
   app.exec()
+```
+
+The above script makes use of the lazy instantiation provided by the
+`AttriBox` class. While some readers may have recognized the
+similarities between ``Field`` and ``property``, many readers are presently
+picking jaws up from the floor, pinching themselves or seeking spiritual
+guidance. The `AttriBox` not only implements an enhanced version of the
+descriptor protocol, but it does so on a single line, where it even
+provides syntactic sugar for defining the class intended for lazy
+instantiation. Let us examine ``AttriBox`` in more detail.
+
+#### The `AttriBox` class
+
+```python
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
+from PySide6.QtCore import QSize
+
+from worktoy.desc import AttriBox, THIS
+
+
+class MainWindow(QMainWindow):
+  """Subclass of QMainWindow. This class provides the main window for the 
+    application. """
+
+  baseWidget = AttriBox[QWidget](THIS)
+  #  The above line creates a descriptor at name 'baseWidget' that will 
+  #  instantiate a QWidget instance. When the __get__ on the descriptor
+  #  tries to retrieve the value it owns, only then will the value be 
+  #  instantiated. When instantiating the value, the arguments in the 
+  #  parentheses are passed to the constructor of the class. That brings 
+  #  us to the 'THIS' token. When instantiating the value, the 'THIS' token
+  #  is replaced with the instance of the owning class. This is convenient 
+  #  for the 'baseWidget' attribute, as it allows the instance created to 
+  #  set its parent to the owning instance.
+```
+
+The use case pertaining to the PySide6 library makes great use of the
+lazy instantiation. Before discussing further use cases of the `AttriBox`
+class, we need to discuss a different module in the WorkToy package.
+
+### `worktoy.meta`
+
+Despite significant vandalism having been done to the word 'meta' in
+recent memory, it is no match for the power of the Python metaclass. You
+are about to embark on a journey beyond. Beyond all boundaries. No other
+programming language conceptualizes what the Python metaclass is. Java
+reflections? No, no, no. C# attributes, not even close! C++ templates?
+Get it out of here! The Python metaclass is the ultimate power tool. You
+have heard about metaclasses. Whispers in the corners. Is it possible to
+learn this power? Not from a Java programmer. Not from a C# developer.
+Not from a C++ programmer. Welcome to the Python metaclass.
+
+#### What is a metaclass?
+
+You already know what a metaclass is. ``type`` is a metaclass. Recall how
+the overconfident "online course" instructor told that 'everything is an
+object' in Python. That is correct. In fact, the two classes below are in
+fact the same:
+
+```python
+class MyClass:
+  pass
+
+
+class OldSchool(object):
+  pass
+```
+
+The ``OldSchool`` class explicitly inherits from the ``object``, but
+``MyClass`` is as much a subclass of ``object`` as ``OldSchool``. If you
+suffer the misfortune of encountering Python 2 code, you will see the
+explicit inheritance from ``object`` that is now implicit in Python 3.
+That is not the only implicit thing happening in Python class creation.
+In fact:
+
+```python
+class SomeClass(object, metaclass=type):
+  pass
+```
+
+``type`` is a bit odd. It is a class, a metaclass, but also a function:
+``type(69) is int``. A function returning the type of the object:
+``type(int) is type``. As an alternative to using ``type`` as a function,
+the attribute ``__class__`` also returns the type of the object. In this
+discussion, ``type`` denotes the default metaclass. In the next section,
+we will implement a custom metaclass that behaves as closely as possible
+to ``type``.
+
+#### Your first MetaClass!
+
+We will now be sus. We will implement a metaclass behaving as close to how
+``type`` behaves as possible. The metaclass will be named ``MetaClass``.
+
+```python
+class MetaClass(type):
+  """This metaclass behaves as close to the default metaclass 'type' as 
+  possible. """
+
+  @classmethod
+  def __prepare__(mcls,
+                  name: str,
+                  bases: tuple[type, ...],
+                  **kwargs) -> dict:
+    """This special method creates the namespace object used to create 
+    the new class. Before the first line in the class body is even 
+    executed, this method is called. At each line in the class body that 
+    contains a name assignment, the namespace object is updated. By 
+    default, '__prepare__' returns an empty dictionary. Custom metaclasses 
+    wishing to override this method should definitely keep reading this 
+    documentation!
+    
+    The __prepare__ method is a classmethod and should be decorated as such.
+    """
+    return dict()
+
+  def __new__(mcls,
+              name: str,
+              bases: tuple[type, ...],
+              namespace: dict,
+              **kwargs) -> type:
+    """When the class body is complete and collected in the namespace 
+    object, this method is invoked. Like the '__prepare__' method, this 
+    is a classmethod, but it must NOT be decorated as such. Doing so 
+    results in undefined behaviour. """
+    cls = type.__new__(mcls, name, bases, namespace, **kwargs)
+    #  cls is the newly created class. When this method returns, the 
+    #  '__set_name__' methods on descriptors owned by the class are 
+    #  invoked.
+    return cls
+
+  def __init__(cls,
+               name: str,
+               bases: tuple[type, ...],
+               namespace: dict,
+               **kwargs) -> None:
+    """This method is called after the '__new__' method. The '__init__' 
+    method defined on 'type', the default metaclass, is a no-op. What is 
+    relevant to note here is that this method is invoked after the 
+    __set_name__ methods have returned. """
+    type.__init__(cls, name, bases, namespace, **kwargs)
+
+  def __call__(cls: type, *args, **kwargs) -> object:
+    """This method defines what happens when calling the class. This is 
+    typically when the class is instantiated. Please note that 
+    metaclasses typically allow their derived classes to implement 
+    their own '__new__' and '__init__' methods. """
+    self = cls.__new__(cls, *args, **kwargs)
+    if isinstance(self, cls):
+      cls.__init__(self, *args, **kwargs)
+    return self
+
+
+
+
 
 ```
