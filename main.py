@@ -8,7 +8,6 @@ import sys
 
 from icecream import ic
 
-from main_tester_class01 import Test
 from worktoy.yolo import yolo, runTests
 
 ic.configureOutput(includeContext=True)
@@ -22,15 +21,5 @@ def tester00() -> int:
   return 0
 
 
-def tester01() -> int:
-  """Hello World!"""
-  test = Test()
-  print(Test.__class__.__class__)
-  print(Test.__class__)
-  print(Test)
-  print(test)
-  return 0
-
-
 if __name__ == '__main__':
-  yolo(runTests, tester01)
+  yolo(runTests, tester00)

@@ -772,4 +772,3 @@ class? Why should a class body result in a new class, why not something
 entirely new? By reimplementing methods in the metaclass, in
 particular ``__new__``, the metaclass can achieve all of this, albeit
 being in a way that some may consider unnatural.
-
