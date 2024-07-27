@@ -538,7 +538,7 @@ instantiation! Let us now see how we might create a more advanced
 graphical user interface whilst adhering to the `QObject` requirement.
 
 #### The `AttriBox` class - Lazy instantiation
-
+ 
 ```python
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
