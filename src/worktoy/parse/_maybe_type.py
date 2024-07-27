@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from icecream import ic
-
 
 def maybeType(*args) -> Any:
   """The 'maybeType' function receives a type followed by any number of

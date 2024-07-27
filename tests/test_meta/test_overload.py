@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from icecream import ic
-
 from worktoy.desc import AttriBox
 from worktoy.meta import BaseObject, overload
 

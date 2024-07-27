@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Callable
 
 
-def overload(*args, **kwargs):
+def overload(*args, ):
   """The overload function returns a callable that decorates a function with
   the signature. """
 

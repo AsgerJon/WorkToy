@@ -21,8 +21,6 @@ class Dispatcher:
   def functionFactory(self, ) -> Callable:
     """Return a function that calls the dispatcher."""
 
-    f = self.__overloaded_functions__
-
     def callMeMaybe(this: Any, *args) -> Any:
       """Call the dispatcher."""
       typeSig = (*[type(arg) for arg in args],)
