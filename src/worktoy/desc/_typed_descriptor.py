@@ -31,7 +31,8 @@ class TypedDescriptor(DelayedDescriptor):
       name = self.__inner_class__.__name__
       bases = (self.__inner_class__,)
       namespace = {**AttriClass.__dict__, }
-      return type(name, bases, namespace)
+      metaClass = type(self.__inner_class__)
+      return metaClass(name, bases, namespace)
     e = typeMsg('__inner_class__', self.__inner_class__, type)
     raise TypeError(e)
 

@@ -6,6 +6,8 @@ from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING
 from unittest import TestCase
 
+from icecream import ic
+
 from worktoy.keenum import KeeNum, auto
 from worktoy.text import stringList
 
@@ -64,3 +66,18 @@ class TestKeeNum(TestCase):
     testDict = {weekDay: weekDay.name for weekDay in WeekDay}
     for (weekDay, name) in testDict.items():
       self.assertEqual(weekDay.name, name)
+
+  def test_class_membership(self) -> None:
+    """Tests if the KeeNum subclass instances correctly identifies
+    themselves as members of the class"""
+    for weekDay in WeekDay:
+      self.assertIsInstance(weekDay, WeekDay)
+
+  def test_class_instance(self) -> None:
+    """Tests if objects returned by the KeeNum class object are correctly
+    identified as instances of the class. """
+    for weekDay in WeekDay:
+      name = weekDay.name
+      self.assertIsInstance(WeekDay(name), WeekDay)
+      item = getattr(WeekDay, name)
+      self.assertIsInstance(item, WeekDay)

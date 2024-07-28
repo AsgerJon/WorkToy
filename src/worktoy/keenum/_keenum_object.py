@@ -92,6 +92,10 @@ class KeeNumObject:
     """String representation"""
     return '%s.%s' % (self.__class__.__name__, self.name)
 
+  def __repr__(self, ) -> str:
+    """Code representation"""
+    return """%s['%s']""" % (self.__class__.__name__, self.name)
+
   def __int__(self) -> int:
     """Exposes the private value"""
     if isinstance(self.__private_value__, int):

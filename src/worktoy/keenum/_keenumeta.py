@@ -5,10 +5,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional, Iterable, Any
 
+from icecream import ic
+
 from worktoy.keenum import KeeNumSpace, KeeNumObject
-from worktoy.meta import AbstractMetaclass
+from worktoy.meta import AbstractMetaclass, Bases
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, stringList
+
+ic.configureOutput(includeContext=True)
 
 
 class KeeNumMeta(AbstractMetaclass):
@@ -34,16 +38,34 @@ class KeeNumMeta(AbstractMetaclass):
     """The __prepare__ method is invoked before the class is created."""
     return KeeNumSpace(mcls, name, (), **kwargs)
 
-  def __new__(mcls, name: str, _, keeNumSpace: KeeNumSpace, **__) -> type:
+  def __new__(mcls,
+              name: str,
+              bases: Bases,
+              keeNumSpace: KeeNumSpace, **__) -> type:
     """The __new__ method is invoked to create the class."""
-    namespace = keeNumSpace.compile()
+    if isinstance(keeNumSpace, KeeNumSpace):
+      namespace = keeNumSpace.compile()
+    else:
+      namespace = {}
+      for (key, val) in keeNumSpace.items():
+        if key not in KeeNumSpace.__dict__:
+          namespace[key] = val
     bases = (KeeNumObject,)
     return AbstractMetaclass.__new__(mcls, name, bases, namespace, )
 
-  def __init__(cls, name: str, _, keeNumSpace: KeeNumSpace, **__) -> None:
+  def __init__(cls,
+               name: str,
+               bases: Bases,
+               keeNumSpace: KeeNumSpace, **__) -> None:
     """The __init__ method is invoked after the class is created."""
     cls.__allow_instantiation__ = True
-    entries = keeNumSpace.getKeeNumEntries()
+    try:
+      entries = keeNumSpace.getKeeNumEntries()
+    except AttributeError as attributeError:
+      try:
+        entries = [item for item in bases[0]]
+      except Exception as exception:
+        raise attributeError from exception
     newEntries = []
     for entry in entries:
       newEntries.append(cls(entry))
@@ -54,7 +76,9 @@ class KeeNumMeta(AbstractMetaclass):
   def __call__(cls, *args, **kwargs) -> object:
     """The __call__ method is invoked when the class is called."""
     if cls.__allow_instantiation__:
-      return super().__call__(*args, **kwargs)
+      self = super().__call__(*args, **kwargs)
+      setattr(self, '__class__', cls)
+      return self
     return cls._parse(*args, **kwargs)
 
   def __getitem__(cls, item: object) -> object:
@@ -139,9 +163,15 @@ class KeeNumMeta(AbstractMetaclass):
   def __getattr__(cls, key: str | int) -> object:
     """The __getattr__ method is invoked when an attribute is accessed."""
     if isinstance(key, int):
-      return cls._recognizeIndex(key)
+      try:
+        return cls._recognizeIndex(key)
+      except Exception as exception:
+        raise AttributeError(key) from exception
     if isinstance(key, str):
-      return cls._recognizeName(key)
+      try:
+        return cls._recognizeName(key)
+      except Exception as exception:
+        raise AttributeError(key) from exception
     return object.__getattribute__(cls, key)
 
   def __len__(cls) -> int:

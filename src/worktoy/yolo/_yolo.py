@@ -6,7 +6,10 @@ from __future__ import annotations
 import os
 import sys
 import time
+from math import log
 from typing import Callable
+
+from worktoy.text import stringList
 
 
 def yolo(*args: Callable) -> None:
@@ -54,8 +57,26 @@ def yolo(*args: Callable) -> None:
   print('Return Code: %s' % retCode)
   toc = int(time.perf_counter_ns() - tic)
   n = 0
-  while toc > 1e03:
-    toc *= 1e-03
-    n += 1
-  name = ['nano', 'micro', 'milli', ''][int(n)]
-  print('Runtime: %d %s-seconds' % (int(toc), name))
+  n = int(log(toc) / log(1e03))
+  prefixes = stringList("""nano, micro, milli""")
+  if n < 3:
+    prefix = prefixes[n]
+    msg = """Runtime: %d %s-seconds"""
+    print(msg % (int(toc * 1e-03 ** n), prefix))
+    sys.exit(0)
+  toc *= 1e-09
+  seconds = int(toc) % 60
+  toc = int(toc - seconds)
+  minutes = toc % 60
+  toc = int(toc - minutes)
+  hours = toc % 24
+  toc = int(toc - hours)
+  if hours:
+    msg = """Runtime: %d hours, %d minutes, %d seconds - Completed on %s"""
+    print(msg % (hours, minutes, seconds, time.ctime()))
+  elif minutes:
+    msg = """Runtime: %d minutes, %d seconds - Completed on %s"""
+    print(msg % (minutes, seconds, time.ctime()))
+  else:
+    msg = """Runtime: %d seconds - Completed on %s"""
+    print(msg % (seconds, time.ctime()))

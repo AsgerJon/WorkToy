@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 
 from icecream import ic
 
-from worktoy.keenum import KeeNum, auto
+from main_tester_class02 import Test
 from worktoy.yolo import yolo, runTests
 
 ic.configureOutput(includeContext=True)
@@ -22,5 +23,11 @@ def tester00() -> int:
   return 0
 
 
+def tester01() -> int:
+  """Hello World!"""
+  test = Test()
+  print(test.lmao)
+
+
 if __name__ == '__main__':
-  yolo(runTests, tester00)
+  yolo(runTests, tester01)
