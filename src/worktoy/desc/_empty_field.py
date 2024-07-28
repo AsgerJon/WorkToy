@@ -4,7 +4,7 @@ protocol allowing owning classes to decorate methods as accessor methods. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Any
 
 from worktoy.text import monoSpace, typeMsg
 
@@ -58,7 +58,7 @@ class EmptyField:
     self.__field_name__ = name
     self.__field_owner__ = owner
 
-  def __get__(self, instance: object, owner: type) -> object:
+  def __get__(self, instance: object, owner: type) -> Any:
     """Get the value of the field."""
     if instance is None:
       return self
