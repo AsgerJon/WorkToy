@@ -16,7 +16,7 @@ potential impact, and any suggestions for solutions.
 For security vulnerabilities that require immediate attention, please also
 email [asgerjon2@gmail.com](mailto:asgerjon2@gmail.com). In your report,
 prioritize speed and detail; you may disregard the normal guidelines for
-reporting issues when necessary.
+reporting issues at your discretion.
 
 ### Immediate Escalation for Critical Vulnerabilities
 
