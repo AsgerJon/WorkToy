@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Iterable
+from typing import TYPE_CHECKING, Optional, Iterable, Any
 
 from worktoy.keenum import KeeNumSpace, KeeNumObject
 from worktoy.meta import AbstractMetaclass

@@ -124,3 +124,7 @@ class KeeNumObject:
     if isinstance(other, self.__class__):
       return self == int(other)
     return NotImplemented
+
+  def __hash__(self, ) -> int:
+    """Hash function"""
+    return hash("""%s.%s""" % (self.__class__.__name__, self.name))

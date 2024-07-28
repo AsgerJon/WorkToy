@@ -8,6 +8,7 @@ import sys
 
 from icecream import ic
 
+from worktoy.keenum import KeeNum, auto
 from worktoy.yolo import yolo, runTests
 
 ic.configureOutput(includeContext=True)

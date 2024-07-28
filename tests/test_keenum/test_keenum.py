@@ -58,3 +58,9 @@ class TestKeeNum(TestCase):
     for (ugedag, weekday, dag) in zip(Ugedag, WeekDay, dage):
       self.assertEqual(ugedag.name, weekday.value)
       self.assertEqual(ugedag.value.lower(), dag.lower())
+
+  def test_dict_key(self) -> None:
+    """Tests if the KeeNum subclasses can be used as dictionary keys"""
+    testDict = {weekDay: weekDay.name for weekDay in WeekDay}
+    for (weekDay, name) in testDict.items():
+      self.assertEqual(weekDay.name, name)
