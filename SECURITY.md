@@ -20,8 +20,8 @@ reporting issues at your discretion.
 
 ### Immediate Escalation for Critical Vulnerabilities
 
-If you do not receive a response within 72 hours and believe the issue requires
-more urgent attention, please contact:
+If you do not receive a response promptly or you believe the issue 
+requires more urgent attention, please contact:
 
 - **CERT/CC (Computer Emergency Response Team/Coordination Center)** or
   your local equivalent. These organizations are equipped to handle severe
