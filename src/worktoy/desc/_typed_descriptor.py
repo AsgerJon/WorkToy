@@ -24,15 +24,7 @@ class TypedDescriptor(DelayedDescriptor):
       e = """The inner class has not been assigned. """
       raise AttributeError(e)
     if isinstance(self.__inner_class__, type):
-      if hasattr(self.__inner_class__, '__ready_box__'):
-        return self.__inner_class__
-      if kwargs.get('_raw', False):
-        return self.__inner_class__
-      name = self.__inner_class__.__name__
-      bases = (self.__inner_class__,)
-      namespace = {**AttriClass.__dict__, }
-      metaClass = type(self.__inner_class__)
-      return metaClass(name, bases, namespace)
+      return self.__inner_class__
     e = typeMsg('__inner_class__', self.__inner_class__, type)
     raise TypeError(e)
 

@@ -10,6 +10,7 @@ import time
 from icecream import ic
 
 from main_tester_class02 import Test
+from main_tester_class03 import Float, ComplexNumber2, ComplexNumber
 from worktoy.yolo import yolo, runTests
 
 ic.configureOutput(includeContext=True)
@@ -25,9 +26,15 @@ def tester00() -> int:
 
 def tester01() -> int:
   """Hello World!"""
-  test = Test()
-  print(test.lmao)
+  z = ComplexNumber()  # realPart and imagPart not having setter applied
+  z2 = ComplexNumber2(69., 420.)
+  #  We expect the types of realPart and imagPart to be of Float:
+  print(z.realPart.__class__)
+  print(type(z.realPart))
+  print(z2.realPart.__class__)
+  print(type(z2.realPart))
+  return 0
 
 
 if __name__ == '__main__':
-  yolo(runTests, tester01)
+  yolo(tester01)

@@ -6,11 +6,12 @@ creation. """
 from __future__ import annotations
 
 import sys
+from types import MethodType
 from typing import TYPE_CHECKING, Callable, Never, Any
 
 from icecream import ic
 
-from worktoy.desc import TypedDescriptor, THIS, Owner
+from worktoy.desc import TypedDescriptor, THIS, Owner, AttriClass
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
@@ -21,10 +22,12 @@ else:
 
 ic.configureOutput(includeContext=True)
 
-if TYPE_CHECKING:
-  pass
-else:
-  AttriClass = object
+
+#
+# if TYPE_CHECKING:
+#   pass
+# else:
+#   AttriClass = object
 
 
 class AttriBox(TypedDescriptor):
@@ -138,6 +141,12 @@ class AttriBox(TypedDescriptor):
     innerClass = self.getInnerClass()
     args, kwargs = self._getArgs(instance), self._getKwargs(instance)
     innerObject = innerClass(*args, **kwargs)
+    for (key, val) in AttriClass.__dict__.items():
+      if getattr(self.__inner_class__, key, None) is not None:
+        continue
+      if callable(val):
+        val = MethodType(val, innerObject)
+      setattr(innerObject, key, val)
     if TYPE_CHECKING:
       assert isinstance(innerObject, AttriClass)
     innerObject.setOuterBox(self)
