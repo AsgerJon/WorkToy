@@ -41,7 +41,7 @@ pip install worktoy
 
 #### Background
 
-The descriptor protocol in Python allows significant customization of the
+The descriptor protocol in Python allows significant customisation of the
 attribute access mechanism. To understand this protocol, consider a class
 body assigning an object to a name. During the class creation process,
 when this line is reached, the object is assigned to the name. For the
@@ -612,24 +612,407 @@ The use case pertaining to the PySide6 library makes great use of the
 lazy instantiation. Before discussing further use cases of the `AttriBox`
 class, we need to discuss a different module in the WorkToy package.
 
-### `worktoy.meta`
+### What even if is this "meta" word?
 
-Despite significant vandalism having been done to the word 'meta' in
-recent memory, it is no match for the power of the Python metaclass. You
-are about to embark on a journey beyond. Beyond all boundaries. No other
-programming language conceptualizes what the Python metaclass is. Java
-reflections? No, no, no. C# attributes, not even close! C++ templates?
-Get it out of here! The Python metaclass is the ultimate power tool. You
-have heard about metaclasses. Whispers in the corners. Is it possible to
-learn this power? Not from a Java programmer. Not from a C# developer.
-Not from a C++ programmer. Welcome to the Python metaclass.
+Something weird has happened to the word **meta**. It happened after this
+author lost the last bits of faith in contemporary society and discourse.
+The author does care about this word and its importance in Python. Not
+enough to research recent human history beyond YouTube videos and dank
+memes though. As such, this introduction may not fully capture the reality
+of events. Because I don't care.
+
+At some point within the last few years, this author encountered the word
+meta whilst consuming independently created content on YouTube. Having
+had his lack of faith validated by crypto-bros, virtue-signalling venture
+capitalists, scumbag journalists and other smooth-brains, this author
+lamented the loss of this word. This author hopes to provide a last
+bastion for the word in the context of Python metaclasses. So please,
+tolerate the cringe that this word is bringing you and let us proceed!
+
+#### worktoy.meta - The Python metaclass concept
+
+Learning to use programming languages to solve problems is not meant as a
+solitary venture. A few heroes may have started out alone, but we who
+have come after them have walked the paths they blazed. It is the opinion
+of this author that such heroes are not alone, but instead joined every
+time someone ventures down that path. Take a moment to imagine the
+limitations faced by having to program by plugging in wires, carrying
+punch cards or flicking switches, although the latter does sound cool.
+The most significant discovery made was that limitations could be destroyed.
+
+But today when we face limitations, it does not quite feel the same. What
+is obviously limitations to be conquered are now elevated to dogmatic
+reverence. Ask 'why' on stackoverflow and persons heralded as 'power'
+users will respond with dismissive verbal abuse. While you see a
+limitation worthy of conquer, you also see them dancing around it like it
+was a golden calf. What exactly are they guarding? Obviously, the
+nauseating nature of C++ syntax should have been conquered decades ago,
+but nevertheless it remains. Now full of ``auto`` everywhere. Why must it
+be nauseating to use Java? Well, because a lot of people gatekeep. And it
+stops now. Where once they were in giant ivory towers, but today they are
+in their mothers basements with their waifu pillows.
+
+If you have faith, faith in your own faculties, there is a way forward. A
+way that evaporates the paper tigers of the gatekeepers leaving only the
+actual limitations for us to conquer. Where we used to walk the paths of
+heroes, we will now learn to fly!
+
+We begin by understanding the python metaclass. However, this is not the
+final destination. It just so happens that this is where the veil is
+first beginning to lift. So this is where we begin. Immediately, we will
+discover that the Python metaclass completely ignores anything the
+stackoverflow smooth-brains have to say. It even provides a pathway
+beyond, a pathway even to functionalities that many will consider unnatural.
+No other programming languages implement anything like it. Java reflections?
+No, no, no. C# attributes, not even close! C++ templates? Get it out of here!
+Come on this journey to beyond the reach of any gate! Let us learn to fly!
+Imagine going on reddit and being able to implement whatever a new
+programmer asks about. Imagine having the power such that any user
+departing with your advice does so encouraged to fight on instead of
+getting discouraged by some pretentious stackoverflow answer.
+
+Is it possible to learn this power? Yes, but keep in mind that there is
+nothing special about Python as such, they just happened to find the tear
+in the veil first. This does mean that we must begin with Python.
+Fortunately, 2024 is a perfect time to begin learning Python. Anything
+negative you are likely to hear about Python is long obsolete.
+
+#### Everything is an object!
+
+Python operates on one fundamental idea: Everything is an object.
+Everything. All numbers, all strings, all functions, all modules and
+everything that you can reference. Even ``object`` itself is an object.
+This means that everything supports a core set of attributes and methods
+defined on the core ``object`` type. This means that unless special
+effort is made, you can always ask for the string representation of an
+object. For example using the print function. This universal set of
+functionalities provides a solid foundation for everything, but crucially,
+it is possible and even the intention that methods defined on ``object``
+should be overridden when extending the ``object`` type.
+
+#### What is a class?
+
+For the purposes of this discussion, a class is an extension of
+``object`` allowing objects to be instances of the class, while other
+objects are not. This is the most basic definition of a class. For
+practical purposes a class also implements functions that are not defined
+on the ``object`` class. It may even replace methods defined on
+``object``. When a class defines such methods, they are generally
+applicable to instances of the class. This definition is reflecting the
+actual practical use more than a rigid definition. A more rigid
+definition will be discussed later on.
 
 #### What is a metaclass?
 
-You already know what a metaclass is. ``type`` is a metaclass. Recall how
-the overconfident "online course" instructor told that 'everything is an
-object' in Python. That is correct. In fact, the two classes below are in
-fact the same:
+A metaclass is to a class what a class is to an object. Notice the
+difference in the relationship: ``object`` is the class to which
+everything belongs, and a class extends it. That means that it a class is
+at the same level of abstract as ``object`` whereas an instance of the
+class is at a lower level. If you have never heard of a metaclass before,
+but have programmed in python, you have been using the default metaclass,
+but is simply ``type``. In the following, let us examine in more detail
+the functionalities provided by ``type`` that a custom metaclass might
+extend.
+
+#### Nomenclature
+
+Before proceeding, let us define terms:
+
+In the examination we will use the following nomenclature:
+
+- **``cls``** - A newly created class object
+- **``self``** - A newly created object that is an instance of the newly
+  created class.
+- **``mcls``** - The metaclass creating the new class.
+- **``namespace``** - This is where the class body is stored during class
+  creation.
+
+#### Class creation
+
+```python
+class ClassName(metaclass=MetaType):
+  ...  # Class body is the code block that follows the class definition.
+```
+
+1. When encountering the above syntax, the interpreter collects the
+   following information: The name given ('ClassName'), the base class
+   (omitted here) and the metaclass ('MetaType') which would be ``type``
+   by default.
+2. The interpreter next creates a namespace object that will collect the
+   information provided by the class body. It does this by calling the
+   special class method ``__prepare__`` on the metaclass. This method is
+   a ``classmethod`` bound to the metaclass meaning that it receives the
+   metaclass itself as the first argument resulting in the following
+   signature: ``__prepare__(mcls, name, bases, **kwargs)``. Hereinafter,
+   we will omit the keyword arguments for sake of brevity. Thus, the
+   namespace object is created by the code below, where the empty tuple
+   would have contained base classes omitted from this discussion:
+    ```python
+    namespace = MetaType.__prepare__('ClassName', ())
+    ```
+3. With this namespace the interpreter goes through the class body line
+   by line from top to bottom and when encountering an assignment, it
+   updates the namespace accordingly. As far as this author can tell,
+   assignments are any of the following:
+   3.1 Direct assignment to existing object: ``name = value``
+   3.2 Assignment to return value from function call: ``name = func()``
+   In this particular case, the function call blocks the class creation
+   until it returns a value. Then this value is assigned to the name. The
+   function may be a method in the class body provided it was defined
+   above the assignment.  
+   3.3 Method definition: ``def name(self, *args, **kwargs): ...`` Please
+   note that when creating a normal instance method in the class body,
+   the object received by the namespace object is a regular function
+   object indistinguishable from a function object created outside a
+   class body.
+   3.4 Decorated method definition: ``@decorator`` followed by a method
+   definition. Understanding decorators involves multiple steps:
+   3.4.1 The function object is created
+   3.4.2 The function object is passed to the decorator function
+   3.4.3 Whatever object is returned by the decorator function is  
+   assigned to the initial name of the function. The decorator is NOT
+   able to change the name at which the decorated function arrives in the
+   namespace object. It can return anything it wants, but will always
+   arrive in the namespace object in the original name.
+   Example:
+
+```python
+"""The 'typeGuard' function provides a type guard for the sake of the 
+example. """
+from __future__ import annotations
+from typing import Callable, Any, Never
+from worktoy.desc import Field
+from worktoy.parse import maybe
+
+
+class TypeGuardException(Exception):
+  """This exception is raised when the type guard fails. """
+  pass
+
+
+def typeGuard(*types) -> Callable:
+  """This decorator prevents the decorated function from being 
+  invoked with incorrect argument types. Please note that this 
+  method creates the decorator function and returns it. """
+
+  def decorator(callMeMaybe: Callable) -> Callable:
+    """This function is the actual decorator."""
+
+    def wrapper(*args, ) -> Any:
+      """This created function replaces the original function. """
+      if len(args) - len(types):
+        e = """Received incorrect number of arguments"""
+        raise TypeGuardException(e)
+      for (arg, type_) in zip(args, types):
+        if not isinstance(arg, type_):
+          e = """Received '%s' of type '%s', but expected type '%s'!"""
+          actType = type(arg).__name__
+          expType = type_.__name__
+          raise TypeGuardException(e % (arg, actType, expType))
+      return callMeMaybe(*args)
+
+    return wrapper
+
+  return decorator
+
+
+class NameSpace(dict):
+  """This class provides the namespace object."""
+  pass
+
+
+class MetaType(type):
+  """This metaclass returns an instance of NameSpace as the namespace 
+  object used to create the new class. """
+
+  @classmethod
+  def __prepare__(mcls, name: str, bases: tuple[type, ...]) -> NameSpace:
+    """The default implementation returns an empty 'dict', but for the 
+    sake of the example, we will return an instance of 'NameSpace'. """
+    return NameSpace()
+
+
+class Point(metaclass=MetaType):
+  """This class represents a point in the plane. For the sake of the 
+  example, suppose that 'namespace' is the namespace object created by 
+  the metaclass."""
+  x: int  # This is not an actual assignment, but it does cause an update 
+  y: int  # to the '__annotations__' attribute of the class.
+  #  namespace.__setitem__('__annotations__', {'x': 'int', 'y': 'int'})
+  #  PLEASE NOTE: The above annotations object contains the name of the 
+  #  types rather than the types themselves, because of the:
+  #  from __future__ import annotations
+  __fallback_x__ = 0  # namespace.__setitem__('__fallback_x__', 0)
+  __fallback_y__ = 0  # namespace.__setitem__('__fallback_y__', 0)
+  _x = None  # namespace.__setitem__('_x', None)
+  _y = None  # namespace.__setitem__('_y', None)
+
+  #  Refer to the 'Field' class mentioned in 'worktoy.desc' section
+  x = Field()  # namespace.__setitem__('x', Field())
+  y = Field()  # namespace.__setitem__('y', Field())
+
+  #  Please note, that the Field instances are created before arriving in 
+  #  the namespace object.
+
+  @x.GET
+  def _getX(self, ) -> int:  # key = '_getX'
+    """This method returns the x-coordinate. """
+    return maybe(self._x, self.__fallback_x__)
+
+  @x.SET
+  def _setX(self, value: int) -> None:
+    """This method sets the x-coordinate. """
+    self._x = value
+
+  @y.GET
+  def _getY(self, ) -> int:  # key = '_getY'
+    """This method returns the y-coordinate. """
+    return maybe(self._y, self.__fallback_y__)
+
+  @y.SET
+  def _setY(self, value: int) -> None:
+    """This method sets the y-coordinate. """
+    self._y = value
+
+  #  The setters and getters above cause the following entries in the 
+  #  namespace object:
+  #  namespace.__setitem__('_getX', x.GET(_getX))
+  #  namespace.__setitem__('_setX', x.SET(_setX))
+  #  namespace.__setitem__('_getY', y.GET(_getY))
+  #  namespace.__setitem__('_setY', y.SET(_setY))
+
+  @x.DELETE
+  @y.DELETE
+  def _illegalAccessor(self, *_) -> Never:
+    """Because x and y are both protected from deletion, lower effort 
+    implementations can use a single method to handle both. This is 
+    because the decorators return the method as it is, unlike the 
+    typeGuard decorator. """
+    e = """This attribute is read-only!"""
+    raise TypeError(e)
+
+  #  namespace.__setitem__('_illegalAccessor', _illegalAccessor)
+  #  Please note that the above decorator does not change anything about 
+  #  the decorated method which is why the decorators are omitted. In fact:
+  #  x.DELETE(print) is print  # True
+  #  The setters and getters likewise might have omitted the decorators 
+  #  when describing the namespace.__setitem__ calls. 
+
+  @staticmethod  # The staticmethod evades handling 'self' as an argument.
+  @typeGuard(int, int)  # This creates the type guard
+  def _parseInts(x: int, y: int) -> tuple[int, int]:  # key = '_parseInts'
+    """This method converts the arguments to integers. """
+    return float(x), float(y)
+
+  #  namespace.__setitem__('_parseInts', typeGuard(int, int)(_parseInts))
+
+  @staticmethod
+  @typeGuard(float, float)
+  def _parseFloats(x: float, y: float) -> tuple[float, float]:
+    """This method converts the arguments to floats. """
+    return x, y
+
+  def __init__(self, *args) -> None:
+    """This method initializes the point. It uses the typeGuard decorator 
+    to provide a cheap overload-ish implementation. The typeGuard 
+    decorator is actually a bad example for this example, because it is 
+    used before the actual class is created. We obviously cannot provide 
+    as argument to the typeGuard decorator a class that does not yet 
+    exist. This author hopes that this paradox does illustrate the 
+    important reality that a lot of things happen before the class is 
+    even ready. Later on we will create a much more clever type guard. """
+    try:
+      x, y = self._parseInts(*args)
+    except TypeGuardException as intGuard:
+      try:
+        x, y = self._parseFloats(*args)
+      except TypeGuardException as floatGuard:
+        x, y = self.__fallback_x__, self.__fallback_y__
+
+  #  CRINGE ZONE: The following code is included here as it does cause 
+  #  entries in the namespace object, despite being bad.
+
+  c = 0  # namespace.__setitem__('c', 0) # This is fine
+  c += 1  # namespace.__setitem__('c', 1) # This is bad
+
+  class NestedClass:  # Don't do this!
+    """Nested classes appear in the namespace object as well:
+    namespace.__setitem__('NestedClass', NestedClass)"""
+    pass
+
+  #  Nested classes are never the answer!
+
+  #  DANGER ZONE! Doing any of the following makes you a bad person:
+  cringe = []  # namespace.__setitem__('cringe', [])
+  for i in range(10):  # This includes 10 calls to the namespace:
+    cringe.append('i will not run loops in class bodies')
+    #  namespace.__setitem__('i', i)
+
+  while cringe:  # While disgusting this will not call the namespace object.
+    print(cringe.pop())
+
+
+
+
+
+
+
+
+```
+
+**IMPORTANT NOTE**: A common procedure in Python is to define an entry
+point in a 'main' function in a 'main.py' script containing:
+
+```python
+#!/usr/bin/env python3
+from __future__ import annotations
+import sys
+
+
+def main(*args) -> int:
+  """This function will provide the main entry point for the application. 
+  This method should return 0 unless in case of an error. """
+  #  Application logic goes here.
+
+
+if __name__ == "__main__":
+  arguments = sys.argv
+  #  The first argument is the name of the script itself. The following 
+  #  items from sys.argv are any arguments passed in the terminal, for 
+  #  example:
+  #  -- START OF TERMINAL --
+  #  (Imagine this is in the terminal)
+  #  [HAL-9000@Dave ~]$ python3 main.py daisy daisy
+  #  -- END OF TERMINAL --
+  #  The above command would result in the following sys.argv:
+  #  ['main.py', 'daisy', 'daisy']
+  sys.exit(main(*sys.argv[1:]))
+```
+
+The above syntax include things like ``__name__`` which require
+explanation, particularly ``__name__``. Unfortunately, the explanation is
+too long so TL;DR: If ``__name__`` is in the file that you run in the
+terminal, then ``__name__`` is equal to ``__main__``. Otherwise, it
+equals the name of the file or the module or something beyond the scope
+of this discussion.
+
+```python
+if __name__ == "__main__":
+  print('Hello world')
+```
+
+The code in the ``if __name__ == "__main__":`` block will only run if the
+file containing the code is the one executed by the terminal command. Why
+use such seemingly pedantic syntax? The motivation seems to be the
+ability to control what code is allowed to run. Or at least to have a
+well-defined entry point. Unfortunately, it is not the case that the
+first line of code other than conditionals is the line in the
+``if __name__ == "__main__":`` of the main script. This is for the simple
+reason that classes imported from modules execute code during class
+creation, which runs before the main script can import from the module
+containing the classes. Code execution flow is thus not a solved problem
+by this conditional check, not even close. Nevertheless, its use as a
+clearly indicated entry point is fine.
 
 ```python
 class MyClass:

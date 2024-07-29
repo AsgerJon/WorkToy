@@ -9,6 +9,7 @@ import time
 
 from icecream import ic
 
+from main_tester_class04 import TestClass
 from main_tester_class02 import Test
 from main_tester_class03 import Float, ComplexNumber2, ComplexNumber
 from worktoy.yolo import yolo, runTests
@@ -36,5 +37,10 @@ def tester01() -> int:
   return 0
 
 
+def tester02() -> int:
+  """Testing what assignments are recognized by the metaclass"""
+  TestClass()
+
+
 if __name__ == '__main__':
-  yolo(tester01)
+  yolo(tester02)
