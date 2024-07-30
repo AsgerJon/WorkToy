@@ -1,74 +1,109 @@
-"""AbstractDescriptor provides a baseclass for classes implementing the
-descriptor protocol."""
+"""AbstractDescriptor provides common boilerplate for descriptor classes. """
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from abc import abstractmethod
-
-from worktoy.meta import BaseObject
+from worktoy.meta import BaseMetaclass
+from worktoy.parse import maybe
 from worktoy.text import monoSpace, typeMsg
 
 
-class AbstractDescriptor(BaseObject):
-  """AbstractDescriptor provides a baseclass for classes implementing the
-  descriptor protocol."""
+class AbstractDescriptor(metaclass=BaseMetaclass):
+  """AbstractDescriptor provides common boilerplate for descriptor
+  classes. """
 
-  __field_name__ = None
   __field_owner__ = None
+  __field_name__ = None
+  __get_subscribers__ = None
+  __set_subscribers__ = None
+  __del_subscribers__ = None
 
-  def _getFieldName(self) -> str:
-    """Returns the name of the field the descriptor is assigned to. """
+  def __set_name__(self, owner: type, name: str) -> None:
+    """Set the name of the field and the owner of the field."""
+    self.__field_owner__ = owner
+    self.__field_name__ = name
+
+  def getFieldName(self) -> str:
+    """Getter-function for the field name."""
     if self.__field_name__ is None:
-      e = """The descriptor has not been assigned to a field. """
-      raise AttributeError(monoSpace(e))
+      e = """Instance of 'AttriBox' does not belong to class. This 
+      typically indicates that the owning class is still being created."""
+      raise RuntimeError(monoSpace(e))
     if isinstance(self.__field_name__, str):
       return self.__field_name__
     e = typeMsg('__field_name__', self.__field_name__, str)
     raise TypeError(monoSpace(e))
 
-  def _getFieldOwner(self) -> type:
-    """Returns the type of the class the descriptor is assigned to. """
+  def getFieldOwner(self) -> type:
+    """Getter-function for the field owner."""
     if self.__field_owner__ is None:
-      e = """The descriptor has not been assigned to a field. """
-      raise AttributeError(monoSpace(e))
+      e = """Instance of 'AttriBox' does not belong to class. This 
+      typically indicates that the owning class is still being created."""
+      raise RuntimeError(monoSpace(e))
     if isinstance(self.__field_owner__, type):
       return self.__field_owner__
     e = typeMsg('__field_owner__', self.__field_owner__, type)
     raise TypeError(monoSpace(e))
 
-  def _getPrivateName(self, ) -> str:
-    """Returns the name of the private attribute used to store the inner
-    object. """
-    return '__%s_value__' % (self.__field_name__,)
+  def notifyGet(self, instance: object, value: object) -> None:
+    for callMeMaybe in self._getGetSubscribers():
+      callMeMaybe(instance, value)
 
-  def __set_name__(self, owner: type, name: str) -> None:
-    """The __set_name__ method is called when the descriptor is assigned to
-    a class attribute. """
-    self.__field_name__ = name
-    self.__field_owner__ = owner
+  def notifySet(self,
+                instance: object,
+                oldValue: object,
+                newValue: object) -> None:
+    for callMeMaybe in self._getSetSubscribers():
+      callMeMaybe(instance, oldValue, newValue)
 
-  @abstractmethod
-  def __instance_get__(self, instance: object, owner: type) -> object:
-    """The __instance_get__ method is called when the descriptor is accessed
-    via the owning instance. """
+  def notifyDel(self, instance: object, value: object) -> None:
+    for callMeMaybe in self._getDelSubscribers():
+      callMeMaybe(instance, value)
 
-  def __get__(self, instance: object, owner: type) -> object:  # Footnote
-    """The __get__ method is called when the descriptor is accessed via the
-    owning instance. Subclasses should not override this method, but should
-    instead implement the __instance_get__ method. """
-    if instance is None:
-      return self
-    return self.__instance_get__(instance, owner)
+  def _getGetSubscribers(self) -> list[callable]:
+    return maybe(self.__get_subscribers__, [])
 
-  def __set__(self, instance: object, value: object) -> None:
-    """The __set__ method is called when the descriptor is assigned a value
-    via the owning instance. The default implementation raises an error."""
-    e = """The '%s' descriptor class does not implement a setter!"""
-    raise TypeError(e % self.__class__.__name__)
+  def _getSetSubscribers(self) -> list[callable]:
+    return maybe(self.__set_subscribers__, [])
 
-  def __delete__(self, instance: object) -> None:
-    """The __delete__ method is called when the descriptor is deleted via
-    the owning instance. The default implementation raises an error."""
-    e = """The '%s' descriptor class does not implement a deleter!"""
-    raise TypeError(e % self.__class__.__name__)
+  def _getDelSubscribers(self) -> list[callable]:
+    return maybe(self.__del_subscribers__, [])
+
+  def _addGetSubscriber(self, callMeMaybe: callable) -> None:
+    """Subscribes the callable received to be notified when the field
+    getter is called. The instance and the value are passed as arguments.
+    If instance is None, the AttriBox is accessed through the owning class,
+    which does not result in a notification.
+
+    Similar to this method, the _addSetSubscriber and _addDelSubscriber
+    methods are used to subscribe callables to be notified when the field
+    is accessed. """
+    getSubscribers = self._getGetSubscribers()
+    self.__get_subscribers__ = [*getSubscribers, callMeMaybe]
+
+  def _addSetSubscriber(self, callMeMaybe: callable) -> None:
+    """Registers the callable for notification when field setter is
+    called."""
+    setSubscribers = self._getSetSubscribers()
+    self.__set_subscribers__ = [*setSubscribers, callMeMaybe]
+
+  def _addDelSubscriber(self, callMeMaybe: callable) -> None:
+    """Registers the callable for notification when field deleter is
+    called."""
+    delSubscribers = self._getDelSubscribers()
+    self.__del_subscribers__ = [*delSubscribers, callMeMaybe]
+
+  def ONGET(self, callMeMaybe: callable) -> callable:
+    """Decorator for subscribing to the getter."""
+    self._addGetSubscriber(callMeMaybe)
+    return callMeMaybe
+
+  def ONSET(self, callMeMaybe: callable) -> callable:
+    """Decorator for subscribing to the setter."""
+    self._addSetSubscriber(callMeMaybe)
+    return callMeMaybe
+
+  def ONDEL(self, callMeMaybe: callable) -> callable:
+    """Decorator for subscribing to the deleter."""
+    self._addDelSubscriber(callMeMaybe)
+    return callMeMaybe

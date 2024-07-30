@@ -6,45 +6,24 @@ from __future__ import annotations
 
 from typing import Callable, Any
 
-from worktoy.text import monoSpace, typeMsg
+from worktoy.desc import AbstractDescriptor
+from worktoy.parse import maybe
+from worktoy.text import typeMsg
 
 
-class EmptyField:
+class EmptyField(AbstractDescriptor):
   """EmptyField provides a flexible implementation of the descriptor
   protocol allowing owning classes to decorate methods as accessor
   methods. """
-  __field_name__ = None
-  __field_owner__ = None
   __field_type__ = None
   __getter_name__ = None
   __setter_name__ = None
   __deleter_name__ = None
+  __getter_function__ = None
+  __setter_function__ = None
+  __deleter_function__ = None
 
-  def _getFieldName(self) -> str:
-    """Returns the name of the field the descriptor is assigned to. """
-    if self.__field_name__ is None:
-      e = """The descriptor has not been assigned to a field. """
-      raise AttributeError(monoSpace(e))
-    if isinstance(self.__field_name__, str):
-      return self.__field_name__
-    e = typeMsg('__field_name__', self.__field_name__, str)
-    raise TypeError(monoSpace(e))
-
-  def _getFieldOwner(self) -> type:
-    """Returns the type of the class the descriptor is assigned to. """
-    if self.__field_owner__ is None:
-      e = """The descriptor has not been assigned to a field. """
-      raise AttributeError(monoSpace(e))
-    if isinstance(self.__field_owner__, type):
-      return self.__field_owner__
-    e = typeMsg('__field_owner__', self.__field_owner__, type)
-    raise TypeError(monoSpace(e))
-
-  def _getOwnerName(self) -> str:
-    """Returns the name of the class the descriptor is assigned to. """
-    return self._getFieldOwner().__name__
-
-  def _getFieldType(self) -> type:
+  def getFieldType(self) -> type:
     """Getter-function for the field type."""
     if self.__field_type__ is None:
       return object
@@ -53,86 +32,117 @@ class EmptyField:
     e = typeMsg('__field_type__', self.__field_type__, type)
     raise TypeError(e)
 
-  def __set_name__(self, owner: type, name: str) -> None:
-    """Set the name of the field and the owner of the field."""
-    self.__field_name__ = name
-    self.__field_owner__ = owner
-
   def __get__(self, instance: object, owner: type) -> Any:
     """Get the value of the field."""
+    getter = None
     if instance is None:
       return self
-    if not issubclass(owner, self._getFieldOwner()):
-      e = """The instance does not belong to the owner class: '%s'."""
-      raise RuntimeError(monoSpace(e % self._getOwnerName()))
-    fieldName = self._getFieldName()
-    ownerName = self._getOwnerName()
-    if self.__getter_name__ is None:
-      e = """The field instance at name: '%s' does not have a getter!"""
-      raise AttributeError(monoSpace(e % fieldName))
-    getter = getattr(owner, self.__getter_name__, None)
-    if getter is None:
-      e = """The owner class: '%s' does not implement a getter function
-      for field: '%s'."""
-      raise AttributeError(monoSpace(e % (ownerName, fieldName)))
-    if callable(getter):
-      return getter(instance)
-    e = typeMsg('getter', getter, Callable)
-    raise TypeError(e)
+    try:
+      getter = self.__get_getter__()
+    except Exception as exception:
+      if isinstance(exception, (AttributeError, TypeError)):
+        getter = getattr(owner, self.__getter_name__, None)
+        if getter is None:
+          raise exception
+    value = getter(instance)
+    self.notifyGet(instance, value)
+    return value
 
   def __set__(self, instance: object, value: object) -> None:
     """Set the value of the field."""
-    fieldName = self._getFieldName()
-    ownerName = self._getOwnerName()
-    if not isinstance(instance, self.__field_owner__):
-      e = """The instance does not belong to the owner class: '%s'."""
-      raise RuntimeError(monoSpace(e % ownerName))
-    if self.__setter_name__ is None:
-      e = """The field instance at name: '%s' does not have a setter!"""
-      raise AttributeError(monoSpace(e % fieldName))
-    setter = getattr(self.__field_owner__, self.__setter_name__, None)
-    if setter is None:
-      e = """The owner class: '%s' does not implement a setter function
-      for field: '%s'."""
-      raise AttributeError(monoSpace(e % (ownerName, fieldName)))
-    if callable(setter):
-      return setter(instance, value)
-    e = typeMsg('setter', setter, Callable)
-    raise TypeError(e)
+    owner = self.getFieldOwner()
+    fieldType = self.getFieldType()
+    setter = None
+    if not isinstance(value, fieldType):
+      e = typeMsg('value', value, fieldType)
+      raise TypeError(e)
+    try:
+      setter = self.__get_setter__()
+    except Exception as exception:
+      if isinstance(exception, (AttributeError, TypeError)):
+        owner = self.getFieldOwner()
+        setter = getattr(owner, self.__setter_name__, None)
+        if setter is None:
+          raise exception
+    if not callable(setter):
+      e = typeMsg('setter', setter, Callable)
+      raise TypeError(e)
+    oldValue = self.__get__(instance, owner)
+    self.notifySet(instance, oldValue, value)
+    setter(instance, value)
 
   def __delete__(self, instance: object) -> None:
     """Delete the value of the field."""
-    fieldName = self._getFieldName()
-    ownerName = self._getOwnerName()
-    if not isinstance(instance, self.__field_owner__):
-      e = """The instance does not belong to the owner class: '%s'."""
-      raise RuntimeError(monoSpace(e % ownerName))
-    if self.__deleter_name__ is None:
-      e = """The field instance at name: '%s' does not have a deleter!"""
-      raise AttributeError(monoSpace(e % fieldName))
-    deleter = getattr(self.__field_owner__, self.__deleter_name__, None)
-    if deleter is None:
-      e = """The owner class: '%s' does not implement a deleter function
-      for field: '%s'."""
-      raise AttributeError(monoSpace(e % (ownerName, fieldName)))
-    if callable(deleter):
-      return deleter(instance)
-    e = typeMsg('deleter', deleter, Callable)
+    owner = self.getFieldOwner()
+    deleter = None
+    try:
+      deleter = self.__get_deleter__()
+    except Exception as exception:
+      if isinstance(exception, (AttributeError, TypeError)):
+        deleter = getattr(owner, self.__deleter_name__, None)
+        if deleter is None:
+          raise exception
+    if not callable(deleter):
+      e = typeMsg('deleter', deleter, Callable)
+      raise TypeError(e)
+    oldValue = self.__get__(instance, owner)
+    self.notifyDel(instance, oldValue)
+
+  def __get_getter__(self, ) -> Callable:
+    """Getter-function for the getter-function, getter-ception."""
+    if self.__getter_function__ is None:
+      e = """The field instance does not have a getter function!"""
+      raise AttributeError(e)
+    if callable(self.__getter_function__):
+      return self.__getter_function__
+    e = typeMsg('getter', self.__getter_function__, Callable)
+    raise TypeError(e)
+
+  def __get_setter__(self, ) -> Callable:
+    """Getter-function for the setter-function of the field."""
+    if self.__setter_function__ is None:
+      e = """The field instance does not have a setter function!"""
+      raise AttributeError(e)
+    if callable(self.__setter_function__):
+      return self.__setter_function__
+    e = typeMsg('setter', self.__setter_function__, Callable)
+    raise TypeError(e)
+
+  def __get_deleter__(self, ) -> Callable:
+    """Getter-function for the deleter-function of the field."""
+    if self.__deleter_function__ is None:
+      e = """The field instance does not have a deleter function!"""
+      raise AttributeError(e)
+    if callable(self.__deleter_function__):
+      return self.__deleter_function__
+    e = typeMsg('deleter', self.__deleter_function__, Callable)
     raise TypeError(e)
 
   def __set_getter__(self, callMeMaybe: Callable) -> Callable:
     """Set the getter function of the field."""
+    if maybe(self.__getter_function__, self.__getter_name__) is not None:
+      e = """The getter function has already been set!"""
+      raise AttributeError(e)
     self.__getter_name__ = callMeMaybe.__name__
+    self.__getter_function__ = callMeMaybe
     return callMeMaybe
 
   def __set_setter__(self, callMeMaybe: Callable) -> Callable:
     """Set the setter function of the field."""
+    if maybe(self.__setter_name__, self.__setter_function__) is not None:
+      e = """The setter function has already been set!"""
+      raise AttributeError(e)
     self.__setter_name__ = callMeMaybe.__name__
+    self.__setter_function__ = callMeMaybe
     return callMeMaybe
 
   def __set_deleter__(self, callMeMaybe: Callable) -> Callable:
     """Set the deleter function of the field."""
+    if maybe(self.__deleter_name__, self.__deleter_function__) is not None:
+      e = """The deleter function has already been set!"""
+      raise AttributeError(e)
     self.__deleter_name__ = callMeMaybe.__name__
+    self.__deleter_function__ = callMeMaybe
     return callMeMaybe
 
   def GET(self, callMeMaybe: Callable) -> Callable:
@@ -144,9 +154,5 @@ class EmptyField:
     return self.__set_setter__(callMeMaybe)
 
   def DELETE(self, callMeMaybe: Callable) -> Callable:
-    """Decorator for setting the deleter function of the field."""
-    return self.__set_deleter__(callMeMaybe)
-
-  def DEL(self, callMeMaybe: Callable) -> Callable:
     """Decorator for setting the deleter function of the field."""
     return self.__set_deleter__(callMeMaybe)

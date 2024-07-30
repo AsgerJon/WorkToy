@@ -544,16 +544,16 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
 from PySide6.QtCore import QSize
 
-from worktoy.desc import AttriBox, THIS
+from worktoy.desc import OLDAttriBox, THIS
 
 
 class MainWindow(QMainWindow):
   """Subclass of QMainWindow. This class provides the main window for the 
   application. """
 
-  baseWidget = AttriBox[QWidget](THIS)
-  verticalLayout = AttriBox[QVBoxLayout]()
-  welcomeLabel = AttriBox[QLabel]()
+  baseWidget = OLDAttriBox[QWidget](THIS)
+  verticalLayout = OLDAttriBox[QVBoxLayout]()
+  welcomeLabel = OLDAttriBox[QLabel]()
 
   def show(self) -> None:
     """Before invoking the parent method, we will setup the window. """
@@ -589,14 +589,14 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
 from PySide6.QtCore import QSize
 
-from worktoy.desc import AttriBox, THIS
+from worktoy.desc import OLDAttriBox, THIS
 
 
 class MainWindow(QMainWindow):
   """Subclass of QMainWindow. This class provides the main window for the 
     application. """
 
-  baseWidget = AttriBox[QWidget](THIS)
+  baseWidget = OLDAttriBox[QWidget](THIS)
   #  The above line creates a descriptor at name 'baseWidget' that will 
   #  instantiate a QWidget instance. When the __get__ on the descriptor
   #  tries to retrieve the value it owns, only then will the value be 

@@ -9,7 +9,7 @@ import os
 from typing import Optional, TYPE_CHECKING
 from unittest import TestCase
 
-from worktoy.desc import AttriClass, AttriBox
+from worktoy.desc import AttriClass, OLDAttriBox
 from worktoy.ezdata import EZData, EndFields, BeginFields
 from worktoy.parse import maybe
 
@@ -39,18 +39,18 @@ class Point3D(EZData):
   """Space point"""
 
   BeginFields
-  x = AttriBox[Integer](-1)
-  y = AttriBox[Integer](-1)
-  z = AttriBox[Integer](-1)
+  x = OLDAttriBox[Integer](-1)
+  y = OLDAttriBox[Integer](-1)
+  z = OLDAttriBox[Integer](-1)
   EndFields
 
   def getPrivateNames(self) -> dict[str, str]:
     """Getter for the names of the private variables. """
     cls = self.__class__
     if TYPE_CHECKING:
-      assert isinstance(cls.x, AttriBox)
-      assert isinstance(cls.y, AttriBox)
-      assert isinstance(cls.z, AttriBox)
+      assert isinstance(cls.x, OLDAttriBox)
+      assert isinstance(cls.y, OLDAttriBox)
+      assert isinstance(cls.z, OLDAttriBox)
     xName = cls.x._getPrivateName()
     yName = cls.y._getPrivateName()
     zName = cls.z._getPrivateName()

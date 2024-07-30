@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.desc import AttriBox, AttriClass
+from worktoy.desc import AttriBox
 from worktoy.parse import maybe
 
 
@@ -57,6 +57,7 @@ class ComplexNumber2:
   __fallback_value__ = 0j
   realPart = AttriBox[Float](69.)
   imagPart = AttriBox[Float](420.)
+  label = AttriBox[str]('lmao')
 
   def __str__(self) -> str:
     """String representation"""
@@ -80,3 +81,4 @@ class ComplexNumber2:
       b = maybe(b, 0.0)
     self.realPart = Float(a)
     self.imagPart = Float(b)
+    self.label = 'fuck you!'

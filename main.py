@@ -5,14 +5,12 @@ from __future__ import annotations
 
 import os
 import sys
-import time
 
 from icecream import ic
 
-from main_tester_class04 import TestClass
-from main_tester_class02 import Test
-from main_tester_class03 import Float, ComplexNumber2, ComplexNumber
-from worktoy.yolo import yolo, runTests
+from main_tester_class03 import ComplexNumber2, ComplexNumber
+from worktoy.desc import SCOPE, THIS
+from worktoy.yolo import yolo
 
 ic.configureOutput(includeContext=True)
 
@@ -30,17 +28,17 @@ def tester01() -> int:
   z = ComplexNumber()  # realPart and imagPart not having setter applied
   z2 = ComplexNumber2(69., 420.)
   #  We expect the types of realPart and imagPart to be of Float:
-  print(z.realPart.__class__)
-  print(type(z.realPart))
-  print(z2.realPart.__class__)
-  print(type(z2.realPart))
+  print(z2.label)
   return 0
 
 
 def tester02() -> int:
-  """Testing what assignments are recognized by the metaclass"""
-  TestClass()
+  """LMAO"""
+  print(THIS)
+  print(SCOPE)
+  print(isinstance(THIS, SCOPE))
+  return 0
 
 
 if __name__ == '__main__':
-  yolo(tester02)
+  yolo(tester01)

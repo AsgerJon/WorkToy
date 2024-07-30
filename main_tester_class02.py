@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import AttriBox
+from worktoy.desc import OLDAttriBox
 from worktoy.keenum import KeeNum, auto
 
 
@@ -17,4 +17,4 @@ class Flag(KeeNum):
 class Test:
   """Owner of KeeNum AttriBox"""
 
-  lmao = AttriBox[Flag]('true')
+  lmao = OLDAttriBox[Flag]('true')

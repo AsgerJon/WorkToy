@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.desc import AttriBox
+from worktoy.desc import OLDAttriBox
 from worktoy.meta import BaseObject, overload
 
 
@@ -13,9 +13,9 @@ class Color(BaseObject):
   """Color provides a test case for functional overloading, since colors
   can be defined in multiple ways."""
 
-  red = AttriBox[int](0)
-  green = AttriBox[int](0)
-  blue = AttriBox[int](0)
+  red = OLDAttriBox[int](0)
+  green = OLDAttriBox[int](0)
+  blue = OLDAttriBox[int](0)
 
   @overload(int, int, int)
   def __init__(self, red: int, green: int, blue: int) -> None:
