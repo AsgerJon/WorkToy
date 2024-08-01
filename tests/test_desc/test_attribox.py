@@ -12,6 +12,7 @@ from icecream import ic
 
 from worktoy.desc import AttriBox, SCOPE
 from worktoy.ezdata import EZData
+from worktoy.meta import BaseObject
 from worktoy.parse import maybe
 
 ic.configureOutput(includeContext=True)
@@ -82,6 +83,10 @@ class Instance:
   def __str__(self) -> str:
     """String representation"""
     return '%s(%s)' % (self.__class__.__name__, self.__owning_instance__)
+
+
+class ObjectName(BaseObject):
+  """Provides a field class collecting information received at the """
 
 
 class BoxClass:

@@ -95,9 +95,5 @@ class BaseNamespace(AbstractNamespace):
     out = AbstractNamespace.compile(self, )
     for (key, overloaded) in self._getOverloadedFunctions().items():
       functionType = self._validateOverload(overloaded, key)
-      dispatcher = Dispatcher(overloaded)
-      if functionType is staticmethod:
-        out[key] = dispatcher.staticFactory()
-      else:
-        out[key] = dispatcher.functionFactory()
+      out[key] = Dispatcher(overloaded, functionType)
     return out

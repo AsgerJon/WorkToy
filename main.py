@@ -6,11 +6,8 @@ from __future__ import annotations
 import os
 import sys
 
-from numpy import zeros
-
 from main_tester_class02 import TestClass
 from main_tester_class03 import Test
-from worktoy.desc import AttriBox
 from worktoy.yolo import yolo, runTests
 
 

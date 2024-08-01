@@ -14,7 +14,7 @@ features, only bug fixes and documentation updates. Upon completion of
 tasks given below, version 1.0.0 will be released.
 Navigate with the table of contents below.
 
-## Table of Contents
+# Table of Contents
 
 - [WorkToy v0.99.xx](#worktoy-v099xx)
     - [Table of Contents](#table-of-contents)
@@ -29,17 +29,17 @@ Navigate with the table of contents below.
         - [yolo](#worktoyyolo)
     - [Development](#development)
 
-## Installation
+# Installation
 
 ```bash 
 pip install worktoy
 ```
 
-## Usage
+# Usage
 
-### `worktoy.desc`
+## `worktoy.desc`
 
-#### Background
+### Background
 
 The descriptor protocol in Python allows significant customisation of the
 attribute access mechanism. To understand this protocol, consider a class
@@ -90,7 +90,7 @@ class Integer:
 
 ```
 
-#### Unusual `for-else` statement
+### Unusual `for-else` statement
 
 The code above features the unusual and under-appreciated for-else
 statement in the `__init__` method. If the for loop terminates by the ´break´
@@ -102,7 +102,7 @@ and the ´else´ block is skipped. If unable to find an integer, the for
 loop will terminate normally, and the ´else´ block will execute, where
 the fallback value is conveniently waiting to be assigned.
 
-#### The `__set_name__` method
+### The `__set_name__` method
 
 This method is a powerful addition to the descriptor protocol. To
 understand its significance, consider that the descriptor class was
@@ -113,7 +113,7 @@ that was assigned to a name in the class body of the newly created
 class, will have this method called with the owning class and the
 name at which the instance appears in the class body.
 
-#### The `__get__` method
+### The `__get__` method
 
 This method is called in two different situations that differ
 substantially. When the descriptor is accessed through the owning
@@ -139,7 +139,7 @@ attribute. This part of the discussion will explain some typical uses
 before describing the novel use case provided by the ´AttriBox´ class,
 which is the central feature of the ´worktoy.desc´ module.
 
-#### Property-like behaviour
+### Property-like behaviour
 
 A common implementation of the descriptor protocol makes use of a
 'private' attribute owned by the instance. Python does not enforce 'private'
@@ -244,7 +244,7 @@ expose 'private' attributes through dedicated accessor functions. The
 above is a very straightforward example, but the descriptor protocol is
 capable of much more!
 
-#### The `property` class
+### The `property` class
 
 It is likely that some readers are familiar with the `property` class.
 Where we are going we do not need the `property` class! Nevertheless, let
@@ -486,13 +486,13 @@ protocol, the ``Field`` class could be further enhanced by implementing
 strong type checking or even casting. This is left as an exercise for
 those readers who have read the guidelines in the contribution section.
 
-#### The `AttriBox` class - Prologue
+### The `AttriBox` class - Prologue
 
 This class is the central feature of the `worktoy.desc` module. It is the
 logical next step of the implementations hitherto discussed. Before
 diving into the implementation, let us begin with a use case.
 
-#### PySide6 - Qt for Python
+### PySide6 - Qt for Python
 
 The PySide6 library provides Python bindings for the Qt framework. What
 is Qt? For the purposes of this discussion, Qt is a framework for
@@ -537,23 +537,23 @@ this reason, the `AttriBox` class was created to implement lazy
 instantiation! Let us now see how we might create a more advanced
 graphical user interface whilst adhering to the `QObject` requirement.
 
-#### The `AttriBox` class - Lazy instantiation
+### The `AttriBox` class - Lazy instantiation
 
 ```python
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
 from PySide6.QtCore import QSize
 
-from worktoy.desc import OLDAttriBox, THIS
+from worktoy.desc import AttriBox, THIS
 
 
 class MainWindow(QMainWindow):
   """Subclass of QMainWindow. This class provides the main window for the 
   application. """
 
-  baseWidget = OLDAttriBox[QWidget](THIS)
-  verticalLayout = OLDAttriBox[QVBoxLayout]()
-  welcomeLabel = OLDAttriBox[QLabel]()
+  baseWidget = AttriBox[QWidget](THIS)
+  verticalLayout = AttriBox[QVBoxLayout]()
+  welcomeLabel = AttriBox[QLabel]()
 
   def show(self) -> None:
     """Before invoking the parent method, we will setup the window. """
@@ -582,7 +582,7 @@ descriptor protocol, but it does so on a single line, where it even
 provides syntactic sugar for defining the class intended for lazy
 instantiation. Let us examine ``AttriBox`` in more detail.
 
-#### The `AttriBox` class
+### The `AttriBox` class
 
 ```python
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
@@ -609,10 +609,15 @@ class MainWindow(QMainWindow):
 ```
 
 The use case pertaining to the PySide6 library makes great use of the
-lazy instantiation. Before discussing further use cases of the `AttriBox`
-class, we need to discuss a different module in the WorkToy package.
+lazy instantiation. In fact, the motivation that led to the creation of
+the ``AttriBox`` class was this need for lazy instantiation.
 
-### worktoy.meta - Understanding the Python metaclass
+### ``worktoy.desc.AttriBox`` - Advanced Instantiation
+
+PENDING...
+WorkToy v1 will not release until this documentation is complete.
+
+## worktoy.meta - Understanding the Python metaclass
 
 Readers may associate the word **meta** with crime on account of the hype
 created around the term **metaverse**. This author hopes readers will
@@ -622,7 +627,7 @@ streamlined approach to metaclass programming. This documentation
 explains the functionality of metaclasses in general and how this module
 provides helpful tools.
 
-#### Everything is an object!
+### Everything is an object!
 
 Python operates on one fundamental idea: Everything is an object.
 Everything. All numbers, all strings, all functions, all modules and
@@ -630,7 +635,7 @@ everything that you can reference. Even ``object`` itself is an object.
 This means that everything supports a core set of attributes and methods
 defined on the core ``object`` type.
 
-#### Extensions of ``object``
+### Extensions of ``object``
 
 With everything being an object, it is necessary to extend the
 functionalities in the core ``object`` type to create new types,
@@ -680,7 +685,7 @@ implement functions: ``function`` and ``lambda``. Both of these have
 quite unique instantiation syntax and does not follow the conventions we
 shall see later in this discussion.
 
-#### Defining a ``function``
+### Defining a ``function``
 
 Python allows the following syntax for creating a function. Please note
 that all functions are still objects, and all functions created with the
@@ -694,7 +699,7 @@ def multiplication(a: int, b: int) -> int:
   return a * b
 ```
 
-##### RANT
+#### RANT
 
 The above function implements multiplication. It also provides the
 optional features: type hints and a docstring. The interpreter completely
@@ -703,7 +708,7 @@ this author that omitting type hints and docstrings is acceptable only
 when running a quick test. If anyone except you or God will ever read
 your code, it must have type hints and docstrings!
 
-##### END OF RANT
+#### END OF RANT
 
 Below is the syntax that invokes the function:
 
@@ -723,7 +728,7 @@ tluser = multiplication(b=8, a=7)  # result is 56
 When keyword arguments are used instead of positional arguments, the
 order is irrelevant, but names are required.
 
-#### The star ``*`` and double star ``**`` operators
+### The star ``*`` and double star ``**`` operators
 
 Suppose the function were to be invoked with the numbers from a
 list: ``numbers = [7, 8]``, then we might invoke the ``multiplication``
@@ -743,13 +748,13 @@ result = multiplication(*numbers)  # result is 56
 Wherever multiple positional arguments are expected, and we have a list
 or a tuple, the star operator unpacks it. This syntax will seem confusing,
 but it is very powerful and is used extensively in Python. It is also
-orders of magnitude more readable than the equivalent in C++ of Java.
+orders of magnitude more readable than the equivalent in C++ or Java.
 
-##### RANT
+#### RANT
 
 This rant is left as an exercise to the reader
 
-##### END OF RANT
+#### END OF RANT
 
 Besides function calls, the star operator conveniently concatenates lists
 and tuples. Suppose we have two lists: ``a = [1, 2]`` and ``b = [3, 4]``
@@ -771,7 +776,7 @@ discussion is the third, but the second and fourth have merit as well,
 but will not be used here. Finally, list comprehension is quite powerful
 as well but is the subject for a different discussion.
 
-#### The double star ``**`` operator
+### The double star ``**`` operator
 
 The single star is to lists and tuples as the double star is to
 dictionaries. Suppose we have a dictionary: ``data = {'a': 1, 'b': 2}``
@@ -815,7 +820,7 @@ that the code is unpacking the operands. Not before having identified the
 types of the operands. In contrast, the star in front of an object
 without space immediately says unpacking.
 
-##### RANT
+#### RANT
 
 If you have ever had the misfortune of working with C++ or Java, you
 would know that the syntax were disgusting, but you didn't know the words
@@ -857,9 +862,9 @@ cognitive capability of the human brain. Deliberately obscuring code,
 reduces the cognitive capacity left over for actual problem-solving. This
 syntax is kept in place for no other purpose than gate-keeping.
 
-##### END OF RANT
+#### END OF RANT
 
-#### The famous function signature ``def someFunc(*args, **kwargs)``
+### The famous function signature: ``def someFunc(*args, **kwargs)``
 
 Anyone having browsed through Python documentation or code may have
 marvelled at the function signature: ``def someFunc(*args, **kwargs)``.
@@ -869,7 +874,7 @@ function to accept multiple different argument signatures. While this may
 be convenient, the ubiquitous use of this pattern is likely motivated by
 the absense of function overloading in native Python. (Foreshadowing...)
 
-#### The ``lambda`` function
+### The ``lambda`` function
 
 Before getting back to class instantiation, we will round off this
 discussion of functions with the ``lambda`` function. The ``lambda``
@@ -908,10 +913,21 @@ cosh = lambda x, n: recursiveSum(taylorTerm(x, coshTerm), n)
 ```
 
 The above collection of functions implement recursive lambda functions to
-calculate function values of several function using Taylor-Maclaurin
-series. Because that's not flexing at all.
+calculate function values of common mathematical functions including:
 
-#### Instantiation of classes
+- ``exp``: The exponential function.
+- ``sin``: The sine function.
+- ``cos``: The cosine function.
+- ``sinh``: The hyperbolic sine function.
+- ``cosh``: The hyperbolic cosine function.
+
+The lambda functions implement Taylor-Maclaurin series expansions at a
+given number of terms and then begin by calculating the last term
+adding the previous term to it recursively, until the 0th term is reached.
+This implementation demonstrates the power of the recursive lambda
+function and is not at all flexing.
+
+### Instantiation of classes
 
 Since this discussion includes class instantiations, the previous section
 discussing functions will be quite relevant. We left the discussion of
@@ -1007,7 +1023,7 @@ def newTuple(*args) -> tuple:
   return (*args,)  # Unpacking the positional arguments creates the tuple.
 ```
 
-#### Custom classes
+### Custom classes
 
 In the previous section, we examined functions and builtin classes. To
 reiterate, in the context of this discussion a class is an extension of
@@ -1097,7 +1113,7 @@ of ``object``. This starts the following process:
   coding custom classes implementing the ``__init__`` method is the most
   convenient way to define how new instances are initialized.
 
-#### What is a metaclass?
+### What is a metaclass?
 
 In the previous section, we examined how ``type`` creates a new class.
 What exactly is ``type`` though? ``type`` is an ``object``, but is also
@@ -1173,7 +1189,7 @@ may override. Before proceeding, we must discuss the role of the
 namespace object. A significant aspect of the custom metaclass is the
 ability to provide a custom namespace object.
 
-#### Custom Namespace
+### Custom Namespace
 
 Going back to the class creation procedure, the interpreter requests a
 namespace object from the metaclass. A custom metaclass may reimplement
@@ -1181,7 +1197,7 @@ the ``__prepare__`` method responsible for creating the custom namespace
 and have it return an instance of a custom namespace class. Doing so
 places a few subtle requirements on this class.
 
-##### Preservation of ``KeyError``
+### Preservation of ``KeyError``
 
 When a dictionary is accessed with a key that does not exist, a
 ``KeyError`` is raised. The interpreter relies on this behaviour to
@@ -1207,25 +1223,26 @@ happen to not include any of the above non-assignments. In summary:
 failing to raise the expected error must be avoided at all costs, as it
 will cause undefined behaviour without any indication as to the to cause.
 
-##### Subclass of ``dict``
+### Subclass of ``dict``
 
 After the class body is executed the namespace object is passed to the
 ``__new__`` method on the metaclass. If the metaclass is intended to
 create a new class object, the metaclass must eventually call the
 ``__new__`` method on the parent ``type`` class. The ``type.__new__``
 method must receive a namespace object that is a subclass of ``dict``. It
-is only at this stage the requirements is enforced. Thus, it is possible
+is only at this stage the requirement is enforced. Thus, it is possible
 to use a custom namespace object that is not a subclass of ``dict``, but
 then it is necessary to implement functionality in the ``__new__`` method
 on the metaclass such that a ``dict`` is passed to the ``type.__new__``
 call.
 
-##### Required functionalities
+### Required functionalities
 
 Please note that this section pertains only to functionalities whose
 absense will cause the interpreter to raise an exception. The
-functionalities described here are unlikely to provide sufficient
-functionality for any purpose, without additional functionality.
+functionalities described here cannot be said to be sufficient for any
+degree of functionality. A custom namespace class must additionally
+implement whatever functionality is required for its intended purpose.
 
 - **``__getitem__``**: This method must implement this method such that
   if a normal dictionary would raise an error on receiving a key, then
@@ -1239,16 +1256,18 @@ functionality for any purpose, without additional functionality.
   raise an error upon receiving three arguments, the namespace object can
   do whatever it wants. It does not even have to remember anything.
 
-##### Potential functionalities
+### Potential functionalities
 
 This section describes functionalities that is certain to preserve all
 information received in the class body. This is an enhancement compared
 to the default namespace object. It permits the ``__new__`` in the
 metaclass access to all information encountered in the class body. As
 long as this is satisfied, there is little additional functionality the
-namespace object may provide to the ``__new__`` method.
+namespace object may provide to the ``__new__`` method. Nevertheless,
+readers are encouraged to experiment with custom namespace classes beyond
+this.
 
-##### Custom Metaclass Requirements
+### Custom Metaclass Requirements
 
 This section illustrates the immense flexibility of the custom metaclass,
 by just how little is actually required for the interpreter to go through
@@ -1256,22 +1275,27 @@ the class creation process without raising an exception. This author has
 found only two requirements for the custom metaclass:
 
 - **Callable**: The object used as ``metaclass`` must be callable.
-- **Accepting 3 positional arguments**: As well as being callable, three
-  positional arguments are passed to it, so it must accept these.
+- **Accept three positional arguments**: As well as being callable, three
+  positional arguments are passed to it. As long as doing so does not
+  raise an exception, the metaclass is free to do whatever it wants.
 
 And that is all that is required. The metaclass is typically a subclass
 of ``type``, but is not required. Conventionally, some kind of class
 object is created, but is not required. The metaclass is not even
 required to return anything in which case, the ``None`` object will
-appear at the given class name. This author hopes that this lack of
-requirements will make room for novel solutions.
+appear at the given class name. Thus, the custom metaclass can be used to
+create new classes, but in reality it can be used to create anything. It
+could be used to replace functions defined with the ``def`` keyword.
+Readers are encouraged to dream up new uses for the custom metaclass.
 
 The remainder of this documentation focus on the ``worktoy.meta`` module
-and the classes and functions defined therein.
+and the classes and functions defined therein. These focus on the more
+conventional applications of the custom metaclass, that is, creation of
+classes having functionalities beyond the default Python classes.
 
-### The ``worktoy.meta`` module
+## The ``worktoy.meta`` module
 
-#### Nomenclature
+### Nomenclature
 
 Before proceeding, let us define terms:
 
@@ -1282,7 +1306,7 @@ Before proceeding, let us define terms:
 - **``namespace``** - This is where the class body is stored during class
   creation.
 
-#### ``AbstractMetaclass`` and ``AbstractNamespace``
+### ``AbstractMetaclass`` and ``AbstractNamespace``
 
 These abstract baseclass illustrates an elegant metaclass pattern. The
 namespace class records every assignment in the class body, even if a
@@ -1306,7 +1330,7 @@ Without loss of information, the namespace object is returned to the
 metaclass. Here the metaclass obtains the final namespace dictionary from
 the ``compile`` method on the namespace object.
 
-#### Singleton
+### Singleton
 
 The singleton term is well understood as a class having only one
 instance. Typically, such a class is callable, but instead of creating a
@@ -1322,35 +1346,72 @@ derived class called ``Singleton``. Custom singleton classes may either
 set ``SingletonMeta`` as the metaclass or subclass ``Singleton``. The
 metaclass subclasses the ``BaseMetaclass`` discussed below.
 
-#### Zeroton
+### Zeroton
 
 The ``Zeroton`` class is a novelty. What specified the singleton class is
 the fact that it has only one instance. The ``Zeroton`` class in contrast
 has not even one instance. Such a class is essentially a token. The
-purpose of it is to retain itself across multiple modules. It is
-particularly useful in deferred function calls where a required argument
-is not yet created. The ``AttriBox`` class in the ``worktoy.desc`` module
-is an example of a class that uses the ``Zeroton`` class to manage its
-deferred instantiation. ``AttriBox`` uses the following special syntactic
-sugar to provide a typed attribute in a class body:
+purpose of it is to retain itself across multiple modules. Presently, it
+finds use in the ``AttriBox`` implementation of the ``worktoy.desc``
+module. For more information, readers are referred to the section on
+"Advanced Instantiation" in the ``worktoy.desc`` documentation.
+
+### Function overloading in Python
+
+When creating a new class using the default ``type``, only the most
+recent assigned value at each name is retained. As such, implementing
+overloading of methods in the class body requires a custom metaclass
+providing a custom namespace. The ``worktoy.meta`` module provides the
+``BaseObject`` class derived from the ``BaseMetaclass``, which implements
+function overloading of the methods in the class body. Before
+demonstrating the syntactic use of the ``BaseObject`` class, an
+explanation of the implementation is provided. To skip directly to the
+usage, see section **worktoy.meta.overload - Usage**.
+
+### Background
+
+The main issue with function overloading is that multiple callables are
+now present on the same name. Thus, a new step is required to determine
+which available implementation to invoke, given the arguments received.
+The procedure chosen here is to contain the pairs of type signatures and
+callables in a dictionary. When the overloaded function is called, the
+type signature of the arguments is determined and used to look up the
+appropriate callable in the dictionary, before invoking it with the
+argument values. This step does add some overhead, but in testing has not
+exceeded 20 %.
+
+### Type Decoration
+
+When a class body is to define multiple callables at the same name, but
+with different functions, the ``worktoy.meta.overload`` decorator factory
+is used. When calling it with types as positional arguments, it returns a
+decorator. When this decorator is called it sets the type signature of
+the decorated function at the attribute named
+``__overloaded_signature__`` to the type signature given the factory.
+
+### Function Dispatcher
+
+The ``BaseNamespace`` uses a dedicated class called ``Dispatcher`` to
+encapsulates the type signature to callable mapping. The ``Dispatcher``
+class implements both the descriptor protocol and the ``__call__`` method
+allowing it to emulate the behaviour of bounded and unbounded methods as
+appropriate. When called it determines the type signature of the
+arguments received, resolve the matching callable, invokes it with the
+arguments received and returns the return value.
+
+### Namespace Compilation
+
+The ``BaseMetaclass`` implements the pattern described previously, where
+the namespace class provides functionality for creating a dictionary to
+be used in the ``type.__new__`` method. This ``compile`` method retrieves
+the callables encountered during class body execution that were decorated
+with by the overload decorator and for each name creates a ``Dispatcher``
+instance as described above, which is placed in the final dictionary at
+the appropriate name.
 
 ```python
-from __future__ import annotations
-from worktoy.desc import AttriBox
 from worktoy.meta import BaseObject
 
-
-class Attribute(BaseObject):
-  """This class provides the field class for the AttriBox class defined 
-  in the SomeClass defined below. """
-
-  __fallback_name__ = 'LMAO'
-  __inner_name__ = None
-
-
-class SomeClass:
-  """This class uses the 'AttriBox' class to provide a typed attribute. """
-
-  x = AttriBox[float]()
-  y = AttriBox[float]()  # This creates a float attribute 'y'.
 ```
+
+### ``worktoy.meta.overload`` - Usage
