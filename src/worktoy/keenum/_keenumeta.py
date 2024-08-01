@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Iterable, Any
+from typing import TYPE_CHECKING, Optional, Iterable
 
 from icecream import ic
 

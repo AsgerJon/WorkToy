@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Never, Self
+from typing import Any, Self
 
 from icecream import ic
 

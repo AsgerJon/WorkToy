@@ -6,8 +6,6 @@ from __future__ import annotations
 
 from typing import Callable, Any, Never
 
-from icecream import ic
-
 from worktoy.meta import ZerotonMetaclass, BaseMetaclass
 from worktoy.text import typeMsg
 

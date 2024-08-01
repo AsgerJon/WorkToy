@@ -1409,9 +1409,91 @@ with by the overload decorator and for each name creates a ``Dispatcher``
 instance as described above, which is placed in the final dictionary at
 the appropriate name.
 
-```python
-from worktoy.meta import BaseObject
+### ``worktoy.meta.overload`` - Usage
 
+To make use of the 'overload' functionality in a class definition, import
+the ``overload`` decorator factory and the ``BaseObject`` class from the
+``worktoy.meta.overload`` module. The ``BaseObject`` class already uses the
+``BaseMetaclass`` as the metaclass, provides replacements for
+``__init__`` and ``__init_subclass__`` which do not raise exceptions
+every time they see an argument, in contrast to ``object.__init__`` and
+``object.__init_subclass__``:
+
+```python
+from __future__ import annotations
+
+from worktoy.meta import BaseMetaclass
+
+
+class BaseObject(metaclass=BaseMetaclass):
+  """BaseObject provides argument-tolerant implementations of __init__ and
+  __init_subclass__ preventing the errors explained in the documentation."""
+
+  def __init__(self, *args, **kwargs) -> None:
+    """Why are we still here?"""
+
+  def __init_subclass__(cls, *args, **kwargs) -> None:
+    """Just to suffer?"""
 ```
 
-### ``worktoy.meta.overload`` - Usage
+Implement the custom class as a subclass of ``BaseObject``. In the
+function body, provide implementations of the overloaded functions by
+reusing the name of the function. Decorate each such function with the
+``overload`` decorator factory and provide the type signatures of the
+as positional arguments. For example:
+
+```python
+from worktoy.meta import overload, BaseObject
+from worktoy.desc import AttriBox
+from typing import Self
+
+
+class ComplexNumber(BaseObject):
+  """Class representing complex numbers. """
+
+  __fallback_value__ = 0j
+
+  realPart = AttriBox[float]()
+  imagPart = AttriBox[float]()
+
+  @overload(int, int)
+  def __init__(self, a: int, b: int) -> None:
+    self.__init__(float(a), float(b))
+
+  @overload(float, float)
+  def __init__(self, a: float, b: float) -> None:
+    self.realPart, self.imagPart = a, b
+
+  @overload(complex)
+  def __init__(self, z: complex) -> None:
+    self.realPart, self.imagPart = z.real, z.imag
+
+  @overload()
+  def __init__(self, ) -> None:
+    self.__init__(self.__fallback_value__)
+
+  def __abs__(self) -> float:
+    return (self.realPart ** 2 + self.imagPart ** 2) ** 0.5
+
+  def __sub__(self, other: Self) -> Self:
+    return ComplexNumber(self.realPart - other.realPart,
+                         self.imagPart - other.imagPart)
+
+  def __add__(self, other: Self) -> Self:
+    return ComplexNumber(self.realPart + other.realPart,
+                         self.imagPart + other.imagPart)
+
+  def __eq__(self, other: Self) -> bool:
+    return False if abs(self - other) > 1e-08 else True
+
+
+if __name__ == '__main__':
+  z1 = ComplexNumber(69, 420)
+  z2 = ComplexNumber(69.0, 420.0)
+  z3 = ComplexNumber(69 + 420j)
+  print(z1 == z2 == z3)
+
+
+
+
+```

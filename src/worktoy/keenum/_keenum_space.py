@@ -3,8 +3,6 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable
-
 from worktoy.keenum import KeeNumObject
 from worktoy.meta import AbstractNamespace
 from worktoy.parse import maybe
