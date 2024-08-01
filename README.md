@@ -992,7 +992,7 @@ Now let's have a look at what happens if we try to instantiate ``tuple``,
   pedantic. The existing syntax is not a problem, and it's not like the
   suggested instantiation syntax is used anywhere else in Python.
 - **set**: ``data = set(1, 2, 3,)`` This is correct syntax. So this works,
-  but the suggest ``smartList`` and ``smartTuple`` functions does not, OK
+  but the suggested ``smartList`` and ``smartTuple`` functions does not, OK
   sure, makes sense...
 - **frozenset**: ``data = frozenset([69, 420])`` - This is correct syntax.
 
