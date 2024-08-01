@@ -5,13 +5,9 @@ from __future__ import annotations
 
 from typing import Any, Self
 
-from icecream import ic
-
 from worktoy.desc import THIS, SCOPE, AbstractDescriptor
 from worktoy.desc._owner_instance import WaitForIt
 from worktoy.text import typeMsg, monoSpace
-
-ic.configureOutput(includeContext=True)
 
 
 class _Bag:
