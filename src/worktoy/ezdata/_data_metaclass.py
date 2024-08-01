@@ -37,5 +37,5 @@ class EZData(metaclass=DataMetaclass):
   Subclasses are not allowed to implement the __init__ method. """
 
   if TYPE_CHECKING:
-    def __init__(self, *_, **__) -> None:
+    def __init__(self, *__, **_) -> None:
       """The __init__ method is reserved for populating the data fields. """

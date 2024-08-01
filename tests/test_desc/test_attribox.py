@@ -4,103 +4,96 @@ protocol."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-import inspect
-import os
-from typing import Optional, TYPE_CHECKING
+from random import random
+from time import time
 from unittest import TestCase
 
-from worktoy.desc import AttriClass, OLDAttriBox
-from worktoy.ezdata import EZData, EndFields, BeginFields
+from icecream import ic
+
+from worktoy.desc import AttriBox, SCOPE
+from worktoy.ezdata import EZData
 from worktoy.parse import maybe
 
-
-class Integer(AttriClass):
-  """Integer is a descriptor for integer attributes."""
-
-  __inner_value__ = None
-
-  def __init__(self, *args, **kwargs) -> None:
-    for arg in args:
-      if isinstance(arg, int):
-        self.__inner_value__ = arg
-        break
-    AttriClass.__init__(self, )
-
-  def __eq__(self, other: object) -> bool:
-    """Equality test for two integers"""
-    if isinstance(other, Integer):
-      return self.__inner_value__ == other.__inner_value__
-    if isinstance(other, int):
-      return self.__inner_value__ == other
-    return NotImplemented
+ic.configureOutput(includeContext=True)
 
 
 class Point3D(EZData):
   """Space point"""
 
-  BeginFields
-  x = OLDAttriBox[Integer](-1)
-  y = OLDAttriBox[Integer](-1)
-  z = OLDAttriBox[Integer](-1)
-  EndFields
+  x = AttriBox[int](-1)
+  y = AttriBox[int](-1)
+  z = AttriBox[int](-1)
 
-  def getPrivateNames(self) -> dict[str, str]:
-    """Getter for the names of the private variables. """
-    cls = self.__class__
-    if TYPE_CHECKING:
-      assert isinstance(cls.x, OLDAttriBox)
-      assert isinstance(cls.y, OLDAttriBox)
-      assert isinstance(cls.z, OLDAttriBox)
-    xName = cls.x._getPrivateName()
-    yName = cls.y._getPrivateName()
-    zName = cls.z._getPrivateName()
-    return dict(x=xName, y=yName, z=zName)
 
-  def getPrivateValues(self) -> dict[str, Optional[Integer]]:
-    """Getter-function for the private values."""
-    names = self.getPrivateNames()
-    x = getattr(self, names['x'], None)
-    y = getattr(self, names['y'], None)
-    z = getattr(self, names['z'], None)
-    return dict(x=x, y=y, z=z)
+class Float:
+  """Float class"""
+  __fallback_value__ = 69.
+  __inner_value__ = None
 
-  def peek(self) -> str:
-    """Peeks at the private values"""
-    values = self.getPrivateValues()
-    x = str(maybe(values['x'], 'None'))
-    y = str(maybe(values['y'], 'None'))
-    z = str(maybe(values['z'], 'None'))
-    return 'peek: x=%s, y=%s, z=%s' % (x, y, z)
+  def __init__(self, *args, ) -> None:
+    pass
 
   def __str__(self) -> str:
     """String representation"""
-    if TYPE_CHECKING:
-      assert isinstance(self.x, int)
-      assert isinstance(self.y, int)
-      assert isinstance(self.z, int)
-    return """(%d, %d, %d)""" % (self.x, self.y, self.z)
+    return '%.3f' % float(self.__inner_value__)
 
-  def __setattr__(self, key, value) -> None:
-    """Replaces instances of int with Integer."""
-    object.__setattr__(self, key, value)
+  def __repr__(self, ) -> str:
+    """Code representation"""
+    return '%s(%.3f)' % (self.__class__.__name__, self.__inner_value__)
+
+  def __float__(self) -> float:
+    """Float representation"""
+    return maybe(self.__inner_value__, self.__fallback_value__)
+
+
+class ClassName:
+  """ClassName class"""
+  __fallback_name__ = 'LMAO'
+  __inner_name__ = None
+
+  def __init__(self, *args) -> None:
+    for arg in args:
+      if isinstance(arg, str):
+        self.__inner_name__ = arg
+        break
+    else:
+      self.__inner_name__ = self.__fallback_name__
+
+  def __str__(self, ) -> str:
+    """String representation"""
+    return self.__inner_name__
+
+  def __repr__(self, ) -> str:
+    """Code representation"""
+    return '%s(%s)' % (self.__class__.__name__, self.__inner_name__)
+
+
+class Instance:
+  """Class representing the instance of the class owning the descriptor
+  class. """
+
+  __owning_instance__ = None
+  __owning_class__ = None
+
+  def __init__(self, owningInstance: object) -> None:
+    self.__owning_instance__ = owningInstance
+    self.__owning_class__ = owningInstance.__class__
+
+  def __str__(self) -> str:
+    """String representation"""
+    return '%s(%s)' % (self.__class__.__name__, self.__owning_instance__)
+
+
+class BoxClass:
+  """Box class"""
+
+  label = AttriBox[ClassName](
+      SCOPE >> (lambda cls: getattr(cls, '__name__')))
 
 
 class TestAttriBox(TestCase):
   """TestAttriBox tests the AttriBox implementation of the descriptor
   protocol. """
-
-  @classmethod
-  def getStubFileName(cls) -> str:
-    """Returns the name of the stub file. """
-    return inspect.getfile(cls).replace('.py', '.pyi')
-
-  @classmethod
-  def clearStubFile(cls) -> None:
-    """Removes the stub file. """
-    stubFile = cls.getStubFileName()
-    if os.path.exists(stubFile):
-      os.remove(stubFile)
-      print('Removed stub file: %s' % stubFile)
 
   @classmethod
   def setUpClass(cls, ) -> None:
@@ -109,30 +102,27 @@ class TestAttriBox(TestCase):
   @classmethod
   def tearDownClass(cls, ) -> None:
     """Tear down the test class."""
-    cls.clearStubFile()
 
-  def test_instance_peek(self, ) -> None:
+  def setUp(self) -> None:
+    """Set up the test."""
+    self.box = BoxClass()
+    self.point = Point3D(69, 420, 1337)
+
+  def test_get_set(self, ) -> None:
     """Tests the creation of an instance of the Point3D class. """
-    point = Point3D()
-    values = point.getPrivateValues()
-    self.assertIsNone(values['x'])
-    self.assertIsNone(values['y'])
-    self.assertIsNone(values['z'])
-    if point.x:
-      pass
-    values = point.getPrivateValues()
-    self.assertEqual(values['x'], -1)
-    self.assertIsNone(values['y'])
-    self.assertIsNone(values['z'])
-    if point.y:
-      pass
-    values = point.getPrivateValues()
-    self.assertEqual(values['x'], -1)
-    self.assertEqual(values['y'], -1)
-    self.assertIsNone(values['z'])
-    if point.z:
-      pass
-    values = point.getPrivateValues()
-    self.assertEqual(values['x'], -1)
-    self.assertEqual(values['y'], -1)
-    self.assertEqual(values['z'], -1)
+    roll = Float(random())
+    self.box.x = roll
+    self.assertAlmostEqual(float(self.box.x), float(roll))
+
+  def test_errors(self, ) -> None:
+    """Tests the creation of an instance of the Point3D class. """
+    with self.assertRaises(TypeError):
+      self.point.x = .1337
+    with self.assertRaises(TypeError):
+      self.point.y = 69 + 420 * 1j
+    with self.assertRaises(TypeError):
+      self.point.z = '1337'
+
+  def test_scope(self, ) -> None:
+    """Tests the creation of an instance of the Point3D class. """
+    self.assertEqual(str(self.box.label), self.box.__class__.__name__)

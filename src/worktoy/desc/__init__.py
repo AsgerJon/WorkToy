@@ -4,7 +4,7 @@ instantiation. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._owner_instance import Owner, THIS, SCOPE
+from ._owner_instance import THIS, SCOPE
 from ._abstract_descriptor import AbstractDescriptor
 from ._attri_box import AttriBox
 from ._empty_field import EmptyField

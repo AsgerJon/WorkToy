@@ -3,18 +3,18 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Never
+from typing import Any, Never, Self
 
 from icecream import ic
 
 from worktoy.desc import THIS, SCOPE, AbstractDescriptor
-from worktoy.meta import BaseMetaclass
+from worktoy.desc._owner_instance import WaitForIt
 from worktoy.text import typeMsg, monoSpace
 
 ic.configureOutput(includeContext=True)
 
 
-class _Bag(metaclass=BaseMetaclass):
+class _Bag:
   """This private class wraps the field object. """
 
   __owning_instance__ = None
@@ -71,11 +71,13 @@ class AttriBox(AbstractDescriptor):
   __pos_args__ = None
   __key_args__ = None
 
+  @classmethod
   def __class_getitem__(cls, fieldClass: type) -> AttriBox:
     """Class method for creating a AttriBox instance."""
     return cls(fieldClass)
 
   def __init__(self, *args) -> None:
+    AbstractDescriptor.__init__(self)
     fieldClass = None
     for arg in args:
       if isinstance(arg, type):
@@ -90,13 +92,12 @@ class AttriBox(AbstractDescriptor):
       e = """AttriBox constructor requires the fieldClass type!"""
       e2 = typeMsg('fieldClass', fieldClass, type)
       raise TypeError(monoSpace('%s\n%s' % (e, e2)))
+    self.__field_class__ = fieldClass
 
-  def __call__(self, *args, **kwargs) -> None:
-    if self.__pos_args__ is not None or self.__key_args__ is not None:
-      e = """AttriBox instance has already been called!"""
-      raise AttributeError(e)
+  def __call__(self, *args, **kwargs) -> Self:
     self.__pos_args__ = [*args, ]
     self.__key_args__ = {**kwargs, }
+    return self
 
   def getFieldClass(self, ) -> type:
     """Getter-function for the field class."""
@@ -110,50 +111,31 @@ class AttriBox(AbstractDescriptor):
 
   def getArgs(self, instance: object = None) -> list[Any]:
     """Getter-function for positional arguments"""
-    if self.__pos_args__ is None:
-      e = """AttriBox instance missing constructor arguments!"""
-      raise AttributeError(e)
-    if isinstance(self.__pos_args__, tuple):
-      self.__pos_args__ = [*self.__pos_args__, ]
-    if not isinstance(self.__pos_args__, list):
-      e = typeMsg('__pos_args__', self.__pos_args__, list)
-      raise TypeError(e)
-    if instance is None:
-      return self.__pos_args__
     out = []
-    for item in self.getArgs():
-      if item is THIS:
+    for arg in self.__pos_args__:
+      if arg is THIS:
         out.append(instance)
         continue
-      if item is SCOPE:
+      if arg is SCOPE:
         out.append(self.getFieldOwner())
         continue
-      out.append(item)
+      if isinstance(arg, WaitForIt):
+        if arg.zeroton is SCOPE:
+          arg.replacement = self.getFieldOwner()
+        elif arg.zeroton is THIS:
+          arg.replacement = instance
+        else:
+          e = """Received unsupported zeroton instance of WaitForIt 
+          instance!"""
+          raise ValueError(e)
+        out.append(arg())
+        continue
+      out.append(arg)
     return out
 
   def getKwargs(self, instance: object = None) -> dict[str, Any]:
     """Getter-function for keyword arguments"""
-    if self.__key_args__ is None:
-      e = """AttriBox instance missing constructor arguments!"""
-      raise AttributeError(e)
-    if not isinstance(self.__key_args__, dict):
-      e = typeMsg('__key_args__', self.__key_args__, dict)
-      raise TypeError(e)
-    if instance is None:
-      return self.__key_args__
-    out = {}
-    for key, value in self.getKwargs().items():
-      if key in out:
-        e = """Duplicate key found in AttriBox instance!"""
-        raise KeyError(e)
-      if value is THIS:
-        out[key] = instance
-        continue
-      if value is SCOPE:
-        out[key] = self.getFieldOwner()
-        continue
-      out[key] = value
-    return out
+    return self.__key_args__
 
   def _createFieldObject(self, instance: object) -> _Bag:
     """Create the field object."""
@@ -223,9 +205,16 @@ class AttriBox(AbstractDescriptor):
     e = typeMsg('bag', bag, _Bag)
     raise TypeError(e)
 
-  def __delete__(self, instance: object = None) -> Never:
+  def __delete__(self, instance: object = None) -> None:
     """Deleter-function is not implemented by the AttriBox class. """
-    ic(self, instance)
-    oldValue = getattr(instance, self._getPrivateName(), None)
-    delattr(instance, self._getPrivateName())
+    pvtName = self._getPrivateName()
+    if getattr(instance, pvtName, None) is None:
+      return self.notifyDel(instance, None)
+    oldValue = getattr(instance, pvtName, )
     self.notifyDel(instance, oldValue)
+    delattr(instance, pvtName)
+
+  def __getattribute__(self, key: str) -> Any:
+    """LMAO"""
+    val = object.__getattribute__(self, key)
+    return val

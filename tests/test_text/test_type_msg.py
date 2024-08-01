@@ -6,14 +6,14 @@ from __future__ import annotations
 from types import FunctionType
 from unittest import TestCase
 
-from worktoy.desc import OLDAttriBox
+from worktoy.desc import AttriBox
 from worktoy.text import typeMsg
 
 
 class IntOnly:
   """Class requiring integer types."""
 
-  value = OLDAttriBox[int](0)
+  value = AttriBox[int](0)
 
   def __init__(self, value: int) -> None:
     if not isinstance(value, int):

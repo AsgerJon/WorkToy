@@ -7,7 +7,6 @@ from __future__ import annotations
 from typing import Callable, Any
 
 from worktoy.desc import AbstractDescriptor
-from worktoy.parse import maybe
 from worktoy.text import typeMsg
 
 
@@ -34,65 +33,37 @@ class EmptyField(AbstractDescriptor):
 
   def __get__(self, instance: object, owner: type) -> Any:
     """Get the value of the field."""
-    getter = None
     if instance is None:
       return self
-    try:
-      getter = self.__get_getter__()
-    except Exception as exception:
-      if isinstance(exception, (AttributeError, TypeError)):
-        getter = getattr(owner, self.__getter_name__, None)
-        if getter is None:
-          raise exception
+    getter = self.__get_getter__()
     value = getter(instance)
     self.notifyGet(instance, value)
     return value
 
   def __set__(self, instance: object, value: object) -> None:
     """Set the value of the field."""
-    owner = self.getFieldOwner()
-    fieldType = self.getFieldType()
-    setter = None
-    if not isinstance(value, fieldType):
-      e = typeMsg('value', value, fieldType)
+    if not isinstance(value, self.getFieldType()):
+      e = typeMsg('value', value, self.getFieldType())
       raise TypeError(e)
+    setter = self.__get_setter__()
+    getter = self.__get_getter__()
     try:
-      setter = self.__get_setter__()
-    except Exception as exception:
-      if isinstance(exception, (AttributeError, TypeError)):
-        owner = self.getFieldOwner()
-        setter = getattr(owner, self.__setter_name__, None)
-        if setter is None:
-          raise exception
-    if not callable(setter):
-      e = typeMsg('setter', setter, Callable)
-      raise TypeError(e)
-    oldValue = self.__get__(instance, owner)
+      oldValue = getter(instance)
+    except AttributeError:
+      oldValue = None
     self.notifySet(instance, oldValue, value)
     setter(instance, value)
 
   def __delete__(self, instance: object) -> None:
     """Delete the value of the field."""
-    owner = self.getFieldOwner()
-    deleter = None
-    try:
-      deleter = self.__get_deleter__()
-    except Exception as exception:
-      if isinstance(exception, (AttributeError, TypeError)):
-        deleter = getattr(owner, self.__deleter_name__, None)
-        if deleter is None:
-          raise exception
-    if not callable(deleter):
-      e = typeMsg('deleter', deleter, Callable)
-      raise TypeError(e)
-    oldValue = self.__get__(instance, owner)
+    deleter = self.__get_deleter__()
+    getter = self.__get_getter__()
+    oldValue = getter(instance)
     self.notifyDel(instance, oldValue)
+    deleter(instance)
 
   def __get_getter__(self, ) -> Callable:
     """Getter-function for the getter-function, getter-ception."""
-    if self.__getter_function__ is None:
-      e = """The field instance does not have a getter function!"""
-      raise AttributeError(e)
     if callable(self.__getter_function__):
       return self.__getter_function__
     e = typeMsg('getter', self.__getter_function__, Callable)
@@ -100,9 +71,6 @@ class EmptyField(AbstractDescriptor):
 
   def __get_setter__(self, ) -> Callable:
     """Getter-function for the setter-function of the field."""
-    if self.__setter_function__ is None:
-      e = """The field instance does not have a setter function!"""
-      raise AttributeError(e)
     if callable(self.__setter_function__):
       return self.__setter_function__
     e = typeMsg('setter', self.__setter_function__, Callable)
@@ -110,9 +78,6 @@ class EmptyField(AbstractDescriptor):
 
   def __get_deleter__(self, ) -> Callable:
     """Getter-function for the deleter-function of the field."""
-    if self.__deleter_function__ is None:
-      e = """The field instance does not have a deleter function!"""
-      raise AttributeError(e)
     if callable(self.__deleter_function__):
       return self.__deleter_function__
     e = typeMsg('deleter', self.__deleter_function__, Callable)
@@ -120,28 +85,34 @@ class EmptyField(AbstractDescriptor):
 
   def __set_getter__(self, callMeMaybe: Callable) -> Callable:
     """Set the getter function of the field."""
-    if maybe(self.__getter_function__, self.__getter_name__) is not None:
+    if self.__getter_function__ is not None:
       e = """The getter function has already been set!"""
       raise AttributeError(e)
-    self.__getter_name__ = callMeMaybe.__name__
+    if not callable(callMeMaybe):
+      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
+      raise TypeError(e)
     self.__getter_function__ = callMeMaybe
     return callMeMaybe
 
   def __set_setter__(self, callMeMaybe: Callable) -> Callable:
     """Set the setter function of the field."""
-    if maybe(self.__setter_name__, self.__setter_function__) is not None:
+    if self.__setter_function__ is not None:
       e = """The setter function has already been set!"""
       raise AttributeError(e)
-    self.__setter_name__ = callMeMaybe.__name__
+    if not callable(callMeMaybe):
+      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
+      raise TypeError(e)
     self.__setter_function__ = callMeMaybe
     return callMeMaybe
 
   def __set_deleter__(self, callMeMaybe: Callable) -> Callable:
     """Set the deleter function of the field."""
-    if maybe(self.__deleter_name__, self.__deleter_function__) is not None:
+    if self.__deleter_function__ is not None:
       e = """The deleter function has already been set!"""
       raise AttributeError(e)
-    self.__deleter_name__ = callMeMaybe.__name__
+    if not callable(callMeMaybe):
+      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
+      raise TypeError(e)
     self.__deleter_function__ = callMeMaybe
     return callMeMaybe
 

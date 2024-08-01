@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable
+from random import randint
 from unittest import TestCase
 
 from worktoy.desc import EmptyField
@@ -42,14 +42,6 @@ class Point3D:
       raise TypeError(e)
     self.__x_value__ = float(x)
 
-  @x.DELETE
-  def _delX(self) -> None:
-    """Delete the x coordinate."""
-    if self.__x_value__ is None:
-      e = """The x coordinate has not been assigned!"""
-      raise AttributeError(e)
-    del self.__x_value__
-
   @y.GET
   def _getY(self) -> float:
     """Return the y coordinate."""
@@ -79,8 +71,6 @@ class Point3D:
         self.__x_value__, self.__y_value__ = 69., 420.
       elif self.__y_value__ is None:
         self.__y_value__ = 420.
-    self.__class__.z.__deleter_name__ = 'yolo'
-    setattr(self.__class__, 'yolo', 'LMAO')
 
 
 class TestEmptyField(TestCase):
@@ -90,36 +80,22 @@ class TestEmptyField(TestCase):
     """Sets up each test method."""
     self.point = Point3D(69, 420)
 
-  def test_instance(self) -> None:
-    """Tests the accessor functions"""
-    self.assertEqual(self.point.x, 69)
-    self.point.x = 1337
-    self.assertEqual(self.point.x, 1337)
-    del self.point.x
-    self.assertRaises(AttributeError, lambda: self.point.x)
-    self.assertEqual(self.point.y, 420)
-    with self.assertRaises(AttributeError, ) as context:
-      self.point.y = 69
-    actual = str(context.exception)
-    expected = "The field instance at name: 'y' does not have a setter!"
-    self.assertEqual(actual, expected)
-    with self.assertRaises(AttributeError, ) as context:
-      del self.point.y
-    actual = str(context.exception)
-    expected = "The field instance at name: 'y' does not have a deleter!"
-    self.assertEqual(actual, expected)
-    with self.assertRaises(AttributeError) as context:
+  def test_getters(self) -> None:
+    """Tests the getter functions"""
+    self.assertEqual(self.point.x, 69.)
+    self.assertEqual(self.point.y, 420.)
+
+  def test_setters(self) -> None:
+    """Tests the setter functions"""
+    roll = float(randint(0, 255))
+    self.point.x = roll
+    self.assertEqual(self.point.x, roll)
+
+  def test_errors(self) -> None:
+    """Tests the error handling"""
+    with self.assertRaises(TypeError):
       print(self.point.z)
-    actual = str(context.exception)
-    expected = "The field instance at name: 'z' does not have a getter!"
-    self.assertEqual(actual, expected)
-    with self.assertRaises(AttributeError) as context:
-      self.point.z = 69
-    actual = str(context.exception)
-    expected = "The field instance at name: 'z' does not have a setter!"
-    self.assertEqual(actual, expected)
-    with self.assertRaises(TypeError) as context:
-      del self.point.z
-    actual = str(context.exception)
-    expected = typeMsg('deleter', 'LMAO', Callable)
-    self.assertEqual(actual, expected)
+    with self.assertRaises(TypeError):
+      self.point.y = 1337
+    with self.assertRaises(TypeError):
+      del self.point.x

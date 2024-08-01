@@ -3,30 +3,20 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import randint, sample
 from typing import TYPE_CHECKING, Self
 from unittest import TestCase
 
-from worktoy.desc import OLDAttriBox
-from worktoy.ezdata import EZData, BeginFields, EndFields
+from worktoy.desc import AttriBox
+from worktoy.ezdata import EZData, DataMetaclass
+from worktoy.text import monoSpace
 
 
 class Point3D(EZData):
   """Point3D is a 3D point with x, y, and z coordinates."""
 
-  BeginFields
-  x = OLDAttriBox[int](-1)
-  y = OLDAttriBox[int](-1)
-  z = OLDAttriBox[int](-1)
-  EndFields
-
-  if TYPE_CHECKING:
-    x: int
-    y: int
-    z: int
-
-    def __init__(self, *args, **kwargs) -> None:
-      """TYPE_CHECKING"""
+  x = AttriBox[int](-1)
+  y = AttriBox[int](-1)
+  z = AttriBox[int](-1)
 
   def __str__(self) -> str:
     """String representation"""
@@ -60,25 +50,57 @@ class Point3D(EZData):
 class TestEZData(TestCase):
   """TestEZData tests the EZData class."""
 
-  def test_class_instantiation_positional(self, ) -> None:
-    """Tests if the Point3D class gets instantiated on any number of
-    positional arguments. """
-    X = [randint(0, 255) for _ in range(10)]
-    for i in range(10):
-      x = sample(X, i)
-      point = Point3D(*x, )
-      expected = [*x, -1, -1, -1][:3]
-      self.assertEqual((point.x, point.y, point.z), (*expected,))
+  def test_positional_args(self) -> None:
+    """Tests that Point3D support any number of positional arguments"""
+    point = Point3D()  # Nu arguments
+    self.assertEqual(point.x, -1)
+    self.assertEqual(point.y, -1)
+    self.assertEqual(point.z, -1)
+    point = Point3D(1)  # One argument
+    self.assertEqual(point.x, 1)
+    self.assertEqual(point.y, -1)
+    self.assertEqual(point.z, -1)
+    point = Point3D(1, 2)  # Two arguments
+    self.assertEqual(point.x, 1)
+    self.assertEqual(point.y, 2)
+    self.assertEqual(point.z, -1)
+    point = Point3D(1, 2, 3, )  # Three arguments
+    self.assertEqual(point.x, 1)
+    self.assertEqual(point.y, 2)
+    self.assertEqual(point.z, 3)
 
-  def test_class_instantiation_keyword(self) -> None:
-    """Tests if the Point3D class gets instantiated on any number of
-    keyword arguments. """
-    Q = [randint(0, 255) for _ in range(10)]
-    for i in range(4):
-      q = sample(Q, i)
-      p = (*q, -1, -1, -1)
-      kwargs = [('x', p[0]), ('y', p[1]), ('z', p[2])][:min(i, 3)]
-      kwargs = {k: v for (k, v) in kwargs}
-      point = Point3D(**kwargs)
-      expected = p[:3]
-      self.assertEqual((point.x, point.y, point.z), (*expected,))
+  def test_keyword_args(self) -> None:
+    """Tests that Point3D support any number of keyword arguments"""
+    point = Point3D(x=1)  # One argument
+    self.assertEqual(point.x, 1)
+    self.assertEqual(point.y, -1)
+    self.assertEqual(point.z, -1)
+    point = Point3D(x=1, y=2)  # Two arguments
+    self.assertEqual(point.x, 1)
+    self.assertEqual(point.y, 2)
+    self.assertEqual(point.z, -1)
+    point = Point3D(x=1, y=2, z=3)  # Three arguments
+    self.assertEqual(point.x, 1)
+    self.assertEqual(point.y, 2)
+    self.assertEqual(point.z, 3)
+
+  def test_errors(self, ) -> None:
+    """Tests that EZData correctly raises an error when a subclass tries
+    to implement '__init__'."""
+    with self.assertRaises(AttributeError) as context:
+      class SusData(EZData):
+        """This class will attempt to implement '__init__', which should
+        raise an 'AttributeError'. """
+
+        def __init__(self, *__, **_) -> None:
+          EZData.__init__(self)  # keeps pycharm from complaining lol
+          
+    expectedMsg = monoSpace("""Reimplementing __init__ is not allowed for 
+      EZData classes!""").lower()
+    self.assertEqual(expectedMsg, context.exception.__str__().lower())
+
+  def test_class_access(self, ) -> None:
+    """Tests that the AttriBox instances are accessible from the class."""
+    self.assertIs(Point3D.x.getFieldClass(), int)
+    self.assertIs(Point3D.y.getFieldClass(), int)
+    self.assertIs(Point3D.z.getFieldClass(), int)

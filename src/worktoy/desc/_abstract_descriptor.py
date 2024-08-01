@@ -3,6 +3,8 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from icecream import ic
+
 from worktoy.meta import BaseMetaclass
 from worktoy.parse import maybe
 from worktoy.text import monoSpace, typeMsg
