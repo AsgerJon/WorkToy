@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Iterable
+from typing import TYPE_CHECKING, Optional, Iterable, Any
 
 from icecream import ic
 
@@ -41,7 +41,7 @@ class KeeNumMeta(AbstractMetaclass):
   def __new__(mcls,
               name: str,
               bases: Bases,
-              keeNumSpace: KeeNumSpace, **__) -> type:
+              keeNumSpace: KeeNumSpace, **__) -> Any:
     """The __new__ method is invoked to create the class."""
     if isinstance(keeNumSpace, KeeNumSpace):
       namespace = keeNumSpace.compile()

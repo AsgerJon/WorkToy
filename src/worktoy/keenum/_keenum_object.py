@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Self
 
-from worktoy.desc import EmptyField
+from worktoy.desc import Field
 from worktoy.text import typeMsg
 
 
@@ -16,9 +16,9 @@ class KeeNumObject:
   __private_value__ = None
   __public_value__ = None
 
-  name = EmptyField()
-  _pvtVal = EmptyField()
-  value = EmptyField()
+  name = Field()
+  _pvtVal = Field()
+  value = Field()
 
   @name.GET
   def _getName(self) -> object:

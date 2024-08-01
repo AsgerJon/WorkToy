@@ -10,7 +10,7 @@ from worktoy.desc import AbstractDescriptor
 from worktoy.text import typeMsg
 
 
-class EmptyField(AbstractDescriptor):
+class Field(AbstractDescriptor):
   """EmptyField provides a flexible implementation of the descriptor
   protocol allowing owning classes to decorate methods as accessor
   methods. """

@@ -6,7 +6,7 @@ from __future__ import annotations
 from random import randint
 from unittest import TestCase
 
-from worktoy.desc import EmptyField
+from worktoy.desc import Field
 from worktoy.text import typeMsg
 
 
@@ -17,9 +17,9 @@ class Point3D:
   __y_value__ = None
   __z_value__ = None
 
-  x = EmptyField()  # get, set and delete supported
-  y = EmptyField()  # get only supported
-  z = EmptyField()  # not even get supported
+  x = Field()  # get, set and delete supported
+  y = Field()  # get only supported
+  z = Field()  # not even get supported
 
   @x.GET
   def _getX(self) -> float:

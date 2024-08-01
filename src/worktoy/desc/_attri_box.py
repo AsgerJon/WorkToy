@@ -5,8 +5,8 @@ from __future__ import annotations
 
 from typing import Any, Self
 
-from worktoy.desc import THIS, SCOPE, AbstractDescriptor
-from worktoy.desc._owner_instance import WaitForIt
+from worktoy.desc import AbstractDescriptor
+from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
 
@@ -74,7 +74,6 @@ class AttriBox(AbstractDescriptor):
 
   def __init__(self, *args) -> None:
     AbstractDescriptor.__init__(self)
-    fieldClass = None
     for arg in args:
       if isinstance(arg, type):
         fieldClass = arg
@@ -105,33 +104,13 @@ class AttriBox(AbstractDescriptor):
     e = typeMsg('__field_class__', self.__field_class__, type)
     raise TypeError(e)
 
-  def getArgs(self, instance: object = None) -> list[Any]:
+  def getArgs(self, ) -> list[Any]:
     """Getter-function for positional arguments"""
-    out = []
-    for arg in self.__pos_args__:
-      if arg is THIS:
-        out.append(instance)
-        continue
-      if arg is SCOPE:
-        out.append(self.getFieldOwner())
-        continue
-      if isinstance(arg, WaitForIt):
-        if arg.zeroton is SCOPE:
-          arg.replacement = self.getFieldOwner()
-        elif arg.zeroton is THIS:
-          arg.replacement = instance
-        else:
-          e = """Received unsupported zeroton instance of WaitForIt 
-          instance!"""
-          raise ValueError(e)
-        out.append(arg())
-        continue
-      out.append(arg)
-    return out
+    return maybe(self.__pos_args__, [])
 
-  def getKwargs(self, instance: object = None) -> dict[str, Any]:
+  def getKwargs(self, ) -> dict[str, Any]:
     """Getter-function for keyword arguments"""
-    return self.__key_args__
+    return maybe(self.__key_args__, {})
 
   def _createFieldObject(self, instance: object) -> _Bag:
     """Create the field object."""
@@ -141,7 +120,7 @@ class AttriBox(AbstractDescriptor):
     if self.__pos_args__ is None or self.__key_args__ is None:
       e = """AttriBox instance has not been called!"""
       raise AttributeError(e)
-    args, kwargs = self.getArgs(instance), self.getKwargs(instance)
+    args, kwargs = self.getArgs(), self.getKwargs()
     fieldClass = self.getFieldClass()
     innerObject = fieldClass(*args, **kwargs)
     return _Bag(instance, innerObject)
@@ -209,8 +188,3 @@ class AttriBox(AbstractDescriptor):
     oldValue = getattr(instance, pvtName, )
     self.notifyDel(instance, oldValue)
     delattr(instance, pvtName)
-
-  def __getattribute__(self, key: str) -> Any:
-    """LMAO"""
-    val = object.__getattribute__(self, key)
-    return val

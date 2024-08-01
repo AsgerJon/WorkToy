@@ -25,8 +25,6 @@ class DataNamespace(AbstractNamespace):
   def _initFactory(self, ) -> Callable:
     """Factory function for the __init__ method"""
 
-    dataFields = self.getDataBoxes()
-
     def newInit(this, *args, **kwargs) -> None:
       """The newInit method is the __init__ method for the class."""
       boxes = this.getDataBoxes()
