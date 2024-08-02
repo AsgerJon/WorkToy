@@ -4,9 +4,9 @@ protocol allowing owning classes to decorate methods as accessor methods. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable, Any
+from typing import Callable
 
-from worktoy.desc import AbstractDescriptor
+from worktoy.desc import AbstractDescriptor, MissingValueException
 from worktoy.text import typeMsg
 
 
@@ -31,39 +31,25 @@ class Field(AbstractDescriptor):
     e = typeMsg('__field_type__', self.__field_type__, type)
     raise TypeError(e)
 
-  def __get__(self, instance: object, owner: type) -> Any:
-    """Get the value of the field."""
-    if instance is None:
-      return self
-    getter = self.__get_getter__()
-    value = getter(instance)
-    self.notifyGet(instance, value)
-    return value
-
-  def __set__(self, instance: object, value: object) -> None:
-    """Set the value of the field."""
-    if not isinstance(value, self.getFieldType()):
-      e = typeMsg('value', value, self.getFieldType())
-      raise TypeError(e)
-    setter = self.__get_setter__()
-    getter = self.__get_getter__()
+  def __instance_get__(self, instance: object) -> object:
+    """Get the instance object."""
     try:
-      oldValue = getter(instance)
+      return self.__get_getter__()(instance)
     except AttributeError:
-      oldValue = None
-    self.notifySet(instance, oldValue, value)
-    setter(instance, value)
+      raise MissingValueException(instance, self)
 
-  def __delete__(self, instance: object) -> None:
-    """Delete the value of the field."""
-    deleter = self.__get_deleter__()
-    getter = self.__get_getter__()
-    oldValue = getter(instance)
-    self.notifyDel(instance, oldValue)
-    deleter(instance)
+  def __instance_set__(self, instance: object, value: object) -> None:
+    """Set the instance object."""
+    self.__get_setter__()(instance, value)
+
+  def __instance_del__(self, instance: object) -> None:
+    """Delete the instance object."""
+    self.__get_deleter__()(instance)
 
   def __get_getter__(self, ) -> Callable:
     """Getter-function for the getter-function, getter-ception."""
+    if self.__getter_function__ is None:
+      raise AttributeError
     if callable(self.__getter_function__):
       return self.__getter_function__
     e = typeMsg('getter', self.__getter_function__, Callable)

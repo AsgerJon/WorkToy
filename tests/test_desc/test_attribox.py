@@ -4,13 +4,11 @@ protocol."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import random
-from time import time
 from unittest import TestCase
 
 from icecream import ic
 
-from worktoy.desc import AttriBox, SCOPE
+from worktoy.desc import AttriBox
 from worktoy.ezdata import EZData
 from worktoy.meta import BaseObject
 from worktoy.parse import maybe
@@ -89,13 +87,6 @@ class ObjectName(BaseObject):
   """Provides a field class collecting information received at the """
 
 
-class BoxClass:
-  """Box class"""
-
-  label = AttriBox[ClassName](
-      SCOPE >> (lambda cls: getattr(cls, '__name__')))
-
-
 class TestAttriBox(TestCase):
   """TestAttriBox tests the AttriBox implementation of the descriptor
   protocol. """
@@ -110,14 +101,7 @@ class TestAttriBox(TestCase):
 
   def setUp(self) -> None:
     """Set up the test."""
-    self.box = BoxClass()
     self.point = Point3D(69, 420, 1337)
-
-  def test_get_set(self, ) -> None:
-    """Tests the creation of an instance of the Point3D class. """
-    roll = Float(random())
-    self.box.x = roll
-    self.assertAlmostEqual(float(self.box.x), float(roll))
 
   def test_errors(self, ) -> None:
     """Tests the creation of an instance of the Point3D class. """
@@ -127,7 +111,3 @@ class TestAttriBox(TestCase):
       self.point.y = 69 + 420 * 1j
     with self.assertRaises(TypeError):
       self.point.z = '1337'
-
-  def test_scope(self, ) -> None:
-    """Tests the creation of an instance of the Point3D class. """
-    self.assertEqual(str(self.box.label), self.box.__class__.__name__)

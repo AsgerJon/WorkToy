@@ -4,6 +4,7 @@ instantiation. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._missing_value_exception import MissingValueException
 from ._abstract_descriptor import AbstractDescriptor
 from ._attri_box import AttriBox
 from ._field import Field

@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Self
+from typing import Any, Self, Never
 
 from worktoy.desc import AbstractDescriptor
 from worktoy.parse import maybe
@@ -48,6 +48,14 @@ class _Bag:
     elif isinstance(innerObject, self.getInnerClass()):
       self.__inner_object__ = innerObject
     else:
+      if self.getInnerClass() is complex:
+        if isinstance(innerObject, (int, float)):
+          return self.setInnerObject(complex(innerObject))
+      if self.getInnerClass() is float and isinstance(innerObject, int):
+        return self.setInnerObject(float(innerObject))
+      if self.getInnerClass() is int and isinstance(innerObject, float):
+        if innerObject.is_integer():
+          return self.setInnerObject(int(innerObject))
       e = typeMsg('innerObject', innerObject, self.getInnerClass())
       raise TypeError(e)
 
@@ -137,54 +145,51 @@ class AttriBox(AbstractDescriptor):
       if char.isupper() and i and i < len(self.__field_name__):
         chars.append('_')
       chars.append(char.lower())
-    return """__%s__""" % (''.join(chars),)
+    innerName = ''.join(chars)
+    innerNames = innerName.split('_')
+    if len(innerNames) == 1:
+      innerNames.append('value')
+    innerName = '_'.join(innerNames)
+    return """__%s__""" % (innerName,)
 
-  def __get__(self, instance: object, owner: type, **kwargs) -> Any:
-    """Getter-function which instantiates the field object only when
-    called for the first time and only if the instance is not missing."""
-    if instance is None:
-      return self
+  def __instance_get__(self, instance: object, **kwargs) -> Any:
+    """Getter-function for the instance."""
     pvtName = self._getPrivateName()
     if getattr(instance, pvtName, None) is None:
       if kwargs.get('_recursion', False):
         raise RecursionError
       setattr(instance, pvtName, self._createFieldObject(instance))
-      return self.__get__(instance, owner, _recursion=True)
+      return self.__instance_get__(instance, _recursion=True)
     bag = getattr(instance, pvtName)
     if not isinstance(bag, _Bag):
       e = typeMsg('bag', bag, _Bag)
       raise TypeError(e)
     innerObject = bag.getInnerObject()
     if innerObject is None:
-      e = """The inner object of the AttriBox instance is missing!"""
-      raise AttributeError(e)
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      setattr(instance, pvtName, self._createFieldObject(instance))
+      return self.__instance_get__(instance, _recursion=True)
     fieldClass = self.getFieldClass()
     if isinstance(innerObject, fieldClass):
-      self.notifyGet(instance, innerObject)
       return innerObject
     e = typeMsg('innerObject', innerObject, fieldClass)
     raise TypeError(e)
 
-  def __set__(self, instance: object, newValue: object) -> None:
-    """Setter-function which raises an error."""
+  def __instance_set__(self, instance: object, value: object) -> None:
+    """Setter-function for the instance."""
     pvtName = self._getPrivateName()
     bag = getattr(instance, pvtName, None)
     if bag is None:
-      bag = _Bag(instance, newValue)
-      self.notifySet(instance, None, newValue)
+      bag = self._createFieldObject(instance)
+      bag.setInnerObject(value)
       return setattr(instance, pvtName, bag)
     if isinstance(bag, _Bag):
-      oldValue = bag.getInnerObject()
-      self.notifySet(instance, oldValue, newValue)
-      return bag.setInnerObject(newValue)
+      return bag.setInnerObject(value)
     e = typeMsg('bag', bag, _Bag)
     raise TypeError(e)
 
-  def __delete__(self, instance: object = None) -> None:
-    """Deleter-function is not implemented by the AttriBox class. """
-    pvtName = self._getPrivateName()
-    if getattr(instance, pvtName, None) is None:
-      return self.notifyDel(instance, None)
-    oldValue = getattr(instance, pvtName, )
-    self.notifyDel(instance, oldValue)
-    delattr(instance, pvtName)
+  def __instance_del__(self, instance: object) -> Never:
+    """Deleter-function for the instance."""
+    e = """Deleter-function is not implemented by the AttriBox class."""
+    raise TypeError(e)

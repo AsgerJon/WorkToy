@@ -3,6 +3,10 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from abc import abstractmethod
+from typing import Any
+
+from worktoy.desc import MissingValueException
 from worktoy.meta import BaseMetaclass
 from worktoy.parse import maybe
 from worktoy.text import monoSpace, typeMsg
@@ -107,3 +111,58 @@ class AbstractDescriptor(metaclass=BaseMetaclass):
     """Decorator for subscribing to the deleter."""
     self._addDelSubscriber(callMeMaybe)
     return callMeMaybe
+
+  def __get__(self, instance: object, owner: type) -> Any:
+    """Get the value of the field."""
+    if instance is None:
+      return self
+    try:
+      value = self.__instance_get__(instance)
+    except MissingValueException as missingValueException:
+      raise AttributeError from missingValueException
+    self.notifyGet(instance, value)
+    return value
+
+  def __set__(self, instance: object, value: object) -> None:
+    """Set the value of the field."""
+    oldValue = None
+    try:
+      oldValue = self.__instance_get__(instance)
+    except MissingValueException:
+      oldValue = None
+    self.notifySet(instance, oldValue, value)
+    self.__instance_set__(instance, value)
+
+  def __delete__(self, instance: object) -> None:
+    """Delete the value of the field."""
+    try:
+      oldValue = self.__instance_get__(instance)
+    except MissingValueException as missingValueException:
+      if missingValueException == (instance, self):
+        oldValue = None
+      else:
+        raise missingValueException
+    self.notifyDel(instance, oldValue)
+    self.__instance_del__(instance)
+
+  @abstractmethod
+  def __instance_get__(self, instance: object) -> Any:
+    """Subclasses should implement this method to provide the getter. """
+
+  def __instance_set__(self, instance: object, value: object) -> None:
+    """Subclasses should implement this method to provide the setter. """
+    descName = self.__class__.__name__
+    ownerName = self.getFieldOwner().__name__
+    fieldName = self.getFieldName()
+    e = """The attribute '%s' on class '%s' belongs to descriptor of type: 
+    '%s' which does not implement setting!"""
+    raise TypeError(monoSpace(e % (fieldName, ownerName, descName)))
+
+  def __instance_del__(self, instance: object) -> None:
+    """Subclasses should implement this method to provide the deleter. """
+    descName = self.__class__.__name__
+    ownerName = self.getFieldOwner().__name__
+    fieldName = self.getFieldName()
+    e = """The attribute '%s' on class '%s' belongs to descriptor of type: 
+    '%s' which does not implement deletion!"""
+    raise TypeError(monoSpace(e % (fieldName, ownerName, descName)))

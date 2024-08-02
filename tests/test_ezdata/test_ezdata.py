@@ -3,11 +3,11 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import Self
 from unittest import TestCase
 
 from worktoy.desc import AttriBox
-from worktoy.ezdata import EZData, DataMetaclass
+from worktoy.ezdata import EZData
 from worktoy.text import monoSpace
 
 
@@ -94,7 +94,7 @@ class TestEZData(TestCase):
 
         def __init__(self, *__, **_) -> None:
           EZData.__init__(self)  # keeps pycharm from complaining lol
-          
+
     expectedMsg = monoSpace("""Reimplementing __init__ is not allowed for 
       EZData classes!""").lower()
     self.assertEqual(expectedMsg, context.exception.__str__().lower())

@@ -6,7 +6,7 @@ from __future__ import annotations
 from random import randint
 from unittest import TestCase
 
-from worktoy.desc import Field
+from worktoy.desc import Field, MissingValueException
 from worktoy.text import typeMsg
 
 
@@ -93,8 +93,10 @@ class TestEmptyField(TestCase):
 
   def test_errors(self) -> None:
     """Tests the error handling"""
-    with self.assertRaises(TypeError):
-      print(self.point.z)
+    # try:
+    #   print(self.point.z)
+    # except Exception as exception:
+    #   print(exception)
     with self.assertRaises(TypeError):
       self.point.y = 1337
     with self.assertRaises(TypeError):

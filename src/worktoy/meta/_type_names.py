@@ -3,12 +3,9 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TypeAlias, Union, Tuple, TYPE_CHECKING, Callable
+from typing import TypeAlias, Union, Tuple, Callable
 
-if TYPE_CHECKING:
-  from worktoy.meta import AbstractNamespace
-else:
-  AbstractNamespace = object
+from worktoy.meta import AbstractNamespace
 
 
 def functionInstance() -> None:

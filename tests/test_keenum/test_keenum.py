@@ -6,8 +6,6 @@ from __future__ import annotations
 from typing import Iterable, TYPE_CHECKING
 from unittest import TestCase
 
-from icecream import ic
-
 from worktoy.keenum import KeeNum, auto
 from worktoy.text import stringList
 

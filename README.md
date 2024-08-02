@@ -37,9 +37,9 @@ pip install worktoy
 
 # Usage
 
-## `worktoy.desc`
+# `worktoy.desc`
 
-### Background
+## Background - The Python Descriptor Protocol
 
 The descriptor protocol in Python allows significant customisation of the
 attribute access mechanism. To understand this protocol, consider a class
@@ -74,8 +74,18 @@ class Integer:
       if isinstance(arg, int):
         self.__default_value__ = arg
         break
-    else:  # See explanation below for the unusual for-else statement.
+    else:
       self.__default_value__ = self.__fallback_value__
+
+  #  The '__init__' method implemented above makes use of the unusual 
+  #  'else' clause at the end of a loop. This clause is executed once after 
+  #  the loop has completed. Since it is part of the loop, the 'break' 
+  #  keyword applies to it as well as the loop itself. The for loop above 
+  #  iterates through the positional arguments and if it encounters an 
+  #  'int' argument, it assigns it and issues the 'break'. So if the loop 
+  #  completes without hitting the 'break', no 'int' could be found in any 
+  #  of the positional arguments. Conveniently, the 'else' block then 
+  #  assigns the fallback value.
 
   def __set_name__(self, owner: type, name: str) -> None:
     """Powerful method called automatically when the class owning the 
@@ -87,412 +97,551 @@ class Integer:
 
   def __get__(self, instance: object, owner: type) -> int:
     """Getter-function."""
+``` 
 
-```
+## The ``__set_name__`` method
 
-### Unusual `for-else` statement
-
-The code above features the unusual and under-appreciated for-else
-statement in the `__init__` method. If the for loop terminates by the ´break´
-keyword, the ´else´ block is skipped. If the for loop completes without
-hitting the ´break´ keyword, the ´else´ block is executed. As used here,
-the for loop tries to find an integer from the received positional
-arguments. If it finds one, it assigns it and hits the ´break´ keyword
-and the ´else´ block is skipped. If unable to find an integer, the for
-loop will terminate normally, and the ´else´ block will execute, where
-the fallback value is conveniently waiting to be assigned.
-
-### The `__set_name__` method
-
-This method is a powerful addition to the descriptor protocol. To
-understand its significance, consider that the descriptor class was
-instantiated in the class body, during creation of the owning class,
-but before the owning class was actually created. When the owning class
-is created, every instance of a class that implements this method,
-that was assigned to a name in the class body of the newly created
-class, will have this method called with the owning class and the
-name at which the instance appears in the class body.
+Python 3.6 was released on December 23, 2016. This version introduced
+the ``__set_name__`` method, which marks a significant improvement to the
+descriptor protocol. It informs instances of descriptor classes of the
+class that owns them **and** the name by which they appear in the class
+namespace. Much of the functionality found in the ``worktoy.desc`` module
+would not be possible without this method.
 
 ### The `__get__` method
 
-This method is called in two different situations that differ
-substantially. When the descriptor is accessed through the owning
-class and when the descriptor is accessed through an instance of the
-owning class. This distinction may be likened to that of accessing a
-method. Accessing a method through its owning class returns an
-unbound method. In contrast, accessing a method through an instance
-of the class returns a method bound to this instance. This is why the
-first argument of a method is ´self´ (except for ´classmethods´ and
-´staticmethods´).
-
-If the instance is None, it signifies that the descriptor is being
-accessed through the owning class. In this case, it is the opinion of
-this author that the descriptor should always return itself. This allows
-other objects to access the descriptor object itself, instead of the
-value it wraps. Choosing this return value also follows the pattern
-used by methods. Nevertheless, descriptor classes are allowed to
-return any object when accessed through the owning class.
-
-This brings the discussion to the central situation allowing significant
-customization of what it even means for a Python class to have an
-attribute. This part of the discussion will explain some typical uses
-before describing the novel use case provided by the ´AttriBox´ class,
-which is the central feature of the ´worktoy.desc´ module.
-
-### Property-like behaviour
-
-A common implementation of the descriptor protocol makes use of a
-'private' attribute owned by the instance. Python does not enforce 'private'
-attributes, but the convention is to denote attributes intended to remain
-'private' with a leading underscore. While convention only, IDEs and
-linters will commonly mark as warning or even an error when this
-convention is not observed. It is the opinion of this author that issues
-caused by failure to observe this convention does not merit fixing, with
-the sole exception being security related issues.
-
-Below is an example using a descriptor class to expose a 'private'
-attribute through dedicated accessor functions.
+Consider the code below:
 
 ```python
+class Descriptor:
+  """Descriptor class."""
 
-class SpacePoint:
-  """This class represent an integer valued point in the plane. """
-  _x = None
-  _y = None
-  x = Float(0.)
-  y = Float(0.)
-```   
-
-Like before, it is the descriptor class more so that the owner class that
-is the subject of this discussion:
-
-```python
-class Float:
-  """Descriptor class wrapping a floating point value"""
-  __field_name__ = None
-  __field_owner__ = None
-  __fallback_value__ = 0.0
-  __default_value__ = None
-
-  def __init__(self, *args, ) -> None:
-    for arg in args:
-      if isinstance(arg, float):
-        self.__default_value__ = arg
-        break
-    else:  # See explanation below for the unusual for-else statement.
-      self.__default_value__ = self.__fallback_value__
+  def __get__(self, instance: object, owner: type) -> object:
+    """Getter-function."""
 
   def __set_name__(self, owner: type, name: str) -> None:
-    self.__field_name__ = name
-    self.__field_owner__ = owner
+    """Informs the descriptor instance that the owner is created"""
 
-  def _getPrivateName(self) -> str:
-    """This 'private' method formats the name at which instances of this 
-    descriptor class will expect 'private' attributes. """
-    if self.__field_name__ is None:
-      e = """Unable to format private name, before owning class is 
-      created!"""
-      raise RuntimeError(e)
-    if isinstance(self.__field_name__, str):
-      return """_%s""" % self.__field_name__
-    e = """Expected field name to be instance of str, but received '%s' 
-    of class '%s'!"""
-    fieldName = self.__field_name__
-    typeName = type(fieldName).__name__
-    raise TypeError(e % (fieldName, typeName))
 
-  def __get__(self, instance: object, owner: type, **kwargs) -> object:
-    """Getter-function. If instance is None, the descriptor instance 
-    returns itself. Otherwise, the descriptor attempts to find a value at 
-    the expected private name. If no value is present, the default value 
-    of the descriptor is assigned to the expected private name and the 
-    getter function is called recursively again. This pattern ensures 
-    that if the descriptor lacks permission or is otherwise unable to 
-    assign values to owning instances, an error is raised immediately. """
-    if instance is None:
-      return self
-    pvtName = self._getPrivateName()
-    if getattr(instance, pvtName, None) is not None:
-      return getattr(instance, pvtName)
-    if kwargs.get('_recursion', False):
-      raise RecursionError
-    setattr(instance, pvtName, self.__default_value__)
-    return self.__get__(instance, owner, _recursion=True)
+class OwningClass:
+  """Class owning the descriptor."""
+  descriptor = Descriptor()
 
-  def __set__(self, instance: object, value: object) -> None:
-    """Setter-function. Although not provided in this example, setter 
-    functions provide a convenient place to enforce constraints, in 
-    particular type guarding as well as casting and validation. """
-    pvtName = self._getPrivateName()
-    setattr(instance, pvtName, value)
 
-  def __delete__(self, instance: object) -> None:
-    """IMPORTANT! This method is what is called when the 'del' keyword is 
-    used on an attribute through an instance. This method is NOT the same 
-    as __del__. This latter method is called when the object itself is 
-    deleted. Regarding that particular method, this author finds occasion 
-    to mention never having observed it implemented in the wild. """
-    pvtName = self._getPrivateName()
-    if hasattr(instance, pvtName):
-      return delattr(instance, pvtName)
-    e = """Instance of class '%s' does not have attribute '%s'!"""
-    raise AttributeError(e % (instance.__class__.__name__, pvtName))
+#  At this point in the code, the OwningClass is created, which triggers 
+#  the '__set_name__' method on the descriptor instance. 
+#  Event 1
+
+if __name__ == '__main__':
+  owningInstance = OwningClass()  # Event 2
+  print(OwningClass.descriptor)  # Event 3
+  print(owningInstance.descriptor)  # Event 4
 ```
 
-The above describes a common pattern of using the descriptor protocol to
-expose 'private' attributes through dedicated accessor functions. The
-above is a very straightforward example, but the descriptor protocol is
-capable of much more!
+Let us examine each of the four events marked in the above example:
+
+1. **Event 1** - This marks the completion of the class creation process,
+   which is described in excruciating detail in later sections. Of
+   interest here is the call to the ``__set_name__`` method on the
+   descriptor:
+   ``Descriptor.__set_name__(descriptor, OwningClass, 'descriptor')``
+2. **Event 2** - This marks the creation of an instance of the owning
+   class. This event is not of interest to this discussion.
+3. **Event 3** - Accessing the descriptor on the OwningClass triggers the
+   following function call:
+   ``Descriptor.__get__(descriptor, None, OwningClass)``
+4. **Event 4** - Accessing the descriptor on an instance of the owning
+   class triggers the following function call:
+   ``Descriptor.__get__(descriptor, owningInstance, OwningClass)``
+
+The ``__get__`` determines what is returned when the descriptor is
+accessed. Please note that this method is what is called every time the
+descriptor instance is accessed regardless of how. In the above example,
+the following would each result in a call to the ``__get__`` method:
+
+```python
+#  Each result in:  Descriptor.__get__(descriptor, None, OwningClass)
+OwningClass.descriptor
+getattr(OwningClass, 'descriptor')
+object.__getattribute__(OwningClass, 'descriptor')
+```
+
+The interpreter always refers to the ``__get__`` method. To still allow
+access to the descriptor object itself, the common pattern is for the
+``__get__`` method to return the descriptor instance when accessed
+through the owning class:
+
+```python
+class Descriptor:
+  """Descriptor class."""
+
+  def __get__(self, instance: object, owner: type) -> object:
+    """Getter-function."""
+    if instance is None:
+      return self
+    #  YOLO
+```
+
+This author suggests never deviating from this pattern. Perhaps some more
+functionality or some hooks may be implemented, but the descriptor
+instance itself should always be returned when accessed through the owning
+class. When accessed through the instance, the descriptor is free to do
+whatever it wants!
+
+### The `__set__` method
+
+The prior section focused on the distinction between accessing on the
+class or instance level. The ``__set__`` method defined on the Descriptor
+is invoked only when accessed through the instance:
+
+```python
+class Descriptor:
+  """Descriptor class."""
+
+  #  Code as before
+  def __set__(self, instance: object, value: object) -> None:
+    """Setter-function."""
+
+
+if __name__ == '__main__':
+  owningInstance = OwningClass()
+  owningInstance.descriptor = 69  # Event 1
+  print(owningInstance.descriptor)  # Event 2
+  OwningClass.descriptor = 420  # Event 3
+  print(owningInstance.descriptor)  # Event 4
+```
+
+The above code triggers the following function call:
+
+-**Event 1:** ``Descriptor.__set__(descriptor, owningInstance, 7)``
+-**Event 2:** ``Descriptor.__get__(descriptor, owningInstance, OwningClass)``
+-**Event 3:** This call does not involve the descriptor at all, instead
+it simply overwrites the descriptor.
+-**Event 4:** The previous event overwrote the descriptor instance so now
+it simply returns the value set in Event 3.
+
+Thus, when trying to call ``__set__`` through the owning class, it is
+applied to the descriptor object itself. This matches the suggested
+implementation of the ``__get__`` method which would return the
+descriptor item itself, when accessed through the owning class.
+
+### The ``delete`` method
+
+The most important comment here is this warning: **Do not mistake
+``__del__`` and ``__delete__``!** ``__del__`` is a mysterious method
+associated with the destruction of an object.
+
+The ``__delete__`` method on the other hand allows instance specific
+control over what happens when the ``del`` keyword is used on an
+attribute through an instance. If the descriptor class does not
+implement it, it will raise an ``AttributeError`` when the interpreter
+tries to invoke ``__delete__`` on the descriptor instance. Deleting an
+attribute through the owning class does not involve the descriptor at all,
+but is managed on the metaclass level. Generally, the descriptor is just
+yeeted in this case.
+
+```python
+class Descriptor:
+  """Descriptor class."""
+
+  #  Code as before
+  def __delete__(self, instance: object, ) -> None:
+    """Setter-function."""
+
+
+if __name__ == '__main__':
+  owningInstance = OwningClass()
+  del owningInstance.descriptor  # event 1
+  print(owningInstance.descriptor)  # event 2
+```
+
+If a descriptor class does implement the ``__delete__`` method the script
+above is expected to trigger the following:
+
+-**Event 1:** ``Descriptor.__delete__(descriptor, owningInstance)``
+
+-**Event 2a:** ``AttributeError: __delete__`` if the descriptor does not
+implement the method.
+
+-**Event 2b:** ``AttributeError: 'OwningClass' object has no attribute
+'descriptor'!`` if the descriptor does implement the method and allows
+deletion to proceed.
+
+-**Event 2c:** A custom implementation of the ``__delete__`` method which
+does not allow deletion and thus raises an appropriate exception. In this
+case, this author suggests raising a ``TypeError`` to indicate that the
+attribute is of a read-only type. This is different than the
+``AttributeError`` which generally indicate the absense of the attribute.
+
+If a custom implementation of the ``__delete__`` method is provided, 2b
+or 2c as described above should happen, as this is the generally expected
+behaviour in Python. Implementing some alternative behaviour might be
+cute or something, but when the code is then used elsewhere, the bugs
+resulting from this unexpected behaviour are nearly impossible to find.
+
+### Descriptor Protocol Implementations
+
+There are three questions to consider before discussing implementation
+details:
+
+1. Is the descriptor class simply a way for owning classes to enhance
+   attribute access?
+2. Should classes implement the descriptor protocol to define their
+   behaviour when owned by other classes?
+3. Should a central descriptor class define how one class can own an
+   instance of another?
+
+There is certainly a need for classes to specialize access to their
+attributes. This is the most common use of the descriptor protocol.
+Python itself implements the ``property`` class to provide this control.
+
+When creating a custom class, it seems reasonable to consider that other
+classes might own instance of it and to implement descriptor protocol
+methods as appropriate. Unfortunately, this is not commonly done meaning
+that you can expect to have to own instances of classes that do not
+provide for this ownership interaction themselves.
+
+The ``AttriBox`` class provided by the ``worktoy.desc`` module does
+implement the descriptor protocol in a way designed to allow one class to
+own instances of another without either having to implement anything
+related to the descriptor protocol. This class also makes the second
+question redundant.
+
+This discussion will now proceed with the following:
+
+1. Usage of the ``property`` class provided by Python.
+2. The ``worktoy.desc`` module provides the ``AbstractDescriptor`` class,
+   which implements the parts of the descriptor protocol used by both
+   ``Field`` and ``AttriBox``.
+3. Implementation of the vastly superior ``Field`` class provided by the
+   ``worktoy.desc`` module.
+   4Usage an examples of the ``AttriBox`` class provided by the
+   ``worktoy.desc`` module.
 
 ### The `property` class
 
-It is likely that some readers are familiar with the `property` class.
-Where we are going we do not need the `property` class! Nevertheless, let
-us now see a descriptor class that implements the behaviour of the
-property class. The property class may seem like advanced or
-sophisticated, but as this discussion progresses, the mundane and simple
-nature of it will reveal itself.
-
-To avoid confusion, this implementation will be named `Field` as the
-name ``property`` is already taken.
+The `property` class is a built-in class in Python. It allows the use of
+a decorator to define getter, setter and deleter functions for a property.
+Alternatively, the ``property`` may be instantiated in the class body
+with the getter, setter and deleter functions as arguments. The following
+example will demonstrate a class owning a number and a name,
+demonstrating the two approaches to defining properties.
 
 ```python
-class Field:
-  """Descriptor class wrapping a value"""
-  __field_name__ = None
-  __field_owner__ = None
-  __default_value__ = None
-  __getter_function__ = None
-  __setter_function__ = None
-  __deleter_function__ = None
+from __future__ import annotations
 
-  def __init__(self, *args) -> None:
-    if args:
-      self.__default_value__ = args[0]
 
-  def __set_name__(self, owner: type, name: str) -> None:
-    self.__field_name__ = name
-    self.__field_owner__ = owner
+class OwningClass:
+  """This class uses 'property' to implement the 'name' attribute. """
 
-  def _getGetterFunction(self, ) -> Callable:
-    """This 'private' method returns the getter-function. This must be
-      explicitly defined by the GET decorator for the descriptor to 
-      implement getting. This allows significant customization of the 
-      attribute access mechanism. """
-    if self.__getter_function__ is None:
-      e = """The getter-function must be explicitly set by the SET 
-      decorator!"""
-      raise AttributeError(e)
-    if callable(self.__getter_function__):
-      return self.__getter_function__
-    e = """Expected getter-function to be callable, but received '%s'
-        of class '%s'!"""
-    func = self.__getter_function__
-    typeName = type(func).__name__
-    raise TypeError(e % (func, typeName))
+  __fallback_number__ = 0
+  __fallback_name__ = 'Unnamed'
+  __inner_number__ = None
+  __inner_name__ = None
 
-  def _getSetterFunction(self, ) -> Callable:
-    """This 'private' method returns the setter-function. This must be 
-    explicitly defined by the SET decorator for the descriptor to 
-    implement setting. Please note, that the setter-function is by no 
-    means required and in particular when the descriptor is used to 
-    provide a readonly attribute, the setter-function should remain 
-    undefined or even defined as a Callable raising an exception. If so, 
-    this author suggests raising a TypeError to indicate that this is a 
-    readonly object. Alternatively, raising an AttributeError is also 
-    observed, although such an error indicates that the instance is not 
-    presently capable of supporting this attribute. Not that the object 
-    is entirely incapable of supporting setting the attribute. """
-    if self.__setter_function__ is None:
-      e = """The setter-function must be explicitly set by the SET 
-      decorator!"""
-      raise AttributeError(e)
-    if callable(self.__setter_function__):
-      return self.__setter_function__
-    e = """Expected setter-function to be callable, but received '%s'
-        of class '%s'!"""
-    func = self.__setter_function__
-    typeName = type(func).__name__
-    raise TypeError(e % (func, typeName))
+  def __init__(self, *args, **kwargs) -> None:
+    self.__inner_number__ = kwargs.get('number', None)
+    self.__inner_name__ = kwargs.get('name', None)
+    for arg in args:
+      if isinstance(arg, int) and self.__inner_number__ is None:
+        self.__inner_number__ = arg
+      elif isinstance(arg, str) and self.__inner_name__ is None:
+        self.__inner_name__ = arg
 
-  def _getDeleterFunction(self, ) -> Callable:
-    """This 'private' method returns the deleter-function. This is the 
-    method called when the 'del' keyword is used on an attribute through
-    an instance. This method is NOT the same as __del__ as discussed 
-    above. This author notes having never had problem solved by 
-    implementation of the deleter-function. """
-    if self.__deleter_function__ is None:
-      e = """The deleter-function must be explicitly set by the SET 
-      decorator!"""
-      raise AttributeError(e)
-    if callable(self.__deleter_function__):
-      return self.__deleter_function__
-    e = """Expected deleter-function to be callable, but received '%s'
-        of class '%s'!"""
-    func = self.__deleter_function__
-    typeName = type(func).__name__
-    raise TypeError(e % (func, typeName))
+  @property
+  def name(self) -> str:
+    """Name property"""
+    if self.__inner_name__ is None:
+      return self.__fallback_name__
+    return self.__inner_name__
 
-  def GET(self, callMeMaybe: Callable) -> Callable:
-    """As alluded to above, this method sets the method that should be 
-    used as the getter-function. Classes owning instances of this 
-    descriptor class should use this method as a decorator to define the 
-    method that should be invoked by the __get__ method. Please note, 
-    that this method as well as the other method setters return the 
-    decorated method as it is without augmenting it. """
-    if self.__getter_function__ is not None:
-      e = """The getter-function has already been set!"""
-      raise AttributeError(e)
-    if not callable(callMeMaybe):
-      e = """Expected getter-function to be callable, but received '%s'
-        of class '%s'!"""
-      typeName = type(callMeMaybe).__name__
-      raise TypeError(e % (callMeMaybe, typeName))
-    self.__getter_function__ = callMeMaybe
-    return callMeMaybe
+  @name.setter
+  def name(self, value: str) -> None:
+    """Name setter"""
+    self.__inner_name__ = value
 
-  def SET(self, callMeMaybe: Callable) -> Callable:
-    """Similar to the GET method defined above, this method should be 
-    used to decorate the desired setter-function on the owning class. """
-    if self.__setter_function__ is not None:
-      e = """The setter-function has already been set!"""
-      raise AttributeError(e)
-    if not callable(callMeMaybe):
-      e = """Expected setter-function to be callable, but received '%s'
-            of class '%s'!"""
-      typeName = type(callMeMaybe).__name__
-      raise TypeError(e % (callMeMaybe, typeName))
-    self.__setter_function__ = callMeMaybe
-    return callMeMaybe
+  @name.deleter
+  def name(self) -> None:
+    """Name deleter"""
+    del self.__inner_name__
 
-  def DELETE(self, callMeMaybe: Callable) -> Callable:
-    """Similar to the GET and SET methods defined above, this method 
-    defines the method on the owning class that is responsible for 
-    deleting the attribute from the owning instance. """
-    if self.__deleter_function__ is not None:
-      e = """The deleter-function has already been set!"""
-      raise AttributeError(e)
-    if not callable(callMeMaybe):
-      e = """Expected deleter-function to be callable, but received '%s'
-            of class '%s'!"""
-      typeName = type(callMeMaybe).__name__
-      raise TypeError(e % (callMeMaybe, typeName))
-    self.__deleter_function__ = callMeMaybe
-    return callMeMaybe
+  def _getNumber(self) -> int:
+    """Number getter"""
+    if self.__inner_number__ is None:
+      return self.__fallback_number__
+    return self.__inner_number__
 
-  def __get__(self, instance: object, owner: type, **kwargs) -> object:
-    """Getter-function. As before, when instance is None, the descriptor 
-    returns itself. Otherwise, the dedicated getter-function is used to 
-    get the descriptor value. As mentioned, this function should be 
-    defined by the owning class using the GET decorator. The function 
-    should be a bound method, as this method assumes that the first 
-    argument should be the instance itself, or 'self'. 
-    
-    Please note, that the GET decorator is called before the owning 
-    instance is ever created. This means that this descriptor instance 
-    does own the getter-function, but as an unbound method, meaning that 
-    the getter-function thus defined is common between all instances of 
-    the owning class, despite being an instance method.  The same is true 
-    for the setter-function and the deleter-function. """
-    if instance is None:
-      return self
-    getter = self._getGetterFunction()
-    return getter(instance, )
+  def _setNumber(self, value: int) -> None:
+    """Number setter"""
+    self.__inner_number__ = value
 
-  def __set__(self, instance: object, value: object) -> None:
-    """Setter-function. As before, the setter-function should be defined
-    by the owning class using the SET decorator. If the descriptor is 
-    not intended to support setting, the setter-function should be 
-    explicitly defined to raise an appropriate exception rather than 
-    just left undefined, although this is not a strict requirement. """
-    setter = self._getSetterFunction()
-    setter(instance, value)
+  def _delNumber(self) -> None:
+    """Number deleter"""
+    del self.__inner_number__
 
-  def __delete__(self, instance: object) -> None:
-    """Deleter-function. As before, the deleter-function should be 
-    defined by the owning class using the DELETE decorator. Although not 
-    commonly used, this author suggests either providing an 
-    implementation or a method that raises a TypeError. """
-    deleter = self._getDeleterFunction()
-    deleter(instance, )
+  number = property(_getNumber, _setNumber, _delNumber, doc='Number')
+
 ```
 
-Having implemented the `Field` class, some readers will certainly
-recognize its use as identical, more or less, to that of the `property`.
-One exception to note however is that instances of ``Field`` should be
-defined at the top of the class body, unlike the `property` class.
+The above example demonstrates the use of the `property` class to enhance
+the attribute access mechanism.
+
+### The `AbstractDescriptor` class
+
+The ``AbstractDescriptor`` class provides the ``__set_name__`` method and
+delegates accessor functions to the following methods:
+
+- ``__instance_get__``: Getter-function (Required!)
+- ``__instance_set__``: Setter-function (Optional)
+- ``__instance_del__``: Deleter-function (Optional)
+
+When implementing ``__instance_get__`` to handle a missing value, the
+subclass must raise a ``MissingValueException`` passing the instance and
+itself to the constructor of it. This missing value situation is one
+where no default value is provided and the value has not been set. The
+``AbstractDescriptor`` calls ``__instance_get__`` during the ``__set__``
+and ``delete__`` methods to collect the old value which is used in the
+notification. If it catches such an error during ``__get__``, it raises
+an ``AttributeError`` from it.
+
+The ``AbstractDescriptor`` provides descriptors to mark methods to be
+notified when the attribute is accessed. The methods are:
+
+- ``ONGET``: Called when the attribute is accessed.
+- ``ONSET``: Called when the attribute is set.
+- ``ONDEL``: Called when the attribute is deleted.
+
+Both ``Field`` and ``AttriBox`` subclass the ``AbstractDescriptor`` class.
+These are discussed below.
+
+### The `Field` class
+
+The ``Field`` class provides descriptors in addition to those implemented
+on the ``AbstractDescriptor`` class. These are used by owning classes to
+mark accessor methods, much like the ``property`` class. Unlike the
+Python ``property`` class, instances of the ``Field`` class must be
+defined before the accessor methods in the class body. The decorators
+require their field instance to be defined in the lexical scope before
+they are available to decorate methods.
+
+Below is an example of a plane point implementing the coordinate
+attributes using the ``Field`` class:
 
 ```python
-class Server:
-  """This example class uses instances of the Field class to define the 
-  address and port attributes typically used in server classes. """
+from __future__ import annotations
+from worktoy.desc import Field
 
-  __fallback_address__ = 'localhost'
-  __fallback_port__ = 12345
 
-  __private_address__ = None
-  __private_port__ = None
+class Point:
+  """This class uses the 'Field' descriptor to implement the coordinate
+  attributes. """
+  __x_value__ = None
+  __y_value__ = None
 
-  address = Field()
-  port = Field()
+  x = Field()
+  y = Field()
 
-  @address.GET
-  def _getAddress(self, ) -> str:
-    """Getter-function responsible for returning the address."""
-    if self.__private_address__ is None:
-      return self.__fallback_address__
-    return self.__private_address__
+  @x.GET
+  def _getX(self) -> float:
+    return self.__x_value__
 
-  @address.SET
-  def _setAddress(self, value: str) -> None:
-    """Setter-function responsible for setting the address."""
-    self.__private_address__ = value
+  @x.SET
+  def _setX(self, value: float) -> None:
+    self.__x_value__ = value
 
-  @address.DELETE
-  def _deleteAddress(self, ) -> Never:
-    """For the sake of example, let us disable the deleter-function to 
-    illustrate how the accessor provide a convenient protection against 
-    inadvertent deletion of attributes. Please note the use of the 
-    'Never' type hint. This is meant to indicate that this method will 
-    never return. Once this method is invoked, the program will certainly 
-    raise an exception. """
-    e = """The address attribute is read-only!"""
-    raise TypeError(e)
+  @y.GET
+  def _getY(self) -> float:
+    return self.__y_value__
 
-  @port.GET
-  def _getPort(self) -> int:
-    """Getter-function responsible for returning the port."""
-    if self.__private_port__ is None:
-      return self.__fallback_port__
-    return self.__private_port__
+  @y.SET
+  def _setY(self, value: float) -> None:
+    self.__y_value__ = value
 
-  @port.SET
-  def _setPort(self, port: int) -> None:
-    """Setter-function responsible for setting the port."""
-    self.__private_port__ = port
+  def __init__(self, *args, **kwargs) -> None:
+    self.__x_value__ = kwargs.get('x', None)
+    self.__y_value__ = kwargs.get('y', None)
+    for arg in args:
+      if isinstance(arg, int):
+        arg = float(arg)
+      if isinstance(arg, float):
+        if self.__x_value__ is None:
+          self.__x_value__ = arg
+        elif self.__y_value__ is None:
+          self.__y_value__ = arg
+          break
+    else:
+      if self.__x_value__ is None:
+        self.__x_value__, self.__y_value__ = 69., 420.
+      elif self.__y_value__ is None:
 
-  @port.DELETE
-  def _delPort(self, ) -> Never:
-    """Disabled deleter-function for the port attribute. The same as for 
-    the address attribute."""
-    e = """The port attribute is read-only!"""
-    raise TypeError(e)
+        self.__y_value__ = 420.
 ```
 
-The above ``Server`` class does have an unfortunate boilerplate to
-functionality ratio. Hopefully it provides a helpful illustration of the
-descriptor protocol. While implementing all methods of the descriptor
-protocol, the ``Field`` class could be further enhanced by implementing
-strong type checking or even casting. This is left as an exercise for
-those readers who have read the guidelines in the contribution section.
+The ``Field`` class allows classes to implement how attributes are accessed.
 
-### The `AttriBox` class - Prologue
+### The `AttriBox` class
 
-This class is the central feature of the `worktoy.desc` module. It is the
-logical next step of the implementations hitherto discussed. Before
-diving into the implementation, let us begin with a use case.
+Where ``Field`` relies on the owning class itself to specify the accessor
+functions, the ``AttriBox`` class provides an attribute of a specified
+class. This class is not instantiated until an instance of the owning
+class calls the ``__get__`` method. Only then will the inner object of
+the specified class be created. The inner object is then placed on a
+private variable belonging to the owning instance. When the ``__get__``
+is next called the inner object at the private variable is returned. When
+instantiating the ``AttriBxo`` class, the following syntactic sugar
+should be used: ``fieldName = AttriBox[FieldClass](*args, **kwargs)``.
+The arguments placed in the parentheses after the brackets are those used
+to instantiate the ``FieldClass`` given in the brackets.
+
+Below is an example of a class using the ``AttriBox`` class to implement
+a ``Circle`` class. It uses the ``Point`` class defined above to manage
+the center of the circle. Notice how the ``Point`` class itself is wrapped
+in an ``AttriBox`` instance. The ``area`` attribute is defined using the
+``Field`` class and illustrates the use of the ``Field`` class to expose
+a value as an attribute. Finally, it used the ``ONSET`` decorator to mark
+a method as the validator for the radius attribute. This causes the
+method to be hooked into the ``__set__`` method on the ``radius``.
+
+```python
+from __future__ import annotations
+
+
+class Circle:
+  """This class uses the 'AttriBox' descriptor to manage the radius and
+  center, and it also illustrates a use case for the 'Field' class."""
+
+  radius = AttriBox[float](0)
+  center = AttriBox[Point](0, 0)
+  area = Field()
+
+  @area.GET
+  def _getArea(self) -> float:
+    return 3.1415926535897932 * self.radius ** 2
+
+  @radius.ONSET
+  def _validateRadius(self, _, value: float) -> None:
+    if value < 0:
+      e = """Received negative radius!"""
+      raise ValueError(e)
+
+  def __init__(self, *args, **kwargs) -> None:
+    """Constructor omitted..."""
+
+  def __str__(self) -> str:
+    msg = """Circle centered at: (%.3f, %.3f), with radius: %.3f"""
+    return msg % (self.center.x, self.center.y, self.radius)
+
+
+if __name__ == '__main__':
+  circle = Circle(69, 420, 1337)
+  print(circle)
+  circle.radius = 1
+  print(circle)
+```
+
+Running the code above will output the following:
+
+```terminal
+Circle centered at: (69.000, 420.000), with radius: 4.000
+Circle centered at: (69.000, 420.000), with radius: 1.000
+```
+
+### ``worktoy.desc`` - Summary
+
+As have been demonstrated and explained, the ``worktoy.desc`` module
+provides helpful, powerful and flexible implementations of the descriptor
+protocol. The ``Field`` allows classes to customize attribute access
+behaviour in significant detail. The ``AttriBox`` class provides a way to
+set as attribute any class on another class in a single line. As
+mentioned briefly, the class contained by the ``AttriBox`` instance is
+not instantiated until an instance of the owning class calls the
+``__get__`` method. In the following section, the importance of this lazy
+instantiation feature will be illustrated with an example involving the
+``PySide6`` library.
 
 ### PySide6 - Qt for Python
+
+The PySide6 library provides Python bindings for the Qt framework. Despite
+involving bindings to a C++ library, the code itself remains Python and
+not C++, thank the LORD. Nevertheless, certain errors do not have a
+Pythonic representation. The ``AttriBox`` class was envisioned for this
+very reason. Its lazy instantiation system prevents something called
+'Segmentation Fault'. You can lead a long and happy life not ever
+encountering those words again, thanks to the ``AttriBox`` class!
+
+Central to Qt is the main event loop managed by an instance of
+``QCoreApplication`` or of a subclass of it. While the application is
+running, instances of ``QObject`` provide the actual application
+functionality. It is reasonable to regard the ``QObject`` in Qt and the
+``object`` object in Python as similar. Every window, every widget, the
+running application, managed threads and just about everything else in Qt
+is essentially an instance of ``QObject``. Having defined these terms, we
+may now discuss the two central rules of Qt:
+
+- Only one instances of ``QCoreApplication`` may be running at any time.
+- The first instantiated ``QObject`` must be an instance of the
+  ``QCoreApplication`` class.
+
+Instantiating any ``QObject`` before the ``QCoreApplication`` is running
+will result in immediate error. Enter the ``AttriBox`` class. The
+somewhat inflexible nature of the above rules regains flexibility by
+making use of the lazy instantiation provided by the ``AttriBox`` class.
+
+In the following, we will see a simple application consisting of a window
+showing a welcome message provided as an instance of the ``QLabel`` class
+along with an exit button provided by the ``QPushButton`` class. These
+widgets are stacked vertically and are managed by an instance of the
+``QVBoxLayout`` class and finally these are managed by an instance of
+``QWidget`` which is the parent of the widgets and which owns the layout.
+This widget is set as the central widget in the main window. The main
+window itself is a subclass of the ``QMainWindow`` class.
+
+```python
+import sys
+from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtCore import QSize
+from worktoy.desc import AttriBox
+
+
+class MainWindow(QMainWindow):
+  """This subclass of QMainWindow provides the main application window. """
+
+  baseWidget = AttriBox[QWidget]()
+  layout = AttriBox[QVBoxLayout]()
+  welcomeLabel = AttriBox[QLabel]()
+  exitButton = AttriBox[QPushButton]()
+
+  def initUi(self) -> None:
+    """This method sets up the user interface"""
+    self.setMinimumSize(QSize(480, 320))
+    self.setWindowTitle("Welcome to WorkToy!")
+    self.welcomeLabel.setText("""Welcome to WorkToy!""")
+    self.exitButton.setText("Exit")
+    self.layout.addWidget(self.welcomeLabel)
+    self.layout.addWidget(self.exitButton)
+    self.baseWidget.setLayout(self.layout)
+    self.setCentralWidget(self.baseWidget)
+
+  def initSignalSlot(self) -> None:
+    """This method connects the signals and slots"""
+    self.exitButton.clicked.connect(self.close)
+
+  def show(self) -> None:
+    """This reimplementation calls 'initUi' and 'initSignalSlot' before 
+    calling the parent implementation"""
+    self.initUi()
+    self.initSignalSlot()
+    QMainWindow.show(self)
+
+
+if __name__ == '__main__':
+  app = QApplication([])
+  window = MainWindow()
+  window.show()
+  sys.exit(app.exec())
+
+```
 
 The PySide6 library provides Python bindings for the Qt framework. What
 is Qt? For the purposes of this discussion, Qt is a framework for
