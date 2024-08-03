@@ -19,7 +19,6 @@ class MissingValueException(Exception):
   __descriptor_object__ = None
 
   def __init__(self,
-               instance: object,
                descriptor: AbstractDescriptor) -> None:
     owner = descriptor.getFieldOwner()
     fieldName = descriptor.getFieldName()

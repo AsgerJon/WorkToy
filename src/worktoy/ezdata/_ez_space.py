@@ -41,7 +41,6 @@ class EZSpace(BaseNamespace):
     populates the AttriBox instances."""
 
     keys = [key for (key, _) in attriBoxes]
-    boxes = [box for (_, box) in attriBoxes]
 
     def __init__(self, *args, **kwargs) -> None:
       """This automatically generated '__init__' method populates the

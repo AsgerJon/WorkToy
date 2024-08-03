@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Iterable, Any
+from typing import TYPE_CHECKING, Optional, Any
 
 from icecream import ic
 
@@ -53,6 +53,7 @@ class KeeNumMeta(AbstractMetaclass):
     bases = (KeeNumObject,)
     return AbstractMetaclass.__new__(mcls, name, bases, namespace, )
 
+  # noinspection PyTypeChecker
   def __init__(cls,
                name: str,
                bases: Bases,
@@ -117,8 +118,10 @@ class KeeNumMeta(AbstractMetaclass):
     e = """Unable to recognize KeeNum entry!"""
     raise ValueError(e)
 
+  # noinspection Assert
   def _parseKwargs(cls, **kwargs) -> object:
     """Parses keyword arguments"""
+    # noinspection Assert
     if TYPE_CHECKING:
       assert issubclass(cls, KeeNumObject)
     nameKeys = stringList("""name, key, entry""")
@@ -202,7 +205,3 @@ class KeeNumMeta(AbstractMetaclass):
 
 class KeeNum(metaclass=KeeNumMeta):
   """KeeNum provides the metaclass for the KeeNum class."""
-
-
-if TYPE_CHECKING:
-  assert isinstance(KeeNum, Iterable)

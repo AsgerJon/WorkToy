@@ -36,7 +36,7 @@ class Field(AbstractDescriptor):
     try:
       return self.__get_getter__()(instance)
     except AttributeError:
-      raise MissingValueException(instance, self)
+      raise MissingValueException(self)
 
   def __instance_set__(self, instance: object, value: object) -> None:
     """Set the instance object."""

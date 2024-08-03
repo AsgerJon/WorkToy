@@ -125,7 +125,6 @@ class AbstractDescriptor(metaclass=BaseMetaclass):
 
   def __set__(self, instance: object, value: object) -> None:
     """Set the value of the field."""
-    oldValue = None
     try:
       oldValue = self.__instance_get__(instance)
     except MissingValueException:
