@@ -145,4 +145,3 @@ from ._base_namespace import BaseNamespace
 from ._base_metaclass import BaseMetaclass
 from ._base_object import BaseObject
 from ._singleton_metaclass import SingletonMetaclass, Singleton
-from ._zeroton_metaclass import ZerotonMetaclass

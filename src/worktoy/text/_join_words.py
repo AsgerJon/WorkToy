@@ -8,6 +8,8 @@ from __future__ import annotations
 def joinWords(*words: str) -> str:
   """Join a list of words into a single string with appropriate use of
   commas and 'and'."""
+  if len(words) == 1 and isinstance(words[0], list):
+    return joinWords(*words[0])
   if not words:
     return ''
   if len(words) == 1:

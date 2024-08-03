@@ -17,10 +17,13 @@ value pair, or key, error pair."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Self, get_type_hints
+from typing import Self, get_type_hints, TYPE_CHECKING
 
 from worktoy.parse import maybe
 from worktoy.text import typeMsg
+
+if TYPE_CHECKING:
+  from worktoy.meta import Bases
 
 
 class AbstractNamespace(dict):
@@ -54,6 +57,18 @@ class AbstractNamespace(dict):
     self.__base_classes__ = bases
     self.__key_args__ = dict(**kwargs)
     dict.__init__(self, )
+
+  def getClassName(self) -> str:
+    """Returns the name of the class."""
+    return self.__class_name__
+
+  def getMetaClass(self) -> type:
+    """Returns the metaclass of the class."""
+    return self.__meta_class__
+
+  def getBaseClasses(self) -> Bases:
+    """Returns the base classes of the class."""
+    return (*self.__base_classes__,)
 
   def __explicit_set__(self, key: str, value: object) -> None:
     """The __explicit_set__ method is invoked by __setitem__."""

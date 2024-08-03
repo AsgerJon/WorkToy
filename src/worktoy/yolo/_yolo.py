@@ -15,6 +15,12 @@ from worktoy.text import stringList
 def yolo(*args: Callable) -> None:
   """The 'yolo' function receives any number of callables and runs them."""
   tic = time.perf_counter_ns()
+  startTime = time.ctime()
+  majorPython = sys.version_info.major
+  minorPython = sys.version_info.minor
+  microPython = sys.version_info.micro
+  pythonVersion = """%d.%d.%d""" % (majorPython, minorPython, microPython)
+
   print('Running python script located at: \n%s' % sys.argv[0])
   print('Started at: %s' % time.ctime())
   print(77 * '-')

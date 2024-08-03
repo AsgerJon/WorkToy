@@ -95,9 +95,10 @@ class TestEZData(TestCase):
         def __init__(self, *__, **_) -> None:
           EZData.__init__(self)  # keeps pycharm from complaining lol
 
-    expectedMsg = monoSpace("""Reimplementing __init__ is not allowed for 
-      EZData classes!""").lower()
-    self.assertEqual(expectedMsg, context.exception.__str__().lower())
+    expectedMsg = monoSpace("""EZData subclasses are not permitted to 
+    implement the '__init__' method!""").lower()
+    actualMsg = monoSpace(context.exception.__str__()).lower()
+    self.assertEqual(expectedMsg, actualMsg)
 
   def test_class_access(self, ) -> None:
     """Tests that the AttriBox instances are accessible from the class."""

@@ -1417,3 +1417,332 @@ in the ``BaseObject`` class. Additionally, the module provides a
 metaclass derived from the module. Other parts of the ``worktoy`` module
 makes use of the ``worktoy.meta`` in their implementation. This includes
 the ``KeeNum`` enumeration module and the ``ezdata`` module.
+
+## The ``worktoy.keenum`` module
+
+The ``worktoy.keenum`` module provides the ``KeeNum`` enumeration class.
+This class makes use of the ``worktoy.meta`` module to create the
+enumeration class. This discussion will demonstrate how to create
+enumerations with this class. Every enumeration class must be indicated
+in the class body using the ``worktoy.keenum.auto`` function. Each such
+instances may provide a public value by passing it to the ``auto``
+function. Please note however, that the public value is not used for any
+purpose by the module. The ``KeeNum`` implements a hidden value that it
+uses internally.
+
+```python
+"""Enumeration of weekdays using KeeNum."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.keenum import KeeNum, auto
+
+
+class Weekday(KeeNum):
+  """Enumeration of weekdays."""
+  MONDAY = auto()
+  TUESDAY = auto()
+  WEDNESDAY = auto()
+  THURSDAY = auto()
+  FRIDAY = auto()
+  SATURDAY = auto()
+  SUNDAY = auto()
+```
+
+In the documentation of the ``worktoy.desc`` module, the **PySide6**
+framework were mentioned as a use case for the ``AttriBox`` class. Below
+is a use case for the ``KeeNum`` class in the **PySide6** framework. In
+fact, the ``Alignment`` class shown below is a truncated version
+of a enumeration class included in the ``ezside`` module currently under
+development.
+
+```python
+"""Enumeration of alignment using KeeNum. """
+# AGPL-3.0 license
+# Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from PySide6.QtCore import Qt
+from worktoy.keenum import KeeNum, auto
+
+
+class Alignment(KeeNum):
+  """Enumeration of alignment."""
+  CENTER = auto()
+
+  LEFT = auto()
+  RIGHT = auto()
+  TOP = auto()
+  BOTTOM = auto()
+
+  TOP_LEFT = auto()
+  TOP_RIGHT = auto()
+  BOTTOM_RIGHT = auto()
+  BOTTOM_LEFT = auto()
+``` 
+
+The ``KeeNum`` class might also have been used to enumerate the different
+accessor functions, which might have been useful in the ``worktoy.desc``.
+
+```python
+"""Enumeration of accessor functions using KeeNum."""
+# AGPL-3.0 license
+# Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.keenum import KeeNum, auto
+
+
+class Accessor(KeeNum):
+  """Enumeration of accessor functions."""
+  GET = auto(getattr)
+  SET = auto(setattr)
+  DEL = auto(delattr)
+```
+
+In the above, the ``Accessor`` class enumerates the accessor functions
+``getattr``, ``setattr`` and ``delattr``. But the ``auto`` function can
+also be used to decorate enumerations, which makes their public values
+functions.
+
+```python
+"""Implementation of math functions using KeeNum"""
+# AGPL-3.0 license
+# Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from typing import Callable, Any
+from worktoy.keenum import KeeNum, auto
+
+
+class Trig(KeeNum):
+  """Enumeration of trigonometric functions."""
+
+  @classmethod
+  def factorial(cls, n: int) -> int:
+    """This function returns the factorial of the argument."""
+    if n:
+      return n * cls.factorial(n - 1)
+    return 1
+
+  @classmethod
+  def recursiveSum(cls, callMeMaybe: Callable, n: int) -> float:
+    """This function returns the sum of the function F from 0 to n."""
+    if n:
+      return callMeMaybe(n) + cls.recursiveSum(callMeMaybe, n - 1)
+    return callMeMaybe(n)
+
+  @classmethod
+  def taylorTerm(cls, x: float, callMeMaybe: Callable) -> Callable:
+    """This function returns a function that calculates the nth term of a
+    Taylor series expansion."""
+
+    def polynomial(n: int) -> float:
+      return callMeMaybe(n) * x ** n / cls.factorial(n)
+
+    return polynomial
+
+  @auto
+  def SIN(self, x: float) -> float:
+    """This method returns the sine of the argument."""
+    term = lambda n: [0, 1, 0, -1][n % 4]
+    return self.recursiveSum(self.taylorTerm(x, term), 17)
+
+  @auto
+  def COS(self, x: float) -> float:
+    """This method returns the cosine of the argument."""
+    term = lambda n: [1, 0, -1, 0][n % 4]
+    return self.recursiveSum(self.taylorTerm(x, term), 17)
+
+  @auto
+  def SINH(self, x: float) -> float:
+    """This method returns the hyperbolic sine of the argument."""
+    term = lambda n: n % 2
+    return self.recursiveSum(self.taylorTerm(x, term), 16)
+
+  @auto
+  def COSH(self, x: float) -> float:
+    """This method returns the hyperbolic cosine of the argument."""
+    term = lambda n: (n + 1) % 2
+    return self.recursiveSum(self.taylorTerm(x, term), 16)
+
+  def __call__(self, *args, **kwargs) -> Any:
+    """Calls are passed on to the public value"""
+    return self.value(self, *args, **kwargs)
+```
+
+## The ``worktoy.ezdata`` module
+
+The ``worktoy.ezdata`` module provides the ``EZData`` class, which
+provides a dataclass based on the ``AttriBox`` class. This is achieved by
+leveraging the custom metaclass provided by the ``worktoy.meta`` module.
+The main convenience of the ``EZData`` is the auto generated ``__init__``
+method that will populate fields with values given as positional
+arguments or keyword arguments. The keys to the keyword arguments are the
+field names.
+
+Below is an example of the ``EZData`` class in use:
+
+```python
+"""Dataclass for a point in the plane using EZData."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.ezdata import EZData
+from worktoy.desc import AttriBox
+
+
+class PlanePoint(EZData):
+  """Dataclass representing a point in the plane."""
+  x = AttriBox[float](0)
+  y = AttriBox[float](0)
+
+  def __str__(self, ) -> str:
+    """String representation"""
+    return """(%.3f, %.3f)""" % (self.x, self.y)
+
+
+if __name__ == '__main__':
+  P = PlanePoint(69, 420)
+  print(P)
+  P.x = 1337
+  print(P)
+  P.y = 80085  # Copilot suggested this for reals, lol
+  print(P)
+```
+
+### Summary of ``worktoy.ezdata`` module
+
+The ``EZData`` class supports fields with ``AttriBox`` instances. As
+explained in the documentation of the ``worktoy.desc`` module, the
+``AttriBox`` can use any class as the inner class. Thus, subclasses of
+``EZData`` may use any number of fields of any class.
+
+## ``worktoy.text`` module
+
+The ``worktoy.text`` module provides a number of functions implementing
+text formatting as listed below:
+
+- ``stringList``: This function allows creating a list of strings from a
+  single string with separated values. The separator symbol may be
+  provided at keyword argument ``separator``, but defaults to ``','``.
+  Strings in the returned lists are stripped meaning that spaces are
+  removed from the beginning and end of each string.
+- ``monoSpace``: This function fixes the frustrating reality of managing
+  longer strings in Python. Splitting a string over multiple lines
+  provides only one good option for long strings and that is by using
+  triple quotes. This option is great except for the fact that it
+  preserves line breaks verbatim. The ``monoSpace`` function receives a
+  string and returns it with all continuous whitespace replaced by a
+  single space. Additionally, strings may specify explicitly where line
+  breaks and tabs should occur by include ``'<br>'`` and ``'<tab>'``
+  respectively. Once the initial space replacement is done, the function
+  replaces the explicit line breaks and tabs with the appropriate symbol.
+- ``wordWrap``: This function receives an int specifying the maximum line
+  length and a string. The function returns the string with line breaks
+  inserted at the appropriate places. The function does not break words
+  in the middle, but instead moves the entire word to the next line. The
+  function also removes any leading or trailing whitespace.
+- ``typeMsg``: This function composes the message to be raised with a
+  ``TypeError`` exception when an ``object`` named ``name`` did not
+  belong to the expected class ``cls``.
+- ``joinWords``: This function receives a list of words which it
+  concatenates into a single string, separated by commas except for the
+  final two words which are separated by the word 'and'.
+
+Below are examples of each of the above
+
+### ``worktoy.text.stringList``
+
+```python
+"""Example of the 'stringList' function."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+from worktoy.text import stringList
+
+if __name__ == '__main__':
+  baseString = """69, 420, 1337, 80085"""
+  baseList = stringList(baseString)
+  for item in baseList:
+    print(item)
+
+```
+
+### ``worktoy.text.monoSpace``
+
+```python
+"""Example of the 'monoSpace' function."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import monoSpace
+
+if __name__ == '__main__':
+  baseString = """This is a string that is too long to fit on one line. 
+    It is so long that it must be split over multiple lines. This is 
+    frustrating because it is difficult to manage long strings in Python. 
+    This is a problem that is solved by the 'monoSpace' function."""
+  print(baseString.count('\n'))
+  oneLine = monoSpace(baseString)
+  print(oneLine.count('\n'))
+```
+
+### ``worktoy.text.wordWrap``
+
+```python
+"""Example of the 'wordWrap' function."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import wordWrap
+
+if __name__ == '__main__':
+  baseString = """This is a string that is too long to fit on one line. 
+    It is so long that it must be split over multiple lines. This is 
+    frustrating because it is difficult to manage long strings in Python. 
+    This is a problem that is solved by the 'wordWrap' function."""
+  wrapped = wordWrap(40, baseString)
+  print(baseString.count('\n'))
+  print(len(wrapped))
+  print('\n'.join(wrapped))
+```
+
+### ``worktoy.text.typeMsg``
+
+```python
+"""Example of the 'typeMsg' function."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import typeMsg
+
+if __name__ == '__main__':
+  susObject = 69 + 0j
+  susName = 'susObject'
+  expectedClass = float
+  e = typeMsg(susName, susObject, expectedClass)
+  print(e)
+```
+
+### ``worktoy.text.joinWords``
+
+```python
+"""Example of the 'joinWords' function."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import joinWords
+
+if __name__ == '__main__':
+  words = ['one', 'two', 'three', 'four', 'five']
+  print(joinWords(words))
+```
+
+## ``worktoy.yolo`` module

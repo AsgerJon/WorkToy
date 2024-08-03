@@ -101,39 +101,3 @@ class Point:
       elif self.__y_value__ is None:
 
         self.__y_value__ = 420.
-
-
-class Circle:
-  """This class uses the 'AttriBox' descriptor to manage the radius and
-  center, and it also illustrates a use case for the 'Field' class."""
-
-  radius = AttriBox[float](1337)
-  center = AttriBox[Point](69, 420)
-  area = Field()
-
-  @area.GET
-  def _getArea(self) -> float:
-    return 3.1415926535897932 * self.radius ** 2
-
-  @radius.ONSET
-  def _validateRadius(self, _, value: float) -> None:
-    if value < 0:
-      e = """Received negative radius!"""
-      raise ValueError(e)
-
-  def __init__(self, *args, **kwargs) -> None:
-    _xk = kwargs.get('x', None)
-    _yk = kwargs.get('y', None)
-    _rk = kwargs.get('r', None)
-
-    floatArgs = [float(arg) for arg in args if isinstance(arg, (int, float))]
-    _xa, _ya, _ra = [*floatArgs, None, None, None][:3]
-    _x0, _y0, _r0 = 69., 420., 1337.
-
-    self.center.x = maybe(_xk, _xa, _x0)
-    self.center.y = maybe(_yk, _ya, _y0)
-    self.radius = maybe(_rk, _ra, _r0)
-
-  def __str__(self) -> str:
-    msg = """Circle centered at: (%.3f, %.3f), with radius: %.3f"""
-    return msg % (self.center.x, self.center.y, self.radius)
