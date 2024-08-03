@@ -45,7 +45,17 @@ class Dispatcher:
     typeSig = tuple(type(arg) for arg in args)
     func = self.__overloaded_functions__.get(typeSig, None)
     if func is None:
-      raise ValueError
+      for keyTypes, callMeMaybe in self.__overloaded_functions__.items():
+        if len(keyTypes) == len(args):
+          for keyType, arg in zip(keyTypes, args):
+            if not isinstance(arg, keyType):
+              break
+          else:
+            func = callMeMaybe
+            break
+      else:
+        e = """Unable to match arguments to any overloaded function!"""
+        raise ValueError(e)
     return func(this, *args, **kwargs)
 
   def __get__(self, instance: object, owner: type) -> Optional[Callable]:
