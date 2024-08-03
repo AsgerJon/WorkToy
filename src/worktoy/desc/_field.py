@@ -85,37 +85,25 @@ class Field(AbstractDescriptor):
 
   def __set_getter__(self, callMeMaybe: Callable) -> Callable:
     """Set the getter function of the field."""
-    if self.__getter_function__ is not None:
-      e = """The getter function has already been set!"""
-      raise AttributeError(e)
     if not callable(callMeMaybe):
       e = typeMsg('callMeMaybe', callMeMaybe, Callable)
       raise TypeError(e)
-    self.__getter_function__ = callMeMaybe
     self.__getter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def __set_setter__(self, callMeMaybe: Callable) -> Callable:
     """Set the setter function of the field."""
-    if self.__setter_function__ is not None:
-      e = """The setter function has already been set!"""
-      raise AttributeError(e)
     if not callable(callMeMaybe):
       e = typeMsg('callMeMaybe', callMeMaybe, Callable)
       raise TypeError(e)
-    self.__setter_function__ = callMeMaybe
     self.__setter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def __set_deleter__(self, callMeMaybe: Callable) -> Callable:
     """Set the deleter function of the field."""
-    if self.__deleter_function__ is not None:
-      e = """The deleter function has already been set!"""
-      raise AttributeError(e)
     if not callable(callMeMaybe):
       e = typeMsg('callMeMaybe', callMeMaybe, Callable)
       raise TypeError(e)
-    self.__deleter_function__ = callMeMaybe
     self.__deleter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
