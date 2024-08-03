@@ -1745,4 +1745,11 @@ if __name__ == '__main__':
   print(joinWords(words))
 ```
 
-## ``worktoy.yolo`` module
+## ``worktoy.parse`` module
+
+This module provides two ``None``-aware functions:
+
+- ``maybe``: This functions returns the first positional argument it
+  received that is different from ``None``.
+- ``maybeType``: Same as ``maybe`` but ignoring arguments that are not of
+  the expected type given as the first positional argument. 
