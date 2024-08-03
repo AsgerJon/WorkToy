@@ -6,10 +6,10 @@ from __future__ import annotations
 import os
 import sys
 
+from _yolo import runTests, yolo
 from main_tester_class02 import Trig
 from main_tester_class03 import PlanePoint
 from worktoy.text import wordWrap, typeMsg, joinWords
-from yolo import runTests, yolo
 
 
 def tester00() -> int:
