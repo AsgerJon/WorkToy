@@ -32,7 +32,7 @@ class Dispatcher:
       self.__static_method__ = False
       self.__class_method__ = False
 
-  def __call__(self, *args, ) -> Any:
+  def __call__(self, *args, **kwargs) -> Any:
     """The '__bound_arg__' provides the object to which this is bounded.
     If it covers a static method, no object is ever bounded, if a class
     method, the owner is bounded, and if an instance method, the instance is
@@ -46,7 +46,7 @@ class Dispatcher:
     func = self.__overloaded_functions__.get(typeSig, None)
     if func is None:
       raise ValueError
-    return func(this, *args)
+    return func(this, *args, **kwargs)
 
   def __get__(self, instance: object, owner: type) -> Optional[Callable]:
     """Getter-function for descriptor protocol"""
