@@ -6,5 +6,5 @@ from __future__ import annotations
 
 from ._missing_value_exception import MissingValueException
 from ._abstract_descriptor import AbstractDescriptor
-from ._attri_box import AttriBox
+from ._attri_box import THIS, AttriBox
 from ._field import Field

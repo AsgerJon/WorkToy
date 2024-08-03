@@ -6,8 +6,27 @@ from __future__ import annotations
 from typing import Any, Self, Never
 
 from worktoy.desc import AbstractDescriptor
+from worktoy.meta import AbstractMetaclass
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
+
+
+class _ZerotonMeta(AbstractMetaclass):
+  """_ZerotonMeta class provides the metaclass for the Zeroton class. """
+
+  def __new__(mcls, name: str, _, __, **___) -> Any:
+    """The __new__ method is invoked to create the class."""
+    return AbstractMetaclass.__new__(mcls, name, (), {}, )
+
+  def __call__(cls, *args, **kwargs) -> Self:
+    """The __call__ method is invoked to create the instance."""
+    return cls
+
+
+class THIS(metaclass=_ZerotonMeta):
+  """THIS is a Zeroton object indicating the class owning the descriptor
+  instance."""
+  pass
 
 
 class _Bag:
@@ -129,8 +148,9 @@ class AttriBox(AbstractDescriptor):
       e = """AttriBox instance has not been called!"""
       raise AttributeError(e)
     args, kwargs = self.getArgs(), self.getKwargs()
+    theseArgs = [instance if arg is THIS else arg for arg in args]
     fieldClass = self.getFieldClass()
-    innerObject = fieldClass(*args, **kwargs)
+    innerObject = fieldClass(*theseArgs, **kwargs)
     return _Bag(instance, innerObject)
 
   def _getPrivateName(self, ) -> str:
