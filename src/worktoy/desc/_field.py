@@ -29,9 +29,12 @@ class Field(AbstractDescriptor):
     """Set the name of the field and the owner of the field."""
     self.__field_owner__ = owner
     self.__field_name__ = name
-    self.__getter_function__ = getattr(owner, self.__getter_key__, None)
-    self.__setter_function__ = getattr(owner, self.__setter_key__, None)
-    self.__deleter_function__ = getattr(owner, self.__deleter_key__, None)
+    if self.__getter_key__ is not None:
+      self.__getter_function__ = getattr(owner, self.__getter_key__, None)
+    if self.__setter_key__ is not None:
+      self.__setter_function__ = getattr(owner, self.__setter_key__, None)
+    if self.__deleter_key__ is not None:
+      self.__deleter_function__ = getattr(owner, self.__deleter_key__, None)
 
   def getFieldType(self) -> type:
     """Getter-function for the field type."""
