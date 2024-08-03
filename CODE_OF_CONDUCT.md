@@ -36,6 +36,8 @@ maintainers.
   of maintainers it is not an honest attempt at improving the project.
 - External conduct: Any behavior or activity of a person not related to
   the project.
+- Community: There is no community here. Community requires contact with
+  other real humans.
 
 ### Maintainer Review
 
