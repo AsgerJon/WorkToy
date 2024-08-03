@@ -1,28 +1,29 @@
-"""LoremSegment provides a segment of lorem ipsum text. """
+"""TextSegment represents normal text. """
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import AttriBox
 from worktoy.text import wordWrap
-from worktoy.yolo import AbstractSegment, loremIpsum
+from worktoy.yolo import AbstractSegment
 
 
-class LoremSegment(AbstractSegment):
-  """LoremSegment provides a segment of lorem ipsum text. """
+class TextSegment(AbstractSegment):
+  """TextSegment class represents a segment of text. """
 
-  charLen = AttriBox[int](600)
+  __base_text__ = None
 
   def __init__(self, *args) -> None:
-    """LoremSegment constructor"""
-    self.leftMargin = '# '
-    self.rightMargin = ' #'
+    """TextSegment constructor"""
+    strArgs = [arg for arg in args if isinstance(arg, str)]
+    self.__base_text__ = ' '.join(strArgs)
+    self.leftMargin = '# ) '
+    self.rightMargin = ' ('
     self.topMargin = ' '
     self.bottomMargin = ' '
 
   def fitWidth(self, width: int) -> list[str]:
     """Returns the segment text fitted to the specified width."""
-    baseLines = wordWrap(width, loremIpsum(self.charLen))
+    baseLines = wordWrap(width, self.__base_text__)
     lines = []
     for line in baseLines:
       while len(line) > width:

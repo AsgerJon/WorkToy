@@ -7,7 +7,7 @@ from typing import Self
 
 from worktoy.desc import Field, AttriBox
 from worktoy.meta import BaseObject
-from worktoy.yolo import AbstractSegment
+from worktoy.yolo import AbstractSegment, LoremSegment, CodeSegment
 
 
 class TextSegment(BaseObject):
@@ -39,10 +39,16 @@ class TermText(BaseObject):
 
   def __str__(self, ) -> str:
     """String representation"""
+    width = None
     out = []
     for segment in self.textSegments:
-      for line in segment.fitWidth(self.outerWidth):
+      if isinstance(segment, LoremSegment):
+        width = self.outerWidth - 4
+      elif isinstance(segment, TextSegment):
+        width = self.outerWidth - 4
+      elif isinstance(segment, CodeSegment):
+        width = self.outerWidth - 8
+      for line in segment.fitWidth(width):
         if line:
-          out.append(line)
-      out.append('%s%s%s' % ('#', ' ' * (self.outerWidth - 2), '#'))
+          out.append('#%s#' % str.center(line, self.outerWidth - 2))
     return '\n'.join(out)
