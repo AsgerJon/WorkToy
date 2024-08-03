@@ -640,133 +640,45 @@ if __name__ == '__main__':
   window = MainWindow()
   window.show()
   sys.exit(app.exec())
-
 ```
 
-The PySide6 library provides Python bindings for the Qt framework. What
-is Qt? For the purposes of this discussion, Qt is a framework for
-developing professional and high-quality graphical user interfaces.
-Entirely with Python. Below is a very simple script that opens an empty
-window and nothing more.
+The above script demonstrates the use of the ``AttriBox`` class to
+provide lazy instantiation of the widgets in the PySide6 application.
 
-```python
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtCore import QSize
+## Conclusion
 
+To take full advantage of the descriptor protocol requires considerable
+boilerplate code if implemented from scratch. The ``worktoy.desc`` module
+provides the ``Field`` and ``AttriBox`` classes to minimize boilerplate.
+The ``Field`` class requires only the code you actually want to use. The
+``AttriBox`` lets you set any class as an attribute in a single line.
 
-class MainWindow(QMainWindow):
-  def __init__(self, parent=None):
-    super().__init__(parent)
-    self.setWindowTitle("Hello, World!")
-    self.setMinimumSize(QSize(480, 320))
+## ``worktoy.meta`` - Background
 
+Python is the best programming language. The most important reason is
+that the syntax is made to be human-readable. Regardless of your personal
+preference for languages, you are never happier than when writing in
+Python. The objections to Python are valid. Provided you are talking
+about Python from 10 years ago. The final reason is the subject of this
+discussion: the Python metaclass. The Python metaclass is the most
+powerful single concept in programming. No other programming language has
+anything like it. Java reflections? No, no, no. Rust macros? Not even
+close! C++ templates? Get it out of here!
 
-if __name__ == "__main__":
-  app = QApplication(sys.argv)
-  window = MainWindow()
-  window.show()
-  sys.exit(app.exec())
-```
+Understanding the Python metaclass does require some background. In the
+following sections, we will examine:
 
-From here, the window class can be extended to include buttons, text boxes,
-and other widgets. Qt provides off-the-shelf widgets for much common use.
-These widgets may be subclassed further customizing their appearance or
-behaviour. Actually advanced users may even create entirely new widgets
-from the ground up. The possibilities are endless.
+- **The Python object**
+- **Object Extensions**
+- **The Python Function**
+- **The ``*`` and ``**`` operators**
+- **The Python ``lambda`` Function**
+- **Class Instantiations**
+- **The Custom Class**
+- **The Custom Metaclass**
+- **The Custom Namespace**
 
-Before we get carried away, we need to keep one very important quirk in
-mind. Qt provides a vast array of classes that all inherit from the
-`QObject` class. This class has an odd, but very unforgiving requirement.
-No instances of `QObject` may be instantiated without a running
-QCoreApplication. This immediately presents a problem to our otherwise
-elegant descriptor protocol: We are not permitted to instantiate
-instances before the main script runs. Such as during class creation. For
-this reason, the `AttriBox` class was created to implement lazy
-instantiation! Let us now see how we might create a more advanced
-graphical user interface whilst adhering to the `QObject` requirement.
-
-### The `AttriBox` class - Lazy instantiation
-
-```python
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
-from PySide6.QtCore import QSize
-
-from worktoy.desc import AttriBox, THIS
-
-
-class MainWindow(QMainWindow):
-  """Subclass of QMainWindow. This class provides the main window for the 
-  application. """
-
-  baseWidget = AttriBox[QWidget](THIS)
-  verticalLayout = AttriBox[QVBoxLayout]()
-  welcomeLabel = AttriBox[QLabel]()
-
-  def show(self) -> None:
-    """Before invoking the parent method, we will setup the window. """
-    self.setMinimumSize(QSize(480, 320))
-    self.setWindowTitle("WorkToy!")
-    self.welcomeLabel.setText("""Welcome to AttriBox!""")
-    self.verticalLayout.addWidget(self.welcomeLabel)
-    self.baseWidget.setLayout(self.verticalLayout)
-    self.setCentralWidget(self.baseWidget)
-    QMainWindow.show(self)
-
-
-if __name__ == "__main__":
-  app = QApplication([])
-  window = MainWindow()
-  window.show()
-  app.exec()
-```
-
-The above script makes use of the lazy instantiation provided by the
-`AttriBox` class. While some readers may have recognized the
-similarities between ``Field`` and ``property``, many readers are presently
-picking jaws up from the floor, pinching themselves or seeking spiritual
-guidance. The `AttriBox` not only implements an enhanced version of the
-descriptor protocol, but it does so on a single line, where it even
-provides syntactic sugar for defining the class intended for lazy
-instantiation. Let us examine ``AttriBox`` in more detail.
-
-### The `AttriBox` class
-
-```python
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
-from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel
-from PySide6.QtCore import QSize
-
-from worktoy.desc import AttriBox, THIS
-
-
-class MainWindow(QMainWindow):
-  """Subclass of QMainWindow. This class provides the main window for the 
-    application. """
-
-  baseWidget = AttriBox[QWidget](THIS)
-  #  The above line creates a descriptor at name 'baseWidget' that will 
-  #  instantiate a QWidget instance. When the __get__ on the descriptor
-  #  tries to retrieve the value it owns, only then will the value be 
-  #  instantiated. When instantiating the value, the arguments in the 
-  #  parentheses are passed to the constructor of the class. That brings 
-  #  us to the 'THIS' token. When instantiating the value, the 'THIS' token
-  #  is replaced with the instance of the owning class. This is convenient 
-  #  for the 'baseWidget' attribute, as it allows the instance created to 
-  #  set its parent to the owning instance.
-```
-
-The use case pertaining to the PySide6 library makes great use of the
-lazy instantiation. In fact, the motivation that led to the creation of
-the ``AttriBox`` class was this need for lazy instantiation.
-
-### ``worktoy.desc.AttriBox`` - Advanced Instantiation
-
-PENDING...
-WorkToy v1 will not release until this documentation is complete.
-
-## worktoy.meta - Understanding the Python metaclass
+## Understanding the Python metaclass
 
 Readers may associate the word **meta** with crime on account of the hype
 created around the term **metaverse**. This author hopes readers will
@@ -1190,9 +1102,7 @@ insightful statement:
 ``7`` is to ``int`` as ``int`` is to ``type``. This means that ``type``
 is responsible for instantiating new classes. A few readers may now begin
 to see where this is going, but before we get there, let us examine how
-``type`` creates a new class. In the example below, we create a simple
-class and we will examine the exact steps that the ``type`` class takes
-during class creation.
+``type`` creates a new class.
 
 ```python
 from worktoy.desc import AttriBox
@@ -1201,16 +1111,14 @@ from worktoy.desc import AttriBox
 class PlanePoint:
   """Class representing a point in the plane """
 
-  x = AttriBox[float]()
-  y = AttriBox[float]()
+  x = AttriBox[float](0)
+  y = AttriBox[float](0)
 
-  def __init__(self, *args) -> None:
-    """Constructor for the PlanePoint class. """
-    floatArgs = [float(arg) for arg in args if isinstance(arg, (int, float))]
-    self.x, self.y = [*floatArgs, 0.0, 0.0][:2]
+  def __init__(self, *args, **kwargs) -> None:
+    """Constructor omitted..."""
 
-  def __abs__(self, ) -> float:
-    """Returns the distance from the origin. """
+  def magnitude(self) -> float:
+    """This method returns the magnitude of the point. """
     return (self.x ** 2 + self.y ** 2) ** 0.5
 
 
@@ -1218,135 +1126,170 @@ if __name__ == '__main__':
   P = PlanePoint(69, 420)
 ```
 
-When the Python interpreter encounters the line beginning with the
-reserved keyword ``class``, it creates a new class object, it begins a
-new lexical scope and the contents parentheses after the name determine
-what happens next. If no such parentheses are present, the default
-behaviour is to create a new instance of ``type``, meaning an extension
-of ``object``. This starts the following process:
+After the import statement, which is not the subject of the present
+discussion, the first line of code encountered by the interpreter is the
+``class PlanePoint:``. The line omits some default values shown here:
+``class PlanePoint(object, metaclass=type)``. What the interpreter does
+next is entirely up to the metaclass. Whatever object the metaclass
+returns will be place at the name ``PlanePoint``. We will now look at
+what the ``type`` metaclass, which is the default, does when it creates a
+class, but keep mind that the metaclass my do whatever it wants.
 
-- **namespace**: ``type`` creates a namespace object that the interpreter
-  will use to build the new class. This object is simply an empty
-  instance of ``dict``.
-- **Class Body Execution**: The interpreter goes through the class body
-  line by line from top to bottom. When encountering an assignment, it
-  updates the namespace accordingly.
-- **Class Object Creation**: The interpreter passes the namespace object
-  back to ``type`` that creates the new class object. This happens when
-  the ``__new__`` method of ``type`` returns.
-- **Descriptor Class Notification**: All ``__set_name__`` methods on
-  objects owned by the class are notified, receiving the class object as
-  the first argument and the name by which the object is assigned to the
-  owning class. In the above example, the ``AttriBox`` objects are
-  notified: ``PlanePoint.x.__set_name__(PlanePoint, 'x')`` and
-  ``PlanePoint.y.__set_name__(PlanePoint, 'y')``.
-- **``type.__init__``:** This is the final step before the ``type`` is
-  complete and the class object is returned. Please note that the
-  interpreter uses highly optimized C code during this whole procedure,
-  and the ``type.__init__`` has no C code implementation making it a noop.
-- **Class Instantiation**: Once the class object is created, instances of
-  the class may now be created. This begins with a call the ``__call__``
-  method on the class object. This method is defined by ``type``. If the
-  class itself defines ``__call__``, that method is invoked only when an
-  instance of the class is called.
-- **``type.__call__(cls, *args, **kwargs)``**: This call on the ``type``
-  object creates the new instance of the class.
-- **``cls.__new__(cls, *args, **kwargs)``**: This method is responsible
-  for creating the new instance of the class. Please note that it makes
-  use of the ``__new__`` method defined on the class object. This means
-  that new classes are able to customize how new instances are created,
-  however implementing the ``__init__`` method defined below is more
-  common and quite sufficient for most purposes.
-- **``cls.__init__(self, *args, **kwargs)``**: When the new instance is
-  created, it is passed to the ``__init__`` method on the class. When
-  coding custom classes implementing the ``__init__`` method is the most
-  convenient way to define how new instances are initialized.
+- **name**: ``PlanePoint`` is recorded as the name of the class about to
+  be created.
+- **bases**: A tuple of the base classes is created. The ``object`` does
+  not actually arrive in this tuple and the ``type`` provides implicitly.
 
-### What is a metaclass?
+Please note that it is possible to pass keyword arguments similarly to
+the metaclass=type, but this is beyond the scope of the present
+discussion. With the name and the bases, the metaclass now creates a
+namespace object. The ``type`` simply uses an empty dictionary. Then the
+interpreter goes through the class body line by line look for assignments,
+function definitions and even nested classes. Basically every statement
+in the class body that assigns a value to a key and for each such pair
+the ``__setitem__`` method is called on the namespace object. The
+implication of this is that where the value to be assigned is the return
+value of a function, then that function is called during the class
+creation process. This means that in the ``PlanePoint`` class above, the
+instances of ``AttriBox`` are created before the class object is created.
+When the interpreter finishes, it calls the ``__new__`` method on the
+metaclass and passes to it: the name, the bases, the namespace and any
+keyword arguments initially passed to class creation. The interpreter
+then waits for the metaclass to return the class object. When this
+happens all the objects that implement ``__set_name__`` has the method
+called informing the descriptor instances that their owner has been
+created. Finally, the interpreter applies the ``__init__`` method of the
+metaclass on the newly created class.
 
-In the previous section, we examined how ``type`` creates a new class.
-What exactly is ``type`` though? ``type`` is an ``object``, but is also
-an extension of ``object`` whose instances themselves are extensions of
-``object``. But what if we extended ``type``? We can do that because
-``type`` itself extends ``object``. This is what a metaclass is. An
-extension of the ``type`` extension of ``object``.
+In summary:
 
-Each of the steps in the class creation process described above may be
-customized by extending the ``type`` class. Below is a list of the
-methods defined on ``type`` that a custom class may override:
+- **Setting up class creation** The interpreter records the name of the
+  class to be created, the base classes, the keyword arguments and which
+  metaclass is responsible for creating the class.
+- **Namespace creation** The items collected are passed to the
+  ``__prepare__`` method on the metaclass:
+  ``namespace = type.__prepare__(name, bases, **kwargs)``
+- **Class Body Execution** The interpreter goes through the class body
+  line by line and assigns the values to the namespace object:
+  ``namespace['x'] = AttriBox[float](0)  # Creates the AttriBox object``
+- **Class Object Creation** The namespace object is passed to the
+  ``__new__`` method on the metaclass:
+  ``cls = type.__new__(type, name, bases, namespace, **kwargs)``
+- **Descriptor Class Notification** The objects implementing the descriptor
+  protocol are notified that the class object has been created:
+  ``AttriBox[float].__set_name__(PlanePoint, 'x')``
+- **``type.__init__``** The metaclass is called with the class object:
+  ``type.__init__(cls, name, bases, namespace, **kwargs)`` Although on
+  ``type`` the ``__init__`` method is a noop.
 
-- **``__prepare__``**: In the previous
-  section when the namespace object was created, this is done by the
-  ``__prepare__`` method on the metaclass. The ``type`` implementation of
-  ``__prepare__`` returns an empty dictionary. A metaclass can change
-  this by prepopulating the items in this dictionary or even return a
-  custom namespace object.
-- **``__new__``**: This method is responsible for creating the object
-  that will be created at the name after the class definition. This is
-  where a new class is conventionally created, but this is by no means a
-  requirement for a custom metaclass. It is possible to implement a
-  metaclass that creates some other object than a new class.
-- **``__init__``**: After the metaclass has created the new class object,
-  or whatever object is created, it is passed to the ``__init__`` method.
-  Please note that this method is called after the ``__set_name__`` has
-  been applied to the objects implementing the descriptor protocol. When
-  this method returns the new class object is created.
+An impractical alternative to the above syntax is to create the new class
+inline: ``PlanePoint = type('PlanePoint', (object,), {})``. Although,
+this line has an empty dictionary where the namespace should have been.
 
-After the metaclass has created the new class and has returned the
-``__init__``, the metaclass is still called by the class object under
-certain circumstances. Below is a list of methods that on the metaclass
-that may be called during class lifetime:
+### The Custom Metaclass
 
-- **``__call__``**: When an instance of the class is called, the
-  ``__call__`` method on the metaclass is invoked. By default, the
-  ``__new__`` on the created class object is called, and the object
-  returned is passed to the ``__init__`` method on the class object. The
-  metaclass may override this behaviour.
-- **``__instance_check__``**: When the ``isinstance`` function is called,
-  the metaclass is called with create class and the instance. Thus, the
-  metaclass may specify how classes derived from it determine if an
-  instance is an instance of it. For example, a custom metaclass creating
-  Numerical classes might recognize instances of ``float`` or ``int`` as
-  their own.
-- **``__subclass_check__``**: This is the method called when
-  ``issubclass`` is called on a class object derived from the metaclass.
-  It allows the metaclass to customize what classes it regards as
-  subclasses. Similar to the ``__instance_check__``.
-- **``__str__``: When printing a class object, the resulting text is
-  frequently more confusing than helpful. I defined a class named
-  ``TestClass`` in the main script and printed it. The output was:
-  ``<class '__main__.TestClass'>``. But suppose we used a custom
-  metaclass ``MetaType`` and derived from it a class called ``TestClass``,
-  then the default output would be: ``<class '[MODULE].TestClass'>``, but
-  it will not make reference to the metaclass. Instead, let us have the
-  metaclass improve this output: ``[MODULE].TestClass(MetaType)``.
-- **``__iter__`` and ``__next__``**: Conventionally, iterating over an
-  object happens on the instance level, and only by implementing the
-  iteration protocol on the metaclass level can the class object itself
-  become iterable.
-- **``__getitem__``**: This method allows a metaclass to define handling
-  of ``cls[key]``. Please note that as of Python version 3.9, Python
-  classes may implement a method called ``__class_getitem__``, which is
-  intended for the same use. In case both the metaclass and the class
-  itself implement these classes respectively, the metaclass
-  implementation is used and the class version is ignored.
-- **``__setitem__``**: This method allows a metaclass to define handling
-  of ``cls[key] = value``.
+This brings us to the actual subject of this discussion: The custom
+metaclass. Because every step mentioned above may be customized by
+subclassing ``type``. Doing so takes away every limitation. The line
+discussed before:
 
-Above is a non-exhaustive list of ``type`` methods that a custom metaclass
-may override. Before proceeding, we must discuss the role of the
-namespace object. A significant aspect of the custom metaclass is the
-ability to provide a custom namespace object.
+```python
+class AnyWayUWantIt(metaclass=MyMeta):
+  """Class representing a point in the plane """
+```
 
-### Custom Namespace
+This line can create anything. A class for example, but anything. It can
+create a string, it can return ``None``, it can create a new function,
+any object possible may be created here.
 
-Going back to the class creation procedure, the interpreter requests a
-namespace object from the metaclass. A custom metaclass may reimplement
-the ``__prepare__`` method responsible for creating the custom namespace
-and have it return an instance of a custom namespace class. Doing so
-places a few subtle requirements on this class.
+This present discussion is about creating new classes, but readers are
+encouraged to experiment.
 
-### Preservation of ``KeyError``
+As mentioned, the ``type`` object provides a very helpful class creation
+process. What it does is defined in the heavily optimized C code of the
+Python interpreter. This cannot be inspected as Python code. For the
+purposes of this discussion, we will now create a custom metaclass that
+does the same as the ``type`` metaclass, but exposed as Python code.
+
+```python
+
+class MetaType(type):
+  """This custom metaclass illustrates the class creation process as it 
+  is done by the 'type' metaclass. """
+
+  @classmethod
+  def __prepare__(mcls, name: str, bases: tuple, **kwargs) -> dict:
+    """This method creates the namespace object, which for 'type' is 
+    merely an empty dictionary. """
+    return dict()
+
+  def __new__(cls, name: str, bases: tuple, namespace: dict, **kw) -> type:
+    """This method creates the class object. There is not much to see 
+    here, as the 'type' metaclass does most of the work. This is normal 
+    in custom metaclasses where this method, if implemented, performs 
+    some tasks, creates the class object, possibly does some more tasks, 
+    before returning the class object. """
+    cls = type.__new__(type, name, bases, namespace)
+    return cls
+
+  def __init__(cls, name: str, bases: tuple, namespace: dict, **kw) -> None:
+    """A custom metaclass may implement this method. Doing so allows 
+    further initialization after the '__set_name__' calls have finished. """
+    pass
+
+  def __call__(cls, *args, **kwargs) -> object:
+    """This method is called when the class object is called. The 
+    expected behaviour even from custom metaclasses, is for it to create 
+    a new instance of the class object. Please note, that generally 
+    speaking, custom classes are free to implement their own 
+    instantiation in the form of the '__new__' and '__init__' methods. If 
+    a custom metaclass does not intend to adhere to these, then when 
+    encountering a class body that tries to implement them, the namespace 
+    object should raise an error. Do not allow classes derived from the 
+    custom metaclass to implement a function that you do not intend to 
+    actually use. """
+    self = cls.__new__(cls, *args, **kwargs)
+    if isinstance(self, cls):
+      self.__init__(*args, **kwargs)
+    return self
+
+  def __instance_check__(cls, instance: object) -> bool:
+    """Whenever the 'isinstance' function is called, this method on the 
+    metaclass is responsible for determine if the instance should be 
+    regarded an instance of the class object. """
+    otherCls = type(instance)
+    if cls is otherCls:
+      return True
+    for item in otherCls.__mro__:
+      if item is cls:
+        return True
+    return False
+
+  def __subclass_check__(cls, subclass: type) -> bool:
+    """Similar to the above instance check method, this method is 
+    responsible for deciding of the subclass provided should be regarded 
+    as a subclass of the class object. """
+    if cls is subclass:
+      return True
+    for item in subclass.__mro__:
+      if item is cls:
+        return True
+    return False
+```
+
+Since the ``type`` metaclass is heavily optimized in the C code of the
+Python interpreter, the above implementation is for illustrative purposes
+only. It shows what methods a custom metaclass may customize to achieve a
+particular behaviour.
+
+### The Custom Namespace
+
+The custom namespace object must implement ``__getitem__`` and
+``__setitem__``. Additionally, it must satisfy the key error preservation
+and the ``type.__new__`` method must receive a namespace of ``dict``-type.
+This is elaborated below:
+
+#### ``KeyError`` preservation
 
 When a dictionary is accessed with a key that does not exist, a
 ``KeyError`` is raised. The interpreter relies on this behaviour to
@@ -1372,7 +1315,7 @@ happen to not include any of the above non-assignments. In summary:
 failing to raise the expected error must be avoided at all costs, as it
 will cause undefined behaviour without any indication as to the to cause.
 
-### Subclass of ``dict``
+#### The ``type.__new__`` expects a namespace of ``dict``-type
 
 After the class body is executed the namespace object is passed to the
 ``__new__`` method on the metaclass. If the metaclass is intended to
@@ -1385,68 +1328,38 @@ then it is necessary to implement functionality in the ``__new__`` method
 on the metaclass such that a ``dict`` is passed to the ``type.__new__``
 call.
 
-### Required functionalities
+### Applications of Custom Namespace
 
-Please note that this section pertains only to functionalities whose
-absense will cause the interpreter to raise an exception. The
-functionalities described here cannot be said to be sufficient for any
-degree of functionality. A custom namespace class must additionally
-implement whatever functionality is required for its intended purpose.
+During class body execution the namespace object is passed the key value
+pairs encountered. When using the empty dictionary as the namespace,
+information is lost when a key receives multiple values as only the most
+recently set value is retained. A custom namespace might collect all
+values set at each name thus preserving all information. This application
+is implemented in the ``worktoy.meta`` module. Beyond the scope of this
+module is the potential for the namespace object to dynamically change
+during the class body execution. This potential is not explored here, but
+readers are encouraged to experiment.
 
-- **``__getitem__``**: This method must implement this method such that
-  if a normal dictionary would raise an error on receiving a key, then
-  that error must still be raised. Please note, that the interpreter
-  handles this exception silently. Other than this situation, the
-  ``__getitem__`` method are otherwise free to do anything it wants.
-- **``__setitem__``**: The namespace object must return a callable object
-  at name ``__setitem__``, that accepts three positional arguments: the
-  namespace instance at the ``self`` argument, as well as the ``key`` and
-  the ``value``. As long as a callable is at the name, and it does not
-  raise an error upon receiving three arguments, the namespace object can
-  do whatever it wants. It does not even have to remember anything.
-
-### Potential functionalities
-
-This section describes functionalities that is certain to preserve all
-information received in the class body. This is an enhancement compared
-to the default namespace object. It permits the ``__new__`` in the
-metaclass access to all information encountered in the class body. As
-long as this is satisfied, there is little additional functionality the
-namespace object may provide to the ``__new__`` method. Nevertheless,
-readers are encouraged to experiment with custom namespace classes beyond
-this.
-
-### Custom Metaclass Requirements
-
-This section illustrates the immense flexibility of the custom metaclass,
-by just how little is actually required for the interpreter to go through
-the class creation process without raising an exception. This author has
-found only two requirements for the custom metaclass:
-
-- **Callable**: The object used as ``metaclass`` must be callable.
-- **Accept three positional arguments**: As well as being callable, three
-  positional arguments are passed to it. As long as doing so does not
-  raise an exception, the metaclass is free to do whatever it wants.
-
-And that is all that is required. The metaclass is typically a subclass
-of ``type``, but is not required. Conventionally, some kind of class
-object is created, but is not required. The metaclass is not even
-required to return anything in which case, the ``None`` object will
-appear at the given class name. Thus, the custom metaclass can be used to
-create new classes, but in reality it can be used to create anything. It
-could be used to replace functions defined with the ``def`` keyword.
-Readers are encouraged to dream up new uses for the custom metaclass.
-
-The remainder of this documentation focus on the ``worktoy.meta`` module
-and the classes and functions defined therein. These focus on the more
-conventional applications of the custom metaclass, that is, creation of
-classes having functionalities beyond the default Python classes.
+Preserving multiple values on the same key can only be provided for by a
+custom namespace. An obvious use case would be function overloading. This
+brings up an important distinction: A class implementing function
+overloading is in some ways the exact same class as before. Only the
+overloaded methods are different. Providing a custom namespace does not
+actually result in classes that exhibit different behaviour. Achieving
+this requires customization of the metaclass itself beyond the
+``__prepare__`` method.
 
 ## The ``worktoy.meta`` module
 
+We have discussed class creation by use of ``type``, we have illustrated
+what methods might be customized. In particular the custom namespace
+returned by the ``__prepare__`` method. This brings us to the
+``worktoy.meta`` module. Our discussion will proceed with an examination
+of the contents.
+
 ### Nomenclature
 
-Before proceeding, let us define terms:
+Below is a list of terms used in the ``worktoy.meta`` module:
 
 - **``cls``** - A newly created class object
 - **``self``** - A newly created object that is an instance of the newly
@@ -1455,194 +1368,52 @@ Before proceeding, let us define terms:
 - **``namespace``** - This is where the class body is stored during class
   creation.
 
-### ``AbstractMetaclass`` and ``AbstractNamespace``
+### Metaclass and Namespace Pattern
 
-These abstract baseclass illustrates an elegant metaclass pattern. The
-namespace class records every assignment in the class body, even if a
-name is assigned a value for the second time. The namespace class also
-implements a method called ``compile`` which returns a regular dictionary
-with the items the metaclass should pass on to the ``type.__new__``
-method. Without further subclassing, instances of this namespace class,
-will provide behaviour indistinguishable from the default behaviour.
+The ``worktoy.meta`` module implements a pattern where the metaclass is
+responsible for defining the functionality of the class, while the
+namespace object is responsible for collecting items from the class body
+execution. Rather than simply passing on the namespace object it receives,
+the namespace object class is expected to implement a method called
+``compile``. The metaclass uses the ``dict`` returned by the ``compile``
+when it calls the ``type.__new__`` method.
 
-The abstract metaclass implements the ``__prepare__`` class method which
-returns creates an instance of the abstract namespace class defined above.
-In the ``__new__`` method the metaclass retrieves the final namespace
-dictionary by calling the ``compile`` method on the namespace object.
-With this it calls the ``type.__new__`` method with the thus obtained
-namespace object. The class object returned from the call to
-``type.__new__`` is returned by the abstract metaclass.
+This pattern is based on the separation of responsibilities: The
+namespace object class is responsible for processing the contents of the
+class body. The metaclass is responsible for defining the functionality
+of the class itself.
 
-This pair of abstract classes provides a solid pair of baseclasses. The
-pattern is convenient, the metaclass instantiates the namespace object.
-Without loss of information, the namespace object is returned to the
-metaclass. Here the metaclass obtains the final namespace dictionary from
-the ``compile`` method on the namespace object.
+### Function Overloading
+
+The ``worktoy.meta`` module provides a decorator factory called
+``overload`` used to mark an overloaded method with a type signature. The
+``Dispatcher`` class contains a dictionary of functions keyed by their
+type signatures. When calling an instance of this class, the types of the
+arguments received determine what function to call. The ``BaseNamespace``
+class is a custom namespace object that collects overloaded functions and
+replaces each such name with a relevant instance of the ``Dispatcher``. The
+``BaseMetaclass`` class is a custom metaclass using the ``BaseNamespace``
+class as the namespace object. Finally, the ``BaseObject`` class derives
+from the ``BaseMetaclass`` and implements function overloading.
 
 ### Singleton
 
-The singleton term is well understood as a class having only one
-instance. Typically, such a class is callable, but instead of creating a
-new instance, the same singleton instance is returned. However, when the
-singleton class is called the singleton instance will have its
-``__init__`` repeated with whatever arguments are passed. This allows the
-singleton instance to update itself. If this is undesirable, the
-singleton class should itself prevent its ``__init__`` method from
-updating values intended to immutable.
+Singleton classes are characterized by the fact that they are allowed
+only one instance. The ``worktoy.meta`` provides ``Singleton`` class
+derived from a custom metaclass. Subclasses of it are singletons. When
+calling the class object of a subclass of ``Singleton`` the single
+instance of the class is returned. If the subclass implements
+``__init__`` then it is called on the single instance. This allows
+dynamic behaviour of singletons. If this is not desired, the singleton
+subclass should provide functionality preventing the ``__init__`` method
+from running more than once.
 
-``worktoy.meta`` provides a metaclass called ``SingletonMeta`` and a
-derived class called ``Singleton``. Custom singleton classes may either
-set ``SingletonMeta`` as the metaclass or subclass ``Singleton``. The
-metaclass subclasses the ``BaseMetaclass`` discussed below.
+### Summary
 
-### Zeroton
-
-The ``Zeroton`` class is a novelty. What specified the singleton class is
-the fact that it has only one instance. The ``Zeroton`` class in contrast
-has not even one instance. Such a class is essentially a token. The
-purpose of it is to retain itself across multiple modules. Presently, it
-finds use in the ``AttriBox`` implementation of the ``worktoy.desc``
-module. For more information, readers are referred to the section on
-"Advanced Instantiation" in the ``worktoy.desc`` documentation.
-
-### Function overloading in Python
-
-When creating a new class using the default ``type``, only the most
-recent assigned value at each name is retained. As such, implementing
-overloading of methods in the class body requires a custom metaclass
-providing a custom namespace. The ``worktoy.meta`` module provides the
-``BaseObject`` class derived from the ``BaseMetaclass``, which implements
-function overloading of the methods in the class body. Before
-demonstrating the syntactic use of the ``BaseObject`` class, an
-explanation of the implementation is provided. To skip directly to the
-usage, see section **worktoy.meta.overload - Usage**.
-
-### Background
-
-The main issue with function overloading is that multiple callables are
-now present on the same name. Thus, a new step is required to determine
-which available implementation to invoke, given the arguments received.
-The procedure chosen here is to contain the pairs of type signatures and
-callables in a dictionary. When the overloaded function is called, the
-type signature of the arguments is determined and used to look up the
-appropriate callable in the dictionary, before invoking it with the
-argument values. This step does add some overhead, but in testing has not
-exceeded 20 %.
-
-### Type Decoration
-
-When a class body is to define multiple callables at the same name, but
-with different functions, the ``worktoy.meta.overload`` decorator factory
-is used. When calling it with types as positional arguments, it returns a
-decorator. When this decorator is called it sets the type signature of
-the decorated function at the attribute named
-``__overloaded_signature__`` to the type signature given the factory.
-
-### Function Dispatcher
-
-The ``BaseNamespace`` uses a dedicated class called ``Dispatcher`` to
-encapsulates the type signature to callable mapping. The ``Dispatcher``
-class implements both the descriptor protocol and the ``__call__`` method
-allowing it to emulate the behaviour of bounded and unbounded methods as
-appropriate. When called it determines the type signature of the
-arguments received, resolve the matching callable, invokes it with the
-arguments received and returns the return value.
-
-### Namespace Compilation
-
-The ``BaseMetaclass`` implements the pattern described previously, where
-the namespace class provides functionality for creating a dictionary to
-be used in the ``type.__new__`` method. This ``compile`` method retrieves
-the callables encountered during class body execution that were decorated
-with by the overload decorator and for each name creates a ``Dispatcher``
-instance as described above, which is placed in the final dictionary at
-the appropriate name.
-
-### ``worktoy.meta.overload`` - Usage
-
-To make use of the 'overload' functionality in a class definition, import
-the ``overload`` decorator factory and the ``BaseObject`` class from the
-``worktoy.meta.overload`` module. The ``BaseObject`` class already uses the
-``BaseMetaclass`` as the metaclass, provides replacements for
-``__init__`` and ``__init_subclass__`` which do not raise exceptions
-every time they see an argument, in contrast to ``object.__init__`` and
-``object.__init_subclass__``:
-
-```python
-from __future__ import annotations
-
-from worktoy.meta import BaseMetaclass
-
-
-class BaseObject(metaclass=BaseMetaclass):
-  """BaseObject provides argument-tolerant implementations of __init__ and
-  __init_subclass__ preventing the errors explained in the documentation."""
-
-  def __init__(self, *args, **kwargs) -> None:
-    """Why are we still here?"""
-
-  def __init_subclass__(cls, *args, **kwargs) -> None:
-    """Just to suffer?"""
-```
-
-Implement the custom class as a subclass of ``BaseObject``. In the
-function body, provide implementations of the overloaded functions by
-reusing the name of the function. Decorate each such function with the
-``overload`` decorator factory and provide the type signatures of the
-as positional arguments. For example:
-
-```python
-from worktoy.meta import overload, BaseObject
-from worktoy.desc import AttriBox
-from typing import Self
-
-
-class ComplexNumber(BaseObject):
-  """Class representing complex numbers. """
-
-  __fallback_value__ = 0j
-
-  realPart = AttriBox[float]()
-  imagPart = AttriBox[float]()
-
-  @overload(int, int)
-  def __init__(self, a: int, b: int) -> None:
-    self.__init__(float(a), float(b))
-
-  @overload(float, float)
-  def __init__(self, a: float, b: float) -> None:
-    self.realPart, self.imagPart = a, b
-
-  @overload(complex)
-  def __init__(self, z: complex) -> None:
-    self.realPart, self.imagPart = z.real, z.imag
-
-  @overload()
-  def __init__(self, ) -> None:
-    self.__init__(self.__fallback_value__)
-
-  def __abs__(self) -> float:
-    return (self.realPart ** 2 + self.imagPart ** 2) ** 0.5
-
-  def __sub__(self, other: Self) -> Self:
-    return ComplexNumber(self.realPart - other.realPart,
-                         self.imagPart - other.imagPart)
-
-  def __add__(self, other: Self) -> Self:
-    return ComplexNumber(self.realPart + other.realPart,
-                         self.imagPart + other.imagPart)
-
-  def __eq__(self, other: Self) -> bool:
-    return False if abs(self - other) > 1e-08 else True
-
-
-if __name__ == '__main__':
-  z1 = ComplexNumber(69, 420)
-  z2 = ComplexNumber(69.0, 420.0)
-  z3 = ComplexNumber(69 + 420j)
-  print(z1 == z2 == z3)
-
-
-
-
-```
+The ``worktoy.meta`` module provides base classes and a pattern for
+custom metaclass creation and uses them to implement function overloading
+in the ``BaseObject`` class. Additionally, the module provides a
+``Singleton`` class for creating singletons, which is based on a custom
+metaclass derived from the module. Other parts of the ``worktoy`` module
+makes use of the ``worktoy.meta`` in their implementation. This includes
+the ``KeeNum`` enumeration module and the ``ezdata`` module.
