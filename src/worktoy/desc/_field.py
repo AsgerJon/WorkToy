@@ -113,7 +113,7 @@ class Field(AbstractDescriptor):
       e = typeMsg('callMeMaybe', callMeMaybe, Callable)
       raise TypeError(e)
     self.__deleter_function__ = callMeMaybe
-    self.__deleter_key__ = callMeMaybe
+    self.__deleter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def GET(self, callMeMaybe: Callable) -> Callable:
