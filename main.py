@@ -7,9 +7,6 @@ import os
 import sys
 
 from _yolo import runTests, yolo
-from main_tester_class02 import Trig
-from main_tester_class03 import PlanePoint
-from worktoy.text import wordWrap, typeMsg, joinWords
 
 
 def tester00() -> int:
