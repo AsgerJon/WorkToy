@@ -21,6 +21,17 @@ class Field(AbstractDescriptor):
   __getter_function__ = None
   __setter_function__ = None
   __deleter_function__ = None
+  __getter_key__ = None
+  __setter_key__ = None
+  __deleter_key__ = None
+
+  def __set_name__(self, owner: type, name: str) -> None:
+    """Set the name of the field and the owner of the field."""
+    self.__field_owner__ = owner
+    self.__field_name__ = name
+    self.__getter_function__ = getattr(owner, self.__getter_key__, None)
+    self.__setter_function__ = getattr(owner, self.__setter_key__, None)
+    self.__deleter_function__ = getattr(owner, self.__deleter_key__, None)
 
   def getFieldType(self) -> type:
     """Getter-function for the field type."""
@@ -78,6 +89,7 @@ class Field(AbstractDescriptor):
       e = typeMsg('callMeMaybe', callMeMaybe, Callable)
       raise TypeError(e)
     self.__getter_function__ = callMeMaybe
+    self.__getter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def __set_setter__(self, callMeMaybe: Callable) -> Callable:
@@ -89,6 +101,7 @@ class Field(AbstractDescriptor):
       e = typeMsg('callMeMaybe', callMeMaybe, Callable)
       raise TypeError(e)
     self.__setter_function__ = callMeMaybe
+    self.__setter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def __set_deleter__(self, callMeMaybe: Callable) -> Callable:
@@ -100,6 +113,7 @@ class Field(AbstractDescriptor):
       e = typeMsg('callMeMaybe', callMeMaybe, Callable)
       raise TypeError(e)
     self.__deleter_function__ = callMeMaybe
+    self.__deleter_key__ = callMeMaybe
     return callMeMaybe
 
   def GET(self, callMeMaybe: Callable) -> Callable:
