@@ -1887,4 +1887,27 @@ This module provides two ``None``-aware functions:
 - ``maybe``: This functions returns the first positional argument it
   received that is different from ``None``.
 - ``maybeType``: Same as ``maybe`` but ignoring arguments that are not of
-  the expected type given as the first positional argument. 
+  the expected type given as the first positional argument.
+
+```python
+"""Example of the 'maybe' and 'maybeType' functions."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.parse import maybe, maybeType
+
+someFalse = [0, '', dict(), set(), list(), 0j, .0, ]
+
+if __name__ == '__main__':
+  for item in someFalse:
+    print(maybe(None, None, item, ))  # item from 'someFalse'
+  print(maybeType(int, None, *someFalse))  # 0
+  print(maybeType(str, None, *someFalse))  # ''
+  print(maybeType(dict, None, *someFalse))  # {}
+  print(maybeType(set, None, *someFalse))  # set()
+  print(maybeType(list, None, *someFalse))  # []
+  print(maybeType(complex, None, *someFalse))  # 0j
+  print(maybeType(float, None, *someFalse))  # 0.0
+
+```
