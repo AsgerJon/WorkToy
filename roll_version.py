@@ -27,7 +27,7 @@ def _loadFile(file: str, **kwargs) -> str:
 
 
 def _updateTag() -> None:
-  """Retrieves the version of the worktoy package."""
+  """Retrieves the version of the worktoy package. """
   with open(_loadFile('worktoy_version.json'), 'r') as file:
     v = json.load(file)
   patch = v['patch']
