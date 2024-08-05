@@ -65,6 +65,7 @@ def _updateTag() -> None:
       newLines.append(line)
       newLines = [*newLines, *lines]
       break
+    newLines.append(line)
   else:
     e = """Unable to find the 'version' key in the 'tool.poetry' section of
     the pyproject.toml file!"""
