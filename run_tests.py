@@ -15,7 +15,7 @@ def main(*args) -> int:
   here = os.path.abspath(os.path.dirname(__file__))
   testPath = os.path.join(here, 'tests')
   suite = loader.discover(start_dir=testPath, pattern='test_*.py')
-  runner = TextTestRunner(verbosity=0)
+  runner = TextTestRunner(verbosity=2)
   result = runner.run(suite)
   if result.wasSuccessful():
     return 0
