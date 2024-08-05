@@ -713,7 +713,8 @@ class MainWindow(QMainWindow):
     self.welcomeLabel.setText("""Welcome to WorkToy!""")
     self.baseLayout.addWidget(self.welcomeLabel)
     self.baseWidget.setLayout(self.baseLayout)
-    #  If passing 'THIS' to the layout box, it 
+    #  If passing 'THIS' to the layout box, it would set the window 
+    #  instance at the layout instead of the widget instance. 
     self.setCentralWidget(self.baseWidget)
 
   def show(self) -> None:
