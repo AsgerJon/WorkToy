@@ -12,17 +12,3 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y tree
       - name: Show directory structure
         run: tree
-      - name: Install Miniconda
-        run: |
-          wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-          bash miniconda.sh -b -p $HOME/miniconda
-          echo "$HOME/miniconda/bin" >> $GITHUB_PATH
-      - name: Set up Conda
-        run: |
-          source $HOME/miniconda/bin/activate
-          conda init bash
-          conda config --set always_yes yes
-          conda update -q conda
-          conda config --env --add channels conda-forge
-          conda config --env --remove channels defaults
-          conda install -n base -c conda-forge mamba -y
