@@ -1,4 +1,4 @@
-"""TestEmptyField tests the EmptyField class."""
+"""TestField tests the EmptyField class."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
@@ -73,8 +73,8 @@ class Point3D:
         self.__y_value__ = 420.
 
 
-class TestEmptyField(TestCase):
-  """TestEmptyField tests the EmptyField class."""
+class TestField(TestCase):
+  """TestField tests the EmptyField class."""
 
   def setUp(self, ) -> None:
     """Sets up each test method."""
@@ -93,10 +93,6 @@ class TestEmptyField(TestCase):
 
   def test_errors(self) -> None:
     """Tests the error handling"""
-    # try:
-    #   print(self.point.z)
-    # except Exception as exception:
-    #   print(exception)
     with self.assertRaises(TypeError):
       self.point.y = 1337
     with self.assertRaises(TypeError):

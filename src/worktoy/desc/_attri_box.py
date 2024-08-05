@@ -5,86 +5,9 @@ from __future__ import annotations
 
 from typing import Any, Self, Never
 
-from worktoy.desc import AbstractDescriptor
-from worktoy.meta import AbstractMetaclass
+from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, Flag, BOX, ATTR
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
-
-
-class _ZerotonMeta(AbstractMetaclass):
-  """_ZerotonMeta class provides the metaclass for the Zeroton class. """
-
-  def __new__(mcls, name: str, _, __, **___) -> Any:
-    """The __new__ method is invoked to create the class."""
-    return AbstractMetaclass.__new__(mcls, name, (), {}, )
-
-  def __call__(cls, *args, **kwargs) -> Self:
-    """The __call__ method is invoked to create the instance."""
-    return cls
-
-
-class THIS(metaclass=_ZerotonMeta):
-  """THIS is a Zeroton object indicating the class owning the descriptor
-  instance."""
-  pass
-
-
-class _Bag:
-  """This private class wraps the field object. """
-
-  __owning_instance__ = None
-  __owning_class__ = None
-  __inner_object__ = None
-  __inner_class__ = None
-
-  def __init__(self, owningInstance: object, innerObject: object) -> None:
-    self.setOwningInstance(owningInstance)
-    self.setInnerObject(innerObject)
-
-  def getOwningInstance(self) -> object:
-    """Getter-function for the owning instance. """
-    return self.__owning_instance__
-
-  def setOwningInstance(self, owningInstance: object) -> None:
-    """Setter-function for the owning instance. """
-    if self.__owning_instance__ is not None:
-      if self.__owning_instance__ is owningInstance:
-        return
-      e = """The owning instance has already been assigned!"""
-      raise AttributeError(e)
-    self.__owning_instance__ = owningInstance
-    self.__owning_class__ = type(owningInstance)
-
-  def getInnerObject(self) -> object:
-    """Getter-function for the inner object. """
-    return self.__inner_object__
-
-  def setInnerObject(self, innerObject: object) -> None:
-    """Setter-function for the inner object. """
-    if self.__inner_class__ is None:
-      self.__inner_object__ = innerObject
-      self.__inner_class__ = type(innerObject)
-    elif isinstance(innerObject, self.getInnerClass()):
-      self.__inner_object__ = innerObject
-    else:
-      if self.getInnerClass() is complex:
-        if isinstance(innerObject, (int, float)):
-          return self.setInnerObject(complex(innerObject))
-      if self.getInnerClass() is float and isinstance(innerObject, int):
-        return self.setInnerObject(float(innerObject))
-      if self.getInnerClass() is int and isinstance(innerObject, float):
-        if innerObject.is_integer():
-          return self.setInnerObject(int(innerObject))
-      e = typeMsg('innerObject', innerObject, self.getInnerClass())
-      raise TypeError(e)
-
-  def getInnerClass(self) -> type:
-    """Getter-function for the inner class. """
-    return self.__inner_class__
-
-  def getOwningClass(self) -> type:
-    """Getter-function for the owning class. """
-    return self.__owning_class__
 
 
 class AttriBox(AbstractDescriptor):
@@ -126,20 +49,42 @@ class AttriBox(AbstractDescriptor):
     if self.__field_class__ is None:
       e = """The field class of the AttriBox instance has not been set!"""
       raise AttributeError(e)
+    if self.__field_class__ is bool:
+      return Flag
     if isinstance(self.__field_class__, type):
       return self.__field_class__
     e = typeMsg('__field_class__', self.__field_class__, type)
     raise TypeError(e)
 
-  def getArgs(self, ) -> list[Any]:
+  def getArgs(self, instance: object) -> list[Any]:
     """Getter-function for positional arguments"""
-    return maybe(self.__pos_args__, [])
+    args = []
+    for arg in maybe(self.__pos_args__, []):
+      if arg is THIS:
+        args.append(instance)
+      elif arg is TYPE:
+        args.append(self.getFieldOwner())
+      elif arg is BOX:
+        args.append(self)
+      elif arg is ATTR:
+        args.append(type(self))
+      else:
+        args.append(arg)
+    return args
 
-  def getKwargs(self, ) -> dict[str, Any]:
+  def getKwargs(self, instance: object) -> dict[str, Any]:
     """Getter-function for keyword arguments"""
-    return maybe(self.__key_args__, {})
+    kwargs = {}
+    for (key, val) in maybe(self.__key_args__, {}).items():
+      if val is THIS:
+        kwargs[key] = instance
+      elif val is TYPE:
+        kwargs[key] = self.getFieldOwner()
+      else:
+        kwargs[key] = val
+    return kwargs
 
-  def _createFieldObject(self, instance: object) -> _Bag:
+  def _createFieldObject(self, instance: object) -> Bag:
     """Create the field object."""
     if self.__field_class__ is None:
       e = """AttriBox instance has not been initialized!"""
@@ -147,11 +92,10 @@ class AttriBox(AbstractDescriptor):
     if self.__pos_args__ is None or self.__key_args__ is None:
       e = """AttriBox instance has not been called!"""
       raise AttributeError(e)
-    args, kwargs = self.getArgs(), self.getKwargs()
-    theseArgs = [instance if arg is THIS else arg for arg in args]
+    args, kwargs = self.getArgs(instance), self.getKwargs(instance)
     fieldClass = self.getFieldClass()
-    innerObject = fieldClass(*theseArgs, **kwargs)
-    return _Bag(instance, innerObject)
+    innerObject = fieldClass(*args, **kwargs)
+    return Bag(instance, innerObject)
 
   def _getPrivateName(self, ) -> str:
     """Returns the name of the private attribute used to store the inner
@@ -172,6 +116,11 @@ class AttriBox(AbstractDescriptor):
     innerName = '_'.join(innerNames)
     return """__%s__""" % (innerName,)
 
+  def __instance_reset__(self, instance: object) -> None:
+    """Reset-function for the instance."""
+    pvtName = self._getPrivateName()
+    delattr(instance, pvtName)
+
   def __instance_get__(self, instance: object, **kwargs) -> Any:
     """Getter-function for the instance."""
     pvtName = self._getPrivateName()
@@ -181,8 +130,8 @@ class AttriBox(AbstractDescriptor):
       setattr(instance, pvtName, self._createFieldObject(instance))
       return self.__instance_get__(instance, _recursion=True)
     bag = getattr(instance, pvtName)
-    if not isinstance(bag, _Bag):
-      e = typeMsg('bag', bag, _Bag)
+    if not isinstance(bag, Bag):
+      e = typeMsg('bag', bag, Bag)
       raise TypeError(e)
     innerObject = bag.getInnerObject()
     if innerObject is None:
@@ -204,9 +153,9 @@ class AttriBox(AbstractDescriptor):
       bag = self._createFieldObject(instance)
       bag.setInnerObject(value)
       return setattr(instance, pvtName, bag)
-    if isinstance(bag, _Bag):
+    if isinstance(bag, Bag):
       return bag.setInnerObject(value)
-    e = typeMsg('bag', bag, _Bag)
+    e = typeMsg('bag', bag, Bag)
     raise TypeError(e)
 
   def __instance_del__(self, instance: object) -> Never:

@@ -1,4 +1,4 @@
-"""EmptyField provides a flexible implementation of the descriptor
+"""Field provides a flexible implementation of the descriptor
 protocol allowing owning classes to decorate methods as accessor methods. """
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
@@ -11,18 +11,19 @@ from worktoy.text import typeMsg
 
 
 class Field(AbstractDescriptor):
-  """EmptyField provides a flexible implementation of the descriptor
+  """Field provides a flexible implementation of the descriptor
   protocol allowing owning classes to decorate methods as accessor
   methods. """
   __field_type__ = None
-  __getter_name__ = None
-  __setter_name__ = None
-  __deleter_name__ = None
+  #  Accessor methods
   __getter_function__ = None
   __setter_function__ = None
+  __resetter_function__ = None
   __deleter_function__ = None
+  #  Keys for accessor methods
   __getter_key__ = None
   __setter_key__ = None
+  __resetter_key__ = None
   __deleter_key__ = None
 
   def __set_name__(self, owner: type, name: str) -> None:
@@ -33,6 +34,9 @@ class Field(AbstractDescriptor):
       self.__getter_function__ = getattr(owner, self.__getter_key__, None)
     if self.__setter_key__ is not None:
       self.__setter_function__ = getattr(owner, self.__setter_key__, None)
+    if self.__resetter_key__ is not None:
+      self.__resetter_function__ = getattr(
+          owner, self.__resetter_key__, None)
     if self.__deleter_key__ is not None:
       self.__deleter_function__ = getattr(owner, self.__deleter_key__, None)
 
@@ -44,6 +48,10 @@ class Field(AbstractDescriptor):
       return self.__field_type__
     e = typeMsg('__field_type__', self.__field_type__, type)
     raise TypeError(e)
+
+  def __instance_reset__(self, instance: object) -> None:
+    """Reset the instance object."""
+    self.__get_resetter__()(instance)
 
   def __instance_get__(self, instance: object) -> object:
     """Get the instance object."""
@@ -76,6 +84,13 @@ class Field(AbstractDescriptor):
     e = typeMsg('setter', self.__setter_function__, Callable)
     raise TypeError(e)
 
+  def __get_resetter__(self, ) -> Callable:
+    """Getter-function for the resetter-function of the field."""
+    if callable(self.__resetter_function__):
+      return self.__resetter_function__
+    e = typeMsg('resetter', self.__resetter_function__, Callable)
+    raise TypeError(e)
+
   def __get_deleter__(self, ) -> Callable:
     """Getter-function for the deleter-function of the field."""
     if callable(self.__deleter_function__):
@@ -99,6 +114,14 @@ class Field(AbstractDescriptor):
     self.__setter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
+  def __set_resetter__(self, callMeMaybe: Callable) -> Callable:
+    """Sets the resetter function of the field."""
+    if not callable(callMeMaybe):
+      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
+      raise TypeError(e)
+    self.__resetter_key__ = callMeMaybe.__name__
+    return callMeMaybe
+
   def __set_deleter__(self, callMeMaybe: Callable) -> Callable:
     """Set the deleter function of the field."""
     if not callable(callMeMaybe):
@@ -114,6 +137,10 @@ class Field(AbstractDescriptor):
   def SET(self, callMeMaybe: Callable) -> Callable:
     """Decorator for setting the setter function of the field."""
     return self.__set_setter__(callMeMaybe)
+
+  def RESET(self, callMeMaybe: Callable) -> Callable:
+    """Decorator for setting the resetter function of the field."""
+    return self.__set_resetter__(callMeMaybe)
 
   def DELETE(self, callMeMaybe: Callable) -> Callable:
     """Decorator for setting the deleter function of the field."""

@@ -45,6 +45,26 @@ class Dispatcher:
     typeSig = tuple(type(arg) for arg in args)
     func = self.__overloaded_functions__.get(typeSig, None)
     if func is None:
+      floatSig = (*[float if arg is int else arg for arg in typeSig],)
+      func = self.__overloaded_functions__.get(floatSig, None)
+    if func is None:
+      intArgs, intSig = [], []
+      for arg in args:
+        if isinstance(arg, float):
+          if float.is_integer(arg):
+            intArgs.append(arg)
+            intSig.append(int)
+          else:
+            intArgs.append(arg)
+            intSig.append(float)
+        else:
+          intArgs.append(arg)
+          intSig.append(type(arg))
+      intSig, intArgs = (*intSig,), (*intArgs,)
+      func = self.__overloaded_functions__.get(intSig, None)
+      if func is not None:
+        return func(this, *intArgs, **kwargs)
+    if func is None:
       for keyTypes, callMeMaybe in self.__overloaded_functions__.items():
         if len(keyTypes) == len(args):
           for keyType, arg in zip(keyTypes, args):

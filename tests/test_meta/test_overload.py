@@ -64,9 +64,51 @@ class Color(BaseObject):
     return (self.red ** 2 + self.green ** 2 + self.blue ** 2) ** 0.5
 
 
+class SusInt(BaseObject):
+  """This class tries to accept float as int"""
+
+  x = AttriBox[float]()
+  y = AttriBox[float]()
+  res = AttriBox[str]()
+
+  @overload(int, int)
+  def __init__(self, x: int, y: int) -> None:
+    self.x = x
+    self.y = y
+    self.res = 'WIN!'
+    BaseObject.__init__(self, )
+
+
+class SusFloat(BaseObject):
+  """This class tries to accept int as float"""
+
+  x = AttriBox[int]()
+  y = AttriBox[int]()
+  res = AttriBox[str]()
+
+  @overload(float, float)
+  def __init__(self, x: float, y: float) -> None:
+    self.x = x
+    self.y = y
+    self.res = 'WIN!'
+    BaseObject.__init__(self, )
+
+
 class TestOverload(TestCase):
   """TestOverload tests the overloading functionality of the
   BaseMetaclass. The tests focus on the color class defined above. """
+
+  def testSusInt(self) -> None:
+    """Testing if we can handle float where int is expected, if float is
+    integer valued. """
+    regInt = SusInt(69, 420)
+    susInt = SusInt(69.0, 420.0)
+    regFloat = SusFloat(69., 420.)
+    susFloat = SusFloat(69, 420)
+    self.assertEqual(regInt.x, susInt.x)
+    self.assertEqual(regInt.y, susInt.y)
+    self.assertEqual(regFloat.x, susFloat.x)
+    self.assertEqual(regFloat.y, susFloat.y)
 
   def testBase(self) -> None:
     """Tests the basic functionality of the Color class."""
