@@ -20,14 +20,24 @@ Navigate with the table of contents below.
     - [Table of Contents](#table-of-contents)
     - [Installation](#installation)
     - [Usage](#usage)
-        - [desc](#worktoydesc)
+        - [WorkToy.desc](#worktoy.desc)
+            - [Background - The Python Descriptor Protocol](#background---the-python-descriptor-protocol)
+                - [The `__set_name__` method](#the-__set_name__-method)
+                - [The `__get__` method](#the-__get__-method)
+                - [The `__set__` method](#the-__set__-method)
+                - [The `delete` method](#the-delete-method)
+                - [Descriptor Protocol Implementations](#descriptor-protocol-implementations)
+                - [The `property` class](#the-property-class)
+                - [The `AbstractDescriptor` class](#the-abstractdescriptor-class)
+                - [The `Field` class](#the-field-class)
+                - [The `AttriBox` class](#the-attribox-class)
+                - [``worktoy.desc`` - Summary](#worktoydesc---summary)
+                - [PySide6 - Qt for Python](#pyside6---qt-for-python)
         - [ezdata](#worktoyezdata)
         - [keenum](#worktoykeenum)
         - [meta](#worktoymeta)
         - [parse](#worktoyparse)
-        - [text](#worktoytext)
-        - [yolo](#worktoyyolo)
-    - [Development](#development)
+        - [text](#worktoytext)\usepackage{courier}
 
 # Installation
 
@@ -99,7 +109,7 @@ class Integer:
     """Getter-function."""
 ``` 
 
-## The ``__set_name__`` method
+## The ``__set_name__``method
 
 Python 3.6 was released on December 23, 2016. This version introduced
 the ``__set_name__`` method, which marks a significant improvement to the
@@ -108,7 +118,7 @@ class that owns them **and** the name by which they appear in the class
 namespace. Much of the functionality found in the ``worktoy.desc`` module
 would not be possible without this method.
 
-### The `__get__` method
+## The `__get__` method
 
 Consider the code below:
 
@@ -188,7 +198,7 @@ instance itself should always be returned when accessed through the owning
 class. When accessed through the instance, the descriptor is free to do
 whatever it wants!
 
-### The `__set__` method
+## The `__set__` method
 
 The prior section focused on the distinction between accessing on the
 class or instance level. The ``__set__`` method defined on the Descriptor
@@ -225,7 +235,7 @@ applied to the descriptor object itself. This matches the suggested
 implementation of the ``__get__`` method which would return the
 descriptor item itself, when accessed through the owning class.
 
-### The ``delete`` method
+## The ``delete`` method
 
 The most important comment here is this warning: **Do not mistake
 ``__del__`` and ``__delete__``!** ``__del__`` is a mysterious method
@@ -279,7 +289,7 @@ behaviour in Python. Implementing some alternative behaviour might be
 cute or something, but when the code is then used elsewhere, the bugs
 resulting from this unexpected behaviour are nearly impossible to find.
 
-### Descriptor Protocol Implementations
+## Descriptor Protocol Implementations
 
 There are three questions to consider before discussing implementation
 details:
@@ -318,7 +328,7 @@ This discussion will now proceed with the following:
    4Usage an examples of the ``AttriBox`` class provided by the
    ``worktoy.desc`` module.
 
-### The `property` class
+## The `property` class
 
 The `property` class is a built-in class in Python. It allows the use of
 a decorator to define getter, setter and deleter functions for a property.
@@ -386,7 +396,7 @@ class OwningClass:
 The above example demonstrates the use of the `property` class to enhance
 the attribute access mechanism.
 
-### The `AbstractDescriptor` class
+## The `AbstractDescriptor` class
 
 The ``AbstractDescriptor`` class provides the ``__set_name__`` method and
 delegates accessor functions to the following methods:
@@ -414,7 +424,7 @@ notified when the attribute is accessed. The methods are:
 Both ``Field`` and ``AttriBox`` subclass the ``AbstractDescriptor`` class.
 These are discussed below.
 
-### The `Field` class
+## The `Field` class
 
 The ``Field`` class provides descriptors in addition to those implemented
 on the ``AbstractDescriptor`` class. These are used by owning classes to
@@ -479,7 +489,7 @@ class Point:
 
 The ``Field`` class allows classes to implement how attributes are accessed.
 
-### The `AttriBox` class
+## The `AttriBox` class
 
 Where ``Field`` relies on the owning class itself to specify the accessor
 functions, the ``AttriBox`` class provides an attribute of a specified
@@ -546,7 +556,90 @@ Circle centered at: (69.000, 420.000), with radius: 4.000
 Circle centered at: (69.000, 420.000), with radius: 1.000
 ```
 
-### ``worktoy.desc`` - Summary
+## ``THIS`` - Advanced ``AttriBox`` Usage
+
+So far the ``AttriBox`` instantiation has used the following syntax:
+
+```python
+"""Basic instantiation of the 'AttriBox' class."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.desc import AttriBox
+
+
+class Owner:
+  """Basic instantiation of the 'AttriBox' class."""
+
+  floatBox = AttriBox[float](69.)
+  intBox = AttriBox[int](420)
+```
+
+In the above example, the ``AttriBox`` instantiates **before** the owning
+class is even created. However, suppose the boxed class require the
+owning instance to be passed to the constructor. This presents a
+challenge as the ``AttriBox`` instance exists **before** the owning class
+event exists. Enter the ``THIS`` object!
+
+**TL;DR**
+
+```python
+"""Advanced instantiation of the 'AttriBox' class."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.desc import AttriBox, THIS
+
+
+class WhoDat:
+  """Boxed class aware of its owning instance."""
+
+  __the_boss__ = None
+
+  def __init__(self, who: object) -> None:
+    self.__the_boss__ = who
+
+  def getBoss(self) -> object:
+    return self.__the_boss__
+
+  def __str__(self) -> str:
+    return 'Mah boss: %s' % (self.getBoss(),)
+
+
+class Boss:
+  """Owning class."""
+
+  whoDat = AttriBox[WhoDat](THIS)
+  name = AttriBox[str]()
+
+  def __init__(self, name: str) -> None:
+    self.name = name
+
+  def __str__(self) -> str:
+    return 'Mr. %s' % (self.name,)
+
+
+if __name__ == '__main__':
+  boss = Boss('Guido')
+  print(boss.whoDat)
+  print(boss.whoDat.getBoss() is boss)
+```
+
+The above produces:
+
+```Shell
+Mah boss: Mr. Guido
+True
+```
+
+When the ``AttriBox.__get__`` is called on the ``whoData`` attribute, the
+``WhoDat`` class instantiates, but the ``AttriBox`` instance replaces
+``THIS`` with the owning instance. This allows the ``WhoDat`` instance to
+be aware of its owning instance. Likewise, ``TYPE`` would be replaced by
+the owning class, ``BOX`` with the ``AttriBox`` instance and ``ATTR`` with
+the ``AttriBox`` class (or subclass) itself.
 
 As have been demonstrated and explained, the ``worktoy.desc`` module
 provides helpful, powerful and flexible implementations of the descriptor
@@ -555,113 +648,152 @@ behaviour in significant detail. The ``AttriBox`` class provides a way to
 set as attribute any class on another class in a single line. As
 mentioned briefly, the class contained by the ``AttriBox`` instance is
 not instantiated until an instance of the owning class calls the
-``__get__`` method. In the following section, the importance of this lazy
-instantiation feature will be illustrated with an example involving the
-``PySide6`` library.
+``__get__`` method.
 
-### PySide6 - Qt for Python
+## Using ``AttriBox`` in PySide6 - Qt for Python
 
 The PySide6 library provides Python bindings for the Qt framework. Despite
 involving bindings to a C++ library, the code itself remains Python and
 not C++, thank the LORD. Nevertheless, certain errors do not have a
-Pythonic representation. The ``AttriBox`` class was envisioned for this
-very reason. Its lazy instantiation system prevents something called
-'Segmentation Fault'. You can lead a long and happy life not ever
-encountering those words again, thanks to the ``AttriBox`` class!
+Pythonic representation. The ``AttriBox`` clas was envisioned to provide
+a convenient way to develop PySide6 applications, whilst remaining
+oblivious to terms like "Segmentation Fault".
 
-Central to Qt is the main event loop managed by an instance of
-``QCoreApplication`` or of a subclass of it. While the application is
-running, instances of ``QObject`` provide the actual application
-functionality. It is reasonable to regard the ``QObject`` in Qt and the
-``object`` object in Python as similar. Every window, every widget, the
-running application, managed threads and just about everything else in Qt
-is essentially an instance of ``QObject``. Having defined these terms, we
-may now discuss the two central rules of Qt:
+``AttriBox`` provides two features of particularly significance for
+developing in PySide6: lazy instantiation and the ``THIS`` object.
 
-- Only one instances of ``QCoreApplication`` may be running at any time.
-- The first instantiated ``QObject`` must be an instance of the
-  ``QCoreApplication`` class.
+### Lazy Instantiation
 
-Instantiating any ``QObject`` before the ``QCoreApplication`` is running
-will result in immediate error. Enter the ``AttriBox`` class. The
-somewhat inflexible nature of the above rules regains flexibility by
-making use of the lazy instantiation provided by the ``AttriBox`` class.
+This refers to the fact that the ``AttriBox`` is instantiated before its
+inner class is. When an instance of the owning class calls the ``__get__``
+method, the inner class is instantiated. Not before. This seamlessly
+satisfies the unintuitive-adjacent requirement that the first ``QObject``
+to be instantiated is the singular ``QCoreApplication`` instance.
 
-In the following, we will see a simple application consisting of a window
-showing a welcome message provided as an instance of the ``QLabel`` class
-along with an exit button provided by the ``QPushButton`` class. These
-widgets are stacked vertically and are managed by an instance of the
-``QVBoxLayout`` class and finally these are managed by an instance of
-``QWidget`` which is the parent of the widgets and which owns the layout.
-This widget is set as the central widget in the main window. The main
-window itself is a subclass of the ``QMainWindow`` class.
+### ``THIS`` parent
+
+When instantiating any ``QObject`` or subclass hereof, the constructor
+may be passed another ``QObject`` instance. This instance is then set as
+the parent of the newly instantiated object. However, when placing an
+instance of ``AttriBox`` in the class body with a ``QObject`` inside, the
+parent class does not actually exist yet. (Unintuitive-adjacent).
+Fortunately, ``THIS`` provides a temporary placeholder for the owning
+instance, such that when the class inside the ``AttriBox`` is
+instantiated, the ``THIS`` object is replaced by the owning instance. For
+example:
 
 ```python
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout
-from PySide6.QtCore import QSize
-from worktoy.desc import AttriBox
+"""Using 'AttriBox' and 'THIS' in PySide6."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.desc import AttriBox, THIS
+from PySide6.QtWidgets import QMainWindow, QWidget, QLabel, QVBoxLayout
+from PySide6.QtCore import QObject
 
 
 class MainWindow(QMainWindow):
   """This subclass of QMainWindow provides the main application window. """
 
-  baseWidget = AttriBox[QWidget]()
-  layout = AttriBox[QVBoxLayout]()
-  welcomeLabel = AttriBox[QLabel]()
-  exitButton = AttriBox[QPushButton]()
+  baseWidget = AttriBox[QWidget](THIS)
+  baseLayout = AttriBox[QVBoxLayout]()  # QLayout should NOT have parent
+  welcomeLabel = AttriBox[QLabel]('Welcome to AttriBox!', THIS, )
+
+  def __init__(self, *args, ) -> None:
+    for arg in args:
+      if isinstance(arg, QObject):
+        QMainWindow.__init__(self, arg)
+    else:
+      QMainWindow.__init__(self)
 
   def initUi(self) -> None:
     """This method sets up the user interface"""
-    self.setMinimumSize(QSize(480, 320))
     self.setWindowTitle("Welcome to WorkToy!")
     self.welcomeLabel.setText("""Welcome to WorkToy!""")
-    self.exitButton.setText("Exit")
-    self.layout.addWidget(self.welcomeLabel)
-    self.layout.addWidget(self.exitButton)
-    self.baseWidget.setLayout(self.layout)
+    self.baseLayout.addWidget(self.welcomeLabel)
+    self.baseWidget.setLayout(self.baseLayout)
+    #  If passing 'THIS' to the layout box, it 
     self.setCentralWidget(self.baseWidget)
 
-  def initSignalSlot(self) -> None:
-    """This method connects the signals and slots"""
-    self.exitButton.clicked.connect(self.close)
-
   def show(self) -> None:
-    """This reimplementation calls 'initUi' and 'initSignalSlot' before 
-    calling the parent implementation"""
+    """This reimplementation calls 'initUi' before calling the parent 
+    implementation"""
     self.initUi()
-    self.initSignalSlot()
     QMainWindow.show(self)
-
-
-if __name__ == '__main__':
-  app = QApplication([])
-  window = MainWindow()
-  window.show()
-  sys.exit(app.exec())
 ```
 
-The above script demonstrates the use of the ``AttriBox`` class to
-provide lazy instantiation of the widgets in the PySide6 application.
+## ``worktoy.desc`` Conclusion
 
-## Conclusion
+The Python descriptor protocol provides powerful customization of
+attribute behaviour, but at the cost of considerable amounts of
+boilerplate code. The functionality may be seen as a feature of the class
+owning the attribute or as a feature of the attribute class. The
+``worktoy.desc`` implements a class for each. The ``Field`` class allows
+the owning class to define the attribute behaviour through the use of
+decorators. The ``AttriBox`` class provides an attribute of a specified
+class on a single line. Both are subclasses of the ``AbstractDescriptor``
+class which provides the core functionality of the descriptor protocol.
 
-To take full advantage of the descriptor protocol requires considerable
-boilerplate code if implemented from scratch. The ``worktoy.desc`` module
-provides the ``Field`` and ``AttriBox`` classes to minimize boilerplate.
-The ``Field`` class requires only the code you actually want to use. The
-``AttriBox`` lets you set any class as an attribute in a single line.
+The ``worktoy.desc`` module exposes the powerful descriptor protocol. In
+the following we shall see how ``worktoy.meta`` exposes an even more
+powerful Python feature: the metaclass. The remaining modules in the
+``worktoy`` module combine these to achieve even greater power!
 
-## ``worktoy.meta`` - Background
+# The Python metaclass - ``worktoy.meta``
 
-Python is the best programming language. The most important reason is
-that the syntax is made to be human-readable. Regardless of your personal
-preference for languages, you are never happier than when writing in
-Python. The objections to Python are valid. Provided you are talking
-about Python from 10 years ago. The final reason is the subject of this
-discussion: the Python metaclass. The Python metaclass is the most
-powerful single concept in programming. No other programming language has
+## Introduction - Python is the Best
+
+Python is the best programming language. Why? Because you feel happy when
+coding in Python. Your experience while programming depends on the syntax
+not on the underlying technology. Python made syntax king.
+
+Python is freedom. This author might reject out of hand any contribution
+lacking type hints, but the Python interpreter will not. Thus, Python types
+are the best. Because they are voluntary.
+
+Just like Python blesses voluntary efforts such as type-hints, it also
+permits things like:
+
+```python
+#  NO RIGHTS RESERVED
+try:
+  crime()
+except BaseException:  # Don't show your parole officer
+  pass
+```
+
+While the above code is a sign of a severe personality disorder, Python
+permits it. It is said that Python is named after UK comedy efforts, but this
+author suspects a deeper meaning in the name being that of a snake:
+Granting free will. This freedom allows good code to be genuinely clear and
+intentional, reflecting a developer's honest effort to make the code
+understandable for others, rather than merely satisfying compiler demands.
+
+There may be readers crying, having to wipe saliva of their screens
+having screamed about speed, GIL, memory usage, dynamic typing and so on.
+Objections relating to the permissive nature of Python miss the point:
+You don't have to. You can do better. You are free to choose. This leaves
+objections about performance, but again you are free to implement
+something faster, for example by using a just in time compiler such as
+provided by the [Numba](https://numba.pydata.org/) library as needed. As
+for memory uses, this author is presently using PyCharm, a Java based
+application, with an allowance of 8192MB of memory. Remaining objections
+are either outdated or soon to be outdated as is the case for the GIL,
+which is scheduled for removal in Python 3.14.
+
+If you are still not convinced Python is the best, but are still reading, it
+signifies that you have an open mind. A personality trait indicating that you
+will love the subject of the following discussion.
+
+## Background - The Python Metaclass
+
+It is likely that you have never heard of the Python metaclass. In fact,
+you may have quite negative associations with the word 'meta' on account of
+recent smooth-brained conduct of several multi-billion dollar companies.
+
+Many concepts have implementations in most programming languages, but
+'metaclass' is exclusive to Python. No other programming language has
 anything like it. Java reflections? No, no, no. Rust macros? Not even
 close! C++ templates? Get it out of here!
 
@@ -669,26 +801,16 @@ Understanding the Python metaclass does require some background. In the
 following sections, we will examine:
 
 - **The Python object**
-- **Object Extensions**
+- **Object Extensions** (classes)
 - **The Python Function**
 - **The ``*`` and ``**`` operators**
-- **The Python ``lambda`` Function**
+- **The Python ``lambda`` Function**  (anonymous functions)
 - **Class Instantiations**
 - **The Custom Class**
 - **The Custom Metaclass**
 - **The Custom Namespace**
 
-## Understanding the Python metaclass
-
-Readers may associate the word **meta** with crime on account of the hype
-created around the term **metaverse**. This author hopes readers will
-come to associate the word instead with the Python metaclass. The
-**'worktoy.meta'** module provides functions and classes allowing a more
-streamlined approach to metaclass programming. This documentation
-explains the functionality of metaclasses in general and how this module
-provides helpful tools.
-
-### Everything is an object!
+## Everything is an object!
 
 Python operates on one fundamental idea: Everything is an object.
 Everything. All numbers, all strings, all functions, all modules and
@@ -696,7 +818,7 @@ everything that you can reference. Even ``object`` itself is an object.
 This means that everything supports a core set of attributes and methods
 defined on the core ``object`` type.
 
-### Extensions of ``object``
+## Extensions of ``object``
 
 With everything being an object, it is necessary to extend the
 functionalities in the core ``object`` type to create new types,
@@ -746,7 +868,7 @@ implement functions: ``function`` and ``lambda``. Both of these have
 quite unique instantiation syntax and does not follow the conventions we
 shall see later in this discussion.
 
-### Defining a ``function``
+## Defining a ``function``
 
 Python allows the following syntax for creating a function. Please note
 that all functions are still objects, and all functions created with the
@@ -760,7 +882,7 @@ def multiplication(a: int, b: int) -> int:
   return a * b
 ```
 
-#### RANT
+### RANT
 
 The above function implements multiplication. It also provides the
 optional features: type hints and a docstring. The interpreter completely
@@ -769,7 +891,7 @@ this author that omitting type hints and docstrings is acceptable only
 when running a quick test. If anyone except you or God will ever read
 your code, it must have type hints and docstrings!
 
-#### END OF RANT
+### END OF RANT
 
 Below is the syntax that invokes the function:
 
@@ -789,7 +911,7 @@ tluser = multiplication(b=8, a=7)  # result is 56
 When keyword arguments are used instead of positional arguments, the
 order is irrelevant, but names are required.
 
-### The star ``*`` and double star ``**`` operators
+## The star ``*`` and double star ``**`` operators
 
 Suppose the function were to be invoked with the numbers from a
 list: ``numbers = [7, 8]``, then we might invoke the ``multiplication``
@@ -811,11 +933,11 @@ or a tuple, the star operator unpacks it. This syntax will seem confusing,
 but it is very powerful and is used extensively in Python. It is also
 orders of magnitude more readable than the equivalent in C++ or Java.
 
-#### RANT
+### RANT
 
 This rant is left as an exercise to the reader
 
-#### END OF RANT
+### END OF RANT
 
 Besides function calls, the star operator conveniently concatenates lists
 and tuples. Suppose we have two lists: ``a = [1, 2]`` and ``b = [3, 4]``
@@ -837,7 +959,7 @@ discussion is the third, but the second and fourth have merit as well,
 but will not be used here. Finally, list comprehension is quite powerful
 as well but is the subject for a different discussion.
 
-### The double star ``**`` operator
+## The double star ``**`` operator
 
 The single star is to lists and tuples as the double star is to
 dictionaries. Suppose we have a dictionary: ``data = {'a': 1, 'b': 2}``
@@ -881,51 +1003,7 @@ that the code is unpacking the operands. Not before having identified the
 types of the operands. In contrast, the star in front of an object
 without space immediately says unpacking.
 
-#### RANT
-
-If you have ever had the misfortune of working with C++ or Java, you
-would know that the syntax were disgusting, but you didn't know the words
-for it. The functionalities coded by C++ and Java cannot be inferred
-easily. It is necessary to see multiple parts of the code to infer what
-functionality is intended. For example, suppose we have a C++ class with
-a constructor.
-
-```C++
-class SomeClass {
-private:
-  int _a;
-  int _b;
-public:
-  int a;
-  SomeClass(int a, int b) {
-      // Constructor code
-  }
-  int b {
-    return _b;
-  }
-};
-```
-
-Find the constructor above. It does not have a name that means "Hello
-there, I am a constructor". Instead, it is named the same as the class
-itself. So to find the constructor, you need to identify the class name
-first then go through the class to find name again. The decision for this
-naming makes sense in that it creates something with the name called. But
-it significantly reduces readability. The second attack on human dignity
-is the syntax for the function definition. Where the class defines the
-public variable 'a', the syntax used is not bad. But because the syntax
-is identical for the functions, it increases the amount of code required
-to infer that a function is being created.
-
-The two examples of nauseating syntax above do not serve any performance
-related purpose. Software engineering and development requires the full
-cognitive capability of the human brain. Deliberately obscuring code,
-reduces the cognitive capacity left over for actual problem-solving. This
-syntax is kept in place for no other purpose than gate-keeping.
-
-#### END OF RANT
-
-### The famous function signature: ``def someFunc(*args, **kwargs)``
+## The famous function signature: ``def someFunc(*args, **kwargs)``
 
 Anyone having browsed through Python documentation or code may have
 marvelled at the function signature: ``def someFunc(*args, **kwargs)``.
@@ -933,9 +1011,9 @@ The signature means that the function accepts any number of positional
 arguments as well as any number of keyword arguments. This allows one
 function to accept multiple different argument signatures. While this may
 be convenient, the ubiquitous use of this pattern is likely motivated by
-the absense of function overloading in native Python. (Foreshadowing...)
+the absense of function overloading in native Python. **(Foreshadowing...)**
 
-### The ``lambda`` function
+## The ``lambda`` function
 
 Before getting back to class instantiation, we will round off this
 discussion of functions with the ``lambda`` function. The ``lambda``
@@ -943,7 +1021,7 @@ function is basically the anonymous function. The syntax of it is
 ``lambda arguments: expression``. Whatever the expression on the right
 hand side of the colon evaluates to is returned by the function. The
 ``lambda`` function allows inline function definition which is much more
-condensed that the regular function definition as defined above. This
+condensed than the regular function definition as defined above. This
 allows it to solve certain problems in one line, for example:
 
 ```python
@@ -953,11 +1031,51 @@ fb = lambda n: ('' if n % 3 else 'Fizz') + ('' if n % 5 else 'Buzz') or n
 Besides flexing, the ``lambda`` function is useful when working with
 certain fields of mathematics, requiring implementation of many functions
 that fit on one line. Below is an example of a series of functions
-implementing Taylor series expansions. This takes advantage of the fact
-that many such functions may be distinguished only by a factor mapped
-from the term in the series.
+implementing Taylor series expansions. While type-hints should always be
+used, the single line nature of the ``lambda`` function makes it
+impractical to include type-hints inside the function definition. This
+author suggests instead the inclusion of type hints separately, for
+example for the ``fizzBuzz`` function above:
 
 ```python
+from typing import Callable
+
+fb: Callable[[int], str]
+```
+
+The above signifies that ``fb`` is a callable that takes an integer and
+returns a string. Lambda functions will not fit type hints, so this seems
+a reasonably helpful alternative.
+
+```python
+"""Lambda function implementations of common mathematical functions."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from typing import Callable, TypeAlias
+
+#  int2int is a type alias for a mapping from int to int
+int2int: TypeAlias = Callable[[int], int]
+factorial: int2int
+#  The following functions take other functions as arguments
+recursiveSum: Callable[[int2int, int], int]
+taylorTerm: Callable[[float, int2int], float]
+#  The following maps term order to term value
+expTerm: int2int
+sinTerm: int2int
+cosTerm: int2int
+sinhTerm: int2int
+coshTerm: int2int
+#  Combining the above allows implementation of the following functions. 
+#  The float is the independent variable and the int is the number of 
+#  terms to be used in the Taylor expansion. 
+exp: Callable[[float, int], float]
+sin: Callable[[float, int], float]
+cos: Callable[[float, int], float]
+sinh: Callable[[float, int], float]
+cosh: Callable[[float, int], float]
+#  Below are the actual implementations using type hints as indicated above.
 factorial = lambda n: factorial(n - 1) * n if n else 1
 recursiveSum = lambda F, n: F(n) + (recursiveSum(F, n - 1) if n else 0)
 taylorTerm = lambda x, t: (lambda n: t(n) * x ** n / factorial(n))
@@ -988,7 +1106,7 @@ adding the previous term to it recursively, until the 0th term is reached.
 This implementation demonstrates the power of the recursive lambda
 function and is not at all flexing.
 
-### Instantiation of classes
+## Instantiation of classes
 
 Since this discussion includes class instantiations, the previous section
 discussing functions will be quite relevant. We left the discussion of
@@ -1084,7 +1202,7 @@ def newTuple(*args) -> tuple:
   return (*args,)  # Unpacking the positional arguments creates the tuple.
 ```
 
-### Custom classes
+## Custom classes
 
 In the previous section, we examined functions and builtin classes. To
 reiterate, in the context of this discussion a class is an extension of
@@ -1105,6 +1223,11 @@ to see where this is going, but before we get there, let us examine how
 ``type`` creates a new class.
 
 ```python
+"""Sample class."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
 from worktoy.desc import AttriBox
 
 
@@ -1186,7 +1309,7 @@ An impractical alternative to the above syntax is to create the new class
 inline: ``PlanePoint = type('PlanePoint', (object,), {})``. Although,
 this line has an empty dictionary where the namespace should have been.
 
-### The Custom Metaclass
+## The Custom Metaclass
 
 This brings us to the actual subject of this discussion: The custom
 metaclass. Because every step mentioned above may be customized by
@@ -1194,8 +1317,14 @@ subclassing ``type``. Doing so takes away every limitation. The line
 discussed before:
 
 ```python
+"""The syntax can create anything you want!"""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+
 class AnyWayUWantIt(metaclass=MyMeta):
-  """Class representing a point in the plane """
+  """The syntax can create anything you want!"""
 ```
 
 This line can create anything. A class for example, but anything. It can
@@ -1212,6 +1341,11 @@ purposes of this discussion, we will now create a custom metaclass that
 does the same as the ``type`` metaclass, but exposed as Python code.
 
 ```python
+"""Using 'AttriBox' and 'THIS' in PySide6."""
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
 
 class MetaType(type):
   """This custom metaclass illustrates the class creation process as it 
@@ -1282,14 +1416,14 @@ Python interpreter, the above implementation is for illustrative purposes
 only. It shows what methods a custom metaclass may customize to achieve a
 particular behaviour.
 
-### The Custom Namespace
+## The Custom Namespace
 
 The custom namespace object must implement ``__getitem__`` and
 ``__setitem__``. Additionally, it must satisfy the key error preservation
 and the ``type.__new__`` method must receive a namespace of ``dict``-type.
 This is elaborated below:
 
-#### ``KeyError`` preservation
+### ``KeyError`` preservation
 
 When a dictionary is accessed with a key that does not exist, a
 ``KeyError`` is raised. The interpreter relies on this behaviour to
@@ -1315,7 +1449,7 @@ happen to not include any of the above non-assignments. In summary:
 failing to raise the expected error must be avoided at all costs, as it
 will cause undefined behaviour without any indication as to the to cause.
 
-#### The ``type.__new__`` expects a namespace of ``dict``-type
+### The ``type.__new__`` expects a namespace of ``dict``-type
 
 After the class body is executed the namespace object is passed to the
 ``__new__`` method on the metaclass. If the metaclass is intended to
@@ -1328,7 +1462,7 @@ then it is necessary to implement functionality in the ``__new__`` method
 on the metaclass such that a ``dict`` is passed to the ``type.__new__``
 call.
 
-### Applications of Custom Namespace
+## Applications of Custom Namespace
 
 During class body execution the namespace object is passed the key value
 pairs encountered. When using the empty dictionary as the namespace,
@@ -1349,7 +1483,7 @@ actually result in classes that exhibit different behaviour. Achieving
 this requires customization of the metaclass itself beyond the
 ``__prepare__`` method.
 
-## The ``worktoy.meta`` module
+# The ``worktoy.meta`` module
 
 We have discussed class creation by use of ``type``, we have illustrated
 what methods might be customized. In particular the custom namespace
@@ -1357,7 +1491,7 @@ returned by the ``__prepare__`` method. This brings us to the
 ``worktoy.meta`` module. Our discussion will proceed with an examination
 of the contents.
 
-### Nomenclature
+## Nomenclature
 
 Below is a list of terms used in the ``worktoy.meta`` module:
 
@@ -1368,7 +1502,7 @@ Below is a list of terms used in the ``worktoy.meta`` module:
 - **``namespace``** - This is where the class body is stored during class
   creation.
 
-### Metaclass and Namespace Pattern
+## Metaclass and Namespace Pattern
 
 The ``worktoy.meta`` module implements a pattern where the metaclass is
 responsible for defining the functionality of the class, while the
@@ -1383,7 +1517,7 @@ namespace object class is responsible for processing the contents of the
 class body. The metaclass is responsible for defining the functionality
 of the class itself.
 
-### Function Overloading
+## Function Overloading
 
 The ``worktoy.meta`` module provides a decorator factory called
 ``overload`` used to mark an overloaded method with a type signature. The
@@ -1396,7 +1530,7 @@ replaces each such name with a relevant instance of the ``Dispatcher``. The
 class as the namespace object. Finally, the ``BaseObject`` class derives
 from the ``BaseMetaclass`` and implements function overloading.
 
-### Singleton
+## Singleton
 
 Singleton classes are characterized by the fact that they are allowed
 only one instance. The ``worktoy.meta`` provides ``Singleton`` class
@@ -1408,7 +1542,7 @@ dynamic behaviour of singletons. If this is not desired, the singleton
 subclass should provide functionality preventing the ``__init__`` method
 from running more than once.
 
-### Summary
+## Summary
 
 The ``worktoy.meta`` module provides base classes and a pattern for
 custom metaclass creation and uses them to implement function overloading
@@ -1418,7 +1552,7 @@ metaclass derived from the module. Other parts of the ``worktoy`` module
 makes use of the ``worktoy.meta`` in their implementation. This includes
 the ``KeeNum`` enumeration module and the ``ezdata`` module.
 
-## The ``worktoy.keenum`` module
+# The ``worktoy.keenum`` module
 
 The ``worktoy.keenum`` module provides the ``KeeNum`` enumeration class.
 This class makes use of the ``worktoy.meta`` module to create the
@@ -1572,7 +1706,7 @@ class Trig(KeeNum):
     return self.value(self, *args, **kwargs)
 ```
 
-## The ``worktoy.ezdata`` module
+# The ``worktoy.ezdata`` module
 
 The ``worktoy.ezdata`` module provides the ``EZData`` class, which
 provides a dataclass based on the ``AttriBox`` class. This is achieved by
@@ -1613,14 +1747,14 @@ if __name__ == '__main__':
   print(P)
 ```
 
-### Summary of ``worktoy.ezdata`` module
+## Summary of ``worktoy.ezdata`` module
 
 The ``EZData`` class supports fields with ``AttriBox`` instances. As
 explained in the documentation of the ``worktoy.desc`` module, the
 ``AttriBox`` can use any class as the inner class. Thus, subclasses of
 ``EZData`` may use any number of fields of any class.
 
-## ``worktoy.text`` module
+# ``worktoy.text`` module
 
 The ``worktoy.text`` module provides a number of functions implementing
 text formatting as listed below:
@@ -1654,7 +1788,7 @@ text formatting as listed below:
 
 Below are examples of each of the above
 
-### ``worktoy.text.stringList``
+## ``worktoy.text.stringList``
 
 ```python
 """Example of the 'stringList' function."""
@@ -1671,7 +1805,7 @@ if __name__ == '__main__':
 
 ```
 
-### ``worktoy.text.monoSpace``
+## ``worktoy.text.monoSpace``
 
 ```python
 """Example of the 'monoSpace' function."""
@@ -1691,7 +1825,7 @@ if __name__ == '__main__':
   print(oneLine.count('\n'))
 ```
 
-### ``worktoy.text.wordWrap``
+## ``worktoy.text.wordWrap``
 
 ```python
 """Example of the 'wordWrap' function."""
@@ -1712,7 +1846,7 @@ if __name__ == '__main__':
   print('\n'.join(wrapped))
 ```
 
-### ``worktoy.text.typeMsg``
+## ``worktoy.text.typeMsg``
 
 ```python
 """Example of the 'typeMsg' function."""
@@ -1730,7 +1864,7 @@ if __name__ == '__main__':
   print(e)
 ```
 
-### ``worktoy.text.joinWords``
+## ``worktoy.text.joinWords``
 
 ```python
 """Example of the 'joinWords' function."""
@@ -1745,7 +1879,7 @@ if __name__ == '__main__':
   print(joinWords(words))
 ```
 
-## ``worktoy.parse`` module
+# ``worktoy.parse`` module
 
 This module provides two ``None``-aware functions:
 
