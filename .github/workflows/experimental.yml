@@ -2,34 +2,68 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  testJob:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+
+      - name: Verify branch
+        run: |
+          if [[ "${{ github.ref }}" != "refs/heads/experimental" ]]; then
+            echo "This workflow is not running on the expected branch."
+            exit 1
+          fi
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install build twine
+
       - name: Run Tests
         run: |
-          python -m pytest
+          python run_tests.py
+
+      - name: Update Version
+        run: |
+          python roll_version.py dev
+
+      - name: Read Version Tag
+        id: read_tag
+        run: |
+          echo "TAG_NAME=$(<worktoy.tag)" >> $GITHUB_ENV
+
+      - name: Configure Git User Info
+        run: |
+          git config --local user.name "Asger Jon Vistisen"
+          git config --local user.email "asgerjon2@gmail.com"
+
+      - name: Commit changes
+        run: |
+          git add pyproject.toml
+          git commit -m "Bump version to ${{ env.TAG_NAME }}"
+
+      - name: Push changes
+        run: git push origin HEAD:${{ github.ref }}
+
       - name: Build Package
         run: python -m build
-      - name: Publish Package
+
+      - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.GITHUB2024 }}
           skip-existing: true
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v1.0.0
-          release_name: Release v1.0.0
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: Release ${{ env.TAG_NAME }}
           draft: false
-          prerelease: false
+          prerelease: true

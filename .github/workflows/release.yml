@@ -1,38 +1,53 @@
-name: Automated Release Workflow
-
 on:
   workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  testJob:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
+      - name: Verify branch
+        run: |
+          if [[ "${{ github.ref }}" != "refs/heads/release" ]]; then
+            echo "This workflow is not running on the expected branch."
+            exit 1
+          fi
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'  # Specify your Python version
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Run Tests
+        run: |
+          python run_tests.py
+
+      - name: Update Version
+        run: |
+          python roll_version.py patch
+
+      - name: Read Version Tag
+        id: read_tag
+        run: |
+          echo "TAG_NAME=$(<worktoy.tag)" >> $GITHUB_ENV
 
       - name: Configure Git User Info
         run: |
           git config --local user.name "Asger Jon Vistisen"
           git config --local user.email "asgerjon2@gmail.com"
 
-      - name: Install Dependencies
+      - name: Commit changes
         run: |
-          python -m pip install --upgrade pip
-          pip install bump2version build twine
+          git add pyproject.toml
+          git commit -m "Bump version to ${{ env.TAG_NAME }}"
 
-      - name: Bump Version and Tag
-        id: version
-        run: |
-          bump2version patch --commit --tag
-          echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
-
-      - name: Push Changes
-        run: |
-          git push && git push --tags
+      - name: Push changes
+        run: git push origin HEAD:${{ github.ref }}
 
       - name: Build Package
         run: python -m build
@@ -48,7 +63,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          release_name: Release ${{ steps.version.outputs.tag }}
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: Release ${{ env.TAG_NAME }}
           draft: false
-          prerelease: false
+          prerelease: true
