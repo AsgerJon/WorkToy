@@ -9,6 +9,24 @@ import os.path
 import sys
 
 
+def _updateJson(channel: str) -> None:
+  """Updates the JSON file"""
+
+
+def _updateTag() -> None:
+  """Updates the tag file"""
+
+
+def _updateProject() -> None:
+  """Updates the project file"""
+
+
+def _loadJSON() -> dict:
+  """Loads the content of the specified JSON file."""
+  with open(_loadFile('worktoy_version.json'), 'r') as file:
+    return json.load(file)
+
+
 def _loadFile(file: str, **kwargs) -> str:
   """Loads the content of the specified file."""
   here = os.path.abspath(os.path.dirname(__file__))
@@ -65,6 +83,7 @@ def _updateTag() -> None:
       newLines.append(line)
       newLines = [*newLines, *lines]
       break
+    newLines.append(line)
   else:
     e = """Unable to find the 'version' key in the 'tool.poetry' section of
     the pyproject.toml file!"""
