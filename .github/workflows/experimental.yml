@@ -73,7 +73,7 @@ jobs:
       - name: Commit changes
         run: |
           git add pyproject.toml
-          git commit -m "${{ env.$commit_message }}"
+          git commit -m "${{ env.commit_message }}"
 
       - name: Push changes
         run: git push origin HEAD:${{ github.ref }}
