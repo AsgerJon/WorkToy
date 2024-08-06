@@ -17,32 +17,67 @@ Navigate with the table of contents below.
 # Table of Contents
 
 - [WorkToy v0.99.xx](#worktoy-v099xx)
-    - [Table of Contents](#table-of-contents)
-    - [Installation](#installation)
-    - [Usage](#usage)
-        - [WorkToy.desc](#worktoy.desc)
-            - [Background - The Python Descriptor Protocol](#background---the-python-descriptor-protocol)
-                - [The `__set_name__` method](#the-__set_name__-method)
-                - [The `__get__` method](#the-__get__-method)
-                - [The `__set__` method](#the-__set__-method)
-                - [The `delete` method](#the-delete-method)
-                - [Descriptor Protocol Implementations](#descriptor-protocol-implementations)
-                - [The `property` class](#the-property-class)
-                - [The `AbstractDescriptor` class](#the-abstractdescriptor-class)
-                - [The `Field` class](#the-field-class)
-                - [The `AttriBox` class](#the-attribox-class)
-                - [``worktoy.desc`` - Summary](#worktoydesc---summary)
-                - [PySide6 - Qt for Python](#pyside6---qt-for-python)
-        - [ezdata](#worktoyezdata)
-        - [keenum](#worktoykeenum)
-        - [meta](#worktoymeta)
-        - [parse](#worktoyparse)
-        - [text](#worktoytext)\usepackage{courier}
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
+- [Usage](#usage)
+- [worktoy.desc](#worktoydesc)
+    * [Background - The Python Descriptor Protocol](#background---the-python-descriptor-protocol)
+        + [The ``__set_name__``method](#the-__set_name__method)
+        + [The `__get__` method](#the-__get__-method)
+        + [The `__set__` method](#the-__set__-method)
+        + [The ``delete`` method](#the-delete-method)
+        + [Descriptor Protocol Implementations](#descriptor-protocol-implementations)
+    * [The `property` class](#the-property-class)
+        * [The `AbstractDescriptor` class](#the-abstractdescriptor-class)
+        * [The `Field` class](#the-field-class)
+        * [The `AttriBox` class](#the-attribox-class)
+        * [``THIS`` - Advanced ``AttriBox`` Usage](#this---advanced-attribox-usage)
+        * [Using ``AttriBox`` in PySide6 - Qt for Python](#using-attribox-in-pyside6---qt-for-python)
+        * [``worktoy.desc`` Conclusion](#worktoydesc-conclusion)
+
+* [The Python metaclass - ``worktoy.meta``](#the-python-metaclass---worktoymeta)
+    * [Introduction - Python is the Best](#introduction---python-is-the-best)
+    * [Background - The Python Metaclass](#background---the-python-metaclass)
+    * [Everything is an object!](#everything-is-an-object)
+    * [Extensions of ``object``](#extensions-of-object)
+    * [The Python Function](#the-python-function)
+    * [The ``*`` and ``**`` operators](#the--and---operators)
+    * [The Python ``lambda`` Function](#the-python-lambda-function)
+    * [Class Instantiations](#class-instantiations)
+    * [The Custom Class](#the-custom-class)
+    * [The Custom Metaclass](#the-custom-metaclass)
+    * [The Custom Namespace](#the-custom-namespace)
+    * [The Python Metaclass - Conclusion](#the-python-metaclass---conclusion)
+* [The ``worktoy.meta`` Module](#the-worktoymeta-module)
+    * [Nomenclature](#nomenclature)
+    * [Metaclass and Namespace Pattern](#metaclass-and-namespace-pattern)
+    * [Function Overloading](#function-overloading)
+    * [Singleton](#singleton)
+    * [Summary](#summary)
+* [The ``worktoy.keenum`` module](#the-worktoykeenum-module)
+* [The ``worktoy.ezdata`` module](#the-worktoyezdata-module)
+    * [Summary of ``worktoy.ezdata`` module](#summary-of-worktoyezdata-module)
+* [The ``worktoy.text`` module](#the-worktoytext-module)
+    * [``worktoy.text.stringList``](#worktoytextstringlist)
+    * [``worktoy.text.monoSpace``](#worktoytextmonospace)
+    * [``worktoy.text.wordWrap``](#worktoytextwordwrap)
+    * [``worktoy.text.typeMsg``](#worktoytexttypemsg)
+    * [``worktoy.text.joinwords``](#worktoytextjoinwords)
+    * [``worktoy.parse`` module](#worktoyparse-module)
 
 # Installation
 
+Once the stable version is released, it should be installed via pip:
+
 ```bash 
 pip install worktoy
+```
+
+Until then, the following development version, which is not for the faint
+of heart may be installed:
+
+```Bash
+pip install worktoy --pre
 ```
 
 # Usage
