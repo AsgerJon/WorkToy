@@ -58,7 +58,7 @@ def incrementVersion() -> None:
     tag = f'{major}.{minor}.{patch}.dev{dev}'
   else:
     tag = f'{major}.{minor}.{patch}'
-  with open(_loadFile('worktoy.tag', strict=False), 'w') as file:
+  with open(_loadFile('worktoy-tag.txt', strict=False), 'w') as file:
     file.write(tag)
   with open(_loadFile('pyproject.toml'), 'r', encoding='utf-8') as file:
     lines = file.readlines()

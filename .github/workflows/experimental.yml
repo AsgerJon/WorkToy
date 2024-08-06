@@ -57,7 +57,7 @@ jobs:
       - name: Read Version Tag
         id: read_tag
         run: |
-          echo "TAG_NAME=$(<worktoy.tag)" >> $GITHUB_ENV
+          echo "TAG_NAME=$(<worktoy-tag.txt)" >> $GITHUB_ENV
 
       - name: Configure Git User Info
         run: |
