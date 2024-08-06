@@ -181,7 +181,7 @@ class AttriBox(AbstractDescriptor):
     args, kwargs = self.getArgs(instance), self.getKwargs(instance)
     fieldClass = self.getFieldClass()
     if fieldClass is bool:
-      innerObject = True if args[0] else False
+      innerObject = True if [*args, None][0] else False
     else:
       innerObject = fieldClass(*args, **kwargs)
     return Bag(instance, innerObject)
