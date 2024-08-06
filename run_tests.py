@@ -15,9 +15,13 @@ def main() -> int:
   loader = TestLoader()
   here = os.path.abspath(os.path.dirname(__file__))
   here = os.path.normpath(here)
+  there = os.path.join(here, 'src')
+  there = os.path.normpath(there)
+  sys.path.append(there)
   os.chdir(here)
   testRoot = os.path.join(here, 'tests')
   testRoot = os.path.normpath(testRoot)
+  runner = None
   for item in os.listdir(testRoot):
     testPath = os.path.normpath(os.path.join(testRoot, item))
     suite = loader.discover(start_dir=testPath, pattern='test_*.py')
@@ -28,6 +32,9 @@ def main() -> int:
       continue
     break
   else:
+    if runner is None:
+      print("""Unable to find tests!""")
+      return -1
     print('All tests passed!')
     return 0
   return 1
