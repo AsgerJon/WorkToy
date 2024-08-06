@@ -75,7 +75,7 @@ except ImportError:
 
 from typing import Any
 
-from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, Flag, BOX, \
+from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, BOX, \
   ATTR, DEFAULT
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
@@ -131,8 +131,6 @@ class AttriBox(AbstractDescriptor):
     if self.__field_class__ is None:
       e = """The field class of the AttriBox instance has not been set!"""
       raise AttributeError(e)
-    if self.__field_class__ is bool:
-      return Flag
     if isinstance(self.__field_class__, type):
       return self.__field_class__
     e = typeMsg('__field_class__', self.__field_class__, type)
@@ -182,7 +180,10 @@ class AttriBox(AbstractDescriptor):
       raise AttributeError(e)
     args, kwargs = self.getArgs(instance), self.getKwargs(instance)
     fieldClass = self.getFieldClass()
-    innerObject = fieldClass(*args, **kwargs)
+    if fieldClass is bool:
+      innerObject = True if args[0] else False
+    else:
+      innerObject = fieldClass(*args, **kwargs)
     return Bag(instance, innerObject)
 
   def __instance_reset__(self, instance: object) -> None:
