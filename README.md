@@ -74,7 +74,7 @@ pip install worktoy
 ```
 
 Until then, the following development version, which is not for the faint
-of heart may be installed:
+of heart, may be installed by passing the ``--pre`` flag:
 
 ```Bash
 pip install worktoy --pre
