@@ -52,7 +52,7 @@ jobs:
 
       - name: Update Version
         run: |
-          python roll_version.py patch
+          python roll_version.py dev
 
       - name: Read Version Tag
         id: read_tag
@@ -95,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag: ${{ env.TAG_NAME }}
-          name: RC ${{ env.TAG_NAME }}
+          name: DEV ${{ env.TAG_NAME }}
           draft: false
-          prerelease: false
+          prerelease: true
           generateReleaseNotes: true
