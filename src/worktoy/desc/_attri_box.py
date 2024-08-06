@@ -185,25 +185,6 @@ class AttriBox(AbstractDescriptor):
     innerObject = fieldClass(*args, **kwargs)
     return Bag(instance, innerObject)
 
-  def _getPrivateName(self, ) -> str:
-    """Returns the name of the private attribute used to store the inner
-    object. """
-    if self.getFieldName() is None:
-      e = """Instance of 'AttriBox' does not belong to class. This 
-      typically indicates that the owning class is still being created."""
-      raise RuntimeError(monoSpace(e))
-    chars = []
-    for (i, char) in enumerate(self.__field_name__):
-      if char.isupper() and i and i < len(self.__field_name__):
-        chars.append('_')
-      chars.append(char.lower())
-    innerName = ''.join(chars)
-    innerNames = innerName.split('_')
-    if len(innerNames) == 1:
-      innerNames.append('value')
-    innerName = '_'.join(innerNames)
-    return """__%s__""" % (innerName,)
-
   def __instance_reset__(self, instance: object) -> None:
     """Reset-function for the instance."""
     pvtName = self._getPrivateName()
