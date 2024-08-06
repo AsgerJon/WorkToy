@@ -5,6 +5,7 @@ from worktoy.meta import BaseObject
 from worktoy.text import typeMsg
 
 
+# noinspection PyMissingConstructor
 class Bag(BaseObject):
   """Bag wraps the field object managed by an instance of AttriBox"""
 

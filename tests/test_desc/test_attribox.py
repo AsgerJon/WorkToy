@@ -4,19 +4,12 @@ protocol."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import random
-from typing import Any
 from unittest import TestCase
 
-from icecream import ic
-
+from random import random
 from worktoy.desc import AttriBox, TYPE, THIS, Field, ATTR, BOX
-from worktoy.ezdata import EZData
 from worktoy.meta import BaseObject, overload
-from worktoy.parse import maybe
 from worktoy.text import typeMsg
-
-ic.configureOutput(includeContext=True)
 
 
 class NoDefaults(BaseObject):

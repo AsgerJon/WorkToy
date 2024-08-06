@@ -4,7 +4,10 @@ includes primarily function overloading. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
 
 from worktoy.meta import AbstractMetaclass, Bases, BaseNamespace
 from worktoy.text import monoSpace, typeMsg

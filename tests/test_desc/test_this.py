@@ -5,17 +5,10 @@ correctly. """
 from __future__ import annotations
 
 from typing import Any
-from unittest import TestCase
-
-from icecream import ic
 
 from worktoy.desc import AttriBox, TYPE, THIS, Field
-from worktoy.ezdata import EZData
 from worktoy.meta import BaseObject
-from worktoy.parse import maybe
 from worktoy.text import typeMsg
-
-ic.configureOutput(includeContext=True)
 
 
 class Value(BaseObject):

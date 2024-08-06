@@ -6,7 +6,7 @@ from __future__ import annotations
 from random import randint
 from unittest import TestCase
 
-from worktoy.desc import Field, MissingValueException
+from worktoy.desc import Field
 from worktoy.text import typeMsg
 
 

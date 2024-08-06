@@ -3,16 +3,17 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Any
+from typing import Optional, Any
 
-from icecream import ic
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
 
 from worktoy.keenum import KeeNumSpace, KeeNumObject
 from worktoy.meta import AbstractMetaclass, Bases
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, stringList
-
-ic.configureOutput(includeContext=True)
 
 
 class KeeNumMeta(AbstractMetaclass):

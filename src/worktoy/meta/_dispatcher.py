@@ -4,9 +4,17 @@ function based on received arguments. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable, Any, Optional
+from typing import Any, Optional
 
-Overloaded = dict[tuple[type, ...], Callable]
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
+  
+try:
+  Overloaded = dict[tuple[type, ...], Callable]
+except TypeError:
+  Overloaded = dict
 
 
 class Dispatcher:

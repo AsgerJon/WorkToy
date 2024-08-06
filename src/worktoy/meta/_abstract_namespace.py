@@ -17,10 +17,20 @@ value pair, or key, error pair."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Self, get_type_hints, TYPE_CHECKING
+from typing import get_type_hints
 
 from worktoy.parse import maybe
 from worktoy.text import typeMsg
+
+try:
+  from typing import Self
+except ImportError:
+  Self = object
+
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
 
 if TYPE_CHECKING:
   from worktoy.meta import Bases

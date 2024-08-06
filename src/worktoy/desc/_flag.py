@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.meta import BaseObject, BaseMetaclass
+from worktoy.meta import BaseMetaclass
 
 
 class _FlagMeta(BaseMetaclass):

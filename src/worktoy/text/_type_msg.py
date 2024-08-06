@@ -25,7 +25,10 @@ from worktoy.text import monoSpace
 def typeMsg(name: str, obj: object, type_: type) -> str:
   """The 'typeMsg' function generates a structured error message when an
   object with a given name does not belong to the given type."""
-  expectedType = type_.__name__
+  if isinstance(type_, type):
+    expectedType = type_.__name__
+  else:
+    expectedType = str(type_)
   actualType = type(obj).__name__
   e = """Expected object '%s' to be of type '%s', but found '%s' of type 
   '%s'!"""

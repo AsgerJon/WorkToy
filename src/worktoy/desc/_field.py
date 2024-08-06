@@ -4,7 +4,10 @@ protocol allowing owning classes to decorate methods as accessor methods. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
 
 from worktoy.desc import AbstractDescriptor, MissingValueException
 from worktoy.text import typeMsg

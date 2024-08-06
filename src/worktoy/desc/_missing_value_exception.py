@@ -4,7 +4,13 @@ of AbstractDescriptor should raise to indicate a missing value. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
+
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
+
 from worktoy.text import monoSpace, typeMsg
 
 if TYPE_CHECKING:

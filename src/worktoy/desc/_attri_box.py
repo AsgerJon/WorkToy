@@ -3,7 +3,17 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Self, Never
+try:
+  from typing import Self
+except ImportError:
+  Self = object
+
+try:
+  from typing import Never
+except ImportError:
+  Never = object
+
+from typing import Any
 
 from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, Flag, BOX, ATTR
 from worktoy.parse import maybe

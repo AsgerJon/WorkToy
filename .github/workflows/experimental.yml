@@ -9,7 +9,7 @@ jobs:
 
       - name: Verify branch
         run: |
-          if [[ "${{ github.ref }}" != "refs/heads/experimental" ]]; then
+          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
             echo "This workflow is not running on the expected branch."
             exit 1
           fi

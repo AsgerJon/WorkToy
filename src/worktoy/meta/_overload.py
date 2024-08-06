@@ -4,7 +4,10 @@ the signature. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
 
 
 def overload(*args, ):

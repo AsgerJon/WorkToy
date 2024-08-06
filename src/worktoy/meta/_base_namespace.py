@@ -4,13 +4,19 @@ BaseMetaclass."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Callable
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
 
 from worktoy.meta import AbstractNamespace, Dispatcher
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
-Overloaded = dict[tuple[type, ...], Callable]
+try:
+  Overloaded = dict[tuple[type, ...], Callable]
+except TypeError:
+  Overloaded = dict
 
 
 class BaseNamespace(AbstractNamespace):

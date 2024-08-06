@@ -3,7 +3,11 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Self
+try:
+  from typing import Self
+except ImportError:
+  Self = object
+
 from unittest import TestCase
 
 from worktoy.desc import AttriBox

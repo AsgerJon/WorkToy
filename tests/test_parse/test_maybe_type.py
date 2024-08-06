@@ -47,7 +47,7 @@ class TestMaybeType(TestCase):
 
     types = [int, float, str, list, dict, tuple]
     existing = getattr(sampleFunc, '__annotations__', )
-    existing |= {'return': choices(types, k=1)}
+    existing = {**existing, **{'return': choices(types, k=1)}}
     setattr(sampleFunc, '__annotations__', existing)
     return sampleFunc
 
