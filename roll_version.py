@@ -9,24 +9,6 @@ import os.path
 import sys
 
 
-def _updateJson(channel: str) -> None:
-  """Updates the JSON file"""
-
-
-def _updateTag() -> None:
-  """Updates the tag file"""
-
-
-def _updateProject() -> None:
-  """Updates the project file"""
-
-
-def _loadJSON() -> dict:
-  """Loads the content of the specified JSON file."""
-  with open(_loadFile('worktoy_version.json'), 'r') as file:
-    return json.load(file)
-
-
 def _loadFile(file: str, **kwargs) -> str:
   """Loads the content of the specified file."""
   here = os.path.abspath(os.path.dirname(__file__))
@@ -44,42 +26,48 @@ def _loadFile(file: str, **kwargs) -> str:
   return file
 
 
-def _updateTag() -> None:
-  """Retrieves the version of the worktoy package."""
+def incrementVersion() -> None:
+  """Loads the content of the specified JSON file."""
   with open(_loadFile('worktoy_version.json'), 'r') as file:
-    v = json.load(file)
-  patch = v['patch']
-  minor = v['minor']
-  major = v['major']
-  dev = v['dev']
-  if 'dev' in sys.argv:
-    major, minor, patch, dev = major, minor, patch, dev + 1
-  elif 'patch' in sys.argv:
-    major, minor, patch, dev = major, minor, patch + 1, 0
-  elif 'minor' in sys.argv:
-    major, minor, patch, dev = major, minor + 1, 0, 0
-  elif 'major' in sys.argv:
-    major, minor, patch, dev = major + 1, 0, 0, 0
+    existingVersion = json.load(file)
+  oldMajor = existingVersion['major']
+  oldMinor = existingVersion['minor']
+  oldPatch = existingVersion['patch']
+  oldDev = existingVersion['dev']
+  updateLevel = None
+  tag = None
+  for arg in sys.argv:
+    if arg.lower() in ['major', 'minor', 'patch', 'dev']:
+      updateLevel = arg
+      break
   else:
-    major, minor, patch, dev = major, minor, patch + 1, 0
-  if 'dev' in sys.argv:
-    tag = '%d.%d.%d.dev%d' % (major, minor, patch, dev)
-  else:
-    tag = '%d.%d.%d' % (major, minor, patch)
-  tagFile = _loadFile('worktoy.tag', strict=False)
-  with open(tagFile, 'w', encoding='utf-8') as file:
-    file.write(tag)
-  version = {'major': major, 'minor': minor, 'patch': patch, 'dev': dev}
+    updateLevel = 'dev'
+  existingVersion[updateLevel] += 1
+  if updateLevel in ['major', 'minor', 'patch']:
+    existingVersion['dev'] = 0
+  if updateLevel in ['major', 'minor']:
+    existingVersion['patch'] = 0
+  if updateLevel == 'major':
+    existingVersion['minor'] = 0
   with open(_loadFile('worktoy_version.json'), 'w') as file:
-    json.dump(version, file, indent=2)
-  projectFile = _loadFile('pyproject.toml')
-  with open(projectFile, 'r', encoding='utf-8') as file:
+    json.dump(existingVersion, file, indent=2)
+  major = existingVersion['major']
+  minor = existingVersion['minor']
+  patch = existingVersion['patch']
+  dev = existingVersion['dev']
+  if updateLevel == 'dev':
+    tag = f'{major}.{minor}.{patch}.dev{dev}'
+  else:
+    tag = f'{major}.{minor}.{patch}'
+  with open(_loadFile('worktoy.tag'), 'w') as file:
+    file.write(tag)
+  with open(_loadFile('pyproject.toml'), 'r', encoding='utf-8') as file:
     lines = file.readlines()
   newLines = []
   while lines:
     line = lines.pop(0)
     if 'version' in line:
-      line = 'version = "%s"\n' % tag
+      line = f'version = "{tag}"\n'
       newLines.append(line)
       newLines = [*newLines, *lines]
       break
@@ -88,13 +76,13 @@ def _updateTag() -> None:
     e = """Unable to find the 'version' key in the 'tool.poetry' section of
     the pyproject.toml file!"""
     raise KeyError(' '.join(e.split()))
-  with open(projectFile, 'w', encoding='utf-8') as file:
+  with open(_loadFile('pyproject.toml'), 'w', encoding='utf-8') as file:
     file.writelines(newLines)
 
 
 if __name__ == '__main__':
   try:
-    _updateTag()
+    incrementVersion()
     sys.exit(0)
   except Exception as exception:
     print(exception)
