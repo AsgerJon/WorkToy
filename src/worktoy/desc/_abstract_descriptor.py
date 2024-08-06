@@ -1,4 +1,28 @@
-"""AbstractDescriptor provides common boilerplate for descriptor classes. """
+"""AbstractDescriptor subclasses the CoreDescriptor and expands the basic
+descriptor functionality with the following functionalities:
+
+ - Notification hooks for each accessor
+ - Instance specific silencing of notifications
+ - Global suppression of notifications by the descriptor instance
+ - The basic accessor methods '__get__', '__set__' and '__delete__' are
+ replaced with explicit methods, except for '__get__' which returns the
+ descriptor instance itself, when the owning instance passed to it is
+ None. This is the case when the descriptor is accessed on the owning
+ class directly. This distinction is important, as it is the only way to
+ reach the actual descriptor instance.
+  - Subclasses should implement the instance specific accessor functions
+  as appropriate for their intended function. Only the '__instance_get__'
+  is strictly required. The other methods will raise a TypeError if
+  invoked. Subclasses are free to reimplement this.
+  - Additionally, the reset method is available, however only by the
+  awkward syntax of first accessing it through the owning class.
+  - This class implements the notification mechanisms leaving subclasses
+  with the above instance specific accessors.
+  - The notification system requires that owning class should decorate the
+  methods it wishes to be notified of with the ONGET, ONSET and ONDEL
+  decorators.
+
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
@@ -6,18 +30,15 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Any
 
-from worktoy.desc import MissingValueException
-from worktoy.meta import BaseMetaclass
+from worktoy.desc import MissingValueException, CoreDescriptor
 from worktoy.parse import maybe
-from worktoy.text import monoSpace, typeMsg
+from worktoy.text import monoSpace
 
 
-class AbstractDescriptor(metaclass=BaseMetaclass):
+class AbstractDescriptor(CoreDescriptor):
   """AbstractDescriptor provides common boilerplate for descriptor
   classes. """
 
-  __field_owner__ = None
-  __field_name__ = None
   __get_subscribers__ = None
   __set_subscribers__ = None
   __del_subscribers__ = None
@@ -58,33 +79,6 @@ class AbstractDescriptor(metaclass=BaseMetaclass):
   def resumeNotifications(self) -> None:
     """Resume notification for the descriptor."""
     self.__suppress_notification__ = None
-
-  def __set_name__(self, owner: type, name: str) -> None:
-    """Set the name of the field and the owner of the field."""
-    self.__field_owner__ = owner
-    self.__field_name__ = name
-
-  def getFieldName(self) -> str:
-    """Getter-function for the field name."""
-    if self.__field_name__ is None:
-      e = """Instance of 'AttriBox' does not belong to class. This 
-      typically indicates that the owning class is still being created."""
-      raise RuntimeError(monoSpace(e))
-    if isinstance(self.__field_name__, str):
-      return self.__field_name__
-    e = typeMsg('__field_name__', self.__field_name__, str)
-    raise TypeError(monoSpace(e))
-
-  def getFieldOwner(self) -> type:
-    """Getter-function for the field owner."""
-    if self.__field_owner__ is None:
-      e = """Instance of 'AttriBox' does not belong to class. This 
-      typically indicates that the owning class is still being created."""
-      raise RuntimeError(monoSpace(e))
-    if isinstance(self.__field_owner__, type):
-      return self.__field_owner__
-    e = typeMsg('__field_owner__', self.__field_owner__, type)
-    raise TypeError(monoSpace(e))
 
   def notifyGet(self, instance: object, value: object) -> None:
     if self.__suppress_notification__ or self.isSilenced(instance):

@@ -7,7 +7,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from random import random
-from worktoy.desc import AttriBox, TYPE, THIS, Field, ATTR, BOX
+from worktoy.desc import AttriBox, TYPE, THIS, Field, ATTR, BOX, DEFAULT
 from worktoy.meta import BaseObject, overload
 from worktoy.text import typeMsg
 
@@ -46,6 +46,16 @@ class Point(BaseObject):
   def __str__(self) -> str:
     """String representation"""
     return """%.3f, %.3f""" % (self.x, self.y)
+
+
+class Circle(BaseObject):
+  """Circle setting a center point as default value"""
+
+  center = AttriBox[Point](DEFAULT(Point(0., 0.)))
+  radius = AttriBox[float](DEFAULT(1.))
+
+  def __str__(self, ) -> str:
+    return """%.3f from %s""" % (self.radius, self.center)
 
 
 class Point3D(Point):  #
@@ -110,6 +120,19 @@ class TestAttriBox(TestCase):
     self.x = random()
     self.y = random()
     self.point = Point(self.x, self.y, )
+    self.circle = Circle()
+
+  def test_setter(self) -> None:
+    """Test the setter method of the AttriBox class. """
+    self.circle.center = Point(69, 420)
+    self.assertEqual(self.circle.center.x, 69)
+    self.assertEqual(self.circle.center.y, 420)
+
+  def test_default(self, ) -> None:
+    """Testing if the default value is set """
+    circle = Circle()
+    self.assertEqual(circle.center, Point(0., 0.))
+    self.assertEqual(circle.radius, 1.)
 
   def test_inheritance(self) -> None:
     """Testing if AttriBox instances are inherited correctly."""

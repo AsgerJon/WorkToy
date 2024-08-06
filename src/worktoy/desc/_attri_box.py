@@ -1,4 +1,64 @@
-"""AttriBox class improves the AttriBox class!"""
+"""AttriBox provides a feature complete implementation of the descriptor
+protocol with lazy instantiation. With it, the owning class need only set
+one attribute on one line to access the full functionality of the
+descriptor. The syntactic sugar is as follows:
+
+
+class Info:
+  # This class provides an attribute class of the Owner class below
+
+  __owning_instance__ = None
+
+  def __init__(self, instance: object) -> None:
+    self.__owning_instance__ = instance
+
+
+class Owner:
+  # This class owns attributes through the AttriBox class
+
+  x = AttriBox[float]()
+  info = AttriBox[Info](THIS)  # THIS is replaced by the owning instance.
+
+
+The class of the attribute is placed in the brackets and the parentheses
+are given the arguments used to instantiate the attribute. It is possible
+to pass special placeholders here which are replaced when the attribute
+object is created. The placeholders are:
+
+THIS: The owning instance
+TYPE: The owning class
+BOX: The AttriBox instance
+ATTR: The attribute class or its subclass
+
+The lifecycle of the AttriBox instance is as follows:
+
+1. The AttriBox class itself is created
+2. The AttriBox instance is created during the class body execution of a
+class that is being created.
+3. When the class creation process completes, the '__set_name__' method is
+invoked. This class is inherited from the 'CoreDescriptor' class.
+4. When this AttriBox instance is accessed through the owning class,
+not an instance of it, the AttriBox instance itself returns.
+5. When the access is through an instance of the owning class,
+the AttriBox instance first attempts to find an existing value in the
+namespace of the instance at its private name. This value is returned if
+it exists.
+6. Otherwise, an instance of the wrapping class 'Bag' is created and an
+instance of the inner class is created and stored in the 'Bag' instance.
+It is the 'Bag' instance that is stored in the namespace of the owning
+class and during calls to __get__, the wrapped object is returned from
+inside the Bag instance.
+7. By default, the setter method expects the value received to be of the
+same type as the existing object in the Bag instance.
+8. By default, the deleter method is disabled and will raise an exception.
+This is because calls on the form: 'del instance.attribute' must then
+cause 'instance.attribute' to result in Attribute error. This is not
+really practical as it is insufficient to remove the value as the
+descriptor is on the owning class not the instance. This means that no
+functionality is present to distinguish between the __delete__ having been
+called, and then inner object not having been created yet.
+
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
@@ -15,7 +75,8 @@ except ImportError:
 
 from typing import Any
 
-from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, Flag, BOX, ATTR
+from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, Flag, BOX, \
+  ATTR, DEFAULT
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
@@ -23,6 +84,7 @@ from worktoy.text import typeMsg, monoSpace
 class AttriBox(AbstractDescriptor):
   """AttriBox class improves the AttriBox class!"""
 
+  __default_object__ = None
   __field_class__ = None
   __pos_args__ = None
   __key_args__ = None
@@ -50,8 +112,18 @@ class AttriBox(AbstractDescriptor):
     self.__field_class__ = fieldClass
 
   def __call__(self, *args, **kwargs) -> Self:
-    self.__pos_args__ = [*args, ]
-    self.__key_args__ = {**kwargs, }
+    for arg in args:
+      if arg is DEFAULT:
+        self.__default_object__ = DEFAULT.getDefaultObject()
+        if not isinstance(self.__default_object__, self.getFieldClass()):
+          e = """The default object is not of the correct type!"""
+          e2 = typeMsg('defaultObject', self.__default_object__,
+                       self.getFieldClass())
+          raise TypeError(monoSpace('%s\n%s' % (e, e2)))
+        break
+    else:
+      self.__pos_args__ = [*args, ]
+      self.__key_args__ = {**kwargs, }
     return self
 
   def getFieldClass(self, ) -> type:
@@ -90,12 +162,18 @@ class AttriBox(AbstractDescriptor):
         kwargs[key] = instance
       elif val is TYPE:
         kwargs[key] = self.getFieldOwner()
+      elif val is BOX:
+        kwargs[key] = self
+      elif val is ATTR:
+        kwargs[key] = type(self)
       else:
         kwargs[key] = val
     return kwargs
 
   def _createFieldObject(self, instance: object) -> Bag:
-    """Create the field object."""
+    """Create the field object. If the default object is set, it is used."""
+    if self.__default_object__ is not None:
+      return Bag(instance, self.__default_object__)
     if self.__field_class__ is None:
       e = """AttriBox instance has not been initialized!"""
       raise AttributeError(e)
@@ -144,29 +222,28 @@ class AttriBox(AbstractDescriptor):
       e = typeMsg('bag', bag, Bag)
       raise TypeError(e)
     innerObject = bag.getInnerObject()
-    if innerObject is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      setattr(instance, pvtName, self._createFieldObject(instance))
-      return self.__instance_get__(instance, _recursion=True)
     fieldClass = self.getFieldClass()
     if isinstance(innerObject, fieldClass):
       return innerObject
     e = typeMsg('innerObject', innerObject, fieldClass)
     raise TypeError(e)
 
-  def __instance_set__(self, instance: object, value: object) -> None:
+  def __instance_set__(self,
+                       instance: object,
+                       value: object,
+                       **kwargs) -> None:
     """Setter-function for the instance."""
     pvtName = self._getPrivateName()
-    bag = getattr(instance, pvtName, None)
-    if bag is None:
-      bag = self._createFieldObject(instance)
+    fieldCls = self.getFieldClass()
+    if isinstance(value, fieldCls):
+      bag = getattr(instance, pvtName, None)
+      if bag is None:
+        return setattr(instance, pvtName, Bag(instance, value))
       bag.setInnerObject(value)
       return setattr(instance, pvtName, bag)
-    if isinstance(bag, Bag):
-      return bag.setInnerObject(value)
-    e = typeMsg('bag', bag, Bag)
-    raise TypeError(e)
+    if kwargs.get('_recursion', False):
+      raise RecursionError
+    return self.__instance_set__(instance, fieldCls(value), _recursion=True)
 
   def __instance_del__(self, instance: object) -> Never:
     """Deleter-function for the instance."""

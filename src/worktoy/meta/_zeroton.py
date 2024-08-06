@@ -5,9 +5,10 @@ universal objects that retain identity across modules."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from worktoy.meta import BaseMetaclass, BaseNamespace
+from worktoy.text import typeMsg
 
 
 class ZeroSpace(BaseNamespace):
@@ -68,6 +69,16 @@ class ZeroMeta(BaseMetaclass):
     return BaseMetaclass.__new__(ZeroMeta, name, *args, **kwargs)
 
   def __call__(cls, *args, **kwargs):
+    clsCall = getattr(cls, '__class_call__', None)
+    if clsCall is not None:
+      if callable(clsCall):
+        if getattr(clsCall, '__self__', None) is None:
+          clsCall(cls, *args, **kwargs)
+        else:
+          clsCall(*args, **kwargs)
+      else:
+        e = typeMsg('clsCall', clsCall, Callable)
+        raise TypeError(e)
     return cls
 
 

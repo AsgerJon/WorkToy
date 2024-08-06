@@ -1,5 +1,10 @@
-"""Field provides a flexible implementation of the descriptor
-protocol allowing owning classes to decorate methods as accessor methods. """
+"""Field class subclasses the 'AbstractDescriptor' and provides the owning
+class with decorators for explicitly specifying the accessor methods. This
+means that the owning class are free to customize accessor method for each
+of their attributes. The GET, SET, DELETE and RESET decorators allow the
+owning class to designate the methods responsible for accessor operations.
+Besides these decorators, the Field class also inherits the notification
+related decorators from the AbstractDescriptor class. """
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
