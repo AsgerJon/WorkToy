@@ -16,11 +16,19 @@ def main() -> int:
   here = os.path.abspath(os.path.dirname(__file__))
   here = os.path.normpath(here)
   os.chdir(here)
-  testPath = os.path.join(here, 'tests')
-  suite = loader.discover(start_dir=testPath, pattern='test_*.py')
-  runner = TextTestRunner(verbosity=2)
-  result = runner.run(suite)
-  if result.wasSuccessful():
+  testRoot = os.path.join(here, 'tests')
+  testRoot = os.path.normpath(testRoot)
+  for item in os.listdir(testRoot):
+    testPath = os.path.normpath(os.path.join(testRoot, item))
+    suite = loader.discover(start_dir=testPath, pattern='test_*.py')
+    runner = TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    if result.wasSuccessful():
+      print(f'{item} tests passed!')
+      continue
+    break
+  else:
+    print('All tests passed!')
     return 0
   return 1
 
