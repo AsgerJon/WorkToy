@@ -3,6 +3,8 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.text import typeMsg
+
 try:
   from typing import Callable
 except ImportError:
@@ -43,17 +45,27 @@ class EZSpace(BaseNamespace):
     """This factory creates the '__init__' method which automatically
     populates the AttriBox instances."""
 
-    keys = [key for (key, _) in attriBoxes]
+    keys = [key for (key, box) in attriBoxes]
+    boxes = [box for (key, box) in attriBoxes]
 
     def __init__(self, *args, **kwargs) -> None:
       """This automatically generated '__init__' method populates the
       AttriBox instances."""
+      for box in boxes:
+        if not isinstance(box, AttriBox):
+          e = typeMsg('box', box, AttriBox)
+          raise TypeError(e)
+        box.silenceInstance(self)
+
       for (key, arg) in zip(keys, args):
         setattr(self, key, arg)
 
       for key in keys:
         if key in kwargs:
           setattr(self, key, kwargs[key])
+
+      for box in boxes:
+        box.unsilenceInstance(self)
 
     return __init__
 

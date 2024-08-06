@@ -52,7 +52,7 @@ jobs:
 
       - name: Update Version
         run: |
-          python roll_version.py patch
+          python roll_version.py dev
 
       - name: Read Version Tag
         id: read_tag
