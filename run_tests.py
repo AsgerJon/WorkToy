@@ -15,10 +15,6 @@ def main() -> int:
   loader = TestLoader()
   here = os.path.abspath(os.path.dirname(__file__))
   here = os.path.normpath(here)
-  there = os.path.join(here, 'src')
-  there = os.path.normpath(there)
-  sys.path.append(there)
-  os.chdir(here)
   testRoot = os.path.join(here, 'tests')
   testRoot = os.path.normpath(testRoot)
   runner = None
