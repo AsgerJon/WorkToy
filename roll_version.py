@@ -16,11 +16,10 @@ def _loadFile(file: str, **kwargs) -> str:
   if os.path.exists(file):
     if os.path.isfile(file):
       return file
-    e = """The pyproject.toml file at the specified directory: %s is not a
+    e = """The file at the specified directory: %s is not a
     file!"""
     raise IsADirectoryError(' '.join(e.split()) % here)
-  e = """Unable to find the pyproject.toml file at the specified 
-  directory: %s!"""
+  e = """Unable to find file at the specified directory: %s!"""
   if kwargs.get('strict', True):
     raise FileNotFoundError(' '.join(e.split()) % here)
   return file
@@ -49,7 +48,7 @@ def incrementVersion() -> None:
     existingVersion['patch'] = 0
   if updateLevel == 'major':
     existingVersion['minor'] = 0
-  with open(_loadFile('worktoy_version.json'), 'w') as file:
+  with open(_loadFile('worktoy_version.json', strict=False), 'w') as file:
     json.dump(existingVersion, file, indent=2)
   major = existingVersion['major']
   minor = existingVersion['minor']
@@ -59,7 +58,7 @@ def incrementVersion() -> None:
     tag = f'{major}.{minor}.{patch}.dev{dev}'
   else:
     tag = f'{major}.{minor}.{patch}'
-  with open(_loadFile('worktoy.tag'), 'w') as file:
+  with open(_loadFile('worktoy.tag', strict=False), 'w') as file:
     file.write(tag)
   with open(_loadFile('pyproject.toml'), 'r', encoding='utf-8') as file:
     lines = file.readlines()
@@ -73,8 +72,7 @@ def incrementVersion() -> None:
       break
     newLines.append(line)
   else:
-    e = """Unable to find the 'version' key in the 'tool.poetry' section of
-    the pyproject.toml file!"""
+    e = """Unable to find the 'version' pyproject.toml file!"""
     raise KeyError(' '.join(e.split()))
   with open(_loadFile('pyproject.toml'), 'w', encoding='utf-8') as file:
     file.writelines(newLines)
