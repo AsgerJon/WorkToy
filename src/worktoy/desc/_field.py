@@ -14,7 +14,7 @@ try:
 except ImportError:
   Callable = object
 
-from worktoy.desc import AbstractDescriptor, MissingValueException
+from worktoy.desc import AbstractDescriptor
 from worktoy.text import typeMsg
 
 
@@ -57,16 +57,9 @@ class Field(AbstractDescriptor):
     e = typeMsg('__field_type__', self.__field_type__, type)
     raise TypeError(e)
 
-  def __instance_reset__(self, instance: object) -> None:
-    """Reset the instance object."""
-    self.__get_resetter__()(instance)
-
   def __instance_get__(self, instance: object) -> object:
     """Get the instance object."""
-    try:
-      return self.__get_getter__()(instance)
-    except AttributeError:
-      raise MissingValueException(self)
+    return self.__get_getter__()(instance)
 
   def __instance_set__(self, instance: object, value: object) -> None:
     """Set the instance object."""
@@ -92,13 +85,6 @@ class Field(AbstractDescriptor):
     e = typeMsg('setter', self.__setter_function__, Callable)
     raise TypeError(e)
 
-  def __get_resetter__(self, ) -> Callable:
-    """Getter-function for the resetter-function of the field."""
-    if callable(self.__resetter_function__):
-      return self.__resetter_function__
-    e = typeMsg('resetter', self.__resetter_function__, Callable)
-    raise TypeError(e)
-
   def __get_deleter__(self, ) -> Callable:
     """Getter-function for the deleter-function of the field."""
     if callable(self.__deleter_function__):
@@ -122,14 +108,6 @@ class Field(AbstractDescriptor):
     self.__setter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
-  def __set_resetter__(self, callMeMaybe: Callable) -> Callable:
-    """Sets the resetter function of the field."""
-    if not callable(callMeMaybe):
-      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
-      raise TypeError(e)
-    self.__resetter_key__ = callMeMaybe.__name__
-    return callMeMaybe
-
   def __set_deleter__(self, callMeMaybe: Callable) -> Callable:
     """Set the deleter function of the field."""
     if not callable(callMeMaybe):
@@ -145,10 +123,6 @@ class Field(AbstractDescriptor):
   def SET(self, callMeMaybe: Callable) -> Callable:
     """Decorator for setting the setter function of the field."""
     return self.__set_setter__(callMeMaybe)
-
-  def RESET(self, callMeMaybe: Callable) -> Callable:
-    """Decorator for setting the resetter function of the field."""
-    return self.__set_resetter__(callMeMaybe)
 
   def DELETE(self, callMeMaybe: Callable) -> Callable:
     """Decorator for setting the deleter function of the field."""

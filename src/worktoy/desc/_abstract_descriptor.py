@@ -14,8 +14,6 @@ descriptor functionality with the following functionalities:
   as appropriate for their intended function. Only the '__instance_get__'
   is strictly required. The other methods will raise a TypeError if
   invoked. Subclasses are free to reimplement this.
-  - Additionally, the reset method is available, however only by the
-  awkward syntax of first accessing it through the owning class.
   - This class implements the notification mechanisms leaving subclasses
   with the above instance specific accessors.
   - The notification system requires that owning class should decorate the
@@ -28,9 +26,9 @@ descriptor functionality with the following functionalities:
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Callable, Never
 
-from worktoy.desc import MissingValueException, CoreDescriptor
+from worktoy.desc import CoreDescriptor
 from worktoy.parse import maybe
 from worktoy.text import monoSpace
 
@@ -38,179 +36,262 @@ from worktoy.text import monoSpace
 class AbstractDescriptor(CoreDescriptor):
   """AbstractDescriptor provides common boilerplate for descriptor
   classes. """
+  __on_set_callbacks__ = None
+  __pre_set_callbacks__ = None
+  __on_del_callbacks__ = None
+  __pre_del_callbacks__ = None
+  __pre_get_callbacks__ = None
 
-  __get_subscribers__ = None
-  __set_subscribers__ = None
-  __del_subscribers__ = None
-  __suppress_notification__ = None
-  __silenced_instances__ = None
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Wrapper factories
 
-  def getSilencedInstances(self) -> list:
-    return maybe(self.__silenced_instances__, [])
+  @staticmethod
+  def wrapGet(callMeMaybe: Callable) -> Callable:
+    """This method creates a flexible wrapper for the using the callable
+    as a getter. """
 
-  def silenceInstance(self, instance: object) -> None:
-    silencedInstances = self.getSilencedInstances()
-    if instance in silencedInstances:
-      e = """Tried to silence '%s' which was already silenced!"""
-      raise AttributeError(e % str(instance))
-    self.__silenced_instances__ = [*silencedInstances, instance]
+    def wrapper(instance: object, value: object) -> Any:
+      """Wrapper function handling the notification. The wrapper first
+      tries passing the instance and values to the given callable. If the
+      callable raises a TypeError relating to 'positional arguments', it
+      will then attempt to call with only the instance. """
+      try:
+        return callMeMaybe(instance, value)
+      except TypeError as typeError:
+        if 'positional arguments' in str(typeError):
+          try:
+            return callMeMaybe(value)
+          except Exception as exception:
+            raise exception from typeError
+        else:
+          raise typeError
 
-  def unsilenceInstance(self, instance: object) -> None:
-    silencedInstances = self.getSilencedInstances()
-    self.__silenced_instances__ = []
-    while silencedInstances:
-      silencedInstance = silencedInstances.pop()
-      if silencedInstance is instance:
-        while silencedInstances:
-          self.silenceInstance(silencedInstances.pop())
-        break
-    else:
-      e = """Tried to unsilence '%s' which was not silenced!"""
-      raise AttributeError(e % str(instance))
+    return wrapper
 
-  def isSilenced(self, instance: object) -> bool:
-    silencedInstances = self.getSilencedInstances()
-    return True if instance in silencedInstances else False
+  @staticmethod
+  def wrapDel(callMeMaybe: Callable) -> Callable:
+    """Wrapper function for the deleter notifier."""
 
-  def pauseNotifications(self) -> None:
-    """Suppress notification for the descriptor."""
-    self.__suppress_notification__ = True
-
-  def resumeNotifications(self) -> None:
-    """Resume notification for the descriptor."""
-    self.__suppress_notification__ = None
-
-  def notifyGet(self, instance: object, value: object) -> None:
-    if self.__suppress_notification__ or self.isSilenced(instance):
-      return
-    for callMeMaybe in self._getGetSubscribers():
+    def wrapper(instance: object, value: object) -> None:
+      """Wrapper function handling the notification. The wrapper first
+      tries passing the instance and values to the given callable. If the
+      callable raises a TypeError relating to 'positional arguments', it
+      will then attempt to call with only the instance. """
       try:
         callMeMaybe(instance, value)
       except TypeError as typeError:
-        if 'positional argument' in str(typeError):
+        if 'positional arguments' in str(typeError):
           try:
             callMeMaybe(value)
           except Exception as exception:
             raise exception from typeError
+        else:
+          raise typeError
 
-  def notifySet(self,
-                instance: object,
-                oldValue: object,
-                newValue: object) -> None:
-    if self.__suppress_notification__ or self.isSilenced(instance):
-      return
-    for callMeMaybe in self._getSetSubscribers():
-      try:
-        callMeMaybe(instance, oldValue, newValue)
-      except TypeError as typeError:
-        if 'positional argument' in str(typeError):
-          try:
-            callMeMaybe(instance, newValue)
-          except TypeError as typeError2:
-            if 'positional argument' in str(typeError2):
-              try:
-                callMeMaybe(newValue)
-              except Exception as exception:
-                raise exception from typeError2
+    return wrapper
 
-  def notifyDel(self, instance: object, value: object) -> None:
-    if self.__suppress_notification__ or self.isSilenced(instance):
-      return
-    for callMeMaybe in self._getDelSubscribers():
+  @staticmethod
+  def wrapSet(callMeMaybe: Callable) -> Callable:
+    """This method creates a flexible wrapper for the using the callable
+    as a setter. """
+
+    def wrapper(instance: object, oldVal: object, newVal: object) -> None:
+      """Wrapper function handling the notification. The wrapper first
+      tries passing the instance, old value and new value to the given
+      callable. If the callable raises a TypeError relating to 'positional
+      arguments', it will then attempt to call with only the instance and
+      the new value. """
       try:
-        callMeMaybe(instance, value)
+        callMeMaybe(instance, oldVal, newVal)
       except TypeError as typeError:
-        if 'positional argument' in str(typeError):
+        if 'positional arguments' in str(typeError):
           try:
-            callMeMaybe(instance)
+            callMeMaybe(instance, newVal)
           except Exception as exception:
             raise exception from typeError
+        else:
+          raise typeError
 
-  def _getGetSubscribers(self) -> list[callable]:
-    return maybe(self.__get_subscribers__, [])
+    return wrapper
 
-  def _getSetSubscribers(self) -> list[callable]:
-    return maybe(self.__set_subscribers__, [])
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Getter-functions for notification callbacks
 
-  def _getDelSubscribers(self) -> list[callable]:
-    return maybe(self.__del_subscribers__, [])
+  def _onSetCallbacks(self, ) -> tuple[Callable, ...]:
+    """This method returns the set callbacks."""
+    return maybe(self.__on_set_callbacks__, [])
 
-  def _addGetSubscriber(self, callMeMaybe: callable) -> None:
-    """Subscribes the callable received to be notified when the field
-    getter is called. The instance and the value are passed as arguments.
-    If instance is None, the AttriBox is accessed through the owning class,
-    which does not result in a notification.
+  def _preSetCallbacks(self, ) -> tuple[Callable, ...]:
+    """This method returns the set callbacks."""
+    return maybe(self.__pre_set_callbacks__, [])
 
-    Similar to this method, the _addSetSubscriber and _addDelSubscriber
-    methods are used to subscribe callables to be notified when the field
-    is accessed. """
-    getSubscribers = self._getGetSubscribers()
-    self.__get_subscribers__ = [*getSubscribers, callMeMaybe]
+  def _onDelCallbacks(self, ) -> tuple[Callable, ...]:
+    """This method returns the set callbacks."""
+    return maybe(self.__on_del_callbacks__, [])
 
-  def _addSetSubscriber(self, callMeMaybe: callable) -> None:
-    """Registers the callable for notification when field setter is
-    called."""
-    setSubscribers = self._getSetSubscribers()
-    self.__set_subscribers__ = [*setSubscribers, callMeMaybe]
+  def _preDelCallbacks(self, ) -> tuple[Callable, ...]:
+    """This method returns the set callbacks."""
+    return maybe(self.__pre_del_callbacks__, [])
 
-  def _addDelSubscriber(self, callMeMaybe: callable) -> None:
-    """Registers the callable for notification when field deleter is
-    called."""
-    delSubscribers = self._getDelSubscribers()
-    self.__del_subscribers__ = [*delSubscribers, callMeMaybe]
+  def _preGetCallbacks(self, ) -> tuple[Callable, ...]:
+    """This method returns the set callbacks."""
+    return maybe(self.__pre_get_callbacks__, [])
 
-  def ONGET(self, callMeMaybe: callable) -> callable:
-    """Decorator for subscribing to the getter."""
-    self._addGetSubscriber(callMeMaybe)
-    return callMeMaybe
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Append-functions for notification callbacks
 
-  def ONSET(self, callMeMaybe: callable) -> callable:
+  def _addPreSetCallback(self, callMeMaybe: Callable) -> None:
+    """Registers the given callable to receive notifications when the
+    value is about to change. """
+
+    preSetCallbacks = self._preSetCallbacks()
+    wrapper = self.wrapSet(callMeMaybe)
+    self.__pre_set_callbacks__ = [*preSetCallbacks, wrapper]
+
+  def _addOnSetCallback(self, callMeMaybe: Callable) -> None:
+    """Registers the given callable to receive notifications when the
+    value has changed. """
+
+    onSetCallbacks = self._onSetCallbacks()
+    wrapper = self.wrapSet(callMeMaybe)
+    self.__on_set_callbacks__ = [*onSetCallbacks, wrapper]
+
+  def _addPreDelCallback(self, callMeMaybe: Callable) -> None:
+    """Registers the given callable to receive notifications when the
+    value is about to be deleted. """
+
+    preDelCallbacks = self._preDelCallbacks()
+    wrapper = self.wrapSet(callMeMaybe)
+    self.__pre_del_callbacks__ = [*preDelCallbacks, wrapper]
+
+  def _addOnDelCallback(self, callMeMaybe: Callable) -> None:
+    """Registers the given callable to receive notifications when the
+    value has been deleted. """
+
+    onDelCallbacks = self._onDelCallbacks()
+    wrapper = self.wrapSet(callMeMaybe)
+    self.__on_del_callbacks__ = [*onDelCallbacks, wrapper]
+
+  def _addPreGetCallback(self, callMeMaybe: Callable) -> None:
+    """Registers the given callable to receive notifications when the
+    value is about to be accessed. """
+
+    preGetCallbacks = self._preGetCallbacks()
+    wrapper = self.wrapSet(callMeMaybe)
+    self.__pre_get_callbacks__ = [*preGetCallbacks, wrapper]
+
+  @staticmethod
+  def _addOnGetCallback(*_) -> Never:
+    """It is not possible to be notified 'after' the getter has returned!"""
+    e = """It is not possible to be notified 'after' the getter has 
+    returned!"""
+    raise TypeError(monoSpace(e))
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Decorators for subscribing to the notifications
+
+  @staticmethod
+  def ONGET(*_) -> Never:
+    """It is not possible to be notified 'after' the getter has returned!"""
+    e = """It is not possible to be notified 'after' the getter has 
+    returned!"""
+    raise TypeError(monoSpace(e))
+
+  def ONSET(self, callMeMaybe: Callable) -> Callable:
     """Decorator for subscribing to the setter."""
-    self._addSetSubscriber(callMeMaybe)
+    self._addOnSetCallback(callMeMaybe)
     return callMeMaybe
 
-  def ONDEL(self, callMeMaybe: callable) -> callable:
+  def ONDEL(self, callMeMaybe: Callable) -> Callable:
     """Decorator for subscribing to the deleter."""
-    self._addDelSubscriber(callMeMaybe)
+    self._addOnDelCallback(callMeMaybe)
     return callMeMaybe
 
-  def __get__(self, instance: object, owner: type) -> Any:
+  def PREGET(self, callMeMaybe: Callable) -> Callable:
+    """Decorator for subscribing to the pre-getter."""
+    self._addPreGetCallback(callMeMaybe)
+    return callMeMaybe
+
+  def PRESET(self, callMeMaybe: Callable) -> Callable:
+    """Decorator for subscribing to the pre-setter."""
+    self._addPreSetCallback(callMeMaybe)
+    return callMeMaybe
+
+  def PREDEL(self, callMeMaybe: Callable) -> Callable:
+    """Decorator for subscribing to the pre-deleter."""
+    self._addPreDelCallback(callMeMaybe)
+    return callMeMaybe
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Dispatcher methods for the notifications
+
+  @staticmethod
+  def notifyOnGET(*_) -> Never:
+    """It is not possible to be notified 'after' the getter has returned!"""
+    e = """It is not possible to be notified 'after' the getter has 
+    returned!"""
+    raise TypeError(monoSpace(e))
+
+  def notifyPreGet(self, instance: object, *values) -> None:
+    """Dispatches the pre-get notifications."""
+    for callMeMaybe in self._preGetCallbacks():
+      callMeMaybe(instance, *values)
+
+  def notifyOnSet(self, instance: object, *values) -> None:
+    """Dispatches the on-set notifications."""
+    for callMeMaybe in self._onSetCallbacks():
+      callMeMaybe(instance, *values)
+
+  def notifyPreSet(self, instance: object, *values) -> None:
+    """Dispatches the pre-set notifications."""
+    for callMeMaybe in self._preSetCallbacks():
+      callMeMaybe(instance, *values)
+
+  def notifyOnDel(self, instance: object, *values) -> None:
+    """Dispatches the on-del notifications."""
+    for callMeMaybe in self._onDelCallbacks():
+      callMeMaybe(instance, *values)
+
+  def notifyPreDel(self, instance: object, *values) -> None:
+    """Dispatches the pre-del notifications."""
+    for callMeMaybe in self._preDelCallbacks():
+      callMeMaybe(instance, *values)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Implementation of the descriptor protocol
+
+  def __get__(self, instance: object, owner: type, **kwargs) -> Any:
     """Get the value of the field."""
     if instance is None:
       return self
     try:
       value = self.__instance_get__(instance)
-    except MissingValueException as missingValueException:
-      raise AttributeError from missingValueException
-    self.notifyGet(instance, value)
+    except Exception as exception:
+      if kwargs.get('_setterAsks', False):
+        return None
+      else:
+        raise exception
+    if kwargs.get('_setterAsks', False):
+      return value
+    self.notifyPreGet(instance, value)
     return value
 
   def __set__(self, instance: object, value: object) -> None:
     """Set the value of the field."""
-    try:
-      oldValue = self.__instance_get__(instance)
-    except MissingValueException:
-      oldValue = None
-    self.notifySet(instance, oldValue, value)
+    oldValue = self.__get__(instance, type(instance), _setterAsks=True)
+    self.notifyPreSet(instance, oldValue, value)
     self.__instance_set__(instance, value)
+    self.notifyOnSet(instance, oldValue, value)
 
   def __delete__(self, instance: object) -> None:
     """Delete the value of the field."""
-    try:
-      oldValue = self.__instance_get__(instance)
-    except MissingValueException as missingValueException:
-      if missingValueException == (instance, self):
-        oldValue = None
-      else:
-        raise missingValueException
-    self.notifyDel(instance, oldValue)
+    value = self.__get__(instance, type(instance), _setterAsks=True)
+    self.notifyPreDel(instance, value)
     self.__instance_del__(instance)
+    self.notifyOnDel(instance, value)
 
-  def __instance_reset__(self, instance: object) -> None:
-    """Subclasses may implement this method to specify a way for the
-    instance to have its value reset. """
-    e = """The instance reset method is not implemented by the descriptor!"""
-    raise TypeError(monoSpace(e))
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Instance-specific accessor methods
 
   @abstractmethod
   def __instance_get__(self, instance: object) -> Any:
@@ -233,7 +314,3 @@ class AbstractDescriptor(CoreDescriptor):
     e = """The attribute '%s' on class '%s' belongs to descriptor of type: 
     '%s' which does not implement deletion!"""
     raise TypeError(monoSpace(e % (fieldName, ownerName, descName)))
-
-  def reset(self, instance: object) -> None:
-    """Reset the value of the field."""
-    self.__instance_reset__(instance)
