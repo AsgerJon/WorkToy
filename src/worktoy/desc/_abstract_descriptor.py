@@ -26,11 +26,16 @@ descriptor functionality with the following functionalities:
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, Callable, Never
+from typing import Any, Callable
 
 from worktoy.desc import CoreDescriptor
 from worktoy.parse import maybe
 from worktoy.text import monoSpace
+
+try:
+  from typing import Never
+except ImportError:
+  Never = object
 
 
 class AbstractDescriptor(CoreDescriptor):
