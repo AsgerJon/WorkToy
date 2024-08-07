@@ -166,7 +166,7 @@ class AbstractDescriptor(CoreDescriptor):
     value is about to be deleted. """
 
     preDelCallbacks = self._preDelCallbacks()
-    wrapper = self.wrapSet(callMeMaybe)
+    wrapper = self.wrapDel(callMeMaybe)
     self.__pre_del_callbacks__ = [*preDelCallbacks, wrapper]
 
   def _addOnDelCallback(self, callMeMaybe: Callable) -> None:
@@ -174,7 +174,7 @@ class AbstractDescriptor(CoreDescriptor):
     value has been deleted. """
 
     onDelCallbacks = self._onDelCallbacks()
-    wrapper = self.wrapSet(callMeMaybe)
+    wrapper = self.wrapDel(callMeMaybe)
     self.__on_del_callbacks__ = [*onDelCallbacks, wrapper]
 
   def _addPreGetCallback(self, callMeMaybe: Callable) -> None:
@@ -182,7 +182,7 @@ class AbstractDescriptor(CoreDescriptor):
     value is about to be accessed. """
 
     preGetCallbacks = self._preGetCallbacks()
-    wrapper = self.wrapSet(callMeMaybe)
+    wrapper = self.wrapGet(callMeMaybe)
     self.__pre_get_callbacks__ = [*preGetCallbacks, wrapper]
 
   @staticmethod

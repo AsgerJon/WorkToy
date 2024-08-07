@@ -76,7 +76,7 @@ except ImportError:
 from typing import Any
 
 from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, BOX, \
-  ATTR, DEFAULT
+  ATTR, DEFAULT, NODEF
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
@@ -88,6 +88,57 @@ class AttriBox(AbstractDescriptor):
   __field_class__ = None
   __pos_args__ = None
   __key_args__ = None
+
+  @staticmethod
+  def _castNumberTo(value: object, target: type) -> Any:
+    """This method handles the cringe cases of ints being rejected as
+    floats. """
+    if isinstance(value, int):
+      if target is int:
+        return value
+      if target is float:
+        return float(value)
+      if target is complex:
+        return float(value) + 0j
+    if isinstance(value, float):
+      if target is int:
+        if value.is_integer():
+          return int(value)
+        e = typeMsg('value', value, int)
+        raise TypeError(e)
+      if target is float:
+        return value
+      if target is complex:
+        return value + 0j
+    if isinstance(value, complex):
+      if target is int:
+        if value.real.is_integer() and not value.imag:
+          return int(value.real)
+        e = typeMsg('value', value, int)
+        raise TypeError(e)
+      if target is float:
+        if not value.imag:
+          return float(value.real)
+        e = typeMsg('value', value, float)
+        raise TypeError(e)
+      if target is complex:
+        return value
+
+  @staticmethod
+  def _unpackValueToArgsKwargs(value: Any) -> tuple[tuple, dict]:
+    """This method unpacks the value into positional and keyword
+    arguments."""
+    if not value:
+      return (), {}
+    if not isinstance(value, (list, tuple)):
+      return (value,), {}
+    if len(value) == 1:
+      return (value[0],), {}
+    if len(value) == 2:
+      if isinstance(value[0], (list, tuple)):
+        if isinstance(value[1], dict):
+          return (*value[0],), {**value[1], }
+    return (*value,), {}
 
   @classmethod
   def __class_getitem__(cls, fieldClass: type) -> AttriBox:
@@ -120,6 +171,12 @@ class AttriBox(AbstractDescriptor):
           e2 = typeMsg('defaultObject', self.__default_object__,
                        self.getFieldClass())
           raise TypeError(monoSpace('%s\n%s' % (e, e2)))
+        break
+      if arg is NODEF:
+        if len(args) - 1 or kwargs:
+          e = """The NODEF flag must be the only argument!"""
+          raise ValueError(e)
+        self.__default_object__ = NODEF
         break
     else:
       self.__pos_args__ = [*args, ]
@@ -192,9 +249,16 @@ class AttriBox(AbstractDescriptor):
     delattr(instance, pvtName)
 
   def __instance_get__(self, instance: object, **kwargs) -> Any:
-    """Getter-function for the instance."""
+    """Getter-function for the instance. Please note, that if the call is
+    the notifier asking what the previous value was, the functionality in
+    the AbstractDescriptor expects and handles the exception. """
     pvtName = self._getPrivateName()
     if getattr(instance, pvtName, None) is None:
+      if self.__default_object__ is NODEF:
+        e = """This instance of %s has the NODEF flag set, and the 
+        required explicitly set value is missing! NODEF requires that an 
+        explicit value be set for the attribute.""" % self.getFieldName()
+        raise TypeError(monoSpace(e))
       if kwargs.get('_recursion', False):
         raise RecursionError
       setattr(instance, pvtName, self._createFieldObject(instance))
@@ -223,9 +287,29 @@ class AttriBox(AbstractDescriptor):
         return setattr(instance, pvtName, Bag(instance, value))
       bag.setInnerObject(value)
       return setattr(instance, pvtName, bag)
+    if fieldCls in [int, float, complex]:
+      if kwargs.get('_recursion2', False):
+        e = typeMsg('value', value, fieldCls)
+        raise TypeError(e)
+      return self.__instance_set__(instance,
+                                   self._castNumberTo(value, fieldCls),
+                                   _recursion2=True)
+    if not isinstance(value, (tuple, list)):
+      e = typeMsg('value', value, fieldCls)
+      raise TypeError(e)
     if kwargs.get('_recursion', False):
-      raise RecursionError
-    return self.__instance_set__(instance, fieldCls(value), _recursion=True)
+      e = typeMsg('value', value, fieldCls)
+      raise TypeError(e)
+    newValue = None
+    try:
+      args, kwargs2 = self._unpackValueToArgsKwargs(value)
+      newValue = fieldCls(*args, **kwargs2)
+    except ValueError as valueError:
+      if 'could not convert' in str(valueError):
+        e = """Could not convert the value to the field class!"""
+        e2 = typeMsg('value', value, fieldCls)
+        raise TypeError(monoSpace('%s\n%s' % (e, e2)))
+    return self.__instance_set__(instance, newValue, _recursion=True)
 
   def __instance_del__(self, instance: object) -> Never:
     """Deleter-function for the instance."""
