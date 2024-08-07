@@ -4,10 +4,18 @@
 from __future__ import annotations
 
 from typing import Iterable, TYPE_CHECKING
+
 from unittest import TestCase
 
+from worktoy.desc import AttriBox
 from worktoy.keenum import KeeNum, auto
+from worktoy.meta import BaseObject
 from worktoy.text import stringList
+
+try:
+  from typing import Self
+except ImportError:
+  Self = object
 
 
 class WeekDay(KeeNum):
@@ -19,6 +27,17 @@ class WeekDay(KeeNum):
   FRIDAY = auto()
   SATURDAY = auto()
   SUNDAY = auto()
+
+  @classmethod
+  def __class_call__(cls, *args, **kwargs) -> Self:
+    """Returns the class item"""
+    for arg in args:
+      if isinstance(arg, str):
+        return getattr(cls, arg)
+      if isinstance(arg, int):
+        for item in cls:
+          if int(item) == arg:
+            return item
 
 
 class Ugedag(KeeNum):
@@ -37,8 +56,28 @@ class Ugedag(KeeNum):
     return """%s.%s('%s')""" % (clsName, self.name, str(self.value))
 
 
+class Day(BaseObject):
+  """Day owns a boxed WeekDay"""
+
+  weekday = AttriBox[WeekDay](WeekDay.FRIDAY)
+
+
 class TestKeeNum(TestCase):
   """TestKeeNum tests the KeeNum class"""
+
+  def setUp(self) -> None:
+    """Sets up each test"""
+    self.day = Day()
+
+  def test_setter(self, ) -> None:
+    """Testing if the weekday AttriBox can manage a flexible '__set__'
+    call."""
+    self.assertIsInstance(self.day.weekday, WeekDay)
+    self.day.weekday = 'TUESDAY'
+    self.assertEqual(self.day.weekday, WeekDay.TUESDAY)
+    self.day.weekday = 4
+    self.assertIsInstance(self.day.weekday, WeekDay)
+    self.assertEqual(self.day.weekday, WeekDay.FRIDAY)
 
   def test_iteration(self) -> None:
     """Tests if the KeeNum subclasses implement iteration"""

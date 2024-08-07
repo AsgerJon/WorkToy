@@ -157,8 +157,11 @@ class KeeNumMeta(AbstractMetaclass):
     arguments. """
     keeNumObject = maybe(cls._parseArgs(*args), cls._parseKwargs(**kwargs))
     if keeNumObject is None:
-      e = """Unable to recognize KeeNum entry!"""
-      raise ValueError(e)
+      clsCall = getattr(cls, '__class_call__', None)
+      if not callable(clsCall):
+        e = """Unable to recognize KeeNum entry!"""
+        raise ValueError(e)
+      keeNumObject = clsCall(*args, **kwargs)
     if isinstance(keeNumObject, cls):
       return keeNumObject
     e = typeMsg('keeNumObject', keeNumObject, cls)

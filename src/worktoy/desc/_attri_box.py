@@ -295,8 +295,9 @@ class AttriBox(AbstractDescriptor):
                                    self._castNumberTo(value, fieldCls),
                                    _recursion2=True)
     if not isinstance(value, (tuple, list)):
-      e = typeMsg('value', value, fieldCls)
-      raise TypeError(e)
+      if kwargs.get('_recursion3', False):
+        raise RecursionError
+      return self.__instance_set__(instance, (value,), _recursion3=True)
     if kwargs.get('_recursion', False):
       e = typeMsg('value', value, fieldCls)
       raise TypeError(e)

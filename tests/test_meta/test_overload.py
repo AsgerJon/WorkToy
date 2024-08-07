@@ -141,3 +141,5 @@ class TestOverload(TestCase):
     orangeFloat = Color(1.0, 0.647, 0.0)
     self.assertEqual(str(orange).lower(), '#ffa500'.lower())
     self.assertLess(abs(orange - Color(1.0, 0.647, 0.0)), 9)
+
+  
