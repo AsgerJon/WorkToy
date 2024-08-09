@@ -12,7 +12,7 @@ from worktoy.meta import BaseObject
 from worktoy.text import monoSpace, typeMsg
 
 
-class CoreDescriptor(object):
+class CoreDescriptor(BaseObject):
   """Implementation of basic descriptor protocol functionalities."""
 
   __field_name__ = None
