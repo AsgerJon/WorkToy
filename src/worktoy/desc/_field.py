@@ -10,9 +10,10 @@ related decorators from the AbstractDescriptor class. """
 from __future__ import annotations
 
 try:
-  from typing import Callable
+  from typing import Callable, Any
 except ImportError:
   Callable = object
+  Any = object
 
 from worktoy.desc import AbstractDescriptor
 from worktoy.text import typeMsg
@@ -120,9 +121,13 @@ class Field(AbstractDescriptor):
     """Decorator for setting the getter function of the field."""
     return self.__set_getter__(callMeMaybe)
 
-  def SET(self, callMeMaybe: Callable) -> Callable:
+  def SET(self, *args) -> Any:
     """Decorator for setting the setter function of the field."""
-    return self.__set_setter__(callMeMaybe)
+    for arg in args:
+      if callable(arg):
+        return self.__set_setter__(arg)
+      if isinstance(arg, str):
+        self.__setter_key__ = arg
 
   def DELETE(self, callMeMaybe: Callable) -> Callable:
     """Decorator for setting the deleter function of the field."""

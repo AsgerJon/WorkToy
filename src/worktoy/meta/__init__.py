@@ -135,13 +135,16 @@ object. After this method, the class is created.
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._type_sig import TypeSig
+from ._dispatch_exception import DispatchException
+from ._overload_dispatcher import Dispatcher
+from ._overload_descriptor import Overload
+
 from ._abstract_namespace import AbstractNamespace
 from ._type_names import Bases, Namespace, Space, Function, FunctionTypes
 from ._type_names import FunctionDecorator, ClassDecorator, Decorator
-from ._overload import overload
-from ._dispatcher import Dispatcher
 from ._abstract_metaclass import AbstractMetaclass
-from ._base_namespace import BaseNamespace
+from ._base_namespace import BaseNamespace, OverloadEntry, overload
 from ._base_metaclass import BaseMetaclass
 from ._base_object import BaseObject
 from ._singleton_metaclass import SingletonMetaclass, Singleton

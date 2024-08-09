@@ -1,145 +1,61 @@
-"""TestOverload tests the overloading functionality of the BaseMetaclass."""
+"""TestOverload tests the overloading functionality of the BaseMetaclass.
+The tests focus on the color class defined above. """
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.desc import AttriBox
 from worktoy.meta import BaseObject, overload
+from worktoy.desc import AttriBox
+
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
 
 
-class Color(BaseObject):
-  """Color provides a test case for functional overloading, since colors
-  can be defined in multiple ways."""
+class Complex(BaseObject):
+  """Complex Number representation"""
 
-  red = AttriBox[int](0)
-  green = AttriBox[int](0)
-  blue = AttriBox[int](0)
-
-  @overload(int, int, int)
-  def __init__(self, red: int, green: int, blue: int) -> None:
-    self.red = red
-    self.green = green
-    self.blue = blue
-    BaseObject.__init__(self, )
-
-  @overload(str)
-  def __init__(self, hexCode: str) -> None:
-    if hexCode[0] == '#':
-      hexCode = hexCode[1:]
-    self.red = int(hexCode[0:2], 16)
-    self.green = int(hexCode[2:4], 16)
-    self.blue = int(hexCode[4:6], 16)
-    BaseObject.__init__(self, )
-
-  @overload(float, float, float)
-  def __init__(self, *args) -> None:
-    r, g, b = args
-    self.__init__(int(r * 255), int(g * 255), int(b * 255))
-
-  @overload(dict)
-  def __init__(self, rgb: dict) -> None:
-    self.__init__(rgb['red'], rgb['green'], rgb['blue'])
+  realPart = AttriBox[float]()
+  imgPart = AttriBox[float]()
 
   @overload()
-  def __init__(self) -> None:
-    self.__init__(0, 0, 0)
+  def __init__(self, ) -> None:
+    self.realPart = 0.
+    self.imgPart = 0.
 
-  def __str__(self) -> str:
-    """Returns the hex code of the color."""
-    return '#%02x%02x%02x' % (self.red, self.green, self.blue)
-
-  def __repr__(self) -> str:
-    """Returns the hex code of the color."""
-    return """Color(%d, %d, %d)""" % (self.red, self.green, self.blue)
-
-  def __sub__(self, other: Color) -> Color:
-    """Subtracts two colors."""
-    return Color(self.red - other.red, self.green - other.green,
-                 self.blue - other.blue)
-
-  def __abs__(self, ) -> float:
-    """Returns the absolute value of the color."""
-    return (self.red ** 2 + self.green ** 2 + self.blue ** 2) ** 0.5
-
-
-class SusInt(BaseObject):
-  """This class tries to accept float as int"""
-
-  x = AttriBox[float]()
-  y = AttriBox[float]()
-  res = AttriBox[str]()
-
-  @overload(int, int)
-  def __init__(self, x: int, y: int) -> None:
-    self.x = x
-    self.y = y
-    self.res = 'WIN!'
-    BaseObject.__init__(self, )
-
-
-class SusFloat(BaseObject):
-  """This class tries to accept int as float"""
-
-  x = AttriBox[int]()
-  y = AttriBox[int]()
-  res = AttriBox[str]()
+  @overload(complex)
+  def __init__(self, *args) -> None:
+    self.realPart = args[0].real
+    self.imgPart = args[0].imag
 
   @overload(float, float)
-  def __init__(self, x: float, y: float) -> None:
-    self.x = x
-    self.y = y
-    self.res = 'WIN!'
-    BaseObject.__init__(self, )
+  @overload(float, float, float)
+  def __init__(self, *args) -> None:
+    self.realPart = args[0]
+    self.imgPart = args[1]
 
 
 class TestOverload(TestCase):
   """TestOverload tests the overloading functionality of the
   BaseMetaclass. The tests focus on the color class defined above. """
 
-  def testSusInt(self) -> None:
-    """Testing if we can handle float where int is expected, if float is
-    integer valued. """
-    regInt = SusInt(69, 420)
-    susInt = SusInt(69.0, 420.0)
-    regFloat = SusFloat(69., 420.)
-    susFloat = SusFloat(69, 420)
-    self.assertEqual(regInt.x, susInt.x)
-    self.assertEqual(regInt.y, susInt.y)
-    self.assertEqual(regFloat.x, susFloat.x)
-    self.assertEqual(regFloat.y, susFloat.y)
+  def setUp(self) -> None:
+    """Sets up each test method."""
+    self.emptyPoint = Complex()
+    self.complexPoint = Complex(3 + 4j)
+    self.point = Complex(5., 12.)
+    self.triplePoint = Complex(69, 420, 1337)
 
-  def testBase(self) -> None:
-    """Tests the basic functionality of the Color class."""
-    black = Color()
-    self.assertEqual(black.red, 0)
-    self.assertEqual(black.green, 0)
-    self.assertEqual(black.blue, 0)
+  def test_init(self) -> None:
+    """Test if the __init__ method works correctly."""
+    self.assertEqual(self.emptyPoint.realPart, 0.)
+    self.assertEqual(self.emptyPoint.imgPart, 0.)
 
-  def testBaseHex(self) -> None:
-    """Tests the hex code constructor of the Color class."""
-    black = Color()
-    self.assertEqual(str(black).lower(), '#000000'.lower())
+    self.assertEqual(self.complexPoint.realPart, 3.)
+    self.assertEqual(self.complexPoint.imgPart, 4.)
 
-  def testFloat(self) -> None:
-    """Tests the float constructor of the Color class."""
-    floatWhite = Color(1.0, 1.0, 1.0)
-    intWhite = Color(255, 255, 255)
-    self.assertLess(abs(floatWhite - intWhite), 9)
-    floatBlack = Color(0.0, 0.0, 0.0)
-    intBlack = Color(0, 0, 0)
-    self.assertLess(abs(floatBlack - intBlack), 9)
-    floatPink = Color(1.0, 0.0, 0.5)
-    intPink = Color(255, 0, 127)
-    self.assertLess(abs(floatPink - intPink), 9)
-
-  def testDict(self, ) -> None:
-    """Tests the dictionary constructor of the Color class."""
-    orange = Color({'red': 255, 'green': 165, 'blue': 0})
-    orangeStr = Color('#ffa500')
-    orangeFloat = Color(1.0, 0.647, 0.0)
-    self.assertEqual(str(orange).lower(), '#ffa500'.lower())
-    self.assertLess(abs(orange - Color(1.0, 0.647, 0.0)), 9)
-
-  
+    self.assertEqual(self.point.realPart, 5.)
+    self.assertEqual(self.point.imgPart, 12.)

@@ -9,7 +9,10 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.desc import AttriBox
-from worktoy.meta import BaseObject, overload
+
+# from worktoy.meta import BaseObject
+
+BaseObject = object
 
 
 class BaseTypes(BaseObject):
@@ -59,20 +62,15 @@ class InitValues(BaseObject):
   attrList = AttriBox[list]()
   attrDict = AttriBox[dict]()
 
-  @overload(str, float, int, bool, list, dict)
   def __init__(self, *args) -> None:
     """This method sets the values of the AttriBox instances. """
+    args = [*args, str(), float(), int(), False, list(), dict(), ]
     self.attrStr = args[0]
     self.attrFloat = args[1]
     self.attrInt = args[2]
     self.attrBool = args[3]
     self.attrList = args[4]
     self.attrDict = args[5]
-
-  @overload()
-  def __init__(self, ) -> None:
-    self.__init__(str(), float(), int(), False, list(), dict())
-    #  bool() not allowed I don't think
 
 
 class NestedValues(BaseObject):

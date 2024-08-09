@@ -6,7 +6,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.desc import AttriBox
-from worktoy.meta import Singleton, overload
+from worktoy.meta import Singleton
 
 
 class Unique(Singleton):
@@ -17,48 +17,11 @@ class Unique(Singleton):
 
   name = AttriBox[str]('')
 
-  @overload()
-  def __init__(self, ) -> None:
-    self.name = self.__class__.__name__
-
-  @overload(str)
-  def __init__(self, arg: str) -> None:
-    """Constructor for the Unique class."""
-    self.name = arg
-
-  @overload(str, complex)
-  def __init__(self, arg: str, _z: complex) -> None:
-    self.x, self.y = _z.real, _z.imag
-    self.__init__(arg)
-
-  @overload(str, float, float)
-  def __init__(self, arg: str, _x: float, _y: float) -> None:
-    """Constructor for the Unique class."""
-    self.x, self.y = _x, _y
-    self.__init__(arg)
-
-  @overload(float, float)
-  def __init__(self, _x: float, _y: float) -> None:
-    """Constructor for the Unique class."""
-    self.x, self.y = _x, _y
-    self.__init__()
-
-  @overload(complex)
-  def __init__(self, _z: complex) -> None:
-    self.x, self.y = _z.real, _z.imag
-    self.__init__()
-
-  @overload(str, int, int)
-  def __init__(self, arg: str, _x: int, _y: int) -> None:
-    """Constructor for the Unique class."""
-    self.x, self.y = float(_x), float(_y)
-    self.__init__(arg)
-
-  @overload(int, int)
-  def __init__(self, _x: int, _y: int) -> None:
-    """Constructor for the Unique class."""
-    self.x, self.y = float(_x), float(_y)
-    self.__init__()
+  def __init__(self, *args) -> None:
+    """Initializes the Unique class"""
+    self.name = args[0] if args else self.name
+    self.x = args[1] if len(args) > 1 else self.x
+    self.y = args[2] if len(args) > 2 else self.y
 
   def __str__(self) -> str:
     """String representation"""

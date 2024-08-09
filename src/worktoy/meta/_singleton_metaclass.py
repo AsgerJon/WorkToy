@@ -19,7 +19,8 @@ class SingletonMetaclass(BaseMetaclass):
       setattr(cls, '__singleton_instance__', None)
       return cls(*args, **{**kwargs, **dict(_reset=False)})
     if cls.__singleton_instance__ is None:
-      cls.__singleton_instance__ = super().__call__(*args, **kwargs)
+      self = BaseMetaclass.__call__(cls, *args, **kwargs)
+      setattr(cls, '__singleton_instance__', self)
     cls.__init__(cls.__singleton_instance__, *args, **kwargs)
     return cls.__singleton_instance__
 

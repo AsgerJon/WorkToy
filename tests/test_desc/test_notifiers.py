@@ -7,7 +7,11 @@ from random import random
 from unittest import TestCase
 
 from worktoy.desc import AttriBox
-from worktoy.meta import BaseObject, overload
+
+# from worktoy.meta import BaseObject
+
+
+BaseObject = object
 
 
 class Point(BaseObject):
@@ -22,18 +26,10 @@ class Point(BaseObject):
   xGet = AttriBox[list]([])
   yGet = AttriBox[list]([])
 
-  @overload(float, float)
-  def __init__(self, x: float, y: float) -> None:
-    self.x = x
-    self.y = y
-
-  @overload(complex)
-  def __init__(self, xy: complex) -> None:
-    self.__init__(xy.real, xy.imag)
-
-  @overload()
-  def __init__(self, ) -> None:
-    self.__init__(69, 420)
+  def __init__(self, *args) -> None:
+    _x, _y = [*args, 69, 420][:2]
+    self.x = _x
+    self.y = _y
 
   @x.PRESET
   def _handlePreset(self, oldVal: float, newVal: float) -> None:
