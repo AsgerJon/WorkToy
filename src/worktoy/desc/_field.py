@@ -73,47 +73,36 @@ class Field(AbstractDescriptor):
   def __get_getter__(self, ) -> Callable:
     """Getter-function for the getter-function, getter-ception."""
     if self.__getter_function__ is None:
-      raise AttributeError
-    if callable(self.__getter_function__):
-      return self.__getter_function__
-    e = typeMsg('getter', self.__getter_function__, Callable)
-    raise TypeError(e)
+      e = typeMsg('getter', self.__getter_function__, Callable)
+      raise TypeError(e)
+    return self.__getter_function__
 
   def __get_setter__(self, ) -> Callable:
     """Getter-function for the setter-function of the field."""
-    if callable(self.__setter_function__):
-      return self.__setter_function__
-    e = typeMsg('setter', self.__setter_function__, Callable)
-    raise TypeError(e)
+    if self.__setter_function__ is None:
+      e = typeMsg('setter', self.__setter_function__, Callable)
+      raise TypeError(e)
+    return self.__setter_function__
 
   def __get_deleter__(self, ) -> Callable:
     """Getter-function for the deleter-function of the field."""
-    if callable(self.__deleter_function__):
-      return self.__deleter_function__
-    e = typeMsg('deleter', self.__deleter_function__, Callable)
-    raise TypeError(e)
+    if self.__deleter_function__ is None:
+      e = typeMsg('deleter', self.__deleter_function__, Callable)
+      raise TypeError(e)
+    return self.__deleter_function__
 
   def __set_getter__(self, callMeMaybe: Callable) -> Callable:
     """Set the getter function of the field."""
-    if not callable(callMeMaybe):
-      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
-      raise TypeError(e)
     self.__getter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def __set_setter__(self, callMeMaybe: Callable) -> Callable:
     """Set the setter function of the field."""
-    if not callable(callMeMaybe):
-      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
-      raise TypeError(e)
     self.__setter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def __set_deleter__(self, callMeMaybe: Callable) -> Callable:
     """Set the deleter function of the field."""
-    if not callable(callMeMaybe):
-      e = typeMsg('callMeMaybe', callMeMaybe, Callable)
-      raise TypeError(e)
     self.__deleter_key__ = callMeMaybe.__name__
     return callMeMaybe
 
