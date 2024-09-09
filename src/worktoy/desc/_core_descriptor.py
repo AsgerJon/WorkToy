@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from worktoy.meta import BaseObject
 from worktoy.text import monoSpace, typeMsg
+from re import compile
 
 
 class CoreDescriptor(BaseObject):
@@ -52,14 +53,5 @@ class CoreDescriptor(BaseObject):
       e = """Instance of 'AttriBox' does not belong to class. This 
       typically indicates that the owning class is still being created."""
       raise RuntimeError(monoSpace(e))
-    chars = []
-    for (i, char) in enumerate(self.__field_name__):
-      if char.isupper() and i and i < len(self.__field_name__):
-        chars.append('_')
-      chars.append(char.lower())
-    innerName = ''.join(chars)
-    innerNames = innerName.split('_')
-    if len(innerNames) == 1:
-      innerNames.append('value')
-    innerName = '_'.join(innerNames)
-    return """__%s__""" % (innerName,)
+    pattern = compile(r'(?<!^)(?=[A-Z])')
+    return '__%s__' % pattern.sub('_', self.__field_name__).lower()
