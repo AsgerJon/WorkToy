@@ -39,7 +39,7 @@ class CoreDescriptor(BaseObject):
     """Getter-function for the field owner."""
     if self.__field_owner__ is None:
       e = """Instance of 'AttriBox' does not belong to class. This 
-      typically indicates that the owning class is still being created."""
+      typically indicates that the owning class is still being created. """
       raise RuntimeError(monoSpace(e))
     if isinstance(self.__field_owner__, type):
       return self.__field_owner__
