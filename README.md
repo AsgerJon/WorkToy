@@ -3,78 +3,71 @@ https://wakatime.com/badge/github/AsgerJon/WorkToy)
 
 # WorkToy v0.99.xx
 
-WorkToy collects common utilities. It is available for installation via pip:
-
-```
-pip install worktoy
-```
-
-Version 0.99.xx is in final stages of development. It will see no new
-features, only bug fixes and documentation updates. Upon completion of
-tasks given below, version 1.0.0 will be released.
-Navigate with the table of contents below.
+This library leverages the most advanced Python features including the
+descriptor protocol and support for customizable metaclasses. The
+documentation below explains these features and how **WorkToy** leverages
+them to provide powerful and flexible tools for Python developers.
 
 # Table of Contents
 
-- [WorkToy v0.99.xx](#worktoy-v099xx)
-- [Table of Contents](#table-of-contents)
 - [Installation](#installation)
 - [Usage](#usage)
 - [worktoy.desc](#worktoydesc)
-    * [Background - The Python Descriptor Protocol](#background---the-python-descriptor-protocol)
-        + [The ``__set_name__``method](#the-__set_name__method)
-        + [The `__get__` method](#the-__get__-method)
-        + [The `__set__` method](#the-__set__-method)
-        + [The ``delete`` method](#the-delete-method)
-        + [Descriptor Protocol Implementations](#descriptor-protocol-implementations)
-    * [The `property` class](#the-property-class)
-        * [The `AbstractDescriptor` class](#the-abstractdescriptor-class)
-        * [The `Field` class](#the-field-class)
-        * [The `AttriBox` class](#the-attribox-class)
-        * [``THIS`` - Advanced ``AttriBox`` Usage](#this---advanced-attribox-usage)
-        * [Using ``AttriBox`` in PySide6 - Qt for Python](#using-attribox-in-pyside6---qt-for-python)
-        * [``worktoy.desc`` Conclusion](#worktoydesc-conclusion)
+  * [Background - The Python Descriptor Protocol](#background---the-python-descriptor-protocol)
+    + [The ``__set_name__``method](#the-__set_name__method)
+    + [The `__get__` method](#the-__get__-method)
+    + [The `__set__` method](#the-__set__-method)
+    + [The ``delete`` method](#the-delete-method)
+    + [Descriptor Protocol Implementations](#descriptor-protocol-implementations)
+  * [The `property` class](#the-property-class)
+    * [The `AbstractDescriptor` class](#the-abstractdescriptor-class)
+    * [The `Field` class](#the-field-class)
+    * [The `AttriBox` class](#the-attribox-class)
+    * [``THIS`` - Advanced ``AttriBox`` Usage](#this---advanced-attribox-usage)
+    * [Using ``AttriBox`` in PySide6 - Qt for Python](#using-attribox-in-pyside6---qt-for-python)
+    * [``worktoy.desc`` Conclusion](#worktoydesc-conclusion)
 
 * [The Python metaclass - ``worktoy.meta``](#the-python-metaclass---worktoymeta)
-    * [Introduction - Python is the Best](#introduction---python-is-the-best)
-    * [Background - The Python Metaclass](#background---the-python-metaclass)
-    * [Everything is an object!](#everything-is-an-object)
-    * [Extensions of ``object``](#extensions-of-object)
-    * [The Python Function](#the-python-function)
-    * [The ``*`` and ``**`` operators](#the--and---operators)
-    * [The Python ``lambda`` Function](#the-python-lambda-function)
-    * [Class Instantiations](#class-instantiations)
-    * [The Custom Class](#the-custom-class)
-    * [The Custom Metaclass](#the-custom-metaclass)
-    * [The Custom Namespace](#the-custom-namespace)
-    * [The Python Metaclass - Conclusion](#the-python-metaclass---conclusion)
+  * [Introduction - Python is the Best](#introduction---python-is-the-best)
+  * [Background - The Python Metaclass](#background---the-python-metaclass)
+  * [Everything is an object!](#everything-is-an-object)
+  * [Extensions of ``object``](#extensions-of-object)
+  * [The Python Function](#the-python-function)
+  * [The ``*`` and ``**`` operators](#the--and---operators)
+  * [The Python ``lambda`` Function](#the-python-lambda-function)
+  * [Class Instantiations](#class-instantiations)
+  * [The Custom Class](#the-custom-class)
+  * [The Custom Metaclass](#the-custom-metaclass)
+  * [The Custom Namespace](#the-custom-namespace)
+  * [The Python Metaclass - Conclusion](#the-python-metaclass---conclusion)
 * [The ``worktoy.meta`` Module](#the-worktoymeta-module)
-    * [Nomenclature](#nomenclature)
-    * [Metaclass and Namespace Pattern](#metaclass-and-namespace-pattern)
-    * [Function Overloading](#function-overloading)
-    * [Singleton](#singleton)
-    * [Summary](#summary)
+  * [Nomenclature](#nomenclature)
+  * [Metaclass and Namespace Pattern](#metaclass-and-namespace-pattern)
+  * [Function Overloading](#function-overloading)
+  * [Singleton](#singleton)
+  * [Summary](#summary)
 * [The ``worktoy.keenum`` module](#the-worktoykeenum-module)
 * [The ``worktoy.ezdata`` module](#the-worktoyezdata-module)
-    * [Summary of ``worktoy.ezdata`` module](#summary-of-worktoyezdata-module)
+  * [Summary of ``worktoy.ezdata`` module](#summary-of-worktoyezdata-module)
 * [The ``worktoy.text`` module](#the-worktoytext-module)
-    * [``worktoy.text.stringList``](#worktoytextstringlist)
-    * [``worktoy.text.monoSpace``](#worktoytextmonospace)
-    * [``worktoy.text.wordWrap``](#worktoytextwordwrap)
-    * [``worktoy.text.typeMsg``](#worktoytexttypemsg)
-    * [``worktoy.text.joinwords``](#worktoytextjoinwords)
-    * [``worktoy.parse`` module](#worktoyparse-module)
+  * [``worktoy.text.stringList``](#worktoytextstringlist)
+  * [``worktoy.text.monoSpace``](#worktoytextmonospace)
+  * [``worktoy.text.wordWrap``](#worktoytextwordwrap)
+  * [``worktoy.text.typeMsg``](#worktoytexttypemsg)
+  * [``worktoy.text.joinwords``](#worktoytextjoinwords)
+  * [``worktoy.parse`` module](#worktoyparse-module)
 
 # Installation
 
-Once the stable version is released, it should be installed via pip:
+The stable version of **WorkToy** may be installed using the following
+command:
 
 ```bash 
 pip install worktoy
 ```
 
-Until then, the following development version, which is not for the faint
-of heart, may be installed by passing the ``--pre`` flag:
+The development version, which is not for the faint of heart, may be
+installed by passing the ``--pre`` flag:
 
 ```Bash
 pip install worktoy --pre
@@ -87,34 +80,61 @@ pip install worktoy --pre
 ## Background - The Python Descriptor Protocol
 
 The descriptor protocol in Python allows significant customisation of the
-attribute access mechanism. To understand this protocol, consider a class
-body assigning an object to a name. During the class creation process,
-when this line is reached, the object is assigned to the name. For the
-purposes of this discussion, the object is created when this line is
-reached, for example:
+attribute access mechanism. To illustrate, let us implement a descriptor
+class ```Integer``` which wraps integer values. Such a class is intended
+to be instantiated in the class bodies of other classes.
+
+This discussion will now continue in the docstrings found in the
+implementation of this class.
 
 ```python
-class PlanePoint:
-  """This class represent an integer valued point in the plane. """
-  x = Integer(0)
-  y = Integer(0)  # Integer is defined below. In practice, classes should 
-  #  be defined in dedicated files.
-``` 
 
-The above class ´PlanePoint´ owns a pair of attributes. These are
-instances of the ´Integer´ class defined below. The ´Integer´ class is a
-descriptor and is thus the focus of this discussion.
+from typing import Any
 
-```python
+
 class Integer:
-  """This descriptor class wraps an integer value. More details will be 
-  added throughout this discussion."""
+  """Let us continue this discussion in the docstrings of the 'Integer'
+    class.
+    
+    This descriptor class defines the following instance attributes:
+    - __fallback_value__: If instantiated without a default value, this 
+      value is used.
+    - __default_value__: The default value of the descriptor instance.
+    - __field_name__: The name by which the descriptor instance appears in 
+      the class body.
+    - __field_owner__: The class owning the descriptor instance.
+    - __pvt_name__: The name of the private variable used to store the 
+      value of the attribute.
+    
+    It also defines the following methods which each provides a docstring
+    explaining their purpose and function:
+    - __init__
+    - __set_name__
+    - __get__
+    - __set__
+    - __delete__  # DO NOT MISTAKE WITH __del__! 
+    """
+
   __fallback_value__ = 0
   __default_value__ = None
   __field_name__ = None
   __field_owner__ = None
 
   def __init__(self, *args) -> None:
+    """This constructor method accepts any number of positional arguments.
+     It then implements the under used and underappreciated 'for-loop'
+     ending with an 'else' clause. The code in the 'else' block runs 
+     after the loop completes. The point is that the 'break' keyword also 
+     applies to this block. So if 'break' is encountered, the code in the 
+     'else' block does not run. To translate to natural language: 
+     
+     'Go through each positional argument and when you find an integer, 
+     assign it to the default value. If you have not found any integer 
+     after looking through each positional argument, use the fallback 
+     value.'  
+     
+     It is the opinion of this author that the 'else' clause in a loop is
+     underused and underappreciated."""
     for arg in args:
       if isinstance(arg, int):
         self.__default_value__ = arg
@@ -122,44 +142,114 @@ class Integer:
     else:
       self.__default_value__ = self.__fallback_value__
 
-  #  The '__init__' method implemented above makes use of the unusual 
-  #  'else' clause at the end of a loop. This clause is executed once after 
-  #  the loop has completed. Since it is part of the loop, the 'break' 
-  #  keyword applies to it as well as the loop itself. The for loop above 
-  #  iterates through the positional arguments and if it encounters an 
-  #  'int' argument, it assigns it and issues the 'break'. So if the loop 
-  #  completes without hitting the 'break', no 'int' could be found in any 
-  #  of the positional arguments. Conveniently, the 'else' block then 
-  #  assigns the fallback value.
-
   def __set_name__(self, owner: type, name: str) -> None:
-    """Powerful method called automatically when the class owning the 
-    descriptor instance is finally created. It informs the descriptor 
-    instance of its owner and importantly, it informs the descriptor of 
-    the name by which it appears in the class body. """
+    """This is the method that elevates the power of the descriptor 
+    protocol beyond the mundane getter and setter pattern! This feature 
+    was added in Python 3.6 released on December 23, 2016. Does this make it
+    a recent feature? Well, Minecraft Java 1.11 had been released on 
+    November 14, 2016, meaning that this feature is about the same age as 
+    totems of undying, shulker boxes and the observer block.
+     
+    This method is invoked when the class owning the descriptor is created. 
+    It informs the instance of the descriptor of its owner and the name 
+    by which it appears in the class body of the owner. This means that the 
+    descriptor instance is aware of its own name in the namespace of its 
+    owner.  
+    
+    """
     self.__field_name__ = name
     self.__field_owner__ = owner
+    self.__pvt_name__ = '__%s_value__' % (name,)
 
-  def __get__(self, instance: object, owner: type) -> int:
-    """Getter-function."""
-``` 
+  def __get__(self, instance: object, owner: type) -> Any:
+    """This method is called when the descriptor instance is accessed. It 
+    returns the value of the attribute. If the descriptor instance is 
+    accessed through the owning class, the descriptor instance itself is 
+    returned. For example:
+    
+    class Owner:
+      num = Integer(69)
+    
+    if __name__ == '__main__':
+      owner = Owner()
+      print(type(owner.num))  # <class 'int'>, the wrapped value instance
+      print(type(Owner.num))  # <class 'Integer'>, the descriptor instance
+    
+    'owner.num' results in the following call:
+    '__get__(owner, Owner)'
+    
+    'Owner.num' results in the following call:
+    '__get__(None, Owner)'
+    
+    By making the above distinction, the descriptor instance object may 
+    be accessed by going through the owning class. This is the most 
+    common and highly recommended pattern. However, it also means that 
+    ambiguity exists for the type-hint: When accessing through the 
+    instance the hint should be 'int', but when accessing through the 
+    class, the hint should be 'type'. For this reason, the 'Any' type is
+    used here. 
+    """
+    if instance is None:
+      return self
+    if getattr(instance, self.__pvt_name__, None) is None:
+      return self.__default_value__
+    return getattr(instance, self.__pvt_name__)
 
-## The ``__set_name__``method
+  def __set__(self, instance: object, value: object) -> None:
+    """This method is called when the attribute at the field name of the 
+    descriptor instance is attempted to be set on the instance of the 
+    owning class. Unlike the '__get__' method defined above, this method 
+    is invoked only when the attribute is set on the instance. If set on 
+    the owner, the descriptor instance itself is overwritten. This is 
+    consistent with the pattern that access through the owning class 
+    refers to the descriptor instance, whilst access through the owning 
+    instance is managed by the descriptor class. For example:
+    
+    class Owner:
+      num = Integer(420)
+      
+    if __name__ == '__main__':
+      owner = Owner()
+      print(owner.num)  # 420
+      owner.num = 69 
+      print(owner.num)  # 69
+      
+      print(Owner.num)  # <Integer object at 0x1EE7B00B5>
+      print(type(Owner.num))  # <class 'Integer'>
+      Owner.num = 69
+      print(Owner.num)  # 69
+      print(type(Owner.num))  # <class 'int'>
+      
+      owner.num = 69  # This results in the following call:
+      '__set__(owner, 69)'
+      
+      Owner.num = 69  # This results in the following call:
+      'type(Owner).__setattr__(Owner, 'num', 69)'
+    """
+    setattr(instance, self.__pvt_name__, value)
 
-Python 3.6 was released on December 23, 2016. This version introduced
-the ``__set_name__`` method, which marks a significant improvement to the
-descriptor protocol. It informs instances of descriptor classes of the
-class that owns them **and** the name by which they appear in the class
-namespace. Much of the functionality found in the ``worktoy.desc`` module
-would not be possible without this method.
+  def __delete__(self, instance: object) -> None:
+    """This method is called when the attribute is attempted to be 
+    deleted. DO NOT MISTAKE WITH '__del__'! The '__del__' method is 
+    called when the instance is destroyed. Both of these are outside the 
+    scope of this discussion."""
+    delattr(instance, self.__pvt_name__)
+```
 
-## The `__get__` method
-
-Consider the code below:
+Let us now consider the order of events when using a descriptor class.
+The code below creates a descriptor class and an owning class. It then
+instantiates the owning class and accesses the descriptor instance. In
+the code we will place print statements to indicate the order of events.
 
 ```python
 class Descriptor:
   """Descriptor class."""
+
+  print('Top of descriptor class body')
+
+  def __init__(self) -> None:
+    """Constructor-method."""
+    print('Descriptor instantiation.')
 
   def __get__(self, instance: object, owner: type) -> object:
     """Getter-function."""
@@ -167,10 +257,14 @@ class Descriptor:
   def __set_name__(self, owner: type, name: str) -> None:
     """Informs the descriptor instance that the owner is created"""
 
+  print('End of descriptor class body')
+
 
 class OwningClass:
   """Class owning the descriptor."""
+  print('Beginning of owning class body')
   descriptor = Descriptor()
+  print('End of owning class body')
 
 
 #  At this point in the code, the OwningClass is created, which triggers 
