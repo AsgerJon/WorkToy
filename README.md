@@ -1167,6 +1167,7 @@ allows it to solve certain problems in one line, for example:
 
 ```python
 fb = lambda n: ('' if n % 3 else 'Fizz') + ('' if n % 5 else 'Buzz') or n
+fb = lambda n: ('Fizz' * n % 3 < 1) + ('Buzz' * n % 5 < 1) or n
 ```
 
 Besides flexing, the ``lambda`` function is useful when working with
