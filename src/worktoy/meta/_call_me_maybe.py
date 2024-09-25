@@ -3,10 +3,16 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Never
-
 from worktoy.meta import AbstractMetaclass
 from worktoy.text import monoSpace
+
+try:
+  from typing import Never
+except ImportError:
+  try:
+    from typing import NoReturn as Never
+  except ImportError:
+    from typing import Any as Never
 
 
 def _func() -> None:
