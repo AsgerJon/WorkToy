@@ -1,5 +1,5 @@
 [build-system]
-requires = ['setuptools>=68.2']
+requires = ['setuptools>=69.5.1']
 build-backend = 'setuptools.build_meta'
 
 
@@ -17,12 +17,13 @@ classifiers = [
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     "Programming Language :: Python :: Implementation :: CPython",
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Operating System :: OS Independent",
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 3 - Beta",
     "Intended Audience :: Developers",
     "Natural Language :: English",
     "Topic :: Utilities"
