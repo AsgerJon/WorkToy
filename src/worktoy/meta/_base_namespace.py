@@ -72,19 +72,19 @@ class BaseNamespace(AbstractNamespace):
     overloadEntries = getattr(value, '__type_signatures__', None)
     if overloadEntries is None:
       return AbstractNamespace.__setitem__(self, key, value)
-    existing = self.getOverloadDict()
+    existing = self.getOverloadList()
     for entry in overloadEntries:
       entry.__assigned_key__ = key
     self.__overload_dict__ = [*existing, *overloadEntries]
 
-  def getOverloadDict(self) -> dict:
+  def getOverloadList(self) -> list:
     """Getter-function for overloads"""
     return maybe(self.__overload_dict__, [])
 
   def compile(self) -> dict:
     """Compile the namespace into a dictionary."""
     out = {}
-    for entry in self.getOverloadDict():
+    for entry in self.getOverloadList():
       name = entry.__func_name__
       key = entry.__assigned_key__
       sig = entry.__raw_types__

@@ -12,3 +12,5 @@ from worktoy.meta import Zeroton
 class THIS(Zeroton):
   """THIS is a Zeroton serving as placeholder for the yet to be created
   instance owning the AttriBox instance. """
+
+  __THIS_ZEROTON__ = True

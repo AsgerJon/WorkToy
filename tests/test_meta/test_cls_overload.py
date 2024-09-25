@@ -1,5 +1,5 @@
 """TestCLSOverload tests if Overload descriptors defined entirely in class
-bodies work correctly. """
+bodies work correctly."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
@@ -32,19 +32,14 @@ class Point(BaseObject):
 
   @distance.overload()
   def __(self, ) -> float:
-    print('distance()')
-    print('self.x and self.y: %s and %s' % (self.x, self.y))
-
     return (self.x - 0) ** 2 + (self.y - 0) ** 2
 
   @distance.overload(complex)
   def __(self, z: complex) -> float:
-    print('distance(complex)')
     return (self.x - z.real) ** 2 + (self.y - z.imag) ** 2
 
   @distance.overload(float, float)
   def __(self, x: float, y: float) -> float:
-    print('distance(float, float)')
     return (self.x - x) ** 2 + (self.y - y) ** 2
 
 
