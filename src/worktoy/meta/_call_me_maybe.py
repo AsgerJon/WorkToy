@@ -31,7 +31,7 @@ class _CallMeMeta(AbstractMetaclass):
 
   def __subclasscheck__(cls, subCls: object) -> bool:
     """If 'someObject' pass the '__instancecheck__' method,
-    then 'type(someObject)' pass this method. """
+    then 'type(someObject)' should pass this method. """
 
     def inner(arg) -> bool:
       """Inner"""
