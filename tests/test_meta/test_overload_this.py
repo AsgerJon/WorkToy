@@ -8,7 +8,7 @@ from random import random
 from unittest import TestCase
 
 from worktoy.desc import AttriBox, THIS
-from worktoy.meta import BaseObject, overload
+from worktoy.base import BaseObject, overload
 
 try:
   from typing import TYPE_CHECKING

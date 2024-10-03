@@ -7,6 +7,12 @@ implementation, but can be used independently. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import desc, ezdata, keenum, meta, parse, text
+from . import parse
+from . import text
+from . import meta
+from . import desc
+from . import base
+from . import ezdata
+from . import keenum
 
-__all__ = ['desc', 'ezdata', 'keenum', 'meta', 'parse', 'text']
+__all__ = ['desc', 'ezdata', 'keenum', 'meta', 'base', 'parse', 'text']

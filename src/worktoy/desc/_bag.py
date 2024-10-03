@@ -1,12 +1,12 @@
 """Bag wraps the field object managed by an instance of AttriBox"""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
-from worktoy.meta import BaseObject
+from worktoy.meta import BaseMetaclass
 from worktoy.text import typeMsg
 
 
 # noinspection PyMissingConstructor
-class Bag(BaseObject):
+class Bag(metaclass=BaseMetaclass):
   """Bag wraps the field object managed by an instance of AttriBox"""
 
   __owning_instance__ = None

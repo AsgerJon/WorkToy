@@ -105,7 +105,9 @@ class TestEZData(TestCase):
     self.assertEqual(expectedMsg, actualMsg)
 
   def test_class_access(self, ) -> None:
-    """Tests that the AttriBox instances are accessible from the class."""
-    self.assertIs(Point3D.x.getFieldClass(), int)
-    self.assertIs(Point3D.y.getFieldClass(), int)
-    self.assertIs(Point3D.z.getFieldClass(), int)
+    """Tests that the AttriBox instances are accessible from the class.
+    OBSOLETE after changing EZData to use __slots__."""
+    return
+    # self.assertIs(Point3D.x.getFieldClass(), int)
+    # self.assertIs(Point3D.y.getFieldClass(), int)
+    # self.assertIs(Point3D.z.getFieldClass(), int)

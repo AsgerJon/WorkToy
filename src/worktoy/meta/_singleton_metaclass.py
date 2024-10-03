@@ -4,7 +4,7 @@ These are classes having only one instance, namely the class itself."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.meta import BaseMetaclass, BaseObject
+from worktoy.meta import BaseMetaclass
 
 
 class SingletonMetaclass(BaseMetaclass):
@@ -25,6 +25,6 @@ class SingletonMetaclass(BaseMetaclass):
     return cls.__singleton_instance__
 
 
-class Singleton(BaseObject, metaclass=SingletonMetaclass):
+class Singleton(metaclass=SingletonMetaclass):
   """Baseclass for singleton classes."""
   pass

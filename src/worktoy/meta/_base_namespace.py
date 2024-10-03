@@ -14,7 +14,7 @@ except ImportError:
 
 from worktoy.meta import AbstractNamespace
 from worktoy.parse import maybe
-from worktoy.text import typeMsg, monoSpace
+from worktoy.text import monoSpace
 
 try:
   Overloaded = dict[tuple[type, ...], Callable]
@@ -50,11 +50,6 @@ class OverloadEntry:
     """String representation"""
     typeNames = [t.__name__ for t in self.__raw_types__]
     return """%s: %s""" % (self.__func_name__, typeNames)
-
-
-def overload(*types) -> OverloadEntry:
-  """Decorator function for overloading functions."""
-  return OverloadEntry(*types)
 
 
 class BaseNamespace(AbstractNamespace):

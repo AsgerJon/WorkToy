@@ -8,12 +8,12 @@ of the owning class."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.meta import BaseObject
+from worktoy.meta import BaseMetaclass
 from worktoy.text import monoSpace, typeMsg
 from re import compile
 
 
-class CoreDescriptor(BaseObject):
+class CoreDescriptor(metaclass=BaseMetaclass):
   """Implementation of basic descriptor protocol functionalities."""
 
   __field_name__ = None

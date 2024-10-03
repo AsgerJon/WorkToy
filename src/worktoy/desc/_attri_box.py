@@ -73,6 +73,11 @@ try:
 except ImportError:
   Never = object
 
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
+
 from typing import Any
 
 from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, BOX, \
@@ -193,8 +198,10 @@ class AttriBox(AbstractDescriptor):
     e = typeMsg('__field_class__', self.__field_class__, type)
     raise TypeError(e)
 
-  def getArgs(self, instance: object) -> list[Any]:
+  def getArgs(self, instance: object, **kwargs) -> list[Any]:
     """Getter-function for positional arguments"""
+    if kwargs.get('_root', False):
+      return maybe(self.__pos_args__, [])
     args = []
     for arg in maybe(self.__pos_args__, []):
       if arg is THIS:
@@ -209,23 +216,50 @@ class AttriBox(AbstractDescriptor):
         args.append(arg)
     return args
 
-  def getKwargs(self, instance: object) -> dict[str, Any]:
+  def getKwargs(self, instance: object, **kwargs) -> dict[str, Any]:
     """Getter-function for keyword arguments"""
-    kwargs = {}
+    if kwargs.get('_root', False):
+      return maybe(self.__key_args__, {})
+    keyArgs = {}
     for (key, val) in maybe(self.__key_args__, {}).items():
       if val is THIS:
-        kwargs[key] = instance
+        keyArgs[key] = instance
       elif val is TYPE:
-        kwargs[key] = self.getFieldOwner()
+        keyArgs[key] = self.getFieldOwner()
       elif val is BOX:
-        kwargs[key] = self
+        keyArgs[key] = self
       elif val is ATTR:
-        kwargs[key] = type(self)
+        keyArgs[key] = type(self)
       else:
-        kwargs[key] = val
-    return kwargs
+        keyArgs[key] = val
+    return keyArgs
 
-  def _createFieldObject(self, instance: object) -> Bag:
+  def getDefaultFactory(self) -> Any:
+    """Getter-function for function creating the default value. """
+    keyArgs = self.getKwargs(None, _root=True)
+    posArgs = self.getArgs(None, _root=True)
+    fieldClass = self.getFieldClass()
+
+    zerotons = [THIS, TYPE, BOX, ATTR]
+    for zero in zerotons:
+      if zero in [*posArgs, *keyArgs.values()]:
+        e = """When rooting AttriBox, Zerotons are not supported, 
+        but received: %s""" % zero
+        raise ValueError(monoSpace(e))
+
+    def callMeMaybe() -> Any:
+      """This function creates the default value."""
+      if fieldClass is bool:
+        innerObject = True if [*posArgs, None][0] else False
+      else:
+        innerObject = fieldClass(*posArgs, **keyArgs)
+      if TYPE_CHECKING:
+        return Bag(None, innerObject)
+      return innerObject
+
+    return callMeMaybe
+
+  def createFieldObject(self, instance: object, ) -> Bag:
     """Create the field object. If the default object is set, it is used."""
     if self.__default_object__ is not None:
       return Bag(instance, self.__default_object__)
@@ -235,12 +269,13 @@ class AttriBox(AbstractDescriptor):
     if self.__pos_args__ is None or self.__key_args__ is None:
       e = """AttriBox instance has not been called!"""
       raise AttributeError(e)
-    args, kwargs = self.getArgs(instance), self.getKwargs(instance)
+    keyArgs = self.getKwargs(instance, )
+    posArgs = self.getArgs(instance, )
     fieldClass = self.getFieldClass()
     if fieldClass is bool:
-      innerObject = True if [*args, None][0] else False
+      innerObject = True if [*posArgs, None][0] else False
     else:
-      innerObject = fieldClass(*args, **kwargs)
+      innerObject = fieldClass(*posArgs, **keyArgs)
     return Bag(instance, innerObject)
 
   def __instance_reset__(self, instance: object) -> None:
@@ -261,7 +296,7 @@ class AttriBox(AbstractDescriptor):
         raise TypeError(monoSpace(e))
       if kwargs.get('_recursion', False):
         raise RecursionError
-      setattr(instance, pvtName, self._createFieldObject(instance))
+      setattr(instance, pvtName, self.createFieldObject(instance))
       return self.__instance_get__(instance, _recursion=True)
     bag = getattr(instance, pvtName)
     if not isinstance(bag, Bag):

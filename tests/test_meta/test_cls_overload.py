@@ -7,7 +7,8 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.desc import AttriBox
-from worktoy.meta import BaseObject, Overload
+from worktoy.meta import Overload
+from worktoy.base import BaseObject
 
 
 class Point(BaseObject):

@@ -146,8 +146,7 @@ from ._type_names import Bases, Namespace, Space, Function, FunctionTypes
 from ._type_names import FunctionDecorator, ClassDecorator, Decorator
 from ._abstract_metaclass import AbstractMetaclass
 from ._call_me_maybe import CallMeMaybe
-from ._base_namespace import BaseNamespace, OverloadEntry, overload
+from ._base_namespace import BaseNamespace, OverloadEntry
 from ._base_metaclass import BaseMetaclass
-from ._base_object import BaseObject
 from ._singleton_metaclass import SingletonMetaclass, Singleton
 from ._zeroton import ZeroSpace, ZeroMeta, Zeroton

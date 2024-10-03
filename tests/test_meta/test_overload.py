@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.meta import BaseObject, overload
+from worktoy.base import BaseObject, overload
 from worktoy.desc import AttriBox
 
 try:

@@ -4,13 +4,12 @@
 from __future__ import annotations
 
 from typing import Iterable, TYPE_CHECKING
-
 from unittest import TestCase
 
+from worktoy.text import stringList
 from worktoy.desc import AttriBox
 from worktoy.keenum import KeeNum, auto
-from worktoy.meta import BaseObject
-from worktoy.text import stringList
+from worktoy.base import BaseObject
 
 try:
   from typing import Self

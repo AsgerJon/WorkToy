@@ -4,12 +4,11 @@ function-like objects. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from time import sleep
-from typing import Any
 from unittest import TestCase
 
 from worktoy.desc import CoreDescriptor
-from worktoy.meta import BaseObject, overload, CallMeMaybe
+from worktoy.meta import CallMeMaybe
+from worktoy.base import overload
 
 
 class Decorator(CoreDescriptor):
