@@ -1483,7 +1483,6 @@ purposes of this discussion, we will now create a custom metaclass that
 does the same as the ``type`` metaclass, but exposed as Python code.
 
 ```python
-"""Using 'AttriBox' and 'THIS' in PySide6."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
