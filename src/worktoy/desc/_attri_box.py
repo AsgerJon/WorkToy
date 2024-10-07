@@ -240,19 +240,35 @@ class AttriBox(AbstractDescriptor):
     posArgs = self.getArgs(None, _root=True)
     fieldClass = self.getFieldClass()
 
-    zerotons = [THIS, TYPE, BOX, ATTR]
+    zerotons = [BOX, ATTR]
     for zero in zerotons:
       if zero in [*posArgs, *keyArgs.values()]:
-        e = """When rooting AttriBox, Zerotons are not supported, 
+        e = """The 'getDefaultFactory' does not BOX and ATTR, 
         but received: %s""" % zero
         raise ValueError(monoSpace(e))
 
-    def callMeMaybe() -> Any:
+    def callMeMaybe(instance: object) -> Any:
       """This function creates the default value."""
+      newKeys = {}
+      for (key, val) in keyArgs.items():
+        if val is THIS:
+          newKeys[key] = instance
+        elif val is TYPE:
+          newKeys[key] = type(instance)
+        else:
+          newKeys[key] = val
+      newArgs = []
+      for arg in posArgs:
+        if arg is THIS:
+          newArgs.append(instance)
+        elif arg is TYPE:
+          newArgs.append(type(instance))
+        else:
+          newArgs.append(arg)
       if fieldClass is bool:
-        innerObject = True if [*posArgs, None][0] else False
+        innerObject = True if [*newArgs, None][0] else False
       else:
-        innerObject = fieldClass(*posArgs, **keyArgs)
+        innerObject = fieldClass(*newArgs, **newKeys)
       if TYPE_CHECKING:
         return Bag(None, innerObject)
       return innerObject
@@ -351,3 +367,13 @@ class AttriBox(AbstractDescriptor):
     """Deleter-function for the instance."""
     e = """Deleter-function is not implemented by the AttriBox class."""
     raise TypeError(e)
+
+  def __str__(self, ) -> str:
+    """String representation"""
+    posArgs = self.getArgs(None, _root=True)
+    keyArgs = self.getKwargs(None, _root=True)
+    posStr = ', '.join([str(arg) for arg in posArgs])
+    keyStr = ', '.join([f'{k}={v}' for (k, v) in keyArgs.items()])
+    argStr = ', '.join([arg for arg in [posStr, keyStr] if arg])
+    clsName = self.getFieldClass().__name__
+    return """AttriBox[%s](%s)""" % (clsName, argStr)

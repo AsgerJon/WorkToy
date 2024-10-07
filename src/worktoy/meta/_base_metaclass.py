@@ -65,7 +65,18 @@ class BaseMetaclass(AbstractMetaclass):
               space: BaseNamespace,
               **kwargs) -> type:
     """The __new__ method is invoked to create the class."""
-    namespace = space.compile()
+    spaceCompile = getattr(space, 'compile', None)
+    if spaceCompile is None:
+      if isinstance(space, dict):
+        namespace = {**space, }
+      else:
+        e = typeMsg('namespace', space, dict)
+        raise TypeError(e)
+    elif not callable(spaceCompile):
+      e = typeMsg('compile', spaceCompile, Callable)
+      raise TypeError(e)
+    else:
+      namespace = space.compile()
     if '__del__' in namespace and '__delete__' not in namespace:
       if not kwargs.get('trustMeBro', False):
         e = """The namespace encountered the '__del__' method! 
