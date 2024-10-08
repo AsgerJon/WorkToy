@@ -27,4 +27,3 @@ class EZMeta(BaseMetaclass):
     EZSpace.__setitem__(space, '__repr__', newStr, __trust_me_bro__=True)
     EZSpace.__setitem__(space, '__eq__', newEq, __trust_me_bro__=True)
     return BaseMetaclass.__new__(mcls, name, bases, space, **kwargs)
- 

@@ -26,6 +26,8 @@ try:
   Boxes: TypeAlias = list[tuple[str, AttriBox]]
 except ImportError:
   Boxes = object
+except TypeError:
+  Boxes = object
 
 
 class EZSpace(FastSpace):
