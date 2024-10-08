@@ -1,4 +1,4 @@
-"""TestEZData tests the EZData class."""
+"""TestEZData tests the functionality of EZData"""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
@@ -11,103 +11,125 @@ except ImportError:
 from unittest import TestCase
 
 from worktoy.desc import AttriBox
-from worktoy.ezdata import EZData
+from worktoy.ezdata import EZData, IllegalInitException, \
+  IllegalMethodException, NoDefaultError, AmbiguousDefaultError, \
+  DefaultTypeMismatchError
 from worktoy.text import monoSpace
 
 
-class Point3D(EZData):
-  """Point3D is a 3D point with x, y, and z coordinates."""
+class SomeData(EZData):
+  """SomeData is a subclass of EZData. """
 
-  x = AttriBox[int](-1)
-  y = AttriBox[int](-1)
-  z = AttriBox[int](-1)
-
-  def __str__(self) -> str:
-    """String representation"""
-    return """(%d, %d, %d)""" % (self.x, self.y, self.z)
-
-  def __repr__(self) -> str:
-    """Code representation"""
-    return """Point3D(x=%d, y=%d, z=%d)""" % (self.x, self.y, self.z)
-
-  def __abs__(self, ) -> int:
-    """Returns the square on the length of the vector from origin to self."""
-    return self.x ** 2 + self.y ** 2 + self.z ** 2
-
-  def __mul__(self, other: Self) -> int:
-    """Implements the dot product"""
-    return self.x * other.x + self.y * other.y + self.z * other.z
-
-  def __matmul__(self, other: Self) -> Self:
-    """Implements the cross product"""
-    return Point3D(
-        self.y * other.z - self.z * other.y,
-        self.z * other.x - self.x * other.z,
-        self.x * other.y - self.y * other.x
-    )
-
-  def __eq__(self, other: Self) -> bool:
-    """Equality test for two points"""
-    return False if abs(self @ other) else True
+  a = AttriBox[int](0)
+  b = AttriBox[int](0)
+  c = AttriBox[int](0)
+  d = AttriBox[int](0)
 
 
 class TestEZData(TestCase):
-  """TestEZData tests the EZData class."""
+  """TestEZData tests the functionality of EZData"""
 
-  def test_positional_args(self) -> None:
-    """Tests that Point3D support any number of positional arguments"""
-    point = Point3D()  # Nu arguments
-    self.assertEqual(point.x, -1)
-    self.assertEqual(point.y, -1)
-    self.assertEqual(point.z, -1)
-    point = Point3D(1)  # One argument
-    self.assertEqual(point.x, 1)
-    self.assertEqual(point.y, -1)
-    self.assertEqual(point.z, -1)
-    point = Point3D(1, 2)  # Two arguments
-    self.assertEqual(point.x, 1)
-    self.assertEqual(point.y, 2)
-    self.assertEqual(point.z, -1)
-    point = Point3D(1, 2, 3, )  # Three arguments
-    self.assertEqual(point.x, 1)
-    self.assertEqual(point.y, 2)
-    self.assertEqual(point.z, 3)
+  def setUp(self) -> None:
+    """Sets up each test"""
+    self.data0 = SomeData()
+    self.data1 = SomeData(69)
+    self.data2 = SomeData(69, 420)
+    self.data3 = SomeData(69, 420, 1337)
+    self.data4 = SomeData(69, 420, 1337, 80085)
+    self.other4 = SomeData(69, 420, 1337, 80085)
 
-  def test_keyword_args(self) -> None:
-    """Tests that Point3D support any number of keyword arguments"""
-    point = Point3D(x=1)  # One argument
-    self.assertEqual(point.x, 1)
-    self.assertEqual(point.y, -1)
-    self.assertEqual(point.z, -1)
-    point = Point3D(x=1, y=2)  # Two arguments
-    self.assertEqual(point.x, 1)
-    self.assertEqual(point.y, 2)
-    self.assertEqual(point.z, -1)
-    point = Point3D(x=1, y=2, z=3)  # Three arguments
-    self.assertEqual(point.x, 1)
-    self.assertEqual(point.y, 2)
-    self.assertEqual(point.z, 3)
+  def test_init(self) -> None:
+    """Tests that default values are used correctly"""
+    self.assertEqual(self.data0.a, 0)
+    self.assertEqual(self.data0.b, 0)
+    self.assertEqual(self.data0.c, 0)
+    self.assertEqual(self.data0.d, 0)
 
-  def test_errors(self, ) -> None:
-    """Tests that EZData correctly raises an error when a subclass tries
-    to implement '__init__'."""
-    with self.assertRaises(AttributeError) as context:
+  def test_init1(self) -> None:
+    """Tests that single values are used correctly"""
+    self.assertEqual(self.data1.a, 69)
+    self.assertEqual(self.data1.b, 0)
+    self.assertEqual(self.data1.c, 0)
+    self.assertEqual(self.data1.d, 0)
+
+  def test_init2(self) -> None:
+    """Tests that double values are used correctly"""
+    self.assertEqual(self.data2.a, 69)
+    self.assertEqual(self.data2.b, 420)
+    self.assertEqual(self.data2.c, 0)
+    self.assertEqual(self.data2.d, 0)
+
+  def test_init3(self) -> None:
+    """Tests that triple values are used correctly"""
+    self.assertEqual(self.data3.a, 69)
+    self.assertEqual(self.data3.b, 420)
+    self.assertEqual(self.data3.c, 1337)
+    self.assertEqual(self.data3.d, 0)
+
+  def test_init4(self) -> None:
+    """Tests that quadruple values are used correctly"""
+    self.assertEqual(self.data4.a, 69)
+    self.assertEqual(self.data4.b, 420)
+    self.assertEqual(self.data4.c, 1337)
+    self.assertEqual(self.data4.d, 80085)
+
+  def test_str(self) -> None:
+    """Tests that the string representation is correct"""
+    expected = """SomeData(69, 420, 1337, 80085)"""
+    self.assertEqual(str(self.data4), expected)
+
+  def test_eq(self, ) -> None:
+    """Testing that the equality operator works correctly"""
+    self.assertEqual(self.data4, self.other4)
+
+  def test_bad_init(self, ) -> None:
+    """Subclasses of EZData are not allowed to define methods. If it
+    attempts to define '__init__' a special exception is raised. This
+    method tests that IllegalInitException raises correctly."""
+
+    with self.assertRaises(IllegalInitException):
       class SusData(EZData):
-        """This class will attempt to implement '__init__', which should
-        raise an 'AttributeError'. """
+        """SusData tries to implement __init__!"""
 
         def __init__(self, *__, **_) -> None:
-          EZData.__init__(self)  # keeps pycharm from complaining lol
+          pass
 
-    expectedMsg = monoSpace("""EZData subclasses are not permitted to 
-    implement the '__init__' method!""").lower()
-    actualMsg = monoSpace(context.exception.__str__()).lower()
-    self.assertEqual(expectedMsg, actualMsg)
+  def test_bad_method(self) -> None:
+    """Subclasses of EZData are not allowed to define any methods. For all
+    other methods than __init__ the expected error type is
+    IllegalMethodException."""
 
-  def test_class_access(self, ) -> None:
-    """Tests that the AttriBox instances are accessible from the class.
-    OBSOLETE after changing EZData to use __slots__."""
-    return
-    # self.assertIs(Point3D.x.getFieldClass(), int)
-    # self.assertIs(Point3D.y.getFieldClass(), int)
-    # self.assertIs(Point3D.z.getFieldClass(), int)
+    with self.assertRaises(IllegalMethodException):
+      class SusData(EZData):
+        """SusData tries to implement a method!"""
+
+        def createGlobalVariables(self, ) -> None:
+          """Hey kids, u wanna try some global variables?"""
+          pass
+
+  def test_bad_attribox(self) -> None:
+    """Subclasses of EZData must set their fields as instances of AttriBox
+    and these must have exactly one positional argument to indicate
+    default value. Not providing such a default value, will raise
+    NoDefaultError. Providing more than one positional arguments to the
+    AttriBox is not allowed either and should raise AmbiguousDefaultError.
+    Finally, if the given default value is not an instance of the field
+    class given, a DefaultTypeMismatchError is raised."""
+
+    with self.assertRaises(NoDefaultError):
+      class SusData(EZData):
+        """SusData fails to provide default value!"""
+
+        a = AttriBox[int]()  # The required default value is missing!
+
+    with self.assertRaises(AmbiguousDefaultError):
+      class SusData2(EZData):
+        """SusData2 provides two default values!"""
+
+        a = AttriBox[int](69, 420)
+
+    with self.assertRaises(DefaultTypeMismatchError):
+      class SusData3(EZData):
+        """SusData3 sets a default value of the wrong type!"""
+
+        a = AttriBox[int]('ur mom')

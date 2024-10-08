@@ -14,6 +14,11 @@ except ImportError:
   except ImportError:
     from typing import Any as Never
 
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
+
 
 def _func() -> None:
   """Sample Function"""
@@ -67,3 +72,7 @@ class _CallMeMeta(AbstractMetaclass):
 class CallMeMaybe(metaclass=_CallMeMeta):
   """CallMeMaybe represents types that can be treated as functions. """
   pass
+
+
+if TYPE_CHECKING:
+  from typing import Callable as CallMeMaybe

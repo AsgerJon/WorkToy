@@ -377,3 +377,7 @@ class AttriBox(AbstractDescriptor):
     argStr = ', '.join([arg for arg in [posStr, keyStr] if arg])
     clsName = self.getFieldClass().__name__
     return """AttriBox[%s](%s)""" % (clsName, argStr)
+
+  def __repr__(self, ) -> str:
+    """String representation"""
+    return str(self)

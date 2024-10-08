@@ -20,7 +20,7 @@ from __future__ import annotations
 from typing import get_type_hints
 
 from worktoy.parse import maybe
-from worktoy.text import typeMsg
+from worktoy.text import typeMsg, stringList
 
 try:
   from typing import Self
@@ -47,6 +47,33 @@ class AbstractNamespace(dict):
   __class_lines__ = None
   __read_only__ = False
   __iter_contents__ = None
+
+  __first_run__ = True
+
+  __special_keys__ = """__qualname__, __module__, __firstlineno__, 
+  __doc__, __annotations__, __dict__, __weakref__, __module__, 
+  __metaclass__, __class__, __bases__, __name__, __class_name__,
+  __static_attributes__"""
+
+  @classmethod
+  def getSpecialKeys(cls) -> list[str]:
+    """Getter-function for special keys that are passed to the namespace
+    object during class creation from unseen sources. These mysterious
+    keys and their values must be respected. The recommended procedure is
+    to simply invoke: 'dict.__setitem__(self, key, value)' Not adhering to
+    this recommendation may lead to HIGHLY UNDEFINED BEHAVIOUR!"""
+    out = stringList(cls.__special_keys__)
+    if cls.__first_run__:
+      for key in out:
+        print(key)
+      else:
+        cls.__first_run__ = False
+    return out
+
+  @classmethod
+  def isSpecialKey(cls, key: str) -> bool:
+    """Checks if the key is a special key."""
+    return True if key in cls.getSpecialKeys() else False
 
   def __init__(self, *args, **kwargs) -> None:
     mcls, name, bases = None, None, None

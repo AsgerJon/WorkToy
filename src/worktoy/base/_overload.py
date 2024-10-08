@@ -8,4 +8,7 @@ from worktoy.meta import OverloadEntry
 
 def overload(*types) -> OverloadEntry:
   """Decorator function for overloading functions."""
+  typeNames = [cls.__name__ for cls in types]
+  info = """Overloading types: '%s'""" % ', '.join(typeNames)
+  # print(info)
   return OverloadEntry(*types)

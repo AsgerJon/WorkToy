@@ -15,5 +15,7 @@ class EZData(metaclass=EZMeta):
   they appear in the class body denote the order by which initial values
   should be passed to the constructor. """
 
+  __trust_me_bro__ = True
+
   def __init__(self, *args, **kwargs) -> None:
     """This method is replaced during class creation. """

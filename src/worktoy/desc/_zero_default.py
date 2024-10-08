@@ -5,6 +5,11 @@ from __future__ import annotations
 
 from typing import Any
 
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
+
 from worktoy.meta import Zeroton
 
 
@@ -27,3 +32,8 @@ class DEFAULT(Zeroton):
       return cls.__default_object__
     e = """The DEFAULT Zeroton holds no object!"""
     raise RuntimeError(e)
+
+  if TYPE_CHECKING:
+    def __init__(self, *args, **kwargs) -> None:
+      """Trust me bro"""
+      pass

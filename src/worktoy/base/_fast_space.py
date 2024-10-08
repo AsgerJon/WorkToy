@@ -3,15 +3,17 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+import os
+
 from worktoy.text import monoSpace, typeMsg
 
 try:
-  from typing import Callable
+  from typing import Callable, Any
 except ImportError:
   Callable = object
 
-from worktoy.desc import AttriBox
-from worktoy.meta import BaseNamespace
+from worktoy.desc import AttriBox, DEFAULT
+from worktoy.meta import BaseNamespace, OverloadEntry
 from worktoy.parse import maybe
 
 
@@ -36,15 +38,6 @@ class FastSpace(BaseNamespace):
       provided: (%s)!"""
       e2 = e % (name, mclsName, spaceName, baseNames)
       raise ValueError(monoSpace(e2))
-
-  def _getInnerFunctions(self) -> list[tuple[str, Callable]]:
-    """This method returns the inner functions."""
-    return maybe(self.__inner_functions__, [])
-
-  def _addInnerFunction(self, key: str, func: Callable) -> None:
-    """This method adds an inner function to the namespace."""
-    funcs = self._getInnerFunctions()
-    self.__inner_functions__ = [*funcs, (key, func)]
 
   def _getFieldBoxes(self) -> list[tuple[str, AttriBox]]:
     """This method returns the field boxes."""
@@ -79,12 +72,11 @@ class FastSpace(BaseNamespace):
     """This method sets the key, value pair in the namespace."""
     if isinstance(value, AttriBox):
       return self._addFieldBox(key, value)
-    if callable(value) or (key.startswith('__') and key.endswith('__')):
+    if callable(value):
       return BaseNamespace.__setitem__(self, key, value)
-    e = """Attributes are required to be instances of AttriBox, 
-    but received '%s' of type '%s' at key: '%s'!"""
-    e2 = e % (str(value), type(value).__name__, key)
-    raise ValueError(monoSpace(e2))
+    if self.isSpecialKey(key):
+      return dict.__setitem__(self, key, value)
+    return self.__setitem__(key, AttriBox[type(value)](DEFAULT(value)))
 
   @staticmethod
   def _getattrFactory(boxes: list[tuple[str, AttriBox]]) -> Callable:
@@ -104,6 +96,51 @@ class FastSpace(BaseNamespace):
     return __getattr__
 
   @staticmethod
+  def _initFactory(attriBoxes: list[tuple[str, AttriBox]]) -> Callable:
+    """This factory creates the '__init__' method which automatically
+    populates the AttriBox instances."""
+
+    keys = [key for (key, box) in attriBoxes]
+    defVals = {key: box.getDefaultFactory() for (key, box) in attriBoxes}
+    valTypes = {key: box.getFieldClass() for (key, box) in attriBoxes}
+
+    def __init__(self, *args, **kwargs) -> None:
+      """This automatically generated '__init__' method populates the
+      AttriBox instances."""
+      initValues = dict()  # Creates temporary dictionary for initial values
+
+      #  Retrieves values from positional arguments
+      for (i, (key, type_)) in enumerate(valTypes.items()):
+        if len(args) > i:
+          if isinstance(args[i], type_):
+            initValues[key] = args[i]
+          else:
+            e = typeMsg(key, args[i], type_)
+            raise TypeError(e)
+
+      #  Retrieves values from keyword arguments
+      for (key, type_) in valTypes.items():
+        if key in kwargs:
+          val = kwargs[key]
+          if isinstance(val, type_):
+            initValues[key] = val
+          else:
+            e = typeMsg(key, val, type_)
+            raise TypeError(e)
+
+      #  Creates default values for missing arguments
+      for (key, defVal) in defVals.items():
+        if key not in initValues:
+          initValues[key] = defVal(self)
+
+      #  Assigns values
+      for (key, value) in initValues.items():
+        if value is None:
+          setattr(self, key, value)
+
+    return __init__
+
+  @staticmethod
   def _slotsFactory(boxes: list[tuple[str, AttriBox]]) -> list[str]:
     """This factory creates the '__slots__' list which is used to restrict
     the namespace to the AttriBox instances."""
@@ -113,13 +150,15 @@ class FastSpace(BaseNamespace):
     """The namespace created by the BaseNamespace class is updated with
     the '__init__' function created by the factory function."""
     namespace = BaseNamespace.compile(self)
-    fieldBoxes = self._getFieldBoxes()
-    baseBoxes = self._getBaseBoxes()
-    bases = self.getBaseClasses()
+    oldInit = namespace.get('__init__', None)
+    oldGetAttr = namespace.get('__getattr__', None)
     boxes = self._getAllBoxes()
-    self._addInnerFunction('__getattr__', self._getattrFactory(boxes))
     namespace['__field_boxes__'] = self._getFieldBoxes()
     namespace['__slots__'] = self._slotsFactory(boxes)
-    for (key, callMeMaybe) in self._getInnerFunctions():
-      namespace[key] = callMeMaybe
+    if oldInit is None or oldInit is object.__init__:
+      newInit = self._initFactory(boxes)
+      namespace['__init__'] = newInit
+    if oldGetAttr is None:
+      newGetAttr = self._getattrFactory(boxes)
+      namespace['__getattr__'] = newGetAttr
     return namespace

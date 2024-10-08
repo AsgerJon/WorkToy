@@ -28,7 +28,7 @@ class PlanePoint(FastObject):
 
   @overload()
   def __init__(self) -> None:
-    self.__init__(0, 0)
+    pass
 
 
 class SpacePoint(PlanePoint):
@@ -137,6 +137,19 @@ def yoloPi(cls: type, n: int = None, **kwargs) -> float:
   return toc - tic
 
 
+class NoInit(FastObject):
+  """This class has no init itself!"""
+  pass
+
+
+class SomeInit(FastObject):
+  """This one does!"""
+
+  def __init__(self, *args, **kwargs) -> None:
+    """LOL"""
+    pass
+
+
 class TestFastObject(TestCase):
   """TestFastObject tests the FastObject class. """
 
@@ -144,6 +157,10 @@ class TestFastObject(TestCase):
     """Sets up the test class"""
     self.planePoint = PlanePoint(69, 420)
     self.spacePoint = SpacePoint(69, 420, 1337)
+
+  def test_init_presence(self) -> None:
+    """Testing that the namespace objects can detect the presence of an
+    init method."""
 
   def testNamespace(self, ) -> None:
     """Testing that the PlanePoint class correctly identifies x and y as

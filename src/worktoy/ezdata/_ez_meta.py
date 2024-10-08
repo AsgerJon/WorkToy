@@ -13,3 +13,18 @@ class EZMeta(BaseMetaclass):
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> EZSpace:
     return EZSpace(mcls, name, bases, **kwargs)
+
+  def __new__(mcls,
+              name: str,
+              bases: Bases,
+              space: EZSpace,
+              **kwargs) -> type:
+    newInit = space.ezInitFactory()
+    newStr = space.ezStrFactory()
+    newEq = space.ezEqFactory()
+    EZSpace.__setitem__(space, '__init__', newInit, __trust_me_bro__=True)
+    EZSpace.__setitem__(space, '__str__', newStr, __trust_me_bro__=True)
+    EZSpace.__setitem__(space, '__repr__', newStr, __trust_me_bro__=True)
+    EZSpace.__setitem__(space, '__eq__', newEq, __trust_me_bro__=True)
+    return BaseMetaclass.__new__(mcls, name, bases, space, **kwargs)
+ 
