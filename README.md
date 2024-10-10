@@ -483,10 +483,11 @@ Consider the following example of enumerating colors in the context of
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.desc import Field
 from worktoy.keenum import auto, KeeNum
 
 
-class QColor:  # should be imported from pyside6
+class QColor:  # Imagine this was: from pyside6.QtGui import QColor
 
   def __init__(self, *args, **kwargs) -> None:
     pass
@@ -500,13 +501,120 @@ class RGB(KeeNum):
   RED = auto(QColor(255, 0, 0))
   GREEN = auto(QColor(0, 255, 0))
   BLUE = auto(QColor(0, 0, 255))
+```
+
+In the above example, please imagine that QColor is from the
+```pyside6``` module. Each enumeration is assigned a public value of a
+```QColor``` instance. The ```auto``` function is used to associate the
+instance with the enumeration. If no object is passed to the ```auto```
+function, the name of the enumeration is used instead.
+
+While this public value is entirely semantic from the perspective of the
+internal logic, a subclass may implement functionality expecting the
+public value of each enumeration to be of a particular type. For example:
+
+Please note that the names of enumerations are case-insensitive!
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from typing import Self
+
+from worktoy.parse import maybe
+from worktoy.desc import Field, AttriBox, THIS
+from worktoy.base import FastObject, overload
+from worktoy.keenum import auto, KeeNum
+
+
+class QColor(FastObject):
+  """QColor from pyside6 is not here right now, may I help?"""
+
+  R = AttriBox[int](255)
+  G = AttriBox[int](255)
+  B = AttriBox[int](255)
+
+  @overload(int, int, int)
+  def __init__(self, *rgb) -> None:
+    self.R, self.G, self.B = rgb
+
+  @overload(THIS)
+  def __init__(self, other: Self) -> None:
+    self.R, self.G, self.B = other.R, other.G, other.B
+
+  @overload()
+  def __init__(self, ) -> None:
+    pass
+
+  def red(self) -> int:
+    return self.R
+
+  def green(self) -> int:
+    return self.G
+
+  def blue(self) -> int:
+    return self.B
+
+
+class RGB(KeeNum):
+  """Assigns instances of QColor as public values to the enumeration.
+  Additionally, it requires auto to be of type QColor (the one above,
+  not the real one lol). """
+
+  r = Field()
+  g = Field()
+  b = Field()
+
+  WHITE = auto(QColor(255, 255, 255))
+  BLACK = auto(QColor(0, 0, 0))
+  RED = auto(QColor(255, 0, 0))
+  GREEN = auto(QColor(0, 255, 0))
+  BLUE = auto(QColor(0, 0, 255))
+
   #  Further enumerations are left as an exercise to the reader
 
+  @r.GET
+  def _getRed(self) -> int:
+    """Getter-function for value at red channel"""
+    return self.value.red()
+
+  @g.GET
+  def _getBlue(self) -> int:
+    """Getter-function for value at red channel"""
+    return self.value.green()
+
+  @b.GET
+  def _getGreen(self) -> int:
+    """Getter-function for value at red channel"""
+    return self.value.blue()
+
+  def __str__(self, ) -> str:
+    """Returns hex representation of the color value"""
+    return ('#%02x%02x%02x' % (self.r, self.g, self.b)).upper()
+
+  def __repr__(self, ) -> str:
+    """Returns code that would match this instance"""
+    return """%s.%s""" % (self.__class__.__name__, self.name)
 
 
-
-
+if __name__ == '__main__':
+  for rgb in RGB:
+    print(rgb)
 ```
+
+The above outputs the following:
+
+```terminal
+RGB.WHITE as hex: #FFFFFF
+RGB.BLACK as hex: #000000
+RGB.RED as hex: #FF0000
+RGB.GREEN as hex: #00FF00
+RGB.BLUE as hex: #0000FF
+```
+
+In summary, the ```WorkToy.keenum``` module provides flexible
+enumerations. Planned features include an enhanced ```auto``` function.
 
 # A Deep Dive into Python
 
@@ -2350,7 +2458,7 @@ Below is an example of the ``EZData`` class in use:
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.ezdata import EZData
+from worktoy._WORK_IN_PROGRESS.ezdata import EZData
 from worktoy.desc import AttriBox
 
 

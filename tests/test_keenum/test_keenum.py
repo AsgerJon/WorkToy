@@ -94,6 +94,16 @@ class RGB(KeeNum):
     """Getter-function for value at red channel"""
     return self.value.red()
 
+  @g.GET
+  def _getBlue(self) -> int:
+    """Getter-function for value at red channel"""
+    return self.value.green()
+
+  @b.GET
+  def _getGreen(self) -> int:
+    """Getter-function for value at red channel"""
+    return self.value.blue()
+
 
 class Day(BaseObject):
   """Day owns a boxed WeekDay"""
@@ -157,3 +167,10 @@ class TestKeeNum(TestCase):
       self.assertIsInstance(WeekDay(name), WeekDay)
       item = getattr(WeekDay, name)
       self.assertIsInstance(item, WeekDay)
+
+  def test_rgb(self) -> None:
+    """Tests field instances on KeeNum class"""
+    for color in RGB:
+      self.assertEqual(color.r, color.value.red())
+      self.assertEqual(color.g, color.value.green())
+      self.assertEqual(color.b, color.value.blue())

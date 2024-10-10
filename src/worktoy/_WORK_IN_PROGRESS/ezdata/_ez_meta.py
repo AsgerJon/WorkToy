@@ -3,7 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.ezdata import EZSpace
+from worktoy._WORK_IN_PROGRESS.ezdata import EZSpace
 from worktoy.meta import BaseMetaclass, Bases
 
 
