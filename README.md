@@ -11,7 +11,18 @@ them to provide powerful and flexible tools for Python developers.
 # Table of Contents
 
 - [Installation](#installation)
+- [Introduction](#introduction)
 - [Usage](#usage)
+  * [```worktoy.text```](#worktoytext)
+    + [```worktoy.text.stringList```](#worktoytextstringlist)
+    + [```worktoy.text.monoSpace```](#worktoytextmonospace)
+    + [```worktoy.text.wordWrap```](#worktoytextwordwrap)
+    + [```worktoy.text.typeMsg```](#worktoytexttypemsg)
+    + [```worktoy.text.joinWords```](#worktoytextjoinwords)
+  * [```worktoy.parse```](#worktoyparse)
+    + [```worktoy.parse.maybe```](#worktoyparsemaybe)
+    + [```worktoy.parse.maybeType```](#worktoyparsemaybetype)
+
 - [worktoy.desc](#worktoydesc)
   * [Background - The Python Descriptor Protocol](#background---the-python-descriptor-protocol)
     + [The ``__set_name__``method](#the-__set_name__method)
@@ -330,7 +341,7 @@ from __future__ import annotations
 from worktoy.parse import maybeType
 
 if __name__ == '__main__':
-  foo = [None, '69', dict(value=420), None, 1337, None, 80085]
+  foo = [None, '69', dict(value=420), None, 1337, None, .80085]
   bar = maybeType(int, *foo)  # passes all elements of foo to maybeType
   print('Expected: 1337, Actual: %d' % bar)
 ```
@@ -346,7 +357,64 @@ In summary, the ```WorkToy.parse``` module provides the following:
 - ```maybe```
 - ```maybeType```
 
-## ```WorkToy.desc.AttriBox```
+## ```WorkToy.desc```
+
+This module provides classes implementing the descriptor protocol
+
+### ```worktoy.desc.Field```
+
+In situations were an attribute requires significant customization, the
+```Field``` class exposes the features available in the descriptor
+protocol allowing full customization. Like the builtin ```property```,
+instances of ```Field``` must decorate the accessor methods explicitly
+to enable. This is done by using the ```GET```, ```SET``` and ```DEL```
+decorators. Unlike ```property``` however, the field instance must be
+instantiated *before* it can decorate the accessor methods.
+
+For example, consider the following class representation a complex number
+using the ```Field``` class to fields ```r``` and ```t``` to represent
+absolute value and angle respectively. Notice that the real and imaginary
+parts are represented by instances of AttriBox, which is the subject of
+the next section.
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.base import FastObject, overload
+from worktoy.desc import AttriBox, Field, THIS
+from worktoy.parse import maybeType
+
+
+class Complex(FastObject):
+  """The real and imaginary parts are implemented with AttriBox"""
+
+  IM = AttriBox[float](0.)
+  RE = AttriBox[float](0.)
+
+  r = Field()  # same as absolute value
+  t = Field()  # angle in range -pi, pi
+
+  @overload(float, float)
+  def __init__(self, x: float, y: float) -> None:
+    self.RE, self.IM = x, y
+
+  @overload(complex)
+  def __init__(self, z: complex) -> None:
+    self.RE, self.IM = z.real, z.imag
+
+  @overload(THIS)
+  def __init__(self, other: Self) -> None:
+    self.RE, self.IM = other.RE, other.IM
+
+
+
+
+
+```
+
+### ```worktoy.desc.AttriBox```
 
 This class provides a powerful implementation of the descriptor protocol
 allowing for lazy instantiation while requiring only one line in the
@@ -614,7 +682,18 @@ RGB.BLUE as hex: #0000FF
 ```
 
 In summary, the ```WorkToy.keenum``` module provides flexible
-enumerations. Planned features include an enhanced ```auto``` function.
+enumerations.
+
+## Summary
+
+```WorkToy``` contains the following packages:
+
+- ```WorkToy.text```
+- ```WorkToy.parse```
+- ```WorkToy.desc```
+- ```WorkToy.base```
+- ```WorkToy.keenum```
+- ```WorkToy.ezdata```
 
 # A Deep Dive into Python
 
