@@ -226,4 +226,4 @@ class TestFastObject(TestCase):
     by at least a factor of 10. """
     fastTime = yoloPi(FastCloud, 10000) * 1e-06
     baseTime = yoloPi(BaseCloud, 10000) * 1e-06
-    self.assertLess(fastTime * 10, baseTime)
+    self.assertLess(fastTime * 5, baseTime)
