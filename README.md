@@ -73,9 +73,494 @@ installed by passing the ``--pre`` flag:
 pip install worktoy --pre
 ```
 
+# Introduction
+
+The **usage** section aims to provide a concise explanation of how to use
+the **WorkToy** library. For a more detailed explanation that includes
+discussions on Python itself, please refer to the **A Deep Dive into
+Python** section.
+
 # Usage
 
-# `worktoy.desc`
+This section explains the packages included in the **WorkToy** library in
+the order they are imported.
+
+## ```WorkToy.text```
+
+This package provides functions for manipulating text. The functions are
+very simple but widely used across **WorkToy**.
+
+### ```WorkToy.text.stringList```
+
+This function saves you a lot of quotation marks:
+
+```python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import stringList
+
+if __name__ == '__main__':
+  foo = ['so', 'many', 'quotation', 'marks!']
+  bar = stringList("""so, many, quotation, marks!""")
+  print(foo == bar)  # True
+```
+
+Just write a string with comma, space separated words and the function
+will return a list of the words, providing a much more convenient way of
+defining a list of strings.
+
+### ```WorkToy.text.monoSpace```
+
+Python provides a convenient way of defining long strings using triple
+quotes. However, when including new lines in such a string it is likely
+done for code readability, rather than requiring a linebreak at that
+particular position. The ``monoSpace`` function modifies a string to have
+only single spaces between words and no leading or trailing spaces. If a
+linebreak is intended, include ```'<br>'``` in the string to force a
+linebreak.
+
+```python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import monoSpace
+
+if __name__ == '__main__':
+  foo = """Welcome to the monoSpace documentation! <br> After that 
+  convenient linebreak, we are done!"""
+  bar = monoSpace(foo)
+  print(bar)
+```
+
+The above outputs:
+
+  ```terminal
+  Welcome to the monoSpace documentation!
+  After that convenient linebreak, we are done!
+  ```
+
+Inclusion of ```'<br>'``` explicitly forces a linebreak. Otherwise, the
+function removes all linebreaks and multiple spaces between words.
+
+### ```WorkToy.text.wordWrap```
+
+This function takes a string and splits it into lines not exceeding a
+specified width and returns a list of the lines.
+
+```python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import wordWrap
+
+if __name__ == '__main__':
+  foo = """This is a long string that needs to be wrapped. It is 
+  important that the wrapping is done correctly. Otherwise, the text 
+  will not be readable. """
+  bar = wordWrap(40, foo)
+  for line in bar:
+    print(line)
+```
+
+The above outputs:
+
+```terminal
+This is a long string that needs to be
+wrapped. It is important that the
+wrapping is done correctly. Otherwise,
+the text will not be readable.
+```
+
+### ```WorkToy.text.typeMsg```
+
+When type-guarding a particular variable, an unsupported type should
+result in a TypeError. The `typeMsg` function provides a convenient way
+to raise a TypeError with a custom message if the type is not supported.
+
+```python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+import sys
+
+from worktoy.text import typeMsg, wordWrap
+
+
+def foo(bar: int) -> None:
+  if not isinstance(bar, int):
+    e = typeMsg('bar', bar, int)
+    raise TypeError(e)
+  print(bar)
+
+
+if __name__ == '__main__':
+  susBar = 'sixty-nine'
+  try:
+    foo(susBar)  # That's not an int!
+  except TypeError as typeError:
+    errorMsg = str(typeError)  # Let's wrap this string at 50 characters
+    wrapped = wordWrap(50, errorMsg)  # We apply 'str.join' to the list
+    msg = '\n'.join(wrapped)
+    print(msg)
+    sys.exit(0)
+```
+
+The above outputs the following:
+
+```terminal
+Expected object 'bar' to be of type 'int', but
+found 'sixty-nine' of type 'str'!
+```
+
+### ```WorkToy.text.joinWords```
+
+Recall the ```stringList``` function mentioned earlier. The
+```joinwords``` function does nearly the opposite: It takes a list of
+strings and joins them to one string with commas in between, except for
+in between the last two words where an 'and' is used.
+
+```python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.text import joinWords
+
+if __name__ == '__main__':
+  foo = ['Tom', 'Dick', 'Harry']
+  bar = joinWords(*foo)  # Each string should be a positional argument
+  print(bar)
+```
+
+The above outputs the following:
+
+```terminal
+Tom, Dick and Harry
+```
+
+In summary, ```WorkToy.text``` provides the following:
+
+- ```stringList```
+- ```monoSpace```
+- ```wordWrap```
+- ```typeMsg```
+- ```joinWords```
+
+## ```WorkToy.parse```
+
+This module provides a pair of ```None```-aware functions.
+
+### ```WorkToy.parse.maybe```
+
+This function takes any number of arguments and returns the first that is
+different from ```None```. Suppose a function intends to apply VAT to a
+base price with a default VAT-rate of 10 %:
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.parse import maybe
+
+fallbackRate = 0.1
+
+
+def badApplyVAT(basePrice: float, rate: float = None) -> float:
+  """Bad implementation!"""
+  return basePrice * (1 + (rate or fallbackRate))
+
+
+def goodApplyVAT(basePrice: float, rate: float = None) -> float:
+  """Good implementation"""
+  if rate is None:
+    return basePrice * (1 + fallbackRate)
+  return basePrice * (1 + rate)
+
+
+def bestApplyVAT(basePrice: float, rate: float = None) -> float:
+  """Best implementation using 'maybe'. This is functionality equivalent 
+  to the good implementation above, but with the added syntactic sugar."""
+  return basePrice * (1 + maybe(rate, fallbackRate))
+
+
+if __name__ == '__main__':
+  actualRate = 0.
+  print('Bad implementation: badApplyVAT(100, actualRate)')
+  print('Expected: 100, Actual: %.2f' % badApplyVAT(100, actualRate))
+  print('Best implementation: bestApplyVAT(100, actualRate)')
+  print('Expected: 100, Actual: %.2f' % bestApplyVAT(100, actualRate))
+```
+
+The above outputs the following:
+
+```terminal
+Bad implementation: badApplyVAT(100, actualRate)
+Expected: 100, Actual: 110.00
+Best implementation: bestApplyVAT(100, actualRate)
+Expected: 100, Actual: 100.00
+```
+
+As is obvious, the bad implementation replaced the intended rate of
+```0``` with the fallback rate of ```0.1```. Good thing such a thing has
+never happened in reality to any reasonably sized financial institution.
+This is because ```0``` while a valid rate here, is falsy which is all
+the bad implementation checks for. Instead, comparing against ```None```
+does not cause falsy but valid values to be overwritten. The ```maybe```
+function provides syntactic sugar for selecting only the value different
+from ```None```.
+
+### ```WorkToy.parse.maybeType```
+
+This is identical to the ```maybe``` function, but with the added
+type check, meaning that it takes first a type and then any number of
+positional arguments. It then returns the first of the positional
+arguments that is different from ```None``` *and* is of the given type.
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.parse import maybeType
+
+if __name__ == '__main__':
+  foo = [None, '69', dict(value=420), None, 1337, None, 80085]
+  bar = maybeType(int, *foo)  # passes all elements of foo to maybeType
+  print('Expected: 1337, Actual: %d' % bar)
+```
+
+The above outputs the following:
+
+```terminal
+Expected: 1337, Actual: 1337
+```
+
+In summary, the ```WorkToy.parse``` module provides the following:
+
+- ```maybe```
+- ```maybeType```
+
+## ```WorkToy.desc.AttriBox```
+
+This class provides a powerful implementation of the descriptor protocol
+allowing for lazy instantiation while requiring only one line in the
+class body. When instantiating ```AttriBox``` in the class body, the
+following novel syntax is used:
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.desc import AttriBox
+
+
+class Complex:
+  """Complex number implementation using AttriBox"""
+
+  RE = AttriBox[float](0.)
+  IM = AttriBox[float](0.)
+
+  def __init__(self, *args) -> None:
+    if len(args) > 1:
+      self.RE, self.IM = args[:2]
+    elif len(args):
+      self.RE = args[0]
+
+  #  __add__, __mul__ and other arithmetic operations omitted here
+```
+
+The above implementation of the ```Complex``` class provides a real and
+imaginary part as attributes. The ```AttriBox``` class is instantiated
+with a field type in the brackets and the arguments to be used for
+instantiating the field type. When the ```__get__``` method is first
+called, that is, the attribute is accessed, the field is instantiated
+using the arguments passed after the brackets.
+
+Consider the following example where another class owns attributes
+defined as instances of ```AttriBox``` whose field type is ```Complex```.
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.desc import AttriBox
+
+
+class Complex:
+  """Complex number implementation using AttriBox"""
+  #  Same as before
+
+
+class Quarternion:
+  """Quarternion defined with two complex numbers as attributes. """
+
+  z1 = AttriBox[Complex](0, 0)
+  z2 = AttriBox[Complex](69, 420)
+```
+
+Attributes created this way require one line of code, but possesses the
+following powerful features:
+
+- Lazy, but still flexible instantiation.
+- Strongly typed.
+
+For a deeper dive into the even more powerful features not mentioned here,
+refer to the **A Deep Dive into Python** section.
+
+## ```WorkToy.base```
+
+By leveraging the custom metaclass and descriptor protocol, ```WorkToy```
+is able to provide two powerful and general baseclasses for general use.
+Both of which support an important feature found in other programming
+languages: function overloading.
+
+To use overloading in a new class, have the class inherit from either
+```BaseObject``` or ```FastObject```. The usage is quite intuitive and is
+instantly recognized by copilot, for example:
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from typing import Self
+
+from worktoy.desc import AttriBox, THIS
+from worktoy.base import FastObject, overload
+
+
+class Complex(FastObject):
+  """Complex number implementation using AttriBox"""
+
+  RE = AttriBox[float]()
+  IM = AttriBox[float]()
+
+  @overload(float, float)
+  def __init__(self, x: float, y: float) -> None:
+    self.RE, self.IM = x, y
+
+  @overload(complex)
+  def __init__(self, z: complex) -> None:
+    self.RE, self.IM = z.real, z.imag
+
+  @overload(THIS)
+  def __init__(self, other: Self) -> None:
+    """Note the use of 'THIS' to indicate an instance of the class we are 
+    only just implementing!"""
+    self.RE, self.IM = other.RE, other.IM
+```
+
+In the above implementation of the complex number, we subclass
+```FastObject```, which is faster, but restricts attributes to being
+instances of ```AttriBox``` and disallows dynamic attribute creation.
+These restrictions allow the use of the ```__slots__``` mechanism for
+attribute access. The ```BaseObject``` class is more flexible, but slower
+as it does not implement ```__slots__```.
+
+## ```WorkToy.keenum```
+
+Provides a simple enumeration class. Please note that it does not support
+inheritance. Classes must define enumerate using the ```keenum. auto```
+function. This function allows instances to be associated with any
+arbitrary object passed to the function. If no such object is passed,
+they name of the enumeration is used instead. Please note that this
+public value has only semantic meaning and is never accessed by any
+internal mechanism in the enumeration class. Thus, it may be any object.
+
+Consider the following example of enumerating colors in the context of
+**Qt for Python**.
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+from worktoy.keenum import auto, KeeNum
+
+
+class QColor:  # should be imported from pyside6
+
+  def __init__(self, *args, **kwargs) -> None:
+    pass
+
+
+class RGB(KeeNum):
+  """Assigns instances of QColor as public values to the enumeration. """
+
+  WHITE = auto(QColor(255, 255, 255))
+  BLACK = auto(QColor(0, 0, 0))
+  RED = auto(QColor(255, 0, 0))
+  GREEN = auto(QColor(0, 255, 0))
+  BLUE = auto(QColor(0, 0, 255))
+  #  Further enumerations are left as an exercise to the reader
+
+
+
+
+
+```
+
+# A Deep Dive into Python
+
+This section provides a deeper examination of the contents of **WorkToy**
+and the background in **Python** itself.
+
+## ```WorkToy.parse```: ```None```-awareness
+
+There is a programming language out there possessing exactly one
+redeeming feature: ```??``` As if this wonderful operator is asking *How
+did I end up in javascript?* The unfortunately named *nullish coalescing*
+operator provides awareness of the ```null``` object, which is called
+```None``` in Python. For example:
+
+```Javascript
+
+const susVal = null;
+
+const fallbackVal = 69420;
+
+const midWare = (req, res, next) => {
+  res['someValue'] = susVal ?? fallbackVal;
+  next();
+}
+
+module.exports = midWare;
+```
+
+In the above ```susVal ?? fallbackVal``` uses ```fallbackVal``` only when
+```susVal``` is ```null```. Regrettably, Python provides no such operator,
+nevertheless the logic behind it still finds widespread use in Python.
+Consider a function implementing a default value:
+
+```Python
+def concatLists(X: list, Y: list = []) -> list:
+  """Don't do this. This is disgusting!"""
+  return [*X, *Y]
+```
+
+The above function uses a mutable default argument. Never do this! Instead,
+this author recommends always using ```None``` as the default value **WITHOUT
+EXCEPTION!** For example:
+
+```Python
+def concatList(X: list, Y: list = None) -> list:
+  """This is the way!"""
+  if Y is None:
+    return X
+  return [*X, *Y]
+```
+
+Here, the comparison against ```None``` relies on the ```is None``` check
+in a multiline conditional clause. The ```parse``` module provides a pair
+of None-aware functions.
 
 ## Background - The Python Descriptor Protocol
 

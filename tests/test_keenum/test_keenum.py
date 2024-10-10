@@ -7,7 +7,7 @@ from typing import Iterable, TYPE_CHECKING
 from unittest import TestCase
 
 from worktoy.text import stringList
-from worktoy.desc import AttriBox
+from worktoy.desc import AttriBox, Field
 from worktoy.keenum import KeeNum, auto
 from worktoy.base import BaseObject
 
@@ -53,6 +53,46 @@ class Ugedag(KeeNum):
     """String representation of the Ugedag class"""
     clsName = self.__class__.__name__
     return """%s.%s('%s')""" % (clsName, self.name, str(self.value))
+
+
+class QColor:  # should be imported from pyside6
+
+  R = AttriBox[int](255)
+  G = AttriBox[int](255)
+  B = AttriBox[int](255)
+
+  def __init__(self, *args, **kwargs) -> None:
+    self.R, self.G, self.B = [*args, ][:3]
+
+  def red(self) -> int:
+    return self.R
+
+  def green(self) -> int:
+    return self.G
+
+  def blue(self) -> int:
+    return self.B
+
+
+class RGB(KeeNum):
+  """Assigns instances of QColor as public values to the enumeration. """
+
+  r = Field()
+  g = Field()
+  b = Field()
+
+  WHITE = auto(QColor(255, 255, 255))
+  BLACK = auto(QColor(0, 0, 0))
+  RED = auto(QColor(255, 0, 0))
+  GREEN = auto(QColor(0, 255, 0))
+  BLUE = auto(QColor(0, 0, 255))
+
+  #  Further enumerations are left as an exercise to the reader
+
+  @r.GET
+  def _getRed(self) -> int:
+    """Getter-function for value at red channel"""
+    return self.value.red()
 
 
 class Day(BaseObject):
