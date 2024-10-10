@@ -62,13 +62,7 @@ class AbstractNamespace(dict):
     keys and their values must be respected. The recommended procedure is
     to simply invoke: 'dict.__setitem__(self, key, value)' Not adhering to
     this recommendation may lead to HIGHLY UNDEFINED BEHAVIOUR!"""
-    out = stringList(cls.__special_keys__)
-    if cls.__first_run__:
-      for key in out:
-        print(key)
-      else:
-        cls.__first_run__ = False
-    return out
+    return stringList(cls.__special_keys__)
 
   @classmethod
   def isSpecialKey(cls, key: str) -> bool:

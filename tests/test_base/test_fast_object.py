@@ -224,6 +224,6 @@ class TestFastObject(TestCase):
   def test_timing(self, ) -> None:
     """Testing that FastObject is in fact faster than BaseObject,
     by at least a factor of 10. """
-    fastTime = yoloPi(FastCloud, 10000)
-    baseTime = yoloPi(BaseCloud, 10000)
+    fastTime = yoloPi(FastCloud, 10000) * 1e-06
+    baseTime = yoloPi(BaseCloud, 10000) * 1e-06
     self.assertLess(fastTime * 10, baseTime)

@@ -7,8 +7,8 @@ implementation, but can be used independently. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import parse
 from . import text
+from . import parse
 from . import meta
 from . import desc
 from . import base

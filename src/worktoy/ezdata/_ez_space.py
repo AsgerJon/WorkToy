@@ -4,12 +4,11 @@
 from __future__ import annotations
 
 from worktoy.base import FastSpace
-from worktoy.ezdata import IllegalInitException, IllegalMethodException, \
-  NoDefaultError, AmbiguousDefaultError, DefaultTypeMismatchError
+from worktoy.ezdata import IllegalInitException, IllegalMethodException
+from worktoy.ezdata import NoDefaultError, AmbiguousDefaultError
+from worktoy.ezdata import DefaultTypeMismatchError
 from worktoy.meta import CallMeMaybe
 from worktoy.parse import maybe
-from worktoy.text import typeMsg
-
 from worktoy.desc import AttriBox
 
 try:

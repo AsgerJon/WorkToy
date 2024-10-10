@@ -5,7 +5,12 @@ universal objects that retain identity across modules."""
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
+
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
 
 from worktoy.meta import BaseMetaclass, BaseNamespace
 from worktoy.text import typeMsg
