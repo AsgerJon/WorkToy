@@ -21,7 +21,6 @@ them to provide powerful and flexible tools for Python developers.
     + [```worktoy.text.joinWords```](#worktoytextjoinwords)
   * [```worktoy.parse```](#worktoyparse)
     + [```worktoy.parse.maybe```](#worktoyparsemaybe)
-    + [```worktoy.parse.maybeType```](#worktoyparsemaybetype)
 
 - [worktoy.desc](#worktoydesc)
   * [Background - The Python Descriptor Protocol](#background---the-python-descriptor-protocol)
@@ -172,7 +171,8 @@ if __name__ == '__main__':
   foo = """This is a long string that needs to be wrapped. It is 
   important that the wrapping is done correctly. Otherwise, the text 
   will not be readable. """
-  bar = wordWrap(40, foo)
+  lineWidth: int = 40  # The line must not exceed 40 characters
+  bar: list[str] = wordWrap(lineWidth, foo)  # Returns a list
   for line in bar:
     print(line)
 ```
@@ -244,13 +244,16 @@ from worktoy.text import joinWords
 
 if __name__ == '__main__':
   foo = ['Tom', 'Dick', 'Harry']
-  bar = joinWords(*foo)  # Each string should be a positional argument
-  print(bar)
+  print(joinWords(foo[0]))  # 'Tom'
+  print(joinWords(*foo[:2]))  # 'Tom and Dick'
+  print(joinWords(*foo[:3]))  # 'Tom, Dick and Harry'
 ```
 
 The above outputs the following:
 
 ```terminal
+Tom
+Tom and Dick
 Tom, Dick and Harry
 ```
 
@@ -264,104 +267,203 @@ In summary, ```WorkToy.text``` provides the following:
 
 ## ```WorkToy.parse```
 
-This module provides a pair of ```None```-aware functions.
+This module provides the ```None```-aware ```maybe``` function.
 
 ### ```WorkToy.parse.maybe```
 
-This function takes any number of arguments and returns the first that is
-different from ```None```. Suppose a function intends to apply VAT to a
-base price with a default VAT-rate of 10 %:
+*Simplify identity-checks with the ```maybe``` function.*
 
 ```Python
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import Any
 from worktoy.parse import maybe
 
-fallbackRate = 0.1
+fallback = 69.
 
 
-def badApplyVAT(basePrice: float, rate: float = None) -> float:
-  """Bad implementation!"""
-  return basePrice * (1 + (rate or fallbackRate))
+def verboseFunc(arg: float = None) -> Any:
+  """Verbose identity check"""
+  if arg is None:
+    val = fallback
+  else:
+    val = arg
 
 
-def goodApplyVAT(basePrice: float, rate: float = None) -> float:
-  """Good implementation"""
-  if rate is None:
-    return basePrice * (1 + fallbackRate)
-  return basePrice * (1 + rate)
-
-
-def bestApplyVAT(basePrice: float, rate: float = None) -> float:
-  """Best implementation using 'maybe'. This is functionality equivalent 
-  to the good implementation above, but with the added syntactic sugar."""
-  return basePrice * (1 + maybe(rate, fallbackRate))
-
-
-if __name__ == '__main__':
-  actualRate = 0.
-  print('Bad implementation: badApplyVAT(100, actualRate)')
-  print('Expected: 100, Actual: %.2f' % badApplyVAT(100, actualRate))
-  print('Best implementation: bestApplyVAT(100, actualRate)')
-  print('Expected: 100, Actual: %.2f' % bestApplyVAT(100, actualRate))
+def syntacticSugarFunc(arg: float = None) -> Any:
+  """Syntactic sugar alternative"""
+  val = maybe(arg, fallback)
 ```
 
-The above outputs the following:
-
-```terminal
-Bad implementation: badApplyVAT(100, actualRate)
-Expected: 100, Actual: 110.00
-Best implementation: bestApplyVAT(100, actualRate)
-Expected: 100, Actual: 100.00
-```
-
-As is obvious, the bad implementation replaced the intended rate of
-```0``` with the fallback rate of ```0.1```. Good thing such a thing has
-never happened in reality to any reasonably sized financial institution.
-This is because ```0``` while a valid rate here, is falsy which is all
-the bad implementation checks for. Instead, comparing against ```None```
-does not cause falsy but valid values to be overwritten. The ```maybe```
-function provides syntactic sugar for selecting only the value different
-from ```None```.
-
-### ```WorkToy.parse.maybeType```
-
-This is identical to the ```maybe``` function, but with the added
-type check, meaning that it takes first a type and then any number of
-positional arguments. It then returns the first of the positional
-arguments that is different from ```None``` *and* is of the given type.
-
-```Python
-#  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
-from __future__ import annotations
-
-from worktoy.parse import maybeType
-
-if __name__ == '__main__':
-  foo = [None, '69', dict(value=420), None, 1337, None, .80085]
-  bar = maybeType(int, *foo)  # passes all elements of foo to maybeType
-  print('Expected: 1337, Actual: %d' % bar)
-```
-
-The above outputs the following:
-
-```terminal
-Expected: 1337, Actual: 1337
-```
-
-In summary, the ```WorkToy.parse``` module provides the following:
-
-- ```maybe```
-- ```maybeType```
+This function takes any number of arguments and returns the first that is
+different from ```None```.
 
 ## ```WorkToy.desc```
 
 This module provides classes implementing the descriptor protocol
 
 ### ```worktoy.desc.Field```
+
+Python allows significant customization of the attribute access mechanism
+through the descriptor protocol. Use ```GET```, ```SET``` and ```DELETE```
+to specify the accessor methods. For example:
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+import sys
+from typing import Never
+
+from worktoy.desc import Field
+
+
+class Point:
+  """A point in 2D space"""
+
+  _x = 0.0  # Private value
+  _y = 0.0  # Private value
+
+  x = Field()
+  y = Field()
+
+  @x.GET  # Specify the getter method
+  def _getX(self) -> float:
+    return self._x
+
+  @x.SET  # Specify the setter method
+  def _setX(self, value: float) -> None:
+    self._x = float(value)  # cast to float
+
+  @x.DELETE  # Specify the deleter method as appropriate
+  def _delX(self, *_) -> Never:
+    """Deleter methods are rarely used in practice. This is because 
+    deviating from expected behaviour can lead to undefined behaviour 
+    when other libraries expect the default behaviour. Particularly, when 
+    a custom implementation fails to raise an expected error. Unless 
+    specifically needed, it is advisable to omit the deleter method. The 
+    safest option is to explicitly raise an error like done here. """
+    e = """Tried deleting protected attribute!"""
+    raise TypeError(e)
+
+  #  Accessor methods for 'y' left as an exercise to the try-hard reader.
+
+
+if __name__ == '__main__':
+  point = Point()
+  print(point.x)  # Getter function returns default value
+  point.x = 69.  # Setter function changes the value
+  print(point.x)  # Getter function returns new value
+  try:
+    del point.x  # Deleter function raises an error
+  except TypeError as typeError:
+    print('%s: %s' % (typeError.__class__.__name__, str(typeError)))
+  sys.exit(0)
+```
+
+The above outputs the following:
+
+```terminal
+0.0
+69.0
+TypeError: Tried deleting protected attribute!
+```
+
+In summary, the ```Field``` class provides a descriptor implementation
+that allows the owning class to entirely define how the attribute is
+accessed.
+
+### ```worktoy.desc.AttriBox```
+
+Where the ```Field``` class required the accessor methods to be explicitly
+implemented by the owning class, the ```AttriBox``` class provides a
+highly general descriptor implementation requiring only one line in the
+owning class body. It uses a powerful and novel syntax. The attribute can
+point to any object of any type: ```attr = AttriBox[cls](*args, **kwargs)```
+This creates a descriptor instance pointing to an instance of ```cls```.
+The default value is created only when necessary by passing the given
+arguments to the constructor of ```cls```.
+
+```Python
+#  AGPL-3.0 license
+#  Copyright (c) 2024 Asger Jon Vistisen
+from __future__ import annotations
+
+import sys
+
+from worktoy.desc import AttriBox
+
+
+class Point:
+  """A point in 2D space"""
+
+  x = AttriBox[int](0)
+  y = AttriBox[int](0)
+
+  def __init__(self, *args) -> None:
+    _x, _y = None, None
+    for arg in args:
+      if isinstance(arg, int):
+        if _x is None:
+          _x = arg
+        else:
+          _y = arg
+          break
+    if _x is not None:
+      self.x = _x
+    if _y is not None:
+      self.y = _y
+
+
+class Circle:
+  """A circle in 2D space"""
+
+  center = AttriBox[Point](69, 420)
+  radius = AttriBox[float](1.337)
+
+  def __str__(self, ) -> str:
+    x0, y0, r = self.center.x, self.center.y, self.radius
+    return """Circle: (x-%d)^2+(y-%d)^2=%.3f^2""" % (x0, y0, r)
+
+
+if __name__ == '__main__':
+  circle = Circle()
+  print(circle)
+  sys.exit(0)
+```
+
+The above outputs the following:
+
+```terminal
+Circle: (x-69)^2+(y-420)^2=1.337^2
+```
+
+### ```worktoy.desc.THIS```
+
+Instances of AttriBox are found in the class bodies of owning classes.
+That means that the AttriBox instances are instantiated before their
+owning classes. This presents a significant problem: How could the
+current instance of the class be referenced before the class is even
+created? By using the ```THIS``` zeroton object. It will automatically
+replace this object by the instance
+
+The ```AttriBox``` class can handle any arbitrary type. If necessary a
+default value is created by passing the arguments to the constructor of
+the type.
+
+## ```WorkToy.base```
+
+By leveraging the custom metaclass and descriptor protocol, ```WorkToy```
+is able to provide two powerful and general baseclasses for general use.
+Both of which support an important feature found in other programming
+languages: function overloading.
+
+To use overloading in a new class, have the class inherit from either
+```BaseObject``` or ```FastObject```. The usage is quite intuitive and is
+instantly recognized by copilot, for example:
 
 In situations were an attribute requires significant customization, the
 ```Field``` class exposes the features available in the descriptor
@@ -382,21 +484,23 @@ the next section.
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import Self, Never
+from math import atan2, cos, sin
+
 from worktoy.base import FastObject, overload
 from worktoy.desc import AttriBox, Field, THIS
-from worktoy.parse import maybeType
 
 
 class Complex(FastObject):
   """The real and imaginary parts are implemented with AttriBox"""
 
-  IM = AttriBox[float](0.)
+  IM = AttriBox[float](0.)  # AttriBox is explained in the next section
   RE = AttriBox[float](0.)
 
   r = Field()  # same as absolute value
   t = Field()  # angle in range -pi, pi
 
-  @overload(float, float)
+  @overload(float, float)  # overload is explained in a later section
   def __init__(self, x: float, y: float) -> None:
     self.RE, self.IM = x, y
 
@@ -408,7 +512,36 @@ class Complex(FastObject):
   def __init__(self, other: Self) -> None:
     self.RE, self.IM = other.RE, other.IM
 
+  @r.GET
+  def _getR(self) -> float:
+    """Getter-function for value at r"""
+    return (self.RE ** 2 + self.IM ** 2) ** .5
 
+  @r.SET
+  def _setR(self, value: float) -> None:
+    """Setter-function for value at r. Preserves the angle, changes the 
+    absolute value."""
+    self.RE, self.IM = value * cos(self.t), value * sin(self.t)
+
+  @t.GET
+  def _getT(self) -> float:
+    """Getter-function for value at t"""
+    if self.RE ** 2 + self.IM ** 2:
+      return atan2(self.IM, self.RE)
+    e = """Zero has no angle!"""
+    raise ZeroDivisionError(e)
+
+  @t.SET
+  def _setT(self, value: float) -> None:
+    """Setter-function for value at t"""
+    self.RE, self.IM = self.r * cos(value), self.r * sin(value)
+
+  @r.DELETE
+  @t.DELETE
+  def _delT(self, *_) -> Never:
+    """Disabled deleter function"""
+    e = """Tried deleting protected attribute!"""
+    raise TypeError(e)
 
 
 
@@ -441,7 +574,7 @@ class Complex:
     elif len(args):
       self.RE = args[0]
 
-  #  __add__, __mul__ and other arithmetic operations omitted here
+  #  __add__, __mul__ and other arithmetic operations omitted here 
 ```
 
 The above implementation of the ```Complex``` class provides a real and
@@ -693,7 +826,6 @@ enumerations.
 - ```WorkToy.desc```
 - ```WorkToy.base```
 - ```WorkToy.keenum```
-- ```WorkToy.ezdata```
 
 # A Deep Dive into Python
 
@@ -2518,54 +2650,6 @@ class Trig(KeeNum):
     """Calls are passed on to the public value"""
     return self.value(self, *args, **kwargs)
 ```
-
-# The ``worktoy.ezdata`` module
-
-The ``worktoy.ezdata`` module provides the ``EZData`` class, which
-provides a dataclass based on the ``AttriBox`` class. This is achieved by
-leveraging the custom metaclass provided by the ``worktoy.meta`` module.
-The main convenience of the ``EZData`` is the auto generated ``__init__``
-method that will populate fields with values given as positional
-arguments or keyword arguments. The keys to the keyword arguments are the
-field names.
-
-Below is an example of the ``EZData`` class in use:
-
-```python
-"""Dataclass for a point in the plane using EZData."""
-#  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
-from __future__ import annotations
-
-from worktoy._WORK_IN_PROGRESS.ezdata import EZData
-from worktoy.desc import AttriBox
-
-
-class PlanePoint(EZData):
-  """Dataclass representing a point in the plane."""
-  x = AttriBox[float](0)
-  y = AttriBox[float](0)
-
-  def __str__(self, ) -> str:
-    """String representation"""
-    return """(%.3f, %.3f)""" % (self.x, self.y)
-
-
-if __name__ == '__main__':
-  P = PlanePoint(69, 420)
-  print(P)
-  P.x = 1337
-  print(P)
-  P.y = 80085  # Copilot suggested this for reals, lol
-  print(P)
-```
-
-## Summary of ``worktoy.ezdata`` module
-
-The ``EZData`` class supports fields with ``AttriBox`` instances. As
-explained in the documentation of the ``worktoy.desc`` module, the
-``AttriBox`` can use any class as the inner class. Thus, subclasses of
-``EZData`` may use any number of fields of any class.
 
 # ``worktoy.text`` module
 
