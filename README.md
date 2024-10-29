@@ -50,7 +50,7 @@ pip install worktoy --pre
 
 The **usage** section aims to provide a concise explanation of how to use
 the **worktoy** library. A much more in depth explanation of the contents
-are under development.
+is under development.
 
 # Usage
 
