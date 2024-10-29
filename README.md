@@ -1,11 +1,11 @@
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](
-https://wakatime.com/badge/github/AsgerJon/WorkToy)
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/worktoy.svg)](
+https://wakatime.com/badge/github/AsgerJon/worktoy)
 
-# WorkToy v0.99.xx
+# worktoy v0.99.xx
 
 This library leverages the most advanced Python features including the
 descriptor protocol and support for customizable metaclasses. The
-documentation below explains these features and how **WorkToy** leverages
+documentation below explains these features and how **worktoy** leverages
 them to provide powerful and flexible tools for Python developers.
 
 # Table of Contents
@@ -22,7 +22,7 @@ them to provide powerful and flexible tools for Python developers.
   * [```worktoy.parse```](#worktoyparse)
     + [```worktoy.parse.maybe```](#worktoyparsemaybe)
 
-  + [```WorkToy.desc```](#worktoydesc)
+  + [```worktoy.desc```](#worktoydesc)
     + [```worktoy.desc.Field```](#worktoydescfield)
     + [```worktoy.desc.AttriBox```](#worktoydescattribox)
     + [```worktoy.desc.THIS```](#worktoydescthis)
@@ -32,7 +32,7 @@ them to provide powerful and flexible tools for Python developers.
 
 # Installation
 
-The stable version of **WorkToy** may be installed using the following
+The stable version of **worktoy** may be installed using the following
 command:
 
 ```bash 
@@ -49,21 +49,20 @@ pip install worktoy --pre
 # Introduction
 
 The **usage** section aims to provide a concise explanation of how to use
-the **WorkToy** library. For a more detailed explanation that includes
-discussions on Python itself, please refer to the **A Deep Dive into
-Python** section.
+the **worktoy** library. A much more in depth explanation of the contents
+are under development.
 
 # Usage
 
-This section explains the packages included in the **WorkToy** library in
+This section explains the packages included in the **worktoy** library in
 the order they are imported.
 
-## ```WorkToy.text```
+## ```worktoy.text```
 
 This package provides functions for manipulating text. The functions are
-very simple but widely used across **WorkToy**.
+very simple but widely used across **worktoy**.
 
-### ```WorkToy.text.stringList```
+### ```worktoy.text.stringList```
 
 This function saves you a lot of quotation marks:
 
@@ -84,7 +83,7 @@ Just write a string with comma, space separated words and the function
 will return a list of the words, providing a much more convenient way of
 defining a list of strings.
 
-### ```WorkToy.text.monoSpace```
+### ```worktoy.text.monoSpace```
 
 Python provides a convenient way of defining long strings using triple
 quotes. However, when including new lines in such a string it is likely
@@ -118,7 +117,7 @@ The above outputs:
 Inclusion of ```'<br>'``` explicitly forces a linebreak. Otherwise, the
 function removes all linebreaks and multiple spaces between words.
 
-### ```WorkToy.text.wordWrap```
+### ```worktoy.text.wordWrap```
 
 This function takes a string and splits it into lines not exceeding a
 specified width and returns a list of the lines.
@@ -149,7 +148,7 @@ wrapping is done correctly. Otherwise,
 the text will not be readable.
 ```
 
-### ```WorkToy.text.typeMsg```
+### ```worktoy.text.typeMsg```
 
 When type-guarding a particular variable, an unsupported type should
 result in a TypeError. The `typeMsg` function provides a convenient way
@@ -191,7 +190,7 @@ Expected object 'bar' to be of type 'int', but
 found 'sixty-nine' of type 'str'!
 ```
 
-### ```WorkToy.text.joinWords```
+### ```worktoy.text.joinWords```
 
 Recall the ```stringList``` function mentioned earlier. The
 ```joinwords``` function does nearly the opposite: It takes a list of
@@ -220,7 +219,7 @@ Tom and Dick
 Tom, Dick and Harry
 ```
 
-In summary, ```WorkToy.text``` provides the following:
+In summary, ```worktoy.text``` provides the following:
 
 - ```stringList```
 - ```monoSpace```
@@ -228,11 +227,11 @@ In summary, ```WorkToy.text``` provides the following:
 - ```typeMsg```
 - ```joinWords```
 
-## ```WorkToy.parse```
+## ```worktoy.parse```
 
 This module provides the ```None```-aware ```maybe``` function.
 
-### ```WorkToy.parse.maybe```
+### ```worktoy.parse.maybe```
 
 *Simplify identity-checks with the ```maybe``` function.*
 
@@ -263,7 +262,7 @@ def syntacticSugarFunc(arg: float = None) -> Any:
 This function takes any number of arguments and returns the first that is
 different from ```None```.
 
-## ```WorkToy.desc```
+## ```worktoy.desc```
 
 This module provides classes implementing the descriptor protocol
 
@@ -453,7 +452,7 @@ instance is returned by ```AttriBox```.
 
 ### ```worktoy.desc.THIS```
 
-The ```THIS``` object is a novel and powerful feature of the ```WorkToy```
+The ```THIS``` object is a novel and powerful feature of the ```worktoy```
 library.
 
 In the previous example of ```AttriBox```, the ```Point``` class was
@@ -529,7 +528,7 @@ the same style, ```TYPE``` would refer to the owner of the
 instance, ```BOX``` would refer to the ```AttriBox``` instance, and
 ```ATTR``` to the ```AttriBox``` (or subclass hereof) class object.
 
-## ```WorkToy.base```
+## ```worktoy.base```
 
 ```worktoy``` provides two base classes for general use: ```BaseObject```
 and ```FastObject```. Both support function overloading. The latter does
