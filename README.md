@@ -1,5 +1,4 @@
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/worktoy.svg)](
-https://wakatime.com/badge/github/AsgerJon/worktoy)
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
 
 # worktoy v0.99.xx
 
