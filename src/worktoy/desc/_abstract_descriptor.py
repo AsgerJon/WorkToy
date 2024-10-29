@@ -263,6 +263,39 @@ class AbstractDescriptor(CoreDescriptor):
       callMeMaybe(instance, *values)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Check presence of notification callbacks
+
+  def hasOnSetCallbacks(self, ) -> bool:
+    """Returns True if there are any on-set callbacks."""
+    for _ in self._onSetCallbacks():
+      return True
+    return False
+
+  def hasPreSetCallbacks(self, ) -> bool:
+    """Returns True if there are any pre-set callbacks."""
+    for _ in self._preSetCallbacks():
+      return True
+    return False
+
+  def hasOnDelCallbacks(self, ) -> bool:
+    """Returns True if there are any on-del callbacks."""
+    for _ in self._onDelCallbacks():
+      return True
+    return False
+
+  def hasPreDelCallbacks(self, ) -> bool:
+    """Returns True if there are any pre-del callbacks."""
+    for _ in self._preDelCallbacks():
+      return True
+    return False
+
+  def hasPreGetCallbacks(self, ) -> bool:
+    """Returns True if there are any pre-get callbacks."""
+    for _ in self._preGetCallbacks():
+      return True
+    return False
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Implementation of the descriptor protocol
 
   def __get__(self, instance: object, owner: type, **kwargs) -> Any:
@@ -278,22 +311,28 @@ class AbstractDescriptor(CoreDescriptor):
         raise exception
     if kwargs.get('_setterAsks', False):
       return value
-    self.notifyPreGet(instance, value)
+    if self.hasPreGetCallbacks():
+      self.notifyPreGet(instance, value)
     return value
 
   def __set__(self, instance: object, value: object) -> None:
     """Set the value of the field."""
+    if not (self.hasPreSetCallbacks() or self.hasOnSetCallbacks()):
+      return self.__instance_set__(instance, value)
     oldValue = self.__get__(instance, type(instance), _setterAsks=True)
-    self.notifyPreSet(instance, oldValue, value)
+    if self.hasPreSetCallbacks():
+      self.notifyPreSet(instance, oldValue, value)
     self.__instance_set__(instance, value)
     self.notifyOnSet(instance, oldValue, value)
 
   def __delete__(self, instance: object) -> None:
     """Delete the value of the field."""
-    value = self.__get__(instance, type(instance), _setterAsks=True)
-    self.notifyPreDel(instance, value)
+    if not (self.hasPreDelCallbacks() or self.hasOnDelCallbacks()):
+      return self.__instance_del__(instance)
+    oldValue = self.__get__(instance, type(instance), _setterAsks=True)
+    self.notifyPreDel(instance, oldValue)
     self.__instance_del__(instance)
-    self.notifyOnDel(instance, value)
+    self.notifyOnDel(instance, oldValue)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Instance-specific accessor methods

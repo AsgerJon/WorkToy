@@ -56,9 +56,7 @@ cause 'instance.attribute' to result in Attribute error. This is not
 really practical as it is insufficient to remove the value as the
 descriptor is on the owning class not the instance. This means that no
 functionality is present to distinguish between the __delete__ having been
-called, and then inner object not having been created yet.
-
-"""
+called, and then inner object not having been created yet."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
@@ -79,9 +77,8 @@ except ImportError:
   TYPE_CHECKING = False
 
 from typing import Any
-
-from worktoy.desc import Bag, THIS, TYPE, AbstractDescriptor, BOX, \
-  ATTR, DEFAULT, NODEF
+from worktoy.desc import THIS, TYPE, BOX, ATTR, DEFAULT, NODEF
+from worktoy.desc import AbstractDescriptor, Bag
 from worktoy.parse import maybe
 from worktoy.text import typeMsg, monoSpace
 
@@ -94,40 +91,90 @@ class AttriBox(AbstractDescriptor):
   __pos_args__ = None
   __key_args__ = None
 
-  @staticmethod
-  def _castNumberTo(value: object, target: type) -> Any:
-    """This method handles the cringe cases of ints being rejected as
-    floats. """
+  def _castValueToFieldClass(self, value: object) -> Any:
+    """Casts the value to the field class. """
+    fieldClass = self.getFieldClass()
+    if isinstance(value, fieldClass):
+      return value
+    if fieldClass in [int, float, complex]:
+      return self._castNumber(value, fieldClass)
+    valueClass = type(value)
+
+  @classmethod
+  def _castInt(cls, value: object) -> int:
+    """Casts the value to an integer. """
     if isinstance(value, int):
-      if target is int:
-        return value
-      if target is float:
-        return float(value)
-      if target is complex:
-        return float(value) + 0j
+      return value
     if isinstance(value, float):
-      if target is int:
-        if value.is_integer():
-          return int(value)
-        e = typeMsg('value', value, int)
-        raise TypeError(e)
-      if target is float:
-        return value
-      if target is complex:
-        return value + 0j
+      if value.is_integer():
+        return int(value)
+      e = typeMsg('value', value, int)
+      raise TypeError(e)
     if isinstance(value, complex):
-      if target is int:
-        if value.real.is_integer() and not value.imag:
-          return int(value.real)
+      if value.imag:
         e = typeMsg('value', value, int)
         raise TypeError(e)
-      if target is float:
-        if not value.imag:
-          return float(value.real)
+      return cls._castInt(value.real)
+    try:
+      if TYPE_CHECKING:
+        assert isinstance(value, str)
+      return int(value)
+    except Exception as exception:
+      e = typeMsg('value', value, int)
+      raise TypeError(e) from exception
+
+  @classmethod
+  def _castFloat(cls, value: object) -> float:
+    """Casts the value to a float. """
+    if isinstance(value, float):
+      return value
+    if isinstance(value, int):
+      return float(value)
+    if isinstance(value, complex):
+      if value.imag:
         e = typeMsg('value', value, float)
         raise TypeError(e)
-      if target is complex:
-        return value
+      return cls._castFloat(value.real)
+    try:
+      if TYPE_CHECKING:
+        assert isinstance(value, str)
+      return float(value)
+    except Exception as exception:
+      e = typeMsg('value', value, float)
+      raise TypeError(e) from exception
+
+  @classmethod
+  def _castComplex(cls, value: object) -> complex:
+    """Casts the value to a complex number. """
+    if isinstance(value, complex):
+      return value
+    if isinstance(value, int):
+      return cls._castComplex(float(value))
+    if isinstance(value, float):
+      return value + 0j
+    try:
+      if TYPE_CHECKING:
+        assert isinstance(value, str)
+      return complex(value)
+    except Exception as exception:
+      e = typeMsg('value', value, complex)
+      raise TypeError(e) from exception
+
+  @staticmethod
+  def _castNumber(value: object, fieldClass: type) -> object:
+    """Casts the number to the field class. """
+    if not isinstance(fieldClass, type):
+      e = typeMsg('fieldClass', fieldClass, type)
+      raise TypeError(e)
+    if fieldClass is int:
+      return AttriBox._castInt(value)
+    if fieldClass is float:
+      return AttriBox._castFloat(value)
+    if fieldClass is complex:
+      return AttriBox._castComplex(value)
+    e = """The _castNumber method supports only the int, float, and complex
+    field classes, but received: '%s'!""" % fieldClass.__name__
+    raise ValueError(e)
 
   @staticmethod
   def _unpackValueToArgsKwargs(value: Any) -> tuple[tuple, dict]:
@@ -342,9 +389,8 @@ class AttriBox(AbstractDescriptor):
       if kwargs.get('_recursion2', False):
         e = typeMsg('value', value, fieldCls)
         raise TypeError(e)
-      return self.__instance_set__(instance,
-                                   self._castNumberTo(value, fieldCls),
-                                   _recursion2=True)
+      castedValue = self._castNumber(value, fieldCls)
+      return self.__instance_set__(instance, castedValue, _recursion2=True)
     if not isinstance(value, (tuple, list)):
       if kwargs.get('_recursion3', False):
         raise RecursionError
