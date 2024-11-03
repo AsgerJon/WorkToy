@@ -27,7 +27,7 @@ class Dispatcher:
   function based on received arguments. """
   __static_method__ = None
   __class_method__ = None
-  __func_dict__ = None
+  __func_list__ = None
   __overload_function__ = None
   __bound_arg__ = None
 
@@ -36,13 +36,13 @@ class Dispatcher:
     function
     type."""
     self.__overload_function__ = func
-    self.__func_dict__ = funcList
+    self.__func_list__ = funcList
     self.__static_method__ = func.__static_method__
     self.__class_method__ = func.__class_method__
 
   def getFuncList(self) -> FuncList:
     """Return the function dictionary."""
-    return self.__func_dict__
+    return self.__func_list__
 
   def setBound(self, arg: object) -> None:
     """Set the bound argument."""
@@ -60,6 +60,14 @@ class Dispatcher:
     """Calling the dispatcher handles the dispatching of the correct
     function"""
     bound = self.getBound()
+    for (sig, call) in self.getFuncList():
+      arg = sig.fastCast(*args)
+      if arg is None:
+        continue
+      if bound is None:
+        return call(*arg, **kwargs)
+      return call(bound, *arg, **kwargs)
+
     argTypes = [type(arg).__name__ for arg in args]
     typeSig, callMeMaybe = None, None
     for (typeSig, callMeMaybe) in self.getFuncList():

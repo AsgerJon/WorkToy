@@ -64,8 +64,11 @@ class Overload:
   def _setFunctionOwner(self, owner: type) -> None:
     """Setter-function for the function owner."""
     if self.__function_owner__ is not None:
-      e = """The function owner of the '%s' instance is already set!"""
-      raise OverloadException(monoSpace(e % self.__class__.__name__))
+      oldName = self.__function_owner__.__name__
+      newName = owner.__name__
+      print("""Owner changed from '%s' to '%s'!""" % (oldName, newName))
+      # e = """The function owner of the '%s' instance is already set!"""
+      # raise OverloadException(monoSpace(e % self.__class__.__name__))
     if not isinstance(owner, type):
       e = typeMsg('owner', owner, type)
       raise TypeError(e)
@@ -86,8 +89,9 @@ class Overload:
   def _setFunctionName(self, name: str, ) -> None:
     """Setter-function for the function name"""
     if self.__function_name__ is not None:
-      e = """The function name of the '%s' instance is already set!"""
-      raise OverloadException(monoSpace(e % self.__class__.__name__))
+      print("""Renamed from '%s' to '%s'""" % (self.__function_name__, name))
+      # e = """The function name of the '%s' instance is already set!"""
+      # raise OverloadException(monoSpace(e % self.__class__.__name__))
     if not isinstance(name, str):
       e = typeMsg('name', name, str)
       raise TypeError(e)
@@ -122,10 +126,6 @@ class Overload:
     self.__dispatcher_instance__.setBound(instance)
     return self.__dispatcher_instance__
 
-  def getFuncList(self) -> FuncList:
-    """Getter-function for the function dictionary."""
-    return maybe(self.__func_list__, [])
-
   def overload(self, *types) -> Callable:
     """The overload function returns a callable that decorates a function
     with the signature. """
@@ -151,44 +151,33 @@ class Overload:
     """Creates TypeSig instances for the function list. Please note that
     this method is meant to be invoked only after the owning class has
     been created. This permits the use of 'THIS' in overloaded functions.
-    This allows overloading functions to instances of the same class. For
-    example:
-
-    from typing import Self
-    from worktoy.meta import overload, THIS
-    from worktoy.desc import AttriBox, THIS
-
-
-    class Complex(BaseObject):
-      #  Class representation of complex numbers
-      RE = AttriBox[float]()
-      IM = AttriBox[float]()
-
-      #  Constructors omitted for brevity
-
-      @overload(complex)
-      def __add__(self, other: complex) -> Self:
-        cls = self.__class__
-        return cls(self.RE + other.real, self.IM + other.imag)
-
-      @overload(float, float)
-      def __add__(self, re_: float, im: float) -> Self:
-        cls = self.__class__
-        return cls(self.RE + re_, self.IM + im)
-
-      @overload(THIS)  # When other is an instance of the same class
-      def __add__(self, other: Self) -> Self:
-        cls = self.__class__
-        return cls(self.RE + other.RE, self.IM + other.IM)
-
-      #  Implementations for the remaining mathematical operations are
-      #  left as an exercise for the try-hard reader. """
-    for (types, callMeMaybe) in self.__deferred_funcs__:
+    This allows overloading functions to instances of the same class."""
+    for (types, callMeMaybe) in self.getDeferredFuncs():
       finalTypes = []
       for type_ in types:
         if getattr(type_, '__THIS_ZEROTON__', None) is None:
           finalTypes.append(type_)
           continue
         finalTypes.append(self._getFunctionOwner())
-      key = TypeSig(*finalTypes, )
-      self.__func_list__.append((key, callMeMaybe))
+      self.setFunc(TypeSig(*finalTypes, ), callMeMaybe)
+
+  def getFuncList(self) -> FuncList:
+    """Getter-function for the function list."""
+    return maybe(self.__func_list__, [])
+
+  def getDeferredFuncs(self) -> FuncList:
+    """Getter-function for the deferred functions."""
+    return maybe(self.__deferred_funcs__, [])
+
+  def setFunc(self, key: TypeSig, func: Callable) -> None:
+    """Set the function for the given type signature."""
+    existing = self.getFuncList()
+    self.__func_list__ = [*existing, (key, func)]
+
+  def getFunc(self, key: TypeSig) -> Callable:
+    """Get the function for the given type signature."""
+    for (sig, func) in self.getFuncList():
+      if sig == key:
+        return func
+    e = """No function found for the type signature: '%s'!"""
+    raise KeyError(monoSpace(e % key))

@@ -15,7 +15,7 @@ except ImportError:
   TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from worktoy.meta import Overload
+  from worktoy.meta import Dispatcher
 
 
 class DispatchException(TypeError):
@@ -23,23 +23,16 @@ class DispatchException(TypeError):
   of OverloadDispatcher fails to resolve the correct function from the
   given arguments. """
 
-  __overload_function__ = None
-  __pos_args__ = None
-
-  def __init__(self, func: Overload, *args) -> None:
-    e = """When calling the overloaded function '%s' the dispatcher could 
-    not resolve the correct function from the given arguments: %s!"""
-    self.__overload_function__ = func
-    self.__pos_args__ = [*args, ]
-    argStr = ["""  '%s' of type '%s'""" % (arg, type(arg)) for arg in args]
-    argStr = ',\n'.join(argStr)
-    errorMsg = monoSpace(e % (func.__function_name__, argStr))
-    TypeError.__init__(self, errorMsg)
-
-  def getOverload(self) -> Overload:
-    """Return the Overload instance."""
-    return self.__overload_function__
-
-  def getArgs(self) -> list:
-    """Return the arguments causing the exception."""
-    return self.__pos_args__
+  def __init__(self, dispatch: Dispatcher, *args) -> None:
+    e = """Dispatch instance could not match signature of arguments to any 
+    supported signature. Received: <br><tab>'%s'<br>Supported 
+    signatures: %s"""
+    argSig = ', '.join([type(arg).__name__ for arg in args])
+    supported = []
+    for sig in dispatch.getTypeSignatures():
+      types = sig.getTypes()
+      typeNames = [t.__name__ for t in types]
+      supported.append("""(%s)""" % ', '.join(typeNames))
+    supportedSig = '<br><tab>'.join(supported)
+    e2 = monoSpace(e % (argSig, supportedSig))
+    TypeError.__init__(self, e2)

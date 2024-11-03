@@ -15,47 +15,43 @@ except ImportError:
   Callable = object
 
 
-class Complex(BaseObject):
-  """Complex Number representation"""
+class Point2D(BaseObject):
+  """Plane point"""
 
-  realPart = AttriBox[float]()
-  imgPart = AttriBox[float]()
-
-  @overload()
-  def __init__(self, ) -> None:
-    self.realPart = 0.
-    self.imgPart = 0.
-
-  @overload(complex)
-  def __init__(self, *args) -> None:
-    self.realPart = args[0].real
-    self.imgPart = args[0].imag
+  x = AttriBox[float](0)
+  y = AttriBox[float](0)
 
   @overload(float, float)
-  @overload(float, float, float)
-  def __init__(self, *args) -> None:
-    self.realPart = args[0]
-    self.imgPart = args[1]
+  def __init__(self, x: float, y: float) -> None:
+    self.x = x
+    self.y = y
+
+  @overload(float)
+  def __init__(self, x: float) -> None:
+    self.x = x
+    self.y = 0
+
+  @overload()
+  def __init__(self) -> None:
+    self.x = 0
+    self.y = 0
 
 
 class TestOverload(TestCase):
-  """TestOverload tests the overloading functionality of the
-  BaseMetaclass. The tests focus on the color class defined above. """
+  """TestOverload tests the overloading functionality of the BaseMetaclass.
+  The tests focus on the color class defined above. """
 
   def setUp(self) -> None:
-    """Sets up each test method."""
-    self.emptyPoint = Complex()
-    self.complexPoint = Complex(3 + 4j)
-    self.point = Complex(5., 12.)
-    self.triplePoint = Complex(69, 420, 1337)
+    """Sets up each test"""
+    self.point2Dxy = Point2D(69, 420)
+    self.point2Dx = Point2D(69)
+    self.point2D = Point2D()
 
   def test_init(self) -> None:
-    """Test if the __init__ method works correctly."""
-    self.assertEqual(self.emptyPoint.realPart, 0.)
-    self.assertEqual(self.emptyPoint.imgPart, 0.)
-
-    self.assertEqual(self.complexPoint.realPart, 3.)
-    self.assertEqual(self.complexPoint.imgPart, 4.)
-
-    self.assertEqual(self.point.realPart, 5.)
-    self.assertEqual(self.point.imgPart, 12.)
+    """Testing that points have initialized correctly"""
+    self.assertEqual(self.point2Dxy.x, 69)
+    self.assertEqual(self.point2Dxy.y, 420)
+    self.assertEqual(self.point2Dx.x, 69)
+    self.assertEqual(self.point2Dx.y, 0)
+    self.assertEqual(self.point2D.x, 0)
+    self.assertEqual(self.point2D.y, 0)

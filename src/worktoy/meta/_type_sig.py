@@ -4,58 +4,32 @@ recognizing positional arguments. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Any, Optional
+from worktoy.parse import maybe
 
-from worktoy.text import monoSpace
+try:
+  from typing import Any
+except ImportError:
+  Any = object
 
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
 
-class _SingleType:
-  """This class specifies special type handling"""
+from worktoy.text import monoSpace, typeMsg
 
-  __inner_type__ = None
+if TYPE_CHECKING:
+  from typing import Union, Optional
 
-  def __init__(self, arg: object) -> None:
-    """Initialize the _SingleType object."""
-    if isinstance(arg, type):
-      self.__inner_type__ = arg
-    else:
-      e = """The _SingleType must be initialized with a type, but received: 
-      '%s'!"""
-      raise TypeError(monoSpace(e % arg))
-
-  def __str__(self) -> str:
-    """String representation"""
-    clsName = self.__inner_type__.__name__
-    return '_SingleType(%s,)' % clsName
-
-  def __repr__(self, ) -> str:
-    """Code representation"""
-    return self.__str__()
-
-  def cast(self, arg: object) -> object:
-    """Cast the argument to the inner type."""
-    if arg is None:
-      raise ValueError('None cannot be casted!')
-    if isinstance(arg, self.__inner_type__):
-      return arg
-    if self.__inner_type__ is float:
-      if isinstance(arg, int):
-        return float(arg)
-      if isinstance(arg, complex):
-        if arg.imag:
-          return None
-        return float(arg.real)
-    if self.__inner_type__ is int:
-      if isinstance(arg, complex):
-        if arg.imag:
-          return None
-        if arg.real.is_integer():
-          return int(arg.real)
-      if isinstance(arg, float):
-        if arg.is_integer():
-          return int(arg)
-        return None
-    return None
+  Number = Union[int, float, complex]
+  MaybeInt = Optional[int]
+  MaybeFloat = Optional[float]
+  MaybeComplex = Optional[complex]
+else:
+  Number = object
+  MaybeInt = object
+  MaybeFloat = object
+  MaybeComplex = object
 
 
 class TypeSig:
@@ -63,20 +37,106 @@ class TypeSig:
   recognizing positional arguments. """
 
   __type_signature__ = None
-  __single_types__ = None
+  __hash_value__ = None
+
+  @classmethod
+  def castInt(cls, num: Number) -> MaybeInt:
+    """Casts the number to an integer."""
+    if isinstance(num, int):
+      return num
+    if isinstance(num, float):
+      if num.is_integer():
+        return int(num)
+      return None
+    if isinstance(num, complex):
+      if num.imag:
+        return None
+      return cls.castInt(num.real)
+    return None
+
+  @classmethod
+  def castFloat(cls, num: Number) -> MaybeFloat:
+    """Casts the number to a float."""
+    if isinstance(num, int):
+      return float(num)
+    if isinstance(num, float):
+      return num
+    if isinstance(num, complex):
+      if num.imag:
+        return None
+      return cls.castFloat(num.real)
+    return None
+
+  @classmethod
+  def castComplex(cls, num: Number) -> MaybeComplex:
+    """Casts the number to a complex number."""
+    if isinstance(num, int):
+      return cls.castFloat(num) + 0j
+    if isinstance(num, float):
+      return num + 0j
+    if isinstance(num, complex):
+      return num
+    return None
+
+  @classmethod
+  def castArg(cls, arg: object, type_: type) -> object:
+    """Casts the argument to the type. """
+    if type_ is int:
+      return cls.castInt(arg)
+    if type_ is float:
+      return cls.castFloat(arg)
+    if type_ is complex:
+      return cls.castComplex(arg)
+    if isinstance(arg, type_):
+      return arg
+    return None
 
   def __init__(self, *args) -> None:
     """Initialize the TypeSig object."""
     self.__type_signature__ = []
-    self.__single_types__ = []
     for arg in args:
       if isinstance(arg, type):
         self.__type_signature__.append(arg)
-        self.__single_types__.append(_SingleType(arg))
         continue
       e = """The TypeSig must be initialized with types, but received: 
       '%s'!"""
       raise TypeError(monoSpace(e % arg))
+    self.setHash(hash((*args,)))
+
+  def __hash__(self, ) -> int:
+    """Return the hash of the type signature."""
+    if self.__hash_value__ is None:
+      e = """The hash value has not been set!"""
+      raise ValueError(monoSpace(e))
+    return self.__hash_value__
+
+  def setHash(self, hashValue: int) -> None:
+    """Set the hash value of the type signature."""
+    self.__hash_value__ = hashValue
+
+  def getTypes(self, ) -> list[type]:
+    """Return the types of the type signature."""
+    return maybe(self.__type_signature__, [])
+
+  def fastCast(self, *args) -> object:
+    """Fast cast the arguments to the type signature."""
+    if hash((*[type(arg) for arg in args],)) - hash(self):
+      return None
+    return (*[self.castArg(a, t) for (a, t) in zip(args, self.getTypes())],)
+
+  def cast(self, *args) -> Any:
+    """Casts the arguments to the """
+    if len(args) != len(self):
+      return None
+    if not args and not self:
+      return []
+    out = []
+    for (type_, arg) in zip(self.getTypes(), args):
+      val = self.castArg(arg, type_)
+      if val is None:
+        return None
+      out.append(val)
+    return out
 
   def __contains__(self, other: tuple) -> bool:
     """Check if the TypeSig is contained in the other tuple."""
@@ -94,21 +154,9 @@ class TypeSig:
     """Return the length of the type signature."""
     return len(self.__type_signature__)
 
-  def cast(self, *args) -> Any:
-    """Casts the arguments to the """
-    if not args and not self:
-      return []
-    out = []
-    for (type_, arg) in zip(self.__single_types__, args):
-      val = _SingleType.cast(type_, arg)
-      if val is None:
-        return None
-      out.append(val)
-    return out
-
   def __str__(self) -> str:
     """String representation"""
-    out = [cls.__name__ for cls in self.__type_signature__]
+    out = [cls.__name__ for cls in self.getTypes()]
     return '(%s,)' % ', '.join(out)
 
   def __repr__(self) -> str:

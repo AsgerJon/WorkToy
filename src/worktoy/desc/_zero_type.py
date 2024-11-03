@@ -16,6 +16,8 @@ class TYPE(Zeroton):
   """TYPE is a Zeroton serving as placeholder for the yet to be created
   class owning the AttriBox instance."""
 
+  __TYPE_ZEROTON__ = True
+
   __call_me_maybe__ = None
 
   def __matmul__(self, callMeMaybe: Callable) -> None:

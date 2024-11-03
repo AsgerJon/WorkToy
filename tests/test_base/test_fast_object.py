@@ -12,7 +12,8 @@ from worktoy.desc import AttriBox
 
 
 class PlanePoint(FastObject):
-  """PlanePoint inherits from FastObject and will be further subclassed. """
+  """PlanePoint inherits from FastObject and will be further subclassed.
+  """
 
   x = AttriBox[float](0)
   y = AttriBox[float](0)
@@ -131,7 +132,7 @@ def yoloPi(cls: type, n: int = None, **kwargs) -> float:
     log1k += 1
   unitName = ['ns', 'µs', 'ms', 's'][log1k]
   deltaStr = '%.f %s' % (deltaTime, unitName)
-  info = """Using class '%s' with '%d' points took '%s' to estimate pi 
+  info = """Using class '%s' with '%d' points took '%s' to estimate pi
   as '%.12f'""" % (cls.__name__, n, deltaStr, piIsh)
   print(info)
   return toc - tic

@@ -9,7 +9,7 @@ try:
 except ImportError:
   Callable = object
 
-from worktoy.meta import AbstractMetaclass, Bases, BaseNamespace
+from worktoy.meta import Bases, OverloadSpace, AbstractMetaclass
 from worktoy.text import monoSpace, typeMsg
 
 
@@ -52,31 +52,20 @@ class BaseMetaclass(AbstractMetaclass):
     return subclassCheck(subclass)
 
   @classmethod
-  def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> BaseNamespace:
+  def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> OverloadSpace:
     """The __prepare__ method is invoked before the class is created. This
     implementation ensures that the created class has access to the safe
     __init__ and __init_subclass__ through the BaseObject class in its
     method resolution order."""
-    return BaseNamespace(mcls, name, bases, **kwargs)
+    return OverloadSpace(mcls, name, bases, **kwargs)
 
   def __new__(mcls,
               name: str,
               bases: Bases,
-              space: BaseNamespace,
+              space: OverloadSpace,
               **kwargs) -> type:
     """The __new__ method is invoked to create the class."""
-    spaceCompile = getattr(space, 'compile', None)
-    if spaceCompile is None:
-      if isinstance(space, dict):
-        namespace = {**space, }
-      else:
-        e = typeMsg('namespace', space, dict)
-        raise TypeError(e)
-    elif not callable(spaceCompile):
-      e = typeMsg('compile', spaceCompile, Callable)
-      raise TypeError(e)
-    else:
-      namespace = space.compile()
+    namespace = space.compile()
     if '__del__' in namespace and '__delete__' not in namespace:
       if not kwargs.get('trustMeBro', False):
         e = """The namespace encountered the '__del__' method! 
@@ -86,5 +75,4 @@ class BaseMetaclass(AbstractMetaclass):
           was raised. If '__del__' were the intention, please provide the 
           keyword 'trustMeBro=True' to the class creation."""
         raise AttributeError(monoSpace(e))
-    cls = AbstractMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
-    return cls
+    return AbstractMetaclass.__new__(mcls, name, bases, namespace, **kwargs)

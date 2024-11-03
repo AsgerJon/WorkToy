@@ -650,7 +650,6 @@ a number of common colors using the ```KeeNum``` class.
 ```Python
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
-import string
 from __future__ import annotations
 
 from worktoy.keenum import KeeNum, auto

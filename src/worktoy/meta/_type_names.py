@@ -24,18 +24,8 @@ def functionInstance() -> None:
 Function = type(functionInstance)
 
 if TypeAlias is None:
-  FunctionTypes = object
   Bases = object
-  Namespace = object
   Space = object
-  FunctionDecorator = object
-  ClassDecorator = object
-  Decorator = object
 else:
-  FunctionTypes: TypeAlias = Union[Function, classmethod, staticmethod]
   Bases: TypeAlias = Union[type, Tuple[type, ...]]
-  Namespace: TypeAlias = Union[dict, AbstractNamespace]
-  Space: TypeAlias = Namespace
-  FunctionDecorator: TypeAlias = Callable[[Callable], Callable]
-  ClassDecorator: TypeAlias = Callable[[type], type]
-  Decorator: TypeAlias = Union[FunctionDecorator, ClassDecorator]
+  Space: TypeAlias = Union[dict, AbstractNamespace]

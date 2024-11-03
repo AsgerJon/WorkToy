@@ -13,31 +13,15 @@ except ImportError:
   Callable = object
 
 from worktoy.desc import AttriBox, DEFAULT
-from worktoy.meta import BaseNamespace, OverloadEntry
+from worktoy.meta import OverloadSpace, Overload
 from worktoy.parse import maybe
 
 
-class FastSpace(BaseNamespace):
+class FastSpace(OverloadSpace):
   """EZSpace provides the namespace object class for the EZData class."""
 
   __field_boxes__ = None
   __inner_functions__ = None
-
-  def __init__(self, *args, **kwargs) -> None:
-    """The '__init__' method initializes the namespace object."""
-    BaseNamespace.__init__(self, *args, **kwargs)
-    baseClasses = self.getBaseClasses()
-    if len(baseClasses) > 1:
-      mclsName = self.getMetaClass().__name__
-      name = self.getClassName()
-      spaceName = self.__class__.__name__
-      baseNames = ', '.join([b.__name__ for b in baseClasses])
-      e = """When trying to create a new class named: '%s' derived from 
-      metaclass: '%s', the namespace object of type '%s' supports only 
-      single inheritance! Nevertheless, the following base classes were
-      provided: (%s)!"""
-      e2 = e % (name, mclsName, spaceName, baseNames)
-      raise ValueError(monoSpace(e2))
 
   def _getFieldBoxes(self) -> list[tuple[str, AttriBox]]:
     """This method returns the field boxes."""
@@ -72,8 +56,8 @@ class FastSpace(BaseNamespace):
     """This method sets the key, value pair in the namespace."""
     if isinstance(value, AttriBox):
       return self._addFieldBox(key, value)
-    if callable(value):
-      return BaseNamespace.__setitem__(self, key, value)
+    if callable(value) or isinstance(value, Overload):
+      return OverloadSpace.__setitem__(self, key, value)
     if self.isSpecialKey(key):
       return dict.__setitem__(self, key, value)
     return self.__setitem__(key, AttriBox[type(value)](DEFAULT(value)))
@@ -149,7 +133,7 @@ class FastSpace(BaseNamespace):
   def compile(self) -> dict:
     """The namespace created by the BaseNamespace class is updated with
     the '__init__' function created by the factory function."""
-    namespace = BaseNamespace.compile(self)
+    namespace = OverloadSpace.compile(self)
     oldInit = namespace.get('__init__', None)
     oldGetAttr = namespace.get('__getattr__', None)
     boxes = self._getAllBoxes()
