@@ -77,9 +77,9 @@ except ImportError:
   TYPE_CHECKING = False
 
 from typing import Any
-from worktoy.desc import THIS, TYPE, BOX, ATTR, DEFAULT, NODEF
+from worktoy.desc import ZeroFilter
 from worktoy.desc import AbstractDescriptor, Bag
-from worktoy.parse import maybe
+from worktoy.parse import maybe, typeCast
 from worktoy.text import typeMsg, monoSpace
 
 
@@ -90,107 +90,6 @@ class AttriBox(AbstractDescriptor):
   __field_class__ = None
   __pos_args__ = None
   __key_args__ = None
-
-  def _castValueToFieldClass(self, value: object) -> Any:
-    """Casts the value to the field class. """
-    fieldClass = self.getFieldClass()
-    if isinstance(value, fieldClass):
-      return value
-    if fieldClass in [int, float, complex]:
-      return self._castNumber(value, fieldClass)
-    valueClass = type(value)
-
-  @classmethod
-  def _castInt(cls, value: object) -> int:
-    """Casts the value to an integer. """
-    if isinstance(value, int):
-      return value
-    if isinstance(value, float):
-      if value.is_integer():
-        return int(value)
-      e = typeMsg('value', value, int)
-      raise TypeError(e)
-    if isinstance(value, complex):
-      if value.imag:
-        e = typeMsg('value', value, int)
-        raise TypeError(e)
-      return cls._castInt(value.real)
-    try:
-      if TYPE_CHECKING:
-        assert isinstance(value, str)
-      return int(value)
-    except Exception as exception:
-      e = typeMsg('value', value, int)
-      raise TypeError(e) from exception
-
-  @classmethod
-  def _castFloat(cls, value: object) -> float:
-    """Casts the value to a float. """
-    if isinstance(value, float):
-      return value
-    if isinstance(value, int):
-      return float(value)
-    if isinstance(value, complex):
-      if value.imag:
-        e = typeMsg('value', value, float)
-        raise TypeError(e)
-      return cls._castFloat(value.real)
-    try:
-      if TYPE_CHECKING:
-        assert isinstance(value, str)
-      return float(value)
-    except Exception as exception:
-      e = typeMsg('value', value, float)
-      raise TypeError(e) from exception
-
-  @classmethod
-  def _castComplex(cls, value: object) -> complex:
-    """Casts the value to a complex number. """
-    if isinstance(value, complex):
-      return value
-    if isinstance(value, int):
-      return cls._castComplex(float(value))
-    if isinstance(value, float):
-      return value + 0j
-    try:
-      if TYPE_CHECKING:
-        assert isinstance(value, str)
-      return complex(value)
-    except Exception as exception:
-      e = typeMsg('value', value, complex)
-      raise TypeError(e) from exception
-
-  @staticmethod
-  def _castNumber(value: object, fieldClass: type) -> object:
-    """Casts the number to the field class. """
-    if not isinstance(fieldClass, type):
-      e = typeMsg('fieldClass', fieldClass, type)
-      raise TypeError(e)
-    if fieldClass is int:
-      return AttriBox._castInt(value)
-    if fieldClass is float:
-      return AttriBox._castFloat(value)
-    if fieldClass is complex:
-      return AttriBox._castComplex(value)
-    e = """The _castNumber method supports only the int, float, and complex
-    field classes, but received: '%s'!""" % fieldClass.__name__
-    raise ValueError(e)
-
-  @staticmethod
-  def _unpackValueToArgsKwargs(value: Any) -> tuple[tuple, dict]:
-    """This method unpacks the value into positional and keyword
-    arguments."""
-    if not value:
-      return (), {}
-    if not isinstance(value, (list, tuple)):
-      return (value,), {}
-    if len(value) == 1:
-      return (value[0],), {}
-    if len(value) == 2:
-      if isinstance(value[0], (list, tuple)):
-        if isinstance(value[1], dict):
-          return (*value[0],), {**value[1], }
-    return (*value,), {}
 
   @classmethod
   def __class_getitem__(cls, fieldClass: type) -> AttriBox:
@@ -215,24 +114,8 @@ class AttriBox(AbstractDescriptor):
     self.__field_class__ = fieldClass
 
   def __call__(self, *args, **kwargs) -> Self:
-    for arg in args:
-      if arg is DEFAULT:
-        self.__default_object__ = DEFAULT.getDefaultObject()
-        if not isinstance(self.__default_object__, self.getFieldClass()):
-          e = """The default object is not of the correct type!"""
-          e2 = typeMsg('defaultObject', self.__default_object__,
-                       self.getFieldClass())
-          raise TypeError(monoSpace('%s\n%s' % (e, e2)))
-        break
-      if arg is NODEF:
-        if len(args) - 1 or kwargs:
-          e = """The NODEF flag must be the only argument!"""
-          raise ValueError(e)
-        self.__default_object__ = NODEF
-        break
-    else:
-      self.__pos_args__ = [*args, ]
-      self.__key_args__ = {**kwargs, }
+    self.__pos_args__ = [*args, ]
+    self.__key_args__ = {**kwargs, }
     return self
 
   def getFieldClass(self, ) -> type:
@@ -245,41 +128,27 @@ class AttriBox(AbstractDescriptor):
     e = typeMsg('__field_class__', self.__field_class__, type)
     raise TypeError(e)
 
+  def getZeroFilter(self, ) -> ZeroFilter:
+    """Getter-function for the zero filter."""
+    fieldCls = self.getFieldClass()
+    fieldMcls = type(fieldCls)
+    cls = type(self)
+    return ZeroFilter(fieldCls, fieldMcls, self, cls)
+
   def getArgs(self, instance: object, **kwargs) -> list[Any]:
     """Getter-function for positional arguments"""
     if kwargs.get('_root', False):
       return maybe(self.__pos_args__, [])
-    args = []
-    for arg in maybe(self.__pos_args__, []):
-      if arg is THIS:
-        args.append(instance)
-      elif arg is TYPE:
-        args.append(self.getFieldOwner())
-      elif arg is BOX:
-        args.append(self)
-      elif arg is ATTR:
-        args.append(type(self))
-      else:
-        args.append(arg)
-    return args
+    zeroFilter = self.getZeroFilter()
+    return [zeroFilter(arg) for arg in maybe(self.__pos_args__, [])]
 
   def getKwargs(self, instance: object, **kwargs) -> dict[str, Any]:
     """Getter-function for keyword arguments"""
     if kwargs.get('_root', False):
       return maybe(self.__key_args__, {})
-    keyArgs = {}
-    for (key, val) in maybe(self.__key_args__, {}).items():
-      if val is THIS:
-        keyArgs[key] = instance
-      elif val is TYPE:
-        keyArgs[key] = self.getFieldOwner()
-      elif val is BOX:
-        keyArgs[key] = self
-      elif val is ATTR:
-        keyArgs[key] = type(self)
-      else:
-        keyArgs[key] = val
-    return keyArgs
+    zeroFilter = self.getZeroFilter()
+    kw = maybe(self.__key_args__, {})
+    return {k: zeroFilter(v) for (k, v) in kw.items()}
 
   def getDefaultFactory(self) -> Any:
     """Getter-function for function creating the default value. """
@@ -287,31 +156,12 @@ class AttriBox(AbstractDescriptor):
     posArgs = self.getArgs(None, _root=True)
     fieldClass = self.getFieldClass()
 
-    zerotons = [BOX, ATTR]
-    for zero in zerotons:
-      if zero in [*posArgs, *keyArgs.values()]:
-        e = """The 'getDefaultFactory' does not BOX and ATTR, 
-        but received: %s""" % zero
-        raise ValueError(monoSpace(e))
-
     def callMeMaybe(instance: object) -> Any:
       """This function creates the default value."""
-      newKeys = {}
-      for (key, val) in keyArgs.items():
-        if val is THIS:
-          newKeys[key] = instance
-        elif val is TYPE:
-          newKeys[key] = type(instance)
-        else:
-          newKeys[key] = val
-      newArgs = []
-      for arg in posArgs:
-        if arg is THIS:
-          newArgs.append(instance)
-        elif arg is TYPE:
-          newArgs.append(type(instance))
-        else:
-          newArgs.append(arg)
+      zeroFilter = AttriBox.getZeroFilter(self)
+      newArgs = [zeroFilter(arg) for arg in posArgs]
+      newKeys = {k: zeroFilter(v) for (k, v) in keyArgs.items()}
+
       if fieldClass is bool:
         innerObject = True if [*newArgs, None][0] else False
       else:
@@ -324,22 +174,8 @@ class AttriBox(AbstractDescriptor):
 
   def createFieldObject(self, instance: object, ) -> Bag:
     """Create the field object. If the default object is set, it is used."""
-    if self.__default_object__ is not None:
-      return Bag(instance, self.__default_object__)
-    if self.__field_class__ is None:
-      e = """AttriBox instance has not been initialized!"""
-      raise AttributeError(e)
-    if self.__pos_args__ is None or self.__key_args__ is None:
-      e = """AttriBox instance has not been called!"""
-      raise AttributeError(e)
-    keyArgs = self.getKwargs(instance, )
-    posArgs = self.getArgs(instance, )
-    fieldClass = self.getFieldClass()
-    if fieldClass is bool:
-      innerObject = True if [*posArgs, None][0] else False
-    else:
-      innerObject = fieldClass(*posArgs, **keyArgs)
-    return Bag(instance, innerObject)
+    factory = self.getDefaultFactory()
+    return Bag(instance, factory(instance))
 
   def __instance_reset__(self, instance: object) -> None:
     """Reset-function for the instance."""
@@ -351,17 +187,13 @@ class AttriBox(AbstractDescriptor):
     the notifier asking what the previous value was, the functionality in
     the AbstractDescriptor expects and handles the exception. """
     pvtName = self._getPrivateName()
-    if getattr(instance, pvtName, None) is None:
-      if self.__default_object__ is NODEF:
-        e = """This instance of %s has the NODEF flag set, and the 
-        required explicitly set value is missing! NODEF requires that an 
-        explicit value be set for the attribute.""" % self.getFieldName()
-        raise TypeError(monoSpace(e))
+    bag = getattr(instance, pvtName, None)
+    if bag is None:
       if kwargs.get('_recursion', False):
         raise RecursionError
-      setattr(instance, pvtName, self.createFieldObject(instance))
+      innerObject = self.createFieldObject(instance)
+      setattr(instance, pvtName, innerObject)
       return self.__instance_get__(instance, _recursion=True)
-    bag = getattr(instance, pvtName)
     if not isinstance(bag, Bag):
       e = typeMsg('bag', bag, Bag)
       raise TypeError(e)
@@ -372,42 +204,19 @@ class AttriBox(AbstractDescriptor):
     e = typeMsg('innerObject', innerObject, fieldClass)
     raise TypeError(e)
 
-  def __instance_set__(self,
-                       instance: object,
-                       value: object,
-                       **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     """Setter-function for the instance."""
     pvtName = self._getPrivateName()
     fieldCls = self.getFieldClass()
-    if isinstance(value, fieldCls):
-      bag = getattr(instance, pvtName, None)
-      if bag is None:
-        return setattr(instance, pvtName, Bag(instance, value))
-      bag.setInnerObject(value)
-      return setattr(instance, pvtName, bag)
-    if fieldCls in [int, float, complex]:
-      if kwargs.get('_recursion2', False):
-        e = typeMsg('value', value, fieldCls)
-        raise TypeError(e)
-      castedValue = self._castNumber(value, fieldCls)
-      return self.__instance_set__(instance, castedValue, _recursion2=True)
-    if not isinstance(value, (tuple, list)):
-      if kwargs.get('_recursion3', False):
-        raise RecursionError
-      return self.__instance_set__(instance, (value,), _recursion3=True)
-    if kwargs.get('_recursion', False):
-      e = typeMsg('value', value, fieldCls)
-      raise TypeError(e)
-    newValue = None
-    try:
-      args, kwargs2 = self._unpackValueToArgsKwargs(value)
-      newValue = fieldCls(*args, **kwargs2)
-    except ValueError as valueError:
-      if 'could not convert' in str(valueError):
-        e = """Could not convert the value to the field class!"""
-        e2 = typeMsg('value', value, fieldCls)
-        raise TypeError(monoSpace('%s\n%s' % (e, e2)))
-    return self.__instance_set__(instance, newValue, _recursion=True)
+    value = typeCast(value, fieldCls)
+    bag = getattr(instance, pvtName, None)
+    if bag is None:
+      return setattr(instance, pvtName, Bag(instance, value))
+    bag.setInnerObject(value)
+    return setattr(instance, pvtName, bag)
+
+  if TYPE_CHECKING:
+    from typing import NoReturn as Never
 
   def __instance_del__(self, instance: object) -> Never:
     """Deleter-function for the instance."""

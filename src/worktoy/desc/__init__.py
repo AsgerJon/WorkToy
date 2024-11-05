@@ -11,7 +11,6 @@ from ._zero_this import THIS
 from ._zero_type import TYPE
 from ._zero_box import BOX
 from ._zero_attr import ATTR
-from ._zero_default import DEFAULT
-from ._zero_no_def import NODEF
-from ._attri_box import AttriBox
 from ._field import Field
+from ._zero_filter import ZeroFilter
+from ._attri_box import AttriBox

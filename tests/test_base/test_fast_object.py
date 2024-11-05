@@ -3,12 +3,13 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import random
+from random import random, randint
 from time import perf_counter_ns
 from unittest import TestCase
 
 from worktoy.base import FastObject, overload, BaseObject
 from worktoy.desc import AttriBox
+from worktoy.text import monoSpace
 
 
 class PlanePoint(FastObject):
@@ -96,45 +97,67 @@ def tupleFactory(n: int, cls: type) -> tuple:
 class FastCloud(FastObject):
   """FastCloud contains n points with __slots__ for performance. """
 
-  points = AttriBox[tuple]()
+  def __str__(self) -> str:
+    """String representation."""
+    return self.__class__.__name__
 
-  def __init__(self, n: int = None) -> None:
-    n = 1000 if n is None else n
-    self.points = tupleFactory(n, SpacePoint)
+  def __repr__(self, ) -> str:
+    """Code representation."""
+    return self.__class__.__name__
+
+  x = AttriBox[int](69)
+  y = AttriBox[int](420)
+  z = AttriBox[int](1337)
+  a = AttriBox[int](80085)
+  b = AttriBox[int](133769)
+  c = AttriBox[int](4201337)
 
 
 class BaseCloud(BaseObject):
   """BaseCloud contains n points without __slots__ for performance. """
 
-  points = AttriBox[tuple]()
+  def __str__(self) -> str:
+    """String representation."""
+    return self.__class__.__name__
 
-  def __init__(self, n: int = None) -> None:
-    n = 1000 if n is None else n
-    self.points = tupleFactory(n, ClassicPoint)
+  def __repr__(self, ) -> str:
+    """Code representation."""
+    return self.__class__.__name__
+
+  x = AttriBox[int](69)
+  y = AttriBox[int](420)
+  z = AttriBox[int](1337)
+  a = AttriBox[int](80085)
+  b = AttriBox[int](133769)
+  c = AttriBox[int](4201337)
+
+
+def dataGen(n: int = None) -> tuple[int, ...]:
+  """Generates a tuple of n random integers. """
+  if n is None:
+    return tuple(randint(0, 255) for _ in range(1024))
+  return tuple(randint(0, 255) for _ in range(n))
 
 
 def yoloPi(cls: type, n: int = None, **kwargs) -> float:
   """Computes pi from point clouds. """
-
+  data = dataGen(n)
+  self = cls(**kwargs)
   tic = perf_counter_ns()
-  n = 1000 if n is None else n
-  cloud = cls(n)
-  radii = tuple(p.x ** 2 + p.y ** 2 + p.z ** 2 for p in cloud.points)
-  inner = sum(1 for r in radii if r <= 1)
-  piIsh = 6 * inner / n
+  for (i, v) in enumerate(data):
+    if i % 6 == 0:
+      self.x = max(self.x, v)
+    elif i % 6 == 1:
+      self.y = max(self.y, v)
+    elif i % 6 == 2:
+      self.z = max(self.z, v)
+    elif i % 6 == 3:
+      self.a = max(self.a, v)
+    elif i % 6 == 4:
+      self.b = max(self.b, v)
+    elif i % 6 == 5:
+      self.c = max(self.c, v)
   toc = perf_counter_ns()
-  if not kwargs.get('verbose', False):
-    return toc - tic
-  deltaTime = float(toc - tic)
-  log1k = 0
-  while deltaTime > 1000:
-    deltaTime //= 1000
-    log1k += 1
-  unitName = ['ns', 'µs', 'ms', 's'][log1k]
-  deltaStr = '%.f %s' % (deltaTime, unitName)
-  info = """Using class '%s' with '%d' points took '%s' to estimate pi
-  as '%.12f'""" % (cls.__name__, n, deltaStr, piIsh)
-  print(info)
   return toc - tic
 
 
@@ -225,6 +248,7 @@ class TestFastObject(TestCase):
   def test_timing(self, ) -> None:
     """Testing that FastObject is in fact faster than BaseObject,
     by at least a factor of 10. """
-    fastTime = yoloPi(FastCloud, 10000) * 1e-06
-    baseTime = yoloPi(BaseCloud, 10000) * 1e-06
-    self.assertLess(fastTime * 2, baseTime)
+    n = 100000
+    fastTime = yoloPi(FastCloud, n) * 1e-06
+    baseTime = yoloPi(BaseCloud, n) * 1e-06
+    self.assertLess(fastTime * 10, baseTime)

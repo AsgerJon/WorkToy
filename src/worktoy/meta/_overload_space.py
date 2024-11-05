@@ -48,7 +48,6 @@ class OverloadSpace(AbstractNamespace):
         if not isinstance(dispatcher, Dispatcher):
           continue
         baseName = base.__name__
-        print("""Reusing dispatcher from base class in %s!""" % baseName)
         break
       else:
         dispatcher = Dispatcher(mcls, key)
@@ -63,12 +62,22 @@ class OverloadSpace(AbstractNamespace):
     """Compile the namespace into a dictionary."""
     base = AbstractNamespace.compile(self)
     dispatchers = self._dispatchFactory()
-    return {**base, **dispatchers}
+    return {**base, **dispatchers, '__class_body_lines__': self.getLines()}
 
   def __setitem__(self, key: str, value: object) -> None:
     """Removes instances of OverloadEntry from the default namespace
     handling."""
-    clsName = self.getClassName()
     if isinstance(value, Overload):
       return self.appendOverloadEntry(key, value)
+    if isinstance(value, classmethod):
+      e = """Present version does not support """
+      return self.__setitem__(key, value.__func__)
+
     return AbstractNamespace.__setitem__(self, key, value)
+
+  def __getitem__(self, key: str, ) -> object:
+    """This reimplementation handles the item retrieval case of
+    classmethod. """
+    if key == 'classmethod':
+      return AbstractNamespace.__getitem__(self, 'derp')
+    return AbstractNamespace.__getitem__(self, key)

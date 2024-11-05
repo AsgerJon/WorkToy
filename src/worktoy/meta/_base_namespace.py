@@ -51,13 +51,6 @@ class OverloadEntry:
     setattr(callMeMaybe, '__type_signatures__', updated)
     return callMeMaybe
 
-  def getTypeSig(self) -> TypeSig:
-    """Getter-function for the raw types."""
-    sig = TypeSig(*self.__raw_types__, )
-    sig.setTHIS(self.getTHIS())
-    sig.setTHIS(self.getTYPE())
-    return sig
-
   def assignKey(self, key: str) -> None:
     """Assign the key to the entry."""
     self.__assigned_key__ = key
@@ -76,32 +69,6 @@ class OverloadEntry:
     """String representation"""
     typeNames = [t.__name__ for t in self.__raw_types__]
     return """%s: %s""" % (self.__func_name__, typeNames)
-
-  def getTHIS(self) -> type:
-    """Return the 'THIS' replacement of the TypeSig."""
-    if self.__this_zeroton__ is None:
-      e = """The TypeSig has not been updated with the THIS Zeroton!"""
-      raise ValueError(monoSpace(e))
-    if isinstance(self.__this_zeroton__, type):
-      return self.__this_zeroton__
-    e = typeMsg('thisZeroton', self.__this_zeroton__, type)
-    raise TypeError(monoSpace(e))
-
-  def getTYPE(self) -> type:
-    """Return the 'TYPE' replacement of the TypeSig."""
-    if self.__type_zeroton__ is None:
-      e = """The TypeSig has not been updated with the TYPE Zeroton!"""
-      raise ValueError(monoSpace(e))
-    if isinstance(self.__type_zeroton__, type):
-      return self.__type_zeroton__
-    e = typeMsg('typeZeroton', self.__type_zeroton__, type)
-    raise TypeError(monoSpace(e))
-
-  def updateZerotons(self, cls: type, mcls: type) -> None:
-    """This method replaces instances of THIS with the newly created class
-    and TYPE with the metaclass."""
-    self.__this_zeroton__ = cls
-    self.__type_zeroton__ = mcls
 
 
 class BaseNamespace(AbstractNamespace):

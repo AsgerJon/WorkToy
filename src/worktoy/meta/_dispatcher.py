@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from worktoy.parse import maybe
 from worktoy.meta import Overload, TypeSig, DispatchException
-from worktoy.text import typeMsg
+from worktoy.text import typeMsg, monoSpace
 
 try:
   from typing import TYPE_CHECKING, Any, Callable
@@ -24,6 +24,24 @@ else:
   TypeSigList = object
 
 
+class _DispatchCall:
+  """This class encapsulates the callable created by the dispatcher. """
+
+  __func__ = None
+  __self__ = None
+  __name__ = None
+
+  def __init__(self, *args, **kwargs) -> None:
+    """Initializes the dispatch call. """
+    self.__name__, self.__func__, self.__self__ = [*args, None][:3]
+
+  def __call__(self, *args, **kwargs) -> Any:
+    """Calls the function with the given arguments. """
+    if self.__self__ is None:
+      return self.__func__(*args, **kwargs)
+    return self.__func__(self.__self__, *args, **kwargs)
+
+
 class Dispatcher:
   """Dispatcher is a callable class that passes the call to the given
   overload that matches the type signature of the arguments received. """
@@ -34,9 +52,7 @@ class Dispatcher:
   __field_owner__ = None
   __overload_entries__ = None
   __sig_map__ = None
-  __bound_object__ = None
-
-  #  Trivial accessor methods
+  __class_method_flag__ = None
 
   def setFieldMetaclass(self, mcls: type) -> None:
     """Sets the field metaclass. """
@@ -183,7 +199,7 @@ class Dispatcher:
     self.setFieldOwner(owner)
     self.updateMappings()
 
-  def __init__(self, fieldMetaclass: type, key: str) -> None:
+  def __init__(self, fieldMetaclass: type, key: str, **kwargs) -> None:
     """Initializes the dispatcher. """
     self.setFieldMetaclass(fieldMetaclass)
     self.setFieldKey(key)

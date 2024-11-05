@@ -147,7 +147,5 @@ from ._overload_space import OverloadSpace
 
 from ._abstract_metaclass import AbstractMetaclass
 from ._call_me_maybe import CallMeMaybe
-from ._base_namespace import BaseNamespace
 from ._base_metaclass import BaseMetaclass
-from ._singleton_metaclass import SingletonMetaclass, Singleton
 from ._zeroton import ZeroSpace, ZeroMeta, Zeroton

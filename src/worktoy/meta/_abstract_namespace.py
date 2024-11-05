@@ -146,6 +146,10 @@ class AbstractNamespace(dict):
     self._appendLine(key, (oldVal, value))
     dict.__setitem__(self, key, value)
     self.__explicit_set__(key, value)
+    valueType = type(value)
+    keySetter = getattr(valueType, 'setNamespaceKey', None)
+    if callable(keySetter):
+      keySetter(value, key)
 
   def __delitem__(self, key: str) -> None:
     if dict.__contains__(self, key):

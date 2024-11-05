@@ -96,12 +96,3 @@ class TestTypeMsg(TestCase):
       assert isinstance(baseException, TypeError)
       e = typeMsg('callMeMaybe', 'LMAO', FunctionType)
       assert e == str(baseException)
-
-  def test_str(self) -> None:
-    """Tests the typeMsg function."""
-    try:
-      IntOnly(0)
-    except BaseException as baseException:
-      assert isinstance(baseException, TypeError)
-      e = typeMsg('name', 0, str)
-      assert str(baseException) == e

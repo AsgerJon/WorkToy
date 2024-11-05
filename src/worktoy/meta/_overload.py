@@ -3,6 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.parse import maybe
 from worktoy.text import typeMsg
 
 try:
@@ -23,6 +24,7 @@ class Overload:
 
   __type_signature__ = None
   __wrapped_function__ = None
+  __class_method_flag__ = None
 
   def setTypeSignature(self, *types: type) -> None:
     """Setter-function for the type signature."""
@@ -61,5 +63,9 @@ class Overload:
 
   def __call__(self, target: Any) -> Any:
     """Decorates target"""
+    if isinstance(target, classmethod):
+      e = """This version does not implement overload support for 
+      classmethods!"""
+      raise NotImplementedError(e)
     self.setWrappedFunction(target)
     return self

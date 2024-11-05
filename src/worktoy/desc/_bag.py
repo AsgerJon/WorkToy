@@ -2,6 +2,7 @@
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from worktoy.meta import BaseMetaclass
+from worktoy.parse import typeCast
 from worktoy.text import typeMsg
 
 
@@ -41,23 +42,18 @@ class Bag(metaclass=BaseMetaclass):
     if self.__inner_class__ is None:
       self.__inner_object__ = innerObject
       self.__inner_class__ = type(innerObject)
-    elif isinstance(innerObject, self.getInnerClass()):
-      self.__inner_object__ = innerObject
     else:
-      if self.getInnerClass() is complex:
-        if isinstance(innerObject, (int, float)):
-          return self.setInnerObject(complex(innerObject))
-      if self.getInnerClass() is float and isinstance(innerObject, int):
-        return self.setInnerObject(float(innerObject))
-      if self.getInnerClass() is int and isinstance(innerObject, float):
-        if innerObject.is_integer():
-          return self.setInnerObject(int(innerObject))
-      e = typeMsg('innerObject', innerObject, self.getInnerClass())
-      raise TypeError(e)
+      self.__inner_object__ = typeCast(innerObject, self.getInnerClass())
 
   def getInnerClass(self) -> type:
     """Getter-function for the inner class. """
-    return self.__inner_class__
+    if self.__inner_class__ is None:
+      e = """The inner object has not been set!"""
+      raise AttributeError(e)
+    if isinstance(self.__inner_class__, type):
+      return self.__inner_class__
+    e = typeMsg('innerClass', self.__inner_class__, type)
+    raise TypeError(e)
 
   def getOwningClass(self) -> type:
     """Getter-function for the owning class. """

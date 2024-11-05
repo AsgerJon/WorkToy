@@ -12,21 +12,21 @@ try:
 except ImportError:
   Callable = object
 
-from worktoy.meta import BaseMetaclass, BaseNamespace
+from worktoy.meta import BaseMetaclass, AbstractNamespace
 from worktoy.text import typeMsg
 
 
-class ZeroSpace(BaseNamespace):
+class ZeroSpace(AbstractNamespace):
   """The Zeroton class is a class that has no instances. It is used to
   represent a universal object that retains identity across modules."""
 
   __virgin_namespace__ = None
 
-  def setVirginNamespace(self, namespace: BaseNamespace) -> None:
+  def setVirginNamespace(self, namespace: AbstractNamespace) -> None:
     """This method sets the virgin namespace."""
     self.__virgin_namespace__ = namespace
 
-  def getVirginNamespace(self) -> BaseNamespace:
+  def getVirginNamespace(self) -> AbstractNamespace:
     """This method returns the virgin namespace."""
     return self.__virgin_namespace__
 
@@ -34,14 +34,14 @@ class ZeroSpace(BaseNamespace):
     """If there is already a virgin namespace, this class always raises a
     KeyError"""
     if self.__virgin_namespace__ is None:
-      return BaseNamespace.__getitem__(self, key)
+      return AbstractNamespace.__getitem__(self, key)
     raise KeyError(key)
 
   def __setitem__(self, key: str, value: object) -> None:
     """If there is already a virgin namespace, this class always raises a
     KeyError"""
     if self.__virgin_namespace__ is None:
-      BaseNamespace.__setitem__(self, key, value)
+      AbstractNamespace.__setitem__(self, key, value)
 
 
 class ZeroMeta(BaseMetaclass):
