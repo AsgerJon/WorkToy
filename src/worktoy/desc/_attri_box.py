@@ -62,9 +62,10 @@ called, and then inner object not having been created yet."""
 from __future__ import annotations
 
 try:
-  from typing import Self
+  from typing import Self, Callable
 except ImportError:
   Self = object
+  Callable = object
 
 try:
   from typing import Never
@@ -77,7 +78,7 @@ except ImportError:
   TYPE_CHECKING = False
 
 from typing import Any
-from worktoy.desc import ZeroFilter
+from worktoy.desc import THIS
 from worktoy.desc import AbstractDescriptor, Bag
 from worktoy.parse import maybe, typeCast
 from worktoy.text import typeMsg, monoSpace
@@ -90,6 +91,18 @@ class AttriBox(AbstractDescriptor):
   __field_class__ = None
   __pos_args__ = None
   __key_args__ = None
+
+  @staticmethod
+  def getThisFilter(instance: object) -> Callable:
+    """Getter-function for the 'THIS' filter."""
+
+    def thisFilter(obj: object) -> object:
+      """Filter for the 'THIS' placeholder."""
+      if obj is THIS:
+        return instance
+      return obj
+
+    return thisFilter
 
   @classmethod
   def __class_getitem__(cls, fieldClass: type) -> AttriBox:
@@ -128,27 +141,20 @@ class AttriBox(AbstractDescriptor):
     e = typeMsg('__field_class__', self.__field_class__, type)
     raise TypeError(e)
 
-  def getZeroFilter(self, ) -> ZeroFilter:
-    """Getter-function for the zero filter."""
-    fieldCls = self.getFieldClass()
-    fieldMcls = type(fieldCls)
-    cls = type(self)
-    return ZeroFilter(fieldCls, fieldMcls, self, cls)
-
   def getArgs(self, instance: object, **kwargs) -> list[Any]:
     """Getter-function for positional arguments"""
     if kwargs.get('_root', False):
       return maybe(self.__pos_args__, [])
-    zeroFilter = self.getZeroFilter()
-    return [zeroFilter(arg) for arg in maybe(self.__pos_args__, [])]
+    thisFilter = self.getThisFilter(instance)
+    return [thisFilter(arg) for arg in maybe(self.__pos_args__, [])]
 
   def getKwargs(self, instance: object, **kwargs) -> dict[str, Any]:
     """Getter-function for keyword arguments"""
     if kwargs.get('_root', False):
       return maybe(self.__key_args__, {})
-    zeroFilter = self.getZeroFilter()
+    thisFilter = self.getThisFilter(instance)
     kw = maybe(self.__key_args__, {})
-    return {k: zeroFilter(v) for (k, v) in kw.items()}
+    return {k: thisFilter(v) for (k, v) in kw.items()}
 
   def getDefaultFactory(self) -> Any:
     """Getter-function for function creating the default value. """
@@ -158,9 +164,9 @@ class AttriBox(AbstractDescriptor):
 
     def callMeMaybe(instance: object) -> Any:
       """This function creates the default value."""
-      zeroFilter = AttriBox.getZeroFilter(self)
-      newArgs = [zeroFilter(arg) for arg in posArgs]
-      newKeys = {k: zeroFilter(v) for (k, v) in keyArgs.items()}
+      thisFilter = self.getThisFilter(instance)
+      newArgs = [thisFilter(arg) for arg in posArgs]
+      newKeys = {k: thisFilter(v) for (k, v) in keyArgs.items()}
 
       if fieldClass is bool:
         innerObject = True if [*newArgs, None][0] else False
