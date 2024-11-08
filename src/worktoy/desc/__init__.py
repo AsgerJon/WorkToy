@@ -4,6 +4,9 @@ instantiation. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._abstract_field import AbstractField
+from ._base_field import BaseField
+
 from ._core_descriptor import CoreDescriptor
 from ._abstract_descriptor import AbstractDescriptor
 from ._bag import Bag

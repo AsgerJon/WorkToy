@@ -171,7 +171,14 @@ class AttriBox(AbstractDescriptor):
       if fieldClass is bool:
         innerObject = True if [*newArgs, None][0] else False
       else:
-        innerObject = fieldClass(*newArgs, **newKeys)
+        if newArgs and newKeys:
+          innerObject = fieldClass(*newArgs, **newKeys)
+        elif newArgs:
+          innerObject = fieldClass(*newArgs)
+        elif newKeys:
+          innerObject = fieldClass(**newKeys)
+        else:
+          innerObject = fieldClass()
       if TYPE_CHECKING:
         return Bag(None, innerObject)
       return innerObject
@@ -215,6 +222,15 @@ class AttriBox(AbstractDescriptor):
     pvtName = self._getPrivateName()
     fieldCls = self.getFieldClass()
     value = typeCast(value, fieldCls)
+    if value is None:
+      e = """The '%s' object received a 'None' value in the setter. This 
+      object has field name: '%s', field class: '%s' and owner name: '%s'!"""
+      boxName = type(self).__name__
+      fieldName = self.getFieldName()
+      fieldCls = self.getFieldClass().__name__
+      ownerName = type(instance).__name__
+      e2 = monoSpace(e % (boxName, fieldName, fieldCls, ownerName))
+      raise ValueError(e2)
     bag = getattr(instance, pvtName, None)
     if bag is None:
       return setattr(instance, pvtName, Bag(instance, value))

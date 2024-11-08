@@ -39,6 +39,9 @@ class Bag(metaclass=BaseMetaclass):
 
   def setInnerObject(self, innerObject: object) -> None:
     """Setter-function for the inner object. """
+    if innerObject is None:
+      e = """Attempted to set the inner object to None!"""
+      raise RuntimeError(e)
     if self.__inner_class__ is None:
       self.__inner_object__ = innerObject
       self.__inner_class__ = type(innerObject)

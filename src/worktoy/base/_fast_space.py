@@ -13,7 +13,7 @@ except ImportError:
   Self = object
 
 from worktoy.desc import AttriBox, ExplicitBox
-from worktoy.meta import OverloadSpace, Overload
+from worktoy.meta import OverloadSpace, Overload, CallMeMaybe
 from worktoy.parse import maybe
 
 

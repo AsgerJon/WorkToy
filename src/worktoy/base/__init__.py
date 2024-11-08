@@ -19,6 +19,7 @@ but does not actually pass them on to the created classes.
 from __future__ import annotations
 
 from ._illegal_attribute_exception import IllegalAttributeException
+
 from ._base_object import BaseObject
 from ._fast_space import FastSpace
 from ._fast_meta import FastMeta

@@ -12,6 +12,5 @@ from . import parse
 from . import meta
 from . import desc
 from . import base
-from . import keenum
 
-__all__ = ['desc', 'keenum', 'meta', 'base', 'parse', 'text']
+__all__ = ['desc', 'meta', 'base', 'parse', 'text']

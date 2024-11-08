@@ -55,3 +55,9 @@ class CoreDescriptor(metaclass=BaseMetaclass):
       raise RuntimeError(monoSpace(e))
     pattern = compile(r'(?<!^)(?=[A-Z])')
     return '__%s__' % pattern.sub('_', self.__field_name__).lower()
+
+  def __init__(self, *args, **kwargs) -> None:
+    """Why are we still here?"""
+
+  def __init_subclass__(cls, **kwargs) -> None:
+    """Just to suffer?"""

@@ -3,6 +3,7 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._keenum_object import KeeNumObject
-from ._keenum_space import KeeNumSpace, auto
-from ._keenumeta import KeeNumMeta, KeeNum
+from ._num import Num, auto
+from ._space_num import SpaceNum
+from ._meta_num import MetaNum
+from ._keenum import KeeNum

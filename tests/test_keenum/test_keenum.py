@@ -27,16 +27,17 @@ class WeekDay(KeeNum):
   SATURDAY = auto()
   SUNDAY = auto()
 
-  @classmethod
-  def __class_call__(cls, *args, **kwargs) -> Self:
-    """Returns the class item"""
-    for arg in args:
-      if isinstance(arg, str):
-        return getattr(cls, arg)
-      if isinstance(arg, int):
-        for item in cls:
-          if int(item) == arg:
-            return item
+  # @classmethod
+  # def __class_call__(cls, *args, **kwargs) -> Self:
+  #   """Returns the class item"""
+  #   for arg in args:
+  #     if isinstance(arg, str):
+  #       return getattr(cls, arg)
+  #     if isinstance(arg, int):
+  #       for item in cls:
+  #         if int(item) == arg:
+  #           return item
+  #
 
 
 class Ugedag(KeeNum):
@@ -118,7 +119,32 @@ class TestKeeNum(TestCase):
     """Sets up each test"""
     self.day = Day()
 
-  def test_setter(self, ) -> None:
+  def test_class(self, ) -> None:
+    """Testing if the WeekDay class has the expected functionality given
+    by the metaclass. """
+
+    self.assertEqual(len(WeekDay), 7)
+
+    weekDayList = WeekDay._getKeeNumList()
+    weekDayDict = WeekDay._getKeeNumDict()
+    self.assertEqual(len(weekDayList), 7)
+    self.assertEqual(len(weekDayDict), 7)
+
+    wDict = weekDayDict
+    wList = weekDayList
+
+    for (i, day) in enumerate(WeekDay):
+      self.assertEqual(day, wList[i])
+      self.assertEqual(day, wDict[day.name])
+
+  def test_iteration_protocol(self) -> None:
+    """Tests if the KeeNum subclasses implement iteration"""
+
+    for (i, weekday) in enumerate(WeekDay):
+      self.assertEqual(int(weekday), i)
+      self.assertEqual(weekday.value.lower(), weekday.name.lower())
+
+  def test_attribute(self) -> None:
     """Testing if the weekday AttriBox can manage a flexible '__set__'
     call."""
     self.assertIsInstance(self.day.weekday, WeekDay)
@@ -128,15 +154,13 @@ class TestKeeNum(TestCase):
     self.assertIsInstance(self.day.weekday, WeekDay)
     self.assertEqual(self.day.weekday, WeekDay.FRIDAY)
 
-  def test_iteration(self) -> None:
-    """Tests if the KeeNum subclasses implement iteration"""
-    if TYPE_CHECKING:
-      self.assertIsInstance(WeekDay, Iterable)
-      self.assertIsInstance(Ugedag, Iterable)
+  def test_descriptor_protocol(self) -> None:
+    """Tests if the KeeNum subclasses implement the descriptor protocol"""
 
-    for (i, weekday) in enumerate(WeekDay):
-      self.assertEqual(weekday - i, 0)
-      self.assertEqual(weekday.value, weekday.name)
+    for color in RGB:
+      self.assertEqual(color.r, color.value.red())
+      self.assertEqual(color.g, color.value.green())
+      self.assertEqual(color.b, color.value.blue())
 
   def test_value(self) -> None:
     """Tests if Ugedag correctly has the value attribute set to the Danish
