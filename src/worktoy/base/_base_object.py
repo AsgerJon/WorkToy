@@ -98,7 +98,7 @@ for raising the errors explained. """
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.meta import BaseMetaclass
+from worktoy.base import BaseMetaclass
 
 
 class BaseObject(metaclass=BaseMetaclass):

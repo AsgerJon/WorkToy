@@ -8,3 +8,4 @@ from ._type_msg import typeMsg
 from ._join_words import joinWords
 from ._string_list import stringList
 from ._word_wrap import wordWrap
+from ._func_report import funcReport

@@ -1,21 +1,27 @@
-"""EZData creates data classes inline. These are derived directly from the
-FastMeta metaclass. """
+"""FastObject requires all attributes to be instances of AttriBox. This
+allows significant performance improvements."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.ezdata import EZMeta, EZBase, EZBox
+from worktoy.ezdata import EZMeta
 
 try:
-  from typing import Any
+  from typing import TYPE_CHECKING
 except ImportError:
-  Any = object
-
-from worktoy.base import FastMeta, FastSpace, overload
-from worktoy.desc import AttriBox
-from worktoy.meta import BaseMetaclass
+  TYPE_CHECKING = False
 
 
-class EZData(FastMeta):
-  """EZData creates data classes inline. These are derived directly from the
-  FastMeta metaclass. """
+class EZData(metaclass=EZMeta):
+  """FastObject requires all attributes to be instances of AttriBox. This
+  allows significant performance improvements."""
+
+  def __init__(self, *args, **kwargs) -> None:
+    """This method is overwritten by the namespace object returned by the
+    metaclass __prepare__ method.
+    $$IGNORE=TRUE$$
+    The above line is read by the namespace object which tells it to ignore
+    this method."""
+
+  def __init_subclass__(cls, *args, **kwargs) -> None:
+    """LOL this is why we can't have nice things!"""

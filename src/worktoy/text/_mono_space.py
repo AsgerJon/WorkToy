@@ -37,5 +37,7 @@ def monoSpace(words: str, **kwargs) -> str:
   words = _removeNonPrintableCharacters(words)
   lines = words.split(newLineSymbol)
   lines = [' '.join(line.split()) for line in lines]
+  lines = [line.replace(' %s' % tabSymbol, tabSymbol) for line in lines]
+  lines = [line.replace('%s ' % tabSymbol, tabSymbol) for line in lines]
   lines = [line.replace(tabSymbol, ' ' * 2) for line in lines]
   return '\n'.join(lines)

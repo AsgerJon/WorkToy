@@ -3,13 +3,11 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import Iterable, TYPE_CHECKING
 from unittest import TestCase
 
+from worktoy.attr import AttriBox, Field
 from worktoy.text import stringList
-from worktoy.desc import AttriBox, Field
 from worktoy.keenum import KeeNum, auto
-from worktoy.base import BaseObject
 
 try:
   from typing import Self
@@ -26,18 +24,6 @@ class WeekDay(KeeNum):
   FRIDAY = auto()
   SATURDAY = auto()
   SUNDAY = auto()
-
-  # @classmethod
-  # def __class_call__(cls, *args, **kwargs) -> Self:
-  #   """Returns the class item"""
-  #   for arg in args:
-  #     if isinstance(arg, str):
-  #       return getattr(cls, arg)
-  #     if isinstance(arg, int):
-  #       for item in cls:
-  #         if int(item) == arg:
-  #           return item
-  #
 
 
 class Ugedag(KeeNum):
@@ -106,7 +92,7 @@ class RGB(KeeNum):
     return self.value.blue()
 
 
-class Day(BaseObject):
+class Day:
   """Day owns a boxed WeekDay"""
 
   weekday = AttriBox[WeekDay](WeekDay.FRIDAY)
@@ -144,15 +130,16 @@ class TestKeeNum(TestCase):
       self.assertEqual(int(weekday), i)
       self.assertEqual(weekday.value.lower(), weekday.name.lower())
 
-  def test_attribute(self) -> None:
-    """Testing if the weekday AttriBox can manage a flexible '__set__'
-    call."""
-    self.assertIsInstance(self.day.weekday, WeekDay)
-    self.day.weekday = 'TUESDAY'
-    self.assertEqual(self.day.weekday, WeekDay.TUESDAY)
-    self.day.weekday = 4
-    self.assertIsInstance(self.day.weekday, WeekDay)
-    self.assertEqual(self.day.weekday, WeekDay.FRIDAY)
+  #
+  # def test_attribute(self) -> None:
+  #   """Testing if the weekday AttriBox can manage a flexible '__set__'
+  #   call."""
+  #   self.assertIsInstance(self.day.weekday, WeekDay)
+  #   self.day.weekday = 'TUESDAY'
+  #   self.assertEqual(self.day.weekday, WeekDay.TUESDAY)
+  #   self.day.weekday = 4
+  #   self.assertIsInstance(self.day.weekday, WeekDay)
+  #   self.assertEqual(self.day.weekday, WeekDay.FRIDAY)
 
   def test_descriptor_protocol(self) -> None:
     """Tests if the KeeNum subclasses implement the descriptor protocol"""

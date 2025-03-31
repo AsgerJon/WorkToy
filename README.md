@@ -27,7 +27,7 @@ them to provide powerful and flexible tools for Python developers.
     + [```worktoy.desc.THIS```](#worktoydescthis)
 
   + [```worktoy.base```](#worktoybase)
-  + [```worktoy.keenum```](#worktoykeenum)
+  + [```worktoy.keenum```](#worktoykeenum)t
 
 # Installation
 
@@ -107,6 +107,7 @@ if __name__ == '__main__':
 ```
 
 The above outputs:
+t
 
   ```terminal
   Welcome to the monoSpace documentation!
@@ -240,7 +241,7 @@ This module provides the ```None```-aware ```maybe``` function.
 from __future__ import annotations
 
 from typing import Any
-from worktoy.parse import maybe
+from worktoy.static import maybe
 
 fallback = 69.
 
@@ -279,7 +280,7 @@ from __future__ import annotations
 import sys
 from typing import Never
 
-from worktoy.desc import Field
+from depr.desc import Field
 
 
 class Point:
@@ -297,7 +298,7 @@ class Point:
 
   @x.SET  # Specify the setter method
   def _setX(self, value: float) -> None:
-    self._x = float(value)  # cast to float
+    self._x = float(value)  # static to float
 
   @x.DELETE  # Specify the deleter method as appropriate
   def _delX(self, *_) -> Never:
@@ -355,8 +356,8 @@ from __future__ import annotations
 
 import sys
 
-from worktoy.parse import maybe
-from worktoy.desc import AttriBox
+from worktoy.static import maybe
+from depr.desc import AttriBox
 
 
 class Point:
@@ -463,7 +464,7 @@ object as an argument, it passes the owning instance to the constructor.
 #  AGPL-3.0 license
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
-from worktoy.desc import AttriBox, THIS
+from depr.desc import AttriBox, THIS
 
 
 class Owner:
@@ -552,8 +553,8 @@ from __future__ import annotations
 from typing import Self
 
 from worktoy.base import FastObject, overload
-from worktoy.desc import AttriBox, THIS
-from worktoy.meta import DispatchException
+from depr.desc import AttriBox, THIS
+from depr.meta import DispatchException
 
 
 class Complex(FastObject):
@@ -654,7 +655,7 @@ from __future__ import annotations
 
 from worktoy.keenum import KeeNum, auto
 from worktoy.base import FastObject, overload
-from worktoy.desc import AttriBox, THIS
+from depr.desc import AttriBox, THIS
 
 
 class RGB(FastObject):

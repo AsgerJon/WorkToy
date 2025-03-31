@@ -5,16 +5,36 @@ from __future__ import annotations
 
 from worktoy.text import monoSpace
 
+from worktoy.mcls import AbstractMetaclass
+from worktoy.keenum import Num, SpaceNum
+
 try:
-  from typing import Self, TYPE_CHECKING, Any
+  from typing import Any
 except ImportError:
-  TYPE_CHECKING = False
-  Self = object
   Any = object
 
-from worktoy.keenum import Num, SpaceNum
-from worktoy.meta import AbstractMetaclass
-from worktoy.parse import maybe
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  TYPE_CHECKING = False
+
+try:
+  from typing import Self
+except ImportError:
+  Self = object
+
+try:
+  from typing import Callable
+except ImportError:
+  Callable = object
+
+try:
+  from typing import Never
+except ImportError:
+  try:
+    from typing import NoReturn as Never
+  except ImportError:
+    Never = object
 
 if TYPE_CHECKING:
   NumList = list[Num]
@@ -37,8 +57,7 @@ class MetaNum(AbstractMetaclass):
               space: SpaceNum,
               **kwargs) -> type:
     """The __new__ method is invoked when the class is created."""
-    namespace = space.compile()
-    cls = AbstractMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
+    cls = AbstractMetaclass.__new__(mcls, name, bases, space, **kwargs)
     return cls
 
   def __init__(cls,
@@ -84,7 +103,7 @@ class MetaNum(AbstractMetaclass):
       raise AttributeError(monoSpace(e))
     return keenumDict
 
-  def _resolveNum(cls, identifier: object) -> Any:
+  def _resolveNum(cls, identifier: object, **kwargs) -> Any:
     """Resolve the Num entry."""
     if isinstance(identifier, tuple):
       if len(identifier) == 1:
@@ -92,12 +111,14 @@ class MetaNum(AbstractMetaclass):
       e = """Received identifier: '%s' of type: '%s' which is not
       supported!""" % (identifier, type(identifier).__name__)
       raise TypeError(monoSpace(e))
-    if isinstance(identifier, cls):
-      return identifier
     if isinstance(identifier, str):
       return cls._resolveKey(identifier)
     if isinstance(identifier, int):
       return cls._resolveIndex(identifier)
+    if kwargs.get('_recursion', False):
+      raise RecursionError
+    if isinstance(identifier, cls):
+      return identifier
     e1 = """Received identifier: '%s' of type: '%s' which is not 
     supported!"""
     e2 = """Supported types are: 'str' and 'int'!"""
@@ -111,6 +132,8 @@ class MetaNum(AbstractMetaclass):
     keenumDict = cls._getKeeNumDict()
     if key in keenumDict:
       return keenumDict[key]
+    if key.lower() in keenumDict:
+      return keenumDict[key.lower()]
     e1 = """KeeNum class: '%s' could not resolve the key: '%s'!"""
     e2 = """Supported keys are: \n%s """
     keys = ', '.join([k for k in keenumDict.keys()])
@@ -162,6 +185,6 @@ class MetaNum(AbstractMetaclass):
   def __getattr__(cls, key: str) -> Any:
     """Get the Num entry by key."""
     try:
-      return cls._resolveNum(key)
+      return cls._resolveNum(key, _recursion=True)
     except (KeyError, TypeError):
       return object.__getattribute__(cls, key)

@@ -3,9 +3,9 @@
 #  Copyright (c) 2024 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import Field
+from worktoy.attr import Field
+from worktoy.mcls import CallMeMaybe
 from worktoy.keenum import MetaNum
-from worktoy.meta import CallMeMaybe
 from worktoy.text import typeMsg
 
 

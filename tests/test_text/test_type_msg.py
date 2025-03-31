@@ -6,8 +6,8 @@ from __future__ import annotations
 from types import FunctionType
 from unittest import TestCase
 
-from worktoy.desc import AttriBox
 from worktoy.text import typeMsg
+from worktoy.attr import AttriBox
 
 
 class IntOnly:
