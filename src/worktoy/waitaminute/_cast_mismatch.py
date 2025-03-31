@@ -1,4 +1,4 @@
-"""FastCastMismatch should be raised to indicate that the fast static
+"""CastMismatch should be raised to indicate that the fast static
 system of the TypeSig class did not match."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -12,55 +12,51 @@ except ImportError:
   TYPE_CHECKING = False
   Any = object
 
-if TYPE_CHECKING:
-  from worktoy.static import TypeSig
 
-
-class _Sig:
-  """Descriptor for the TypeSig object passed to the exception."""
+class _ExpectedType:
+  """Descriptor for the expected type passed to the exception."""
 
   def __get__(self, instance: object, owner: type) -> Any:
-    """Get the TypeSig object."""
+    """Get the expected type."""
     if instance is None:
       return self
-    sig = getattr(instance, '__type_sig__', None)
-    if sig is None:
-      info = """'__type_sig__' attribute is not set!"""
+    expectedType = getattr(instance, '__expected_type__', None)
+    if expectedType is None:
+      info = """'__expected_type__' attribute is not set!"""
       raise RuntimeError(info)
-    return sig
+    return expectedType
 
 
-class _PosArgs:
-  """Descriptor for the positional arguments passed to the exception."""
+class ActualObject:
+  """Descriptor for the actual object passed to the exception."""
 
   def __get__(self, instance: object, owner: type) -> Any:
-    """Get the positional arguments."""
+    """Get the actual object."""
     if instance is None:
       return self
-    args = getattr(instance, '__pos_args__', None)
-    if args is None:
-      info = """'__pos_args__' attribute is not set!"""
+    obj = getattr(instance, '__actual_object__', None)
+    if obj is None:
+      info = """'__actual_object__' attribute is not set!"""
       raise RuntimeError(info)
-    return args
+    return obj
 
 
 class CastMismatch(TypeError):
   """FastCastMismatch should be raised to indicate that the fast static
   system of the TypeSig class did not match."""
 
-  __type_sig__ = None
-  __pos_args__ = None
+  __expected_type__ = None
+  __actual_object__ = None
 
-  typeSig = _Sig()
-  posArgs = _PosArgs()
+  expType = _ExpectedType()
+  actObj = ActualObject()
 
-  def __init__(self, sig: TypeSig, *args) -> None:
+  def __init__(self, type_: type, obj: object) -> None:
     """Initialize the FastCastMismatch object."""
-    self.__type_sig__ = sig
-    self.__pos_args__ = args
-    sigInfo = str(sig)
-    argTypes = [type(arg).__name__ for arg in args]
-    argInfo = ', '.join(argTypes)
-    info = """TypeSig object:  '%s' does not match received argument 
+    self.__expected_type__ = type_
+    self.__actual_object__ = obj
+    typeName = type_.__name__
+    objDescription = str(obj)
+    info = """Expected type: '%s' does not match received argument 
     signature: '(%s)'!"""
-    TypeError.__init__(self, monoSpace(info % (sigInfo, argInfo)))
+    TypeError.__init__(self, monoSpace(info) % (typeName, objDescription))
