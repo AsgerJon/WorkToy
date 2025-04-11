@@ -12,10 +12,13 @@ from worktoy.text import monoSpace
 try:
   from typing import TYPE_CHECKING
 except ImportError:
-  TYPE_CHECKING = False
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from depr.meta import CallMeMaybe
+  from worktoy.mcls import CallMeMaybe
 
 
 def funcReport(func: CallMeMaybe) -> str:

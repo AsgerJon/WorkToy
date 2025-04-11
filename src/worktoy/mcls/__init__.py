@@ -19,19 +19,11 @@ Finally, the metaclass returns the created class object."""
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._type_names import Bases, Space
+from . import hooks
+
+from ._type_names import Spaces, Base, Space, Types, FunctionType
 from ._abstract_namespace import AbstractNamespace
 from ._abstract_metaclass import AbstractMetaclass
-
-try:
-  from typing import TYPE_CHECKING
-except ImportError:
-  TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-  try:
-    from typing import Callable as CallMeMaybe
-  except ImportError:
-    CallMeMaybe = object
-else:
-  from ._call_me_maybe import CallMeMaybe
+from ._base_space import BaseSpace
+from ._base_meta import BaseMeta
+from ._base_object import BaseObject

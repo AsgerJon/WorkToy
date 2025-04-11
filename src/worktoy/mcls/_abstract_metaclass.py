@@ -3,23 +3,21 @@
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import Bases, Space, AbstractNamespace
+from worktoy.mcls import Base
+from worktoy.mcls import AbstractNamespace as ASpace
 from worktoy.text import monoSpace, typeMsg
+from worktoy.waitaminute import QuestionableSyntax
 
 try:
-  from typing import Self
+  from typing import TYPE_CHECKING
 except ImportError:
-  Self = object
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
-try:
-  from typing import Any
-except ImportError:
-  Any = object
-
-try:
-  from typing import Callable
-except ImportError:
-  Callable = object
+if TYPE_CHECKING:
+  from typing import Self, Any, Callable
 
 
 class _MetaMetaclass(type):
@@ -47,9 +45,18 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
           the intention, the 'worktoy' library requires passing the 
           keyword 'trustMeBro=True' to the class creation."""
         raise SyntaxError(monoSpace(e))
+    derpNames = [
+        '__get_item__', '__set_item__', '__get_attr__',
+        '__set_attr__'
+    ]
+    realNames = ['__getitem__', '__setitem__', '__getattr__', '__setattr__']
+    for derp, name in zip(derpNames, realNames):
+      if derp in namespace:
+        raise QuestionableSyntax(derp, name, )
     return namespace
 
-  def _notifySubclassHook(cls, *bases) -> Self:
+  @staticmethod
+  def _notifySubclassHook(cls, *bases) -> type:
     """The _notifySubclassHook method is invoked to notify each baseclass
     of the created class of the class creation."""
     for base in bases:
@@ -60,25 +67,32 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     return cls
 
   @classmethod
-  def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> Space:
+  def __prepare__(mcls, name: str, bases: Base, **kwargs) -> ASpace:
     """The __prepare__ method is invoked before the class is created. This
     implementation ensures that the created class has access to the safe
     __init__ and __init_subclass__ through the BaseObject class in its
     method resolution order."""
-    return AbstractNamespace(mcls, name, bases, **kwargs)
+    return ASpace(mcls, name, bases, **kwargs)
 
-  def __new__(mcls, name: str, bases: Bases, space: Space, **kwargs) -> type:
+  def __new__(mcls, name: str, bases: Base, space: ASpace, **kwargs) -> type:
     """The __new__ method is invoked to create the class."""
     namespace = mcls._validateNamespace(space.compile(), **kwargs)
     cls = _MetaMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
     return mcls._notifySubclassHook(cls, *bases)
 
+  def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
+    """The __init__ method is invoked to initialize the class."""
+    if TYPE_CHECKING:
+      assert isinstance(space, ASpace)
+      assert isinstance(bases, tuple)
+    _MetaMetaclass.__init__(cls, name, bases, space, **kwargs)
+
   def __call__(cls, *args, **kwargs) -> Any:
     """The __call__ method is invoked when the class is called."""
     classCall = getattr(cls, '__class_call__', None)
     if classCall is None:
-      return _MetaMetaclass.__call__(cls, *args, **kwargs)
-    if isinstance(classCall, (classmethod, staticmethod)):
+      return type.__call__(cls, *args, **kwargs)
+    if hasattr(classCall, '__self__'):
       return classCall(*args, **kwargs)
     if callable(classCall):
       return classCall(cls, *args, **kwargs)
@@ -91,7 +105,7 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     instanceCheck = getattr(cls, '__class_instancecheck__', None)
     if instanceCheck is None:
       return _MetaMetaclass.__instancecheck__(cls, instance)
-    if isinstance(instanceCheck, classmethod):
+    if hasattr(instanceCheck, '__self__'):
       return True if instanceCheck(instance) else False
     if callable(instanceCheck):
       return True if instanceCheck(cls, instance) else False
@@ -104,9 +118,35 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     subclassCheck = getattr(cls, '__class_subclasscheck__', None)
     if subclassCheck is None:
       return _MetaMetaclass.__subclasscheck__(cls, subclass)
-    if isinstance(subclassCheck, classmethod):
+    if hasattr(subclassCheck, '__self__'):
       return True if subclassCheck(subclass) else False
     if callable(subclassCheck):
       return True if subclassCheck(cls, subclass) else False
     e = typeMsg('subclassCheck', subclassCheck, Callable)
+    raise TypeError(e)
+
+  def __iter__(cls, ) -> Self:
+    """The __iter__ method is invoked to iterate over the class."""
+    func = getattr(cls, '__class_iter__', None)
+    if func is None:
+      func = getattr(_MetaMetaclass, '__iter__')
+      return func(cls)
+    if hasattr(func, '__self__'):
+      return func()
+    if callable(func):
+      return func(cls)
+    e = typeMsg('iter', func, Callable)
+    raise TypeError(e)
+
+  def __next__(cls, ) -> Any:
+    """The __next__ method is invoked to get the next item in the class."""
+    func = getattr(cls, '__class_next__', None)
+    if func is None:
+      func = getattr(_MetaMetaclass, '__next__')
+      return func(cls)
+    if hasattr(func, '__self__'):
+      return func()
+    if callable(func):
+      return func(cls)
+    e = typeMsg('next', func, Callable)
     raise TypeError(e)

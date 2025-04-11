@@ -1,187 +1,76 @@
-"""TestKeeNum tests the KeeNum class"""
+"""TestKeeNum - Test the KeeNum class."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.attr import AttriBox, Field
-from worktoy.text import stringList
-from worktoy.keenum import KeeNum, auto
+from worktoy.keenum import auto, KeeNum
 
 try:
-  from typing import Self
+  from typing import TYPE_CHECKING
 except ImportError:
-  Self = object
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
 
 class WeekDay(KeeNum):
-  """Weekday enumeration"""
-  MONDAY = auto()
-  TUESDAY = auto()
-  WEDNESDAY = auto()
-  THURSDAY = auto()
-  FRIDAY = auto()
-  SATURDAY = auto()
-  SUNDAY = auto()
+  """WeekDay enumeration."""
+
+  MONDAY = auto('Monday')
+  TUESDAY = auto('Tuesday')
+  WEDNESDAY = auto('Wednesday')
+  THURSDAY = auto('Thursday')
+  FRIDAY = auto('Friday')
+  SATURDAY = auto('Saturday')
+  SUNDAY = auto('Sunday')
 
 
 class Ugedag(KeeNum):
-  """Weekday enumeration, but with the public value in Danish."""
-  MONDAY = auto('MANDAG')
-  TUESDAY = auto('TIRSDAG')
-  WEDNESDAY = auto('ONSDAG')
-  THURSDAY = auto('TORSDAG')
-  FRIDAY = auto('FREDAG')
-  SATURDAY = auto('LORDAG')
-  SUNDAY = auto('SONDAG')
+  """Ugedag enumeration."""
 
-  def __str__(self) -> str:
-    """String representation of the Ugedag class"""
-    clsName = self.__class__.__name__
-    return """%s.%s('%s')""" % (clsName, self.name, str(self.value))
+  MONDAY = auto('Mandag')
+  TUESDAY = auto('Tirsdag')
+  WEDNESDAY = auto('Onsdag')
+  THURSDAY = auto('Torsdag')
+  FRIDAY = auto('Fredag')
+  SATURDAY = auto('Lørdag')
+  SUNDAY = auto('Søndag')
 
 
-class QColor:  # should be imported from pyside6
+class Wochentag(KeeNum):
+  """Wochentag enumeration."""
 
-  R = AttriBox[int](255)
-  G = AttriBox[int](255)
-  B = AttriBox[int](255)
-
-  def __init__(self, *args, **kwargs) -> None:
-    self.R, self.G, self.B = [*args, ][:3]
-
-  def red(self) -> int:
-    return self.R
-
-  def green(self) -> int:
-    return self.G
-
-  def blue(self) -> int:
-    return self.B
-
-
-class RGB(KeeNum):
-  """Assigns instances of QColor as public values to the enumeration. """
-
-  r = Field()
-  g = Field()
-  b = Field()
-
-  WHITE = auto(QColor(255, 255, 255))
-  BLACK = auto(QColor(0, 0, 0))
-  RED = auto(QColor(255, 0, 0))
-  GREEN = auto(QColor(0, 255, 0))
-  BLUE = auto(QColor(0, 0, 255))
-
-  #  Further enumerations are left as an exercise to the reader
-
-  @r.GET
-  def _getRed(self) -> int:
-    """Getter-function for value at red channel"""
-    return self.value.red()
-
-  @g.GET
-  def _getBlue(self) -> int:
-    """Getter-function for value at red channel"""
-    return self.value.green()
-
-  @b.GET
-  def _getGreen(self) -> int:
-    """Getter-function for value at red channel"""
-    return self.value.blue()
-
-
-class Day:
-  """Day owns a boxed WeekDay"""
-
-  weekday = AttriBox[WeekDay](WeekDay.FRIDAY)
+  MONDAY = auto('Montag')
+  TUESDAY = auto('Dienstag')
+  WEDNESDAY = auto('Mittwoch')
+  THURSDAY = auto('Donnerstag')
+  FRIDAY = auto('Freitag')
+  SATURDAY = auto('Samstag')
+  SUNDAY = auto('Sonntag')
 
 
 class TestKeeNum(TestCase):
-  """TestKeeNum tests the KeeNum class"""
+  """Test the KeeNum class."""
 
-  def setUp(self) -> None:
-    """Sets up each test"""
-    self.day = Day()
+  def test_auto(self) -> None:
+    """Test the auto function."""
+    self.assertEqual(len(WeekDay), len(Ugedag))
+    self.assertEqual(len(Ugedag), len(Wochentag))
 
-  def test_class(self, ) -> None:
-    """Testing if the WeekDay class has the expected functionality given
-    by the metaclass. """
+  def test_resolve_indices(self, ) -> None:
+    """Tests that the indices are resolved correctly."""
+    for i, (day, dag, tag) in enumerate(zip(WeekDay, Ugedag, Wochentag)):
+      self.assertEqual(day.index, i)
+      self.assertEqual(dag.index, i)
+      self.assertEqual(tag.index, i)
 
-    self.assertEqual(len(WeekDay), 7)
-
-    weekDayList = WeekDay._getKeeNumList()
-    weekDayDict = WeekDay._getKeeNumDict()
-    self.assertEqual(len(weekDayList), 7)
-    self.assertEqual(len(weekDayDict), 7)
-
-    wDict = weekDayDict
-    wList = weekDayList
-
-    for (i, day) in enumerate(WeekDay):
-      self.assertEqual(day, wList[i])
-      self.assertEqual(day, wDict[day.name])
-
-  def test_iteration_protocol(self) -> None:
-    """Tests if the KeeNum subclasses implement iteration"""
-
-    for (i, weekday) in enumerate(WeekDay):
-      self.assertEqual(int(weekday), i)
-      self.assertEqual(weekday.value.lower(), weekday.name.lower())
-
-  #
-  # def test_attribute(self) -> None:
-  #   """Testing if the weekday AttriBox can manage a flexible '__set__'
-  #   call."""
-  #   self.assertIsInstance(self.day.weekday, WeekDay)
-  #   self.day.weekday = 'TUESDAY'
-  #   self.assertEqual(self.day.weekday, WeekDay.TUESDAY)
-  #   self.day.weekday = 4
-  #   self.assertIsInstance(self.day.weekday, WeekDay)
-  #   self.assertEqual(self.day.weekday, WeekDay.FRIDAY)
-
-  def test_descriptor_protocol(self) -> None:
-    """Tests if the KeeNum subclasses implement the descriptor protocol"""
-
-    for color in RGB:
-      self.assertEqual(color.r, color.value.red())
-      self.assertEqual(color.g, color.value.green())
-      self.assertEqual(color.b, color.value.blue())
-
-  def test_value(self) -> None:
-    """Tests if Ugedag correctly has the value attribute set to the Danish
-    word for each weekday, rather than the English word."""
-    dage = stringList(
-        """MANDAG, TIRSDAG, ONSDAG, TORSDAG, FREDAG, LORDAG, SONDAG""")
-    for (ugedag, weekday, dag) in zip(Ugedag, WeekDay, dage):
-      self.assertEqual(ugedag.name, weekday.value)
-      self.assertEqual(ugedag.value.lower(), dag.lower())
-
-  def test_dict_key(self) -> None:
-    """Tests if the KeeNum subclasses can be used as dictionary keys"""
-    testDict = {weekDay: weekDay.name for weekDay in WeekDay}
-    for (weekDay, name) in testDict.items():
-      self.assertEqual(weekDay.name, name)
-
-  def test_class_membership(self) -> None:
-    """Tests if the KeeNum subclass instances correctly identifies
-    themselves as members of the class"""
-    for weekDay in WeekDay:
-      self.assertIsInstance(weekDay, WeekDay)
-
-  def test_class_instance(self) -> None:
-    """Tests if objects returned by the KeeNum class object are correctly
-    identified as instances of the class. """
-    for weekDay in WeekDay:
-      name = weekDay.name
-      self.assertIsInstance(WeekDay(name), WeekDay)
-      item = getattr(WeekDay, name)
-      self.assertIsInstance(item, WeekDay)
-
-  def test_rgb(self) -> None:
-    """Tests field instances on KeeNum class"""
-    for color in RGB:
-      self.assertEqual(color.r, color.value.red())
-      self.assertEqual(color.g, color.value.green())
-      self.assertEqual(color.b, color.value.blue())
+  def test_resolve_keys(self, ) -> None:
+    """Tests that the values are resolved correctly."""
+    keys = [day.name for day in WeekDay]
+    for (key, day, dag, tag) in zip(keys, WeekDay, Ugedag, Wochentag):
+      self.assertEqual(day.key, key)
+      self.assertEqual(dag.key, key)
+      self.assertEqual(tag.key, key)

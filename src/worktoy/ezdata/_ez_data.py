@@ -1,27 +1,38 @@
-"""FastObject requires all attributes to be instances of AttriBox. This
-allows significant performance improvements."""
+"""EZData leverages the 'worktoy' library to provide a dataclass."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.ezdata import EZMeta
+from worktoy.mcls import FunctionType, AbstractNamespace
+
+from worktoy.ezdata import EZMeta, EZSpace
 
 try:
   from typing import TYPE_CHECKING
 except ImportError:
-  TYPE_CHECKING = False
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
+
+
+def _root(callMeMaybe: FunctionType) -> FunctionType:
+  """Root decorator for the EZData class."""
+  setattr(callMeMaybe, '_root', True)
+  return callMeMaybe
 
 
 class EZData(metaclass=EZMeta):
-  """FastObject requires all attributes to be instances of AttriBox. This
-  allows significant performance improvements."""
+  """EZData is a dataclass that provides a simple way to define data
+  structures with validation and serialization capabilities. """
 
-  def __init__(self, *args, **kwargs) -> None:
-    """This method is overwritten by the namespace object returned by the
-    metaclass __prepare__ method.
-    $$IGNORE=TRUE$$
-    The above line is read by the namespace object which tells it to ignore
-    this method."""
+  if TYPE_CHECKING:
+    def __iter__(self): pass
 
-  def __init_subclass__(cls, *args, **kwargs) -> None:
-    """LOL this is why we can't have nice things!"""
+    def __next__(self): pass
+
+    def __init__(self, *args, **kwargs): pass
+
+    def __getitem__(self, key): pass
+
+    def __setitem__(self, key, value): pass
