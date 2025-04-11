@@ -26,11 +26,4 @@ from ._abstract_namespace import AbstractNamespace
 from ._abstract_metaclass import AbstractMetaclass
 from ._base_space import BaseSpace
 from ._base_meta import BaseMeta
-
-try:
-  from typing import TYPE_CHECKING
-except ImportError:
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from ._base_object import BaseObject

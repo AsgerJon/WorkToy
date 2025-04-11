@@ -2,10 +2,8 @@
 
 # worktoy v0.99.xx
 
-This library leverages the most advanced Python features including the
-descriptor protocol and support for customizable metaclasses. The
-documentation below explains these features and how **worktoy** leverages
-them to provide powerful and flexible tools for Python developers.
+The **worktoy** provides utilities for Python development focused on
+reducing boilerplate code, type-safety and readability.
 
 # Table of Contents
 
@@ -27,7 +25,7 @@ them to provide powerful and flexible tools for Python developers.
     + [```worktoy.desc.THIS```](#worktoydescthis)
 
   + [```worktoy.base```](#worktoybase)
-  + [```worktoy.keenum```](#worktoykeenum)t
+  + [```worktoy.keenum```](#worktoykeenum)
 
 # Installation
 
@@ -38,20 +36,20 @@ command:
 pip install worktoy
 ```
 
-The development version, which is not for the faint of heart, may be
-installed by passing the ``--pre`` flag:
-
-```Bash
-pip install worktoy --pre
-```
-
 # Introduction
 
-The **usage** section aims to provide a concise explanation of how to use
-the **worktoy** library. A much more in depth explanation of the contents
-is under development.
+The **worktoy** library provides function overloading, custom descriptors,
+custom enum, custom dataclass and various smaller utility functions. Each
+module implements custom exceptions.
 
 # Usage
+
+This section outlines the usage of the **worktoy** library in order of
+importance.
+
+## overload
+
+The ```@overload``` decorator allows for function overloading in Python:
 
 This section explains the packages included in the **worktoy** library in
 the order they are imported.

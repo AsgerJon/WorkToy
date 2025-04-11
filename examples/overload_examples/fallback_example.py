@@ -6,53 +6,36 @@ received. """
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.waitaminute import DispatchException
-
-try:
-  from typing import Never
-except ImportError:
-  try:
-    from typing import NoReturn as Never
-  except ImportError:
-    from typing import Any as Never
-
-from worktoy import EZData, overload
-from depr.meta import FallBack, TypeSig
+from worktoy.mcls import BaseObject
+from worktoy.static import overload, THIS
 
 
-class PlanePoint(EZData):
-  """Represents a point in the plane"""
-
-  x = 0
-  y = 0
+class ComplexNumber(BaseObject):
+  """The 'ComplexNumber' class represents a complex number. """
+  __slots__ = ('RE', 'IM')
 
   @overload(int, int)
-  def __init__(self, x: int, y: int):
-    self.x = x
-    self.y = y
+  @overload(float, float)
+  def __init__(self, realNum: float, imagNum: float) -> None:
+    """Initialize the complex number with the given real and imaginary
+    parts. """
+    self.RE = float(realNum)
+    self.IM = float(imagNum)
 
-  @overload(int)
-  def __init__(self, x: int):
-    self.x = x
-    self.y = 0
+  @overload(complex)
+  def __init__(self, complexNum: complex) -> None:
+    """Initialize the complex number with the given complex number. """
+    self.RE = complexNum.real
+    self.IM = complexNum.imag
+
+  @overload(THIS)
+  def __init__(self, other: ComplexNumber) -> None:
+    """Initialize the complex number with the given complex number. """
+    self.RE = other.RE
+    self.IM = other.IM
 
   @overload()
-  def __init__(self):
-    pass
-
-  @overload(FallBack)
-  def __init__(self, *args, **kwargs) -> Never:
-    e = """Fallback overload function called! Received the following type 
-    signature: %s"""
-    typeSig = TypeSig(*[type(arg) for arg in args], )
-    raise TypeError(e % str(typeSig))
-
-
-def fallbackExample() -> None:
-  """overloadExample demonstrates how to use the 'worktoy.overload'
-  module."""
-  nicePoint = PlanePoint(69, 420)
-  try:
-    susPoint = PlanePoint('sixty-nine', 'four-twenty')
-  except DispatchException as dispatchException:
-    print(dispatchException)
+  def __init__(self) -> None:
+    """Initialize the complex number with zero. """
+    self.RE = 0.0
+    self.IM = 0.0
