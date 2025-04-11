@@ -1,20 +1,63 @@
-"""FastMeta provides the metaclass for the FastData class. This metaclass
-customize the initial class creation process by returning an instance of
-FastSpace from __prepare__ for use as namespace. """
+"""EZMeta provides the metaclass for the EZData class."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import Bases
-from worktoy.base import BaseMetaclass
+from worktoy.mcls import BaseMeta, AbstractMetaclass, Base
 from worktoy.ezdata import EZSpace
 
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
-class EZMeta(BaseMetaclass):
-  """FastMeta provides the metaclass for the FastData class. This metaclass
-  customize the initial class creation process by returning an instance of
-  FastSpace from __prepare__ for use as namespace. """
+if TYPE_CHECKING:
+  from typing import Any, Self, Callable, Never
+
+
+class _WhenReady:
+  """WhenReady is a decorator that is used to mark a method as ready
+  for use. """
+
+  name = None
+  bases = None
+  space = None
+  kwargs = None
+
+  __wrapped__ = None
+
+  def __init__(self, bases: tuple, **kwargs) -> None:
+    """Initialize the WhenReady object."""
+    self.bases = bases
+    self.kwargs = kwargs
+
+  def __set_name__(self, owner: type, name: str) -> None:
+    self.name = name
+    self.owner = owner
+    space = EZSpace(EZMeta, name, self.bases, )
+    for key, val in self.kwargs.items():
+      space[key] = val
+    space['__name__'] = name
+    self.__wrapped__ = EZMeta(self.name, self.bases, space)
+
+  def __get__(self, instance: object, owner: type) -> EZMeta:
+    """Get the WhenReady object."""
+    return self.__wrapped__
+
+
+class EZMeta(AbstractMetaclass):
+  """EZMeta provides the metaclass for the EZData class."""
 
   @classmethod
-  def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> EZSpace:
+  def __prepare__(mcls, name: str, bases: Base, **kwargs: dict) -> EZSpace:
+    """Prepare the class namespace."""
     return EZSpace(mcls, name, bases, **kwargs)
+
+  def __call__(cls, *args: tuple, **kwargs: dict) -> Any:
+    """Call the class."""
+    if cls.__name__ == 'EZData':
+      return _WhenReady((cls,), **kwargs)
+    return AbstractMetaclass.__call__(cls, *args, **kwargs)

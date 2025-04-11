@@ -4,20 +4,30 @@
 from __future__ import annotations
 
 try:
-  from typing import Any
-except ImportError:
-  Any = object
-
-try:
   from typing import TYPE_CHECKING
 except ImportError:
-  TYPE_CHECKING = False
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
 if TYPE_CHECKING:
   from worktoy.mcls import AbstractNamespace
 
-  Bases = tuple[type, ...]
   Space = AbstractNamespace
+  Spaces = tuple[AbstractNamespace, ...]
+  Base = tuple[type, ...]
+  Types = tuple[type, ...]
+
 else:
-  Bases = object
   Space = object
+  Spaces = tuple
+  Base = tuple
+  Types = tuple
+
+
+def func() -> None:
+  pass
+
+
+FunctionType = type(func)

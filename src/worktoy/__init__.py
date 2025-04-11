@@ -32,8 +32,10 @@ from __future__ import annotations
 from . import text
 from . import waitaminute
 from . import static
-from . import ezdata
+from . import mcls
 from . import keenum
+# from . import ezdata
+# from . import keenum
 # from worktoy.static import maybe, typeCast, overload
 # from worktoy.meta import BaseObject
 # from worktoy.desc import AttriBox, Field, THIS

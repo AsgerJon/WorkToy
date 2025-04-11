@@ -1,106 +1,76 @@
-"""KeeNum enumerates items."""
+"""KeeNum provides a baseclass for enumerations."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.attr import Field
-from worktoy.mcls import CallMeMaybe
-from worktoy.keenum import MetaNum
-from worktoy.text import typeMsg
+from worktoy.keenum import MetaNum, NUM
+from worktoy.waitaminute import ReadOnlyError
+
+try:
+  from typing import TYPE_CHECKING, Never
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+  from typing import Any
+  from worktoy.mcls import FunctionType as Func
 
 
-def _root(callMeMaybe: CallMeMaybe) -> CallMeMaybe:
-  """Return the root class."""
-  setattr(callMeMaybe, '__trust_me_bro__', True)
-  return callMeMaybe
+def _root(func: Func) -> Func:
+  """Decorator to mark a function as a root function."""
+  setattr(func, '__is_root__', True)
+  return func
 
 
 class KeeNum(metaclass=MetaNum):
-  """KeeNum enumerates items."""
+  """KeeNum provides a baseclass for enumerations."""
 
-  __private_value__ = None
-  __public_value__ = None
-  __public_name__ = None
-
-  value = Field()
-  name = Field()
-
-  @value.GET
-  def _getPublicValue(self) -> object:
-    """Getter-function for the public value."""
-    if self.__public_value__ is None:
-      return self.name
-    return self.__public_value__
-
-  @name.GET
-  def _getPublicName(self) -> str:
-    """Getter-function for the public name."""
-    if self.__public_name__ is None:
-      e = """The public name is not set."""
-      raise TypeError(e)
-    if isinstance(self.__public_name__, str):
-      return self.__public_name__
-    e = typeMsg('publicName', self.__public_name__, str)
-    raise TypeError(e)
-
-  def setPrivateValue(self, privateValue: int) -> None:
-    """Setter-function for the private value."""
-    if self.__private_value__ is not None:
-      e = """The private value is already set."""
-      raise TypeError(e)
-    if not isinstance(privateValue, int):
-      e = typeMsg('privateValue', privateValue, int)
-      raise TypeError(e)
-    self.__private_value__ = privateValue
-
-  def setPublicName(self, publicName: str) -> None:
-    """Setter-function for the public name."""
-    if self.__public_name__ is not None:
-      e = """The public name is already set."""
-      raise TypeError(e)
-    if not isinstance(publicName, str):
-      e = typeMsg('publicName', publicName, str)
-      raise TypeError(e)
-    self.__public_name__ = publicName
-
-  def __int__(self, ) -> int:
-    """Return the private value as an integer."""
-    if self.__private_value__ is None:
-      e = """The private value is not set."""
-      raise TypeError(e)
-    if isinstance(self.__private_value__, int):
-      return self.__private_value__
-    e = typeMsg('privateValue', self.__private_value__, int)
-    raise TypeError(e)
+  __slots__ = ('name', 'value', 'index')
 
   @_root
-  def __init__(self, publicValue: object) -> None:
-    self.__public_value__ = publicValue
+  def __init__(self, name: str, value: Any, index: int) -> None:
+    """Initialize the KeeNum instance."""
+    self.name = name
+    self.value = value
+    self.index = index
 
+  @_root
+  def __bool__(self, ) -> bool:
+    """Return True if the value is not 0."""
+    return False if self is type(self).NULL else True
+
+  @_root
   def __str__(self, ) -> str:
-    """Return the public name as a string."""
+    """Return the string representation of the KeeNum instance."""
     clsName = type(self).__name__
-    return """%s.%s""" % (clsName, self.name.upper())
+    return """%s.%s""" % (clsName, self.name.upper(),)
 
+  @_root
   def __repr__(self, ) -> str:
-    """Return the public name as a string."""
-    clsName = type(self).__name__
-    return """%s(%s)""" % (clsName, self.name)
+    """Return the string representation of the KeeNum instance."""
+    return """%s(%s, %s)""" % (type(self).__name__, self.name, self.value,)
 
+  @_root
   def __eq__(self, other: object) -> bool:
-    """Return True if the public value is equal to the other."""
-    if isinstance(other, KeeNum):
-      cls = type(self).__mro__[0]
-      otherCls = type(other).__mro__[0]
-      if cls is otherCls:
-        return False if int(self) - int(other) else True
-      return False
-    if isinstance(other, int):
-      return False if int(self) - other else True
-    if isinstance(other, str):
-      return True if self.name == other else False
-    return False
+    """Return True if the value is equal to the other value."""
+    if not isinstance(other, KeeNum):
+      return True if self.value == other else False
+    return True if self is other else False
 
-  def __hash__(self, ) -> int:
-    """Return the hash of the public value."""
-    return hash((type(self), self.name, int(self)))
+  @_root
+  def __get__(self, instance: object, owner: type) -> KeeNum:
+    """Return the KeeNum instance."""
+    return self
+
+  @_root
+  def __set__(self, instance: object, value: object) -> Never:
+    """Set the KeeNum instance."""
+    raise ReadOnlyError(instance, self, value)
+
+  @_root
+  def __delete__(self, instance: object) -> Never:
+    """Delete the KeeNum instance."""
+    raise ReadOnlyError(instance, self, None)

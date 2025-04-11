@@ -1,190 +1,206 @@
-"""MetaNum provides the metaclass for the KeeNum class. """
+"""MetaNum provides the metaclass for the enumerations."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.text import monoSpace
-
-from worktoy.mcls import AbstractMetaclass
-from worktoy.keenum import Num, SpaceNum
-
-try:
-  from typing import Any
-except ImportError:
-  Any = object
+from worktoy.attr import Field
+from worktoy.mcls import AbstractMetaclass, Base
+from worktoy.keenum import NumSpace as NSpace
+from worktoy.text import monoSpace, typeMsg
+from worktoy.waitaminute import UnrecognizedMember
 
 try:
   from typing import TYPE_CHECKING
 except ImportError:
-  TYPE_CHECKING = False
-
-try:
-  from typing import Self
-except ImportError:
-  Self = object
-
-try:
-  from typing import Callable
-except ImportError:
-  Callable = object
-
-try:
-  from typing import Never
-except ImportError:
   try:
-    from typing import NoReturn as Never
+    from typing_extensions import TYPE_CHECKING
   except ImportError:
-    Never = object
+    TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  NumList = list[Num]
+  from typing import Self, Any, Never
 
 
 class MetaNum(AbstractMetaclass):
-  """MetaNum provides the metaclass for the KeeNum class. """
+  """MetaNum provides the metaclass for the enumerations."""
 
   __iter_contents__ = None
-  __allow_instantiation__ = None
+
+  memberType = Field()
+  NULL = Field()
+
+  @memberType.GET
+  def _getMemberType(cls) -> type:
+    """Get the member type."""
+    type_ = getattr(cls, '__member_type__', None)
+    if type_ is None:
+      raise AttributeError('Member type not set!')
+    if isinstance(type_, type):
+      return type_
+    raise TypeError(typeMsg('__member_type__', type_, type))
+
+  @NULL.GET
+  def _getNULL(cls, ) -> Any:
+    """Get the NULL value."""
+    nullMember = getattr(cls, '__null_member__', None)
+    if nullMember is None:
+      e = """KeeNum class: '%s' does not have a NULL member!"""
+      info = monoSpace(e % cls.__name__)
+      raise AttributeError(info)
+    return nullMember
 
   @classmethod
-  def __prepare__(mcls, name: str, bases: tuple, **kwargs) -> SpaceNum:
-    """The __prepare__ method is invoked before the class is created."""
-    return SpaceNum(mcls, name, bases, **kwargs)
+  def __prepare__(mcls, name: str, bases: Base, **kwargs) -> NSpace:
+    """Prepare the class namespace."""
+    return NSpace(mcls, name, bases, **kwargs)
 
-  def __new__(mcls,
-              name: str,
-              bases: tuple,
-              space: SpaceNum,
-              **kwargs) -> type:
-    """The __new__ method is invoked when the class is created."""
-    cls = AbstractMetaclass.__new__(mcls, name, bases, space, **kwargs)
-    return cls
+  def __new__(mcls, name: str, bases: Base, space: NSpace, **kwargs) -> type:
+    """Create a new class."""
+    return AbstractMetaclass.__new__(mcls, name, bases, space, **kwargs)
 
-  def __init__(cls,
-               name: str,
-               bases: tuple,
-               namespace: dict,
-               **kwargs) -> None:
-    """The __init__ method is invoked when the class is created."""
-    AbstractMetaclass.__init__(cls, name, bases, namespace, **kwargs)
-    setattr(cls, '__allow_instantiation__', True)
-    numEntries = getattr(cls, '__num_entries__', [])
-    keenumDict = getattr(cls, '__keenum_dict__', {})
-    for num in numEntries:
-      name = num.getPublicName()
-      publicValue = num.getPublicValue()
-      privateValue = num.getPrivateValue()
-      keenum = cls(publicValue)
-      keenum.setPrivateValue(privateValue)
-      keenum.setPublicName(name)
-      keenumDict[name] = keenum
-    setattr(cls, '__keenum_dict__', keenumDict)
-    setattr(cls, '__allow_instantiation__', False)
+  def __init__(cls, name: str, bases: Base, space: NSpace, **kwargs) -> None:
+    """The __init__ method is invoked to initialize the class."""
+    AbstractMetaclass.__init__(cls, name, bases, space, **kwargs)
+    memberType = None
+    memberObjects = []
+    for i, member in enumerate(space.getMemberNums()):
+      if memberType is None:
+        memberType = type(member.val)
+      if not isinstance(member.val, memberType):
+        e = """Inconsistent types of inner values in the enumeration! 
+        Expected: type: '%s', but received object: '%s' of type: '%s'!"""
+        expType = memberType.__name__
+        objStr = str(member.val)
+        actType = type(member.val).__name__
+        info = monoSpace(e % (expType, objStr, actType))
+        raise TypeError(info)
+      existing = getattr(cls, '__member_objects__', )
+      newMember = cls(member.key, member.val, i)
+      setattr(cls, member.key, newMember)
+      memberObjects.append(newMember)
+      if member.key == 'NULL':
+        if getattr(cls, '__null_member__', None) is not None:
+          e = """KeeNum class: '%s' has multiple NULL members!"""
+          info = monoSpace(e % cls.__name__)
+          raise AttributeError(info)
+        if member.val:
+          e = """The NULL member must evaluate to False, but received: '%s'
+          which evaluates to True!"""
+          raise ValueError(monoSpace(e % member.val))
+        setattr(cls, '__null_member__', newMember)
+    else:
+      setattr(cls, '__allow_instantiation__', False)
+      setattr(cls, '__member_type__', memberType)
+      setattr(cls, '__member_objects__', memberObjects)
 
-  def __call__(cls, key: object) -> Any:
-    """Get the Num entry by key."""
-    allowInstantiation = getattr(cls, '__allow_instantiation__', False)
-    if allowInstantiation:
-      self = AbstractMetaclass.__call__(cls, key)
-      return self
-    return cls._resolveNum(key)
+  def __call__(cls, *args: Any, **kwargs: Any) -> Self:
+    """The __call__ method is invoked to create an instance of the
+    class."""
+    if getattr(cls, '__allow_instantiation__', False):
+      return AbstractMetaclass.__call__(cls, *args, **kwargs)
+    return cls._resolveMember(*args, **kwargs)
 
-  def _getKeeNumList(cls, ) -> list:
-    """Get the list of KeeNum instances."""
-    keenumDict = getattr(cls, '__keenum_dict__', {})
-    keenumList = [v for (k, v) in keenumDict.items()]
-    return sorted(keenumList, key=lambda x: int(x))
-
-  def _getKeeNumDict(cls, ) -> dict:
-    """Get the dictionary of KeeNum instances."""
-    keenumDict = getattr(cls, '__keenum_dict__', {})
-    if not keenumDict:
-      e = """Class: '%s' has no KeeNum instances!""" % cls.__name__
-      raise AttributeError(monoSpace(e))
-    return keenumDict
-
-  def _resolveNum(cls, identifier: object, **kwargs) -> Any:
-    """Resolve the Num entry."""
-    if isinstance(identifier, tuple):
-      if len(identifier) == 1:
-        return cls._resolveNum(identifier[0])
-      e = """Received identifier: '%s' of type: '%s' which is not
-      supported!""" % (identifier, type(identifier).__name__)
-      raise TypeError(monoSpace(e))
-    if isinstance(identifier, str):
-      return cls._resolveKey(identifier)
-    if isinstance(identifier, int):
-      return cls._resolveIndex(identifier)
-    if kwargs.get('_recursion', False):
-      raise RecursionError
+  def _resolveMember(cls, *args, **kwargs) -> Any:
+    """The _resolveMember method is invoked to resolve the member
+    variables."""
+    if len(args) != 1:
+      e = """Cannot resolve member with more than one argument!"""
+      raise ValueError(monoSpace(e))
+    identifier = args[0]
     if isinstance(identifier, cls):
       return identifier
-    e1 = """Received identifier: '%s' of type: '%s' which is not 
-    supported!"""
-    e2 = """Supported types are: 'str' and 'int'!"""
-    actType = type(identifier).__name__
-    idStr = str(identifier)
-    e = [e1 % (idStr, actType), e2]
-    raise TypeError(monoSpace('\n'.join(e)))
-
-  def _resolveKey(cls, key: str, ) -> Any:
-    """Resolve a string typed key"""
-    keenumDict = cls._getKeeNumDict()
-    if key in keenumDict:
-      return keenumDict[key]
-    if key.lower() in keenumDict:
-      return keenumDict[key.lower()]
-    e1 = """KeeNum class: '%s' could not resolve the key: '%s'!"""
-    e2 = """Supported keys are: \n%s """
-    keys = ', '.join([k for k in keenumDict.keys()])
-    e = [e1 % (cls.__name__, key), e2 % keys]
-    raise KeyError(monoSpace('\n'.join(e)))
-
-  def _rollIndex(cls, index: int) -> int:
-    """Roll the index."""
-    if index > len(cls):
-      e1 = """Index: '%d' exceeds the length of the KeeNum class: '%s' 
-      which has only '%d' members!"""
-      e2 = e1 % (index, cls.__name__, len(cls))
-      raise IndexError(monoSpace(e2))
-    if index < 0:
-      return cls._rollIndex(len(cls) + index)
-    return index
+    if isinstance(identifier, int):
+      try:
+        return cls._resolveIndex(identifier)
+      except IndexError as indexError:
+        raise UnrecognizedMember(cls, identifier) from indexError
+    if isinstance(identifier, str):
+      try:
+        return cls._resolveKey(identifier)
+      except KeyError as keyError:
+        raise UnrecognizedMember(cls, identifier) from keyError
+    if isinstance(identifier, cls.memberType):
+      for self in cls:
+        if identifier == self.val:
+          return self
+    raise UnrecognizedMember(cls, identifier)
 
   def _resolveIndex(cls, index: int) -> Any:
-    """Resolve an integer typed index."""
-    return cls._getKeeNumList()[cls._rollIndex(index)]
+    """The _resolveIndex method is invoked to resolve the index of the
+    member variables."""
+    while index < 0:
+      index += len(cls)
+    if index >= len(cls):
+      e = """Index out of range!"""
+      raise IndexError(monoSpace(e))
+    for self in cls:
+      if self.index == index:
+        return self
+
+  def _resolveKey(cls, key: str) -> Any:
+    """The _resolveKey method is invoked to resolve the key of the member
+    variables."""
+    for self in cls:
+      if self.key.lower() == key.lower():
+        return self
+    e = """Key not found!"""
+    raise KeyError(monoSpace(e))
 
   def __iter__(cls, ) -> Self:
-    """Implement the iterator protocol."""
-    cls.__iter_contents__ = cls._getKeeNumList()
+    """The __iter__ method is invoked to iterate over the class."""
+    cls.__iter_contents__ = getattr(cls, '__member_objects__', )
     return cls
 
-  def __next__(cls, ) -> Any:
-    """Implement the iterator protocol."""
+  def __next__(cls) -> Any:
+    """The __next__ method is invoked to get the next item in the
+    iteration."""
     if cls.__iter_contents__:
       return cls.__iter_contents__.pop(0)
     raise StopIteration
 
   def __len__(cls, ) -> int:
-    """Implement the length protocol."""
-    return len(cls._getKeeNumList())
+    """The __len__ method is invoked to get the length of the class."""
+    return len(getattr(cls, '__member_objects__', []))
 
-  def __getitem__(cls, key: object) -> Any:
-    """Get the Num entry by key."""
-    return cls._resolveNum(key)
+  def __bool__(cls, ) -> bool:
+    """The __bool__ method is invoked to get the boolean value of the
+    class."""
+    return True if getattr(cls, '__member_objects__', []) else False
 
-  def __contains__(cls, key: object) -> bool:
-    """Check if the key is in the KeeNum class."""
-    try:
-      cls._resolveNum(key)
+  def __contains__(cls, item: Any) -> bool:
+    """The __contains__ method is invoked to check if the class contains
+    the item."""
+    if item in getattr(cls, '__member_objects__', []):
       return True
-    except (KeyError, TypeError):
-      return False
+    if item in cls.memberType:
+      for self in cls:
+        if self == item:
+          return True
+    return False
+
+  def __getitem__(cls, key: str) -> Any:
+    """The __getitem__ method is invoked to get the item in the class."""
+    return cls._resolveKey(key)
+
+  def __setitem__(cls, *_) -> Never:
+    """Illegal operation"""
+    info = """KeeNum classes are immutable, but an attempt was 
+    made to set an item on KeeNum class: :'%s'!""" % cls.__name__
+    raise TypeError(monoSpace(info))
+
+  def __delitem__(cls, *_) -> Never:
+    """Illegal operation"""
+    info = """KeeNum classes are immutable, but an attempt was 
+    made to delete an item on KeeNum class: :'%s'!""" % cls.__name__
+    raise TypeError(monoSpace(info))
 
   def __getattr__(cls, key: str) -> Any:
-    """Get the Num entry by key."""
+    """The __getattr__ method is invoked to get the attribute of the
+    class."""
     try:
-      return cls._resolveNum(key, _recursion=True)
-    except (KeyError, TypeError):
-      return object.__getattribute__(cls, key)
+      return cls._resolveKey(key)
+    except KeyError as keyError:
+      try:
+        return object.__getattribute__(cls, key)
+      except AttributeError as attributeError:
+        raise attributeError from keyError
