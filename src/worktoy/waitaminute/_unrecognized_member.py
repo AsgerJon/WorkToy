@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class UnrecognizedMember(Exception):
-  """UnrecognizedMember is raised when a KeeNum class is unabled to
+  """UnrecognizedMember is raised when a KeeNum class is unable to
   recognize a given identifier."""
 
   __keenum_cls__ = None

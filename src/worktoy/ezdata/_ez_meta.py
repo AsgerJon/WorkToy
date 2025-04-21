@@ -3,8 +3,8 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import BaseMeta, AbstractMetaclass, Base
-from worktoy.ezdata import EZSpace
+from ..mcls import AbstractMetaclass, Base
+from ..ezdata import EZSpace
 
 try:
   from typing import TYPE_CHECKING
@@ -15,7 +15,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, Callable, Never
+  from typing import Any
 
 
 class _WhenReady:

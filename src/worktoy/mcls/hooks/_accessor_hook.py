@@ -5,6 +5,7 @@ __getitem__ and __setitem__, but does not otherwise modify any behaviour. """
 from __future__ import annotations
 
 from ...waitaminute import MissingVariable
+from . import AbstractHook
 
 try:
   from typing import TYPE_CHECKING
@@ -13,8 +14,6 @@ except ImportError:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
     TYPE_CHECKING = False
-
-from . import AbstractHook
 
 if TYPE_CHECKING:
   from typing import Any, Callable, Self

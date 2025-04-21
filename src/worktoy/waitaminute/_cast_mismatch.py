@@ -27,7 +27,7 @@ class _ExpectedType:
     return expectedType
 
 
-class ActualObject:
+class _ActualObject:
   """Descriptor for the actual object passed to the exception."""
 
   def __get__(self, instance: object, owner: type) -> Any:
@@ -49,7 +49,7 @@ class CastMismatch(TypeError):
   __actual_object__ = None
 
   expType = _ExpectedType()
-  actObj = ActualObject()
+  actObj = _ActualObject()
 
   def __init__(self, type_: type, obj: object) -> None:
     """Initialize the FastCastMismatch object."""

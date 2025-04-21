@@ -14,6 +14,9 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
+if TYPE_CHECKING:
+  pass
+
 
 class SigMismatch(TypeError):
   """SigMismatch exception is raised when a TypeSig object fails to

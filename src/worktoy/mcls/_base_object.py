@@ -4,7 +4,7 @@ implementations in the 'worktoy' library. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import BaseMeta
+from . import BaseMeta
 
 try:
   from typing import TYPE_CHECKING

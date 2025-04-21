@@ -24,8 +24,7 @@ Subclasses should be made available as attributes on the namespace subclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.text import typeMsg
-from worktoy.waitaminute import MissingVariable, ReadOnlyError
+from ...waitaminute import MissingVariable, ReadOnlyError
 
 try:
   from typing import TYPE_CHECKING, Type

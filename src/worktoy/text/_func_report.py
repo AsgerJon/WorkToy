@@ -7,7 +7,7 @@ from __future__ import annotations
 from inspect import signature
 from typing import get_type_hints
 
-from worktoy.text import monoSpace
+from . import monoSpace
 
 try:
   from typing import TYPE_CHECKING
@@ -18,10 +18,10 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from worktoy.mcls import CallMeMaybe
+  from worktoy.mcls import FunctionType
 
 
-def funcReport(func: CallMeMaybe) -> str:
+def funcReport(func: FunctionType) -> str:
   """The 'funcReport' analyses a function object and returns a string
   description of it including name, typehints and docstring. """
 

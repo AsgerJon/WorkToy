@@ -3,8 +3,9 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.parse import maybe
-from worktoy.waitaminute import VariableNotNone
+from ..waitaminute import VariableNotNone
+from . import AbstractNamespace
+from .hooks import AccessorHook, OverloadHook, NameHook, ReservedNameHook
 
 try:
   from typing import TYPE_CHECKING
@@ -13,10 +14,6 @@ except ImportError:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
     TYPE_CHECKING = False
-
-from worktoy.mcls import AbstractNamespace
-from worktoy.mcls.hooks import AccessorHook, OverloadHook, NameHook, \
-  ReservedNameHook
 
 if TYPE_CHECKING:
   from typing import TypeAlias, Callable, Any

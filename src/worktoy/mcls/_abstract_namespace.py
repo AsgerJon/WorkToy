@@ -4,10 +4,10 @@ objects used in custom metaclasses."""
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import Base, Types, Spaces
-from worktoy.mcls.hooks import AbstractHook
-from worktoy.text import typeMsg, monoSpace
-from worktoy.waitaminute import MissingVariable, HookException
+from ..text import typeMsg, monoSpace
+from ..waitaminute import MissingVariable, HookException
+from . import Base, Types, Spaces
+from .hooks import AbstractHook
 
 try:
   from typing import TYPE_CHECKING

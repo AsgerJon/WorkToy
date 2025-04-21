@@ -3,11 +3,11 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.attr import Field
-from worktoy.mcls import AbstractMetaclass, Base
-from worktoy.keenum import NumSpace as NSpace
-from worktoy.text import monoSpace, typeMsg
-from worktoy.waitaminute import UnrecognizedMember
+from ..attr import Field
+from ..mcls import AbstractMetaclass, Base
+from . import NumSpace as NSpace
+from ..text import monoSpace, typeMsg
+from ..waitaminute import UnrecognizedMember
 
 try:
   from typing import TYPE_CHECKING

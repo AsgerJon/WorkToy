@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 
-from worktoy.waitaminute import MissingVariable, MissingObject
+from ..waitaminute import MissingVariable
 
 try:
   from typing import TYPE_CHECKING
@@ -17,7 +17,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Callable, Self, Never
+  pass
 
 
 class AbstractDescriptor:

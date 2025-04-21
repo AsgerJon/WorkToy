@@ -3,10 +3,9 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.static import Dispatch
-from worktoy.mcls import AbstractMetaclass, Base
-from worktoy.mcls import BaseSpace as BSpace
-from worktoy.mcls import Types
+from . import AbstractMetaclass
+from . import BaseSpace as BSpace
+from . import Types
 
 try:
   from typing import TYPE_CHECKING
@@ -17,7 +16,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, Callable, Never
+  pass
 
 
 class BaseMeta(AbstractMetaclass):

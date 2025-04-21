@@ -16,3 +16,27 @@ from ._hook_exception import HookException
 from ._hash_mismatch import HashMismatch
 from ._missing_object import MissingObject
 from ._unrecognized_member import UnrecognizedMember
+from ._write_once_error import WriteOnceError
+from ._startup_exception import StartupException
+from ._subclass_exception import SubclassException
+from ._protected_error import ProtectedError
+
+__all__ = [
+    'CastMismatch',
+    'DispatchException',
+    'SigMismatch',
+    'ResolveException',
+    'MissingVariable',
+    'VariableNotNone',
+    'QuestionableSyntax',
+    'ReadOnlyError',
+    'ReservedName',
+    'HookException',
+    'HashMismatch',
+    'MissingObject',
+    'UnrecognizedMember',
+    'WriteOnceError',
+    'StartupException',
+    'SubclassException',
+    'ProtectedError'
+]

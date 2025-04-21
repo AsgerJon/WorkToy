@@ -4,11 +4,10 @@ that allow the owning class to explicitly define the accessor methods.  """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.attr import AbstractDescriptor
-from worktoy.mcls import FunctionType as Func
-from worktoy.parse import maybe
-from worktoy.text import typeMsg
-from worktoy.waitaminute import VariableNotNone, MissingVariable
+from ..mcls import FunctionType as Func
+from ..parse import maybe
+from ..text import typeMsg
+from ..waitaminute import VariableNotNone, MissingVariable
 
 try:
   from typing import TYPE_CHECKING

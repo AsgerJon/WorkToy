@@ -7,8 +7,6 @@ error handlers. """
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.text import monoSpace
-
 try:
   from typing import TYPE_CHECKING
 except ImportError:
@@ -30,5 +28,5 @@ class DispatchException(TypeError):
     argTypes = [type(arg) for arg in args]
     argNames = [t.__name__ for t in argTypes]
     argStr = ', '.join(argNames)
-    info = """%s\nbut received: (%s)""" % (dispatchStr, argStr)
+    info = """%s\n%s: (%s)""" % (dispatchStr, 'but received', argStr)
     TypeError.__init__(self, info)

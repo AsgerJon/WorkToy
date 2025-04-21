@@ -6,8 +6,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from worktoy.static.casting import AbstractCast, AutoCast, IntCast
-from worktoy.static.casting import FloatCast, ComplexCast
+from . import AbstractCast, AutoCast, IntCast
+from . import FloatCast, ComplexCast
+
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+  pass
 
 
 class Cast(AbstractCast):

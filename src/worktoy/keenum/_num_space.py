@@ -3,9 +3,9 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import AbstractNamespace
-from worktoy.parse import maybe
-from worktoy.keenum import NumHook
+from ..mcls import AbstractNamespace
+from ..parse import maybe
+from . import NumHook
 
 try:
   from typing import TYPE_CHECKING
@@ -16,7 +16,6 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Self
   from worktoy.keenum import NUM
 
 

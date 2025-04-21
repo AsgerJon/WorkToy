@@ -6,21 +6,22 @@ substantially slower than the former."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.static.casting import AbstractCast, Cast
-from worktoy.static import THIS
-from worktoy.waitaminute import CastMismatch, HashMismatch
+from ..text import typeMsg
+from ..waitaminute import CastMismatch, HashMismatch
+from .casting import AbstractCast, Cast
+from . import THIS
 
 try:
-  from typing import Self, TypeAlias, Any, TYPE_CHECKING
+  from typing import TYPE_CHECKING
 except ImportError:
-  Self = object
-  TypeAlias = object
-  Any = object
-  TYPE_CHECKING = False
-
-from worktoy.text import typeMsg
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
 if TYPE_CHECKING:
+  from typing import Any, Callable, TypeAlias, Never
+
   Types: TypeAlias = list[type]
   Casts: TypeAlias = tuple[AbstractCast, ...]
   TypeCasts: TypeAlias = dict[type, AbstractCast]

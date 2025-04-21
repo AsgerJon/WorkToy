@@ -7,6 +7,7 @@ provide a simple way to overload methods in the namespace system."""
 from __future__ import annotations
 
 from ...static import Dispatch
+from . import AbstractHook
 
 try:
   from typing import TYPE_CHECKING
@@ -15,11 +16,9 @@ except ImportError:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
     TYPE_CHECKING = False
-from . import AbstractHook
 
 if TYPE_CHECKING:
   from typing import TypeAlias
-  from worktoy.mcls import AbstractNamespace as ASpace
   from worktoy.mcls import BaseSpace as BSpace
   from .. import FunctionType as Func
 

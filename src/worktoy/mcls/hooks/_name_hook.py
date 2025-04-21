@@ -49,6 +49,7 @@ collecting, this near-miss will cause HIGHLY UNDEFINED BEHAVIOUR.
 from __future__ import annotations
 
 from . import AbstractHook
+from ...waitaminute import QuestionableSyntax
 
 try:
   from typing import TYPE_CHECKING
@@ -58,10 +59,8 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
-from ...waitaminute import MissingVariable, QuestionableSyntax
-
 if TYPE_CHECKING:
-  from typing import Any, Self, Callable
+  from typing import Any
   from .. import AbstractNamespace as ASpace
 
 

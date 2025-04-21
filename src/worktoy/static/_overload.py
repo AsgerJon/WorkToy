@@ -4,16 +4,21 @@ name but different signatures. The overload decorator is used to"""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.static import TypeSig
+from . import TypeSig
+
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+  from typing import Any, Callable, TypeAlias, Never
 
 
-def func() -> None: pass
-
-
-CallMeMaybe = type(func)
-
-
-def overload(*types, **kwargs) -> CallMeMaybe:
+def overload(*types, **kwargs) -> Callable:
   """Function objects decorated with the @overload decorator may have same
   name but different signatures. The overload decorator is used to
   create a function object that can be called with different argument
@@ -21,7 +26,7 @@ def overload(*types, **kwargs) -> CallMeMaybe:
 
   typeSig = TypeSig(*types)
 
-  def hereIsMyNumber(callMeMaybe: CallMeMaybe) -> CallMeMaybe:
+  def hereIsMyNumber(callMeMaybe: Callable) -> Callable:
     """Here is my number"""
     existing = getattr(callMeMaybe, '__type_sigs__', ())
     setattr(callMeMaybe, '__type_sigs__', (*[*existing, typeSig],))

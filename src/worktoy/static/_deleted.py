@@ -6,6 +6,17 @@ __set__ provides a new value. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+  pass
+
 
 class _MetaDeleted(type):
   """Metaclass for DELETED class object"""
@@ -17,5 +28,7 @@ class _MetaDeleted(type):
 
 class DELETED(metaclass=_MetaDeleted):
   """DELETED is a singleton class that is used to indicate that an
-  attribute"""
+  attribute has been deleted. It covers an edge case where a deleted
+  attribute is accessed, and this singleton is present to indicate that
+  the attribute has been deleted with 'del <attr>' or similar."""
   pass

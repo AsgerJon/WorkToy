@@ -3,10 +3,10 @@
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import Base
-from worktoy.mcls import AbstractNamespace as ASpace
-from worktoy.text import monoSpace, typeMsg
-from worktoy.waitaminute import QuestionableSyntax
+from ..text import monoSpace, typeMsg
+from ..waitaminute import QuestionableSyntax
+from . import Base
+from . import AbstractNamespace as ASpace
 
 try:
   from typing import TYPE_CHECKING

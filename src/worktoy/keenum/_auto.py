@@ -3,10 +3,9 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.attr import Field
-from worktoy.mcls import AbstractMetaclass
-from worktoy.text import typeMsg
-from worktoy.waitaminute import MissingVariable, VariableNotNone
+from ..attr import Field
+from ..text import typeMsg
+from ..waitaminute import MissingVariable, VariableNotNone
 
 try:
   from typing import TYPE_CHECKING
@@ -17,7 +16,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Callable, Self
+  from typing import Any, Self
 
 
 class NUM:
@@ -99,9 +98,13 @@ class NUM:
     return {self.key: self.val}
 
   @classmethod
-  def fromValue(cls, value: Any) -> Self:
+  def fromValue(cls, *args) -> Self:
     """Create a new enumeration member from a value."""
     self = cls()
+    if len(args) == 1:
+      value = args[0]
+    else:
+      value = args
     self.val = value
     return self
 

@@ -4,8 +4,10 @@ underlying object. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.static import DELETED
-from worktoy.text import typeMsg, monoSpace
+from ..static import DELETED
+from ..text import typeMsg, monoSpace
+from ..waitaminute import VariableNotNone, MissingVariable
+from . import AbstractBox
 
 try:
   from typing import TYPE_CHECKING
@@ -14,9 +16,6 @@ except ImportError:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
     TYPE_CHECKING = False
-
-from worktoy.waitaminute import VariableNotNone, MissingVariable
-from worktoy.attr import AbstractBox
 
 if TYPE_CHECKING:
   from typing import Self, Any, Callable

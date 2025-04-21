@@ -4,7 +4,10 @@ function based on the type of the first argument. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.static import TypeSig
+from ..static import TypeSig
+from ..text import typeMsg, monoSpace
+from ..waitaminute import HashMismatch, CastMismatch, ResolveException
+from ..waitaminute import DispatchException
 
 try:
   from typing import TYPE_CHECKING
@@ -14,15 +17,8 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
-from worktoy.text import typeMsg, monoSpace
-from worktoy.waitaminute import SigMismatch, HashMismatch, CastMismatch, \
-  ResolveException
-from worktoy.waitaminute import DispatchException
-
 if TYPE_CHECKING:
   from typing import Any, Callable, TypeAlias, Never
-
-  # from worktoy.mcls import FunctionType
 
   Types: TypeAlias = tuple[type, ...]
   Hashes: TypeAlias = list[int]

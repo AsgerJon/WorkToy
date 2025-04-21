@@ -3,24 +3,19 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ...waitaminute import CastMismatch
+from . import AbstractCast, IntCast, FloatCast
+
 try:
-  from typing import Self, TYPE_CHECKING, Callable
+  from typing import TYPE_CHECKING
 except ImportError:
-  try:
-    from typing_extensions import Self
-  except ImportError:
-    Self = object
   try:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
     TYPE_CHECKING = False
-  try:
-    from typing_extensions import Callable
-  except ImportError:
-    Callable = lambda *__, **_: None
 
-from worktoy.waitaminute import CastMismatch
-from worktoy.static.casting import AbstractCast, IntCast, FloatCast
+if TYPE_CHECKING:
+  from typing import Callable
 
 
 class ComplexCast(AbstractCast):

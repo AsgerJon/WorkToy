@@ -4,9 +4,11 @@ NUM. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import AbstractNamespace as ASpace
-from worktoy.text import typeMsg
-from worktoy.waitaminute import ReservedName
+from ..text import typeMsg
+from ..waitaminute import ReservedName
+from ..mcls import FunctionType as Func
+from ..mcls.hooks import AbstractHook
+from . import NUM
 
 try:
   from typing import TYPE_CHECKING
@@ -16,12 +18,8 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
-from worktoy.mcls import FunctionType as Func
-from worktoy.mcls.hooks import AbstractHook
-from worktoy.keenum import NUM
 
 if TYPE_CHECKING:
-  from typing import Any, Callable, Self
   from worktoy.keenum import NumSpace as NSpace
 
 

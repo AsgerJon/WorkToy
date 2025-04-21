@@ -7,3 +7,12 @@ from ._abstract_descriptor import AbstractDescriptor
 from ._abstract_box import AbstractBox
 from ._attri_box import AttriBox
 from ._field import Field
+from ._alias import Alias
+
+__all__ = [
+    'AbstractDescriptor',
+    'AbstractBox',
+    'AttriBox',
+    'Field',
+    'Alias',
+]

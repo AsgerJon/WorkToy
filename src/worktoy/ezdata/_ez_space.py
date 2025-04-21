@@ -3,9 +3,9 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.ezdata import DataField, EZHook
-from worktoy.mcls import AbstractNamespace, BaseSpace
-from worktoy.parse import maybe
+from . import DataField, EZHook
+from ..mcls import BaseSpace
+from ..parse import maybe
 
 try:
   from typing import TYPE_CHECKING

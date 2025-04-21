@@ -3,9 +3,8 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import FunctionType, AbstractNamespace
-
-from worktoy.ezdata import EZMeta, EZSpace
+from ..mcls import FunctionType
+from . import EZMeta
 
 try:
   from typing import TYPE_CHECKING

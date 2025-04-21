@@ -6,6 +6,8 @@ This is a"""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ..text import monoSpace
+
 try:
   from typing import TYPE_CHECKING
 except ImportError:
@@ -13,8 +15,6 @@ except ImportError:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
     TYPE_CHECKING = False
-
-from worktoy.text import monoSpace
 
 if TYPE_CHECKING:
   from typing import Any, Callable

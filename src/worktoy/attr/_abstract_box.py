@@ -7,8 +7,10 @@ from __future__ import annotations
 from abc import abstractmethod
 import re
 
-from worktoy.static import THIS
-from worktoy.text import typeMsg
+from ..static import THIS
+from ..text import typeMsg
+from ..waitaminute import VariableNotNone, MissingVariable
+from . import AbstractDescriptor
 
 try:
   from typing import TYPE_CHECKING
@@ -18,13 +20,8 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
-from worktoy.parse import maybe
-from worktoy.waitaminute import VariableNotNone, MissingVariable
-
-from worktoy.attr import AbstractDescriptor
-
 if TYPE_CHECKING:
-  from typing import Self, Any, Callable
+  pass
 
 
 class AbstractBox(AbstractDescriptor):

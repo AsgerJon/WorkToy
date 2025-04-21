@@ -4,8 +4,8 @@ automatically by the interpreter. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.text import monoSpace
-from worktoy.waitaminute import ReadOnlyError
+from ...text import monoSpace
+from ...waitaminute import ReadOnlyError
 
 try:
   from typing import TYPE_CHECKING

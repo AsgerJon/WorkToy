@@ -3,11 +3,11 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.keenum import MetaNum, NUM
-from worktoy.waitaminute import ReadOnlyError
+from . import MetaNum
+from ..waitaminute import ReadOnlyError
 
 try:
-  from typing import TYPE_CHECKING, Never
+  from typing import TYPE_CHECKING
 except ImportError:
   try:
     from typing_extensions import TYPE_CHECKING
@@ -15,7 +15,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any
+  from typing import Any, Never
   from worktoy.mcls import FunctionType as Func
 
 

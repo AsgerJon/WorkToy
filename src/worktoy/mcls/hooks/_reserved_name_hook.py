@@ -3,8 +3,8 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls.hooks import AbstractHook, ReservedNames
-from worktoy.waitaminute import ReservedName
+from ...waitaminute import ReservedName
+from . import AbstractHook, ReservedNames
 
 try:
   from typing import TYPE_CHECKING

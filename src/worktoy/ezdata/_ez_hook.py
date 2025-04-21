@@ -3,8 +3,8 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls import FunctionType
-from worktoy.mcls.hooks import AbstractHook
+from ..mcls import FunctionType
+from ..mcls.hooks import AbstractHook
 
 try:
   from typing import TYPE_CHECKING
