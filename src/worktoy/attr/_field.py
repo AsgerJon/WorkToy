@@ -50,19 +50,25 @@ class Field:
     called."""
     return maybe(self.__deleter_keys__, ())
 
-  def _addSetterKey(self, key: str) -> None:
+  def _addSetterKey(self, setterKey: str) -> None:
     """Add a setter key to the list of setter keys."""
+    if not isinstance(setterKey, str):
+      raise TypeError(typeMsg('setterKey', setterKey, str))
     existing = self._getSetterKeys()
-    self.__setter_keys__ = (*[*existing, key],)
+    self.__setter_keys__ = (*[*existing, setterKey],)
 
   def _setGetterKey(self, getterKey: str) -> None:
     """Set the getter key."""
     if self.__getter_key__ is not None:
       raise VariableNotNone('__getter_key__', )
+    if not isinstance(getterKey, str):
+      raise TypeError(typeMsg('getterKey', getterKey, str))
     self.__getter_key__ = getterKey
 
   def _addDeleterKey(self, key: str) -> None:
     """Add a deleter key to the list of deleter keys."""
+    if not isinstance(key, str):
+      raise TypeError(typeMsg('key', key, str))
     existing = self._getDeleterKeys()
     self.__deleter_keys__ = (*[*existing, key],)
 

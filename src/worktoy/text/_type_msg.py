@@ -16,7 +16,7 @@ Example:
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import monoSpace
+from . import monoSpace, joinWords
 
 
 def _resolveTypeNames(*types) -> str:
@@ -35,13 +35,14 @@ def _resolveTypeNames(*types) -> str:
   typeNames = []
   for type_ in types:
     if isinstance(type_, type):
-      typeNames.append(type_.__name__)
+      typeNames.append("""'%s'""" % type_.__name__)
     elif isinstance(type_, str):
-      typeNames.append(type_)
+      typeNames.append("""'%s'""" % type_)
     else:
       raise TypeError("""Received bad arguments: %s""" % (str(types),))
   infoSpec = """Expected object of any of the following types: %s"""
-  return infoSpec % (', '.join(["""'%s'""" for name in typeNames]),)
+  typeStr = joinWords(*typeNames, sep='or')
+  return monoSpace(infoSpec % (typeStr,))
 
 
 def typeMsg(name: str, obj: object, *types) -> str:
