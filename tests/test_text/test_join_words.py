@@ -1,6 +1,6 @@
 """TestJoinWords tests the joinWords function"""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from unittest import TestCase
@@ -27,6 +27,6 @@ class TestJoinWords(TestCase):
 
   def test_many(self, ) -> None:
     """Tests if joinWords correctly joins many strings"""
-    sample = 'hello', 'world', 'universe'
-    expected = 'hello, world and universe'
+    sample = 'Tom', 'Dick', 'Harry'
+    expected = 'Tom, Dick and Harry'
     self.assertEqual(joinWords(*sample), expected)

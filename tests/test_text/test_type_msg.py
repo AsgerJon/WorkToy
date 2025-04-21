@@ -1,13 +1,25 @@
 """TestTypeMsg tests the typeMsg function."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import FunctionType
 from unittest import TestCase
+
+from types import FunctionType
 
 from worktoy.text import typeMsg
 from worktoy.attr import AttriBox
+
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+  from types import MethodType
 
 
 class IntOnly:
@@ -27,7 +39,7 @@ class Descriptor:
 
   __getter_function__ = None
 
-  def _getGetterFunction(self) -> FunctionType:
+  def _getGetterFunction(self) -> MethodType:
     """Getter for the getter function."""
     if self.__getter_function__ is None:
       e = """The getter function has not been set!"""
@@ -70,29 +82,30 @@ class TestTypeMsg(TestCase):
 
   def test_int(self) -> None:
     """Tests the typeMsg function."""
-    try:
+    with self.assertRaises(TypeError) as context:
       IntOnly('hello')
-    except BaseException as baseException:
-      assert isinstance(baseException, TypeError)
-      assert typeMsg('value', 'hello', int) == str(baseException)
+    self.assertEqual(
+        str(context.exception),
+        typeMsg('value', 'hello', int),
+    )
 
   def test_callable(self) -> None:
     """Tests the typeMsg function."""
-    try:
-      class NameTag:
+    with self.assertRaises(TypeError) as context:
+      class Name:
         """Class requiring string types"""
 
         __inner_name__ = 'NameTag'
 
         name = Descriptor()
 
-        name.GET('LMAO')
+        name.GET('Sus name')
 
         @name.GET
         def _getName(self) -> str:
           """Getter-function for the name"""
           return self.__inner_name__
-    except BaseException as baseException:
-      assert isinstance(baseException, TypeError)
-      e = typeMsg('callMeMaybe', 'LMAO', FunctionType)
-      assert e == str(baseException)
+    self.assertEqual(
+        str(context.exception),
+        typeMsg('callMeMaybe', 'Sus name', FunctionType),
+    )

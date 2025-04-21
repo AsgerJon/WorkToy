@@ -11,25 +11,46 @@ Example:
     return number ** 2
 
   square(69.420)
-
-
-
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from . import monoSpace
 
 
-def typeMsg(name: str, obj: object, type_: type) -> str:
+def _resolveTypeNames(*types) -> str:
+  """Creates the first part of the error message listing the expected type
+  or types. """
+  if len(types) == 1:
+    if isinstance(types[0], (tuple, list)):
+      return _resolveTypeNames(*types[0])
+    if isinstance(types[0], type):
+      expName = types[0].__name__
+    elif isinstance(types[0], str):
+      expName = types[0]
+    else:
+      raise TypeError("""Received bad arguments: %s""" % (str(types),))
+    return """Expected object of type '%s'""" % (expName,)
+  typeNames = []
+  for type_ in types:
+    if isinstance(type_, type):
+      typeNames.append(type_.__name__)
+    elif isinstance(type_, str):
+      typeNames.append(type_)
+    else:
+      raise TypeError("""Received bad arguments: %s""" % (str(types),))
+  infoSpec = """Expected object of any of the following types: %s"""
+  return infoSpec % (', '.join(["""'%s'""" for name in typeNames]),)
+
+
+def typeMsg(name: str, obj: object, *types) -> str:
   """The 'typeMsg' function generates a structured error message when an
   object with a given name does not belong to the given type."""
-  if isinstance(type_, type):
-    expectedType = type_.__name__
-  else:
-    expectedType = str(type_)
-  actualType = type(obj).__name__
-  e = """Expected object '%s' to be of type '%s', but found '%s' of type 
-  '%s'!"""
-  return monoSpace(e % (name, expectedType, str(obj), actualType))
+
+  prelude = _resolveTypeNames(*types)
+  actName = type(obj).__name__
+  infoSpec = """%s at name: '%s', but received object of type '%s' with 
+  repr: '%s'"""
+  info = infoSpec % (prelude, name, actName, repr(obj))
+  return monoSpace(info)
