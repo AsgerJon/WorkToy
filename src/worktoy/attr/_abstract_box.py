@@ -9,7 +9,7 @@ import re
 
 from ..static import THIS
 from ..text import typeMsg
-from ..waitaminute import VariableNotNone, MissingVariable
+from ..waitaminute import VariableNotNone, MissingVariable, TypeException
 from . import AbstractDescriptor
 
 try:
@@ -21,7 +21,9 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  pass
+  from typing import Any, Self, Callable, TypeAlias
+
+  Types: TypeAlias = tuple[type, ...]
 
 
 class AbstractBox(AbstractDescriptor):
@@ -32,17 +34,39 @@ class AbstractBox(AbstractDescriptor):
   __pos_args__ = None
   __key_args__ = None
 
-  def _getFieldType(self) -> type:
+  def _getFieldTypes(self) -> Types:
     """Get the field type."""
     if self.__field_type__ is None:
       raise MissingVariable('__field_type__', type)
-    return self.__field_type__
+    if isinstance(self.__field_type__, tuple):
+      for type_ in self.__field_type__:
+        if not isinstance(type_, type):
+          e = typeMsg('__field_type__', self.__field_type__, tuple)
+          raise TypeError(e)
+      else:
+        return self.__field_type__
+    raise TypeException('__field_type__', self.__field_type__, tuple)
 
-  def _setFieldType(self, fieldType: type) -> None:
+  def _setFieldType(self, *args) -> None:
     """Set the field type."""
-    if not isinstance(fieldType, type):
-      raise VariableNotNone('__field_type__', )
-    self.__field_type__ = fieldType
+    if self.__field_type__ is not None:
+      raise VariableNotNone('__field_type__')
+    fieldTypes = []
+    for type_ in args:
+      if not isinstance(type_, type):
+        e = typeMsg('type_', type_, type)
+        raise TypeError(e)
+      if type_ is float:
+        fieldTypes.append(float)
+        fieldTypes.append(int)
+        continue
+      if type_ is complex:
+        fieldTypes.append(complex)
+        fieldTypes.append(float)
+        fieldTypes.append(int)
+        continue
+      fieldTypes.append(type_)
+    self.__field_type__ = (*fieldTypes,)
 
   def _getPosArgs(self, instance: object = None) -> tuple:
     """Get the positional arguments."""

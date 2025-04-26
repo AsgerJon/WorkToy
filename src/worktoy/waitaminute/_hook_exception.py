@@ -5,6 +5,8 @@ confusion with the expected KeyError exception in the metacall system."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from . import _Attribute
+
 try:
   from typing import TYPE_CHECKING
 except ImportError:
@@ -17,9 +19,12 @@ if TYPE_CHECKING:
   from worktoy.mcls import AbstractNamespace
   from worktoy.mcls.hooks import AbstractHook
 
+  from typing import Any, Callable, TypeAlias, Self
+
 
 class HookException(Exception):
-  """This custom exception allows get item hooks to interrupt calls to
+  """
+  This custom exception allows get item hooks to interrupt calls to
   __getitem__. Because the metacall system requires the __getitem__ to
   specifically raise a KeyError in certain situations, an exception raised
   by a hook might be confused for the KeyError. Instead,
@@ -30,15 +35,14 @@ class HookException(Exception):
   try:
     hook(self, key, val)
   except Exception as exception:
-    raise _HookException(exception) from exception
-
+    raise HookException(exception) from exception
   """
 
-  __initial_exception__ = None
-  __namespace_object__ = None
-  __key_str__ = None
-  __val_or_error__ = None
-  __hook_function__ = None
+  initialException = _Attribute()
+  namespaceObject = _Attribute()
+  itemKey = _Attribute()
+  errorValue = _Attribute()
+  hookFunction = _Attribute()
 
   def __init__(
       self,
@@ -48,9 +52,41 @@ class HookException(Exception):
       val: object,
       hook: AbstractHook,
   ) -> None:
-    self.__initial_exception__ = exception
-    self.__namespace_object__ = namespace
-    self.__key_str__ = key
-    self.__val_or_error__ = val
-    self.__hook_function__ = hook
+    self.initialException = exception
+    self.namespaceObject = namespace
+    self.itemKey = key
+    self.errorValue = val
+    self.hookFunction = hook
     Exception.__init__(self, str(exception))
+
+  def _resolveOther(self, other: object) -> Self:
+    """Resolve the other object."""
+    cls = type(self)
+    if isinstance(other, cls):
+      return other
+    if isinstance(other, (tuple, list)):
+      try:
+        return cls(*other)
+      except TypeError:
+        return NotImplemented
+    return NotImplemented
+
+  def __eq__(self, other: object) -> bool:
+    """Compare the exception to another object."""
+    cls = type(self)
+    other = self._resolveOther(other)
+    if other is NotImplemented:
+      return False
+    if isinstance(other, cls):
+      if self.initialException != other.initialException:
+        return False
+      if self.namespaceObject != other.namespaceObject:
+        return False
+      if self.itemKey != other.itemKey:
+        return False
+      if self.errorValue != other.errorValue:
+        return False
+      if self.hookFunction != other.hookFunction:
+        return False
+      return True
+    return False

@@ -4,6 +4,10 @@ recognize a given identifier."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ..text import monoSpace
+
+from . import _Attribute
+
 try:
   from typing import TYPE_CHECKING
 except ImportError:
@@ -13,6 +17,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
+  from ..keenum import MetaNum
   from typing import Any
 
 
@@ -20,12 +25,39 @@ class UnrecognizedMember(Exception):
   """UnrecognizedMember is raised when a KeeNum class is unable to
   recognize a given identifier."""
 
-  __keenum_cls__ = None
-  __unrecognized_identifier__ = None
+  keenumCls = _Attribute()
+  unrecognizedIdentifier = _Attribute()
 
-  def __init__(self, keenumCls: type, unrecognizedIdentifier: Any) -> None:
+  def __init__(self, cls: MetaNum, identifier: Any) -> None:
     """Initialize the UnrecognizedMember object."""
-    self.__keenum_cls__ = keenumCls
-    self.__unrecognized_identifier__ = unrecognizedIdentifier
-    info = "Unrecognized identifier '%s' in KeeNum class '%s'"
-    Exception.__init__(self, info % (unrecognizedIdentifier, keenumCls))
+    self.keenumCls = cls
+    self.unrecognizedIdentifier = identifier
+    infoSpec = """KeeNum class '%s' could not recognize identifier '%s'!"""
+    info = infoSpec % (cls.__name__, identifier)
+    Exception.__init__(self, monoSpace(info))
+
+  def _resolveOther(self, other: Any) -> UnrecognizedMember:
+    """Resolve the other object."""
+    cls = type(self)
+    if isinstance(other, cls):
+      return other
+    if isinstance(other, (tuple, list)):
+      try:
+        return cls(*other)
+      except TypeError:
+        return NotImplemented
+    return NotImplemented
+
+  def __eq__(self, other: object) -> bool:
+    """Compare the UnrecognizedMember object with another object."""
+    other = self._resolveOther(other)
+    if other is NotImplemented:
+      return False
+    cls = type(self)
+    if isinstance(other, cls):
+      if self.keenumCls != other.keenumCls:
+        return False
+      if self.unrecognizedIdentifier != other.unrecognizedIdentifier:
+        return False
+      return True
+    return False

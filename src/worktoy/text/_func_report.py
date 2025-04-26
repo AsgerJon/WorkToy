@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from inspect import signature
 from typing import get_type_hints
+from types import FunctionType
 
 from . import monoSpace
 
@@ -18,14 +19,19 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from worktoy.mcls import FunctionType
+  pass
 
 
-def funcReport(func: FunctionType) -> str:
+def funcReport(func: FunctionType, **kwargs) -> str:
   """The 'funcReport' analyses a function object and returns a string
   description of it including name, typehints and docstring. """
 
-  docString = getattr(func, '__doc__', '')
+  docString = getattr(func, '__doc__', None)
+  if not docString:
+    if kwargs.get('strict', True):
+      e = """No docstring found!"""
+      raise SyntaxError(e)
+    docString = """Imagine not providing a docstring!"""
   typeHints = get_type_hints(func)
   typeSig = signature(func)
   funcName = getattr(func, '__name__', 'unknown')
@@ -46,15 +52,19 @@ def funcReport(func: FunctionType) -> str:
     posArgs.append("""%s: %s""" % (name, type_.__name__))
   else:
     if returnType is None:
-      e = """No return type hint found!"""
-      raise SyntaxError(e)
+      if kwargs.get('strict', True):
+        e = """No return type hint found!"""
+        raise SyntaxError(e)
   if paramKinds['oneStar']:
     posArgs.append(paramKinds['oneStar'])
   if paramKinds['twoStars']:
     posArgs.append(paramKinds['twoStars'])
   #  Formatting the output
   argStr = ', '.join(posArgs)
-  outName = returnType.__name__
+  if returnType is type(None):
+    outName = 'None'
+  else:
+    outName = returnType.__name__
   fmtSpec = """def %s(%s) -> %s:<br><tab>\"\"\"%s\"\"\""""
   out = fmtSpec % (funcName, argStr, outName, docString)
   return monoSpace(out)

@@ -70,8 +70,8 @@ class R2(metaclass=BaseMeta):
   r0 = AttriBox[RealNumber](0.0)
   r1 = AttriBox[RealNumber](0.0)
 
-  @overload(int, int)
-  @overload(float, float)
+  @overload(int, int, )
+  @overload(float, float, )
   def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
     """Initialize the R2 object."""
     self.r0 = RealNumber(float(x))

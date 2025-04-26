@@ -17,10 +17,20 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  pass
+  from typing import Any
 
 
-class AbstractDescriptor:
+class _MetaDescriptor(type):
+  """MetaDescriptor is a metaclass for the AbstractDescriptor class."""
+
+  def __getitem__(cls, fieldType: type) -> Any:
+    """Get the field type."""
+    self = cls()
+    self._setFieldType(fieldType)
+    return self
+
+
+class AbstractDescriptor(metaclass=_MetaDescriptor):
   """AbstractDescriptor provides a common abstract baseclass for all
   descriptor classes. """
 

@@ -16,6 +16,8 @@ Example:
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from warnings import warn
+
 from . import monoSpace, joinWords
 
 

@@ -1,65 +1,8 @@
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
-
-# worktoy v0.99.xx
-
-The **worktoy** provides utilities for Python development focused on
-reducing boilerplate code, type-safety and readability. Each release is
-tested thoroughly on each supported Python version from 3.7* to 3.13.
-
-Note: *Python 3.7 is no longer acceptable for production use as of 2025.
-Support for it should not be taken as an endorsement of staying on an
-outdated version well past end-of-life.*
-
-# Table of Contents
-
-- [Installation](#installation)
-- [Introduction](#introduction)
-- [Features](#features)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-
-# Installation
-
-Install with pip:
-
-```bash
-pip install worktoy
-```
-
-When version 1.0 drops, nightly builds will be available by including the
-`--pre` flag:
-
-```bash
-pip install --pre worktoy
-```
-
-# Introduction
-
-Python should be easy. Easy to write, but also easy to read. **worktoy**
-helps you write Python code that is as easy to read as it is to write.
-
-# Features
-
-Use `AttriBox` to create one-line type-safe attributes or `Field` to
-customize attribute access. Instead of parsing `*args` and
-`**kwargs`, use `overload` to provide type specific implementations of
-the same function.
-
-# Usage
-
-Below is an example implementation of a complex number using **worktoy**.
-Please refer to the docstrings for more information on the individual
-components.
-
-```python
-"""
-ComplexNumber provides a class representation of the complex number
+"""ComplexNumber provides a class representation of the complex number
 using features found in the 'worktoy' library. Briefly, a complex number
 has a real and imaginary part both of which represented here as instances
 of 'AttriBox'. The class inherits from the 'BaseObject' class allowing it
-to overload functions based on types.
-"""
+to overload functions based on types."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
@@ -264,42 +207,3 @@ def main(*args) -> int:
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv))
-
-
-```
-
-Running the above code will produce the following output:
-
-```console
-
-Testing ComplexNumber
-ComplexNumber: z0 = ComplexNumber(0.0, 0.0)
-Nice, no error!
-That was: 0.000 + 0.000J
- --- 
-ComplexNumber: z1 = ComplexNumber(69.0, 420.0)
-Nice, no error!
-That was: 69.000 + 420.000J
- --- 
-ComplexNumber: z2 = ComplexNumber(0.1337, 80085.0)
-Nice, no error!
-That was: 0.134 + 80085.000J
- --- 
-ComplexNumber: z3 = ComplexNumber(69.0, 420.0)
-Nice, no error!
-That was: 69.000 + 420.000J
- --- 
-ComplexNumber: z4 = ComplexNumber(69.0, 420.0)
-Nice, no error!
-That was: 69.000 + 420.000J
- --- 
-ComplexNumber: z5 = ComplexNumber(1337.0, 420.0)
-Nice, no error!
-That was: 1337.000 + 420.000J
-
-Nice, no errors!
-```
-
-The above code illustrates the use of the most important features of
-**worktoy**. For more details, the docstrings of the individual
-components should be consulted.

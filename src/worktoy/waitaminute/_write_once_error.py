@@ -15,7 +15,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any
+  from typing import Any, Self
 
 
 class WriteOnceError(Exception):

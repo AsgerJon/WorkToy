@@ -1,13 +1,14 @@
-"""AttriBox provides a descriptor with lazy instantiation of the
-underlying object. """
+"""FlexBox provides a descriptor with lazy instantiation of the underlying
+object and with type-flexibility. This means that the __set__ method will
+attempt to cast to the field type, if the value is not of the field type."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from ..static import DELETED
-from ..text import monoSpace
-from ..waitaminute import MissingVariable, TypeException
-from . import AbstractBox
+from ..text import typeMsg, monoSpace
+from ..waitaminute import MissingVariable, DeletedAttributeException
+from worktoy.attr import AbstractBox
 
 try:
   from typing import TYPE_CHECKING
@@ -18,20 +19,22 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any
+  from typing import Any, Self
 
 
-class AttriBox(AbstractBox):
-  """AttriBox provides a descriptor with lazy instantiation of the
-  underlying object. """
+class FlexBox(AbstractBox):
+  """FlexBox provides a descriptor with lazy instantiation of the underlying
+  object and with type-flexibility. This means that the __set__ method will
+  attempt to cast to the field type, if the value is not of the field
+  type."""
 
-  def __class_getitem__(cls, fieldType: type) -> AttriBox:
+  def __class_getitem__(cls, fieldType: type) -> Self:
     """Get the field type."""
     self = cls()
     self._setFieldType(fieldType)
     return self
 
-  def __call__(self, *args, **kwargs) -> AttriBox:
+  def __call__(self, *args, **kwargs) -> Self:
     """Call the descriptor with the given arguments."""
     self._setPosArgs(*args)
     self._setKeyArgs(**kwargs)
@@ -54,6 +57,27 @@ class AttriBox(AbstractBox):
     else:
       raise exception
 
+  def _createSetObject(self, instance: object, *args, **kwargs) -> Any:
+    """Create the object."""
+    print('breh: %s' % args)
+    fieldTypes = self._getFieldTypes()
+    exception = None
+    for cls in fieldTypes:
+      try:
+        newObject = cls(*args, )
+      except TypeError as typeError:
+        if exception is None:
+          exception = typeError
+      else:
+        return newObject
+    else:
+      if args:
+        if isinstance(args[0], (tuple, list)):
+          if kwargs.get('_recursion', False):
+            raise RecursionError
+          return self._createSetObject(instance, *args[0], _recursion=True)
+      raise exception
+
   def _getExistingObject(self, instance: object) -> Any:
     """Get the existing object."""
     pvtName = self.getPrivateName()
@@ -63,8 +87,8 @@ class AttriBox(AbstractBox):
       which has been deleted!""" % (pvtName, type(instance),)
       raise AttributeError(monoSpace(e))
     if existingObject is None:
-      fieldTypes = self._getFieldTypes()
-      raise MissingVariable(pvtName, *fieldTypes)
+      fieldType = self._getFieldTypes()
+      raise MissingVariable(pvtName, fieldType)
     return existingObject
 
   def _instanceGet(self, instance: Any, **kwargs) -> Any:
@@ -72,23 +96,26 @@ class AttriBox(AbstractBox):
     pvtName = self.getPrivateName()
     fieldTypes = self._getFieldTypes()
     try:
-      out = self._getExistingObject(instance)
+      existingObject = self._getExistingObject(instance)
     except MissingVariable:
       if kwargs.get('_recursion', False):
         raise RecursionError
-      out = self._createInitObject(instance)
-      setattr(instance, pvtName, out)
-      return self._instanceGet(instance, _recursion=True)
+      newObject = self._createInitObject(instance, )
+      setattr(instance, pvtName, newObject)
+      return self._instanceGet(instance, _recursion=True, )
     else:
-      return out
+      return existingObject
 
-  def _instanceSet(self, instance: Any, value: Any, **kwargs) -> None:
+  def _instanceSet(self, instance: Any, value, *args, **kwargs) -> None:
     """Set the instance."""
     pvtName = self.getPrivateName()
     fieldTypes = self._getFieldTypes()
     if isinstance(value, fieldTypes):
       return setattr(instance, pvtName, value)
-    raise TypeException('value', value, *fieldTypes, )
+    if kwargs.get('_recursion', False):
+      raise RecursionError
+    newObject = self._createSetObject(instance, value, )
+    return self._instanceSet(instance, newObject, _recursion=True, )
 
   def _instanceDelete(self, instance: object, **kwargs) -> None:
     """Delete the instance."""

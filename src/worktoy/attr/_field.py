@@ -138,3 +138,8 @@ class Field:
     """Decorator specifying the deleter method for the field."""
     self._addDeleterKey(callMeMaybe.__name__)
     return callMeMaybe
+
+  def __init__(self, *args) -> None:
+    if args:
+      if isinstance(args[0], str):
+        self._setGetterKey(args[0])

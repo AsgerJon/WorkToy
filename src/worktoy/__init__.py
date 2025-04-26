@@ -13,8 +13,6 @@ The package consists of thr following modules:
 - 'attr': Provides custom descriptors.
 - 'ezdata': Provides the 'EZData' class for creating data classes.
 - 'keenum': Provides the 'KeeNum' class for creating enums.
-
-
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2025 Asger Jon Vistisen

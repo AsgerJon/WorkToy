@@ -6,7 +6,8 @@ from __future__ import annotations
 
 from ..static import TypeSig
 from ..text import typeMsg, monoSpace
-from ..waitaminute import HashMismatch, CastMismatch, ResolveException
+from ..waitaminute import HashMismatch, CastMismatch, ResolveException, \
+  VariableNotNone, TypeException
 from ..waitaminute import DispatchException
 
 try:
@@ -148,7 +149,7 @@ class Dispatch:
 
   def getTypeSigs(self) -> list[TypeSig]:
     """Get the type signatures."""
-    return list(self.__call_map__.keys())
+    return [*self.__call_map__.keys(), ]
 
   def __str__(self, ) -> str:
     """Get the string representation of the function."""
@@ -165,3 +166,19 @@ class Dispatch:
     """Replace THIS with the class."""
     for sig in self.getTypeSigs():
       sig.replaceTHIS(cls)
+
+  def getFieldName(self, ) -> str:
+    """Get the field name."""
+    if self.__field_name__ is None:
+      raise VariableNotNone('__field_name__')
+    if isinstance(self.__field_name__, str):
+      return self.__field_name__
+    raise TypeException('__field_name__', self.__field_name__, str)
+
+  def getFieldOwner(self, ) -> type:
+    """Get the field owner."""
+    if self.__field_owner__ is None:
+      raise VariableNotNone('__field_owner__')
+    if isinstance(self.__field_owner__, type):
+      return self.__field_owner__
+    raise TypeException('__field_owner__', self.__field_owner__, type)
