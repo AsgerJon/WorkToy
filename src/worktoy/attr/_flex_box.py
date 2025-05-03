@@ -59,7 +59,6 @@ class FlexBox(AbstractBox):
 
   def _createSetObject(self, instance: object, *args, **kwargs) -> Any:
     """Create the object."""
-    print('breh: %s' % args)
     fieldTypes = self._getFieldTypes()
     exception = None
     for cls in fieldTypes:

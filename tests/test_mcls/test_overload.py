@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from unittest import TestCase
-from math import atan2
+from math import atan2, atanh
 from random import random
 
 from worktoy.attr import AttriBox, Field
@@ -83,8 +83,15 @@ class R2(metaclass=BaseMeta):
     self.r0 = RealNumber(other.r0)
     self.r1 = RealNumber(other.r1)
 
+  @overload(int)
+  @overload(float)
+  def __init__(self, x: int) -> None:
+    """Initialize the R2 object."""
+    self.r0 = RealNumber(float(x))
+    self.r1 = RealNumber(float(x))
+
   @overload()
-  def __init__(self, ) -> None:
+  def __init__(self, **kwargs) -> None:
     pass
 
 
@@ -130,6 +137,8 @@ class TestOverload(TestCase):
     self.C_3 = ComplexNumber(self.C_0)
     self.C_4 = ComplexNumber(complex(69.0, 420.0))
     self.C_5 = ComplexNumber('69.0 + 420.0j')
+    self.C_6 = ComplexNumber(80085)
+    self.C_7 = ComplexNumber(atanh(0.1337))
 
   def test_values(self, ) -> None:
     """Test the values of the R2 class."""
