@@ -81,6 +81,10 @@ class Dispatch:
         if 'required positional argument' in str(typeError):
           continue
         raise typeError
+      except IndexError:
+        continue
+      except KeyError:
+        continue
       if instance is not None:
         return call(instance, *posArgs, **kwargs)
       return call(*posArgs, **kwargs)
@@ -103,6 +107,8 @@ class Dispatch:
       except TypeError as typeError:
         continue
       except IndexError as indexError:
+        continue
+      except KeyError:
         continue
 
     raise DispatchException(self, *args)
