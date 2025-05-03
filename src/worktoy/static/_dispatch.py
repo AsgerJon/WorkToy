@@ -102,6 +102,9 @@ class Dispatch:
         return call(*posArgs, **kwargs)
       except TypeError as typeError:
         continue
+      except IndexError as indexError:
+        continue
+
     raise DispatchException(self, *args)
 
   def _resolveArgs(self, *args) -> tuple:
