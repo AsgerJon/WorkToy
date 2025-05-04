@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
 import os
@@ -11,7 +11,6 @@ from unittest import TestLoader, TextTestRunner
 
 def main() -> int:
   """Main Tester Script"""
-  # verbosityLevel = [*sys.argv, 2][1]
   loader = TestLoader()
   here = os.path.abspath(os.path.dirname(__file__))
   here = os.path.normpath(here)
@@ -37,4 +36,5 @@ def main() -> int:
 
 
 if __name__ == '__main__':
+  sys.argv.append('-v')
   sys.exit(main())

@@ -4,6 +4,8 @@ function based on the type of the first argument. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+import os
+
 from ..static import TypeSig
 from ..text import typeMsg, monoSpace
 from ..waitaminute import HashMismatch, CastMismatch, ResolveException, \
@@ -118,19 +120,33 @@ class Dispatch:
     posArgs = []
     anyResolved = False
     for arg in args:
-      if isinstance(arg, list):
-        posArgs = [*posArgs, *arg]
-        anyResolved = True
-        continue
       if isinstance(arg, tuple):
         posArgs = [*posArgs, *arg]
         anyResolved = True
-        continue
-      if isinstance(arg, str):
-        posArgs.append(eval(arg))
+      elif isinstance(arg, list):
+        posArgs = [*posArgs, *arg]
         anyResolved = True
-        continue
-      posArgs.append(arg)
+      elif isinstance(arg, tuple):
+        posArgs = [*posArgs, *arg]
+        anyResolved = True
+      elif isinstance(arg, str):
+        evalArg = None
+        try:
+          evalArg = eval(arg)
+        except NameError as nameError:
+          evalArg = nameError
+          posArgs = [*posArgs, arg]
+        else:
+          posArgs = [*posArgs, evalArg]
+          anyResolved = True
+        finally:
+          if os.environ.get('RUNNING_TESTS', False):
+            infoSpec = """Dispatch._resolveArgs tried: eval(%s) which 
+            resolved to: '%s' of type: '%s'"""
+            info = infoSpec % (arg, evalArg, type(evalArg).__name__)
+            print(monoSpace(info))
+      else:
+        posArgs.append(arg)
     if anyResolved:
       return (*posArgs,)
     raise ResolveException(self, args)
