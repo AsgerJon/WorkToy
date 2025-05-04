@@ -69,13 +69,13 @@ class AbstractDescriptor(metaclass=_MetaDescriptor):
     return self.__field_owner__
 
   @abstractmethod
-  def _instanceGet(self, instance: object, **kwargs) -> object:
+  def _instanceGet(self, instance: Any, **kwargs) -> Any:
     """Get the instance of the descriptor."""
 
   @abstractmethod
-  def _instanceSet(self, instance: object, value: object, **kwargs) -> None:
+  def _instanceSet(self, instance: Any, value: Any, **kwargs) -> None:
     """Set the instance of the descriptor."""
 
   @abstractmethod
-  def _instanceDelete(self, instance: object, **kwargs) -> None:
+  def _instanceDelete(self, instance: Any, **kwargs) -> None:
     """Delete the instance of the descriptor."""
