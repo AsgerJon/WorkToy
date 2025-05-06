@@ -288,8 +288,8 @@ class TestFidGen(BaseTest):
     mandelbrot = BMP(128, 128)
     self.assertEqual(mandelbrot.fidGen.fileExtension, 'bmp')
     self.assertEqual(mandelbrot.fidGen.baseName, 'test_fid_gen')
-    expectedPath = self.testDir
-    actualPath = os.path.dirname(mandelbrot.fidGen.fileDirectory)
+    expectedPath = self.tempDir
+    actualPath = mandelbrot.fidGen.fileDirectory
     self.assertEqual(expectedPath, actualPath)
     filePath = mandelbrot.fidGen.filePath
     #  Before saving

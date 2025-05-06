@@ -34,8 +34,8 @@ class TempDir:
     """
     Returns the path to the temporary directory.
     """
-    fallback = os.path.join(os.getcwd(), "test_dir")
-    return os.environ.get("TEST_TEMP_DIR", fallback)
+    fallback = os.path.join(os.getcwd(), )
+    return os.environ.get('TEST_TEMP_DIR', fallback)
 
   def __get__(self, instance: Any, owner: type) -> str:
     """

@@ -201,7 +201,7 @@ class FidGen(BaseObject):
     for arg in args:
       if isinstance(arg, str):
         if os.path.isabs(arg):
-          return os.path.dirname(arg)
+          return arg
     return None  # pycharm, please!
 
   @staticmethod

@@ -36,5 +36,6 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-  sys.argv.append('-v')
+  here = os.path.abspath(os.path.dirname(__file__))
+  os.environ['TEST_TEMP_DIR'] = os.path.join(here, 'temp')
   sys.exit(main())
