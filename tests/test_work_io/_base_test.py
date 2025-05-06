@@ -34,8 +34,26 @@ class TempDir:
     """
     Returns the path to the temporary directory.
     """
-    fallback = os.path.join(os.getcwd(), )
-    return os.environ.get('TEST_TEMP_DIR', fallback)
+    testsDir = os.environ['TESTS_DIR']
+    if not testsDir:
+      infoSpec = """Unable to find the environment variable 'TESTS_DIR'!"""
+      info = monoSpace(infoSpec)
+      raise EnvironmentError(info)
+    if not os.path.isabs(testsDir):
+      infoSpec = """The path found at: 'TESTS_DIR': '%s' is not an 
+      absolute path!"""
+      info = monoSpace(infoSpec % testsDir)
+      raise EnvironmentError(info)
+    if not os.path.exists(testsDir):
+      infoSpec = """The path found at: 'TESTS_DIR': '%s' does not exist!"""
+      info = monoSpace(infoSpec % testsDir)
+      raise FileNotFoundError(info)
+    if not os.path.isdir(testsDir):
+      infoSpec = """The path found at: 'TESTS_DIR': '%s' is not a 
+      directory!"""
+      info = monoSpace(infoSpec % testsDir)
+      raise NotADirectoryError(info)
+    return os.path.join(testsDir, 'temp')
 
   def __get__(self, instance: Any, owner: type) -> str:
     """
@@ -99,4 +117,4 @@ class BaseTest(TestCase):
     """
     Tear down the test case.
     """
-    cls.clearTempDir()
+    # cls.clearTempDir()
