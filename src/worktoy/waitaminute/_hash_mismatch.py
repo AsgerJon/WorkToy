@@ -38,13 +38,13 @@ class HashMismatch(Exception):
     argTypes = [type(arg).__name__ for arg in args]
     argStr = """(%s)""" % ', '.join(argTypes)
     sigHash = hash(typeSig)
-    if isinstance(args, list):
-      argHash = hash((*args,))
-    else:
+    try:
       argHash = hash(args)
+    except TypeError:
+      argHash = '<unhashable>'
 
     infoSpec = """Unable to match type signature: <br><tab>%s<br>with
-    signature of arguments:<br><tab>%s<br>Received hashes: %d != %d"""
+    signature of arguments:<br><tab>%s<br>Received hashes: %d != %s"""
     info = infoSpec % (sigStr, argStr, sigHash, argHash)
     Exception.__init__(self, info)
 
