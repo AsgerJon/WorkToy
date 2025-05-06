@@ -37,5 +37,4 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-  os.environ['TESTS_DIR'] = '/tmp'
   sys.exit(main())
