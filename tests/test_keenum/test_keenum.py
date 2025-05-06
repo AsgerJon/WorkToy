@@ -69,7 +69,7 @@ class TestKeeNum(TestCase):
 
   def test_resolve_keys(self, ) -> None:
     """Tests that the values are resolved correctly."""
-    keys = [day.name for day in WeekDay]
+    keys = [day.baseName for day in WeekDay]
     for (key, day, dag, tag) in zip(keys, WeekDay, Ugedag, Wochentag):
       self.assertEqual(day.key, key)
       self.assertEqual(dag.key, key)

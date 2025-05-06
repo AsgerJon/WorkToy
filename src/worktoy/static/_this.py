@@ -3,6 +3,8 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.waitaminute import IllegalInstantiationError
+
 try:
   from typing import TYPE_CHECKING
 except ImportError:
@@ -15,19 +17,21 @@ if TYPE_CHECKING:
   from typing import Never
 
 
-class _MetaThis(type):
+class Zeroton(type):
   """Metaclass ensuring the 'THIS' class never instantiates."""
 
   def __new__(mcls, *args, **kwargs) -> type:
     """Prevent instantiation of THIS class."""
     bases = (object,)
-    name = "THIS"
-    space = dict(__THIS__=True, )
+    name = args[0]
+    key = '__%s__' % name
+    space = dict()
+    space[key] = True
     return type.__new__(mcls, name, bases, space)
 
   def __call__(cls, *args, **kwargs) -> Never:
     """Prevent instantiation of THIS class."""
-    raise TypeError("THIS class cannot be instantiated.")
+    raise IllegalInstantiationError(cls)
 
   def __str__(cls, ) -> str:
     """Return the string representation of THIS class."""
@@ -40,6 +44,16 @@ class _MetaThis(type):
     return 69420
 
 
-class THIS(metaclass=_MetaThis):
+class THIS(metaclass=Zeroton):
   """THIS is the token object indicating a class before it is created. """
+  pass
+
+
+class OWNER(metaclass=Zeroton):
+  """OWNER is the token object indicating the owner of the descriptor. """
+  pass
+
+
+class ATTR(metaclass=Zeroton):
+  """ATTR is the token object indicating the descriptor itself. """
   pass

@@ -21,6 +21,8 @@ from ._subclass_exception import SubclassException
 from ._protected_error import ProtectedError
 from ._type_exception import TypeException
 from ._deleted_attribute_exception import DeletedAttributeException
+from ._path_syntax_exception import PathSyntaxException
+from ._illegal_instantiation_error import IllegalInstantiationError
 
 __all__ = [
     'CastMismatch',
@@ -38,4 +40,7 @@ __all__ = [
     'SubclassException',
     'ProtectedError',
     'TypeException',
+    'DeletedAttributeException',
+    'PathSyntaxException',
+    'IllegalInstantiationError',
 ]
