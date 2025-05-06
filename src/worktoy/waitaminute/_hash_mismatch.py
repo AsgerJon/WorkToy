@@ -40,7 +40,6 @@ class HashMismatch(Exception):
     sigHash = hash(typeSig)
     if isinstance(args, list):
       argHash = hash((*args,))
-    argHash = hash(args)
 
     infoSpec = """Unable to match type signature: <br><tab>%s<br>with
     signature of arguments:<br><tab>%s<br>Received hashes: %d != %d"""
