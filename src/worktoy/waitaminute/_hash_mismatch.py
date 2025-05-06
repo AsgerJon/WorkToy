@@ -38,6 +38,8 @@ class HashMismatch(Exception):
     argTypes = [type(arg).__name__ for arg in args]
     argStr = """(%s)""" % ', '.join(argTypes)
     sigHash = hash(typeSig)
+    if isinstance(args, list):
+      argHash = hash((*args,))
     argHash = hash(args)
 
     infoSpec = """Unable to match type signature: <br><tab>%s<br>with
