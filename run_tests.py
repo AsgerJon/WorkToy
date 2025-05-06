@@ -12,8 +12,6 @@ from unittest import TestLoader, TextTestRunner
 def main() -> int:
   """Main Tester Script"""
   loader = TestLoader()
-  here = os.path.abspath(os.path.dirname(__file__))
-  here = os.path.normpath(here)
   testRoot = os.path.join(here, 'tests')
   testRoot = os.path.normpath(testRoot)
   runner = None
