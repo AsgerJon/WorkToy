@@ -17,7 +17,6 @@ def main() -> int:
   here = os.path.normpath(here)
   testRoot = os.path.join(here, 'tests')
   testRoot = os.path.normpath(testRoot)
-  os.environ['TESTS_DIR'] = testRoot
   runner = None
   for item in os.listdir(testRoot):
     testPath = os.path.normpath(os.path.join(testRoot, item))
@@ -38,4 +37,5 @@ def main() -> int:
 
 
 if __name__ == '__main__':
+  os.environ['TESTS_DIR'] = '/tmp'
   sys.exit(main())

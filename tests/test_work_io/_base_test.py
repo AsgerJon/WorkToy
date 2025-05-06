@@ -35,6 +35,8 @@ class TempDir:
     Returns the path to the temporary directory.
     """
     testsDir = os.environ['TESTS_DIR']
+    print('_getPath')
+    print('testsDir:', testsDir)
     if not testsDir:
       infoSpec = """Unable to find the environment variable 'TESTS_DIR'!"""
       info = monoSpace(infoSpec)
@@ -111,6 +113,8 @@ class BaseTest(TestCase):
     finally:
       if hasattr(f, 'close'):
         f.close()
+      print('BaseTest.setUpClass')
+      print(os.environ['TESTS_DIR'])
 
   @classmethod
   def tearDownClass(cls) -> None:
