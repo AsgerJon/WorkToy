@@ -12,8 +12,12 @@ from unittest import TestLoader, TextTestRunner
 def main() -> int:
   """Main Tester Script"""
   loader = TestLoader()
+  here = os.path.abspath(os.path.dirname(__file__))
+  here = os.path.normpath(here)
   testRoot = os.path.join(here, 'tests')
   testRoot = os.path.normpath(testRoot)
+  testTempDir = os.path.join(testRoot, 'temp')
+  os.environ['TEST_TEMP_DIR'] = testTempDir
   runner = None
   for item in os.listdir(testRoot):
     testPath = os.path.normpath(os.path.join(testRoot, item))
@@ -34,6 +38,4 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-  here = os.path.abspath(os.path.dirname(__file__))
-  os.environ['TEST_TEMP_DIR'] = os.path.join(here, 'temp')
   sys.exit(main())
