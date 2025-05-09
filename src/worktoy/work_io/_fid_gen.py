@@ -66,6 +66,7 @@ class FidGen(BaseObject):
 
   #  Fallback variables
   __fallback_extension__ = 'json'
+  __fallback_name__ = 'untitled'
   __fallback_directory__ = WaitForIt(os.getcwd)
 
   #  Private variables
@@ -99,19 +100,28 @@ class FidGen(BaseObject):
     return self.__field_owner__
 
   @currentInstance.GET
-  def _getCurrentInstance(self) -> object:
+  def _getCurrentInstance(self) -> Any:
     """Get the current instance."""
     return self.__current_instance__
 
   @currentOwner.GET
   def _getCurrentOwner(self) -> type:
     """Get the current owner."""
-    return maybe(self.__current_owner__, self.__field_owner__, )
+    owner = maybe(self.__current_owner__, self.__field_owner__, )
+    if isinstance(owner, type):
+      return owner
+    if owner is None:
+      raise MissingVariable('__current_owner__', type)
+    raise TypeException('__current_owner__', owner, type)
 
   @baseName.GET
-  def _getFileName(self, ) -> str:
+  def _getBaseName(self, ) -> str:
     """Get the name of the file."""
-    return maybe(self.__base_name__, self.currentOwner.__name__)
+    if isinstance(self.__base_name__, str):
+      return self.__base_name__
+    if isinstance(self.currentOwner, type):
+      return self.currentOwner.__name__
+    return self.__fallback_name__
 
   @fileExtension.GET
   def _getFileExtension(self, **kwargs) -> str:
@@ -153,7 +163,7 @@ class FidGen(BaseObject):
       self.__current_owner__ = owner
 
   @baseName.SET
-  def _setFileName(self, newName: str) -> None:
+  def _setBaseName(self, newName: str) -> None:
     """Set the name of the file."""
     if self.__base_name__ == newName:
       return
