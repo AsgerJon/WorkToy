@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import re
 
-from worktoy.attr import CurrentDescriptor
 from worktoy.parse import maybe
 from worktoy.static import THIS, OWNER, ATTR
 from worktoy.waitaminute import MissingVariable, TypeException
@@ -51,22 +50,45 @@ else:
     Callable = type(func)
 
 
-class WaitForIt(CurrentDescriptor):
+class WaitForIt:
   """Creates a deferred function that is called when the __get__ is first
   called. """
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
   #  Python API
+  __field_name__ = None
+  __field_owner__ = None
 
   #  Private variables
+  __current_instance__ = None
+  __current_owner__ = None
   __call_me_maybe__ = None
+  __pos_args__ = None
+  __key_args__ = None
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Getters
+  def _getFieldName(self, ) -> str:
+    """Get the field name."""
+    if self.__field_name__ is None:
+      raise MissingVariable('__field_name__', str)
+    return self.__field_name__
+
+  def _getFieldOwner(self, ) -> type:
+    """Get the field owner."""
+    if self.__field_owner__ is None:
+      raise MissingVariable('__field_owner__', type)
+    return self.__field_owner__
+
+  def _getCurrentInstance(self, ) -> Any:
+    """Get the current instance."""
+    return self.__current_instance__
+
+  def _getCurrentOwner(self, ) -> type:
+    """Get the current owner."""
+    currentOwner = maybe(self.__current_owner__, self.__field_owner__)
+    if currentOwner is None:
+      raise MissingVariable('__current_owner__', type)
+    return currentOwner
+
   def _getCallMeMaybe(self, ) -> Callable:
     """Get the call me maybe function."""
     if self.__call_me_maybe__ is None:
@@ -78,6 +100,45 @@ class WaitForIt(CurrentDescriptor):
         self.__call_me_maybe__,
         Callable
     )
+
+  def _getPosArgs(self, ) -> list:
+    """Get the positional arguments."""
+    posArgs = maybe(self.__pos_args__, [])
+    if not isinstance(posArgs, (list, tuple)):
+      raise TypeException('__pos_args__', posArgs, list, tuple)
+    currentInstance = self._getCurrentInstance()
+    if currentInstance is None:
+      return posArgs
+    currentOwner = self._getCurrentOwner()
+    out = []
+    for arg in posArgs:
+      if arg is THIS:
+        out.append(currentInstance)
+        continue
+      if arg is OWNER:
+        out.append(currentOwner)
+        continue
+      if arg is ATTR:
+        out.append(self)
+        continue
+      out.append(arg)
+    return out
+
+  def _getKeyArgs(self, ) -> dict:
+    """Get the keyword arguments."""
+    keyArgs = maybe(self.__key_args__, {})
+    if not isinstance(keyArgs, dict):
+      raise TypeException('__key_args__', keyArgs, dict)
+    currentInstance = self._getCurrentInstance()
+    if currentInstance is None:
+      return keyArgs
+    out = {}
+    for key, value in keyArgs.items():
+      if value is THIS:
+        out[key] = currentInstance
+        continue
+      out[key] = value
+    return out
 
   #  Setters
   def _setCurrentInstance(self, instance: Any) -> None:
