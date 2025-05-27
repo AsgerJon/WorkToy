@@ -3,7 +3,6 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._current_descriptor import CurrentDescriptor
 from ._wait_for_it import WaitForIt
 from ._abstract_descriptor import AbstractDescriptor
 from ._abstract_box import AbstractBox
@@ -13,7 +12,6 @@ from ._field import Field
 from ._alias import Alias
 
 __all__ = [
-    'CurrentDescriptor',
     'WaitForIt',
     'AbstractDescriptor',
     'AbstractBox',
