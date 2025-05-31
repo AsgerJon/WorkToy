@@ -16,13 +16,11 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Self, Any, Callable
+  from typing import Self, Any, Callable, Iterator
 
 
 class _Meta(type):
   """Metaclass for ReservedNames."""
-
-  __iter_contents__ = None
 
   __reserved_names__ = [
       '__dict__',
@@ -37,16 +35,9 @@ class _Meta(type):
       '__static_attributes__',
   ]
 
-  def __iter__(cls) -> Self:
+  def __iter__(cls) -> Iterator[str]:
     """Iterate over the reserved names."""
-    cls.__iter_contents__ = [*cls.__reserved_names__, ]
-    return cls
-
-  def __next__(cls) -> str:
-    """Get the next reserved name."""
-    if cls.__iter_contents__:
-      return cls.__iter_contents__.pop(0)
-    raise StopIteration
+    yield from cls.__reserved_names__
 
   def __call__(cls, *args, **kwargs) -> Self:
     """Call the metaclass."""

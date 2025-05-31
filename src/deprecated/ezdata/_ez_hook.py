@@ -139,29 +139,24 @@ class EZHook(AbstractHook):
 
     return __setitem__
 
-  def setItemHook(
-      self,
-      space: EZSpace,
-      key: str,
-      value: object,
-      oldValue: object
-  ) -> bool:
+  def setItemHook(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """The setItemHook method is called when an item is set in the
     enumeration."""
     if callable(value):
       return False
-    space.addField(key, type(value), value)
+    self.space.addField(key, type(value), value)
     return True
 
-  def preCompileHook(self, space: EZSpace, namespace: dict) -> dict:
+  def preCompileHook(self, compiledSpace: dict) -> dict:
     """The preCompileHook method is called before the class is compiled."""
-    dataFields = space.getDataFields()
-    namespace['__slots__'] = (*[dataField.key for dataField in dataFields],)
-    return namespace
+    dataFields = self.space.getDataFields()
+    compiledSpace['__slots__'] = (
+        *[dataField.key for dataField in dataFields],)
+    return compiledSpace
 
-  def postCompileHook(self, space: EZSpace, namespace: dict) -> dict:
+  def postCompileHook(self, compiledSpace: dict) -> dict:
     """The postCompileHook method is called after the class is compiled."""
-    dataFields = space.getDataFields()
+    dataFields = self.space.getDataFields()
     initMethod = self.initFactory(*dataFields)
     eqMethod = self.eqFactory(*dataFields)
     strMethod = self.strFactory(*dataFields)
@@ -169,11 +164,11 @@ class EZHook(AbstractHook):
     iterMethod = self.iterFactory(*dataFields)
     getItemMethod = self.getItemFactory(*dataFields)
     setItemMethod = self.setItemFactory(*dataFields)
-    namespace['__init__'] = initMethod
-    namespace['__eq__'] = eqMethod
-    namespace['__str__'] = strMethod
-    namespace['__repr__'] = reprMethod
-    namespace['__iter__'] = iterMethod
-    namespace['__getitem__'] = getItemMethod
-    namespace['__setitem__'] = setItemMethod
-    return namespace
+    compiledSpace['__init__'] = initMethod
+    compiledSpace['__eq__'] = eqMethod
+    compiledSpace['__str__'] = strMethod
+    compiledSpace['__repr__'] = reprMethod
+    compiledSpace['__iter__'] = iterMethod
+    compiledSpace['__getitem__'] = getItemMethod
+    compiledSpace['__setitem__'] = setItemMethod
+    return compiledSpace

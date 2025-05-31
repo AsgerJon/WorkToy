@@ -5,6 +5,7 @@ implementations in the 'worktoy' library. """
 from __future__ import annotations
 
 from . import BaseMeta
+from ..static import AbstractObject
 
 try:
   from typing import TYPE_CHECKING
@@ -15,12 +16,6 @@ except ImportError:
     TYPE_CHECKING = False
 
 
-class BaseObject(metaclass=BaseMeta):
+class BaseObject(AbstractObject, metaclass=BaseMeta):
   """BaseObject exposes the functionality of the custom metaclass
   implementations in the 'worktoy' library. """
-
-  def __init__(self, *args, **kwargs) -> None:
-    """Why are we still here?"""
-
-  def __init_subclass__(cls, *args, **kwargs) -> None:
-    """Just to suffer?"""

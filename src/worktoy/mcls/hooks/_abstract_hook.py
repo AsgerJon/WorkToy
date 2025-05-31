@@ -1,4 +1,5 @@
-"""AbstractHook provides an abstract baseclass for hooks used by the
+"""
+AbstractHook provides an abstract baseclass for hooks used by the
 namespaces in the metaclass system. These hooks allow modification of the
 class creation process. The following static methods are expected from the
 hooks:
@@ -24,6 +25,9 @@ Subclasses should be made available as attributes on the namespace subclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from types import FunctionType as Func
+
+from ...static import AbstractObject, Alias
 from ...waitaminute import MissingVariable, ReadOnlyError
 
 try:
@@ -42,8 +46,9 @@ if TYPE_CHECKING:
   CompileHook = Callable[[ASpace, dict], dict]
 
 
-class AbstractHook:
-  """AbstractHook provides an abstract baseclass for hooks used by the
+class AbstractHook(AbstractObject):
+  """
+  AbstractHook provides an abstract baseclass for hooks used by the
   namespaces in the metaclass system. These hooks allow modification of the
   class creation process. The following static methods are expected from the
   hooks:
@@ -64,111 +69,57 @@ class AbstractHook:
   - owner: The current namespace class
 
   Subclasses should be made available as attributes on the namespace
-  subclass. """
+  subclass.
+  """
 
-  __field_name__ = None
-  __field_owner__ = None
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  __owning_instance__ = None
-  __owning_class__ = None
+  #  Public variables
+  space = Alias('instance')
+  spaceClass = Alias('owner')
 
-  __owner_hooks_list_name__ = '__hook_objects__'
-  __owner_hooks_getter_name__ = 'getHooks'
+  #  TYPE_CHECKING
+  if TYPE_CHECKING:
+    from . import AbstractHook
+    from .. import AbstractNamespace
+    assert isinstance(AbstractHook.space, AbstractNamespace)
+    assert issubclass(AbstractHook.spaceClass, AbstractNamespace)
 
-  @classmethod
-  def _getOwnerHooksName(cls) -> str:
-    """Getter-function for the name at which the hook is available on the
-    namespace class. """
-    if cls.__owner_hooks_list_name__ is None:
-      raise MissingVariable('__owner_hooks_name__', str)
-    return cls.__owner_hooks_list_name__
-
-  @classmethod
-  def _getOwnerHooksGetterName(cls) -> str:
-    """Getter-function for the name at which the hook is available on the
-    namespace class. """
-    if cls.__owner_hooks_getter_name__ is None:
-      raise MissingVariable('__owner_hooks_getter_name__', str)
-    return cls.__owner_hooks_getter_name__
-
-  def __set_name__(self, owner: type, name: str) -> None:
-    """Set the name of the field and the owner of the field."""
-    self.__field_name__ = name
-    self.__field_owner__ = owner
-    if TYPE_CHECKING:
-      assert issubclass(owner, ASpace)
-    owner.addHook(self, )
-
-  def __get__(self, instance: object, owner: type) -> Self:
-    """Get the wrapped function. The owner is the class through which the
-    descriptor is accessed. This is either __field_class__ or a subclass
-    hereof. """
-    self.__owning_instance__ = instance
-    self.__owning_class__ = owner
-    return self
-
-  def __set__(self, instance: object, value: object) -> Never:
-    """Set the wrapped function. This is not allowed. """
-    raise ReadOnlyError(instance, self, value)
-
-  def getOwningNamespace(self) -> ASpace:
-    """Get the owning instance. This is the instance of the namespace
-    object that owns this hook. """
-    if TYPE_CHECKING:
-      assert isinstance(self.__owning_instance__, ASpace)
-    return self.__owning_instance__
-
-  def getPrimeSpace(self) -> ASpace:
-    """Get the prime space. This is the instance of the namespace object
-    that owns this hook. """
-    namespace = self.getOwningNamespace()
-    if TYPE_CHECKING:
-      assert isinstance(namespace, ASpace)
-    return namespace.getPrimeSpace()
-
-  def getOwningClass(self) -> type:
-    """Get the owning class. This is the class of the namespace object
-    that owns this hook. """
-    return self.__owning_class__
-
-  def getItemHook(self, space: ASpace, key: str, value: object) -> bool:
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  def getItemHook(self, key: str, value: Any, ) -> bool:
     """Hook for getItem. This is called before the __getitem__ method of
     the namespace object is called. The default implementation does nothing
     and returns False. """
-    if TYPE_CHECKING:
-      assert isinstance(self, AbstractHook)
-    self.__owning_instance__ = space
-    return False
 
-  def setItemHook(
-      self,
-      space: ASpace,
-      key: str,
-      value: object,
-      oldValue: object
-  ) -> bool:
+  def setItemHook(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """Hook for setItem. This is called before the __setitem__ method of
     the namespace object is called. The default implementation does nothing
     and returns False. """
-    if TYPE_CHECKING:
-      assert isinstance(self, AbstractHook)
-    self.__owning_instance__ = space
-    return False
 
-  def preCompileHook(self, space: ASpace, namespace: dict) -> dict:
+  def preCompileHook(self, compiledSpace: dict) -> dict:
     """Hook for preCompile. This is called before the __init__ method of
     the namespace object is called. The default implementation does nothing
     and returns the contents unchanged. """
-    if TYPE_CHECKING:
-      assert isinstance(self, AbstractHook)
-    self.__owning_instance__ = space
-    return namespace
+    return compiledSpace
 
-  def postCompileHook(self, space: ASpace, namespace: dict) -> dict:
+  def postCompileHook(self, compiledSpace: dict) -> dict:
     """Hook for postCompile. This is called after the __init__ method of
     the namespace object is called. The default implementation does nothing
     and returns the contents unchanged. """
-    if TYPE_CHECKING:
-      assert isinstance(self, AbstractHook)
-    self.__owning_instance__ = space
-    return namespace
+    return compiledSpace
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+    """
+    After the super call, adds one self to the namespace class as a hook
+    class.
+    """
+    super().__set_name__(owner, name, **kwargs)
+    self.spaceClass.addHook(self)

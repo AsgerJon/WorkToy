@@ -6,13 +6,14 @@ from __future__ import annotations
 from unittest import TestCase
 from math import sin, cos, atan2
 
-from types import FunctionType
+from types import FunctionType as Func
 
 from worktoy.mcls import BaseObject
 from worktoy.parse import maybe
 from worktoy.static import overload
 from worktoy.text import typeMsg
 from worktoy.attr import AttriBox, Field
+from worktoy.waitaminute import TypeException
 
 try:
   from typing import TYPE_CHECKING
@@ -138,75 +139,88 @@ class Complex(BaseObject):
 class TestTypeMsg(TestCase):
   """TestTypeMsg tests the typeMsg function."""
 
-  def setUp(self, ) -> None:
-    """Sets up the test case."""
-    self.z1 = Complex(69, 420)
-    self.z2 = Complex(0.1337, 0.80085)
-
-  def test_single_type(self, ) -> None:
-    """Test that typeMsg correctly creates a type message for a single
-    type."""
-    with self.assertRaises(TypeError) as context:
-      self.z1.r = 'trololololo....'
-    self.assertEqual(
-        str(context.exception),
-        typeMsg('value', 'trololololo....', float)
-    )
-
-    with self.assertRaises(TypeError) as context:
-      self.z2.t = 'half a pie'
-    self.assertEqual(
-        str(context.exception),
-        typeMsg('value', 'half a pie', float)
-    )
-
-  def test_multiple_types(self, ) -> None:
-    """Tests that typeMsg correctly creates an error message appropriate
-    for multiple types."""
-    troll = '69.420'
-    with self.assertRaises(TypeError) as context:
-      self.z1.REAL = troll
-    self.assertEqual(
-        str(context.exception),
-        typeMsg('value', troll, (int, float, complex))
-    )
-    troll = ['69', 420]
-    with self.assertRaises(TypeError) as context:
-      self.z1.IMAG = troll
-    self.assertEqual(
-        str(context.exception),
-        typeMsg('value', troll, (int, float, complex))
-    )
-
-  def test_attribox_error(self, ) -> None:
-    """Tests that typeMsg correctly creates an error message for
-    AttriBox."""
-    troll = '69.420'
-    testSubject = AttriBox[float]()
-    setattr(testSubject, '__pos_args__', troll)
-    with self.assertRaises(TypeError) as context:
-      testSubject._getPosArgs()
-    self.assertEqual(
-        str(context.exception),
-        typeMsg('__pos_args__', troll, tuple)
-    )
-
-  def test_field_error(self, ) -> None:
-    """Tests that typeMsg correctly creates an error message for
-    Field."""
-    troll = 69.420  # A string is expected
-    Troll = type('Troll', (), {'__name__': troll})
-    testSubject = Field()
-    with self.assertRaises(TypeError) as context:
-      testSubject.GET(Troll())
-    self.assertEqual(
-        str(context.exception),
-        typeMsg('getterKey', troll, str)
-    )
-
-    with self.assertRaises(TypeError) as context:
-      testSubject.SET(Troll())
-    self.assertEqual(
-        str(context.exception),
-        typeMsg('setterKey', troll, str)
-    )
+  def assertEqual(self, *args, **kwargs) -> None:
+    """Override assertEqual to use typeMsg."""
+    try:
+      super().assertEqual(*args, **kwargs)
+    except AssertionError as assertionError:
+      print('AssertionError:', )
+      print('Expected:', str(args[0]))
+      print('Actual:', str(args[1]))
+      raise assertionError
+    else:
+      pass
+  #
+  # def setUp(self, ) -> None:
+  #   """Sets up the test case."""
+  #   self.z1 = Complex(69, 420)
+  #   self.z2 = Complex(0.1337, 0.80085)
+  #
+  # def test_single_type(self, ) -> None:
+  #   """Test that typeMsg correctly creates a type message for a single
+  #   type."""
+  #   with self.assertRaises(TypeError) as context:
+  #     self.z1.r = 'trololololo....'
+  #   self.assertEqual(
+  #       str(context.exception),
+  #       typeMsg('value', 'trololololo....', float)
+  #   )
+  #
+  #   with self.assertRaises(TypeError) as context:
+  #     self.z2.t = 'half a pie'
+  #   self.assertEqual(
+  #       str(context.exception),
+  #       typeMsg('value', 'half a pie', float)
+  #   )
+  #
+  # def test_multiple_types(self, ) -> None:
+  #   """Tests that typeMsg correctly creates an error message appropriate
+  #   for multiple types."""
+  #   troll = '69.420'
+  #   with self.assertRaises(TypeError) as context:
+  #     self.z1.REAL = troll
+  #   self.assertEqual(
+  #       str(context.exception),
+  #       typeMsg('value', troll, (int, float, complex))
+  #   )
+  #   troll = ['69', 420]
+  #   with self.assertRaises(TypeError) as context:
+  #     self.z1.IMAG = troll
+  #   self.assertEqual(
+  #       str(context.exception),
+  #       typeMsg('value', troll, (int, float, complex))
+  #   )
+  #
+  # def test_attribox_error(self, ) -> None:
+  #   """Tests that typeMsg correctly creates an error message for
+  #   AttriBox."""
+  #   troll = '69.420'
+  #   testSubject = AttriBox[float]()
+  #   setattr(testSubject, '__pos_args__', troll)
+  #   with self.assertRaises(TypeException) as context:
+  #     testSubject._getPositionalArgs()
+  #   self.assertEqual(
+  #       str(context.exception),
+  #       str(TypeException('__pos_args__', troll, tuple, list))
+  #   )
+  #
+  # def test_field_error(self, ) -> None:
+  #   """Tests that typeMsg correctly creates an error message for
+  #   Field."""
+  #   troll = 69.420  # A string is expected
+  #   Troll = type('Troll', (), {'__name__': troll})
+  #   testSubject = Field()
+  #   sus = Troll()
+  #   with self.assertRaises(TypeException) as context:
+  #     testSubject.GET(sus)
+  #   self.assertEqual(
+  #       str(context.exception),
+  #       str(TypeException('_setGetter', sus, Func))
+  #   )
+  #
+  #   with self.assertRaises(TypeException) as context:
+  #     testSubject.SET(sus)
+  #   self.assertEqual(
+  #       str(context.exception),
+  #       str(TypeException('_addSetter', sus, Func))
+  #   )

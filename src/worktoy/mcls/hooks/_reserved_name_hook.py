@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from ...waitaminute import ReservedName
+
 from . import AbstractHook, ReservedNames
 
 try:
@@ -15,26 +16,23 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from worktoy.mcls import AbstractNamespace as ASpace
+  from typing import Any
 
 
 class ReservedNameHook(AbstractHook):
   """ReservedNameHook protects reserved names."""
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Public variables
   reservedNames = ReservedNames()
 
-  def setItemHook(
-      self,
-      space: ASpace,
-      key: str,
-      value: object,
-      oldValue: object
-  ) -> bool:
+  def setItemHook(self, key: str, value: Any, oldValue: Any) -> bool:
     """The setItemHook method is called when an item is set in the
     namespace."""
     if key in self.reservedNames:
-      if key not in space:
-        dict.__setitem__(space, key, value)
-        return True
-      raise ReservedName(key)
+      if key in self.space:
+        raise ReservedName(key)
     return False

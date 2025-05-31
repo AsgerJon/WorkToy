@@ -6,6 +6,8 @@ provide a simple way to overload methods in the namespace system."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from types import FunctionType as Func
+
 from ...static import Dispatch
 from . import AbstractHook
 
@@ -18,9 +20,8 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import TypeAlias
+  from typing import TypeAlias, Any
   from worktoy.mcls import BaseSpace as BSpace
-  from .. import FunctionType as Func
 
   Types: TypeAlias = tuple[type, ...]
   TypesDict: TypeAlias = dict[Types, Func]
@@ -40,13 +41,7 @@ class OverloadHook(AbstractHook):
   provide a simple way to overload methods in the namespace system.
   """
 
-  def setItemHook(
-      self,
-      space: BSpace,
-      key: str,
-      value: object,
-      oldValue: object
-  ) -> bool:
+  def setItemHook(self, key: str, value: Any, old: Any, ) -> bool:
     """Set the item hook for the namespace system. This method is called
     when an item is set in the namespace system. It collects the
     overload decorated methods and replaces them with a dispatcher that
@@ -55,18 +50,18 @@ class OverloadHook(AbstractHook):
       return False
     typeSigs = getattr(value, '__type_sigs__', None)
     for sig in typeSigs:
-      space.addOverload(key, sig, value)
+      self.space.addOverload(key, sig, value)
     return True
 
-  def postCompileHook(self, space: BSpace, namespace: dict) -> dict:
+  def postCompileHook(self, compiledSpace) -> dict:
     """Post compile hook for the namespace system. This method is called
     after the namespace system is compiled. It collects the overload
     decorated methods and replaces them with a dispatcher that calls the
     correct method based on the arguments passed to it."""
-    overloadMap = space.getOverloadMap()
+    overloadMap = self.space.getOverloadMap()  # str: dict[TypeSig, Func]
     dispatchNames = []
     for key, sigMap in overloadMap.items():
-      namespace[key] = Dispatch(sigMap)
+      compiledSpace[key] = Dispatch(sigMap)
       dispatchNames.append(key)
-    namespace['__dispatch_names__'] = dispatchNames
-    return namespace
+    compiledSpace['__dispatch_names__'] = dispatchNames
+    return compiledSpace

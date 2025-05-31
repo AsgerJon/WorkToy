@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from . import hooks
 
+from ._nuthin import newBuild as _newBuild  # Private
 from ._type_names import Spaces, Base, Space, Types, FunctionType
 from ._abstract_namespace import AbstractNamespace
 from ._abstract_metaclass import AbstractMetaclass

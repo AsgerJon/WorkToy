@@ -5,7 +5,7 @@ that the attribute is read-only. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import _Attribute
+from . import _Attribute, BadSet
 
 try:
   from typing import TYPE_CHECKING
@@ -17,27 +17,6 @@ except ImportError:
 
 if TYPE_CHECKING:
   from typing import Any, Optional, Self
-
-
-class _ReadOnlyError(TypeError):
-  """ReadOnlyError is raised when an attempt is made to modify a read-only
-  attribute. This is a subclass of TypeError and should be used to indicate
-  that the attribute is read-only. """
-
-  def __init__(self, instance: object, desc: object, value: object) -> None:
-    fieldName = getattr(desc, '__field_name__', None)
-    if fieldName is None:
-      TypeError.__init__(self, "Cannot modify read-only attribute.")
-    else:
-      owner = type(instance)
-      ownerName = getattr(owner, '__name__', )
-      cls = type(desc)
-      clsName = getattr(cls, '__name__', )
-      descName = '%s.%s' % (ownerName, fieldName)
-      valueStr = repr(value)
-      info = """Attempted to set value of read-only attribute: '%s' of 
-      descriptor class: '%s' to: '%s'!""" % (descName, clsName, valueStr)
-      TypeError.__init__(self, info)
 
 
 class ReadOnlyError(TypeError):
@@ -55,14 +34,24 @@ class ReadOnlyError(TypeError):
     self.owningInstance = instance
     self.descriptorObject = desc
     self.existingValue, self.newValue = [*values, None, None][:2]
-    header = """Attempted to overwrite read-only attribute '%s.%s'"""
-    if self.existingValue is not None:
-      valStr = """%s having value: '%s'""" % (header, self.existingValue)
-      if self.newValue is not None:
-        valStr = """%s with new value: '%s'""" % (valStr, self.newValue)
+    fieldOwner = getattr(instance, '__field_owner__', None)
+    fieldName = getattr(desc, '__field_name__', None)
+    if fieldOwner is None or fieldName is None:
+      info = """Cannot set value on ReadOnly attribute!"""
     else:
-      valStr = header
-    TypeError.__init__(self, valStr)
+      fieldId = '%s.%s' % (fieldOwner.__name__, fieldName)
+      newStr = str(self.newValue)
+      if isinstance(self.newValue, BadSet):
+        infoSpec = """Attempted to overwrite read-only attribute '%s'
+        with new value: '%s'!"""
+        info = infoSpec % (fieldId, newStr)
+      else:
+        oldStr = str(self.existingValue)
+        infoSpec = """Attempted to overwrite read-only attribute '%s' 
+        having value: '%s' with new value: '%s'!"""
+        info = infoSpec % (fieldId, oldStr, newStr)
+
+    TypeError.__init__(self, info)
 
   def _resolveOther(self, other: object) -> Self:
     """Resolve the other object."""

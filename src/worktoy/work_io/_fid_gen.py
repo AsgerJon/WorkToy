@@ -33,36 +33,8 @@ class FidGen(BaseObject):
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  __field_name__ = None
-  __field_owner__ = None
-  __current_instance__ = None
-  __current_owner__ = None
-  fieldName = Field()
-  fieldOwner = Field()
-  currentInstance = Field()
-  currentOwner = Field()
-
-  def __set_name__(self, owner: type, name: str) -> None:
-    """Set the name of the field."""
-    self.__field_name__ = name
-    self.__field_owner__ = owner
-
-  def __get__(self, instance: Any, owner: type) -> Any:
-    """Get the value of the field."""
-    self.currentInstance = instance
-    self.currentOwner = owner
-    return self
-
-  def __set__(self, instance: Any, value: Any) -> None:
-    """Set the value of the field."""
-    self.currentInstance = instance
-    self.baseName = value
-
-  def __delete__(self, instance: Any) -> None:
-    """Delete the field."""
-    delattr(instance, self.fieldName)
 
   #  Fallback variables
   __fallback_extension__ = 'json'
@@ -85,42 +57,13 @@ class FidGen(BaseObject):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  @fieldName.GET
-  def _getFieldName(self) -> str:
-    """Get the field name."""
-    if self.__field_name__ is None:
-      raise MissingVariable('__field_name__', str)
-    return self.__field_name__
-
-  @fieldOwner.GET
-  def _getFieldOwner(self) -> type:
-    """Get the field owner."""
-    if self.__field_owner__ is None:
-      raise MissingVariable('__field_owner__', type)
-    return self.__field_owner__
-
-  @currentInstance.GET
-  def _getCurrentInstance(self) -> Any:
-    """Get the current instance."""
-    return self.__current_instance__
-
-  @currentOwner.GET
-  def _getCurrentOwner(self) -> type:
-    """Get the current owner."""
-    owner = maybe(self.__current_owner__, self.__field_owner__, )
-    if isinstance(owner, type):
-      return owner
-    if owner is None:
-      raise MissingVariable('__current_owner__', type)
-    raise TypeException('__current_owner__', owner, type)
-
   @baseName.GET
   def _getBaseName(self, ) -> str:
     """Get the name of the file."""
     if isinstance(self.__base_name__, str):
       return self.__base_name__
-    if isinstance(self.currentOwner, type):
-      return self.currentOwner.__name__
+    if isinstance(self.owner, type):
+      return self.owner.__name__
     return self.__fallback_name__
 
   @fileExtension.GET
@@ -150,18 +93,6 @@ class FidGen(BaseObject):
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Setter methods
-  @currentInstance.SET
-  def _setCurrentInstance(self, instance: object) -> None:
-    """Set the current instance."""
-    if instance is not self.__current_instance__:
-      self.__current_instance__ = instance
-
-  @currentOwner.SET
-  def _setCurrentOwner(self, owner: type) -> None:
-    """Set the current owner."""
-    if owner is not self.__current_owner__:
-      self.__current_owner__ = owner
-
   @baseName.SET
   def _setBaseName(self, newName: str) -> None:
     """Set the name of the file."""
@@ -205,35 +136,6 @@ class FidGen(BaseObject):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @staticmethod
-  def _findDirectory(*args) -> Optional[str]:
-    """Finds the directory in positional arguments. """
-    for arg in args:
-      if isinstance(arg, str):
-        if os.path.isabs(arg):
-          return arg
-    return None  # pycharm, please!
-
-  @staticmethod
-  def _getCommonExtensions() -> list[str]:
-    """Returns a list of common file extensions."""
-    return stringList(
-        """json, txt, csv, xml, html, pdf, doc, csv, py, 
-        mkv, mp4, mp3, wav, jpg, png, gif, zip, tar, gz, bz2"""
-    )
-
-  @classmethod
-  def _findFileExtension(cls, *args) -> Optional[str]:
-    """Finds the file extension in positional arguments. """
-    commonExtensions = cls._getCommonExtensions()
-    for arg in args:
-      if isinstance(arg, str):
-        if str.startswith(arg, '*.'):
-          return arg[2:]
-        if arg in commonExtensions:
-          return arg
-    return None  # pycharm, please!
-
   @overload(str)
   def __init__(self, fileName: str, **kwargs) -> None:
     """Initialize the FidGen object."""
@@ -274,3 +176,40 @@ class FidGen(BaseObject):
             VALUES[name] = value
             break
           raise TypeException(key, value, type_)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @staticmethod
+  def _findDirectory(*args) -> Optional[str]:
+    """Finds the directory in positional arguments. """
+    for arg in args:
+      if isinstance(arg, str):
+        if os.path.isabs(arg):
+          return arg
+    return None  # pycharm, please!
+
+  @staticmethod
+  def _getCommonExtensions() -> list[str]:
+    """Returns a list of common file extensions."""
+    return stringList(
+        """json, txt, csv, xml, html, pdf, doc, csv, py, 
+        mkv, mp4, mp3, wav, jpg, png, gif, zip, tar, gz, bz2"""
+    )
+
+  @classmethod
+  def _findFileExtension(cls, *args) -> Optional[str]:
+    """Finds the file extension in positional arguments. """
+    commonExtensions = cls._getCommonExtensions()
+    for arg in args:
+      if isinstance(arg, str):
+        if str.startswith(arg, '*.'):
+          return arg[2:]
+        if arg in commonExtensions:
+          return arg
+    return None  # pycharm, please!

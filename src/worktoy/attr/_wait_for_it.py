@@ -21,13 +21,8 @@ THIS, which is redundant.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import re
-
-from worktoy.parse import maybe
-from worktoy.static import THIS, OWNER, ATTR
-from worktoy.waitaminute import MissingVariable, TypeException
-from worktoy.waitaminute import SubclassException
-from worktoy.waitaminute import ReadOnlyError, ProtectedError
+from ..waitaminute import MissingVariable, TypeException, VariableNotNone
+from . import Field
 
 try:
   from typing import TYPE_CHECKING
@@ -38,177 +33,111 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias, Never
+  from typing import Any
+  from typing import Callable as Func
 else:
-  try:
-    from types import FunctionType as Callable
-  except ImportError:
-    def func() -> None:
-      pass
+  Func = type('_', (type,), dict(__instancecheck__=callable))('_', (), {})
 
 
-    Callable = type(func)
-
-
-class WaitForIt:
+class WaitForIt(Field):
   """Creates a deferred function that is called when the __get__ is first
   called. """
 
-  #  Python API
-  __field_name__ = None
-  __field_owner__ = None
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private variables
-  __current_instance__ = None
-  __current_owner__ = None
-  __call_me_maybe__ = None
-  __pos_args__ = None
-  __key_args__ = None
+  __creator_function__ = None  # The function that creates the descriptor
 
-  #  Getters
-  def _getFieldName(self, ) -> str:
-    """Get the field name."""
-    if self.__field_name__ is None:
-      raise MissingVariable('__field_name__', str)
-    return self.__field_name__
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getFieldOwner(self, ) -> type:
-    """Get the field owner."""
-    if self.__field_owner__ is None:
-      raise MissingVariable('__field_owner__', type)
-    return self.__field_owner__
+  def _getCreatorFunction(self) -> Func:
+    """Get the creator function."""
+    if self.__creator_function__ is None:
+      raise MissingVariable('__creator_function__', Func)
+    if not isinstance(self.__creator_function__, Func):
+      name, value = '__creator_function__', self.__creator_function__
+      raise TypeException(name, value, Func)
+    #  _getCreatorFunction should never be invoked, except when both owner
+    #  and instance have objects other than None. Thus, the creator may be
+    #  retrieved from the instance ensuring it is a bound method.
+    #  Therefore, the 'self/cls' first argument will not swallow one of
+    #  the expected values. If the function is not present, it means it is
+    #  not a method in the class. In this case, the function is called
+    #  directly.
+    key = self.__creator_function__.__name__
+    return getattr(self.instance, key, self.__creator_function__)
 
-  def _getCurrentInstance(self, ) -> Any:
-    """Get the current instance."""
-    return self.__current_instance__
+  def _hasCreatorFunction(self, ) -> bool:
+    """Check if the creator function is set."""
+    if self.__creator_function__ is None:
+      return False
+    if isinstance(self.__creator_function__, Func):
+      return True
+    name, value = '__creator_function__', self.__creator_function__
+    raise TypeException(name, value, Func)
 
-  def _getCurrentOwner(self, ) -> type:
-    """Get the current owner."""
-    currentOwner = maybe(self.__current_owner__, self.__field_owner__)
-    if currentOwner is None:
-      raise MissingVariable('__current_owner__', type)
-    return currentOwner
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getCallMeMaybe(self, ) -> Callable:
-    """Get the call me maybe function."""
-    if self.__call_me_maybe__ is None:
-      raise MissingVariable('__call_me_maybe__', Callable)
-    if callable(self.__call_me_maybe__):
-      return self.__call_me_maybe__
-    raise TypeException(
-        '__call_me_maybe__',
-        self.__call_me_maybe__,
-        Callable
-    )
+  def _setCreatorFunction(self, creator: Func) -> None:
+    """Set the creator function."""
+    if self.__creator_function__ is not None:
+      name, value = '__creator_function__', self.__creator_function__
+      raise VariableNotNone(name, value)
+    if not isinstance(creator, Func):
+      name, value = '__creator_function__', creator
+      raise TypeException(name, value, Func)
+    self.__creator_function__ = creator
 
-  def _getPosArgs(self, ) -> list:
-    """Get the positional arguments."""
-    posArgs = maybe(self.__pos_args__, [])
-    if not isinstance(posArgs, (list, tuple)):
-      raise TypeException('__pos_args__', posArgs, list, tuple)
-    currentInstance = self._getCurrentInstance()
-    if currentInstance is None:
-      return posArgs
-    currentOwner = self._getCurrentOwner()
-    out = []
-    for arg in posArgs:
-      if arg is THIS:
-        out.append(currentInstance)
-        continue
-      if arg is OWNER:
-        out.append(currentOwner)
-        continue
-      if arg is ATTR:
-        out.append(self)
-        continue
-      out.append(arg)
-    return out
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getKeyArgs(self, ) -> dict:
-    """Get the keyword arguments."""
-    keyArgs = maybe(self.__key_args__, {})
-    if not isinstance(keyArgs, dict):
-      raise TypeException('__key_args__', keyArgs, dict)
-    currentInstance = self._getCurrentInstance()
-    if currentInstance is None:
-      return keyArgs
-    out = {}
-    for key, value in keyArgs.items():
-      if value is THIS:
-        out[key] = currentInstance
-        continue
-      out[key] = value
-    return out
-
-  #  Setters
-  def _setCurrentInstance(self, instance: Any) -> None:
-    """Set the current instance."""
-    if instance is not self.__current_instance__:
-      self.__current_instance__ = instance
-
-  def _setCurrentOwner(self, owner: type) -> None:
-    """Set the current owner."""
-    fieldOwner = self._getFieldOwner()
-    if not issubclass(owner, fieldOwner):
-      raise SubclassException(owner, fieldOwner)
-    self.__current_owner__ = owner
-
-  #  Others
-  def _generatePrivateName(self, ) -> str:
-    """Generates a private name for the field based on the field name. """
-    fieldName = self._getFieldName()
-    pattern = re.compile(r'(?<!^)(?=[A-Z])')
-    return '__%s__' % pattern.sub('_', fieldName).lower()
-
-  #  Python API
-  def __set_name__(self, owner: type, name: str) -> None:
-    """Set the name of the field."""
-    self.__field_name__ = name
-    self.__field_owner__ = owner
-
-  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    """Get the value of the descriptor."""
-    if instance is None:
-      return self
-    pvtName = self._generatePrivateName()
-    if hasattr(instance, pvtName):
-      return getattr(instance, pvtName)
-    if kwargs.get('_recursion', False):
-      raise RecursionError
-    self._setCurrentInstance(instance)
-    self._setCurrentOwner(owner)
-    callMeMaybe = self._getCallMeMaybe()
-    posArgs = self._getPosArgs()
-    keyArgs = self._getKeyArgs()
-    val = callMeMaybe(*posArgs, **keyArgs)
-    setattr(instance, pvtName, val)
-    return self.__get__(instance, owner, _recursion=True)
-
-  def __set__(self, instance: Any, value: Any) -> Never:
-    """The setter is disabled"""
-    raise ReadOnlyError(instance, self, value)
-
-  def __delete__(self, instance: Any) -> Never:
-    """The deleter is disabled"""
-    owner = self._getCurrentOwner()
-    val = self.__get__(instance, owner)
-    raise ProtectedError(self, instance, val)
-
-  #  Constructors
-  def __init__(self, *args: Any, **kwargs: Any) -> None:
-    """Constructor for the WaitForIt class."""
-    if not args:
-      raise MissingVariable('__call_me_maybe__', Callable)
-    if args[0] in [THIS, OWNER, ATTR]:
-      self.__call_me_maybe__ = getattr
-      self.__pos_args__ = (*args,)
-    elif isinstance(args[0], str):
-      self.__call_me_maybe__ = getattr
-      self.__pos_args__ = (THIS, *args,)
-    elif callable(args[0]):
-      self.__call_me_maybe__ = args[0]
-      self.__pos_args__ = (*args[1:],)
+  def __init__(self, *args, **kwargs) -> None:
+    posArgs = []
+    tempArgs = [*args, ]
+    while tempArgs:
+      arg = tempArgs.pop(0)
+      if isinstance(arg, Func):
+        self._setCreatorFunction(arg)
+        posArgs.extend(tempArgs)
+        Field.__init__(self, *posArgs, **kwargs)
+        break
+      posArgs.append(arg)
     else:
-      raise TypeException('__call_me_maybe__', args[0], Callable)
-    if kwargs:
-      self.__key_args__ = kwargs
+      Field.__init__(self, *args, **kwargs)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __instance_get__(self, **kwargs) -> Any:
+    """
+    Get the value of the descriptor, which is the result of calling the
+    creator function with the given arguments.
+    """
+    creator = self._getCreatorFunction()
+    pvtName = self._getPrivateName()
+    if not hasattr(self.instance, pvtName, ):
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      args = self._getPositionalArgs()
+      kwargs = self._getKeywordArgs()
+      value = creator(*args, **kwargs)
+      setattr(self.instance, pvtName, value)
+      return self.__instance_get__(_recursion=True, )
+    return getattr(self.instance, pvtName, )
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __call__(self, func: Func) -> Any:
+    """Call the descriptor with the given arguments."""
+    self._setCreatorFunction(func)
+    return func

@@ -3,9 +3,13 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from types import FunctionType as Func
+
 from ..waitaminute import VariableNotNone
+from ..static import TypeSig
+
 from . import AbstractNamespace
-from .hooks import AccessorHook, OverloadHook, NameHook, ReservedNameHook
+from .hooks import OverloadHook, NameHook, ReservedNameHook, PreClassHook
 
 try:
   from typing import TYPE_CHECKING
@@ -17,8 +21,6 @@ except ImportError:
 
 if TYPE_CHECKING:
   from typing import TypeAlias, Callable, Any
-  from worktoy.static import TypeSig
-  from worktoy.mcls import FunctionType as Func
 
   OverloadMap: TypeAlias = dict[str, dict[TypeSig, Callable[..., Any]]]
 
@@ -56,6 +58,6 @@ class BaseSpace(AbstractNamespace):
     self.__overload_map__ = overloadMap
 
   reservedNameHook = ReservedNameHook()
-  accessorHook = AccessorHook()
+  preClassHook = PreClassHook()
   overloadHook = OverloadHook()
   nameHook = NameHook()

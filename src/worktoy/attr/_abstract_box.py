@@ -1,16 +1,38 @@
-"""AttriBox provides a descriptor with lazy instantiation of the
-underlying object. """
+"""
+AbstractBox provides a descriptor with lazy instantiation of a particular
+class instantiating only when 'AbstractBox.__get__' receives an instance
+(not 'None'). This conserves resources and streamlines object creation.
+
+Qt applications such as developed by Pyside6, require the
+'QCoreApplication' to be running before any 'QObject' may be instantiated.
+Since Pyside6 is effectively a C++ library, failure to adhere to this
+requirement leads to segmentation related errors occurring separate from
+the Python interpreter. In other words, it leads to highly undefined
+behaviour. By using 'AbstractBox' descriptors when developing in Pyside6,
+this design patterns becomes much easier to implement and maintain as the
+descriptor itself defers instantiation.
+
+AbstractBox descriptor implements only 'get' functionality, which
+looks for an instance of the wrapped class at the private name of
+the descriptor in the namespace of the current instance. If no such is
+found, it creates one and recursively calls the instance get again. This
+attempt passes positional and keyword arguments received by the descriptor
+constructor and passes them on to the wrapped class constructor.
+
+The 'set' functionality may be implemented in multiple different ways,
+unlike the 'get' functionality which AbstractBox does provide. For 'set'
+and 'delete' functionality, AbstractBox leaves it to subclasses to change
+the default behaviour of simply raising 'ReadOnlyError' or
+'ProtectedError' respectively.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from abc import abstractmethod
-import re
-
-from ..static import THIS
-from ..text import typeMsg
-from ..waitaminute import VariableNotNone, MissingVariable, TypeException
-from . import AbstractDescriptor
+from ..static.zeroton import DELETED
+from ..waitaminute import MissingVariable, TypeException, \
+  attributeErrorFactory
+from . import Field
 
 try:
   from typing import TYPE_CHECKING
@@ -21,111 +43,87 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, Callable, TypeAlias
+  from typing import Any, TypeAlias
 
   Types: TypeAlias = tuple[type, ...]
 
 
-class AbstractBox(AbstractDescriptor):
+class AbstractBox(Field):
   """AttriBox provides a descriptor with lazy instantiation of the
   underlying object. """
 
-  __field_type__ = None
-  __pos_args__ = None
-  __key_args__ = None
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getFieldTypes(self) -> Types:
-    """Get the field type."""
-    if self.__field_type__ is None:
-      raise MissingVariable('__field_type__', type)
-    if isinstance(self.__field_type__, tuple):
-      for type_ in self.__field_type__:
-        if not isinstance(type_, type):
-          e = typeMsg('__field_type__', self.__field_type__, tuple)
-          raise TypeError(e)
-      else:
-        return self.__field_type__
-    raise TypeException('__field_type__', self.__field_type__, tuple)
+  #  Private variables
+  __wrapped__ = None  # __get__ returns an instance of this class
 
-  def _setFieldType(self, *args) -> None:
-    """Set the field type."""
-    if self.__field_type__ is not None:
-      raise VariableNotNone('__field_type__')
-    fieldTypes = []
-    for type_ in args:
-      if not isinstance(type_, type):
-        e = typeMsg('type_', type_, type)
-        raise TypeError(e)
-      if type_ is float:
-        fieldTypes.append(float)
-        fieldTypes.append(int)
-        continue
-      if type_ is complex:
-        fieldTypes.append(complex)
-        fieldTypes.append(float)
-        fieldTypes.append(int)
-        continue
-      fieldTypes.append(type_)
-    self.__field_type__ = (*fieldTypes,)
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getPosArgs(self, instance: object = None) -> tuple:
-    """Get the positional arguments."""
-    posArgs = getattr(self, '__pos_args__', None)
-    if posArgs is None:
-      raise MissingVariable('__pos_args__', tuple)
-    if not isinstance(posArgs, tuple):
-      e = typeMsg('__pos_args__', posArgs, tuple)
-      raise TypeError(e)
-    if instance is None:
-      return posArgs
-    out = []
-    for arg in posArgs:
-      if arg is THIS:
-        out.append(instance)
-      else:
-        out.append(arg)
-    return (*out,)
+  def getWrappedClass(self) -> type:
+    """
+    Getter-function for the wrapped class.
+    """
+    if self.__wrapped__ is None:
+      raise MissingVariable('__wrapped__', type)
+    if isinstance(self.__wrapped__, type):
+      return self.__wrapped__
+    name, value = '__wrapped__', self.__wrapped__
+    raise TypeException(name, value, type)
 
-  def _setPosArgs(self, *args) -> None:
-    """Set the positional arguments."""
-    self.__pos_args__ = (*args,)
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getKeyArgs(self, instance: object = None) -> dict:
-    """Get the keyword arguments."""
-    keyArgs = getattr(self, '__key_args__', None)
-    if keyArgs is None:
-      raise MissingVariable('__key_args__', dict)
-    if not isinstance(keyArgs, dict):
-      e = typeMsg('__key_args__', keyArgs, dict)
-      raise TypeError(e)
-    if instance is None:
-      return keyArgs
-    out = {}
-    for key, value in keyArgs.items():
-      if value is THIS:
-        out[key] = instance
-      else:
-        out[key] = value
-    return out
+  def _setWrappedClass(self, wrapped: type) -> None:
+    """
+    Setter-function for the wrapped class.
+    """
+    if self.__wrapped__ is not None:
+      raise MissingVariable('__wrapped__', type)
+    if not isinstance(wrapped, type):
+      name, value = '__wrapped__', wrapped
+      raise TypeException(name, value, type)
+    self.__wrapped__ = wrapped
+    return
 
-  def _setKeyArgs(self, **kwargs) -> None:
-    """Set the keyword arguments."""
-    self.__key_args__ = {**kwargs, }
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def getPrivateName(self, ) -> str:
-    """Getter-function for the private name of the field."""
-    fieldName = self.getFieldName()
-    pattern = re.compile(r'(?<!^)(?=[A-Z])')
-    return '__%s__' % pattern.sub('_', fieldName).lower()
+  def _createdWrappedObject(self, ) -> Any:  # of __wrapped__ type
+    """
+    Creator-function for the object of __wrapped__ type.
+    """
+    args = self._getPositionalArgs()
+    kwargs = self._getKeywordArgs()
+    wrapCls = self.getWrappedClass()
+    return wrapCls(*args, **kwargs)
 
-  @abstractmethod
-  def _instanceGet(self, instance: object, **kwargs) -> object:
-    """Get the instance of the descriptor."""
+  def __instance_get__(self, **kwargs) -> Any:
+    """
+    Instance getter-function retrieves a wrapped object already at the
+    current instance. If no wrapped object is found, an attempt is made to
+    create and set one after which __'instance_get__' is called again,
+    but with the '_recursion' keyword argument set to 'True'. If again, no
+    wrapped object is found, the function raises a plain RecursionError.
+    """
+    pvtName = self._getPrivateName()
+    out = getattr(self.instance, pvtName, None)
+    if out is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      out = self._createdWrappedObject()
+      setattr(self.instance, pvtName, out)
+      return self.__instance_get__(_recursion=True, )
+    if out is DELETED:
+      raise attributeErrorFactory(self.owner, self.__field_name__)
 
-  @abstractmethod
-  def _instanceSet(self, instance: object, value: object, **kwargs) -> None:
-    """Set the instance of the descriptor."""
-
-  @abstractmethod
-  def _instanceDelete(self, instance: object, **kwargs) -> None:
-    """Delete the instance of the descriptor."""
+    wrapped = self.getWrappedClass()
+    if isinstance(out, wrapped):
+      return out
+    name, value = pvtName, out
+    raise TypeException(name, value, wrapped)

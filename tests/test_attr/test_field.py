@@ -4,14 +4,13 @@
 from __future__ import annotations
 
 from unittest import TestCase
-from math import atan2
-from random import random
 
-from worktoy.attr import AttriBox, Field
+from worktoy.attr import Field
 from worktoy.mcls import BaseMeta
 from worktoy.parse import maybe
-from worktoy.static import overload, THIS
-from worktoy.waitaminute import DispatchException, ReadOnlyError
+from worktoy.static import overload
+from worktoy.static.zeroton import THIS
+from worktoy.waitaminute import ProtectedError
 
 try:
   from typing import TYPE_CHECKING
@@ -22,7 +21,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Self, Any, Never
+  pass
 
 
 class R2(metaclass=BaseMeta):
@@ -56,18 +55,6 @@ class R2(metaclass=BaseMeta):
   def _setR1(self, value: float) -> None:
     """Set the y-coordinate."""
     self.__r_1__ = float(value)
-
-  @r0.DELETE
-  def _deleteR0(self, ) -> Never:
-    """Delete the x and y coordinates."""
-    cls = type(self)
-    raise ReadOnlyError(self, cls.r0, None)
-
-  @r1.DELETE
-  def _deleteR1(self, ) -> Never:
-    """Delete the x and y coordinates."""
-    cls = type(self)
-    raise ReadOnlyError(self, cls.r1, None)
 
   @overload(int, int)
   @overload(float, float)
@@ -112,7 +99,7 @@ class TestField(TestCase):
     self.C_3 = ComplexNumber(self.C_0)
     self.C_4 = ComplexNumber(complex(69.0, 420.0))
 
-  def test_values(self, ) -> None:
+  def test_init_get(self, ) -> None:
     """Test the values of the R2 class."""
     self.assertEqual(self.R2_0.r0, 0.0)
     self.assertEqual(self.R2_0.r1, 0.0)
@@ -123,7 +110,7 @@ class TestField(TestCase):
     self.assertEqual(self.R2_3.r0, 0.0)
     self.assertEqual(self.R2_3.r1, 0.0)
 
-  def test_accessors(self) -> None:
+  def test_good_set(self) -> None:
     """Test the accessors of the R2 class."""
     self.assertEqual(self.R2_0.r0, 0.0)
     self.R2_0.r0 = 69.0
@@ -138,13 +125,13 @@ class TestField(TestCase):
     self.assertEqual(self.C_0.r0, 69.0)
     self.assertEqual(self.C_0.r1, 420.0)
 
-  def test_errors(self) -> None:
+  def test_bad_delete(self) -> None:
     """Tests that the correct errors are raised."""
-    with self.assertRaises(ReadOnlyError):
+    with self.assertRaises(ProtectedError):
       del self.R2_0.r0
-    with self.assertRaises(ReadOnlyError):
+    with self.assertRaises(ProtectedError):
       del self.R2_0.r1
-    with self.assertRaises(ReadOnlyError):
+    with self.assertRaises(ProtectedError):
       del self.C_0.r0
-    with self.assertRaises(ReadOnlyError):
+    with self.assertRaises(ProtectedError):
       del self.C_0.r1

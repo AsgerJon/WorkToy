@@ -6,10 +6,11 @@ from __future__ import annotations
 
 import os
 
+from . import AbstractObject
 from ..static import TypeSig
 from ..text import typeMsg, monoSpace
 from ..waitaminute import HashMismatch, CastMismatch, ResolveException, \
-  VariableNotNone, TypeException
+  VariableNotNone, TypeException, CascadeException
 from ..waitaminute import DispatchException
 
 try:
@@ -31,25 +32,43 @@ if TYPE_CHECKING:
   CallMap: TypeAlias = dict[TypeSig, Callable]
 
 
-class Dispatch:
+class Dispatch(AbstractObject):
   """The Dispatch class dispatches a function call to the appropriate
   function based on the type of the first argument. """
 
-  __field_name__ = None  # name of the function
-  __field_owner__ = None  # owner of the function
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  #  Private variables
   __call_map__ = None
 
-  __bound_instance__ = None  # bound instance
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getBoundInstance(self) -> object:
-    """Get the bound instance."""
-    return self.__bound_instance__
+  def getTypeSigs(self) -> list[TypeSig]:
+    """Get the type signatures."""
+    return [*self.__call_map__.keys(), ]
 
-  def __set_name__(self, owner: type, name: str) -> None:
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init__(self, callMap: CallMap) -> None:
+    self.__call_map__ = callMap
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
     """Set the name of the function."""
-    self.__field_name__ = name
-    self.__field_owner__ = owner
+    AbstractObject.__set_name__(self, owner, name, **kwargs)
 
     for sig, call in self.__call_map__.items():
       if not isinstance(sig, TypeSig):
@@ -59,21 +78,12 @@ class Dispatch:
         raise TypeError(typeMsg('call', call, FunctionType))
       TypeSig.replaceTHIS(sig, owner)
 
-  def __init__(self, callMap: CallMap) -> None:
-    self.__call_map__ = callMap
-
-  def __get__(self, instance: object, owner: type) -> Dispatch:
-    """Get the bound instance."""
-    self.__bound_instance__ = instance
-    return self
-
-  def __set__(self, *__, **_) -> Never:
-    """Set the value of the field."""
-    raise TypeError('Cannot set attribute on class')
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _fastCall(self, *args: Any, **kwargs: Any) -> Any:
     """Fast call the function."""
-    instance = self._getBoundInstance()
     for sig, call in self.__call_map__.items():
       try:
         posArgs = sig.fast(*args)
@@ -87,33 +97,26 @@ class Dispatch:
         continue
       except KeyError:
         continue
-      if instance is not None:
-        return call(instance, *posArgs, **kwargs)
+      if self.instance is not None:
+        return call(self.instance, *posArgs, **kwargs)
       return call(*posArgs, **kwargs)
     raise DispatchException(self, *args)
 
   def _flexCall(self, *args: Any, **kwargs: Any) -> Any:
     """Flex call the function."""
-    instance = self._getBoundInstance()
+    exceptions = []
     for sig, call in self.__call_map__.items():
       try:
         posArgs = sig.flex(*args)
-      except HashMismatch:
+      except Exception as exception:
+        exceptions.append(exception)
         continue
-      except CastMismatch:
-        continue
-      try:
-        if instance is not None:
-          return call(instance, *posArgs, **kwargs)
-        return call(*posArgs, **kwargs)
-      except TypeError as typeError:
-        continue
-      except IndexError as indexError:
-        continue
-      except KeyError:
-        continue
-
-    raise DispatchException(self, *args)
+      else:
+        return self._fastCall(*posArgs, **kwargs)
+    try:
+      raise CascadeException(*exceptions)
+    except CascadeException as cascadeException:
+      raise DispatchException(self, *args) from cascadeException
 
   def _resolveArgs(self, *args) -> tuple:
     """Resolves tuples, lists and strings. """
@@ -140,11 +143,7 @@ class Dispatch:
           posArgs = [*posArgs, evalArg]
           anyResolved = True
         finally:
-          if os.environ.get('RUNNING_TESTS', False):
-            infoSpec = """Dispatch._resolveArgs tried: eval(%s) which 
-            resolved to: '%s' of type: '%s'"""
-            info = infoSpec % (arg, evalArg, type(evalArg).__name__)
-            print(monoSpace(info))
+          pass
       else:
         posArgs.append(arg)
     if anyResolved:
@@ -172,10 +171,6 @@ class Dispatch:
         break
     return self.__call__(*posArgs, **kwargs)
 
-  def getTypeSigs(self) -> list[TypeSig]:
-    """Get the type signatures."""
-    return [*self.__call_map__.keys(), ]
-
   def __str__(self, ) -> str:
     """Get the string representation of the function."""
     sigStr = [str(sig) for sig in self.getTypeSigs()]
@@ -186,24 +181,3 @@ class Dispatch:
   def __repr__(self, ) -> str:
     """Get the string representation of the function."""
     return object.__repr__(self)
-
-  def replaceThis(self, cls: type) -> None:
-    """Replace THIS with the class."""
-    for sig in self.getTypeSigs():
-      sig.replaceTHIS(cls)
-
-  def getFieldName(self, ) -> str:
-    """Get the field name."""
-    if self.__field_name__ is None:
-      raise VariableNotNone('__field_name__')
-    if isinstance(self.__field_name__, str):
-      return self.__field_name__
-    raise TypeException('__field_name__', self.__field_name__, str)
-
-  def getFieldOwner(self, ) -> type:
-    """Get the field owner."""
-    if self.__field_owner__ is None:
-      raise VariableNotNone('__field_owner__')
-    if isinstance(self.__field_owner__, type):
-      return self.__field_owner__
-    raise TypeException('__field_owner__', self.__field_owner__, type)

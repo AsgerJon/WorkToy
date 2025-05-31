@@ -4,9 +4,8 @@ underlying object. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..static import DELETED
-from ..text import monoSpace
-from ..waitaminute import MissingVariable, TypeException
+from ..static.zeroton import DELETED
+from ..waitaminute import TypeException
 from . import AbstractBox
 
 try:
@@ -18,83 +17,60 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any
+  from typing import Any, Self
 
 
 class AttriBox(AbstractBox):
   """AttriBox provides a descriptor with lazy instantiation of the
   underlying object. """
 
-  def __class_getitem__(cls, fieldType: type) -> AttriBox:
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  @classmethod
+  def __class_getitem__(cls, wrapped: type) -> Self:
     """Get the field type."""
-    self = cls()
-    self._setFieldType(fieldType)
+    self = cls.__new__(cls)
+    self._setWrappedClass(wrapped)
     return self
 
   def __call__(self, *args, **kwargs) -> AttriBox:
     """Call the descriptor with the given arguments."""
-    self._setPosArgs(*args)
-    self._setKeyArgs(**kwargs)
+    self.__init__(*args, **kwargs)
     return self
 
-  def _createInitObject(self, instance: object, ) -> Any:
-    """Create the object."""
-    fieldTypes = self._getFieldTypes()
-    posArgs = self._getPosArgs(instance)
-    keyArgs = self._getKeyArgs(instance)
-    exception = None
-    for cls in fieldTypes:
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __instance_set__(self, val: Any, oldVal: Any = None, **kwargs) -> None:
+    """
+    Strongly typed setter requiring the new value to be a strict instance
+    of the wrapped class.
+    """
+    if oldVal is None and not kwargs.get('_recursion', False):
       try:
-        newObject = cls(*posArgs, **keyArgs)
-      except TypeError as typeError:
-        if exception is None:
-          exception = typeError
+        oldVal = self.__instance_get__()
+      except Exception as exception:
+        oldVal = exception
       else:
-        return newObject
-    else:
-      raise exception
+        pass
+      finally:
+        return self.__instance_set__(val, oldVal, _recursion=True, **kwargs)
+    cls = self.getWrappedClass()
+    if not isinstance(val, cls) and val is not DELETED:
+      name = self.__field_name__
+      raise TypeException(name, val, cls)
+    pvtName = self._getPrivateName()
+    setattr(self.instance, pvtName, val)
 
-  def _getExistingObject(self, instance: object) -> Any:
-    """Get the existing object."""
-    pvtName = self.getPrivateName()
-    existingObject = getattr(instance, pvtName, None)
-    if existingObject is DELETED:
-      e = """Attempted to access attribute '%s' from object of type: '%s',
-      which has been deleted!""" % (pvtName, type(instance),)
-      raise AttributeError(monoSpace(e))
-    if existingObject is None:
-      fieldTypes = self._getFieldTypes()
-      raise MissingVariable(pvtName, *fieldTypes)
-    return existingObject
-
-  def _instanceGet(self, instance: Any, **kwargs) -> Any:
-    """Get the instance."""
-    pvtName = self.getPrivateName()
-    fieldTypes = self._getFieldTypes()
-    try:
-      out = self._getExistingObject(instance)
-    except MissingVariable:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      out = self._createInitObject(instance)
-      setattr(instance, pvtName, out)
-      return self._instanceGet(instance, _recursion=True)
-    else:
-      return out
-
-  def _instanceSet(self, instance: Any, value: Any, **kwargs) -> None:
-    """Set the instance."""
-    pvtName = self.getPrivateName()
-    fieldTypes = self._getFieldTypes()
-    if isinstance(value, fieldTypes):
-      return setattr(instance, pvtName, value)
-    raise TypeException('value', value, *fieldTypes, )
-
-  def _instanceDelete(self, instance: object, **kwargs) -> None:
-    """Delete the instance."""
-    pvtName = self.getPrivateName()
-    if getattr(instance, pvtName, None) is None:
-      e = """Attempted to delete attribute '%s' from object of type: '%s', 
-      which owns no such attribute!""" % (pvtName, type(instance),)
-      raise AttributeError(monoSpace(e))
-    setattr(instance, pvtName, DELETED)
+  def __instance_delete__(self, oldVal: Any = None, **kwargs) -> None:
+    """
+    Strongly typed deleter requiring the value to be deleted to be an
+    instance of the wrapped class.
+    """
+    self.__instance_set__(DELETED, )

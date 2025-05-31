@@ -4,10 +4,14 @@ that allow the owning class to explicitly define the accessor methods.  """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..mcls import FunctionType as Func
-from ..parse import maybe
-from ..text import typeMsg
-from ..waitaminute import VariableNotNone, MissingVariable
+from types import FunctionType as Func
+from types import MethodType as Meth
+
+from ..static.zeroton import DELETED
+from ..waitaminute import attributeErrorFactory, TypeException, \
+  ProtectedError, ReadOnlyError
+
+from . import _FieldProperties, _flexSet, _flexDelete
 
 try:
   from typing import TYPE_CHECKING
@@ -18,128 +22,173 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Self, Any, Callable
+  from typing import Any
 
 
-class Field:
+class Field(_FieldProperties):
   """AbstractField provides an implementation of the descriptor protocol
   that allow the owning class to explicitly define the accessor methods.  """
 
-  __field_name__ = None
-  __field_owner__ = None
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  __setter_keys__ = None
-  __getter_key__ = None
-  __deleter_keys__ = None
+  #  Public variables
+  #  # Accessor decorators
+  GET = _FieldProperties._setGetter
+  SET = _FieldProperties._addSetter
+  DELETE = _FieldProperties._addDeleter
+  #  # Notifier decorators
+  preGET = _FieldProperties._addPreGet
+  preSET = _FieldProperties._addPreSet
+  preDELETE = _FieldProperties._addPreDelete
+  postGET = _FieldProperties._addPostGet
+  postSET = _FieldProperties._addPostSet
+  postDELETE = _FieldProperties._addPostDelete
 
-  def __set_name__(self, owner: type, name: str) -> None:
-    """Set the name of the field."""
-    self.__field_name__ = name
-    self.__field_owner__ = owner
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getSetterKeys(self, ) -> tuple[str, ...]:
-    """Getter-function for names of methods called when __set__ is called."""
-    return maybe(self.__setter_keys__, ())
-
-  def _getGetterKey(self, ) -> str:
-    """Getter-function for name of method called when __get__ is called."""
-    return self.__getter_key__
-
-  def _getDeleterKeys(self) -> tuple[str, ...]:
-    """Getter-function for names of methods called when __delete__ is
-    called."""
-    return maybe(self.__deleter_keys__, ())
-
-  def _addSetterKey(self, setterKey: str) -> None:
-    """Add a setter key to the list of setter keys."""
-    if not isinstance(setterKey, str):
-      raise TypeError(typeMsg('setterKey', setterKey, str))
-    existing = self._getSetterKeys()
-    self.__setter_keys__ = (*[*existing, setterKey],)
-
-  def _setGetterKey(self, getterKey: str) -> None:
-    """Set the getter key."""
-    if self.__getter_key__ is not None:
-      raise VariableNotNone('__getter_key__', )
-    if not isinstance(getterKey, str):
-      raise TypeError(typeMsg('getterKey', getterKey, str))
-    self.__getter_key__ = getterKey
-
-  def _addDeleterKey(self, key: str) -> None:
-    """Add a deleter key to the list of deleter keys."""
-    if not isinstance(key, str):
-      raise TypeError(typeMsg('key', key, str))
-    existing = self._getDeleterKeys()
-    self.__deleter_keys__ = (*[*existing, key],)
-
-  def __get__(self, instance: object, owner: type) -> Any:
-    """Getter-function for the field."""
+  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
+    """
+    Reimplementation inserting the hooks.
+    """
+    self.__current_instance__ = instance
+    self.__current_owner__ = owner
     if instance is None:
       return self
-    getterKey = self._getGetterKey()
-    if getterKey is None:
-      raise MissingVariable('__getter_key__', str)
-    if not isinstance(getterKey, str):
-      raise TypeError(typeMsg('getterKey', getterKey, str))
-    getterFunction = getattr(owner, getterKey, None)
-    if getterFunction is None:
-      raise MissingVariable(getterKey, Callable)
-    if not callable(getterFunction):
-      raise TypeError(typeMsg(getterKey, getterFunction, Func))
-    return getterFunction(instance, )
+    value = self.__instance_get__()
+    if value is DELETED:
+      _name = self.__field_name__
+      raise attributeErrorFactory(self.owner, _name)
+    self._notifyPreGet(value)
+    try:
+      return value
+    finally:
+      self._notifyPostGet(value)
 
-  def __set__(self, instance: object, value: Any) -> None:
-    """Setter-function for the field."""
-    owner = type(instance)
-    setterKeys = self._getSetterKeys()
-    if not setterKeys:
-      raise MissingVariable('__setter_keys__', tuple)
-    if not isinstance(setterKeys, tuple):
-      raise TypeError(typeMsg('__setter_keys__', setterKeys, tuple))
-    for setterKey in setterKeys:
-      if not isinstance(setterKey, str):
-        raise TypeError(typeMsg('setterKey', setterKey, str))
-      setterFunction = getattr(owner, setterKey, None)
-      if setterFunction is None:
-        raise MissingVariable(setterKey, Func)
-      if not callable(setterFunction):
-        raise TypeError(typeMsg(setterKey, setterFunction, Func))
-      setterFunction(instance, value)
+  def __set__(self, instance: Any, value: Any, **kwargs) -> None:
+    """
+    Reimplementation inserting the hooks.
+    """
+    self.__current_instance__ = instance
+    self.__current_owner__ = type(instance)
+    try:
+      oldVal = self.__instance_get__()
+    except Exception as exception:
+      oldVal = exception
+    else:
+      pass
+    postSet = self._notifyPostSet
+    self._notifyPreSet(value, oldVal)
+    self.__instance_set__(value, oldVal=oldVal, )
+    self._notifyPostDelete(oldVal)
 
-  def __delete__(self, instance: object) -> None:
-    """Deleter-function for the field."""
-    owner = type(instance)
-    deleterKeys = self._getDeleterKeys()
-    if not deleterKeys:
-      raise MissingVariable('__deleter_keys__', tuple)
-    if not isinstance(deleterKeys, tuple):
-      raise TypeError(typeMsg('__deleter_keys__', deleterKeys, tuple))
-    for deleterKey in deleterKeys:
-      if not isinstance(deleterKey, str):
-        raise TypeError(typeMsg('deleterKey', deleterKey, str))
-      deleterFunction = getattr(owner, deleterKey, None)
-      if deleterFunction is None:
-        raise MissingVariable(deleterKey, Func)
-      if not callable(deleterFunction):
-        raise TypeError(typeMsg(deleterKey, deleterFunction, Func))
-      deleterFunction(instance)
+  def __delete__(self, instance: Any, **kwargs) -> None:
+    """
+    Reimplementation inserting the hooks.
+    """
+    self.__current_instance__ = instance
+    self.__current_owner__ = type(instance)
+    try:
+      oldVal = self.__instance_get__(**kwargs)
+    except Exception as exception:
+      type_, name = self.owner, self.__field_name__
+      raise attributeErrorFactory(type_, name) from exception
+    else:
+      pass
 
-  def GET(self, callMeMaybe: Func) -> Func:
-    """Decorator specifying the getter method for the field."""
-    self._setGetterKey(callMeMaybe.__name__)
-    return callMeMaybe
+    self._notifyPreDelete(oldVal)
+    self.__instance_delete__(oldVal=oldVal, )
+    self._notifyPostDelete(oldVal)
 
-  def SET(self, callMeMaybe: Func) -> Func:
-    """Decorator specifying the setter method for the field."""
-    self._addSetterKey(callMeMaybe.__name__)
-    return callMeMaybe
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def DELETE(self, callMeMaybe: Func) -> Func:
-    """Decorator specifying the deleter method for the field."""
-    self._addDeleterKey(callMeMaybe.__name__)
-    return callMeMaybe
+  def _notifyPreGet(self, value: Any) -> None:
+    """
+    Notifies the pre-get listeners.
+    """
+    preGets = self._getPreGet()
+    for preGet in preGets:
+      preGet(self.instance, value, )
 
-  def __init__(self, *args) -> None:
-    if args:
-      if isinstance(args[0], str):
-        self._setGetterKey(args[0])
+  def _notifyPostGet(self, value: Any) -> None:
+    """
+    Notifies the post-get listeners.
+    """
+    postGets = self._getPostGet()
+    for postGet in postGets:
+      postGet(self.instance, value, )
+
+  def _notifyPreSet(self, value: Any, oldValue: Any) -> None:
+    """
+    Notifies the pre-set listeners.
+    """
+    preSets = self._getPreSet()
+    for preSet in preSets:
+      preSet(self.instance, value, oldValue, )
+
+  def _notifyPostSet(self, value: Any, oldValue: Any) -> None:
+    """
+    Notifies the post-set listeners.
+    """
+    postSets = self._getPostSet()
+    for postSet in postSets:
+      postSet(self.instance, value, oldValue, )
+
+  def _notifyPreDelete(self, oldValue: Any) -> None:
+    """
+    Notifies the pre-delete listeners.
+    """
+    preDeletes = self._getPreDelete()
+    for preDelete in preDeletes:
+      preDelete(self.instance, oldValue, )
+
+  def _notifyPostDelete(self, oldValue: Any) -> None:
+    """
+    Notifies the post-delete listeners.
+    """
+    postDeletes = self._getPostDelete()
+    for postDelete in postDeletes:
+      postDelete(self.instance, oldValue, )
+
+  def __instance_get__(self, **kwargs) -> Any:
+    """
+    Returns the value of the field.
+    """
+    getter = self._getGet()
+    return getter(self.instance)
+
+  def __instance_set__(self, val: Any, oldVal: Any = None, **kwargs) -> None:
+    """
+    Sets the value of the field.
+    """
+    setters = self._getSet()
+    if not setters:
+      raise ReadOnlyError(self.instance, self, val)
+    for setter in setters:
+      try:
+        setter(self.instance, val, old=oldVal, )
+      except TypeError as typeError:
+        if 'unexpected keyword argument' in str(typeError):
+          try:
+            setter(self.instance, val)
+          except Exception as exception:
+            raise exception from typeError
+
+  def __instance_delete__(self, oldVal: Any = None, **kwargs) -> None:
+    """
+    Deletes the value of the field.
+    """
+    deleters = self._getDelete()
+    if not deleters:
+      raise ProtectedError(self, self.instance, oldVal)
+    for deleter in deleters:
+      deleter(self.instance, old=oldVal)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

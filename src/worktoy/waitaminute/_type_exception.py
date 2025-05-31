@@ -58,8 +58,9 @@ class TypeException(TypeError):
   """
 
   varName = _Attribute()
-  actType = _Attribute()
-  expTypes = _Attribute()
+  actualObject = _Attribute()  # This is the object that was received
+  actualType = _Attribute()
+  expectedType = _Attribute()
 
   def __init__(self, name: str, obj: object, *types) -> None:
     """Initialize the TypeException with the name of the variable, the
@@ -71,8 +72,9 @@ class TypeException(TypeError):
     info = infoSpec % (prelude, name, actName, repr(obj))
     TypeError.__init__(self, monoSpace(info))
     self.varName = name
-    self.actType = type(obj)
-    self.expTypes = types
+    self.actualObject = obj
+    self.actualType = type(obj)
+    self.expectedType = types
 
   def _resolveOther(self, other: Any) -> Self:
     """Resolve the other object."""
@@ -95,9 +97,9 @@ class TypeException(TypeError):
     if isinstance(other, cls):
       if self.varName != other.varName:
         return False
-      if self.actType != other.actType:
+      if self.actualType != other.actualType:
         return False
-      if self.expTypes != other.expTypes:
+      if self.expectedType != other.expectedType:
         return False
       return True
     return False

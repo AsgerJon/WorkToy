@@ -1,4 +1,5 @@
-"""NameHook filters named used in the namespace system. If it encounters
+"""
+NameHook filters named used in the namespace system. If it encounters
 names that are near-misses of commonly used names, it will raise a
 QuestionableSyntax exception. Because these names refer to built-in
 functions, the near-miss names will not generally cause any errors related
@@ -49,6 +50,7 @@ collecting, this near-miss will cause HIGHLY UNDEFINED BEHAVIOUR.
 from __future__ import annotations
 
 from . import AbstractHook
+from ...static import AbstractObject
 from ...waitaminute import QuestionableSyntax
 
 try:
@@ -61,23 +63,37 @@ except ImportError:
 
 if TYPE_CHECKING:
   from typing import Any
-  from .. import AbstractNamespace as ASpace
 
 
-class _Name:
+class _Name(AbstractObject):
   """Name descriptor."""
 
-  __pvt_name__ = None
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, pvtName: str) -> None:
-    """Initialize the Name object."""
-    self.__pvt_name__ = pvtName
+  #  Private variables
+  __private_name__ = None
 
-  def __get__(self, instance: object, owner: type) -> Any:
-    """Get the name of the function."""
-    if instance is None:
-      return self
-    return getattr(instance, self.__pvt_name__, )
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init__(self, *args) -> None:
+    for arg in args:
+      if isinstance(arg, str):
+        self.__private_name__ = arg
+        break
+    else:
+      raise ValueError("""Private name required!""")
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __instance_get__(self, **kwargs, ) -> Any:
+    """Get the private name of the descriptor instance."""
+    return getattr(self.instance, self.__private_name__, )
 
 
 class _NearMiss:
@@ -104,7 +120,7 @@ class NameHook(AbstractHook):
   def _getNearMisses(cls) -> list[_NearMiss]:
     """Get the near-miss names."""
     return [
-        _NearMiss('__set_name__', '__setname__'),
+        _NearMiss('__set_name__', '__setname__'),  # NOQA
         _NearMiss('__getitem__', '__get_item__'),
         _NearMiss('__setitem__', '__set_item__'),
         _NearMiss('__delitem__', '__del_item__'),
@@ -120,13 +136,7 @@ class NameHook(AbstractHook):
         raise QuestionableSyntax(nearMiss.missed, nearMiss.correct)
     return False
 
-  def setItemHook(
-      self,
-      space: ASpace,
-      key: str,
-      value: object,
-      oldValue: object
-  ) -> bool:
+  def setItemHook(self, key: str, value: Any, oldValue: Any) -> bool:
     """Hook for setItem. This is called before the __setitem__ method of
     the namespace object is called. The default implementation does nothing
     and returns False. """

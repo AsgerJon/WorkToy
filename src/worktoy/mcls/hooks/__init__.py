@@ -7,7 +7,7 @@ from __future__ import annotations
 from ._reserved_names import ReservedNames
 from ._abstract_hook import AbstractHook
 from ._reserved_name_hook import ReservedNameHook
-from ._accessor_hook import AccessorHook
+from ._pre_class_hook import PreClassHook
 from ._overload_hook import OverloadHook
 from ._name_hook import NameHook
 
@@ -15,7 +15,7 @@ __all__ = [
     'ReservedNames',
     'AbstractHook',
     'ReservedNameHook',
-    'AccessorHook',
+    'PreClassHook',
     'OverloadHook',
     'NameHook',
 ]

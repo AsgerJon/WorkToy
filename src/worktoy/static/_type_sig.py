@@ -9,7 +9,8 @@ from __future__ import annotations
 from ..text import typeMsg
 from ..waitaminute import CastMismatch, HashMismatch
 from .casting import AbstractCast, Cast
-from . import THIS
+from .zeroton import THIS
+from . import PreClass
 
 try:
   from typing import TYPE_CHECKING
@@ -20,11 +21,12 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Callable, TypeAlias, Never
+  from typing import Any, TypeAlias, Union, Iterator
 
   Types: TypeAlias = list[type]
   Casts: TypeAlias = tuple[AbstractCast, ...]
   TypeCasts: TypeAlias = dict[type, AbstractCast]
+  Hash: TypeAlias = Union[PreClass, type]
 
 
 class TypeSig:
@@ -33,17 +35,18 @@ class TypeSig:
   'flex' method attempts to cast each object in a tuple to the expected
   type. The latter is substantially slower than the former."""
 
-  __iter_contents__ = None
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Private variables
   __raw_types__ = None
   __type_casts__ = None
   __hash_value__ = None
 
-  def __init__(self, *types: Any) -> None:
-    """Initialize the TypeSig instance."""
-    if len(types) == 1:
-      if isinstance(types[0], tuple):
-        types = types[0]
-    self.__raw_types__ = types
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def getCasts(self, ) -> Casts:
     """Get the casts for the types."""
@@ -54,11 +57,26 @@ class TypeSig:
       out.append(Cast(type_))
     return (*out,)
 
-  def replaceTHIS(self, cls: type) -> None:
-    """Replace the 'THIS' type with the class."""
-    newTypes = (*[cls if t is THIS else t for t in self.__raw_types__],)
-    self.__raw_types__ = newTypes
-    self.__hash_value__ = hash(newTypes)
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init__(self, *types: Any) -> None:
+    """Initialize the TypeSig instance."""
+    if len(types) == 1:
+      if isinstance(types[0], tuple):
+        types = types[0]
+    self.__raw_types__ = types
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  PYTHON API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __iter__(self, ) -> Iterator[type]:
+    """
+    Implementation of iteration
+    """
+    yield from (self.__raw_types__ or ())
 
   def __hash__(self, ) -> int:
     """Forwards the hash to the hash of the types. If the replaceTHIS
@@ -89,6 +107,21 @@ class TypeSig:
     typeStr = ', '.join([t.__name__ for t in self.__raw_types__])
     info = """%s(%s)""" % (type(self).__name__, typeStr)
     return info
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def replaceTHIS(self, cls: Hash) -> None:
+    """Replace the 'THIS' type with the class."""
+    newTypes = []
+    for type_ in self.__raw_types__:
+      if type_ is THIS or isinstance(type_, PreClass):
+        newTypes.append(cls)
+        continue
+      newTypes.append(type_)
+    self.__raw_types__ = (*newTypes,)
+    self.__hash_value__ = hash(self.__raw_types__)
 
   def fast(self, *args) -> tuple:
     """Check if the types of the arguments match the types in the

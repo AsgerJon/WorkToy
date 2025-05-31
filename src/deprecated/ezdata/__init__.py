@@ -1,8 +1,8 @@
-"""The 'worktoy.ezdata' leverages the 'worktoy' library to provide a
-dataclass. """
+"""
+The 'worktoy.ezdata' package provides the EZData dataclass.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
-from __future__ import annotations
 
 from ._data_field import DataField
 from ._ez_hook import EZHook

@@ -1,4 +1,4 @@
-"""IllegalInstantiationError is a custom exception raised to indicate than
+"""IllegalInstantiation is a custom exception raised to indicate than
 an attempt was made to instantiate a class under illegal conditions."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -18,14 +18,14 @@ if TYPE_CHECKING:
   from typing import Never
 
 
-class IllegalInstantiationError(TypeError):
-  """IllegalInstantiationError is a custom exception raised to indicate than
+class IllegalInstantiation(TypeError):
+  """IllegalInstantiation is a custom exception raised to indicate than
   an attempt was made to instantiate a class under illegal conditions."""
 
   cls = _Attribute()
 
   def __init__(self, cls_: type) -> None:
-    """Initialize the IllegalInstantiationError with the class."""
+    """Initialize the IllegalInstantiation with the class."""
     self.cls = cls_
     infoSpec = """Illegal instantiation of class '%s'"""
     info = infoSpec % cls_.__name__

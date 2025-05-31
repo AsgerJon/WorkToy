@@ -6,7 +6,7 @@ the string the following tags to explicitly set new lines or indentations:
   '<tab>' for one tab containing the number of spaces defined at the
   keyword argument 'tab', by default 2."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from string import digits, punctuation, ascii_letters
@@ -39,5 +39,5 @@ def monoSpace(words: str, **kwargs) -> str:
   lines = [' '.join(line.split()) for line in lines]
   lines = [line.replace(' %s' % tabSymbol, tabSymbol) for line in lines]
   lines = [line.replace('%s ' % tabSymbol, tabSymbol) for line in lines]
-  lines = [line.replace(tabSymbol, ' ' * 2) for line in lines]
-  return '\n'.join(lines)
+  # lines = [line.replace(tabSymbol, ' ' * 2) for line in lines]
+  return '\n'.join(lines).replace(tabSymbol, ' ' * 2)

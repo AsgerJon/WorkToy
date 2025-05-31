@@ -1,4 +1,6 @@
-"""TestAttriBox - Test the Attribox class."""
+"""
+TestAttriBox tests the AttriBox class.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
@@ -10,7 +12,8 @@ from random import random
 from worktoy.attr import AttriBox, Field
 from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.parse import maybe
-from worktoy.static import overload, THIS
+from worktoy.static import overload
+from worktoy.static.zeroton import THIS, DELETED
 from worktoy.waitaminute import DispatchException
 
 try:
@@ -172,7 +175,7 @@ class TestAttriBox(TestCase):
     self.assertEqual(self.sphere.center.y, self.center.y)
     self.assertEqual(self.sphere.center.z, self.center.z)
 
-  def test_set(self, ) -> None:
+  def test_good_set(self, ) -> None:
     """Tests that the setter works."""
     if TYPE_CHECKING:
       assert isinstance(self.point0, Point3d)
@@ -231,7 +234,7 @@ class TestAttriBox(TestCase):
     self.assertAlmostEqual(actualCenter.y, expectedCenter.y)
     self.assertAlmostEqual(actualCenter.z, expectedCenter.z)
 
-  def test_del(self, ) -> None:
+  def test_good_del(self, ) -> None:
     """Test that the deleter works."""
     #  Point 0
     self.assertAlmostEqual(self.point0.x, 0.0)
@@ -287,7 +290,7 @@ class TestAttriBox(TestCase):
     with self.assertRaises(AttributeError):
       _ = self.sphere
 
-  def test_type_set(self) -> None:
+  def test_bad_set(self) -> None:
     """Tests that setting to wrong type raises an error."""
     #  Point 0
     with self.assertRaises(TypeError):

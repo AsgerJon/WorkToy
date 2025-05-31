@@ -18,8 +18,8 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
-
 if TYPE_CHECKING:
+  from typing import Any
   from worktoy.keenum import NumSpace as NSpace
 
 
@@ -41,13 +41,7 @@ class NumHook(AbstractHook):
         '__delete__',
     ]
 
-  def setItemHook(
-      self,
-      space: NSpace,
-      key: str,
-      value: object,
-      oldValue: object
-  ) -> bool:
+  def setItemHook(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """The setItemHook method is called when an item is set in the
     enumeration."""
     if key in self._getReservedNames():
@@ -55,16 +49,16 @@ class NumHook(AbstractHook):
         raise TypeError(typeMsg(key, value, Func))
       if getattr(value, '__is_root__', None) is None:
         raise ReservedName(key, )
-      if space.getClassName() != 'KeeNum':
+      if self.space.getClassName() != 'KeeNum':
         raise ReservedName(key, )
       return False
     if isinstance(value, NUM):
-      return space.addNum(key, value)
+      return self.space.addNum(key, value)
     return False
 
-  def postCompileHook(self, space: NSpace, namespace: dict) -> dict:
+  def postCompileHook(self, compiledSpace: dict) -> dict:
     """The postCompileHook method is called after the namespace is
     compiled."""
-    namespace['__member_objects__'] = []
-    namespace['__allow_instantiation__'] = True
-    return namespace
+    compiledSpace['__member_objects__'] = []
+    compiledSpace['__allow_instantiation__'] = True
+    return compiledSpace
