@@ -111,7 +111,7 @@ class AbstractBox(Field):
     but with the '_recursion' keyword argument set to 'True'. If again, no
     wrapped object is found, the function raises a plain RecursionError.
     """
-    pvtName = self._getPrivateName()
+    pvtName = self.getPrivateName()
     out = getattr(self.instance, pvtName, None)
     if out is None:
       if kwargs.get('_recursion', False):

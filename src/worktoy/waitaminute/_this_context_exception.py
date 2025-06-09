@@ -18,7 +18,7 @@ except ImportError:
 if TYPE_CHECKING:
   from typing import Self, Any, Callable
 
-  from ..attr import AbstractDescriptor as Desc
+  from ..attr import _FieldProperties as Desc
 
 
 class THISContextException(ValueError):

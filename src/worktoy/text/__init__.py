@@ -15,6 +15,7 @@
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._class_body_template import ClassBodyTemplate
 from ._mono_space import monoSpace
 from ._join_words import joinWords
 from ._type_msg import typeMsg
@@ -23,6 +24,7 @@ from ._word_wrap import wordWrap
 from ._func_report import funcReport
 
 __all__ = [
+    'ClassBodyTemplate',
     'monoSpace',
     'typeMsg',
     'joinWords',

@@ -31,9 +31,11 @@ For example:
 from __future__ import annotations
 
 from ._maybe import maybe, maybeType, maybeTypes
+from ._most_specific_base import mostSpecificBase
 
 __all__ = [
     'maybe',
     'maybeType',
     'maybeTypes',
+    'mostSpecificBase',
 ]

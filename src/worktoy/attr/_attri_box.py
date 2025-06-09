@@ -65,7 +65,7 @@ class AttriBox(AbstractBox):
     if not isinstance(val, cls) and val is not DELETED:
       name = self.__field_name__
       raise TypeException(name, val, cls)
-    pvtName = self._getPrivateName()
+    pvtName = self.getPrivateName()
     setattr(self.instance, pvtName, val)
 
   def __instance_delete__(self, oldVal: Any = None, **kwargs) -> None:

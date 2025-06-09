@@ -34,30 +34,37 @@ def _resolveBases(func, name, *args, **kwargs) -> tuple[type, ...]:
   return args
 
 
-def _validateMetaclass(mcls, name, *bases, ) -> None:
+class _InitSub(object):
   """
-  Validates that each base derives from the metaclass or a subclass of it.
+  A chill object that does not raise any:
+  'TypeError: Some.__init_subclass__() takes no keyword arguments'
   """
-  for base in bases:
-    meta = type(base)
-    if meta is mcls or issubclass(meta, mcls):
-      continue
-    raise MetaclassException(mcls, name, base)
+
+  def __init__(self, *args, **kwargs) -> None:
+    """
+    Why are we still here?
+    """
+    object.__init__(self)
+
+  def __init_subclass__(cls, **kwargs) -> None:
+    """
+    Just to suffer?
+    """
+    object.__init_subclass__()
 
 
 def newBuild(func, name, *args, **kwargs):
   """A new build function that does nothing."""
+  mcls = _resolveMetaclass(func, name, *args, **kwargs)
+  bases = _resolveBases(func, name, *args, **kwargs)
   try:
     cls = oldBuild(func, name, *args, **kwargs)
   except TypeError as typeError:
-    try:
-      mcls = _resolveMetaclass(func, name, *args, **kwargs)
-      bases = _resolveBases(func, name, *args, **kwargs)
-      _validateMetaclass(mcls, name, *bases)
-    except MetaclassException as mce:
-      raise mce from typeError
-    else:
-      raise typeError
+    if '__init_subclass__() takes no keyword arguments' in str(typeError):
+      return newBuild(func, name, _InitSub, *args, **kwargs)
+    if 'metaclass conflict' in str(typeError):
+      raise MetaclassException(mcls, name, *bases)
+    raise typeError
   else:
     return cls
   finally:

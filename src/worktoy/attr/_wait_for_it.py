@@ -122,7 +122,7 @@ class WaitForIt(Field):
     creator function with the given arguments.
     """
     creator = self._getCreatorFunction()
-    pvtName = self._getPrivateName()
+    pvtName = self.getPrivateName()
     if not hasattr(self.instance, pvtName, ):
       if kwargs.get('_recursion', False):
         raise RecursionError

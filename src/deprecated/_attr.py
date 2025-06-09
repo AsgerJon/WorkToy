@@ -42,7 +42,7 @@ class Attr(AbstractObject):
     if self.__private_name__ is None:
       if kwargs.get('_recursion', False):
         raise RecursionError
-      name = AbstractObject._getPrivateName(self, )
+      name = AbstractObject.getPrivateName(self, )
       self._setPrivateName(name, )
       return self._getPrivateName(_recursion=True, )
     if isinstance(self.__private_name__, str):

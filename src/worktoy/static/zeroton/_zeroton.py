@@ -192,17 +192,17 @@ class Zeroton(type):
       value = getattr(cls, name, None)
       if value is None:
         setattr(cls, name, factory)
-    #
-    # setattr(cls, '__new__', cls._badNewFactory())
-    # setattr(cls, '__init__', cls._badInitFactory())
-    # setattr(cls, '__hash__', cls._badHashFactory())
 
-  # def __call__(cls, *args, **kwargs) -> Never:
-  #   """Prevent instantiation of Zeroton class."""
-  #   if not getattr(cls, '__trust_me_bro__', False):
-  #     raise IllegalInstantiation(cls)
-  #   self = cls.__new__(*args, **kwargs)
-  #   return self
+    setattr(cls, '__new__', cls._badNewFactory())
+    setattr(cls, '__init__', cls._badInitFactory())
+    setattr(cls, '__hash__', cls._badHashFactory())
+
+  def __call__(cls, *args, **kwargs) -> Never:
+    """Prevent instantiation of Zeroton class."""
+    if not getattr(cls, '__trust_me_bro__', False):
+      raise IllegalInstantiation(cls)
+    self = cls.__new__(*args, **kwargs)
+    return self
 
   def __hash__(cls, ) -> Never:
     """

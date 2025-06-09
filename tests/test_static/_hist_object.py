@@ -7,7 +7,7 @@ HistObject drops in for 'BaseObject' but with the namespace based on
 from __future__ import annotations
 
 from test_static import HistMetaclass
-from worktoy.attr import AbstractDescriptor
+from worktoy.attr import _FieldProperties
 
 try:
   from typing import TYPE_CHECKING

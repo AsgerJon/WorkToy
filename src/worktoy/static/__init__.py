@@ -7,6 +7,8 @@ from __future__ import annotations
 #  Private classes
 from ._current_instance import _CurrentInstance
 from ._current_owner import _CurrentOwner
+from ._current_module import _CurrentModule
+from ._current_class import _CurrentClass
 
 #  Public classes
 from ._item_call import ItemCall

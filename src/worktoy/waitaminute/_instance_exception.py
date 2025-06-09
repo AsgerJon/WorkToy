@@ -21,7 +21,7 @@ except ImportError:
 if TYPE_CHECKING:
   from typing import Self, Any
 
-  from ..attr import AbstractDescriptor as Desc
+  from ..attr import _FieldProperties as Desc
 
 
 class InstanceException(ValueError):

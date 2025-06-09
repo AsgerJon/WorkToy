@@ -36,7 +36,7 @@ from ._protected_error import ProtectedError
 from ._type_exception import TypeException
 from ._deleted_attribute_exception import DeletedAttributeException
 from ._path_syntax_exception import PathSyntaxException
-from ._illegal_instantiation_error import IllegalInstantiation
+from ._illegal_instantiation import IllegalInstantiation
 from ._illegal_name import IllegalName
 from ._duplicate_seed_exception import DuplicateSeedException
 from ._cascade_exception import CascadeException

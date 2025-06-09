@@ -31,20 +31,20 @@ class TestZeroton(TestCase):
 
   def test_raises(self, ) -> None:
     """Test that the Zeroton metaclass raises the correct exceptions."""
-    # with self.assertRaises(IllegalInstantiation) as context:
-    #   _ = THIS()
-    # cls = IllegalInstantiation.cls.__get__(context.exception, object)
-    # self.assertIs(cls, THIS)
-    #
-    # with self.assertRaises(IllegalInstantiation) as context:
-    #   _ = OWNER()
-    # cls = IllegalInstantiation.cls.__get__(context.exception, object)
-    # self.assertIs(cls, OWNER)
-    #
-    # with self.assertRaises(IllegalInstantiation) as context:
-    #   _ = DESC()
-    # cls = IllegalInstantiation.cls.__get__(context.exception, object)
-    # self.assertIs(cls, DESC)
+    with self.assertRaises(IllegalInstantiation) as context:
+      _ = THIS()
+    cls = IllegalInstantiation.cls.__get__(context.exception, object)
+    self.assertIs(cls, THIS)
+
+    with self.assertRaises(IllegalInstantiation) as context:
+      _ = OWNER()
+    cls = IllegalInstantiation.cls.__get__(context.exception, object)
+    self.assertIs(cls, OWNER)
+
+    with self.assertRaises(IllegalInstantiation) as context:
+      _ = DESC()
+    cls = IllegalInstantiation.cls.__get__(context.exception, object)
+    self.assertIs(cls, DESC)
 
   def test_ad_hoc(self) -> None:
     """

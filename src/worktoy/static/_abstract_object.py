@@ -30,8 +30,9 @@ from ..parse import maybe
 
 from .zeroton import THIS, OWNER, DELETED
 
-from . import _CurrentInstance, _CurrentOwner
+from . import _CurrentInstance, _CurrentOwner, _CurrentClass, _CurrentModule
 
+#  Below provides compatibility back to Python 3.7
 try:
   from typing import TYPE_CHECKING
 except ImportError:
@@ -79,6 +80,12 @@ class AbstractObject(object, metaclass=type):
   #  Public variables
   instance = _CurrentInstance()
   owner = _CurrentOwner()
+  cls = _CurrentClass()
+  module = _CurrentModule()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def getFieldName(self) -> str:
     """Get the field name."""
@@ -128,7 +135,7 @@ class AbstractObject(object, metaclass=type):
       return {**keyArgs, }
     raise TypeException('__key_args__', self.__key_args__, dict)
 
-  def _getPrivateName(self, ) -> str:
+  def getPrivateName(self, ) -> str:
     """Getter-function for the private name of the field."""
     fieldName = self.getFieldName()
     pattern = re.compile(r'(?<!^)(?=[A-Z])')
@@ -153,28 +160,39 @@ class AbstractObject(object, metaclass=type):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __set_name__(self, owner: type, name: str, **kwargs) -> None:
-    """Set the name of the field and the owner of the field."""
+    """
+    Provides the instance with awareness of the class, if any, owning it
+    and by what name it does. This method is invoked by '__build_class__'
+    which is implemented entirely in C.
+    """
     self.__field_name__ = name
     self.__field_owner__ = owner
 
   def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    """Get the value of the field."""
-    self.__current_instance__ = instance
-    self.__current_owner__ = owner
+    """
+    After updating the instance and owner, this method returns 'self' if
+    accessed from the class (instance is None) or calls the
+    '__instance_get__' method.
+    """
+    self.updateContext(instance, owner, **kwargs)
     if instance is None:
       return self
     return self.__instance_get__(**kwargs)
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> None:
-    """Set the value of the field."""
-    self.__current_instance__ = instance
-    self.__current_owner__ = type(instance)
+    """
+    After updating the instance and owner, this method calls the
+    '__instance_set__' method.
+    """
+    self.updateContext(instance, **kwargs)
     return self.__instance_set__(value, **kwargs)
 
   def __delete__(self, instance: Any, **kwargs) -> None:
-    """Delete the value of the field."""
-    self.__current_instance__ = instance
-    self.__current_owner__ = type(instance)
+    """
+    After updating the instance and owner, this method calls the
+    '__instance_delete__' method.
+    """
+    self.updateContext(instance, **kwargs)
     return self.__instance_delete__(**kwargs)
 
   #  Presentation
@@ -208,6 +226,25 @@ class AbstractObject(object, metaclass=type):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def updateContext(self, *args, **kwargs) -> None:
+    """Updates the current instance."""
+    if len(args) == 1:  # __set__ and __delete__ methods
+      self.__current_instance__ = args[0]
+      self.__current_owner__ = type(args[0])
+    elif len(args) == 2:
+      ins, own = args
+      if not isinstance(ins, own) and ins is not None:
+        raise TypeException('instance', ins, own)
+      self.__current_instance__ = ins  # even if None
+      self.__current_owner__ = own
+    else:
+      print('__________________________________________________________')
+      print("""updateContext problem! Received:""")
+      for arg in args:
+        print('type: %s, value: %s' % (type(arg), str(arg),))
+      print('¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨')
+      raise NotImplementedError('precise argument exception not ready')
 
   def __instance_get__(self, **kwargs, ) -> Any:
     """Subclasses may implement this method to specify the object to be
