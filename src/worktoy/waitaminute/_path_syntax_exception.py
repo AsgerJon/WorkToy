@@ -4,10 +4,7 @@ a 'str' object is not a valid absolute path. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
-
 from worktoy.text import monoSpace
-
 from . import _Attribute
 
 try:
@@ -19,7 +16,9 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias
+  from typing import Any, Union, Self, TypeAlias, LiteralString
+
+  Path: TypeAlias = Union[str, bytes, LiteralString]
 
 
 class PathSyntaxException(ValueError):
@@ -30,7 +29,7 @@ class PathSyntaxException(ValueError):
 
   badPath = _Attribute()
 
-  def __init__(self, path: str) -> None:
+  def __init__(self, path: Path) -> None:
     """
     Initialize the PathSyntaxException with the invalid path.
 

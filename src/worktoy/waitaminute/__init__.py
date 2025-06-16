@@ -10,6 +10,7 @@ from ._bad_value import BadValue
 from ._bad_set import BadSet
 from ._bad_delete import BadDelete
 from ._metaclass_exception import MetaclassException
+from ._del_exception import DelException
 from ._compound_exception import CompoundException
 from ._alias_exception import AliasException
 from ._abstract_exception import AbstractException
@@ -48,6 +49,7 @@ __all__ = [
     'BadDelete',
     'MetaclassException',
     'CompoundException',
+    'DelException',
     'AliasException',
     'HashMismatch',
     'CastMismatch',

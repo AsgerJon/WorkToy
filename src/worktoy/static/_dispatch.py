@@ -97,6 +97,9 @@ class Dispatch(AbstractObject):
         continue
       except KeyError:
         continue
+      except Exception as exception:
+        print("""Unhandled exception in _fastCall: %s""" % str(exception))
+        raise SystemExit
       if self.instance is not None:
         return call(self.instance, *posArgs, **kwargs)
       return call(*posArgs, **kwargs)

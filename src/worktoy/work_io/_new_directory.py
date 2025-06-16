@@ -6,10 +6,6 @@ from __future__ import annotations
 
 import os
 
-from worktoy.text import monoSpace
-
-from worktoy.waitaminute import PathSyntaxException
-
 from . import validateAvailablePath
 
 try:
@@ -21,10 +17,12 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias
+  from typing import Union, TypeAlias, LiteralString
+
+  Path: TypeAlias = Union[str, bytes, LiteralString]
 
 
-def newDirectory(path: str) -> str:
+def newDirectory(path: Path) -> str:
   """
   Creates a new directory at the specified path.
 

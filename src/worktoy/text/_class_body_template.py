@@ -22,6 +22,16 @@ ClassBodyTemplate = """
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  #  Class Variables
+  
+  #  Fallback Variables
+  
+  #  Private Variables
+  
+  #  Public Variables
+  
+  #  Virtual Variables
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

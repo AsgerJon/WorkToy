@@ -117,7 +117,7 @@ class ComplexNumber(metaclass=BaseMeta):
         return args[0]
     try:
       return cls(*args)
-    except DispatchException:
+    except TypeError:  # DispatchException is a subclass of TypeError
       return NotImplemented
 
   def __hash__(self, ) -> int:

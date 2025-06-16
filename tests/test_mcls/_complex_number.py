@@ -1,4 +1,6 @@
-"""ComplexNumber implementation"""
+"""
+ComplexNumber implementation
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
@@ -18,7 +20,8 @@ except ImportError:
     TYPE_CHECKING = False
 
 from worktoy.mcls import BaseMeta
-from worktoy.static import overload, THIS
+from worktoy.static import overload
+from worktoy.static.zeroton import THIS
 
 if TYPE_CHECKING:
   from typing import Any, Self

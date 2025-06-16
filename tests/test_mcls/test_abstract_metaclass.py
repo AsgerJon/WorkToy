@@ -78,7 +78,9 @@ class TestAbstractMetaclass(TestCase):
   def setUp(self, ) -> None:
     """Set up the test case."""
     super().setUp()
-    AbstractMetaclass._validateNamespace(dict())
+    name = 'test'
+    bases = ()
+    AbstractMetaclass._validateNamespace(name, bases, dict())
 
   def test_abstract_metaclass(self) -> None:
     """Test the AbstractMetaclass class."""

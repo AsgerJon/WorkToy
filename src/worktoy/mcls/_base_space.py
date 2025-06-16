@@ -8,7 +8,7 @@ from types import FunctionType as Func
 from ..waitaminute import VariableNotNone
 from ..static import TypeSig
 
-from . import AbstractNamespace
+from . import AbstractNamespace, AbstractMetaclass
 from .hooks import OverloadHook, NameHook, ReservedNameHook, PreClassHook
 
 try:
@@ -34,11 +34,21 @@ class BaseSpace(AbstractNamespace):
     """Build the overload map for the namespace."""
     if self.__overload_map__ is not None:
       raise VariableNotNone('__overload_map__', )
-    if self.isPrime():
-      self.__overload_map__ = {}
-      return
-    parentSpace = self.getParentSpace()
-    self.__overload_map__ = {**parentSpace.getOverloadMap(), }
+    mcls = self.getMetaclass()
+    bases = self.getClassBases()
+    baseSpaces = []
+    self.__overload_map__ = {}
+    for base in bases:
+      if isinstance(base, AbstractMetaclass):
+        baseSpaces.append(base.getNamespace())
+    while baseSpaces:
+      space = baseSpaces.pop()
+      baseOverloadMap = space.getOverloadMap()
+      for key, overloads in baseOverloadMap.items():
+        existing = self.__overload_map__.get(key, {})
+        for sig, func in overloads.items():
+          existing[sig] = func
+        self.__overload_map__[key] = existing
 
   def getOverloadMap(self, **kwargs) -> OverloadMap:
     """Get the overload map for the namespace."""

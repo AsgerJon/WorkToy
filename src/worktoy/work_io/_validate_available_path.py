@@ -19,10 +19,12 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias
+  from typing import Union, TypeAlias, LiteralString
+
+  Path: TypeAlias = Union[str, bytes, LiteralString]
 
 
-def validateAvailablePath(path: str) -> str:
+def validateAvailablePath(path: Path) -> str:
   """
   Validates that a given 'str' object is a valid file or directory path
   that does not already exist.

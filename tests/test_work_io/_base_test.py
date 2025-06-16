@@ -98,4 +98,4 @@ class BaseTest(TestCase):
     """
     Tear down the test case.
     """
-    # cls.clearTempDir()
+    cls.clearTempDir()

@@ -24,5 +24,5 @@ from . import waitaminute
 from . import static
 from . import mcls
 from . import attr
-# from . import keenum
-# from . import ezdata
+from . import keenum
+from . import ezdata

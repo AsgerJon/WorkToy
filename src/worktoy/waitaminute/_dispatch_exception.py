@@ -8,6 +8,7 @@ error handlers. """
 from __future__ import annotations
 
 from . import _Attribute
+from ..text import monoSpace
 
 try:
   from typing import TYPE_CHECKING
@@ -51,7 +52,8 @@ class DispatchException(TypeError):
 
     infoSpec = """%s received arguments with signature: <br><tab>%s
     <br>which does not match any of the expected signatures:<br><tab>%s"""
-    info = infoSpec % (header, argStr, sigStr)
+    info = monoSpace(infoSpec % (header, argStr, sigStr))
+    self.fuckUnitTest = info
     TypeError.__init__(self, info)
 
   def _resolveOther(self, other: object) -> Self:
@@ -80,3 +82,10 @@ class DispatchException(TypeError):
     if self.receivedTypes != other.receivedTypes:
       return False
     return True
+
+  def __repr__(self, ) -> str:
+    """
+    Get the string representation of the DispatchException even if someone
+    tries to repr it instead.
+    """
+    return self.__str__()

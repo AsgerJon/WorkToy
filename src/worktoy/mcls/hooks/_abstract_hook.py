@@ -1,25 +1,6 @@
 """
 AbstractHook provides an abstract baseclass for hooks used by the
-namespaces in the metaclass system. These hooks allow modification of the
-class creation process. The following static methods are expected from the
-hooks:
-- setItem: called before calls to __setitem__ on the namespace object.
-- getItem: called before calls to __getitem__ on the namespace object.
-- preCompile: called before the final namespace object is populated with
-the conventional key, value pairs.
-- postCompile: called after the final namespace object is populated with
-the conventional key, value pairs.
-
-Subclasses may implement either of the above methods. The default
-implementations have no effect, so subclasses need only implement the
-methods they are interested in.
-
-AbstractHook implements the descriptor protocol such that calls to
-'__get__' receive:
-- instance: The current instance of the namespace object.
-- owner: The current namespace class
-
-Subclasses should be made available as attributes on the namespace subclass.
+namespaces in the metaclass system.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen

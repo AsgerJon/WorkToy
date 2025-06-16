@@ -1,5 +1,7 @@
-"""AbstractNamespace class provides a base class for custom namespace
-objects used in custom metaclasses."""
+"""
+AbstractNamespace class provides a base class for custom namespace
+objects used in custom metaclasses.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
@@ -26,8 +28,29 @@ if TYPE_CHECKING:
 
 
 class AbstractNamespace(HistDict):
-  """AbstractNamespace class provides a base class for custom namespace
-  objects used in custom metaclasses."""
+  """
+  AbstractNamespace defines the custom execution environment used by
+  AbstractMetaclass during class construction. It provides a controlled
+  and extensible context for evaluating class bodies, enabling advanced
+  metaprogramming behavior.
+
+  The core feature of AbstractNamespace is its support for modular
+  hook-based behavior. Hooks are instances of subclasses of AbstractHook,
+  declared directly within the body of the namespace class. Upon
+  declaration, each hook registers itself with the namespace via the
+  descriptor protocol.
+
+  These hooks allow interception and transformation of key events during
+  class construction, including symbol access, assignment, and final
+  namespace compilation. For details on available hook methods and their
+  intended usage, refer to the AbstractHook documentation.
+
+  This design allows complex functionality, such as decorator-based
+  overload resolution and placeholder replacement, to be cleanly
+  separated into reusable components. By defining a namespace subclass
+  with the desired combination of hooks, users can tailor the behavior of
+  class construction without modifying the core metaclass logic.
+  """
 
   #  Reserved private names
   __meta_class__ = None
@@ -111,9 +134,9 @@ class AbstractNamespace(HistDict):
     """Returns the name of the class."""
     return self.__class_name__
 
-  def getBaseClass(self, ) -> type:
-    """Returns the base class."""
-    return self.__base_class__
+  # def getBaseClass(self, ) -> type:
+  #   """Returns the base class."""
+  #   return self.__base_class__
 
   def getKwargs(self, ) -> dict:
     """Returns the keyword arguments passed to the class."""
@@ -172,27 +195,27 @@ class AbstractNamespace(HistDict):
     under creation. """
     return True if self.getPrimeSpace() is self else False
 
-  def getParent(self, ) -> type:
-    """Getter-function for the parent baseclass of the class under
-    creation. """
-    if self.isPrime():
-      raise MissingVariable('parent', type(self))
-    return self.getBaseClass()
+  # def getParent(self, ) -> type:
+  #   """Getter-function for the parent baseclass of the class under
+  #   creation. """
+  #   if self.isPrime():
+  #     raise MissingVariable('parent', type(self))
+  #   return self.getBaseClass()
 
-  def getParentSpace(self, ) -> Self:
-    """Getter-function for the namespace object of the parent baseclass of
-    the class under creation. """
-    cls = type(self)
-    try:
-      parentBase = self.getParent()
-    except MissingVariable as missingVariable:
-      return self
-    parentSpace = getattr(parentBase, '__namespace__', None)
-    if parentSpace is None:
-      raise MissingVariable('__namespace__', cls)
-    if isinstance(parentSpace, cls):
-      return parentSpace
-    raise TypeError(typeMsg('parentSpace', parentSpace, cls))
+  # def getParentSpace(self, ) -> Self:
+  #   """Getter-function for the namespace object of the parent baseclass of
+  #   the class under creation. """
+  #   cls = type(self)
+  #   try:
+  #     parentBase = self.getParent()
+  #   except MissingVariable as missingVariable:
+  #     return self
+  #   parentSpace = getattr(parentBase, '__namespace__', None)
+  #   if parentSpace is None:
+  #     raise MissingVariable('__namespace__', cls)
+  #   if isinstance(parentSpace, cls):
+  #     return parentSpace
+  #   raise TypeError(typeMsg('parentSpace', parentSpace, cls))
 
   def __getitem__(self, key: str, **kwargs) -> Any:
     """Returns the value of the key."""
@@ -250,9 +273,10 @@ class AbstractNamespace(HistDict):
     namespace = self.preCompile()
     for (key, val) in dict.items(self, ):
       namespace[key] = val
+    namespace = self.postCompile(namespace)
     namespace['__metaclass__'] = self.getMetaclass()
     namespace['__namespace__'] = self
-    return self.postCompile(namespace)
+    return namespace
 
   def postCompile(self, namespace: dict) -> dict:
     """The object returned from this method is passed to the __new__
@@ -264,30 +288,28 @@ class AbstractNamespace(HistDict):
       if TYPE_CHECKING:
         assert isinstance(hook, AbstractHook)
       namespace = hook.postCompileHook(namespace)
-    if '__metaclass__' not in namespace:
-      raise MissingVariable('__metaclass__', self.getMetaclass())
-    if '__namespace__' not in namespace:
-      raise MissingVariable('__namespace__', type(self))
     return namespace
 
   def __str__(self, ) -> str:
     """Returns the string representation of the namespace object."""
+    bases = self.getClassBases()
     spaceName = type(self).__name__
     clsName = self.getClassName()
-    baseName = self.getBaseClass().__name__
+    baseNames = ', '.join([base.__name__ for base in bases])
     mclsName = self.getMetaclass().__name__
     info = """Namespace object of type: '%s' created by the '__prepare__' 
     method on metaclass: '%s' with base: %s to create class: '%s'."""
-    return monoSpace(info % (spaceName, mclsName, baseName, clsName))
+    return monoSpace(info % (spaceName, mclsName, baseNames, clsName))
 
   def __repr__(self, ) -> str:
     """Returns the string representation of the namespace object."""
+    bases = self.getClassBases()
     spaceName = type(self).__name__
     clsName = self.getClassName()
     mclsName = self.getMetaclass().__name__
-    baseName = self.getBaseClass().__name__
+    baseNames = ', '.join([base.__name__ for base in bases])
     mclsName = self.getMetaclass().__name__
-    args = """%s, %s, (%s,)""" % (mclsName, clsName, baseName)
+    args = """%s, %s, (%s,)""" % (mclsName, clsName, baseNames)
     kwargs = [(k, v) for (k, v) in self.getKwargs().items()]
     kwargStr = ', '.join(['%s=%s' % (k, str(v)) for (k, v) in kwargs])
     if kwargStr:
