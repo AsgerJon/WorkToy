@@ -97,7 +97,7 @@ class PreClassHook(AbstractHook):
     """
     overloadMap = self.space.getOverloadMap()  # str: dict[TypeSig, Func]
     preClass = self._getPreClass()
-    bases = self.space.getClassBases()
+    bases = self.space.getBases()
     newLoadMap = dict()
     for key, sigMap in overloadMap.items():
       moreSigMap = dict()

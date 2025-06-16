@@ -57,27 +57,6 @@ class Wochentag(KeeNum):
 class TestKeeNum(TestCase):
   """Test the KeeNum class."""
 
-  def test_ad_hoc(self) -> None:
-    """
-    Ad hoc testing
-    """
-
-    print("-----")
-    print(WeekDay)
-    for day in WeekDay:
-      print(day)
-
-    print("-----")
-    print(Ugedag)
-    for dag in Ugedag:
-      print(dag)
-
-    print("-----")
-    print(Wochentag)
-
-    for tag in Wochentag:
-      print(tag)
-
   def test_auto(self) -> None:
     """Test the auto function."""
     self.assertEqual(len(WeekDay), len(Ugedag))

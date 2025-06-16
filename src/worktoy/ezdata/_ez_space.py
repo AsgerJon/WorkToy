@@ -39,7 +39,7 @@ class EZSpace(BaseSpace):
   def getDataFields(self) -> list[DataField]:
     """Get the data fields."""
     out = maybe(self.__data_fields__, [])
-    bases = [*self.getClassBases(), ]
+    bases = [*self.getBases(), ]
     for base in bases:
       space = getattr(base, '__namespace__', None)
       if space is None:

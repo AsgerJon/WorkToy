@@ -66,23 +66,6 @@ import unittest
 
 class TestKeeNum(unittest.TestCase):
 
-  def test_ad_hoc(self) -> None:
-    """
-    Ad hoc testing
-    """
-    classes = [Fruit, Vehicle, ValidStrings, Wrapped, Steps]
-    for cls in classes:
-      print('_' * 77)
-      print('--- Testing class: %s ---' % cls.__name__)
-      for item in cls:
-        infoSpec = """%d: name: %s, value: %s"""
-        info = infoSpec % (item.index, item.name, item.value)
-        if len(info) > 77:
-          print('%s...' % info[:74])
-          continue
-        print(info)
-      print('¨' * 77)
-
   def test_namesValuesIndexes(self) -> None:
     self.assertEqual(Fruit.APPLE.name, 'APPLE')
     self.assertEqual(Fruit.APPLE.value, 'APPLE')
@@ -95,16 +78,6 @@ class TestKeeNum(unittest.TestCase):
     self.assertTrue(hasattr(Vehicle, 'BIKE'))
     self.assertNotIn('BIKE', Vehicle.__member_entries__)
     self.assertEqual([v.name for v in Vehicle], ['CAR', 'BUS'])
-
-  def test_valueTypeConsistency(self) -> None:
-    try:
-      class Mixed(KeeNum):
-        A = auto('valid')
-        B = auto(123)
-    except Exception as exception:
-      print("""Exception raised: %s""" % str(exception))
-    else:
-      print("""No exception raised, but expected one!""")
 
   def test_iterationOrder(self) -> None:
     names = [step.name for step in Steps]

@@ -35,7 +35,7 @@ class BaseSpace(AbstractNamespace):
     if self.__overload_map__ is not None:
       raise VariableNotNone('__overload_map__', )
     mcls = self.getMetaclass()
-    bases = self.getClassBases()
+    bases = self.getBases()
     baseSpaces = []
     self.__overload_map__ = {}
     for base in bases:

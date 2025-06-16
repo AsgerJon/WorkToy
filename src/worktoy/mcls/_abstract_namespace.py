@@ -60,7 +60,7 @@ class AbstractNamespace(HistDict):
   __owner_hooks_list_name__ = '__hook_objects__'
   __hash_value__ = None
 
-  def getClassBases(self) -> Bases:
+  def getBases(self) -> Bases:
     """Returns the base classes of the class under creation."""
     return (*self.__base_classes__,)
 
@@ -69,7 +69,7 @@ class AbstractNamespace(HistDict):
     Computes the hash value for the future class.
     """
     clsName = self.getClassName()
-    baseNames = [base.__name__ for base in self.getClassBases()]
+    baseNames = [base.__name__ for base in self.getBases()]
     mclsName = self.getMetaclass().__name__
     return hash((clsName, *baseNames, mclsName,))
 
@@ -119,10 +119,6 @@ class AbstractNamespace(HistDict):
   def __init__(self, mcls: type, name: str, bases: Base, **kwargs) -> None:
     self.__meta_class__ = mcls
     self.__class_name__ = name
-    if len(bases) > 1:
-      e = """The 'worktoy' package does not support multiple inheritance!"""
-      raise TypeError(monoSpace(e))
-    self.__base_class__ = [*bases, object][0]
     self.__base_classes__ = [*bases, ]
     self.__key_args__ = kwargs or {}
 
@@ -134,88 +130,9 @@ class AbstractNamespace(HistDict):
     """Returns the name of the class."""
     return self.__class_name__
 
-  # def getBaseClass(self, ) -> type:
-  #   """Returns the base class."""
-  #   return self.__base_class__
-
   def getKwargs(self, ) -> dict:
     """Returns the keyword arguments passed to the class."""
     return {**self.__key_args__, **dict()}
-
-  def getMRO(self, ) -> Types:
-    """Returns the method resolution order of the class."""
-    mcls = self.__meta_class__
-    name = '_THIS_IS_WHY_WE_CANT_HAVE_NICE_THINGS'
-    Space = type(self)
-    space = Space(mcls, name, self.getClassBases(), )
-    bases = self.getClassBases()
-    tempClass = mcls(name, (*bases,), space)
-    return tempClass.__mro__
-
-  def getMROSpace(self, ) -> Spaces:
-    """Returns the namespace objects of the baseclasses. """
-    cls = type(self)
-    mcls = self.getMetaclass()
-    out = []
-    for base in self.getMRO():
-      if isinstance(base, mcls):
-        out.append(getattr(base, '__namespace__', ))
-    return (*out,)
-
-  def getPrimeBase(self, ) -> type:
-    """Returns the prime baseclass of the class under creation. """
-    baseMRO = [*self.getMRO(), ]
-    mcls = self.getMetaclass()
-    while baseMRO:
-      base = baseMRO.pop()
-      if base is object:
-        continue
-      if isinstance(base, mcls):
-        return base
-    raise MissingVariable('base', mcls)
-
-  def getPrimeSpace(self, ) -> Self:
-    """Getter-function for the namespace object of the prime baseclass of
-    the class under creation. The prime baseclass is the baseclass whose
-    baseclasses are not derived from this metaclass. """
-    try:
-      primeBase = self.getPrimeBase()
-    except MissingVariable as missingVariable:
-      return self
-    cls = type(self)
-    primeSpace = getattr(primeBase, '__namespace__', None)
-    if isinstance(primeSpace, cls):
-      return primeSpace
-    if primeSpace is None:
-      return self
-    raise TypeError(typeMsg('primeSpace', primeSpace, cls))
-
-  def isPrime(self, ) -> bool:
-    """Returns True if the class is the prime baseclass of the class
-    under creation. """
-    return True if self.getPrimeSpace() is self else False
-
-  # def getParent(self, ) -> type:
-  #   """Getter-function for the parent baseclass of the class under
-  #   creation. """
-  #   if self.isPrime():
-  #     raise MissingVariable('parent', type(self))
-  #   return self.getBaseClass()
-
-  # def getParentSpace(self, ) -> Self:
-  #   """Getter-function for the namespace object of the parent baseclass of
-  #   the class under creation. """
-  #   cls = type(self)
-  #   try:
-  #     parentBase = self.getParent()
-  #   except MissingVariable as missingVariable:
-  #     return self
-  #   parentSpace = getattr(parentBase, '__namespace__', None)
-  #   if parentSpace is None:
-  #     raise MissingVariable('__namespace__', cls)
-  #   if isinstance(parentSpace, cls):
-  #     return parentSpace
-  #   raise TypeError(typeMsg('parentSpace', parentSpace, cls))
 
   def __getitem__(self, key: str, **kwargs) -> Any:
     """Returns the value of the key."""
@@ -292,7 +209,7 @@ class AbstractNamespace(HistDict):
 
   def __str__(self, ) -> str:
     """Returns the string representation of the namespace object."""
-    bases = self.getClassBases()
+    bases = self.getBases()
     spaceName = type(self).__name__
     clsName = self.getClassName()
     baseNames = ', '.join([base.__name__ for base in bases])
@@ -303,7 +220,7 @@ class AbstractNamespace(HistDict):
 
   def __repr__(self, ) -> str:
     """Returns the string representation of the namespace object."""
-    bases = self.getClassBases()
+    bases = self.getBases()
     spaceName = type(self).__name__
     clsName = self.getClassName()
     mclsName = self.getMetaclass().__name__

@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from icecream import ic
-
 from worktoy.mcls import AbstractMetaclass
 from worktoy.static import AbstractObject
 
@@ -23,8 +21,6 @@ except ImportError:
 
 if TYPE_CHECKING:
   from typing import Any, Iterator
-
-ic.configureOutput(includeContext=True, )
 
 
 class Name(AbstractObject):
@@ -114,7 +110,6 @@ class ClassHooks(metaclass=AbstractMetaclass):
 
   @classmethod
   def __class_getitem__(cls, key: Any) -> Any:
-    ic()
     raise ClassLevelCalled("getitem", key)
 
   @classmethod
