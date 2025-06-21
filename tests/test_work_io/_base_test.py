@@ -5,11 +5,9 @@ It subclasses the unittest.TestCase class and adds file functionality."""
 from __future__ import annotations
 
 import os
-
 from unittest import TestCase
 
 from worktoy.text import monoSpace
-from worktoy.waitaminute import PathSyntaxException
 
 try:
   from typing import TYPE_CHECKING
@@ -20,7 +18,7 @@ except ImportError:  # pragma: no cover
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias
+  from typing import Any
 
 
 class TempDir:
