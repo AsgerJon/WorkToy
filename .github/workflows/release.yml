@@ -40,6 +40,9 @@ jobs:
           echo "Unit tests for versions 3.7 to 3.12 did pass successfully."
           echo "Publication will proceed."
 
+      - name: Set RUNNING_TESTS environment variable
+        run: echo "RUNNING_TESTS=1" >> $GITHUB_ENV
+
       - name: Install Dependencies
         if: ${{ success() || matrix.python-version != '3.13' }}
         run: |
