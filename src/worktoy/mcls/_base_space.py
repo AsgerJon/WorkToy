@@ -15,7 +15,7 @@ from .hooks import OverloadHook, NameHook, ReservedNameHook, PreClassHook
 
 try:
   from typing import TYPE_CHECKING
-except ImportError:
+except ImportError:  # pragma: no cover
   try:
     from typing_extensions import TYPE_CHECKING
   except ImportError:

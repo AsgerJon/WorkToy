@@ -11,7 +11,7 @@ from . import AbstractHook, ReservedNames
 
 try:
   from typing import TYPE_CHECKING
-except ImportError:
+except ImportError:  # pragma: no cover
   try:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
@@ -69,7 +69,7 @@ class ReservedNameHook(AbstractHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  
+
   def setItemHook(self, key: str, value: Any, oldValue: Any) -> bool:
     """
     The setItemHook method is called when an item is set in the

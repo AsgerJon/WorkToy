@@ -8,7 +8,7 @@ from . import _Attribute
 
 try:
   from typing import TYPE_CHECKING
-except ImportError:
+except ImportError:  # pragma: no cover
   try:
     from typing_extensions import TYPE_CHECKING
   except ImportError:

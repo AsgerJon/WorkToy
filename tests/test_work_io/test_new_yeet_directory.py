@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 from unittest import TestCase
 
-from test_work_io import BaseTest
+from . import BaseTest
 from worktoy.text import monoSpace, wordWrap
 from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import validateExistingDirectory, yeetDirectory
@@ -14,7 +14,7 @@ from worktoy.work_io import newDirectory, validateAvailablePath
 
 try:
   from typing import TYPE_CHECKING
-except ImportError:
+except ImportError:  # pragma: no cover
   try:
     from typing_extensions import TYPE_CHECKING
   except ImportError:

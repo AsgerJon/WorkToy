@@ -12,7 +12,7 @@ from worktoy.waitaminute import TypeException
 
 try:
   from typing import TYPE_CHECKING
-except ImportError:
+except ImportError:  # pragma: no cover
   try:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
@@ -121,14 +121,13 @@ class TestClassIterNext(TestCase):
     list(StatefulClass)
     self.assertFalse(StatefulClass.__iter_contents__)
 
-
-def testManualNextCalls(self) -> None:
-  """
-  Verifies StatefulClass manually yields all expected values.
-  """
-  expected = [69, 420, 1337, 80085, 8008135]
-  it = iter(StatefulClass)
-  for val in expected:
-    self.assertEqual(next(it), val)
-  with self.assertRaises(StopIteration):
-    next(it)
+  def testManualNextCalls(self) -> None:
+    """
+    Verifies StatefulClass manually yields all expected values.
+    """
+    expected = [69, 420, 1337, 80085, 8008135]
+    it = iter(StatefulClass)
+    for val in expected:
+      self.assertEqual(next(it), val)
+    with self.assertRaises(StopIteration):
+      next(it)

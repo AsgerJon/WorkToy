@@ -21,7 +21,7 @@ from . import _CurrentClass, _CurrentModule
 #  Below provides compatibility back to Python 3.7
 try:
   from typing import TYPE_CHECKING
-except ImportError:
+except ImportError:  # pragma: no cover
   try:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
