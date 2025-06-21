@@ -12,6 +12,7 @@ from unittest import TestLoader, TextTestRunner
 def main() -> int:
   """Main Tester Script"""
   # verbosityLevel = [*sys.argv, 2][1]
+  os.environ['RUNNING_TESTS'] = '1'
   loader = TestLoader()
   here = os.path.abspath(os.path.dirname(__file__))
   here = os.path.normpath(here)
