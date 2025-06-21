@@ -1,5 +1,6 @@
 """
-ComplexNumber implementation used to test stuff in the attr module.
+ComplexBase provides an implementation of complex numbers that makes
+use of the overload functionality provided by the 'worktoy' library.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -7,8 +8,7 @@ from __future__ import annotations
 
 from math import atan2
 
-from worktoy.attr import FlexBox
-from worktoy.waitaminute import DispatchException
+from worktoy.static import AbstractObject
 
 try:
   from typing import TYPE_CHECKING
@@ -19,75 +19,40 @@ except ImportError:
     TYPE_CHECKING = False
 
 from worktoy.mcls import BaseMeta
-from worktoy.static import overload
-from worktoy.static.zeroton import THIS
 
 if TYPE_CHECKING:
   from typing import Any, Self
 
 
-class ComplexNumber(metaclass=BaseMeta):
+class ComplexBase(AbstractObject):
   """Complex number representation. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Public variables
+  #  Fallback Variables
+  __fallback_real__ = 0.0
+  __fallback_imag__ = 0.0
 
-  RE = FlexBox[float](0.0)
-  IM = FlexBox[float](0.0)
+  #  Public variables
+  RE = 0.0  # Real part of the complex number
+  IM = 0.0  # Imaginary part of the complex number
+
+  #  When testing descriptor classes, we will subclass this class and
+  #  replace the above with instances of the descriptor being tested.
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @overload(float, float)
-  def __init__(self, x: float, y: float) -> None:
-    """Initialize the complex number."""
-    self.RE = x
-    self.IM = y
-
-  @overload(int, int)
-  def __init__(self, x: int, y: int) -> None:
-    """Initialize the complex number."""
-    self.RE = float(x)
-    self.IM = float(y)
-
-  @overload(complex)
-  def __init__(self, z: complex) -> None:
-    """Initialize the complex number."""
-    self.RE = z.real
-    self.IM = z.imag
-
-  @overload(THIS)
-  def __init__(self, z: Self) -> None:
-    """Initialize the complex number."""
-    self.RE = z.RE
-    self.IM = z.IM
-
-  @overload(float)
-  @overload(int)
-  def __init__(self, x: int) -> None:
-    """Initialize the complex number."""
-    if TYPE_CHECKING:
-      assert callable(self.__init__)
-    self.__init__(float(x), 0.0)
-
-  @overload(tuple)
-  @overload(list)
-  def __init__(self, args: Any) -> None:
-    """Initialize the complex number."""
-    if TYPE_CHECKING:
-      assert callable(self.__init__)
-    self.__init__(*args)
-
-  @overload()
-  def __init__(self) -> None:
-    """Initialize the complex number."""
-    if TYPE_CHECKING:
-      assert callable(self.__init__)
-    self.__init__(0.0, 0.0)
+  def __init__(self, *args, **kwargs) -> None:
+    """
+    The simplest constructor possible. When testing overloading,
+    a subclass will implement overloaded constructors.
+    """
+    self.RE = kwargs.get('real', self.__fallback_real__)
+    self.IM = kwargs.get('imag', self.__fallback_imag__)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -104,7 +69,7 @@ class ComplexNumber(metaclass=BaseMeta):
   def __arg__(self, ) -> float:
     """Get the argument of the complex number."""
     if TYPE_CHECKING:
-      assert isinstance(self, ComplexNumber)
+      assert isinstance(self, ComplexBase)
     if not self:
       raise ZeroDivisionError
     return atan2(self.IM, self.RE)
@@ -130,6 +95,21 @@ class ComplexNumber(metaclass=BaseMeta):
     if other is NotImplemented:
       return NotImplemented
     return False if self - other else True
+
+  def __str__(self, ) -> str:
+    """Get the string representation of the complex number. This uses 'J'
+    upper-case to represent the imaginary unit. The form is then:
+    'x + yJ'. """
+    infoSpec = """%s + %sJ""" if self.IM >= 0 else """%s - %sJ"""
+    info = infoSpec % (str(self.RE), str(abs(self.IM)))
+    return info
+
+  def __repr__(self, ) -> str:
+    """Provides a code representation that would instantiate this object
+    if passed to 'eval()'. """
+    infoSpec = """%s(%s, %s)"""
+    info = infoSpec % (type(self).__name__, str(self.RE), str(self.IM))
+    return info
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  ARITHMETIC   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

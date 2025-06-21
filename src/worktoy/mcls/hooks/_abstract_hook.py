@@ -6,10 +6,7 @@ namespaces in the metaclass system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import FunctionType as Func
-
 from ...static import AbstractObject, Alias
-from ...waitaminute import MissingVariable, ReadOnlyError
 
 try:
   from typing import TYPE_CHECKING, Type
@@ -20,7 +17,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, Callable, Self, Never
+  from typing import Any, Callable
   from worktoy.mcls import AbstractNamespace as ASpace
 
   AccessorHook = Callable[[ASpace, str, Any], Any]
@@ -29,28 +26,70 @@ if TYPE_CHECKING:
 
 class AbstractHook(AbstractObject):
   """
-  AbstractHook provides an abstract baseclass for hooks used by the
-  namespaces in the metaclass system. These hooks allow modification of the
-  class creation process. The following static methods are expected from the
-  hooks:
-  - setItem: called before calls to __setitem__ on the namespace object.
-  - getItem: called before calls to __getitem__ on the namespace object.
-  - preCompile: called before the final namespace object is populated with
-    the conventional key, value pairs.
-  - postCompile: called after the final namespace object is populated with
-    the conventional key, value pairs.
+  AbstractHook is the abstract base class for defining hook objects
+  used in conjunction with AbstractNamespace. These hooks enable modular,
+  stage-specific interception during class body evaluation and namespace
+  compilation within the metaclass system.
 
-  Subclasses may implement either of the above methods. The default
-  implementations have no effect, so subclasses need only implement the
-  methods they are interested in.
+  ## Purpose
 
-  AbstractHook implements the descriptor protocol such that calls to
-  '__get__' receive:
-  - instance: The current instance of the namespace object.
-  - owner: The current namespace class
+  Hooks allow custom behavior to be injected into the class construction
+  pipeline without modifying the namespace or metaclass core logic. They
+  are used to observe and/or alter how names are accessed, assigned, or
+  compiled into the final class definition.
 
-  Subclasses should be made available as attributes on the namespace
-  subclass.
+  ## Integration
+
+  To activate a hook, simply instantiate a subclass of AbstractHook inside
+  the body of a namespace class (i.e., a subclass of AbstractNamespace).
+  The descriptor protocol (`__set_name__`) ensures the hook registers
+  itself with the namespace automatically at definition time.
+
+  Example:
+
+      class MyNamespace(AbstractNamespace):
+        overloadHook = OverloadHook()
+        validationHook = ReservedNameHook()
+
+  ## Lifecycle Hook Methods
+
+  Subclasses may override any of the following methods to participate in
+  different stages of the namespace lifecycle. All are optional.
+
+  - `setItemHook(self, key, value, oldValue) -> bool`
+    Called just before a name is set in the namespace.
+    Returning True blocks the default behavior.
+
+  - `getItemHook(self, key, value) -> bool`
+    Called just before a name is retrieved from the namespace.
+    Returning True blocks the default behavior.
+
+  - `preCompileHook(self, compiled: dict) -> dict`
+    Called after the class body finishes executing, but before the
+    namespace is finalized. May transform or replace namespace contents.
+
+  - `postCompileHook(self, compiled: dict) -> dict`
+    Called immediately before the finalized namespace is handed off to the
+    metaclass. Can be used for final transformations or validation.
+
+  ## Descriptor Behavior
+
+  AbstractHook implements the descriptor protocol. When accessed via a
+  namespace class, it is bound with the following attributes:
+
+  - `self.space` refers to the active namespace instance.
+  - `self.spaceClass` refers to the namespace class itself.
+
+  These attributes can be used to introspect the environment the hook is
+  participating in.
+
+  ## Extension Notes
+
+  Subclasses are expected to override only the relevant hook methods.
+  If none are overridden, the hook has no effect.
+
+  The `addHook()` method of the namespace class is automatically invoked
+  during registration. Hook authors do not need to call it manually.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

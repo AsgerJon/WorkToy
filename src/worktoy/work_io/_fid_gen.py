@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from worktoy.attr import WaitForIt, Field
+from worktoy.attr import Field
 from worktoy.mcls import BaseObject
 from worktoy.parse import maybe
 from worktoy.static import overload
@@ -39,7 +39,7 @@ class FidGen(BaseObject):
   #  Fallback variables
   __fallback_extension__ = 'json'
   __fallback_name__ = 'untitled'
-  __fallback_directory__ = WaitForIt(os.getcwd)
+  __fallback_directory__ = Field()
 
   #  Private variables
   __base_name__ = None
@@ -57,6 +57,13 @@ class FidGen(BaseObject):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  @__fallback_directory__.GET
+  def _getFallbackDirectory(self, **kwargs) -> str:
+    """
+    Getter-function for the fallback directory.
+    """
+    return os.getcwd()
+
   @baseName.GET
   def _getBaseName(self, ) -> str:
     """Get the name of the file."""

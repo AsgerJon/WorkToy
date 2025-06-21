@@ -1,0 +1,52 @@
+"""
+TestComplex tests that the ComplexOverload helper class functions
+correctly.
+"""
+#  AGPL-3.0 license
+#  Copyright (c) 2025 Asger Jon Vistisen
+from __future__ import annotations
+
+from unittest import TestCase
+
+from worktoy.attr import AttriBox
+from worktoy.mcls import BaseMeta
+
+from . import ComplexOverload
+
+from tests import ComplexBase
+
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
+
+
+class TestComplex(TestCase):
+  """
+  TestComplex tests that the ComplexOverload helper class functions
+  correctly.
+  """
+
+  def test_metaclass(self, ) -> None:
+    """
+    Test that the ComplexOverload actually exists and is a class derived
+    from BaseMeta.
+    """
+    self.assertIsInstance(ComplexOverload, type)
+    self.assertIsInstance(ComplexOverload, BaseMeta)
+
+  def test_baseclass(self, ) -> None:
+    """
+    Test that ComplexOverload is a subclass of ComplexBase.
+    """
+    self.assertTrue(issubclass(ComplexOverload, ComplexBase))
+
+  def test_attribox(self) -> None:
+    """
+    Test that the RE and IM attributes are AttriBox instances.
+    """
+    self.assertIsInstance(ComplexOverload.RE, AttriBox)
+    self.assertIsInstance(ComplexOverload.IM, AttriBox)

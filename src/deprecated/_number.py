@@ -5,11 +5,7 @@ Number provides a single numeric value descriptor.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import random
-from math import atan2
-
 from worktoy.parse import maybe
-from worktoy.waitaminute import DispatchException
 
 try:
   from typing import TYPE_CHECKING
@@ -19,12 +15,8 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
-from worktoy.mcls import BaseMeta
-from worktoy.static import overload
-from worktoy.static.zeroton import THIS
-
 if TYPE_CHECKING:
-  from typing import Any, Self
+  from typing import Any
 
 
 class Number:

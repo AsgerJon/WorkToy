@@ -21,6 +21,25 @@ if TYPE_CHECKING:
   Space: TypeAlias = dict[str, Any]
 
 
+class _InitSub(object):
+  """
+  A chill object that does not raise any:
+  'TypeError: Some.__init_subclass__() takes no keyword arguments'
+  """
+
+  def __init__(self, *args, **kwargs) -> None:
+    """
+    Why are we still here?
+    """
+    object.__init__(self)
+
+  def __init_subclass__(cls, **kwargs) -> None:
+    """
+    Just to suffer?
+    """
+    object.__init_subclass__()
+
+
 class _MetaSome(type):
   """
   Implementation of custom 'isinstance' logic requires metaclass level
@@ -64,10 +83,16 @@ class _MetaSome(type):
     from worktoy.waitaminute import IllegalInstantiation
     raise IllegalInstantiation(mcls)
 
+  def __new__(mcls, name: str, bases: tuple, *args, **kwargs) -> type:
+    """
+    Inserts the chill '_InitSub' class into the bases to prevent the cringy:
+    'TypeError: Some.__init_subclass__() takes no keyword arguments'
+    """
+    return type.__new__(mcls, name, (*bases, _InitSub), *args, **kwargs)
+
 
 class Some(metaclass=_MetaSome, _root=True):
   """
   The 'Some' class considers all objects as instances of itself, except for
   'None'. It is not meant to be instantiated or subclassed.
   """
-  pass

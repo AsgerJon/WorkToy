@@ -12,6 +12,7 @@ name passed to its constructor during the '__set_name__' method.
 from __future__ import annotations
 
 from . import _Attribute
+from ..text import monoSpace
 
 try:
   from typing import TYPE_CHECKING
@@ -22,7 +23,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias, Never
+  pass
 
 
 class AliasException(Exception):
@@ -44,8 +45,6 @@ class AliasException(Exception):
     """Initialize the AliasException object."""
     self.owner = owner
     self.name = name
-    info = "Alias '%s' in '%s' could not resolve original name '%s'!"
-    Exception.__init__(self, info % (name, owner.__name__, name))
 
   def __eq__(self, other: object) -> bool:
     """Compare the AliasException object with another object."""
@@ -64,3 +63,12 @@ class AliasException(Exception):
     if self.name != otherName:
       return False
     return True
+
+  def __str__(self) -> str:
+    """Return a string representation of the AliasException object."""
+    infoSpec = "Alias '%s' in '%s' could not resolve original name '%s'!"
+    clsName = self.owner.__name__
+    info = infoSpec % (self.name, clsName, self.name)
+    return monoSpace(info)
+
+  __repr__ = __str__

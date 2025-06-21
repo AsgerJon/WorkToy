@@ -5,13 +5,7 @@ KeeHook provides the namespace hook for the KeeSpace namespace class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import FunctionType as Func
-
-from ..parse import maybe
 from ..static import AbstractObject
-from ..static import AbstractObject as Object
-from ..text import typeMsg
-from ..waitaminute import ReservedName
 from ..mcls.hooks import AbstractHook
 
 try:
@@ -23,9 +17,9 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, TypeAlias
+  from typing import Any
 
-  from . import KeeSpace, _AutoMember
+  from . import _AutoMember
 
 
 class KeeHook(AbstractHook):

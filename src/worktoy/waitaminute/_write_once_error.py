@@ -36,3 +36,13 @@ class WriteOnceError(Exception):
     new value '%s'"""
     info = infoSpec % (name, str(oldVal), str(newVal))
     Exception.__init__(self, monoSpace(info))
+
+  def __str__(self) -> str:
+    infoSpec = """Attempted to overwrite variable '%s' having value '%s' to 
+    new value '%s'"""
+    oldStr = str(self.__old_value__)
+    newStr = str(self.__new_value__)
+    info = infoSpec % (self.__var_name__, oldStr, newStr)
+    return monoSpace(info)
+
+  __repr__ = __str__

@@ -6,12 +6,8 @@ objects having the hash and name of the future class ahead of class creation.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import FunctionType as Func
-
-from ...static import PreClass, HistDict, TypeSig
-from ...static.zeroton import THIS
+from ...static import PreClass, TypeSig
 from ...waitaminute import TypeException
-
 from . import AbstractHook
 
 try:
@@ -23,14 +19,63 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, TypeAlias
+  from typing import Any
 
 
 class PreClassHook(AbstractHook):
   """
-  'PreClassHook' replaces 'THIS' in the AbstractNamespace with 'PreClass'
-  objects having the hash and name of the future class ahead of class
-  creation.
+  PreClassHook resolves the circular reference problem caused when a
+  decorator or hook needs to refer to the class under construction —
+  *before* that class exists.
+
+  ## Purpose
+
+  During class construction, decorators (such as those involved in
+  overload resolution) may need to reference the class currently being
+  defined. But this isn't possible with a literal reference, since the
+  class object doesn’t exist yet.
+
+  To solve this, a sentinel object named `THIS` is used as a placeholder.
+  The PreClassHook intercepts assignments in the namespace and replaces
+  any references to `THIS` found in function type signatures with a
+  special `PreClass` proxy.
+
+  The `PreClass` object mimics the identity of the future class:
+  - It has the same `__hash__` as the future class will
+  - It stores the intended class name and metaclass
+  - It can be used in hash-based fast dispatch without knowing the class
+
+  ## Behavior
+
+  - **During setItemHook**:
+    If a function assigned to the namespace contains one or more
+    `TypeSig` objects (e.g. for overloads), each is scanned for
+    references to `THIS`. These are replaced in-place with the
+    appropriate `PreClass` object.
+
+  - **During postCompileHook**:
+    After the class body has executed, the overload map is scanned for
+    type signatures that refer to known base classes. For each such
+    signature, a new equivalent signature is created where the base class
+    is replaced with the `PreClass` object. This allows overloads in
+    parent classes referencing `THIS` to resolve correctly in subclasses.
+
+  ## Usage
+
+  This hook is registered inside a namespace like so:
+
+      class MyNamespace(AbstractNamespace):
+        preClassHook = PreClassHook()
+
+  It cooperates with the OverloadHook to ensure that decorators using
+  `THIS` for self-type references work reliably across complex inheritance
+  hierarchies.
+
+  ## Notes
+
+  - The PreClass object is cached internally and created on demand.
+  - It is only instantiated once per class construction.
+  - It is safe to hash and compare, but is not a fully functional class.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

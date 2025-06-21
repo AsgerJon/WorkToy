@@ -7,9 +7,17 @@ its subclasses.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._priority import _Priority  # Private
+from ._hook_phases import HookPhase
+
 from ._abstract_descriptor_hook import AbstractDescriptorHook
+from ._caching_hook import CachingHook
+from ._weak_box import WeakBox
+from ._strong_box import StrongBox
 
 __all__ = [
+    'HookPhase',
     'AbstractDescriptorHook',
+    'CachingHook',
+    'WeakBox',
+    'StrongBox',
 ]

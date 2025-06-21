@@ -1,14 +1,17 @@
-"""TypeSig instances represent particular type signatures. The 'fast' method
-provides a performant validation of a tuple of objects. The 'flex' method
-attempts to cast each object in a tuple to the expected type. The latter is
-substantially slower than the former."""
+"""
+TypeSig encapsulates type signatures and recognizes positional arguments
+that match it.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from collections.abc import Iterable
+
+from ..core import unpack, bipartiteMatching
 from ..text import typeMsg
-from ..waitaminute import CastMismatch, HashMismatch
-from .casting import AbstractCast, Cast
+from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch
+
 from .zeroton import THIS
 from . import PreClass
 
@@ -23,17 +26,160 @@ except ImportError:
 if TYPE_CHECKING:
   from typing import Any, TypeAlias, Union, Iterator
 
-  Types: TypeAlias = list[type]
-  Casts: TypeAlias = tuple[AbstractCast, ...]
-  TypeCasts: TypeAlias = dict[type, AbstractCast]
-  Hash: TypeAlias = Union[PreClass, type]
-
 
 class TypeSig:
-  """TypeSig instances represent particular type signatures. The 'fast'
-  method provides a performant validation of a tuple of objects. The
-  'flex' method attempts to cast each object in a tuple to the expected
-  type. The latter is substantially slower than the former."""
+  """
+  #  DESCRIPTION
+  'TypeSig' describes the types of an array of positional arguments
+  analogous to how the 'type' function describes the 'type' of a single
+  argument. The class supports both explicit types and the 'THIS'
+  placeholder sentinel.
+
+  #  NOMENCLATURE
+
+  - 'Call arguments':  A tuple of objects. For example, the arguments
+  received by a callable object.
+  - 'type parsing':  The process by which the 'TypeSig' object determines
+  how it best matches call arguments. If possible, the 'TypeSig' object
+  will return a tuple of objects matching it. If not possible, a custom
+  exception is raised. More details provided below.
+  - 'type parser':  The 'TypeSig' instance method performing the 'type
+  parsing'. The method receives 'call arguments' and returns 'processed
+  arguments' (described below) or raises a custom exception specific to
+  itself.
+  - 'Processed arguments':  A tuple of objects returned by the 'TypeSig'
+  object after parsing.
+  - 'type casting':  same as 'type parsing' but emphasizes changes applied
+  changing call arguments to processed arguments.
+
+  #  USAGE
+  #  #  Type Guarding and Casting
+  A function requiring a very specific type signature, might use an
+  instance of 'TypeSig' to type parse and possibly cast received arguments
+  to match the required types. This allows the function more flexibility
+  in what arguments it accepts while retaining the initial type
+  specificity. Additionally, unsupported types are caught immediately and
+  explicitly allowing for explicit and precise error handling.
+
+  #  #  Hashable
+  Since 'TypeSig' objects are hashable(*) they may be used as keys in
+  'dict' objects. This facilitates dispatching of function calls to a type
+  appropriate overload.
+
+  #  IMPLEMENTATION DETAILS
+  'TypeSig' provides multiple 'type parser' methods as listed below:
+
+  - 'fast':  Strict, but fast hash-based parsing. This method will always
+  return processed arguments identical to received call arguments when
+  hashes match. Otherwise, it raises 'HashMismatch'.
+
+  - 'cast'(**):  Applies type casting to each call argument not exactly
+  matching the corresponding type. If any argument fails to cast,
+  it raises 'CastMismatch' (a subclass of 'HashMismatch'). Otherwise,
+  the type-casted arguments are passed to the 'fast' method described
+  above to ensure type exactness. Please note that both this and 'flex'
+  described below, are not appropriate for performance-sensitive
+  applications, requiring substantial overhead compared to 'fast'.
+
+  - 'flex'(**):  This method attempts to find a permutation of the call
+  arguments that it might be able to cast. Additionally, if none of its
+  raw types are 'list' or 'tuple', it will unpack any iterable call
+  argument. If at all possible, the processed arguments will pass through
+  the 'fast' method described above. Otherwise, it raises 'FlexMismatch' (
+  a subclass of 'CastMismatch').
+
+  (*) Note that 'TypeSig' objects are hashable only after the 'THIS'
+  sentinel has been replaced with the appropriate class or a more specific
+  hash-aware placeholder. 'worktoy' assigns to each class a hash value
+  that depends only on names known ahead of actual class creation. This
+  allows 'THIS' to be replaced with a 'PreClass' object having identical
+  hash.
+
+  (**) Note that 'TypeSig' parsing methods 'cast' and 'flex' do not
+  support 'THIS', when used to overload the constructor of the class to
+  which 'THIS' refers. The 'worktoy.static.Dispatch' class responsible for
+  dispatching calls are meant to explicitly skip both 'cast' and 'flex'
+  for this case. Since the 'TypeSig' object has no awareness of the
+  broader context, it cannot detect and prevent this case. The 'cast' and
+  'flex' methods will raise 'SignatureRecursion'
+
+  #  ROLE IN LIBRARY
+  The 'worktoy' library uses 'TypeSig' to provide function overloading.
+  When the '@overload(...)' decorator receives types and decorates a
+  function, it instantiates a 'TypeSig' object and associates the
+  decorated function object with it. Please note that during class
+  creation, methods created with 'def ...' begin as 'function' objects.
+  They only become bound methods during the class creation process. Thus,
+  any function decorator in Python is certain to receive a 'function
+  object'. Even if this object later becomes a bound method.
+
+  The 'worktoy' library leverages metaclass customization to facilitate
+  function overloading. It uses the 'TypeSig' class when deciding which
+  function object to dispatch. For more details, see the 'worktoy.mcls'
+  documentation.
+
+  # EXAMPLE
+  from __future__ import annotations
+
+  import sys
+  from math import atan2
+
+  def angle(*args, ) -> float:
+    typeSig = TypeSig(float, float)  # Creates a float-float signature
+    try:
+      xp, yp = typeSig.fast(*args, )
+    except HashMismatch as hashMismatch:
+      pass
+    else:
+      if xp ** 2 + yp ** 2 > 1e-12:
+        return atan2(yp, xp)
+      raise ZeroDivisionError('Zero has no angle!')
+    try:
+      xp, yp = typeSig.cast(*args, )
+    except CastMismatch as castMismatch:
+      pass
+    else:
+      return angle(xp, yp)  # Recursive call
+    try:
+      xp, yp = typeSig.flex(*args, )
+    except FlexMismatch as flexMismatch:
+      raise
+    else:
+      return angle(xp, yp)  # Recursive call
+
+
+  def main(*args) -> None:
+    #  Main script entry point.
+    try:
+      res = angle(*args)
+    except HashMismatch as hashMismatch:
+      infoSpec = 'Unable to parse arguments: (%s), resulting in: %s'
+      info = infoSpec % (str(args), hashMismatch)
+      print(info)
+      return 1
+    except ZeroDivisionError as zeroDivisionError:
+      infoSpec = 'Received origin point, resulting in: %s!'
+      info = infoSpec % zeroDivisionError
+      print(info)
+      return 2
+    except Exception as exception:
+      infoSpec = 'Unexpected exception: %s'
+      info = infoSpec % exception
+      print(info)
+      return 3
+    else:
+      infoSpec = 'Found angle: %.3f'
+      info = infoSpec % res
+      print(info)
+      return 0
+    finally:
+      info = 'Exiting test of the TypeSig class!'
+      print(info)
+
+
+  if __name__ == '__main__':
+    sys.exit(main(*sys.argv[1:]))
+  """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -47,15 +193,6 @@ class TypeSig:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def getCasts(self, ) -> Casts:
-    """Get the casts for the types."""
-    out = []
-    for type_ in self.__raw_types__:
-      if type_ is THIS:
-        raise RuntimeError('THIS not yet replaced!')
-      out.append(Cast(type_))
-    return (*out,)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -96,6 +233,13 @@ class TypeSig:
     """Get the length of the types."""
     return len(self.__raw_types__)
 
+  def __contains__(self, type_: type) -> bool:
+    """Check if the type is in the types."""
+    for raw in self.__raw_types__:
+      if raw is type_:
+        return True
+    return False
+
   def __str__(self, ) -> str:
     """String representation reflects the types. """
     typeStr = ', '.join([t.__name__ for t in self.__raw_types__])
@@ -112,7 +256,16 @@ class TypeSig:
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def replaceTHIS(self, cls: Hash) -> None:
+  def _hasIterable(self) -> bool:
+    """
+    Flag indicating presence of 'list' or 'tuple' in the types.
+    """
+    for type_ in self.__raw_types__:
+      if issubclass(type_, Iterable):
+        return True
+    return False
+
+  def replaceTHIS(self, cls: type) -> None:
     """Replace the 'THIS' type with the class."""
     newTypes = []
     for type_ in self.__raw_types__:
@@ -121,36 +274,145 @@ class TypeSig:
         continue
       newTypes.append(type_)
     self.__raw_types__ = (*newTypes,)
-    self.__hash_value__ = hash(self.__raw_types__)
+    try:
+      self.__hash_value__ = hash(self.__raw_types__)
+    except Exception as exception:
+      raise RuntimeError from exception
 
   def fast(self, *args) -> tuple:
-    """Check if the types of the arguments match the types in the
-    signature."""
+    """
+    Hash-based type parsing. The method collects the types of the call
+    arguments and compares the hash of the tuple containing them with the
+    predicted hash. If hashes match, the call arguments are returned.
+    Otherwise, raises 'HashMismatch'.
+
+    This method is significantly faster than the 'cast' and 'flex'
+    methods, but requires exact matching. Passing an 'int' object where a
+    'float' object is expected, raises 'HashMismatch'.
+    """
     if len(args) == len(self):
       if hash(self) == hash((*[type(arg) for arg in args],)):
         return (*args,)
     raise HashMismatch(self, *args)
 
-  def flex(self, *args) -> tuple:
-    """Cast the arguments to the types in the signature."""
+  def cast(self, *args, ) -> tuple:
+    """
+    Iterates over the call arguments and the expected types:
+
+    - If the argument at index 'i' is an instance of the type at 'i',
+    the processed arguments will contain the argument at 'i'.
+    - Otherwise, attempts to cast the argument to the type at 'i'. If
+    successful, the processed arguments will contain the 'cast'
+    argument at 'i'. If not, raises 'CastMismatch'.
+    - If for every argument no 'CastMismatch' is raised, the
+    processed arguments are returned as a tuple.
+    """
     if len(args) != len(self):
-      if len(args) == 1:
-        if isinstance(args[0], (list, tuple)):
-          return self.fast(*args[0])
-      raise HashMismatch(self, *args)
-    casts = self.getCasts()
-    types = self.__raw_types__
-    out = []
-    for arg, type_, cast in zip(args, types, casts):
-      if not isinstance(type_, type):
-        raise TypeError(typeMsg('type_', type_, type))
+      raise CastMismatch(self, *args)
+    castArgs = []
+    for type_, arg in zip(self.__raw_types__, args):
+      if isinstance(arg, type_):
+        castArgs.append(arg)
+        continue
+      #  Here be dragons!
+      if type_.__init__ is not object.__init__:
+        initType = type(type_.__init__)
+        if hasattr(initType, '__overload_dispatcher__'):
+          raise FlexMismatch(self, *args)
+      #  End of dragon zone!
       try:
-        if isinstance(arg, type_):
-          out.append(arg)
+        castedArg = type_(arg)
+      except (TypeError, ValueError) as castException:
+        raise CastMismatch(self, type_, arg) from castException
+      else:
+        castArgs.append(castedArg)
+    else:
+      return (*castArgs,)
+
+  def _biPartiteMatching(self, *args, ) -> tuple:
+    """
+    This method attempts to find a bipartite matching between the call
+    arguments and the types. If successful, returns a tuple of processed
+    arguments. Otherwise, raises 'FlexMismatch'.
+    """
+    if len(args) < len(self):
+      raise FlexMismatch(self, *args)
+    candidateTuples = []
+    for type_ in self.__raw_types__:
+      candidates = []
+      for index, posArg in enumerate(args):
+        if isinstance(posArg, type_):
+          candidates.append(index)
+          continue
+        #  Here be dragons!
+        if type_.__init__ is not object.__init__:
+          initType = type(type_.__init__)
+          if hasattr(initType, '__overload_dispatcher__'):
+            raise FlexMismatch(self, *args)
+        #  End of dragon zone!
+        try:
+          castedArg = type_(posArg)
+        except (TypeError, ValueError):
+          continue
         else:
-          out.append(cast(arg))
-      except CastMismatch:
+          candidates.append(index)
+      if candidates:
+        candidateTuples.append(candidates)
         continue
-      except RecursionError:
+      raise FlexMismatch(self, *args)
+    try:
+      typeIndices = bipartiteMatching(candidateTuples)
+    except ValueError as exception:
+      raise FlexMismatch(self, *args) from exception
+    out = []
+    for type_, index in zip(self.__raw_types__, typeIndices):
+      posArg = args[index]
+      if isinstance(posArg, type_):
+        out.append(posArg)
         continue
+      #  Here be dragons!
+      if type_.__init__ is not object.__init__:
+        initType = type(type_.__init__)
+        if hasattr(initType, '__overload_dispatcher__'):
+          raise FlexMismatch(self, *args)
+      #  End of dragon zone!
+      out.append(type_(posArg))
     return (*out,)
+
+  def flex(self, *args, **kwargs) -> tuple:
+    """
+    Attempts flexible matching of arguments to this TypeSig.
+
+    First, attempts bipartite matching across the call arguments and
+    required types, allowing reordering and type casting.
+
+    If this fails, and none of the types are iterable, attempts to
+    unpack shallow iterable arguments and retries recursively.
+
+    If no valid match can be found, raises 'FlexMismatch'.
+
+    Args:
+      *args: Positional arguments to match.
+      **kwargs: Currently unused.
+
+    Returns:
+      tuple: Arguments reordered and cast to match this TypeSig.
+
+    Raises:
+      FlexMismatch: If no argument permutation satisfies the signature.
+
+    """
+    _ = hash(self)  # Ensure hash is set or raise RuntimeError immediately
+    try:
+      out = self._biPartiteMatching(*args, )
+    except FlexMismatch as flexMismatch:
+      if self._hasIterable():
+        raise flexMismatch
+      try:
+        unpackedArgs = unpack(*args, strict=True, shallow=True)
+      except ValueError as valueError:
+        raise flexMismatch from valueError
+      else:
+        return self.flex(*unpackedArgs, )
+    else:
+      return out

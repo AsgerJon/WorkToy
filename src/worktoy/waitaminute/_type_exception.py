@@ -6,10 +6,7 @@ rather than type mismatch. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from warnings import warn
-
 from . import _Attribute
-
 from ..text import monoSpace, joinWords
 
 try:
@@ -21,7 +18,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, Callable
+  from typing import Any, Self
 
 
 def _resolveTypeNames(*types) -> str:
@@ -50,6 +47,18 @@ def _resolveTypeNames(*types) -> str:
   return monoSpace(infoSpec % (typeStr,))
 
 
+class _Meta(type):
+  """Metaclass simplifying __str__ and __repr__"""
+
+  def __str__(cls) -> str:
+    """String representation of the class."""
+    return cls.__name__
+
+  def __repr__(cls) -> str:
+    """Representation of the class."""
+    return cls.__name__
+
+
 class TypeException(TypeError):
   """
   TypeException is a custom exception class for handling type related
@@ -65,41 +74,20 @@ class TypeException(TypeError):
   def __init__(self, name: str, obj: object, *types) -> None:
     """Initialize the TypeException with the name of the variable, the
     received object, and the expected types."""
-    prelude = _resolveTypeNames(*types)
-    actName = type(obj).__name__
-    infoSpec = """%s at name: '%s', but received object of type '%s' with 
-    repr: '%s'"""
-    info = infoSpec % (prelude, name, actName, repr(obj))
-    TypeError.__init__(self, monoSpace(info))
+    TypeError.__init__(self, )
     self.varName = name
     self.actualObject = obj
     self.actualType = type(obj)
     self.expectedType = types
 
-  def _resolveOther(self, other: Any) -> Self:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, (tuple, list)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
+  def __str__(self) -> str:
+    """String representation of the TypeException."""
+    prelude = _resolveTypeNames(*self.expectedType)
+    actName = type(self.actualObject).__name__
+    actRepr = repr(self.actualObject)
+    infoSpec = """%s at name: '%s', but received object of type '%s' with 
+    repr: '%s'"""
+    info = infoSpec % (prelude, self.varName, actName, actRepr)
+    return monoSpace(info)
 
-  def __eq__(self, other: object) -> bool:
-    """Compare the TypeException object with another object."""
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    cls = type(self)
-    if isinstance(other, cls):
-      if self.varName != other.varName:
-        return False
-      if self.actualType != other.actualType:
-        return False
-      if self.expectedType != other.expectedType:
-        return False
-      return True
-    return False
+  __repr__ = __str__

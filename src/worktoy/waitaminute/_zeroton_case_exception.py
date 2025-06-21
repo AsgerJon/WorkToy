@@ -27,6 +27,13 @@ class ZerotonCaseException(ValueError):
   def __init__(self, name: str) -> None:
     """Initialize the ZerotonCaseException with the name."""
     self.name = name
+    ValueError.__init__(self, )
+
+  def __str__(self) -> str:
+    """String representation of the exception."""
+    if self.name is None:
+      return ValueError.__str__(self)
     infoSpec = """Zeroton class name '%s' must be in all upper cases!"""
-    info = infoSpec % name
-    ValueError.__init__(self, info)
+    return infoSpec % self.name
+
+  __repr__ = __str__

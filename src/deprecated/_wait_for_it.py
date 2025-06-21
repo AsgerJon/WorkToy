@@ -34,9 +34,6 @@ except ImportError:
 
 if TYPE_CHECKING:
   from typing import Any
-  from typing import Callable as Func
-else:
-  Func = type('_', (type,), dict(__instancecheck__=callable))('_', (), {})
 
 
 class WaitForIt(Field):

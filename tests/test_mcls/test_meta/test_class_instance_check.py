@@ -15,7 +15,7 @@ from worktoy.mcls import AbstractMetaclass
 from worktoy.text import stringList
 from worktoy.waitaminute import TypeException
 
-from . import ComplexNumber
+from .. import ComplexNumber
 
 try:
   from typing import TYPE_CHECKING

@@ -5,16 +5,10 @@ AbstractMetaclass provides the baseclass for custom metaclasses.
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import MethodType as Meth
 from types import FunctionType as Func
 
-from icecream import ic
-
-from ..parse import maybe
 from ..static import HistDict
-from ..text import monoSpace
-from ..waitaminute import QuestionableSyntax, TypeException, DelException, \
-  MissingVariable
+from ..waitaminute import QuestionableSyntax, TypeException, MissingVariable
 from . import Base
 from . import AbstractNamespace as ASpace
 
@@ -27,11 +21,9 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Self, Any, Callable
+  from typing import Any
 else:
-  from types import FunctionType as Callable
-
-ic.configureOutput(includeContext=True, )
+  pass
 
 
 class _MetaMetaclass(type):

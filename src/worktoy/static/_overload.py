@@ -18,7 +18,7 @@ if TYPE_CHECKING:
   from typing import Any, Callable, TypeAlias, Never
 
 
-def overload(*types, **kwargs) -> Callable:
+def overload(*types: object, **kwargs: object) -> Callable:
   """Function objects decorated with the @overload decorator may have same
   name but different signatures. The overload decorator is used to
   create a function object that can be called with different argument

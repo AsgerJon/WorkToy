@@ -7,9 +7,9 @@ from __future__ import annotations
 from types import FunctionType as Func
 from types import MethodType as Meth
 
+from ..static import AbstractObject
 from ..text import typeMsg
 from ..waitaminute import MissingVariable, TypeException
-from . import AbstractDescriptor
 
 try:
   from typing import TYPE_CHECKING
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
   Funcs: TypeAlias = tuple[Func, ...]
 
 
-class Field(AbstractDescriptor):
+class Field(AbstractObject):
   """AbstractField provides an implementation of the descriptor protocol
   that allow the owning class to explicitly define the accessor methods.  """
 
@@ -327,7 +327,7 @@ class Field(AbstractDescriptor):
     """
     setters = self._getSet()
     if not setters:
-      return AbstractDescriptor.__instance_set__(self, value, **kwargs)
+      return AbstractObject.__instance_set__(self, value, **kwargs)
     for setter in setters:
       if isinstance(setter, classmethod):  # Class method object
         setter(self.owner, value, **kwargs)
@@ -350,7 +350,7 @@ class Field(AbstractDescriptor):
     """
     deleters = self._getDelete()
     if not deleters:
-      return AbstractDescriptor.__instance_delete__(self, **kwargs)
+      return AbstractObject.__instance_delete__(self, **kwargs)
     for deleter in deleters:
       if isinstance(deleter, classmethod):  # Class method object
         deleter(self.owner, **kwargs)

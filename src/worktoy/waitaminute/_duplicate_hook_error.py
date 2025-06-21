@@ -1,0 +1,48 @@
+"""
+DuplicateHookError is a custom exception raised when an attempt is made to
+register a hook at a name already populated with a hook. If 'oldHook is
+newHook' is True, this exception may not be appropriate.
+"""
+#  AGPL-3.0 license
+#  Copyright (c) 2025 Asger Jon Vistisen
+from __future__ import annotations
+
+from . import _Attribute
+from ..text import monoSpace
+
+
+class DuplicateHookError(Exception):
+  """
+  DuplicateHookError is a custom exception raised when an attempt is made to
+  register a hook at a name already populated with a hook. If 'oldHook is
+  newHook' is True, this exception may not be appropriate.
+  """
+
+  owner = _Attribute()
+  name = _Attribute()
+  existingHook = _Attribute()
+  newHook = _Attribute()
+
+  def __init__(self, *args, ) -> None:
+    _owner, _name, _oldHook, _newHook = [*args, None, None, None, None][:4]
+    if any(i is None for i in (_name, _oldHook, _newHook)):
+      Exception.__init__(self, "Duplicate hook registration")
+    else:
+      self.owner = _owner
+      self.name = _name
+      self.existingHook = _oldHook
+      self.newHook = _newHook
+
+  def __str__(self) -> str:
+    """
+    String representation of the exception.
+    """
+    if any(i is None for i in (self.name, self.existingHook, self.newHook)):
+      return Exception.__str__(self)
+    infonSpec = """The class '%s' already has a hook registered 
+    at name: '%s'! The existing hook is '%s', and the new hook is '%s'."""
+    ownerName = self.owner.__name__
+    oldHook = str(self.existingHook)
+    newHook = str(self.newHook)
+    info = infonSpec % (ownerName, self.name, oldHook, newHook)
+    return monoSpace(info)

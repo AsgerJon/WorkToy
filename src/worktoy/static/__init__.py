@@ -5,8 +5,8 @@ utilities. """
 from __future__ import annotations
 
 #  Private classes
-from ._current_instance import _CurrentInstance
-from ._current_owner import _CurrentOwner
+from ._current_instance import _CurrentInstance, _InstanceAddress
+from ._current_owner import _CurrentOwner, _OwnerAddress
 from ._current_module import _CurrentModule
 from ._current_class import _CurrentClass
 
@@ -14,12 +14,15 @@ from ._current_class import _CurrentClass
 from ._item_call import ItemCall
 from ._hist_dict import HistDict
 
-#  Sub modules
-from . import casting
+#  Submodules
+# from . import casting
 from . import zeroton
 
 #  Public classes
 from ._abstract_object import AbstractObject  # Depends on zeroton
+
+#  Private classes
+from ._attribute import _Attribute  # Depends on AbstractObject
 from ._alias import Alias
 from ._pre_class import PreClass
 
@@ -34,7 +37,6 @@ __all__ = [
     'AbstractObject',
     'Alias',
     'PreClass',
-    'casting',
     'zeroton',
     'TypeSig',
     'Dispatch',

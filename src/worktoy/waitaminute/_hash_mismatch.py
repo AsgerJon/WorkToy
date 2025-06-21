@@ -5,6 +5,7 @@ based mismatch between a type signature and a tuple of arguments. """
 from __future__ import annotations
 
 from . import _Attribute
+from ..text import monoSpace
 
 try:
   from typing import TYPE_CHECKING
@@ -26,49 +27,30 @@ class HashMismatch(Exception):
 
   typeSig = _Attribute()
   posArgs = _Attribute()
+  types = _Attribute()
 
-  def __init__(self, typeSig: TypeSig, *args) -> None:
+  def __init__(self, typeSig_: TypeSig, *args) -> None:
     """HashMismatch is raised by the dispatcher system to indicate a hash
     based mismatch between a type signature and a tuple of arguments. """
-
-    self.typeSig = typeSig
+    self.types = typeSig_
     self.posArgs = args
 
-    sigStr = str(typeSig)
-    argTypes = [type(arg).__name__ for arg in args]
+    Exception.__init__(self, )
+
+  def __str__(self) -> str:
+    """Get the string representation of the HashMismatch."""
+    sigStr = str(self.typeSig)
+    argTypes = [type(arg).__name__ for arg in self.posArgs]
     argStr = """(%s)""" % ', '.join(argTypes)
-    sigHash = hash(typeSig)
+    sigHash = hash(self.typeSig)
     try:
-      argHash = hash(args)
+      argHash = hash(self.posArgs)
     except TypeError:
       argHash = '<unhashable>'
 
     infoSpec = """Unable to match type signature: <br><tab>%s<br>with
     signature of arguments:<br><tab>%s<br>Received hashes: %d != %s"""
     info = infoSpec % (sigStr, argStr, sigHash, argHash)
-    Exception.__init__(self, info)
+    return monoSpace(info)
 
-  def _resolveOther(self, other: object) -> Self:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, TypeSig):
-      return cls(other, *self.posArgs)
-    if isinstance(other, (tuple, list)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
-
-  def __eq__(self, other: object) -> bool:
-    """Check if two HashMismatch objects are equal."""
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    if self.typeSig != other.typeSig:
-      return False
-    if self.posArgs != other.posArgs:
-      return False
-    return True
+  __repr__ = __str__

@@ -3,7 +3,8 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..mcls import FunctionType
+from types import FunctionType
+
 from ..mcls.hooks import AbstractHook
 from ..text import stringList
 from ..waitaminute import attributeErrorFactory, ReservedName
@@ -17,8 +18,8 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Callable, Iterator
-  from worktoy.ezdata import EZSpace, EZData
+  from typing import Any, Iterator
+  from worktoy.ezdata import EZData
 
 
 class EZHook(AbstractHook):

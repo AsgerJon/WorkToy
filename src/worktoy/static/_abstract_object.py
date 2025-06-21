@@ -1,21 +1,6 @@
 """
-AbstractObject reimplements certain functions on 'object':
-
-  __init__
-  __init_subclass__
-  __setattr__
-  __delattr__
-
-The __init__ and __init_subclass__ methods remove arguments other than
-'self' before calling the base class. This prevents errors caused by
-arguments being passed up through base classes.
-
-The __setattr__ and __delattr__ methods streamlines error handling. A
-subclass wishing to indicate an illegal set or delete operation should
-raise BadSet or BadDelete respectively. The __setattr__ and __delattr__
-methods implemented here catch these errors and raise ReadOnlyError or
-ProtectedError respectively.
-
+AbstractObject defines a base class for all other objects in the worktoy
+library.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -24,13 +9,14 @@ from __future__ import annotations
 import re
 
 from ..text import monoSpace
-from ..waitaminute import BadSet, BadDelete, ReadOnlyError, ProtectedError
+from ..waitaminute import ReadOnlyError, ProtectedError, \
+  attributeErrorFactory
 from ..waitaminute import MissingVariable, TypeException
 from ..parse import maybe
-
 from .zeroton import THIS, OWNER, DELETED
-
-from . import _CurrentInstance, _CurrentOwner, _CurrentClass, _CurrentModule
+from . import _CurrentInstance, _InstanceAddress
+from . import _CurrentOwner, _OwnerAddress
+from . import _CurrentClass, _CurrentModule
 
 #  Below provides compatibility back to Python 3.7
 try:
@@ -42,27 +28,63 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Optional, Self, TypeAlias
+  from typing import Any, TypeAlias
+
+  Names: TypeAlias = tuple[str, str, str, str]
 
 
-class AbstractObject(object, metaclass=type):
+class AbstractObject:
   """
-  AbstractObject reimplements certain functions on 'object':
+  AbstractObject is the base class for most core components in the
+  worktoy framework. It extends Python's built-in 'object' with safer
+  construction semantics, stricter descriptor behavior, and optional
+  dynamic context binding.
 
-  __init__
-  __init_subclass__
-  __setattr__
-  __delattr__
+  ## Constructor Behavior
 
-  The __init__ and __init_subclass__ methods remove arguments other than
-  'self' before calling the base class. This prevents errors caused by
-  arguments being passed up through base classes.
+  Both `__init__` and `__init_subclass__` are patched to discard any
+  unexpected arguments. This prevents stray *args or **kwargs from
+  propagating into classes that don't explicitly accept them, which is
+  particularly useful in deep inheritance hierarchies.
 
-  The __setattr__ and __delattr__ methods streamlines error handling. A
-  subclass wishing to indicate an illegal set or delete operation should
-  raise BadSet or BadDelete respectively. The __setattr__ and __delattr__
-  methods implemented here catch these errors and raise ReadOnlyError or
-  ProtectedError respectively.
+  ## Descriptor Safety
+
+  This class provides an extensible, context-aware descriptor pattern:
+
+  - `__get__`, `__set__`, and `__delete__` update internal `instance` and
+    `owner` references before dispatching to:
+    - `__instance_get__`
+    - `__instance_set__`
+    - `__instance_delete__`
+
+  Subclasses can override these to define field-like behavior, while still
+  retaining contextual metadata.
+
+  If a subclass raises `BadSet` or `BadDelete`, `__setattr__` and
+  `__delattr__` catch those and re-raise them as `ReadOnlyError` or
+  `ProtectedError` respectively. This provides a clean and consistent way
+  to signal protected fields.
+
+  ## Contextual Metadata
+
+  When used as a descriptor, this class dynamically reflects runtime
+  context via properties:
+    - `instance`: the current instance being accessed
+    - `owner`: the class owning the descriptor
+    - `cls`: the descriptor's own class
+    - `module`: its defining module
+
+  These are exposed as dynamic properties for use in custom logic.
+
+  ## Utilities
+
+  - `parseKwargs`: searches kwargs for values of given types or names
+  - `getFieldName`, `getFieldOwner`: introspective helpers
+  - `getPrivateName`: converts CamelCase field names to snake_case for
+    private naming
+
+  Use AbstractObject as a foundation for anything that wants controlled
+  access behavior, contextual awareness, or descriptor-like hooks.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -79,7 +101,9 @@ class AbstractObject(object, metaclass=type):
 
   #  Public variables
   instance = _CurrentInstance()
+  instanceId = _InstanceAddress()
   owner = _CurrentOwner()
+  ownerId = _OwnerAddress()
   cls = _CurrentClass()
   module = _CurrentModule()
 
@@ -145,10 +169,10 @@ class AbstractObject(object, metaclass=type):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, fuckPycharm: str = None, *args, **kwargs) -> None:
+  def __init__(self: Any, *args, **kwargs) -> None:
     """Why are we still here?"""
     object.__init__(self, )  # Removed args and kwargs
-    self.__pos_args__ = (fuckPycharm, *args,)
+    self.__pos_args__ = (*args,)
     self.__key_args__ = {**kwargs, }
 
   def __init_subclass__(cls, *args, **kwargs) -> None:
@@ -177,7 +201,17 @@ class AbstractObject(object, metaclass=type):
     self.updateContext(instance, owner, **kwargs)
     if instance is None:
       return self
-    return self.__instance_get__(**kwargs)
+    try:
+      value = self.__instance_get__(**kwargs)
+    except Exception as exception:
+      raise exception
+    else:
+      if value is DELETED:
+        ownerName = self.getFieldOwner().__name__
+        fieldName = self.getFieldName()
+        attributeError = attributeErrorFactory(ownerName, fieldName)
+        raise attributeError
+      return value
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
@@ -196,7 +230,7 @@ class AbstractObject(object, metaclass=type):
     return self.__instance_delete__(**kwargs)
 
   #  Presentation
-  def _getNames(self) -> tuple[str, str, str, str]:
+  def _getNames(self) -> Names:
     """
     Getter function for class name, owner name and field name. Convenience
     function for '__str__' and '__repr__' methods.

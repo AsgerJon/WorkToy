@@ -7,7 +7,11 @@ The 'worktoy.core' module provides the most primitive objects used by the
 from __future__ import annotations
 
 from ._some import Some
+from ._unpack import unpack
+from ._bipartite_matching import bipartiteMatching
 
 __all__ = [
     'Some',
+    'unpack',
+    'bipartiteMatching',
 ]

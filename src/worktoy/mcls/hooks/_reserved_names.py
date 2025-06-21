@@ -16,7 +16,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Self, Any, Callable, Iterator
+  from typing import Self, Any, Iterator
 
 
 class _Meta(type):

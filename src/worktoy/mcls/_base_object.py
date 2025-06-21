@@ -1,5 +1,6 @@
-"""BaseObject exposes the functionality of the custom metaclass
-implementations in the 'worktoy' library. """
+"""
+BaseObject is the standard entry point for using the worktoy library.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
@@ -17,5 +18,16 @@ except ImportError:
 
 
 class BaseObject(AbstractObject, metaclass=BaseMeta):
-  """BaseObject exposes the functionality of the custom metaclass
-  implementations in the 'worktoy' library. """
+  """
+  BaseObject combines the core functionality of AbstractObject with the
+  hook-based metaclass behavior of BaseMeta.
+
+  From AbstractObject, it inherits robust constructor handling, controlled
+  descriptor mutation, and context-aware access to instance and owner
+  information. From BaseMeta, it gains support for function overloading
+  and other hook-based class construction features via BaseSpace.
+
+  Subclass this when you want both: sane, safe object semantics and
+  overload-aware metaclass support.
+  """
+  pass

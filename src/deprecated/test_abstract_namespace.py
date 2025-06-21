@@ -3,6 +3,11 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from unittest import TestCase
+
+from worktoy.mcls.hooks import AbstractHook
+from worktoy.mcls import AbstractNamespace, AbstractMetaclass
+
 try:
   from typing import TYPE_CHECKING
 except ImportError:
@@ -10,10 +15,6 @@ except ImportError:
     from typing_extensions import TYPE_CHECKING
   except ImportError:
     TYPE_CHECKING = False
-
-from unittest import TestCase
-
-from worktoy.mcls import AbstractNamespace, Base, Space, AbstractMetaclass
 
 if TYPE_CHECKING:
   from typing import Any, Callable, Self

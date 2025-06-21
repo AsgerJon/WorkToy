@@ -3,4 +3,8 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from .quick import main, ComplexNumber
+from .type_sig_example import main as typeSigExample
+
+__all__ = [
+    "typeSigExample",
+]

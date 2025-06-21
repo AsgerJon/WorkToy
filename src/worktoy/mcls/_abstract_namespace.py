@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from ..static import HistDict
 from ..text import typeMsg, monoSpace
-from ..waitaminute import MissingVariable, HookException
+from ..waitaminute import HookException, DuplicateHookError
 from ..waitaminute import HashError, TypeException
-from . import Base, Types, Spaces
+from . import Base
 from .hooks import AbstractHook
 
 try:
@@ -22,9 +22,10 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Any, Self, TypeAlias
+  from typing import Any, TypeAlias
 
   Bases: TypeAlias = tuple[type, ...]
+  Hooks: TypeAlias = list[AbstractHook]
 
 
 class AbstractNamespace(HistDict):
@@ -52,14 +53,23 @@ class AbstractNamespace(HistDict):
   class construction without modifying the core metaclass logic.
   """
 
-  #  Reserved private names
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+  __owner_hooks_list_name__ = '__hook_objects__'
+
+  #  Private Variables
   __meta_class__ = None
   __class_name__ = None
   __base_classes__ = None
   __key_args__ = None
-  __owner_hooks_list_name__ = '__hook_objects__'
   __hash_value__ = None
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   def getBases(self) -> Bases:
     """Returns the base classes of the class under creation."""
     return (*self.__base_classes__,)
@@ -96,31 +106,32 @@ class AbstractNamespace(HistDict):
       assert isinstance(cls, dict)
     return cls.__owner_hooks_list_name__
 
-  def getHooks(self, owner: type = None) -> list[AbstractHook]:
+  def getHooks(self, owner: type = None) -> Hooks:
     """Getter-function for the AbstractHook classes. """
-    pvtName = self.getHookListName()
     cls = type(self)
-    hooks = getattr(cls, pvtName, [])
+    hooks = self.classGetHooks()
     out = []
     for hook in hooks:
       out.append(hook.__get__(self, cls))
     return out
 
   @classmethod
-  def addHook(cls, hook: AbstractHook) -> None:
-    """Adds a hook to the list of hooks. """
-    if TYPE_CHECKING:
-      assert isinstance(cls, dict)
-    if not isinstance(hook, AbstractHook):
-      raise TypeError(typeMsg('hook', hook, AbstractHook))
-    existingHooks = getattr(cls, cls.getHookListName(), [])
-    setattr(cls, cls.getHookListName(), [*existingHooks, hook])
-
-  def __init__(self, mcls: type, name: str, bases: Base, **kwargs) -> None:
-    self.__meta_class__ = mcls
-    self.__class_name__ = name
-    self.__base_classes__ = [*bases, ]
-    self.__key_args__ = kwargs or {}
+  def classGetHooks(cls, ) -> Hooks:
+    """
+    Returns the hooks registered on this class or baseclasses.
+    """
+    pvtName = cls.getHookListName()
+    out = []
+    for base in cls.__mro__:
+      if issubclass(base, dict):
+        hooks = getattr(base, pvtName, [])
+        for hook in hooks:
+          if not isinstance(hook, AbstractHook):
+            raise TypeError(typeMsg('hook', hook, AbstractHook))
+          if hook in out:
+            continue
+          out.append(hook)
+    return out
 
   def getMetaclass(self, ) -> type:
     """Returns the metaclass."""
@@ -133,6 +144,41 @@ class AbstractNamespace(HistDict):
   def getKwargs(self, ) -> dict:
     """Returns the keyword arguments passed to the class."""
     return {**self.__key_args__, **dict()}
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @classmethod
+  def addHook(cls, hook: AbstractHook) -> None:
+    """Adds a hook to the list of hooks. """
+    if not isinstance(hook, AbstractHook):
+      raise TypeException('hook', hook, AbstractHook)
+    existingHooks = cls.classGetHooks()
+    for existingHook in existingHooks:
+      existingName = existingHook.getFieldName()
+      newName = hook.getFieldName()
+      if existingName == newName:
+        if existingHook is hook:
+          return
+        hooks = (existingHook, hook)
+        raise DuplicateHookError(cls, hook.__name__, *hooks)
+    pvtName = cls.getHookListName()
+    setattr(cls, pvtName, [*existingHooks, hook])
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init__(self, mcls: type, name: str, bases: Base, **kwargs) -> None:
+    self.__meta_class__ = mcls
+    self.__class_name__ = name
+    self.__base_classes__ = [*bases, ]
+    self.__key_args__ = kwargs or {}
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __getitem__(self, key: str, **kwargs) -> Any:
     """Returns the value of the key."""
@@ -169,6 +215,35 @@ class AbstractNamespace(HistDict):
     else:
       HistDict.__setitem__(self, key, val)
 
+  def __str__(self, ) -> str:
+    """Returns the string representation of the namespace object."""
+    bases = self.getBases()
+    spaceName = type(self).__name__
+    clsName = self.getClassName()
+    baseNames = ', '.join([base.__name__ for base in bases])
+    mclsName = self.getMetaclass().__name__
+    info = """Namespace object of type: '%s' created by the '__prepare__' 
+    method on metaclass: '%s' with base: %s to create class: '%s'."""
+    return monoSpace(info % (spaceName, mclsName, baseNames, clsName))
+
+  def __repr__(self, ) -> str:
+    """Returns the string representation of the namespace object."""
+    bases = self.getBases()
+    spaceName = type(self).__name__
+    clsName = self.getClassName()
+    mclsName = self.getMetaclass().__name__
+    baseNames = ', '.join([base.__name__ for base in bases])
+    mclsName = self.getMetaclass().__name__
+    args = """%s, %s, (%s,)""" % (mclsName, clsName, baseNames)
+    kwargs = [(k, v) for (k, v) in self.getKwargs().items()]
+    kwargStr = ', '.join(['%s=%s' % (k, str(v)) for (k, v) in kwargs])
+    if kwargStr:
+      kwargStr = ', %s' % kwargStr
+    return """%s(%s%s)""" % (spaceName, args, kwargStr)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   def preCompile(self, ) -> dict:
     """The return value from this method is passed to the compile method.
     Subclasses can implement this method to provide special objects at
@@ -206,29 +281,3 @@ class AbstractNamespace(HistDict):
         assert isinstance(hook, AbstractHook)
       namespace = hook.postCompileHook(namespace)
     return namespace
-
-  def __str__(self, ) -> str:
-    """Returns the string representation of the namespace object."""
-    bases = self.getBases()
-    spaceName = type(self).__name__
-    clsName = self.getClassName()
-    baseNames = ', '.join([base.__name__ for base in bases])
-    mclsName = self.getMetaclass().__name__
-    info = """Namespace object of type: '%s' created by the '__prepare__' 
-    method on metaclass: '%s' with base: %s to create class: '%s'."""
-    return monoSpace(info % (spaceName, mclsName, baseNames, clsName))
-
-  def __repr__(self, ) -> str:
-    """Returns the string representation of the namespace object."""
-    bases = self.getBases()
-    spaceName = type(self).__name__
-    clsName = self.getClassName()
-    mclsName = self.getMetaclass().__name__
-    baseNames = ', '.join([base.__name__ for base in bases])
-    mclsName = self.getMetaclass().__name__
-    args = """%s, %s, (%s,)""" % (mclsName, clsName, baseNames)
-    kwargs = [(k, v) for (k, v) in self.getKwargs().items()]
-    kwargStr = ', '.join(['%s=%s' % (k, str(v)) for (k, v) in kwargs])
-    if kwargStr:
-      kwargStr = ', %s' % kwargStr
-    return """%s(%s%s)""" % (spaceName, args, kwargStr)

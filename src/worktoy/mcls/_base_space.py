@@ -1,4 +1,6 @@
-"""BaseSpace provides the namespace class for the worktoy.mcls module."""
+"""
+BaseSpace provides the namespace class used by worktoy.mcls.BaseMeta
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
@@ -26,7 +28,18 @@ if TYPE_CHECKING:
 
 
 class BaseSpace(AbstractNamespace):
-  """BaseSpace provides the namespace class for the worktoy.mcls module."""
+  """
+  BaseSpace is the namespace used by BaseMeta. It enables function
+  overloading and related features via hook registration.
+
+  Classes defined using this namespace support method overloading through
+  hooks installed automatically in the class body. These hooks handle
+  overload collection, dispatch construction, and support for 'THIS' as a
+  placeholder during class creation.
+
+  The overload mechanism and other behavior are defined in
+  `worktoy.mcls.hooks`. This namespace is returned from BaseMeta.__prepare__.
+  """
 
   __overload_map__ = None
 

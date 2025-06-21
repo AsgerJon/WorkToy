@@ -42,10 +42,9 @@ class VariableNotNone(Exception):
       self.name = _name
     if _value is not None:
       self.value = _value
-    info = self._getInfoSpec()
-    Exception.__init__(self, info)
+    Exception.__init__(self, )
 
-  def _getInfoSpec(self, ) -> str:
+  def __str__(self, ) -> str:
     """Get the info spec."""
     if self.name is None and self.value is None:
       infoSpec = """Unexpected value at name expected to be None!%s%s"""
@@ -67,18 +66,4 @@ class VariableNotNone(Exception):
       name = self.name
     return monoSpace(infoSpec % (valueStr, name), )
 
-  def __eq__(self, other: Any) -> bool:
-    """Check if the other object is equal to this object."""
-    if not isinstance(other, VariableNotNone):
-      return False
-    if self.name is None and self.value is None:
-      return True if self is other else False
-    if self.name is None and other.name is None:
-      return True if self.value == other.value else False
-    if self.value is None and other.value is None:
-      return True if self.name == other.name else False
-    if self.name != other.name:
-      return False
-    if self.value != other.value:
-      return False
-    return True
+  __repr__ = __str__

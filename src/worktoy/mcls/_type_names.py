@@ -24,10 +24,3 @@ else:
   Spaces = tuple
   Base = tuple
   Types = tuple
-
-
-def func() -> None:
-  pass
-
-
-FunctionType = type(func)
