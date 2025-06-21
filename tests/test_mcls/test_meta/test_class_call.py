@@ -22,7 +22,7 @@ except ImportError:  # pragma: no cover
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-  from typing import Self, TypeAlias, Any
+  from typing import Any
 
 
 class Thing(AbstractObject, metaclass=AbstractMetaclass):
