@@ -8,11 +8,8 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from icecream import ic
-
 from worktoy.mcls import AbstractMetaclass
 from worktoy.parse import maybe
-from worktoy.static import AbstractObject
 
 try:
   from typing import TYPE_CHECKING
@@ -24,8 +21,6 @@ except ImportError:
 
 if TYPE_CHECKING:
   from typing import Any
-
-ic.configureOutput(includeContext=True, )
 
 
 class Christiania(metaclass=AbstractMetaclass):
