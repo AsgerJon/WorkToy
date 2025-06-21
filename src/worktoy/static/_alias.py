@@ -58,6 +58,7 @@ class Alias(AbstractObject):
     parentDescriptor = getattr(owner, self.__original_name__, None)
     if parentDescriptor is None:
       raise AliasException(owner, name)
+    setattr(owner, name, parentDescriptor)
 
   def __instance_get__(self, **kwargs) -> Any:
     """
