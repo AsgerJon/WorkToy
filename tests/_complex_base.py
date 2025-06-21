@@ -10,17 +10,10 @@ from math import atan2
 
 from worktoy.static import AbstractObject
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
-
+from typing import TYPE_CHECKING
 from worktoy.mcls import BaseMeta
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
@@ -68,7 +61,7 @@ class ComplexBase(AbstractObject):
 
   def __arg__(self, ) -> float:
     """Get the argument of the complex number."""
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(self, ComplexBase)
     if not self:
       raise ZeroDivisionError

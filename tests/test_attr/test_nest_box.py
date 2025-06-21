@@ -18,15 +18,9 @@ from worktoy.text import stringList
 
 from . import PlanePoint, PlaneCircle
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
 
 

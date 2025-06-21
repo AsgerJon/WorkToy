@@ -8,15 +8,9 @@ from ..static import AbstractObject
 from ..static.zeroton import DELETED
 from ..waitaminute import MissingVariable, TypeException, VariableNotNone
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
@@ -42,7 +36,7 @@ class AttriBox(AbstractObject):
     Returns the type of the field object.
     """
     if self.__field_type__ is None:
-      raise MissingVariable('AttriBox.__field_type__')
+      raise MissingVariable('AttriBox.__field_type__', type)
     if isinstance(self.__field_type__, type):
       return self.__field_type__
     name, value = '__field_type__', self.__field_type__
@@ -66,11 +60,12 @@ class AttriBox(AbstractObject):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, fieldType: type) -> None:
+  def __init__(self, fieldType: type = None) -> None:
     """
     Initializes the AttriBox with the type of the object to be returned.
     """
-    self.setFieldType(fieldType)
+    if fieldType is not None:
+      self.setFieldType(fieldType)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -7,15 +7,9 @@ from __future__ import annotations
 from worktoy.text import monoSpace
 from . import _Attribute
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Union, Self, TypeAlias, LiteralString
 
   Path: TypeAlias = Union[str, bytes, LiteralString]
@@ -61,7 +55,7 @@ class PathSyntaxException(ValueError):
     else:
       return out
     finally:
-      if TYPE_CHECKING:  # pycharm, please!
+      if TYPE_CHECKING:  # pragma: no cover  # pycharm, please!
         pycharmPlease = 69420
         assert isinstance(pycharmPlease, cls)
         return pycharmPlease

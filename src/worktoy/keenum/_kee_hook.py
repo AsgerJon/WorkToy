@@ -8,15 +8,9 @@ from __future__ import annotations
 from ..static import AbstractObject
 from ..mcls.hooks import AbstractHook
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
   from . import _AutoMember
@@ -113,7 +107,7 @@ class KeeHook(AbstractHook):
     if isinstance(value, AbstractObject):
       if hasattr(value, '__auto_member__'):
         if getattr(value, '__auto_member__'):
-          if TYPE_CHECKING:
+          if TYPE_CHECKING:  # pragma: no cover
             assert isinstance(value, _AutoMember)
           self._addMember(key.upper(), value.getValue())
           return True

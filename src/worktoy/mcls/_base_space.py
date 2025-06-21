@@ -13,15 +13,9 @@ from ..static import TypeSig
 from . import AbstractNamespace, AbstractMetaclass
 from .hooks import OverloadHook, NameHook, ReservedNameHook, PreClassHook
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Callable, Any
 
   OverloadMap: TypeAlias = dict[str, dict[TypeSig, Callable[..., Any]]]

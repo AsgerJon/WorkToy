@@ -14,15 +14,9 @@ from worktoy.text import stringList
 from worktoy.waitaminute import TypeException, MissingVariable
 from worktoy.work_io import validateExistingDirectory
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Optional
 
 

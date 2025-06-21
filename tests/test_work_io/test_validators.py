@@ -9,21 +9,13 @@ from unittest import TestCase
 from . import BaseTest
 from worktoy.text import monoSpace, wordWrap
 from worktoy.waitaminute import PathSyntaxException
-
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-  pass
-
 from worktoy.work_io import validateExistingDirectory, validateAvailablePath
-
 from worktoy.work_io import validateExistingFile
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+  pass
 
 
 class TestValidators(BaseTest):

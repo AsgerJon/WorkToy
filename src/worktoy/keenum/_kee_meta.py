@@ -13,15 +13,9 @@ from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute import IllegalInstantiation
 from . import KeeSpace, _KeeNumBase
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias, Any, Iterator
 
   Bases: TypeAlias = tuple[type, ...]

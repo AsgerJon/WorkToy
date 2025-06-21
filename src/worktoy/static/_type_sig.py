@@ -15,15 +15,9 @@ from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch
 from .zeroton import THIS
 from . import PreClass
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Union, Iterator
 
 

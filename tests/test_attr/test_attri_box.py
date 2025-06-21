@@ -7,25 +7,32 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.waitaminute import ReadOnlyError, ProtectedError
-from worktoy.waitaminute import TypeException
-
 from worktoy.attr import AttriBox
 from worktoy.static.zeroton import THIS
-from worktoy.text import stringList
-
+from worktoy.waitaminute import MissingVariable, TypeException
 from . import PlanePoint, PlaneCircle
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-  from typing import Self
+if TYPE_CHECKING:  # pragma: no cover
+  pass
+
+
+class Foo:
+  """
+  Foo is a class
+  """
+
+
+class Ham:
+  """
+  Ham accepts 'Foo' objects in its constructor
+  """
+
+  eggs = AttriBox[str](THIS)
+
+  def __init__(self, foo: Foo) -> None:
+    self.eggs = str(foo)
 
 
 class TestAttriBox(TestCase):
@@ -109,3 +116,51 @@ class TestAttriBox(TestCase):
     self.assertEqual(self.circle2.center.x, self.point3.x)
     self.assertEqual(self.circle2.center.y, self.point3.y)
     self.assertEqual(self.circle2.radius, 69.0)
+
+  def test_get_missing_field_type(self) -> None:
+    """
+    Test retrieving field type from AttriBox object not having one set.
+    """
+    box = AttriBox()  # Missing field type
+    with self.assertRaises(MissingVariable) as context:
+      box.getFieldType()
+    exception = context.exception
+    self.assertIs(exception.varType[0], type)
+    self.assertEqual(exception.varName, 'AttriBox.__field_type__')
+
+  def test_get_wrong_field_type(self) -> None:
+    """
+    Test retrieving field type from AttriBox object having wrong type set.
+    """
+    susType = 'imma type, trust!'
+    box = AttriBox()
+    setattr(box, '__field_type__', susType)  # Set wrong type
+    with self.assertRaises(TypeException) as context:
+      box.getFieldType()
+    exception = context.exception
+    self.assertEqual(exception.varName, '__field_type__')
+    self.assertEqual(exception.actualObject, susType)
+    self.assertIs(exception.expectedType[0], type)
+    self.assertIs(exception.actualType, str)
+
+  def test_set_wrong_field_type(self) -> None:
+    """
+    Test setting field type on AttriBox object with wrong type.
+    """
+    box = AttriBox()
+    susType = 'imma type, trust!'
+    with self.assertRaises(TypeException) as context:
+      box.setFieldType(susType)
+    exception = context.exception
+    self.assertEqual(exception.varName, 'fieldType')
+    self.assertEqual(exception.actualObject, susType)
+    self.assertIs(exception.expectedType[0], type)
+
+  def test_instantiate_box_field_type(self) -> None:
+    """
+    Test instantiating AttriBox with field type.
+    """
+    foo = Foo()
+    ham = Ham(foo)
+    self.assertIsInstance(ham.eggs, str)
+    self.assertIsInstance(Ham.eggs, AttriBox)

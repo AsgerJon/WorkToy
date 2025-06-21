@@ -16,7 +16,7 @@ except ImportError:
   except ImportError:
     TYPE_CHECKING = False
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable
   from worktoy.mcls import AbstractNamespace as ASpace
 
@@ -101,7 +101,7 @@ class AbstractHook(AbstractObject):
   spaceClass = Alias('owner')
 
   #  TYPE_CHECKING
-  if TYPE_CHECKING:
+  if TYPE_CHECKING:  # pragma: no cover
     from . import AbstractHook
     from .. import AbstractNamespace
     assert isinstance(AbstractHook.space, AbstractNamespace)

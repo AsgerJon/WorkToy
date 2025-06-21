@@ -5,21 +5,15 @@ and requires initialization. """
 from __future__ import annotations
 
 from . import _Attribute
-from ..text import joinWords
+from ..text import joinWords, monoSpace
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
 
 
-class MissingVariable(Exception):
+class MissingVariable(AttributeError):
   """MissingVariable exception should be raised when a variable is missing
   and requires initialization. """
 
@@ -30,43 +24,22 @@ class MissingVariable(Exception):
     """Initialize the MissingVariable object."""
     self.varName = name
     self.varType = types
-    if not types:
-      info = """Missing variable at name: '%s'!%s"""
+    AttributeError.__init__(self, )
+
+  def __str__(self, ) -> str:
+    """Return the string representation of the MissingVariable object."""
+    if not self.varType:
+      infoSpec = """Missing variable at name: '%s'!%s"""
       typeStr = ''
-    elif len(types) == 1:
-      info = """Missing variable '%s' of type '%s'"""
-      typeStr = types[0].__name__
+    elif len(self.varType) == 1:
+      infoSpec = """Missing variable '%s' of type '%s'"""
+      typeStr = self.varType[0].__name__
     else:
-      info = """Missing variable '%s' of any of the following types: %s"""
-      typeNames = [type_.__name__ for type_ in types]
+      infoSpec = """Missing variable '%s' of any of the following types: 
+      %s"""
+      typeNames = [type_.__name__ for type_ in self.varType]
       typeStr = joinWords(*typeNames, sep='or')
-    Exception.__init__(self, info % (name, typeStr))
+    info = infoSpec % (self.varName, typeStr)
+    return monoSpace(info)
 
-  def _resolveOther(self, other: object) -> Self:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, (tuple, list)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
-
-  def __eq__(self, other: object) -> bool:
-    """Compare the MissingVariable object with another object."""
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    cls = type(self)
-    if isinstance(other, cls):
-      if self.varName != other.varName:
-        return False
-      if len(self.varType) != len(other.varType):
-        return False
-      for selfType, otherType in zip(self.varType, other.varType):
-        if selfType != otherType:
-          return False
-      return True
-    return False
+  __repr__ = __str__

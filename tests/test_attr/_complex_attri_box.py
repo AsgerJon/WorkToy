@@ -9,19 +9,12 @@ from __future__ import annotations
 from tests import ComplexBase
 from worktoy.attr import AttriBox
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
-
+from typing import TYPE_CHECKING
 from worktoy.mcls import BaseMeta
 from worktoy.static import overload
 from worktoy.static.zeroton import THIS
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
@@ -69,7 +62,7 @@ class ComplexAttriBox(ComplexBase, metaclass=BaseMeta):
   @overload(int)
   def __init__(self, x: int) -> None:
     """Initialize the complex number."""
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert callable(self.__init__)
     self.__init__(float(x), 0.0)
 
@@ -77,13 +70,13 @@ class ComplexAttriBox(ComplexBase, metaclass=BaseMeta):
   @overload(list)
   def __init__(self, args: Any) -> None:
     """Initialize the complex number."""
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert callable(self.__init__)
     self.__init__(*args)
 
   @overload()
   def __init__(self) -> None:
     """Initialize the complex number."""
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert callable(self.__init__)
     self.__init__(0.0, 0.0)

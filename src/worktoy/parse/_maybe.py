@@ -9,7 +9,7 @@ try:
 except ImportError:
   TYPE_CHECKING = False
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 

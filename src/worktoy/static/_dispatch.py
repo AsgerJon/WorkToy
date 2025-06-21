@@ -18,15 +18,9 @@ from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch
 from ..waitaminute import DispatchException, CascadeException
 from ..waitaminute import IllegalDispatcher, MissingVariable
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias
 
   Types: TypeAlias = tuple[type, ...]

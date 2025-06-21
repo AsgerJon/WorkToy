@@ -8,15 +8,9 @@ from __future__ import annotations
 from ..mcls import AbstractNamespace
 from . import KeeHook  # Private to module
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   pass
 
 

@@ -14,15 +14,9 @@ from ..waitaminute import (QuestionableSyntax, TypeException,
 from . import Base
 from . import AbstractNamespace as ASpace
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 else:
   pass
@@ -319,7 +313,7 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
     """The __init__ method is invoked to initialize the class."""
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(space, ASpace)
       assert isinstance(bases, tuple)
     _MetaMetaclass.__init__(cls, name, bases, space, **kwargs)
@@ -596,7 +590,7 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
         return func
       raise TypeException(name, func, Func)
     finally:
-      if TYPE_CHECKING:
+      if TYPE_CHECKING:  # pragma: no cover
         pycharmPlease = 69420
         assert isinstance(pycharmPlease, Func)
         return pycharmPlease
@@ -605,13 +599,13 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
 
   def getNamespace(cls) -> ASpace:
     """Get the namespace object for the class."""
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(cls, AbstractMetaclass)
     space = getattr(cls, '__namespace__', None)
     if space is None:
       raise MissingVariable('__namespace__', ASpace, HistDict, dict)
     if isinstance(space, dict):
-      if TYPE_CHECKING:
+      if TYPE_CHECKING:  # pragma: no cover
         assert isinstance(space, ASpace)
       return space
     raise TypeException('__namespace__', space, ASpace, HistDict, dict)

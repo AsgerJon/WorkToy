@@ -13,15 +13,9 @@ from ..waitaminute import HashError, TypeException
 from . import Base
 from .hooks import AbstractHook, ReservedNameHook, NameHook
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias
 
   Bases: TypeAlias = tuple[type, ...]
@@ -102,7 +96,7 @@ class AbstractNamespace(HistDict):
   @classmethod
   def getHookListName(cls, ) -> str:
     """Getter-function for the name of the hook list. """
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(cls, dict)
     return cls.__owner_hooks_list_name__
 
@@ -208,7 +202,7 @@ class AbstractNamespace(HistDict):
     except KeyError:
       oldVal = None
     for hook in self.getHooks():
-      if TYPE_CHECKING:
+      if TYPE_CHECKING:  # pragma: no cover
         assert isinstance(hook, AbstractHook)
       if hook.setItemHook(key, val, oldVal):
         break
@@ -251,7 +245,7 @@ class AbstractNamespace(HistDict):
     returned. """
     namespace = dict()
     for hook in self.getHooks():
-      if TYPE_CHECKING:
+      if TYPE_CHECKING:  # pragma: no cover
         assert isinstance(hook, AbstractHook)
       namespace = hook.preCompileHook(namespace)
     return namespace
@@ -277,7 +271,7 @@ class AbstractNamespace(HistDict):
     validations. Subclasses can implement this method to provide further
     processing of the compiled object. """
     for hook in self.getHooks():
-      if TYPE_CHECKING:
+      if TYPE_CHECKING:  # pragma: no cover
         assert isinstance(hook, AbstractHook)
       namespace = hook.postCompileHook(namespace)
     return namespace

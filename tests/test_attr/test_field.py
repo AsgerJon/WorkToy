@@ -12,15 +12,9 @@ from worktoy.static import overload
 from worktoy.static.zeroton import THIS
 from worktoy.waitaminute import ProtectedError
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   pass
 
 

@@ -7,15 +7,9 @@ from __future__ import annotations
 from ..waitaminute import attributeErrorFactory
 from ..waitaminute import ProtectedError, ReadOnlyError
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Never
   from . import AbstractObject
 
@@ -32,7 +26,7 @@ class _CurrentOwner:
     """
     if instance is None:
       return self
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(instance, AbstractObject)
     if instance.__current_owner__ is None:
       if instance.__field_owner__ is None:

@@ -35,15 +35,9 @@ from . import ZeroSpace as ZSpace
 from ...waitaminute import IllegalInstantiation, ZerotonCaseException
 from ...waitaminute import MissingVariable, TypeException
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:  # pragma: no cover
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, TypeAlias, Never
 
   Bases: TypeAlias = tuple[type, ...]
@@ -117,13 +111,13 @@ class Zeroton(type):
       if isinstance(func, classmethod):
         out = func()
         if isinstance(out, str):
-          if TYPE_CHECKING:
+          if TYPE_CHECKING:  # pragma: no cover
             assert isinstance(out, str)
           return out
         raise TypeException('__class_str__', func, str)
       raise TypeException('__class_str__', func, classmethod)
     finally:
-      if TYPE_CHECKING:  # pycharm, please!
+      if TYPE_CHECKING:  # pragma: no cover  # pycharm, please!
         return 'pycharm, please!'
       else:
         pass
@@ -146,7 +140,7 @@ class Zeroton(type):
         return True if func(obj) else False
       raise TypeException(name, func, classmethod)
     finally:
-      if TYPE_CHECKING:  # pycharm, please!
+      if TYPE_CHECKING:  # pragma: no cover  # pycharm, please!
         return not 'pycharm, please!'
       else:
         pass
