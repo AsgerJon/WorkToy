@@ -37,4 +37,5 @@ def main() -> int:
 
 
 if __name__ == '__main__':
+  os.environ['RUNNING_TESTS'] = '1'
   sys.exit(main())
