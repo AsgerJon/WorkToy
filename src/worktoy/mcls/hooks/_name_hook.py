@@ -83,7 +83,7 @@ class NameHook(AbstractHook):
     """
     nearMisses = cls._getNearMisses()
     for nearMiss in nearMisses:
-      if name == nearMiss[0]:
+      if name == nearMiss[1]:
         raise QuestionableSyntax(*nearMiss, )
     return False
 

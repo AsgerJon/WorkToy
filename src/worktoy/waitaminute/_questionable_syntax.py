@@ -31,7 +31,7 @@ class QuestionableSyntax(SyntaxError):
   derpName = _Attribute()
   realName = _Attribute()
 
-  def __init__(self, derpName: str, realName: str) -> None:
+  def __init__(self, realName: str, derpName: str, ) -> None:
     self.__derp_name__ = derpName
     self.__real_name__ = realName
     info = """Received name: '%s' which is similar enough to '%s' to be a 
