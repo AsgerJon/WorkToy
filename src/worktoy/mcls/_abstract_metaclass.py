@@ -8,7 +8,9 @@ from __future__ import annotations
 from types import FunctionType as Func
 
 from ..static import HistDict
-from ..waitaminute import QuestionableSyntax, TypeException, MissingVariable
+from ..waitaminute import (QuestionableSyntax, TypeException,
+                           MissingVariable, \
+                           DelException)
 from . import Base
 from . import AbstractNamespace as ASpace
 
@@ -558,18 +560,11 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     """
     The _validateNamespace method is invoked to validate the namespace
     object before the class is created.
+    #TODO:  Implement as namespace hook.
     """
     if '__del__' in space and '__delete__' not in space:
       if not kwargs.get('trustMeBro', False):
         raise DelException(mcls, name, bases, space)
-    derpNames = [
-        '__get_item__', '__set_item__', '__get_attr__',
-        '__set_attr__'
-    ]
-    realNames = ['__getitem__', '__setitem__', '__getattr__', '__setattr__']
-    for derp, name in zip(derpNames, realNames):
-      if derp in space:
-        raise QuestionableSyntax(derp, name, )
     return space
 
   @staticmethod
@@ -588,6 +583,7 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     If the class implements a method called '__class_[name]__', this
     method returns the underlying function object. Otherwise, it raises
     'NotImplementedError'.
+    #TODO: Implement support for '__class_init__'. Is good for a finalizer.
     """
     try:
       func = object.__getattribute__(cls, name)

@@ -130,6 +130,7 @@ class AbstractObject:
     if isinstance(self.__pos_args__, (tuple, list)):
       instance = maybe(kwargs.get('THIS', self.instance), THIS)
       owner = maybe(kwargs.get('OWNER', self.owner), OWNER)
+      desc = maybe(kwargs.get('DESC', self), self)
       posArgs = []
       for arg in self.__pos_args__:
         if arg is THIS:
@@ -148,6 +149,7 @@ class AbstractObject:
     if isinstance(self.__key_args__, dict):
       instance = maybe(kwargs.get('THIS', self.instance), THIS)
       owner = maybe(kwargs.get('OWNER', self.owner), OWNER)
+      desc = maybe(kwargs.get('DESC', self), self)
       keyArgs = {}
       for (key, val) in self.__key_args__.items():
         if val is THIS:

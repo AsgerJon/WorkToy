@@ -11,7 +11,7 @@ from ..text import typeMsg, monoSpace
 from ..waitaminute import HookException, DuplicateHookError
 from ..waitaminute import HashError, TypeException
 from . import Base
-from .hooks import AbstractHook
+from .hooks import AbstractHook, ReservedNameHook, NameHook
 
 try:
   from typing import TYPE_CHECKING
@@ -281,3 +281,6 @@ class AbstractNamespace(HistDict):
         assert isinstance(hook, AbstractHook)
       namespace = hook.postCompileHook(namespace)
     return namespace
+
+  reservedNameHook = ReservedNameHook()
+  nameHook = NameHook()

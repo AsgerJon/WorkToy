@@ -8,6 +8,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.mcls import AbstractMetaclass, BaseMeta
+from worktoy.waitaminute import QuestionableSyntax
 
 try:
   from typing import TYPE_CHECKING
@@ -50,3 +51,24 @@ class TestBasicMeta(TestCase):
         """
         Set the name of the class.
         """
+
+  def test_bad_class(self) -> None:
+    """
+    Test that the metaclass is set correctly.
+    """
+
+    with self.assertRaises(QuestionableSyntax):
+      class Foo(metaclass=AbstractMetaclass):
+        """
+        Foo is a class with AbstractMetaclass as its metaclass.
+        """
+
+        def __get_item__(self, item: Any) -> Any:
+          """
+          Get an item from the class.
+          """
+
+        def __set_item__(self, key: Any, value: Any) -> None:
+          """
+          Set an item in the class.
+          """

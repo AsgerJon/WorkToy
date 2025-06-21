@@ -80,7 +80,5 @@ class BaseSpace(AbstractNamespace):
     overloadMap[key] = existingMap
     self.__overload_map__ = overloadMap
 
-  reservedNameHook = ReservedNameHook()
   preClassHook = PreClassHook()
   overloadHook = OverloadHook()
-  nameHook = NameHook()
