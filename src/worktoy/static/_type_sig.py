@@ -255,7 +255,7 @@ class TypeSig:
     Flag indicating presence of 'list' or 'tuple' in the types.
     """
     for type_ in self.__raw_types__:
-      if issubclass(type_, Iterable):
+      if type_ is list or type_ is tuple:
         return True
     return False
 
@@ -397,6 +397,10 @@ class TypeSig:
 
     """
     _ = hash(self)  # Ensure hash is set or raise RuntimeError immediately
+    posArgs = [*args, ]
+    if not self.__raw_types__:
+      if args:
+        raise FlexMismatch(self, *args)
     try:
       out = self._biPartiteMatching(*args, )
     except FlexMismatch as flexMismatch:

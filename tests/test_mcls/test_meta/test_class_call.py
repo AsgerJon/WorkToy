@@ -116,7 +116,7 @@ class Thing(AbstractObject, metaclass=AbstractMetaclass):
       self = existing[key]
     except KeyError:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       self = super().__new__(cls)
       cls._addInstance(key, self)
       return cls.__class_call__(key, _recursion=True)

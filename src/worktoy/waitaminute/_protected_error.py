@@ -38,7 +38,15 @@ class ProtectedError(TypeError):
     self.owningInstance = instance
     self.descriptorObject = desc
     self.existingValue = oldValue
-    fieldOwner = getattr(instance, '__field_owner__', None)
+    TypeError.__init__(self, )
+
+  def __str__(self, ) -> str:
+    """
+    Return the string representation of the ProtectedError.
+    """
+    oldValue = self.existingValue
+    desc = self.descriptorObject
+    fieldOwner = getattr(self.owningInstance, '__field_owner__', None)
     fieldName = getattr(desc, '__field_name__', None)
     if fieldOwner is None or fieldName is None:
       info = """Cannot delete protected attribute!"""
@@ -49,33 +57,7 @@ class ProtectedError(TypeError):
       else:
         infoSpec = """Attempted to delete protected attribute '%s' 
         with value: '%s'"""
-      info = monoSpace(infoSpec % (fieldId, oldValue))
-    TypeError.__init__(self, info)
+      info = infoSpec % (fieldId, oldValue)
+    return monoSpace(info)
 
-  def _resolveOther(self, other: object) -> Self:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, (tuple, list)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
-
-  def __eq__(self, other: object) -> bool:
-    """Compare the ProtectedError object with another object."""
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    cls = type(self)
-    if isinstance(other, cls):
-      if self.descriptorObject != other.descriptorObject:
-        return False
-      if self.owningInstance != other.owningInstance:
-        return False
-      if self.existingValue != other.existingValue:
-        return False
-      return True
-    return False
+  __repr__ = __str__

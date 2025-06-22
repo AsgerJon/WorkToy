@@ -100,7 +100,7 @@ class PreClassHook(AbstractHook):
     """
     if self.__pre_class__ is None:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       self._createPreClass()
       return self._getPreClass(_recursion=True)
     if isinstance(self.__pre_class__, PreClass):

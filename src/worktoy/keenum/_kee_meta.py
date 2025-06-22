@@ -68,7 +68,7 @@ class KeeMeta(AbstractMetaclass):
     """
     if mcls.__core_keenum__ is None:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       mcls._createCoreKeeNum()
       return mcls.getCoreKeeNum(_recursion=True)
     if isinstance(mcls.__core_keenum__, type):

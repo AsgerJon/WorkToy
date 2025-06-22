@@ -75,17 +75,11 @@ class NestBox(AttriBox):
       value = getattr(self.topInstance, pvtName, )
     except AttributeError:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       value = self._createFieldObject()
       setattr(self.topInstance, pvtName, value)
       return self.__instance_get__(_recursion=True)
     else:
-      if value is None:
-        if kwargs.get('_recursion2', False):
-          raise RecursionError
-        value = self._createFieldObject()
-        setattr(self.topInstance, pvtName, value)
-        return self.__instance_get__(_recursion2=True)
       return value
 
   def __instance_set__(self, value: Any, **kwargs) -> None:
@@ -97,7 +91,7 @@ class NestBox(AttriBox):
       pvtName = self.getPrivateName()
       return setattr(self.topInstance, pvtName, value)
     if kwargs.get('_recursion', False):
-      raise RecursionError
+      raise RecursionError  # pragma: no cover
     try:
       castValue = fieldType(value)
     except Exception as exception:

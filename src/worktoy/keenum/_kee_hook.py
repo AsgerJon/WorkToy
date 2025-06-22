@@ -51,12 +51,12 @@ class KeeHook(AbstractHook):
     """
     if value is None:
       if kwargs.get('_recursion2', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       return self._addMember(name, name, _recursion2=True)
     valueType = self._getValueType()
     if valueType is None:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       self._setValueType(type(value))
       return self._addMember(name, value, _recursion=True)
     else:

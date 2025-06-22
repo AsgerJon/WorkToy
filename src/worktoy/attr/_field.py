@@ -73,13 +73,13 @@ class Field(AbstractObject):
       return ()
     if isinstance(self.__setter_keys__, list):
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       self.__setter_keys__ = (*self.__setter_keys__,)
       return self._getSetKeys(_recursion=True, )
     if isinstance(self.__setter_keys__, tuple):
       for key in self.__setter_keys__:
         if not isinstance(key, str):
-          raise TypeError(typeMsg('setterKey', key, str))
+          raise TypeException('key', key, str)
       else:
         return self.__setter_keys__
     name, value = '__setter_keys__', self.__setter_keys__
@@ -96,13 +96,13 @@ class Field(AbstractObject):
       return ()
     if isinstance(self.__deleter_keys__, list):
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       self.__deleter_keys__ = (*self.__deleter_keys__,)
       return self._getDeleteKeys(_recursion=True, )
     if isinstance(self.__deleter_keys__, tuple):
       for key in self.__deleter_keys__:
         if not isinstance(key, str):
-          raise TypeError(typeMsg('deleterKey', key, str))
+          raise TypeException('key', key, str)
       else:
         return self.__deleter_keys__
     name, value = '__deleter_keys__', self.__deleter_keys__
@@ -111,7 +111,6 @@ class Field(AbstractObject):
   #  ________________________________________________________________________
   #  Getter for accessor functions directly
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
   def _getGet(self, **kwargs) -> Func:
     """
     Getter-function for the getter function.
@@ -136,15 +135,10 @@ class Field(AbstractObject):
     """
     Getter-function for the getter function object.
     """
-    if self.__getter_func__ is not None:
-      if isinstance(self.__getter_func__, Func):
-        return self.__getter_func__
-      name, value = '__getter_func__', self.__getter_func__
-      raise TypeException(name, value, Func)
-    if kwargs.get('_recursion', False):
-      raise RecursionError
-    self.__getter_func__ = self._getGet()
-    return self._getGetFuncObject(_recursion=True, )
+    if isinstance(self.__getter_func__, Func):
+      return self.__getter_func__
+    name, value = '__getter_func__', self.__getter_func__
+    raise TypeException(name, value, Func)
 
   def _getSet(self, **kwargs) -> Funcs:
     """
@@ -173,24 +167,18 @@ class Field(AbstractObject):
     """
     Getter-function for the setter function objects.
     """
-    if self.__setter_funcs__ is not None:
-      if isinstance(self.__setter_funcs__, list):
-        if kwargs.get('_recursion', False):
-          raise RecursionError
-        self.__setter_funcs__ = (*self.__setter_funcs__,)
-        return self._getSet(_recursion=True, )
-      if isinstance(self.__setter_funcs__, tuple):
-        for setterFunc in self.__setter_funcs__:
-          if not isinstance(setterFunc, Func):
-            name, value = '__setter_funcs__', setterFunc
-            raise TypeException(name, value, Func)
-        else:
-          return self.__setter_funcs__
-      if isinstance(self.__setter_funcs__, Func):
-        return (self.__setter_funcs__,)
-      name, value = '__setter_funcs__', self.__setter_funcs__
-      raise TypeException(name, value, tuple)
-    return ()
+    try:
+      for setterFunc in self.__setter_funcs__:
+        if not isinstance(setterFunc, Func):
+          name, value = 'setterFunc', setterFunc
+          raise TypeException(name, value, Func)
+    except TypeError as typeError:
+      if 'iterable' in str(typeError):
+        name, value = '__setter_funcs__', self.__setter_funcs__
+        raise TypeException(name, value, tuple)
+      raise typeError
+    else:
+      return self.__setter_funcs__
 
   def _getDelete(self, **kwargs) -> Funcs:
     """
@@ -219,24 +207,18 @@ class Field(AbstractObject):
     """
     Getter-function for the deleter function objects.
     """
-    if self.__deleter_funcs__ is not None:
-      if isinstance(self.__deleter_funcs__, list):
-        if kwargs.get('_recursion', False):
-          raise RecursionError
-        self.__deleter_funcs__ = (*self.__deleter_funcs__,)
-        return self._getDelete(_recursion=True, )
-      if isinstance(self.__deleter_funcs__, tuple):
-        for deleterFunc in self.__deleter_funcs__:
-          if not isinstance(deleterFunc, Func):
-            name, value = '__deleter_funcs__', deleterFunc
-            raise TypeException(name, value, Func)
-        else:
-          return self.__deleter_funcs__
-      if isinstance(self.__deleter_funcs__, Func):
-        return (self.__deleter_funcs__,)
-      name, value = '__deleter_funcs__', self.__deleter_funcs__
-      raise TypeException(name, value, tuple)
-    return ()
+    try:
+      for deleterFunc in self.__deleter_funcs__:
+        if not isinstance(deleterFunc, Func):
+          name, value = 'deleterFunc', deleterFunc
+          raise TypeException(name, value, Func)
+    except TypeError as typeError:
+      if 'iterable' in str(typeError).lower():
+        name, value = '__deleter_funcs__', self.__deleter_funcs__
+        raise TypeException(name, value, tuple)
+      raise typeError
+    else:
+      return self.__deleter_funcs__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -247,7 +229,7 @@ class Field(AbstractObject):
     Setter-function for the getter function.
     """
     if not isinstance(callMeMaybe, Func):
-      name, value = '_setGetter', callMeMaybe
+      name, value = 'getterFunc', callMeMaybe
       raise TypeException(name, value, Func)
     self.__getter_func__ = callMeMaybe
     self.__getter_key__ = callMeMaybe.__name__
@@ -261,7 +243,7 @@ class Field(AbstractObject):
     function should be an instance method of the owner class.
     """
     if not isinstance(callMeMaybe, Func):
-      name, value = '_addSetter', callMeMaybe
+      name, value = 'setterFunc', callMeMaybe
       raise TypeException(name, value, Func)
     existingFuncs = self._getSet()
     existingKeys = self._getSetKeys()
@@ -277,7 +259,7 @@ class Field(AbstractObject):
     function should be an instance method of the owner class.
     """
     if not isinstance(callMeMaybe, Func):
-      name, value = '_addDeleter', callMeMaybe
+      name, value = 'deleterFunc', callMeMaybe
       raise TypeException(name, value, Func)
     existingFuncs = self._getDelete()
     existingKeys = self._getDeleteKeys()
@@ -302,17 +284,7 @@ class Field(AbstractObject):
     the getter function.
     """
     getter = self._getGet()
-    if isinstance(getter, classmethod):
-      return getter(self.owner, **kwargs)
-    if isinstance(getter, Meth):  # Bound method object
-      return getter(**kwargs)
-    try:
-      return getter(self.instance, **kwargs)
-    except Exception as exception1:
-      try:
-        return getter(**kwargs)
-      except Exception as exception2:
-        raise exception1 from exception2
+    return getter(self.instance, **kwargs)
 
   def __instance_set__(self, value: Any, **kwargs) -> None:
     """
@@ -323,19 +295,7 @@ class Field(AbstractObject):
     if not setters:
       return AbstractObject.__instance_set__(self, value, **kwargs)
     for setter in setters:
-      if isinstance(setter, classmethod):  # Class method object
-        setter(self.owner, value, **kwargs)
-        continue
-      if isinstance(setter, Meth):  # Bound method object
-        setter(value, **kwargs)
-        continue
-      try:
-        setter(self.instance, value, **kwargs)
-      except Exception as exception1:
-        try:
-          setter(value, **kwargs)
-        except Exception as exception2:
-          raise exception1 from exception2
+      setter(self.instance, value, **kwargs)
 
   def __instance_delete__(self, **kwargs) -> None:
     """
@@ -346,16 +306,4 @@ class Field(AbstractObject):
     if not deleters:
       return AbstractObject.__instance_delete__(self, **kwargs)
     for deleter in deleters:
-      if isinstance(deleter, classmethod):  # Class method object
-        deleter(self.owner, **kwargs)
-        continue
-      if isinstance(deleter, Meth):  # Bound method object
-        deleter(**kwargs)
-        continue
-      try:
-        deleter(self.instance, **kwargs)
-      except Exception as exception1:
-        try:
-          deleter(**kwargs)
-        except Exception as exception2:
-          raise exception1 from exception2
+      deleter(self.instance, **kwargs)

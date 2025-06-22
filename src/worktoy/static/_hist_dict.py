@@ -73,7 +73,7 @@ class HistDict(dict):
       else:
         return None
     if kwargs.get('_recursion', False):
-      raise RecursionError
+      raise RecursionError  # pragma: no cover
     return self.extendItemCalls(*other.getItemCalls(), _recursion=True)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -84,7 +84,7 @@ class AbstractNamespace(HistDict):
     computedHash = self._computeHash()
     if self.__hash_value__ is None:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       self.__hash_value__ = computedHash
       return self.getHash(_recursion=True)
     if not isinstance(self.__hash_value__, int):

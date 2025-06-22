@@ -115,14 +115,14 @@ class AttriBox(AbstractObject):
       value = getattr(self.instance, pvtName, )
     except AttributeError:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       value = self._createFieldObject()
       setattr(self.instance, pvtName, value)
       return self.__instance_get__(_recursion=True)
     else:
       if value is None:
         if kwargs.get('_recursion2', False):
-          raise RecursionError
+          raise RecursionError  # pragma: no cover
         value = self._createFieldObject()
         setattr(self.instance, pvtName, value)
         return self.__instance_get__(_recursion2=True)
@@ -137,7 +137,7 @@ class AttriBox(AbstractObject):
       pvtName = self.getPrivateName()
       return setattr(self.instance, pvtName, value)
     if kwargs.get('_recursion', False):
-      raise RecursionError
+      raise RecursionError  # pragma: no cover
     try:
       castValue = fieldType(value)
     except Exception as exception:

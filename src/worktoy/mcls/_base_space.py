@@ -61,7 +61,7 @@ class BaseSpace(AbstractNamespace):
     """Get the overload map for the namespace."""
     if self.__overload_map__ is None:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       self._buildOverloadMap()
       return self.getOverloadMap(_recursion=True)
     return self.__overload_map__

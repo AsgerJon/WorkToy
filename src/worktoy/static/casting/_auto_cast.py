@@ -31,7 +31,7 @@ class AutoCast(AbstractCast):
   def _cast(self, *args, **kwargs) -> Any:
     """Cast the arguments to the target type."""
     if kwargs.get('_recursion', False):
-      raise RecursionError
+      raise RecursionError  # pragma: no cover
     cls = self.getTargetType()
     return cls(*args, **kwargs, _recursion=True)
 

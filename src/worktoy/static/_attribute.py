@@ -48,7 +48,7 @@ class _Attribute(AbstractObject):
       value = getattr(self.instance, pvtName)
     except AttributeError as attributeError:
       if kwargs.get('_recursion', False):
-        raise RecursionError from attributeError
+        raise RecursionError  # pragma: no cover from attributeError
       if self.__default_value__ is None:
         raise attributeError
       self.__instance_set__(self.__default_value__, )

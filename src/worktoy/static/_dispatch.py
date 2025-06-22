@@ -115,7 +115,7 @@ instantiates Dispatch during class creation.
     """
     if cls.__running_tests__ is None:
       if kwargs.get('_recursion', False):
-        raise RecursionError
+        raise RecursionError  # pragma: no cover
       cls._createTestFlag()
       return cls.getTestFlag(_recursion=True)
     return cls.__running_tests__
@@ -188,7 +188,7 @@ instantiates Dispatch during class creation.
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _fastDispatch(self, *args, **kwargs) -> Any:
+  def _fastDispatch(self, ins: Any, *args, **kwargs) -> Any:
     """
     Fast dispatch the function call.
     """
@@ -202,13 +202,13 @@ instantiates Dispatch during class creation.
       else:
         if hasattr(call, '__func__'):
           return call.__func__(self.instance, *posArgs, **kwargs)
-        return call(self.instance, *posArgs, **kwargs)
+        return call(ins, *posArgs, **kwargs)
     else:
       if exceptions:
         raise exceptions[-1]  # Will be caught by control flow
       raise RuntimeError("""No signatures defined!""")
 
-  def _castDispatch(self, *args, **kwargs) -> Any:
+  def _castDispatch(self, ins: Any, *args, **kwargs) -> Any:
     """
     Dispatches the function call with arguments casted to the expected
     types.
@@ -221,13 +221,13 @@ instantiates Dispatch during class creation.
         exceptions.append(castMismatch)
         continue
       else:
-        return call(self.instance, *posArgs, **kwargs)
+        return call(ins, *posArgs, **kwargs)
     else:
       if exceptions:
         raise exceptions[-1]  # Will be caught by control flow
       raise RuntimeError("""No signatures defined!""")
 
-  def _flexDispatch(self, *args, **kwargs) -> Any:
+  def _flexDispatch(self, ins: Any, *args, **kwargs) -> Any:
     """
     The most flexible attempt to dispatch the function call.
     """
@@ -239,13 +239,13 @@ instantiates Dispatch during class creation.
         exceptions.append(exception)
         continue
       else:
-        return call(self.instance, *posArgs, **kwargs)
+        return call(ins, *posArgs, **kwargs)
     else:
       if exceptions:
         raise exceptions[-1]  # Will be caught by control flow
       raise RuntimeError("""No signatures defined!""")
 
-  def _dispatch(self, *args: Any, **kwargs: Any) -> Any:
+  def _dispatch(self, ins: Any, *args: Any, **kwargs: Any) -> Any:
     """
     Dispatches the function call by trying fast, cast and flex in that
     order.
@@ -255,13 +255,13 @@ instantiates Dispatch during class creation.
       self._setLatestDispatch(self._fastDispatch)
     exceptions = []
     try:
-      out = self._fastDispatch(*args, **kwargs)
+      out = self._fastDispatch(ins, *args, **kwargs)
     except HashMismatch as hashMismatch:
       exceptions.append(hashMismatch)
     else:
       return out
     try:
-      out = self._castDispatch(*args, **kwargs)
+      out = self._castDispatch(ins, *args, **kwargs)
     except CastMismatch as castMismatch:
       exceptions.append(castMismatch)
     else:
@@ -269,7 +269,7 @@ instantiates Dispatch during class creation.
         self._setLatestDispatch(self._castDispatch)
       return out
     try:
-      out = self._flexDispatch(*args, **kwargs)
+      out = self._flexDispatch(ins, *args, **kwargs)
     except FlexMismatch as flexMismatch:
       exceptions.append(flexMismatch)
     else:
@@ -290,7 +290,8 @@ instantiates Dispatch during class creation.
     """
     if self.getTestFlag():
       self._resetLatestDispatch()
-    return self._dispatch(*args, **kwargs)
+    lockedInstance = self.instance
+    return self._dispatch(lockedInstance, *args, **kwargs)
 
   def __str__(self, ) -> str:
     """Get the string representation of the function."""

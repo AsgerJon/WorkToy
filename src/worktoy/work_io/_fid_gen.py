@@ -125,7 +125,7 @@ class FidGen(BaseObject):
       validateExistingDirectory(value)
     except FileNotFoundError as e:
       if kwargs.get('_recursion', False):
-        raise RecursionError from e
+        raise RecursionError  # pragma: no cover from e
       os.makedirs(value, exist_ok=True)
       return self._setFileDirectory(value, _recursion=True)
     else:

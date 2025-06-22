@@ -8,13 +8,18 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.attr import AttriBox
-from worktoy.static.zeroton import THIS
+from worktoy.static.zeroton import THIS, OWNER, DELETED
 from worktoy.waitaminute import MissingVariable, TypeException
+from worktoy.waitaminute import VariableNotNone
 from . import PlanePoint, PlaneCircle
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
+  from typing import Any, Self
+
+
+class Yikes(Exception):
   pass
 
 
@@ -23,16 +28,21 @@ class Foo:
   Foo is a class
   """
 
+  __wrapped__ = None
 
-class Ham:
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
+    self.__wrapped__ = args[0]
+    if isinstance(args[0], complex):
+      raise Yikes
+
+
+class Bar:
   """
-  Ham accepts 'Foo' objects in its constructor
+  Bar accepts 'Foo' objects in its constructor
   """
 
-  eggs = AttriBox[str](THIS)
-
-  def __init__(self, foo: Foo) -> None:
-    self.eggs = str(foo)
+  ham = AttriBox[Foo](OWNER)
+  eggs = AttriBox[Foo](THIS)
 
 
 class TestAttriBox(TestCase):
@@ -156,11 +166,43 @@ class TestAttriBox(TestCase):
     self.assertEqual(exception.actualObject, susType)
     self.assertIs(exception.expectedType[0], type)
 
+  def test_set_duplicate_field_type(self) -> None:
+    """
+    Test setting field type on AttriBox object that already has one set.
+    """
+    box = AttriBox(int)
+    with self.assertRaises(VariableNotNone) as context:
+      box.setFieldType(float)
+    exception = context.exception
+    self.assertEqual(exception.name, 'AttriBox.__field_type__')
+    self.assertIs(exception.value, int)
+
   def test_instantiate_box_field_type(self) -> None:
     """
     Test instantiating AttriBox with field type.
     """
-    foo = Foo()
-    ham = Ham(foo)
-    self.assertIsInstance(ham.eggs, str)
-    self.assertIsInstance(Ham.eggs, AttriBox)
+    bar = Bar()
+    setattr(bar, Bar.ham.getPrivateName(), None)
+    self.assertIsInstance(bar.ham, Foo)
+    self.assertIs(bar.ham.__wrapped__, Bar)
+    self.assertIsInstance(bar.eggs, Foo)
+    self.assertIs(bar.eggs.__wrapped__, bar)
+
+  def test_bad_set(self) -> None:
+    """
+    Tests bad setting of AttriBox
+    """
+    bar = Bar()
+    with self.assertRaises(TypeException) as context:
+      bar.ham = 69 + 420j
+    exception = context.exception
+    self.assertIsInstance(exception, TypeException)
+    self.assertIsInstance(exception.__cause__, Yikes)
+
+  def test_bad_delete(self) -> None:
+    """
+    Tests bad deletion of AttriBox
+    """
+    bar = Bar()
+    del bar.ham
+    self.assertIs(getattr(bar, Bar.ham.getPrivateName(), ), DELETED)

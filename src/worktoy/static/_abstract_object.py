@@ -203,7 +203,7 @@ class AbstractObject:
       raise exception
     else:
       if value is DELETED:
-        ownerName = self.getFieldOwner().__name__
+        ownerName = self.owner.__name__
         fieldName = self.getFieldName()
         attributeError = attributeErrorFactory(ownerName, fieldName)
         raise attributeError

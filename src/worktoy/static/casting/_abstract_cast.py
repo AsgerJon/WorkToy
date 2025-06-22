@@ -23,5 +23,5 @@ class AbstractCast:
   def __call__(self, *args, **kwargs) -> Any:
     """Calling the Cast object will cast the arguments to the target type."""
     if kwargs.get('_recursion', False):
-      raise RecursionError
+      raise RecursionError  # pragma: no cover
     return self._cast(*args, **kwargs, _recursion=True)

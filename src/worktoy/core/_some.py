@@ -55,7 +55,13 @@ class _MetaSome(type):
 
   def __subclasscheck__(cls, other: type) -> bool:  # NOQA
     """
-    Any class except 'NoneType' is considered a subclass of 'Some'.
+    Any class except 'NoneType' is considered a subclass of 'Some'. Please
+    note the general expectation that only classes are eligible for
+    subclass verification. However, a custom implementation of
+    '__subclasscheck__' prevents the normal 'TypeError' despite this
+    exception seeming like it was raised by the Python interpreter on the
+    basis of a pattern. This is the reason behind the try-except block at
+    the top of this method.
     """
     try:
       _ = issubclass(other, object)  # even NoneType is an object
@@ -83,6 +89,13 @@ class _MetaSome(type):
     'TypeError: Some.__init_subclass__() takes no keyword arguments'
     """
     return type.__new__(mcls, name, (*bases, _InitSub), *args, **kwargs)
+
+  def __call__(cls, *args, **kwargs) -> None:
+    """
+    Prevents instantiation of the 'Some' class.
+    """
+    from worktoy.waitaminute import IllegalInstantiation
+    raise IllegalInstantiation(cls)
 
 
 class Some(metaclass=_MetaSome, _root=True):
