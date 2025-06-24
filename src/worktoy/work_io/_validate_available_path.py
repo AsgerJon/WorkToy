@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Path: TypeAlias = Union[str, bytes, LiteralString]
 
 
-def validateAvailablePath(path: Path) -> str:
+def validateAvailablePath(path: Path, **kwargs) -> str:
   """
   Validates that a given 'str' object is a valid file or directory path
   that does not already exist.
@@ -36,6 +36,8 @@ def validateAvailablePath(path: Path) -> str:
   if not os.path.isabs(path):
     raise PathSyntaxException(path)
   if os.path.exists(path):
+    if not kwargs.get('strict', True):
+      return ''
     infoSpec = """The path '%s' already exists!"""
     info = monoSpace(infoSpec % path)
     raise FileExistsError(info)

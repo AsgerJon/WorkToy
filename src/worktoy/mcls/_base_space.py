@@ -40,7 +40,7 @@ class BaseSpace(AbstractNamespace):
   def _buildOverloadMap(self, ) -> None:
     """Build the overload map for the namespace."""
     if self.__overload_map__ is not None:
-      raise VariableNotNone('__overload_map__', )
+      raise VariableNotNone('__overload_map__', self.__overload_map__)
     mcls = self.getMetaclass()
     bases = self.getBases()
     baseSpaces = []

@@ -8,7 +8,6 @@ from types import FunctionType as Func
 from types import MethodType as Meth
 
 from ..static import AbstractObject
-from ..text import typeMsg
 from ..waitaminute import MissingVariable, TypeException
 
 from typing import TYPE_CHECKING

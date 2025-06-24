@@ -5,19 +5,20 @@ directory, it returns the next available filename of the given format."""
 from __future__ import annotations
 
 import os
-
-from worktoy.attr import Field
-from worktoy.mcls import BaseObject
-from worktoy.parse import maybe
-from worktoy.static import overload
-from worktoy.text import stringList
-from worktoy.waitaminute import TypeException, MissingVariable
-from worktoy.work_io import validateExistingDirectory
-
 from typing import TYPE_CHECKING
 
+from ..attr import Field
+from ..mcls import BaseObject
+from ..parse import maybe
+from ..static import overload
+from ..text import stringList
+from ..waitaminute import TypeException
+from . import validateExistingDirectory, validateAvailablePath
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Optional
+  from typing import Optional, Any, TypeAlias
+
+  ArgRes: TypeAlias = tuple[Optional[str], tuple[Any, ...]]
 
 
 class FidGen(BaseObject):
@@ -32,40 +33,63 @@ class FidGen(BaseObject):
 
   #  Fallback variables
   __fallback_extension__ = 'json'
-  __fallback_name__ = 'untitled'
-  __fallback_directory__ = Field()
+  __fallback_directory__ = os.path.abspath(os.path.dirname(__file__))
 
   #  Private variables
   __base_name__ = None
+  __generated_names__ = None
+  __file_spec__ = None
   __file_extension__ = None
   __file_directory__ = None
 
   #  Public variables
   fileExtension = Field()
   fileDirectory = Field()
-  baseName = Field()
+  fileSpec = Field()
 
   #  Virtual variables
   filePath = Field()
+  nextName = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  @__fallback_directory__.GET
-  def _getFallbackDirectory(self, **kwargs) -> str:
-    """
-    Getter-function for the fallback directory.
-    """
-    return os.getcwd()
 
-  @baseName.GET
-  def _getBaseName(self, ) -> str:
-    """Get the name of the file."""
-    if isinstance(self.__base_name__, str):
-      return self.__base_name__
-    if isinstance(self.owner, type):
-      return self.owner.__name__
-    return self.__fallback_name__
+  def _getGeneratedNames(self) -> list[str]:
+    """
+    Getter-function for the generated names.
+    """
+    return maybe(self.__generated_names__, [])
+
+  def _createFileSpec(self) -> None:
+    """
+    Creator-function for the file specification.
+    """
+    baseName = maybe(self.__base_name__, self.owner.__name__, )
+    chars = []
+    for i, char in enumerate(baseName):
+      if char.upper() == char:
+        if i:
+          chars.append('_%s' % char.lower())
+          continue
+        chars.append(char.lower())
+        continue
+      chars.append(char)
+    snakeName = ''.join(chars)
+    spec = """%s%%03d.%s""" % (snakeName, self.fileExtension)
+    self.__file_spec__ = spec
+
+  @fileSpec.GET
+  def _getFileSpec(self, **kwargs) -> str:
+    """Get the file specification."""
+    if self.__file_spec__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      self._createFileSpec()
+      return self._getFileSpec(_recursion=True, )
+    if isinstance(self.__file_spec__, str):
+      return str(os.path.join(self.fileDirectory, self.__file_spec__))
+    raise TypeException('__file_spec__', self.__file_spec__, str)
 
   @fileExtension.GET
   def _getFileExtension(self, **kwargs) -> str:
@@ -77,33 +101,32 @@ class FidGen(BaseObject):
     """Get the file directory."""
     return maybe(self.__file_directory__, self.__fallback_directory__, )
 
-  @filePath.GET
-  def _getFilePath(self, **kwargs) -> str:
-    """Getter-function for the file path. """
-    n = kwargs.get('_n', 0)
-    formatSpec = """%s_%03d"""
-    fid = formatSpec % (self.baseName, n,)
-    for item in os.listdir(self.fileDirectory):
-      if item.startswith(fid):
-        return self._getFilePath(_n=n + 1, )
-    fidExt = """%s.%s""" % (fid, self.fileExtension)
-    out = os.path.join(self.fileDirectory, fidExt)
-    return str(out)
+  @nextName.GET
+  def _getNextName(self, n=None) -> str:
+    """
+    Retrieves the next available filename based on the file specification.
+    """
+    n = maybe(n, 0)  # easier to cover wink wink
+    while not validateAvailablePath(self.fileSpec % n, strict=False):
+      n += 1
+      if n > 100:
+        break
+    else:
+      out = self.fileSpec % n
+      self._addGeneratedName(out)
+      return out
+    raise RecursionError
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Setter methods
-  @baseName.SET
-  def _setBaseName(self, newName: str) -> None:
-    """Set the name of the file."""
-    if self.__base_name__ == newName:
-      return
-    if not isinstance(newName, str):
-      raise TypeException('__name__', newName, str)
-    if not newName:
-      raise ValueError('__name__ must be a non-empty string')
-    self.__base_name__ = newName
+
+  def _addGeneratedName(self, name: str) -> None:
+    """
+    Adds a generated name to the list of generated names.
+    """
+    existing = self._getGeneratedNames()
+    self.__generated_names__ = [*existing, name]
 
   @fileExtension.SET
   def _setFileExtension(self, value: str) -> None:
@@ -117,21 +140,7 @@ class FidGen(BaseObject):
   @fileDirectory.SET
   def _setFileDirectory(self, value: str, **kwargs) -> None:
     """Set the file directory."""
-    if not isinstance(value, str):
-      raise TypeException('__file_directory__', value, str)
-    if not value:
-      raise ValueError('__file_directory__ must be a non-empty string')
-    try:
-      validateExistingDirectory(value)
-    except FileNotFoundError as e:
-      if kwargs.get('_recursion', False):
-        raise RecursionError  # pragma: no cover from e
-      os.makedirs(value, exist_ok=True)
-      return self._setFileDirectory(value, _recursion=True)
-    else:
-      self.__file_directory__ = value
-    finally:
-      pass  # NOQA
+    self.__file_directory__ = validateExistingDirectory(value)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -141,23 +150,23 @@ class FidGen(BaseObject):
   def __init__(self, fileName: str, **kwargs) -> None:
     """Initialize the FidGen object."""
     self.__base_name__ = fileName
-    self.__init__(**kwargs)
+    if kwargs:
+      self.__init__(**kwargs)
 
   @overload(str, str, str)
   @overload(str, str)
   def __init__(self, *args, **kwargs) -> None:
-    argDir = self._findDirectory(*args)
-    argExt = self._findFileExtension(*args)
-    for arg in args:
-      if arg in [argDir, argExt]:
-        continue
+    posArgs = (*args,)
+    argDir, posArgs = self._findDirectory(*posArgs)
+    argExt, posArgs = self._findFileExtension(*posArgs)
+    for arg in posArgs:
       self.baseName = arg
-      break
     if argDir is not None:
       self.fileDirectory = argDir
     if argExt is not None:
       self.fileExtension = argExt
-    self.__init__(**kwargs)
+    if kwargs:
+      self.__init__(**kwargs)
 
   @overload()  # kwargs
   def __init__(self, **kwargs) -> None:
@@ -165,18 +174,11 @@ class FidGen(BaseObject):
     nameKeys = stringList("""name, file, fileName, filename, file_name""")
     extKeys = stringList("""ext, extension, file_extension""")
     dirKeys = stringList("""dir, directory, file_directory""")
-    KEYS = [nameKeys, extKeys, dirKeys]
-    NAMES = stringList("""name, ext, dirPath""")
-    TYPES = dict(name=str, ext=str, dirPath=str)
-    VALUES = dict()
-    for (keys, (name, type_)) in zip(KEYS, TYPES.items()):
-      for key in keys:
-        if key in kwargs:
-          value = kwargs[key]
-          if isinstance(value, type_):
-            VALUES[name] = value
-            break
-          raise TypeException(key, value, type_)
+    name, kwargs = self.parseKwargs(str, *nameKeys, **kwargs)
+    ext, kwargs = self.parseKwargs(str, *extKeys, **kwargs)
+    dir_, kwargs = self.parseKwargs(str, *dirKeys, **kwargs)
+    if all([i is not None for i in [name, ext, dir_]]):
+      self.__init__(name, ext, dir_, )
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -187,13 +189,21 @@ class FidGen(BaseObject):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @staticmethod
-  def _findDirectory(*args) -> Optional[str]:
+  def _findDirectory(*args) -> ArgRes:
     """Finds the directory in positional arguments. """
-    for arg in args:
+    unusedArgs = []
+    posArgs = [*reversed(args), ]
+    while posArgs:
+      arg = posArgs.pop()
       if isinstance(arg, str):
-        if os.path.isabs(arg):
-          return arg
-    return None  # pycharm, please!
+        if os.path.isdir(arg):
+          out = arg
+          unusedArgs.extend(posArgs)
+          break
+        unusedArgs.append(arg)
+    else:
+      return None, (*args,)
+    return out, (*unusedArgs,)
 
   @staticmethod
   def _getCommonExtensions() -> list[str]:
@@ -204,13 +214,22 @@ class FidGen(BaseObject):
     )
 
   @classmethod
-  def _findFileExtension(cls, *args) -> Optional[str]:
+  def _findFileExtension(cls, *args) -> ArgRes:
     """Finds the file extension in positional arguments. """
-    commonExtensions = cls._getCommonExtensions()
-    for arg in args:
+    unusedArgs = []
+    posArgs = [*reversed(args), ]
+    while posArgs:
+      arg = posArgs.pop()
       if isinstance(arg, str):
         if str.startswith(arg, '*.'):
-          return arg[2:]
-        if arg in commonExtensions:
-          return arg
-    return None  # pycharm, please!
+          out = arg[2:]
+          unusedArgs.extend(posArgs)
+          break
+        if arg in cls._getCommonExtensions():
+          out = arg
+          unusedArgs.extend(posArgs)
+          break
+        unusedArgs.append(arg)
+    else:
+      return None, (*args,)
+    return out, (*unusedArgs,)

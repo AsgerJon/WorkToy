@@ -49,6 +49,7 @@ def funcReport(func: FunctionType, **kwargs) -> str:
       if kwargs.get('strict', True):
         e = """No return type hint found!"""
         raise SyntaxError(e)
+      returnType = type(None)
   if paramKinds['oneStar']:
     posArgs.append(paramKinds['oneStar'])
   if paramKinds['twoStars']:

@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Optional, Union, Self, Callable, TypeAlias
 
 
-def validateExistingDirectory(directory: str) -> str:
+def validateExistingDirectory(directory: str, **kwargs) -> str:
   """
   Validates that a given 'str' object points to an existing directory.
 
@@ -29,10 +29,14 @@ def validateExistingDirectory(directory: str) -> str:
     NotADirectoryError: If the path is not a directory.
   """
   if not os.path.exists(directory):
+    if not kwargs.get('strict', True):
+      return ''
     infoSpec = """No directory exists at: '%s'!"""
     info = monoSpace(infoSpec % directory)
     raise FileNotFoundError(info)
   if not os.path.isdir(directory):
+    if not kwargs.get('strict', True):
+      return ''
     infoSpec = """The path '%s' is not a directory!"""
     info = monoSpace(infoSpec % directory)
     raise NotADirectoryError(info)

@@ -16,5 +16,9 @@ if TYPE_CHECKING:  # pragma: no cover
 class TestDispatch(TestCase):
   """TestDispatch tests the Dispatch class."""
 
-  def setUp(self) -> None:
-    """Set up the test case."""
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()

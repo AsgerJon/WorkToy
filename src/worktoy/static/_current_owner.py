@@ -38,25 +38,13 @@ class _CurrentOwner:
     """
     This should never happen.
     """
-    try:
-      currentOwner = instance.__current_owner__
-    except Exception as exception:
-      currentOwner = exception
-      raise ReadOnlyError(instance, self, None) from currentOwner
-    else:
-      raise ReadOnlyError(instance, self, currentOwner)
+    raise ReadOnlyError(instance, self, None)
 
   def __delete__(self, instance: Any) -> Never:
     """
     Illegal deleter operation
     """
-    try:
-      currentOwner = instance.__current_owner__
-    except Exception as exception:
-      attributeError = attributeErrorFactory(type(self), '__current_owner__')
-      raise attributeError from exception
-    else:
-      raise ProtectedError(instance, self, currentOwner)
+    raise ProtectedError(instance, self, None)
 
 
 class _OwnerAddress(_CurrentOwner):

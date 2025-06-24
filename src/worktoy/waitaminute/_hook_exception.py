@@ -51,36 +51,19 @@ class HookException(Exception):
     self.itemKey = key
     self.errorValue = val
     self.hookFunction = hook
-    Exception.__init__(self, str(exception))
+    Exception.__init__(self, )
 
-  def _resolveOther(self, other: object) -> Self:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, (tuple, list)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
+  def __str__(self) -> str:
+    """
+    String representation of the HookException.
+    """
+    spec = """HookException raised from %s! Key: '%s', Value: '%s', 
+    Hook: '%s'! Initial exception: %s"""
+    cls = type(self).__name__
+    info = spec % (
+        self.namespaceObject, self.itemKey, self.errorValue,
+        self.hookFunction, self.initialException
+    )
+    return info
 
-  def __eq__(self, other: object) -> bool:
-    """Compare the exception to another object."""
-    cls = type(self)
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    if isinstance(other, cls):
-      if self.initialException != other.initialException:
-        return False
-      if self.namespaceObject != other.namespaceObject:
-        return False
-      if self.itemKey != other.itemKey:
-        return False
-      if self.errorValue != other.errorValue:
-        return False
-      if self.hookFunction != other.hookFunction:
-        return False
-      return True
-    return False
+  __repr__ = __str__

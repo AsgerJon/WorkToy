@@ -18,7 +18,6 @@ from __future__ import annotations
 from ._class_body_template import ClassBodyTemplate
 from ._mono_space import monoSpace
 from ._join_words import joinWords
-from ._type_msg import typeMsg
 from ._string_list import stringList
 from ._word_wrap import wordWrap
 from ._func_report import funcReport
@@ -26,7 +25,6 @@ from ._func_report import funcReport
 __all__ = [
     'ClassBodyTemplate',
     'monoSpace',
-    'typeMsg',
     'joinWords',
     'stringList',
     'wordWrap',

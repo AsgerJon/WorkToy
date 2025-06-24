@@ -7,21 +7,15 @@ namespaces in the metaclass system.
 from __future__ import annotations
 
 from ...static import AbstractObject, Alias
-
-try:
-  from typing import TYPE_CHECKING, Type
-except ImportError:
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable
+  from typing import Any, Callable, TypeAlias, Type
   from worktoy.mcls import AbstractNamespace as ASpace
 
   AccessorHook = Callable[[ASpace, str, Any], Any]
   CompileHook = Callable[[ASpace, dict], dict]
+  Space: TypeAlias = Type[ASpace]
 
 
 class AbstractHook(AbstractObject):
@@ -136,10 +130,10 @@ class AbstractHook(AbstractObject):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+  def __set_name__(self, owner: Space, name: str, **kwargs) -> None:
     """
     After the super call, adds one self to the namespace class as a hook
     class.
     """
     super().__set_name__(owner, name, **kwargs)
-    self.spaceClass.addHook(self)
+    owner.addHook(self)

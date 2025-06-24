@@ -4,12 +4,10 @@
 from __future__ import annotations
 
 from types import FunctionType
-
-from ..mcls.hooks import AbstractHook
-from ..text import stringList
-from ..waitaminute import attributeErrorFactory, ReservedName
-
 from typing import TYPE_CHECKING
+
+from ..mcls.hooks import AbstractHook, ReservedNames
+from ..waitaminute import attributeErrorFactory, ReservedName
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterator
@@ -24,32 +22,15 @@ class EZHook(AbstractHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
-  __reserved_names__ = """__slots__, __init__, __eq__, __str__, __repr__,
+  __auto_names__ = """__slots__, __init__, __eq__, __str__, __repr__,
     __iter__, __getitem__, __setitem__, __getattr__"""
-  __ignore_names__ = """__module__, __dict__, __weakref__, __class__, 
-  __qualname__, __firstlineno__, __doc__, __static_attributes__, 
-  """
+
+  #  Public Variables
+  reservedNames = ReservedNames()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  @classmethod
-  def _getReservedNames(cls) -> list[str]:
-    """Get the reserved names for the EZData class."""
-    return stringList(cls.__reserved_names__)
-
-  @classmethod
-  def _getIgnoreNames(cls) -> list[str]:
-    """Get the ignore names for the EZData class."""
-    return stringList(cls.__ignore_names__)
-
-  @classmethod
-  def validateName(cls, name: str, ) -> None:
-    """
-    Raises ReservedName if the name is one of the reserved names.
-    """
-    if name in cls._getReservedNames():
-      raise ReservedName(name)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -69,31 +50,32 @@ class EZHook(AbstractHook):
     dataFields = self.space.getDataFields()
     initMethod = self.initFactory(*dataFields)
     eqMethod = self.eqFactory(*dataFields)
+    hashMethod = self.hashFactory(*dataFields)
     strMethod = self.strFactory(*dataFields)
     reprMethod = self.reprFactory(*dataFields)
     iterMethod = self.iterFactory(*dataFields)
+    lenMethod = self.lenFactory(*dataFields)
     getItemMethod = self.getItemFactory(*dataFields)
     setItemMethod = self.setItemFactory(*dataFields)
-    getAttrMethod = self.getAttrFactory(*dataFields)
     compiledSpace['__init__'] = initMethod
     compiledSpace['__eq__'] = eqMethod
+    compiledSpace['__hash__'] = hashMethod
     compiledSpace['__str__'] = strMethod
     compiledSpace['__repr__'] = reprMethod
     compiledSpace['__iter__'] = iterMethod
+    compiledSpace['__len__'] = lenMethod
     compiledSpace['__getitem__'] = getItemMethod
     compiledSpace['__setitem__'] = setItemMethod
-    compiledSpace['__getattr__'] = getAttrMethod
     return compiledSpace
 
   def setItemHook(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """The setItemHook method is called when an item is set in the
     enumeration."""
-    if key in self._getIgnoreNames():
-      return False
-    if key in self._getReservedNames():
-      if hasattr(value, '__is_root__'):
-        return False
-      raise ReservedName(key)
+    if key in self.__auto_names__:
+      if not hasattr(value, '__is_root__'):
+        raise ReservedName(key)
+    if key in self.reservedNames:
+      return False  # Already handled by ReservedNameHook
     if callable(value):
       return False
     self.space.addField(key, type(value), value)
@@ -111,7 +93,7 @@ class EZHook(AbstractHook):
     slotKeys = [dataField.key for dataField in dataFields]
     defVals = [dataField.val for dataField in dataFields]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
       """
       The generated '__init__' method sets attributes on the instance
       based on given arguments. Keyword arguments take precedence.
@@ -141,6 +123,8 @@ class EZHook(AbstractHook):
       """
       Instances of EZData are equal if each of their data fields are equal.
       """
+      if type(self) is not type(other):
+        return NotImplemented
       for dataField in dataFields:
         key = dataField.key
         if getattr(self, key) != getattr(other, key):
@@ -148,6 +132,25 @@ class EZHook(AbstractHook):
       return True
 
     return __eq__
+
+  @staticmethod
+  def hashFactory(*dataFields) -> FunctionType:
+    """
+    Creates the '__hash__' method for the EZData class.
+    """
+
+    def __hash__(self) -> int:
+      """
+      The hash of an EZData instance is the hash of its data fields.
+      """
+      hashVal = 0
+      for dataField in dataFields:
+        key = dataField.key
+        val = getattr(self, key)
+        hashVal ^= hash(val)
+      return hashVal
+
+    return __hash__
 
   @staticmethod
   def strFactory(*dataFields) -> FunctionType:
@@ -190,6 +193,16 @@ class EZHook(AbstractHook):
     return __iter__
 
   @staticmethod
+  def lenFactory(*dataFields) -> FunctionType:
+    """The lenFactory method is called when the class is created."""
+
+    def __len__(self) -> int:
+      """The __len__ method is called when the class is created."""
+      return len(self.__slots__)
+
+    return __len__
+
+  @staticmethod
   def getItemFactory(*dataFields) -> FunctionType:
     """The getItemFactory method is called when the class is created."""
 
@@ -212,15 +225,3 @@ class EZHook(AbstractHook):
       raise KeyError(key)
 
     return __setitem__
-
-  @staticmethod
-  def getAttrFactory(*dataFields) -> FunctionType:
-    """The getAttrFactory method is called when the class is created."""
-
-    def __getattr__(self, key: str) -> Any:
-      """The __getattr__ method is called when the class is created."""
-      if key in self.__slots__:
-        return getattr(self, key)
-      raise attributeErrorFactory(type(self), key)
-
-    return __getattr__

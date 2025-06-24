@@ -134,7 +134,7 @@ class AbstractObject:
         else:
           posArgs.append(arg)
       return (*posArgs,)
-    raise TypeException('__pos_args__', self.__pos_args__, (tuple, list))
+    raise TypeException('__pos_args__', self.__pos_args__, tuple, list)
 
   def _getKeywordArgs(self, **kwargs) -> dict:
     """Get the keyword arguments."""
@@ -253,28 +253,20 @@ class AbstractObject:
       infoSpec = """'%s.%s' object%s%s"""
     return monoSpace(infoSpec % (modName, clsName, ownerName, fieldName))
 
+  __repr__ = __str__
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def updateContext(self, *args, **kwargs) -> None:
     """Updates the current instance."""
-    if len(args) == 1:  # __set__ and __delete__ methods
-      self.__current_instance__ = args[0]
-      self.__current_owner__ = type(args[0])
-    elif len(args) == 2:
-      ins, own = args
-      if not isinstance(ins, own) and ins is not None:
-        raise TypeException('instance', ins, own)
-      self.__current_instance__ = ins  # even if None
-      self.__current_owner__ = own
+    if len(args) == 1:
+      ins = args[0]
+      own = type(ins)
     else:
-      print('__________________________________________________________')
-      print("""updateContext problem! Received:""")
-      for arg in args:
-        print('type: %s, value: %s' % (type(arg), str(arg),))
-      print('¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨')
-      raise NotImplementedError('precise argument exception not ready')
+      ins, own = args
+    self.__current_instance__, self.__current_owner__ = ins, own
 
   def __instance_get__(self, **kwargs, ) -> Any:
     """Subclasses may implement this method to specify the object to be
@@ -290,7 +282,7 @@ class AbstractObject:
       oldVal = self.__instance_get__()
     except Exception as exception:
       oldVal = exception
-    raise ReadOnlyError(self.instance, self, oldVal, val)
+    raise ReadOnlyError(self.instance, self, val, oldVal, )
 
   def __instance_delete__(self, oldVal: Any = None, **kwargs) -> None:
     """Subclasses may implement this method to enable deletion of the

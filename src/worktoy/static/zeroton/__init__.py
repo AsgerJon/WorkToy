@@ -85,9 +85,6 @@ from __future__ import annotations
 #  Private list of disallowed names
 from ._reserved_names import _reservedNames
 
-#  The Zeroton namespace
-from ._zero_space import ZeroSpace
-
 #  The Zeroton metaclass
 from ._zeroton import Zeroton
 

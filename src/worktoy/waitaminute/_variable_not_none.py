@@ -21,43 +21,17 @@ class VariableNotNone(Exception):
   name = _Attribute()
   value = _Attribute()
 
-  def __init__(self, *args) -> None:
+  def __init__(self, _name: str, _value: Any) -> None:
     """Initialize the VariableNotNone object."""
-    _name, _value = None, None
-    for arg in args:
-      if isinstance(arg, str):
-        if _name is None:
-          _name = arg
-          continue
-      if _value is None:
-        _value = arg
-        break
-    if _name is not None:
-      self.name = _name
-    if _value is not None:
-      self.value = _value
+    self.name, self.value = _name, _value
     Exception.__init__(self, )
 
   def __str__(self, ) -> str:
     """Get the info spec."""
-    if self.name is None and self.value is None:
-      infoSpec = """Unexpected value at name expected to be None!%s%s"""
-      name, valueStr = '', ''
-    elif self.name is None:
-      infoSpec = """Unexpected value: '%s' at name expected to be 
-      None!%s"""
-      name = ''
-      valueStr = monoSpace(str(self.value), )
-    elif self.value is None:
-      infoSpec = """Unexpected value at name '%s' expected to be 
-      None!"""
-      name = self.name
-      valueStr = ''
-    else:
-      infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
-      None!"""
-      valueStr = monoSpace(str(self.value), )
-      name = self.name
+    infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
+    None!"""
+    valueStr = monoSpace(str(self.value), )
+    name = self.name
     return monoSpace(infoSpec % (valueStr, name), )
 
   __repr__ = __str__

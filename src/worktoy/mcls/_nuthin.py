@@ -20,11 +20,8 @@ def _resolveMetaclass(func, name, *args, **kwargs) -> type:
   if 'metaclass' in kwargs:
     mcls = kwargs['metaclass']
   elif args:
-    if isinstance(args[0], type):
-      mcls = type(args[0])
-  if isinstance(mcls, type):
-    return mcls
-  raise TypeException('metaclass', mcls, type)
+    mcls = type(args[0])
+  return mcls
 
 
 def _resolveBases(func, name, *args, **kwargs) -> tuple[type, ...]:

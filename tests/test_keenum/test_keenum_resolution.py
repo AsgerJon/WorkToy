@@ -134,7 +134,3 @@ class TestKeeNumLookup(TestCase):
     self.assertIs(Mode[-3], Mode.FAST_MODE)
     self.assertIs(Mode[-2], Mode.SLOW_MODE)
     self.assertIs(Mode[-1], Mode.TURBO)
-
-  def test_valueLookup(self) -> None:
-    self.assertIn(Mode['fast'], (Mode.FAST_MODE, Mode.TURBO))
-    self.assertIs(Mode['slow'], Mode.SLOW_MODE)

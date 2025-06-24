@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from worktoy.waitaminute import UnpackException
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -45,6 +43,7 @@ def unpack(*args: Any, **kwargs) -> tuple[Any, ...]:
   """
   if not args:
     if kwargs.get('strict', True):
+      from worktoy.waitaminute import UnpackException
       raise UnpackException(*args, )
     return ()
   out = []
@@ -63,4 +62,5 @@ def unpack(*args: Any, **kwargs) -> tuple[Any, ...]:
     out.append(arg)
   if iterableFound or not kwargs.get('strict', True):
     return (*out,)
+  from worktoy.waitaminute import UnpackException
   raise UnpackException(*args, )

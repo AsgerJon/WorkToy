@@ -55,52 +55,12 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class Breh(ValueError):
-  """
-  Breh is a custom exception that is raised when an attribute error is
-  encountered, but the attribute error message does not match the built-in
-  message.
-  """
-
-  posArgs = _Attribute()
-
-  def __init__(self, *args: Any) -> None:
-    self.posArgs = args
-    ValueError.__init__(self, )
-
-  def __str__(self) -> str:
-    """
-    Return a string representation of the Breh exception.
-    """
-    infoSpec = """Unable to resolve arguments: \n%s"""
-    argStr = '<br><tab>'.join([str(arg) for arg in self.posArgs])
-    info = infoSpec % argStr
-    return monoSpace(info)
-
-  __repr__ = __str__
-
-
-def attributeErrorFactory(*args) -> AttributeError:
+def attributeErrorFactory(owner: str, field: str) -> AttributeError:
   """
   Factory function that creates an AttributeError with a message that
   matches the built-in message if a given object does not have a given
   attribute.
   """
-  ownerName, fieldName = None, None
-  for arg in args:
-    if isinstance(arg, type) and ownerName is None:
-      ownerName = arg.__name__
-      continue
-    if isinstance(arg, str):
-      if ownerName is None:
-        ownerName = arg
-        continue
-      if fieldName is None:
-        fieldName = arg
-        continue
-  else:
-    if ownerName is None or fieldName is None:
-      raise Breh(*args)
   infoSpec = """AttributeError: '%s' object has no attribute '%s'"""
-  info = infoSpec % (ownerName, fieldName)
+  info = infoSpec % (str(owner), str(field))
   return AttributeError(info)  # type: ignore[return-value]

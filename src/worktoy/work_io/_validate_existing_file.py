@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Optional, Union, Self, Callable, TypeAlias
 
 
-def validateExistingFile(file: str) -> str:
+def validateExistingFile(file: str, **kwargs) -> str:
   """
   Validates that a given 'str' object points to an existing file.
 
@@ -28,10 +28,14 @@ def validateExistingFile(file: str) -> str:
     IsADirectoryError: If the path is a directory.
   """
   if not os.path.exists(file):
+    if not kwargs.get('strict', True):
+      return ''
     infoSpec = """No file exists at: '%s'!"""
     info = monoSpace(infoSpec % file)
     raise FileNotFoundError(info)
   if not os.path.isfile(file):
+    if not kwargs.get('strict', True):
+      return ''
     infoSpec = """The path '%s' is not a file!"""
     info = monoSpace(infoSpec % file)
     raise IsADirectoryError(info)

@@ -8,6 +8,8 @@ from . import _Attribute
 
 from typing import TYPE_CHECKING
 
+from ..text import monoSpace
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Never
 
@@ -21,6 +23,14 @@ class IllegalInstantiation(TypeError):
   def __init__(self, cls_: type) -> None:
     """Initialize the IllegalInstantiation with the class."""
     self.cls = cls_
+    TypeError.__init__(self, )
+
+  def __str__(self, ) -> str:
+    """Return the string representation of the IllegalInstantiation
+    object."""
+    clsName = self.cls.__name__
     infoSpec = """Illegal instantiation of class '%s'"""
-    info = infoSpec % cls_.__name__
-    TypeError.__init__(self, info)
+    info = infoSpec % clsName
+    return monoSpace(info)
+
+  __repr__ = __str__

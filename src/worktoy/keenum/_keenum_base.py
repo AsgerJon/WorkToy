@@ -15,14 +15,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
-try:
-  from icecream import ic  # NOQA
-
-  ic.configureOutput(includeContext=True, )
-except ImportError:
-  print('icecream not installed, using dummy ic function.')
-  ic = print
-
 
 class _KeeNumBase(AbstractObject):
   """
@@ -112,8 +104,11 @@ class _KeeNumBase(AbstractObject):
     """
     Hash representation of the enumeration member.
     """
-    clsHash = hash(type(self))
-    return hash((clsHash, self.name, self.index))
+    clsName = type(self).__name__
+    baseNames = 'AbstractObject',
+    mclsName = 'type'
+    clsHash = hash((clsName, *baseNames, mclsName))
+    return hash((clsHash, self.name, self.value, self.index))
 
   def __eq__(self, other: Any) -> bool:
     """
@@ -123,7 +118,7 @@ class _KeeNumBase(AbstractObject):
       return True
     cls = type(self)
     if not isinstance(other, cls):
-      return False
+      return NotImplemented
     return True if self.value == other.value else False
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

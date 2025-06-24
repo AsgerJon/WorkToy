@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from . import DataField, EZHook
 from ..mcls import BaseSpace
+from ..mcls.hooks import ReservedNameHook
 from ..parse import maybe
 from ..waitaminute import TypeException
 
@@ -36,8 +37,6 @@ class EZSpace(BaseSpace):
     bases = [*self.getBases(), ]
     for base in bases:
       space = getattr(base, '__namespace__', None)
-      if space is None:
-        continue
       fields = getattr(space, '__data_fields__', None)
       if fields is None:
         continue

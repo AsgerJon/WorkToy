@@ -28,32 +28,14 @@ class QuestionableSyntax(SyntaxError):
   def __init__(self, realName: str, derpName: str, ) -> None:
     self.__derp_name__ = derpName
     self.__real_name__ = realName
-    info = """Received name: '%s' which is similar enough to '%s' to be a 
+    SyntaxError.__init__(self, )
+
+  def __str__(self) -> str:
+    """String representation of the QuestionableSyntax."""
+    spec = """%s! Received name '%s' which is similar enough to '%s' to be a 
     likely typo. """
-    SyntaxError.__init__(self, monoSpace(info % (derpName, realName)))
+    cls = type(self).__name__
+    info = spec % (cls, self.derpName, self.realName)
+    return monoSpace(info)
 
-  def _resolveOther(self, other: object) -> Any:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, (tuple, list)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
-
-  def __eq__(self, other: object) -> bool:
-    """Compare the QuestionableSyntax object with another object."""
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    cls = type(self)
-    if isinstance(other, cls):
-      if self.derpName != other.derpName:
-        return False
-      if self.realName != other.realName:
-        return False
-      return True
-    return False
+  __repr__ = __str__

@@ -1,21 +1,32 @@
-"""ReservedNames provides a list of reserved names that are set
-automatically by the interpreter. """
+"""
+ReservedNames provides a list of reserved names that are set
+automatically by the interpreter.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...text import monoSpace
-from ...waitaminute import ReadOnlyError
+from ...static import AbstractObject
 
 from typing import TYPE_CHECKING
 
+from ...text import monoSpace
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Any, Iterator
+  from typing import Any, Iterable, Iterator, Self
 
 
-class _Meta(type):
-  """Metaclass for ReservedNames."""
+class ReservedNames(AbstractObject):
+  """
+  ReservedNames provides a list of reserved names that are set
+  automatically by the interpreter.
+  """
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
   __reserved_names__ = [
       '__dict__',
       '__weakref__',
@@ -28,41 +39,32 @@ class _Meta(type):
       '__firstlineno__',
       '__static_attributes__',
   ]
+  
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __iter__(cls) -> Iterator[str]:
-    """Iterate over the reserved names."""
-    yield from cls.__reserved_names__
+  def __iter__(self) -> Iterator[str]:
+    """
+    Iterate over the reserved names.
+    """
+    yield from self.__reserved_names__
 
-  def __call__(cls, *args, **kwargs) -> Self:
-    """Call the metaclass."""
-    return cls
-
-  def __get__(cls, instance: object, owner: type) -> Self:
-    """Get the reserved names."""
-    return cls
-
-  def __set__(cls, instance: object, value: Any) -> None:
-    """Set the reserved names."""
-    raise ReadOnlyError(instance, cls, value)
-
-  def __delete__(cls, instance: object) -> None:
-    """Delete the reserved names."""
-    raise ReadOnlyError(instance, cls, None)
-
-  def __contains__(cls, name: str) -> bool:
+  def __contains__(self, name: str) -> bool:
     """Check if the name is in the reserved names."""
-    return True if name in [i for i in cls] else False
+    for item in self:
+      if item == name:
+        return True
+    return False
 
-  def __str__(cls, ) -> str:
+  def __len__(self) -> int:
+    """Get the number of reserved names."""
+    return len(self.__reserved_names__)
+
+  def __str__(self, ) -> str:
     """Get the string representation of the metaclass."""
     info = 'ReservedNames:\n%s'
-    names = '<br><tab>'.join([name for name in cls])
+    names = '<br><tab>'.join([name for name in self])
     return monoSpace(info % names)
 
   __repr__ = __str__
-
-
-class ReservedNames(metaclass=_Meta):
-  """ReservedNames provides a list of reserved names that are set
-  automatically by the interpreter."""
-  pass

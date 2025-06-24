@@ -5,7 +5,7 @@ NameHook filters named used in the namespace system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...waitaminute import QuestionableSyntax
+from ...waitaminute import QuestionableSyntax, DelException
 
 from . import AbstractHook
 
@@ -66,7 +66,6 @@ class NameHook(AbstractHook):
         ('__getitem__', '__get_item__'),
         ('__setitem__', '__set_item__'),
         ('__delitem__', '__del_item__'),
-        ('__delete__', '__del__'),
     ]
 
   @classmethod
@@ -81,10 +80,25 @@ class NameHook(AbstractHook):
         raise QuestionableSyntax(*nearMiss, )
     return False
 
+  def _validateDel(self, ) -> bool:
+    """
+    Validates that the current class is allowed to implement '__del__'.
+    """
+    if 'trustMeBro' in self.space.getKwargs():
+      return True
+    return False
+
   def setItemHook(self, key: str, value: Any, oldValue: Any) -> bool:
     """
     Hook for setItem. This is called before the __setitem__ method of
     the namespace object is called. The default implementation does nothing
     and returns False.
     """
+    if key == '__del__':
+      if self._validateDel():
+        return False
+      mcls = self.space.getMetaclass()
+      name = self.space.getClassName()
+      bases = self.space.getBases()
+      raise DelException(mcls, name, bases, self.space)
     return self._validateName(key)

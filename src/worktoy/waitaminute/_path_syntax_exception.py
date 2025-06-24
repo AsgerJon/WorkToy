@@ -31,50 +31,14 @@ class PathSyntaxException(ValueError):
       path (str): The invalid path.
     """
     self.badPath = path
+    ValueError.__init__(self, )
+
+  def __str__(self, ) -> str:
+    """
+    Get the string representation of the exception.
+    """
+
     infoSpec = """The path '%s' is not a valid, absolute path!"""
-    info = monoSpace(infoSpec % path)
-    ValueError.__init__(self, info)
+    return monoSpace(infoSpec % self.badPath)
 
-  def _resolveOther(self, other: Any) -> Self:
-    """
-    Resolve the other object to a PathSyntaxException.
-
-    Args:
-      other (Any): The other object to resolve.
-
-    Returns:
-      Self: The resolved PathSyntaxException.
-    """
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    try:
-      out = cls(other)
-    except (TypeError, IndexError, ValueError):
-      return NotImplemented
-    else:
-      return out
-    finally:
-      if TYPE_CHECKING:  # pragma: no cover  # pycharm, please!
-        pycharmPlease = 69420
-        assert isinstance(pycharmPlease, cls)
-        return pycharmPlease
-      else:
-        pass
-
-  def __eq__(self, other: Any) -> bool:
-    """
-    Check if the PathSyntaxException is equal to another object.
-
-    Args:
-      other (Any): The other object to compare.
-
-    Returns:
-      bool: True if equal, False otherwise.
-    """
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    if self.badPath != other.badPath:
-      return False
-    return True
+  __repr__ = __str__

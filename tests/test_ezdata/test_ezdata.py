@@ -99,3 +99,6 @@ class TestEZData(TestCase):
     self.assertNotEqual(self.point2d_0, Point2D(1))
     self.assertEqual(self.point3d_0, Point3D())
     self.assertNotEqual(self.point3d_0, Point3D(1))
+
+  def test_ad_hoc(self) -> None:
+    """Test ad-hoc EZData instances."""

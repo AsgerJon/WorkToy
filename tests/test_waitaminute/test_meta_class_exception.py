@@ -1,0 +1,61 @@
+"""
+TestMetaclassException tests the exception handling in the WaitAMinute
+metaclass.
+"""
+#  AGPL-3.0 license
+#  Copyright (c) 2025 Asger Jon Vistisen
+from __future__ import annotations
+
+from unittest import TestCase
+
+from worktoy.mcls import BaseObject, BaseMeta
+from worktoy.text import monoSpace
+from worktoy.waitaminute import MetaclassException
+
+
+class TestMetaclassException(TestCase):
+  """
+  TestMetaclassException tests the exception handling in the WaitAMinute
+  metaclass.
+  """
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
+  def test_raises(self, ) -> None:
+    """
+    Tests that MetaclassException correctly raises TypeError when passing
+    a metaclass which does support each received base class.
+    """
+
+    with self.assertRaises(TypeError) as context:
+      raise MetaclassException(type, 'breh', int, str, list)
+    e = context.exception
+    expected = """was raised with no base classes incompatible 
+      with the received metaclass"""
+    self.assertIn(monoSpace(expected), str(e))
+
+  def test_str_repr(self) -> None:
+    """
+    Tests that MetaclassException has a correct string representation.
+    """
+
+    class _Meta(type):
+      pass
+
+    class Sus(metaclass=_Meta):
+      pass
+
+    with self.assertRaises(MetaclassException) as context:
+      class Breh(BaseObject, Sus):
+        pass
+    e = context.exception
+    self.assertIs(e.name, 'Breh')
+    self.assertIs(e.meta, BaseMeta)
+    self.assertIs(e.badBase, Sus)
+    self.assertIs(e.badMeta, _Meta)
+    self.assertEqual(str(e), repr(e))

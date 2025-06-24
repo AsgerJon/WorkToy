@@ -53,14 +53,3 @@ class Alias(AbstractObject):
     if parentDescriptor is None:
       raise AliasException(owner, name)
     setattr(owner, name, parentDescriptor)
-
-  def __instance_get__(self, **kwargs) -> Any:
-    """
-    Returns the value of the original descriptor. Please note that if
-    accessed through the owning class, with instance being 'None',
-    the 'Alias' object not the original object is returned.
-    """
-    originalDescriptor = getattr(self.owner, self.__original_name__, None)
-    if originalDescriptor is None:
-      raise AliasException(self.owner, self.__original_name__)
-    return originalDescriptor.__get__(self.instance, self.owner, **kwargs)

@@ -5,12 +5,13 @@ that the attribute is read-only. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import _Attribute, BadSet
-
 from typing import TYPE_CHECKING
 
+from . import _Attribute
+from ..text import monoSpace
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Optional, Self
+  from typing import Any
 
 
 class ReadOnlyError(TypeError):
@@ -27,52 +28,19 @@ class ReadOnlyError(TypeError):
     """Initialize the ReadOnlyError."""
     self.owningInstance = instance
     self.descriptorObject = desc
-    self.existingValue, self.newValue = [*values, None, None][:2]
-    fieldOwner = getattr(instance, '__field_owner__', None)
-    fieldName = getattr(desc, '__field_name__', None)
-    if fieldOwner is None or fieldName is None:
-      info = """Cannot set value on ReadOnly attribute!"""
-    else:
-      fieldId = '%s.%s' % (fieldOwner.__name__, fieldName)
-      newStr = str(self.newValue)
-      if isinstance(self.newValue, BadSet):
-        infoSpec = """Attempted to overwrite read-only attribute '%s'
-        with new value: '%s'!"""
-        info = infoSpec % (fieldId, newStr)
-      else:
-        oldStr = str(self.existingValue)
-        infoSpec = """Attempted to overwrite read-only attribute '%s' 
-        having value: '%s' with new value: '%s'!"""
-        info = infoSpec % (fieldId, oldStr, newStr)
+    self.newValue, self.existingValue = [*values, None, None][:2]
+    TypeError.__init__(self, )
 
-    TypeError.__init__(self, info)
+  def __str__(self, ) -> str:
+    """Return the string representation of the ReadOnlyError."""
+    infoSpec = """Attempted to overwrite read-only attribute '%s' 
+    having value: '%s' with new value: '%s'!"""
+    ownerName = type(self.owningInstance).__name__
+    fieldName = getattr(self.descriptorObject, '__field_name__', 'object')
+    fieldId = '%s.%s' % (ownerName, fieldName)
+    oldValue = str(self.existingValue)
+    newValue = str(self.newValue)
+    info = infoSpec % (fieldId, oldValue, newValue)
+    return monoSpace(info)
 
-  def _resolveOther(self, other: object) -> Self:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, (tuple, list)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
-
-  def __eq__(self, other: object) -> bool:
-    """Compare the ReadOnlyError object with another object."""
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    cls = type(self)
-    if isinstance(other, cls):
-      if self.owningInstance != other.owningInstance:
-        return False
-      if self.descriptorObject != other.descriptorObject:
-        return False
-      if self.existingValue != other.existingValue:
-        return False
-      if self.newValue != other.newValue:
-        return False
-      return True
-    return False
+  __repr__ = __str__

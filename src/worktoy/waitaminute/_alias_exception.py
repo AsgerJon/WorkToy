@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class AliasException(Exception):
+class AliasException(RuntimeError):
   """
   'AliasException' is raised when an 'Alias' object cannot resolve the
   original
@@ -39,24 +39,7 @@ class AliasException(Exception):
     """Initialize the AliasException object."""
     self.owner = owner
     self.name = name
-
-  def __eq__(self, other: object) -> bool:
-    """Compare the AliasException object with another object."""
-    if isinstance(other, AliasException):
-      if self.owner is not other.owner:
-        return False
-      if self.name != other.name:
-        return False
-      return True
-    otherOwner = getattr(other, '__field_owner__', None)
-    otherName = getattr(other, '__field_name__', None)
-    if otherOwner is None or otherName is None:
-      return False
-    if self.owner is not otherOwner:
-      return False
-    if self.name != otherName:
-      return False
-    return True
+    RuntimeError.__init__(self, )
 
   def __str__(self) -> str:
     """Return a string representation of the AliasException object."""

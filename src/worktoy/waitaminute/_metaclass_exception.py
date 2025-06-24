@@ -56,22 +56,41 @@ class MetaclassException(TypeError):
   badBase = _Attribute()
   badMeta = _Attribute()
 
-  def __init__(self, mcls: type, name: str, base: type) -> None:
+  def __init__(self, mcls: type, name: str, *bases: type) -> None:
     """Initialize the MetaclassException object."""
     self.name = name
     self.meta = mcls
-    self.badBase = base
-    self.badMeta = type(base)
+    for base in bases:
+      if isinstance(base, mcls):
+        continue
+      self.badBase = base
+      self.badMeta = type(base)
+      break
+    else:
+      infoSpec = """
+      MetaclassException was raised with no base classes incompatible 
+      with the received metaclass '%s' while defining class '%s'."""
+      info = infoSpec % (mcls.__name__, name)
+      raise TypeError(monoSpace(info))
+    TypeError.__init__(self, )
 
+  def __str__(self) -> str:
+    """
+    Return a string representation of the MetaclassException object.
+    """
     infoSpec = """Metaclass conflict while deriving class: '%s' from 
     metaclass: '%s', because the base class: '%s' is derived from the 
     different metaclass: '%s' which is not a subclass of '%s'."""
+
     names = [
-        name,
-        mcls.__name__,
-        base.__name__,
+        self.name,
+        self.meta.__name__,
+        self.badBase.__name__,
         self.badMeta.__name__,
-        mcls.__name__
+        self.meta.__name__
     ]
+
     info = infoSpec % (*names,)
-    TypeError.__init__(self, info)
+    return monoSpace(info)
+
+  __repr__ = __str__

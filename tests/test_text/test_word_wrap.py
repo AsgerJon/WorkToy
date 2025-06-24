@@ -6,6 +6,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.text import wordWrap, monoSpace
+from worktoy.waitaminute import TypeException
 
 
 class TestWordWrap(TestCase):
@@ -30,3 +31,30 @@ class TestWordWrap(TestCase):
       lines = actual.split('\n')
       for line in lines:
         self.assertLessEqual(len(line), width)
+
+  def test_missing_length(self) -> None:
+    """
+    Test that wordWrap raises 'TypeException' when the width is not an
+    integer.
+    """
+    with self.assertRaises(TypeException) as context:
+      wordWrap('not an int', self.paragraph)
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertEqual(e.varName, 'width')
+    self.assertEqual(e.actualObject, 'not an int')
+    self.assertEqual(e.actualType, str)
+    self.assertEqual(e.expectedType, (int,))
+
+  def test_non_str_lines(self, ) -> None:
+    """
+    Test that wordWrap raises 'TypeException' when a line is not a string.
+    """
+    with self.assertRaises(TypeException) as context:
+      wordWrap(50, self.paragraph, 123, 'breh')
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertEqual(e.varName, 'line')
+    self.assertEqual(e.actualObject, 123)
+    self.assertEqual(e.actualType, int)
+    self.assertEqual(e.expectedType, (str,))

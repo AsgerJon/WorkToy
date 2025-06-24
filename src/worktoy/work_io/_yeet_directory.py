@@ -45,14 +45,4 @@ def yeetDirectory(dirPath: str, **kwargs) -> None:
     info = monoSpace(infoSpec % dirPath)
     raise NotADirectoryError(info) from notADirectoryError
   else:
-    for root, dirs, files in os.walk(dirPath, topdown=False):
-      for name in files:
-        os.remove(os.path.join(root, name))
-      for name in dirs:
-        os.rmdir(os.path.join(root, name))
     os.rmdir(dirPath)
-  finally:
-    if os.path.exists(dirPath):
-      infoSpec = """The directory '%s' was not removed!"""
-      info = monoSpace(infoSpec % dirPath)
-      raise OSError(info)

@@ -6,10 +6,18 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.text import joinWords
+from worktoy.waitaminute import TypeException
 
 
 class TestJoinWords(TestCase):
   """TestJoinWords tests the joinWords function"""
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
 
   def test_empty(self) -> None:
     """Tests if joinWords correctly returns an empty string when
@@ -30,3 +38,11 @@ class TestJoinWords(TestCase):
     sample = 'Tom', 'Dick', 'Harry'
     expected = 'Tom, Dick and Harry'
     self.assertEqual(joinWords(*sample), expected)
+
+  def test_raises(self, ) -> None:
+    """
+    Tests receiving unsupported types
+    """
+    with self.assertRaises(TypeException) as context:
+      _ = joinWords(69 + 420j)
+    e = context.exception

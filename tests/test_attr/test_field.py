@@ -4,19 +4,18 @@
 from __future__ import annotations
 
 from unittest import TestCase
-
 from types import FunctionType as Func
+from typing import TYPE_CHECKING
 
+from tests.test_attr import ComplexField
 from worktoy.attr import Field
 from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.parse import maybe
 from worktoy.static import overload
 from worktoy.static.zeroton import THIS, DELETED
-from worktoy.text import stringList, monoSpace
+from worktoy.text import stringList
 from worktoy.waitaminute import ProtectedError, MissingVariable, \
-  TypeException, ReadOnlyError
-
-from typing import TYPE_CHECKING
+  TypeException, ReadOnlyError, WriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -84,6 +83,13 @@ class ComplexNumber(R2):
 
 class TestField(TestCase):
   """Test the Field descriptor functionality."""
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
 
   def setUp(self, ) -> None:
     """Testing that complex numbers initialize correctly."""
@@ -720,3 +726,14 @@ class TestField(TestCase):
     self.assertIs(exception.descriptorObject, Foo.bar)
     self.assertEqual(exception.existingValue, 'bar')
     self.assertEqual(exception.newValue, 69)
+
+  def test_write_twice(self) -> None:
+    """
+    Tries to write to a ComplexField class twice
+    """
+    z = ComplexField()
+    with self.assertRaises(WriteOnceError) as context:
+      z.RE = 420.0
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertEqual(e.varName, '__real_part__')

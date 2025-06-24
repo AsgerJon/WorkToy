@@ -21,10 +21,20 @@ class TestUnpack(TestCase):
   Unit tests for the 'unpack' function.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_no_arguments_strict(self) -> None:
     """ No arguments, strict=True should raise """
-    with self.assertRaises(UnpackException):
+    with self.assertRaises(UnpackException) as context:
       unpack(strict=True)
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertFalse(e.args, )
 
   def test_no_arguments_non_strict(self) -> None:
     """ No arguments, strict=False should return empty """

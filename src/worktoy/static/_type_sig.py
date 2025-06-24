@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from ..core import unpack, bipartiteMatching
-from ..text import typeMsg
-from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch
+from ..core import unpack, bipartiteMatching, permutate
+from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch, \
+  UnpackException, TypeCastException
 
 from .zeroton import THIS
-from . import PreClass
+from . import PreClass, typeCast
 
 from typing import TYPE_CHECKING
 
@@ -194,9 +194,6 @@ class TypeSig:
 
   def __init__(self, *types: Any) -> None:
     """Initialize the TypeSig instance."""
-    if len(types) == 1:
-      if isinstance(types[0], tuple):
-        types = types[0]
     self.__raw_types__ = types
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -218,10 +215,14 @@ class TypeSig:
 
   def __eq__(self, other: object) -> bool:
     """Check if the other object is a TypeSig and has the same types."""
-    cls = type(self)
-    if not isinstance(other, cls):
-      return self == cls(other)
-    return True if hash(self) == hash(other) else False
+    if type(self) is not type(other):
+      return NotImplemented
+    if TYPE_CHECKING:  # pragma: no cover
+      assert isinstance(other, TypeSig)
+    for selfType, otherType in zip(self.__raw_types__, other.__raw_types__):
+      if selfType is not otherType:
+        return False
+    return True
 
   def __len__(self, ) -> int:
     """Get the length of the types."""
@@ -250,15 +251,6 @@ class TypeSig:
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _hasIterable(self) -> bool:
-    """
-    Flag indicating presence of 'list' or 'tuple' in the types.
-    """
-    for type_ in self.__raw_types__:
-      if type_ is list or type_ is tuple:
-        return True
-    return False
-
   def replaceTHIS(self, cls: type) -> None:
     """Replace the 'THIS' type with the class."""
     newTypes = []
@@ -268,12 +260,9 @@ class TypeSig:
         continue
       newTypes.append(type_)
     self.__raw_types__ = (*newTypes,)
-    try:
-      self.__hash_value__ = hash(self.__raw_types__)
-    except Exception as exception:
-      raise RuntimeError from exception
+    self.__hash_value__ = hash(self.__raw_types__)
 
-  def fast(self, *args) -> tuple:
+  def fast(self, *args, ) -> tuple:
     """
     Hash-based type parsing. The method collects the types of the call
     arguments and compares the hash of the tuple containing them with the
@@ -289,7 +278,7 @@ class TypeSig:
         return (*args,)
     raise HashMismatch(self, *args)
 
-  def cast(self, *args, ) -> tuple:
+  def cast(self, *args, **kwargs) -> tuple:
     """
     Iterates over the call arguments and the expected types:
 
@@ -308,109 +297,41 @@ class TypeSig:
       if isinstance(arg, type_):
         castArgs.append(arg)
         continue
-      #  Here be dragons!
-      if type_.__init__ is not object.__init__:
-        initType = type(type_.__init__)
-        if hasattr(initType, '__overload_dispatcher__'):
-          raise FlexMismatch(self, *args)
-      #  End of dragon zone!
       try:
-        castedArg = type_(arg)
-      except (TypeError, ValueError) as castException:
-        raise CastMismatch(self, type_, arg) from castException
+        castArg = typeCast(type_, arg)
+      except TypeCastException as typeCastException:
+        raise CastMismatch(self, *args) from typeCastException
       else:
-        castArgs.append(castedArg)
+        castArgs.append(castArg)
     else:
       return (*castArgs,)
 
-  def _biPartiteMatching(self, *args, ) -> tuple:
-    """
-    This method attempts to find a bipartite matching between the call
-    arguments and the types. If successful, returns a tuple of processed
-    arguments. Otherwise, raises 'FlexMismatch'.
-    """
-    if len(args) < len(self):
-      raise FlexMismatch(self, *args)
-    candidateTuples = []
-    for type_ in self.__raw_types__:
-      candidates = []
-      for index, posArg in enumerate(args):
-        if isinstance(posArg, type_):
-          candidates.append(index)
-          continue
-        #  Here be dragons!
-        if type_.__init__ is not object.__init__:
-          initType = type(type_.__init__)
-          if hasattr(initType, '__overload_dispatcher__'):
-            raise FlexMismatch(self, *args)
-        #  End of dragon zone!
-        try:
-          castedArg = type_(posArg)
-        except (TypeError, ValueError):
-          continue
-        else:
-          candidates.append(index)
-      if candidates:
-        candidateTuples.append(candidates)
-        continue
-      raise FlexMismatch(self, *args)
-    try:
-      typeIndices = bipartiteMatching(candidateTuples)
-    except ValueError as exception:
-      raise FlexMismatch(self, *args) from exception
-    out = []
-    for type_, index in zip(self.__raw_types__, typeIndices):
-      posArg = args[index]
-      if isinstance(posArg, type_):
-        out.append(posArg)
-        continue
-      #  Here be dragons!
-      if type_.__init__ is not object.__init__:
-        initType = type(type_.__init__)
-        if hasattr(initType, '__overload_dispatcher__'):
-          raise FlexMismatch(self, *args)
-      #  End of dragon zone!
-      out.append(type_(posArg))
-    return (*out,)
-
   def flex(self, *args, **kwargs) -> tuple:
     """
-    Attempts flexible matching of arguments to this TypeSig.
-
-    First, attempts bipartite matching across the call arguments and
-    required types, allowing reordering and type casting.
-
-    If this fails, and none of the types are iterable, attempts to
-    unpack shallow iterable arguments and retries recursively.
-
-    If no valid match can be found, raises 'FlexMismatch'.
-
-    Args:
-      *args: Positional arguments to match.
-      **kwargs: Currently unused.
-
-    Returns:
-      tuple: Arguments reordered and cast to match this TypeSig.
-
-    Raises:
-      FlexMismatch: If no argument permutation satisfies the signature.
-
+    Attempts reordering of the call arguments to find a permutation
+    that matches the types in the 'TypeSig'. If no permutation is found,
+    raises 'FlexMismatch'. If a permutation is found, the processed
+    arguments are returned as a tuple.
     """
     _ = hash(self)  # Ensure hash is set or raise RuntimeError immediately
-    posArgs = [*args, ]
-    if not self.__raw_types__:
-      if args:
-        raise FlexMismatch(self, *args)
     try:
-      out = self._biPartiteMatching(*args, )
-    except FlexMismatch as flexMismatch:
-      if self._hasIterable():
-        raise flexMismatch
-      try:
-        unpackedArgs = unpack(*args, strict=True, shallow=True)
-      except ValueError as valueError:
-        raise flexMismatch from valueError
-      else:
-        return self.flex(*unpackedArgs, )
+      posArgs = unpack(*args, strict=True, shallow=True)
+    except UnpackException as unpackException:
+      pass
     else:
-      return out
+      return (*self.cast(*posArgs, **kwargs),)
+    candidateMap = dict()
+    candidateList = []
+    for type_ in self:
+      candidates = []
+      for i, arg in enumerate(args):
+        if isinstance(arg, type_):
+          candidates.append(i)
+      else:
+        if not candidates:
+          raise FlexMismatch(self, *args)
+        candidateList.append((*candidates,))
+    indices = bipartiteMatching(candidateList)
+    if len(indices) != len(args):
+      raise FlexMismatch(self, *args)
+    return (*[args[i] for i in indices],)

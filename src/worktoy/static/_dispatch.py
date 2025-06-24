@@ -6,19 +6,15 @@ function based on the type of the first argument.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
 from types import FunctionType as Func
-from types import MethodType as Meth
+from typing import TYPE_CHECKING
 
 from . import AbstractObject
 from ..attr import Field
 from ..static import TypeSig
-from ..text import typeMsg, monoSpace
+from ..text import monoSpace
 from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch
-from ..waitaminute import DispatchException, CascadeException
-from ..waitaminute import IllegalDispatcher, MissingVariable
-
-from typing import TYPE_CHECKING
+from ..waitaminute import DispatchException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias
@@ -72,7 +68,6 @@ instantiates Dispatch during class creation.
 
   #  Class variables
   __latest_dispatch__ = None  # The latest dispatch that was made
-  __running_tests__ = None  # Whether the class is running tests
   __overload_dispatcher__ = True  # Required flag for all dispatchers!
 
   #  Private variables
@@ -96,29 +91,7 @@ instantiates Dispatch during class creation.
     """
     Getter-function for the most recently successful dispatch.
     """
-    if cls.__latest_dispatch__ is None:
-      raise MissingVariable('__latest_dispatch__', Meth)
     return cls.__latest_dispatch__.__func__
-
-  @classmethod
-  def _createTestFlag(cls) -> None:
-    """
-    Create the test flag for the class.
-    """
-    value = os.environ.get('RUNNING_TESTS', '')
-    cls.__running_tests__ = True if value else False
-
-  @classmethod
-  def getTestFlag(cls, **kwargs) -> bool:
-    """
-    Get the test flag.
-    """
-    if cls.__running_tests__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError  # pragma: no cover
-      cls._createTestFlag()
-      return cls.getTestFlag(_recursion=True)
-    return cls.__running_tests__
 
   @__name__.GET
   def _getName(self, ) -> str:
@@ -165,24 +138,8 @@ instantiates Dispatch during class creation.
     of it.
     """
     AbstractObject.__set_name__(self, owner, name, **kwargs)
-
     for sig, call in self.__call_map__.items():
-      if not isinstance(sig, TypeSig):
-        raise TypeError(typeMsg('sig', sig, TypeSig))
-      if not callable(call):
-        raise TypeError(typeMsg('call', call, Func))
       TypeSig.replaceTHIS(sig, owner)
-
-  def __init_subclass__(cls, **kwargs) -> None:
-    """
-    This method checks that subclasses retain the token flag to indicate
-    their use as dispatchers. See the 'IllegalDispatcher' documentation
-    for more details.
-    """
-    try:
-      _ = cls.__overload_dispatcher__
-    except Exception as exception:
-      raise IllegalDispatcher(cls, ) from exception
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -200,21 +157,19 @@ instantiates Dispatch during class creation.
         exceptions.append(hashMismatch)
         continue
       else:
-        if hasattr(call, '__func__'):
-          return call.__func__(self.instance, *posArgs, **kwargs)
         return call(ins, *posArgs, **kwargs)
     else:
-      if exceptions:
-        raise exceptions[-1]  # Will be caught by control flow
-      raise RuntimeError("""No signatures defined!""")
+      raise [RuntimeError, *exceptions][-1]
 
   def _castDispatch(self, ins: Any, *args, **kwargs) -> Any:
     """
-    Dispatches the function call with arguments casted to the expected
+    Dispatches the function call with arguments cast to the expected
     types.
     """
     exceptions = []
     for sig, call in self.__call_map__.items():
+      if self.owner in sig:
+        continue
       try:
         posArgs = sig.cast(*args)
       except CastMismatch as castMismatch:
@@ -223,9 +178,7 @@ instantiates Dispatch during class creation.
       else:
         return call(ins, *posArgs, **kwargs)
     else:
-      if exceptions:
-        raise exceptions[-1]  # Will be caught by control flow
-      raise RuntimeError("""No signatures defined!""")
+      raise [RuntimeError, *exceptions][-1]
 
   def _flexDispatch(self, ins: Any, *args, **kwargs) -> Any:
     """
@@ -241,18 +194,14 @@ instantiates Dispatch during class creation.
       else:
         return call(ins, *posArgs, **kwargs)
     else:
-      if exceptions:
-        raise exceptions[-1]  # Will be caught by control flow
-      raise RuntimeError("""No signatures defined!""")
+      raise [RuntimeError, *exceptions][-1]
 
   def _dispatch(self, ins: Any, *args: Any, **kwargs: Any) -> Any:
     """
     Dispatches the function call by trying fast, cast and flex in that
     order.
     """
-    testFlag = self.getTestFlag()
-    if testFlag:
-      self._setLatestDispatch(self._fastDispatch)
+    self._setLatestDispatch(self._fastDispatch)
     exceptions = []
     try:
       out = self._fastDispatch(ins, *args, **kwargs)
@@ -265,31 +214,24 @@ instantiates Dispatch during class creation.
     except CastMismatch as castMismatch:
       exceptions.append(castMismatch)
     else:
-      if testFlag:
-        self._setLatestDispatch(self._castDispatch)
+      self._setLatestDispatch(self._castDispatch)
       return out
     try:
       out = self._flexDispatch(ins, *args, **kwargs)
     except FlexMismatch as flexMismatch:
       exceptions.append(flexMismatch)
     else:
-      if testFlag:
-        self._setLatestDispatch(self._flexDispatch)
+      self._setLatestDispatch(self._flexDispatch)
       return out
-    if testFlag:
-      self._resetLatestDispatch()
-    try:
-      raise CascadeException(*exceptions)
-    except CascadeException as cascadeException:
-      raise DispatchException(self, *args) from cascadeException
+    self._resetLatestDispatch()
+    raise DispatchException(self, *args, )
 
   def __call__(self, *args: Any, **kwargs: Any) -> Any:
     """
     Tries fast, cast and flex dispatches in that order before raising
     'DispatchException'.
     """
-    if self.getTestFlag():
-      self._resetLatestDispatch()
+    self._resetLatestDispatch()
     lockedInstance = self.instance
     return self._dispatch(lockedInstance, *args, **kwargs)
 
@@ -300,6 +242,4 @@ instantiates Dispatch during class creation.
     sigLines = '<br><tab>'.join(sigStr)
     return monoSpace(info % (self.__field_name__, sigLines))
 
-  def __repr__(self, ) -> str:
-    """Get the string representation of the function."""
-    return object.__repr__(self)
+  __repr__ = __str__

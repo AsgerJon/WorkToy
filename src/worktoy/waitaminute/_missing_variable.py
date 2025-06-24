@@ -28,17 +28,10 @@ class MissingVariable(AttributeError):
 
   def __str__(self, ) -> str:
     """Return the string representation of the MissingVariable object."""
-    if not self.varType:
-      infoSpec = """Missing variable at name: '%s'!%s"""
-      typeStr = ''
-    elif len(self.varType) == 1:
-      infoSpec = """Missing variable '%s' of type '%s'"""
-      typeStr = self.varType[0].__name__
-    else:
-      infoSpec = """Missing variable '%s' of any of the following types: 
-      %s"""
-      typeNames = [type_.__name__ for type_ in self.varType]
-      typeStr = joinWords(*typeNames, sep='or')
+    infoSpec = """Missing variable '%s' of any of the following types: 
+    %s"""
+    typeNames = [type_.__name__ for type_ in self.varType]
+    typeStr = joinWords(*typeNames, sep='or')
     info = infoSpec % (self.varName, typeStr)
     return monoSpace(info)
 

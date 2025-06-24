@@ -15,44 +15,6 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
-def _resolveTypeNames(*types) -> str:
-  """Creates the first part of the error message listing the expected type
-  or types. """
-  if len(types) == 1:
-    if isinstance(types[0], (tuple, list)):
-      return _resolveTypeNames(*types[0])
-    if isinstance(types[0], type):
-      expName = types[0].__name__
-    elif isinstance(types[0], str):
-      expName = types[0]
-    else:
-      raise TypeError("""Received bad arguments: %s""" % (str(types),))
-    return """Expected object of type '%s'""" % (expName,)
-  typeNames = []
-  for type_ in types:
-    if isinstance(type_, type):
-      typeNames.append("""'%s'""" % type_.__name__)
-    elif isinstance(type_, str):
-      typeNames.append("""'%s'""" % type_)
-    else:
-      raise TypeError("""Received bad arguments: %s""" % (str(types),))
-  infoSpec = """Expected object of any of the following types: %s"""
-  typeStr = joinWords(*typeNames, sep='or')
-  return monoSpace(infoSpec % (typeStr,))
-
-
-class _Meta(type):
-  """Metaclass simplifying __str__ and __repr__"""
-
-  def __str__(cls) -> str:
-    """String representation of the class."""
-    return cls.__name__
-
-  def __repr__(cls) -> str:
-    """Representation of the class."""
-    return cls.__name__
-
-
 class TypeException(TypeError):
   """
   TypeException is a custom exception class for handling type related
@@ -76,12 +38,13 @@ class TypeException(TypeError):
 
   def __str__(self) -> str:
     """String representation of the TypeException."""
-    prelude = _resolveTypeNames(*self.expectedType)
-    actName = type(self.actualObject).__name__
-    actRepr = repr(self.actualObject)
-    infoSpec = """%s at name: '%s', but received object of type '%s' with 
-    repr: '%s'"""
-    info = infoSpec % (prelude, self.varName, actName, actRepr)
+    spec = """%s! Expected type of variable '%s' to be one of: (%s), 
+    but received '%s' of type '%s'!"""
+    cls = type(self).__name__
+    exp = ', '.join([t.__name__ for t in self.expectedType])
+    valStr = ('%50s' % repr(self.actualObject))[:50].replace(' ', '')
+    valType = type(self.actualObject).__name__
+    info = spec % (cls, self.varName, exp, valStr, valType)
     return monoSpace(info)
 
   __repr__ = __str__

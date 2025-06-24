@@ -6,10 +6,8 @@ objects used in custom metaclasses.
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..static import HistDict
-from ..text import typeMsg, monoSpace
+from ..text import monoSpace
 from ..waitaminute import HookException, DuplicateHookError
-from ..waitaminute import HashError, TypeException
 from . import Base
 from .hooks import AbstractHook, ReservedNameHook, NameHook
 
@@ -22,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Hooks: TypeAlias = list[AbstractHook]
 
 
-class AbstractNamespace(HistDict):
+class AbstractNamespace(dict):
   """
   AbstractNamespace defines the custom execution environment used by
   AbstractMetaclass during class construction. It provides a controlled
@@ -61,6 +59,10 @@ class AbstractNamespace(HistDict):
   __key_args__ = None
   __hash_value__ = None
 
+  #  Public Variables
+  reservedNameHook = ReservedNameHook()
+  nameHook = NameHook()
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -87,10 +89,6 @@ class AbstractNamespace(HistDict):
         raise RecursionError  # pragma: no cover
       self.__hash_value__ = computedHash
       return self.getHash(_recursion=True)
-    if not isinstance(self.__hash_value__, int):
-      raise TypeException('__hash_value__', self.__hash_value__, int)
-    if self.__hash_value__ != computedHash:
-      raise HashError(self.__hash_value__, computedHash, )
     return self.__hash_value__
 
   @classmethod
@@ -120,8 +118,6 @@ class AbstractNamespace(HistDict):
       if issubclass(base, dict):
         hooks = getattr(base, pvtName, [])
         for hook in hooks:
-          if not isinstance(hook, AbstractHook):
-            raise TypeError(typeMsg('hook', hook, AbstractHook))
           if hook in out:
             continue
           out.append(hook)
@@ -146,8 +142,6 @@ class AbstractNamespace(HistDict):
   @classmethod
   def addHook(cls, hook: AbstractHook) -> None:
     """Adds a hook to the list of hooks. """
-    if not isinstance(hook, AbstractHook):
-      raise TypeException('hook', hook, AbstractHook)
     existingHooks = cls.classGetHooks()
     for existingHook in existingHooks:
       existingName = existingHook.getFieldName()
@@ -156,7 +150,7 @@ class AbstractNamespace(HistDict):
         if existingHook is hook:
           return
         hooks = (existingHook, hook)
-        raise DuplicateHookError(cls, hook.__name__, *hooks)
+        raise DuplicateHookError(cls, newName, *hooks)
     pvtName = cls.getHookListName()
     setattr(cls, pvtName, [*existingHooks, hook])
 
@@ -177,19 +171,13 @@ class AbstractNamespace(HistDict):
   def __getitem__(self, key: str, **kwargs) -> Any:
     """Returns the value of the key."""
     try:
-      val = HistDict.__getitem__(self, key)
+      val = dict.__getitem__(self, key)
     except KeyError as keyError:
       val = keyError
     for hook in self.getHooks():
-      if not isinstance(hook, AbstractHook):
-        raise TypeError(typeMsg('hook', hook, AbstractHook))
       try:
         hook.getItemHook(key, val)
       except Exception as exception:
-        print('hook exception: %s' % type(hook).__name__)
-        print('  key: %s' % key)
-        print('  value: %s' % val)
-        print('  %s!\n%s' % (type(exception).__name__, str(exception)))
         raise HookException(exception, self, key, val, hook)
     if isinstance(val, KeyError):
       raise val
@@ -198,7 +186,7 @@ class AbstractNamespace(HistDict):
   def __setitem__(self, key: str, val: object, **kwargs) -> None:
     """Sets the value of the key."""
     try:
-      oldVal = HistDict.__getitem__(self, key)
+      oldVal = dict.__getitem__(self, key)
     except KeyError:
       oldVal = None
     for hook in self.getHooks():
@@ -207,7 +195,7 @@ class AbstractNamespace(HistDict):
       if hook.setItemHook(key, val, oldVal):
         break
     else:
-      HistDict.__setitem__(self, key, val)
+      dict.__setitem__(self, key, val)
 
   def __str__(self, ) -> str:
     """Returns the string representation of the namespace object."""
@@ -217,7 +205,7 @@ class AbstractNamespace(HistDict):
     baseNames = ', '.join([base.__name__ for base in bases])
     mclsName = self.getMetaclass().__name__
     info = """Namespace object of type: '%s' created by the '__prepare__' 
-    method on metaclass: '%s' with base: %s to create class: '%s'."""
+    method on metaclass: '%s' with bases: (%s) to create class: '%s'."""
     return monoSpace(info % (spaceName, mclsName, baseNames, clsName))
 
   def __repr__(self, ) -> str:
@@ -226,9 +214,12 @@ class AbstractNamespace(HistDict):
     spaceName = type(self).__name__
     clsName = self.getClassName()
     mclsName = self.getMetaclass().__name__
-    baseNames = ', '.join([base.__name__ for base in bases])
+    if bases:
+      baseNames = '%s,' % ', '.join([base.__name__ for base in bases])
+    else:
+      baseNames = ''
     mclsName = self.getMetaclass().__name__
-    args = """%s, %s, (%s,)""" % (mclsName, clsName, baseNames)
+    args = """%s, '%s', (%s)""" % (mclsName, clsName, baseNames)
     kwargs = [(k, v) for (k, v) in self.getKwargs().items()]
     kwargStr = ', '.join(['%s=%s' % (k, str(v)) for (k, v) in kwargs])
     if kwargStr:
@@ -254,8 +245,6 @@ class AbstractNamespace(HistDict):
     """This method is responsible for building the final namespace object.
     Subclasses may reimplement preCompile or postCompile as needed,
     but must not reimplement this method."""
-    if self.__class_name__ == '_THIS_IS_WHY_WE_CANT_HAVE_NICE_THINGS':
-      return dict()
     namespace = self.preCompile()
     for (key, val) in dict.items(self, ):
       namespace[key] = val
@@ -275,6 +264,3 @@ class AbstractNamespace(HistDict):
         assert isinstance(hook, AbstractHook)
       namespace = hook.postCompileHook(namespace)
     return namespace
-
-  reservedNameHook = ReservedNameHook()
-  nameHook = NameHook()

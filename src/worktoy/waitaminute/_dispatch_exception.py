@@ -27,59 +27,28 @@ class DispatchException(TypeError):
 
   dispatchObject = _Attribute()
   receivedArguments = _Attribute()
-  receivedTypes = _Attribute()
 
   def __init__(self, dispatch: Dispatch, *args) -> None:
     self.dispatchObject = dispatch
     self.receivedArguments = args
-    self.receivedTypes = [type(arg) for arg in args]
+    TypeError.__init__(self, )
 
-    ownerName = dispatch.getFieldOwner().__name__
-    fieldName = dispatch.getFieldName()
-    clsName = type(dispatch).__name__
+  def __str__(self) -> str:
+    """
+    Return a string representation of the DispatchException.
+    """
+    ownerName = self.dispatchObject.getFieldOwner().__name__
+    fieldName = self.dispatchObject.getFieldName()
+    clsName = type(self.dispatchObject).__name__
     header = '%s object at %s.%s' % (clsName, ownerName, fieldName)
-    typeArgs = [type(arg).__name__ for arg in args]
+    typeArgs = [type(arg).__name__ for arg in self.receivedArguments]
     argStr = '%s' % ', '.join(typeArgs)
-    typeSigs = dispatch.getTypeSigs()
+    typeSigs = self.dispatchObject.getTypeSigs()
     typeSigStr = [str(sig) for sig in typeSigs]
     sigStr = '<br><tab>'.join(typeSigStr)
 
     infoSpec = """%s received arguments with signature: <br><tab>%s
     <br>which does not match any of the expected signatures:<br><tab>%s"""
-    info = monoSpace(infoSpec % (header, argStr, sigStr))
-    self.fuckUnitTest = info
-    TypeError.__init__(self, info)
+    return monoSpace(infoSpec % (header, argStr, sigStr))
 
-  def _resolveOther(self, other: object) -> Self:
-    """Resolve the other object."""
-    cls = type(self)
-    if isinstance(other, cls):
-      return other
-    if isinstance(other, (list, tuple)):
-      try:
-        return cls(*other)
-      except TypeError:
-        return NotImplemented
-    return NotImplemented
-
-  def __eq__(self, other: object) -> bool:
-    """Check if two DispatchExceptions are equal."""
-    other = self._resolveOther(other)
-    if other is NotImplemented:
-      return False
-    if self is other:
-      return True
-    if self.dispatchObject != other.dispatchObject:
-      return False
-    if self.receivedArguments != other.receivedArguments:
-      return False
-    if self.receivedTypes != other.receivedTypes:
-      return False
-    return True
-
-  def __repr__(self, ) -> str:
-    """
-    Get the string representation of the DispatchException even if someone
-    tries to repr it instead.
-    """
-    return self.__str__()
+  __repr__ = __str__

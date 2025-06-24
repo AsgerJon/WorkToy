@@ -7,7 +7,7 @@ by other descriptors.
 from __future__ import annotations
 
 from . import AttriBox, _TopInstance, _TopOwner
-from ..static import Alias, AbstractObject
+from ..static import Alias, AbstractObject, typeCast
 from ..static.zeroton import DELETED
 from ..waitaminute import TypeException
 
@@ -93,7 +93,7 @@ class NestBox(AttriBox):
     if kwargs.get('_recursion', False):
       raise RecursionError  # pragma: no cover
     try:
-      castValue = fieldType(value)
+      castValue = typeCast(fieldType, value)
     except Exception as exception:
       raise TypeException('value', value, fieldType, ) from exception
     else:

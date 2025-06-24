@@ -6,15 +6,10 @@ AbstractMetaclass provides the baseclass for custom metaclasses.
 from __future__ import annotations
 
 from types import FunctionType as Func
+from typing import TYPE_CHECKING
 
-from ..static import HistDict
-from ..waitaminute import (QuestionableSyntax, TypeException,
-                           MissingVariable, \
-                           DelException)
 from . import Base
 from . import AbstractNamespace as ASpace
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -35,6 +30,8 @@ class _MetaMetaclass(type):
   def __str__(cls, ) -> str:
     """Returns the name of the class. """
     return """%s[metaclass=%s]""" % (cls.__name__, cls.__class__.__name__)
+
+  __repr__ = __str__
 
 
 class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
@@ -308,7 +305,10 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
 
   def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> type:
     """The __new__ method is invoked to create the class."""
-    namespace = mcls._validateNamespace(name, bases, space.compile(), **kw)
+    if hasattr(space, 'compile'):
+      namespace = space.compile()
+    else:
+      namespace = space
     return _MetaMetaclass.__new__(mcls, name, bases, namespace, **kw)
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
@@ -382,12 +382,9 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
       try:
         out = super().__iter__()  # NOQA
       except AttributeError as attributeError:
-        if '__iter__' in str(attributeError):
-          infoSpec = """'%s' object is not iterable"""
-          info = infoSpec % cls.__name__
-          raise TypeError(info) from attributeError
-      except TypeError as typeError:
-        raise
+        infoSpec = """'%s' object is not iterable"""
+        info = infoSpec % cls.__name__
+        raise TypeError(info) from attributeError
     else:
       return func(cls)
 
@@ -436,21 +433,19 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     try:
       lenFunc = cls._dispatchClassHook('__class_len__')
     except NotImplementedError:
-      pass
+      lenFunc = None
     else:
       return lenFunc(cls)
     try:
-      value = 0
-      for _ in cls:
-        value += 1
+      out = cls.__fallback_len__()
     except Exception as exception:
-      if 'object is not iterable' in str(exception):
-        infoSpec = """'%s' object has no len()"""
-        info = infoSpec % cls.__name__
+      if isinstance(exception, (AttributeError, TypeError)):
+        infoSpec = """object has no len()"""
+        info = infoSpec
         raise TypeError(info) from exception
-      raise
+      raise exception
     else:
-      return value
+      return out
 
   def __hash__(cls, ) -> int:
     """The __hash__ method is invoked to get the hash value of the class.
@@ -471,18 +466,14 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     """
     if cls is other:
       return True
+    if type(cls) is not type(other):
+      return NotImplemented
     try:
       func = cls._dispatchClassHook('__class_eq__')
     except NotImplementedError:
-      pass
+      return NotImplemented
     else:
       return True if func(cls, other) else False
-    try:
-      hashFunc = cls._dispatchClassHook('__class_hash__')
-    except NotImplementedError:
-      return False
-    else:
-      return True if hashFunc(cls) == hash(other) else False
 
   def __getattr__(cls, key: str) -> Any:
     """
@@ -544,31 +535,12 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @classmethod
-  def _validateNamespace(
-      mcls, name: str,
-      bases: Base,
-      space: dict,
-      **kwargs,
-  ) -> dict:
-    """
-    The _validateNamespace method is invoked to validate the namespace
-    object before the class is created.
-    #TODO:  Implement as namespace hook.
-    """
-    if '__del__' in space and '__delete__' not in space:
-      if not kwargs.get('trustMeBro', False):
-        raise DelException(mcls, name, bases, space)
-    return space
-
   @staticmethod
   def _notifySubclassHook(cls, *bases) -> type:
     """The _notifySubclassHook method is invoked to notify each baseclass
     of the created class of the class creation."""
     for base in bases:
       hook = getattr(base, '__subclasshook__', None)
-      if hook is None:
-        continue
       hook(cls)
     return cls
 
@@ -579,33 +551,20 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     'NotImplementedError'.
     #TODO: Implement support for '__class_init__'. Is good for a finalizer.
     """
-    try:
-      func = object.__getattribute__(cls, name)
-    except AttributeError as attributeError:
-      raise NotImplementedError from attributeError
-    else:
-      if hasattr(func, '__func__'):
-        return func.__func__
-      if isinstance(func, Func):
-        return func
-      raise TypeException(name, func, Func)
-    finally:
-      if TYPE_CHECKING:  # pragma: no cover
-        pycharmPlease = 69420
-        assert isinstance(pycharmPlease, Func)
-        return pycharmPlease
-      else:
-        pass
+    if name in cls.__dict__:
+      return cls.__dict__[name].__func__
+    raise NotImplementedError
 
   def getNamespace(cls) -> ASpace:
     """Get the namespace object for the class."""
-    if TYPE_CHECKING:  # pragma: no cover
-      assert isinstance(cls, AbstractMetaclass)
-    space = getattr(cls, '__namespace__', None)
-    if space is None:
-      raise MissingVariable('__namespace__', ASpace, HistDict, dict)
-    if isinstance(space, dict):
-      if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(space, ASpace)
-      return space
-    raise TypeException('__namespace__', space, ASpace, HistDict, dict)
+    return getattr(cls, '__namespace__', )
+
+  def __fallback_len__(cls, ) -> int:
+    """
+    Length tries to fall back to using iteration
+    """
+    value = 0
+    for _ in cls:
+      value += 1
+    else:
+      return value

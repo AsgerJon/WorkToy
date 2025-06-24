@@ -46,19 +46,18 @@ class PreClass(type):
     _name, _hash, bases, _meta = None, None, [], None
     for arg in args:
       if isinstance(arg, str):
-        if _name is None:
-          _name = arg
-          continue
+        _name = arg
+        continue
       if isinstance(arg, int):
-        if _hash is None:
-          _hash = arg
-          continue
+        _hash = arg
+        continue
       if isinstance(arg, type):
-        if issubclass(arg, type):
-          if _meta is None:
-            _meta = arg
-            continue
-        bases.append(arg)
+        _meta = arg
+        continue
+      if isinstance(arg, (tuple, list)):
+        bases = (*arg,)
+        continue
+      raise TypeException('arg', arg, str, int, type, tuple, list)
 
     cls = type.__new__(mcls, _name, (*bases,), {})
     setattr(cls, '__hash_value__', _hash)
@@ -73,12 +72,11 @@ class PreClass(type):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __instance_check__(cls, instance: Any) -> bool:
+  def __instancecheck__(cls, instance: Any) -> bool:
     """
     Checks if the instance is an instance of the PreClass.
     """
-    type_ = type(instance)
-    return True if hash(type_) == cls.__hash_value__ else False
+    return True if hash(cls) == hash(instance) else False
 
   def __hash__(cls, ) -> int:
     """

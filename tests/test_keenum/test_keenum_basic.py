@@ -51,6 +51,13 @@ class Wochentag(KeeNum):
 class TestKeeNum(TestCase):
   """Test the KeeNum class."""
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_auto(self) -> None:
     """Test the auto function."""
     self.assertEqual(len(WeekDay), len(Ugedag))
