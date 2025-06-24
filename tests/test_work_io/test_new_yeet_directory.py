@@ -86,6 +86,8 @@ class TestNewYeetDirectory(TestCase):
     finally:
       if hasattr(f, 'close'):
         f.close()
+      if os.path.exists(there):
+        os.remove(there)
 
   def test_yeet_nested(self) -> None:
     """
