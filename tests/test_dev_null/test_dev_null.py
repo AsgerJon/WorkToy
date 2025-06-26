@@ -12,18 +12,16 @@ Func = type('_', (type,), dict(__instancecheck__=callable))('_', (), {})
 class TestDevNull(TestCase):
   """TestDevNull tests that stuff exists. """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def setUp(self, ) -> None:
     """Set up the test case."""
 
   def test_dev_null(self) -> None:
     """Tests that stuff exists."""
     self.assertTrue(True)
-
-    # print('This is a test for dev null.')
-    # print(callable(print))  # True
-    # print(isinstance(print, Func))  # True
-    # print(Func.__instancecheck__(print))  # True
-    # print(isinstance('urmom', Func))  # False
-    # print(isinstance('fat', Func))  # False
-    # print(isinstance(69420, Func))  # False
-    # print(isinstance(Func, type))  # True

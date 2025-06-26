@@ -19,6 +19,13 @@ from worktoy.waitaminute import IllegalInstantiation
 class TestSome(TestCase):
   """TestSome tests the 'Some' class from the worktoy.core module."""
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_is_instance(self) -> None:
     """
     Tests that Some correctly identifies everything other than 'None' as

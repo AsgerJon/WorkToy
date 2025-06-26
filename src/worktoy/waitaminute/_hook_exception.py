@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from worktoy.mcls import AbstractNamespace
-  from worktoy.mcls.hooks import AbstractHook
+  from worktoy.mcls.space_hooks import AbstractSpaceHook
 
   from typing import Any, Callable, TypeAlias, Self
 
@@ -44,7 +44,7 @@ class HookException(Exception):
       namespace: AbstractNamespace,
       key: str,
       val: object,
-      hook: AbstractHook,
+      hook: AbstractSpaceHook,
   ) -> None:
     self.initialException = exception
     self.namespaceObject = namespace

@@ -6,7 +6,7 @@ from __future__ import annotations
 from types import FunctionType
 from typing import TYPE_CHECKING
 
-from ..mcls.hooks import AbstractHook, ReservedNames
+from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..waitaminute import attributeErrorFactory, ReservedName
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from worktoy.ezdata import EZData
 
 
-class EZHook(AbstractHook):
+class EZSpaceHook(AbstractSpaceHook):
   """EZHook collects the field entries in EZData class bodies. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

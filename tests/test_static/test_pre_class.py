@@ -65,6 +65,7 @@ class TestPreClass(TestCase):
     foo = Foo()
     self.assertTrue(isinstance(Foo, Pre))
     self.assertIsInstance(Foo, Pre)
+    self.assertEqual(hash(Foo()), 69420)
 
   def test_bad_hash(self) -> None:
     """

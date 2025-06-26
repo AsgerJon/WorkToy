@@ -553,6 +553,9 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     """
     if name in cls.__dict__:
       return cls.__dict__[name].__func__
+    infoSpec = """'%s' object has no method '%s'"""
+    info = infoSpec % (cls.__name__, name)
+    # print(info)
     raise NotImplementedError
 
   def getNamespace(cls) -> ASpace:

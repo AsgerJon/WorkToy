@@ -32,6 +32,13 @@ class TestMetaclassConflict(TestCase):
   'The metaclasses of the bases are not compatible.'
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_metaclass_conflict(self) -> None:
     """
     Tests that a metaclass conflict raises the correct error message.
@@ -57,7 +64,9 @@ class TestMetaclassConflict(TestCase):
 
     with self.assertRaises(MetaclassException) as context:
       class Bad(BaseA, BaseB):
-        pass
+        """
+        Bad is a bad class
+        """
     e = context.exception
     self.assertEqual(e.name, 'Bad')
     self.assertIs(e.meta, MetaA)

@@ -74,14 +74,12 @@ class TestTypeCast(TestCase):
         """
         Initialize Foo with an integer.
         """
-        pass
 
       @overload(str)
       def __init__(self, *args) -> None:
         """
         Initialize Foo no args
         """
-        pass
 
     with self.assertRaises(TypeCastException) as context:
       typeCast(Foo, 42)

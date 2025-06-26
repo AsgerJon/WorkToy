@@ -126,6 +126,13 @@ class Thing(AbstractObject, metaclass=AbstractMetaclass):
 
 class TestClassCallRegistry(TestCase):
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def setUp(self) -> None:
     """
     Sets up each test case

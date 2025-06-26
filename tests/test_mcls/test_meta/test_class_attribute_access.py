@@ -48,6 +48,13 @@ class TestClassAttributeHooks(TestCase):
   Verifies functionality and fallback behavior of accessor hooks.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def setUp(self) -> None:
     """
     Clear the class dictionary before each test to ensure isolation.

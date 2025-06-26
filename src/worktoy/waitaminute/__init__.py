@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from ._attribute import _Attribute
+from ._access_error import AccessError
 from ._attribute_error_factory import attributeErrorFactory
 from ._zeroton_case_exception import ZerotonCaseException
 from ._metaclass_exception import MetaclassException
@@ -34,6 +35,7 @@ from ._del_exception import DelException
 
 __all__ = [
     'attributeErrorFactory',
+    'AccessError',
     'MetaclassException',
     'AliasException',
     'HashMismatch',

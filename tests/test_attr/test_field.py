@@ -3,6 +3,7 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from tests import WYD
 from unittest import TestCase
 from types import FunctionType as Func
 from typing import TYPE_CHECKING
@@ -11,7 +12,7 @@ from tests.test_attr import ComplexField
 from worktoy.attr import Field
 from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.parse import maybe
-from worktoy.static import overload
+from worktoy.static import overload, AbstractObject
 from worktoy.static.zeroton import THIS, DELETED
 from worktoy.text import stringList
 from worktoy.waitaminute import ProtectedError, MissingVariable, \
@@ -281,7 +282,9 @@ class TestField(TestCase):
     """
 
     def breh(*args) -> None:
-      pass
+      """
+      No-op
+      """
 
     class Pig:
       foo = Field()
@@ -429,12 +432,18 @@ class TestField(TestCase):
 
       @extraBad.GET
       def _getExtraBad(self) -> str:
-        """Get the extra bad field."""
+        """Get the extraBad field."""
         return 'yikes!'
 
       @extraBad.SET
       def _setExtraBad(self, value: str) -> None:
         """Set the 'extraBad' field."""
+
+    pig = Pig()
+    self.assertEqual(pig.good, 'good')
+    self.assertEqual(pig.bad, 'bad')
+    self.assertEqual(pig.derp, 'derp')
+    self.assertEqual(pig.extraBad, 'yikes!')
 
     class Ham(Pig):
       """Ham is a class that inherits from Pig."""
@@ -498,6 +507,17 @@ class TestField(TestCase):
       def _setExtraBad(self, value: str) -> None:
         """Set the 'extraBad' field."""
         pass
+
+    pig = Pig()
+    self.assertEqual(pig.good, 'good')
+    self.assertEqual(pig.bad, 'bad')
+    self.assertEqual(pig.extraBad, 'yikes!')
+    pig.good = 'lol setter is noop'
+    pig.bad = 'lol setter is noop'
+    pig.extraBad = 'lol setter is noop'
+    self.assertEqual(pig.good, 'good')
+    self.assertEqual(pig.bad, 'bad')
+    self.assertEqual(pig.extraBad, 'yikes!')
 
     setattr(Pig.bad, '__setter_funcs__', 80085)  # Wrong type
     func = lambda *_: None
@@ -566,7 +586,7 @@ class TestField(TestCase):
     Testing a bad deleter for the Field descriptor.
     """
 
-    class Pig:
+    class Pig(AbstractObject):
       """
       Class with a bad deleter for Field: 'bad'.
       """
@@ -596,6 +616,7 @@ class TestField(TestCase):
       @bad.DELETE
       def _deleteBad(self) -> None:
         """Delete the bad field."""
+        setattr(self, '__bad_object__', DELETED)
 
       @extraBad.GET
       def _getExtraBad(self) -> str:
@@ -614,6 +635,21 @@ class TestField(TestCase):
       @brand.DELETE
       def _deleteBrand2(self) -> None:
         """Subclass replaces this with wrong type. """
+
+    pig = Pig()
+    self.assertEqual(pig.good, 'good')
+    self.assertEqual(pig.bad, 'bad')
+    self.assertEqual(pig.extraBad, 'extra bad')
+    del pig.good
+    del pig.bad
+    del pig.extraBad
+    with self.assertRaises(AttributeError):
+      _ = pig.good
+    with self.assertRaises(AttributeError):
+      _ = pig.bad
+    with self.assertRaises(AttributeError):
+      _ = pig.extraBad
+    pig = Pig()
 
     class Ham(Pig):
       """

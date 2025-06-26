@@ -5,6 +5,8 @@ TestAttriBox tests the AttriBox class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from tests import WYD
+
 from unittest import TestCase
 
 from worktoy.attr import AttriBox
@@ -47,6 +49,13 @@ class Bar:
 
 class TestAttriBox(TestCase):
   """TestAttriBox tests the AttriBox class."""
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
 
   def setUp(self) -> None:
     """Set up the test case."""

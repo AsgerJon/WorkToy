@@ -119,3 +119,7 @@ class TestBaseOverload(TestCase):
     self.assertIs(e.dispatchObject, Foo.bar)
     self.assertEqual(e.receivedArguments, (69, 420))
     self.assertEqual(str(e), repr(e))
+    with self.assertRaises(WYD):
+      foo.bar(69)
+    with self.assertRaises(WYD):
+      foo.bar('420')

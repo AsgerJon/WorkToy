@@ -19,6 +19,13 @@ class TestBipartiteMatchingList(TestCase):
   Unit tests for list-based bipartiteMatching.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def testSimpleSuccess(self) -> None:
     slots = [
         (1, 2),

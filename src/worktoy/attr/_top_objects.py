@@ -47,3 +47,10 @@ class _TopOwner(AbstractObject):
     Returns the top-level instance of the descriptor owning the hook.
     """
     return self.instance.owner
+
+
+class _Root:
+  """
+  This private descriptor reflects the root of the descriptor owning the
+  hook.
+  """

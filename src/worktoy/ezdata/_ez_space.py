@@ -3,9 +3,9 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import DataField, EZHook
+from . import DataField, EZSpaceHook
 from ..mcls import BaseSpace
-from ..mcls.hooks import ReservedNameHook
+from ..mcls.space_hooks import ReservedNameSpaceHook
 from ..parse import maybe
 from ..waitaminute import TypeException
 
@@ -25,7 +25,7 @@ class EZSpace(BaseSpace):
   __data_fields__ = None
 
   #  Public Variables
-  ezHook = EZHook()
+  ezHook = EZSpaceHook()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

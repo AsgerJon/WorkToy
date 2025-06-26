@@ -24,6 +24,13 @@ class TestComplex(TestCase):
   correctly.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_metaclass(self, ) -> None:
     """
     Test that the ComplexOverload actually exists and is a class derived

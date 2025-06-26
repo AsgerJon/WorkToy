@@ -36,3 +36,9 @@ class EZData(metaclass=EZMeta):
     """
     Here for type hinting purposes only!
     """
+
+  @trustMeBro
+  def __len__(self, *args, **kwargs) -> None:
+    """
+    Here for type hinting purposes only!
+    """

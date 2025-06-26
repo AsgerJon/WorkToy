@@ -58,8 +58,8 @@ class TestFidGen(TestCase):
       f.write('\n')
       f.close()
     finally:
-      if hasattr(f, 'close'):
-        f.close()
+      if hasattr(f, 'close'):  # pragma: no cover
+        f.close()  # pragma: no cover
 
   @staticmethod
   def yeet(filePath: str, ) -> None:
@@ -67,9 +67,7 @@ class TestFidGen(TestCase):
     This static method deletes the file at the given path.
     """
     if validateExistingFile(filePath, strict=False):
-      if os.path.isfile(filePath):
-        if os.access(filePath, os.W_OK):
-          os.remove(filePath)
+      os.remove(filePath)
 
   def test_base(self) -> None:
     """
@@ -79,6 +77,13 @@ class TestFidGen(TestCase):
     self.touch(FooBar.fidGen.nextName)
     iniName2 = FooBar.fidGen.nextName
     self.assertNotEqual(iniName, iniName2)
+
+  def test_touch(self) -> None:
+    """
+    Covering the touch defined here
+    """
+    with self.assertRaises(Exception):
+      self.touch('')
 
   def tearDown(self) -> None:
     """
@@ -121,9 +126,6 @@ class TestFidGen(TestCase):
     filePath = bar.fidGen.fileSpec % 100
     try:
       self.touch(filePath)
-    except Exception as exception:
-      raise exception
-    else:
       with self.assertRaises(RecursionError) as context:
         bar.fidGen._getNextName(100)
     finally:

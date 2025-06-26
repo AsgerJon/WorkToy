@@ -25,6 +25,13 @@ class TestDataField(TestCase):
   'worktoy.ez_data' module.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_good_init(self) -> None:
     """
     Tests that 'DataField' can be instantiated.

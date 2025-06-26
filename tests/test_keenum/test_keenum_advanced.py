@@ -36,8 +36,7 @@ class Wrapper:
   def __str__(self) -> str:
     return '<Wrapper with value: %d>' % self.val
 
-  def __repr__(self) -> str:
-    return 'Wrapper(%d)' % self.val
+  __repr__ = __str__
 
 
 w1 = Wrapper(1)
@@ -57,6 +56,13 @@ class Steps(KeeNum):
 
 class TestKeeNum(TestCase):
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_namesValuesIndexes(self) -> None:
     self.assertEqual(Fruit.APPLE.name, 'APPLE')
     self.assertEqual(Fruit.APPLE.value.upper(), 'APPLE')
@@ -72,3 +78,10 @@ class TestKeeNum(TestCase):
   def test_customObjectValues(self) -> None:
     self.assertEqual(Wrapped.FIRST.value.val, 1)
     self.assertEqual(Wrapped.SECOND.value.val, 2)
+
+  def test_str_repr(self) -> None:
+    """
+    Tests the __str__ on the Wrapper instances
+    """
+
+    self.assertEqual(str(Wrapped.FIRST.value), repr(Wrapped.FIRST.value))

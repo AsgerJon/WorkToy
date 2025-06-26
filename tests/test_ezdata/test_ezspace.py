@@ -25,6 +25,13 @@ class TestEZSpace(TestCase):
   these tests will create various EZData subclasses.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_good_class(self) -> None:
     """
     Tests a good data class
@@ -44,17 +51,13 @@ class TestEZSpace(TestCase):
         """
         return (self.x ** 2 + self.y ** 2) ** 0.5
 
-      def __len__(self, ) -> int:
-        """
-        Returns the number of coordinates in the plane.
-        """
-        return 2
-
     point1 = Plane(69, 420)
     self.assertEqual(point1.x, 69)
     self.assertEqual(point1.y, 420)
     point2 = Plane(69, 420)
     self.assertEqual(point1, point2)
+    self.assertFalse(abs(point1) - 69 * 69 - 420 * 420 > 1e-6)
+    self.assertEqual(len(point1), 2)
 
   def test_bad_class(self) -> None:
     """
@@ -102,12 +105,14 @@ class TestEZSpace(TestCase):
       y = 0.0
 
       @trustMeBro
-      def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+      def __init__(self, *args) -> None:
         """
         Initializes the deviant data class with coordinates.
         """
-        self.x = x
-        self.y = y
+
+    sus = Sus(69, 420)  # Does not actually use __init__ above.
+    self.assertEqual(sus.x, 69)
+    self.assertEqual(sus.y, 420)
 
   def test_str_repr(self) -> None:
     """

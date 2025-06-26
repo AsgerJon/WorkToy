@@ -123,6 +123,14 @@ class Mode(KeeNum):
 
 
 class TestKeeNumLookup(TestCase):
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_nameLookupFlexible(self) -> None:
     self.assertIsInstance(Mode['FAST_MODE'], Mode)
     self.assertIs(Mode['fast_mode'], Mode.FAST_MODE)

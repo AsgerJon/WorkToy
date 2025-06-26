@@ -5,6 +5,7 @@ TestNestBox tests the NestBox class from the attr module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from tests import WYD
 from unittest import TestCase
 
 from worktoy.mcls import BaseObject
@@ -88,15 +89,30 @@ class Brush(BaseObject):
 class TestNestBox(TestCase):
   """TestNestBox tests the NestBox class."""
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def setUp(self) -> None:
     """Set up the test case."""
     self.brush = Brush()
+    self.black = RGB()
+    self.schwartz = RGB(self.black)
 
   def test_init(self) -> None:
     """Test the initialization of the Brush class."""
     self.assertIsInstance(self.brush, Brush)
     self.assertIsInstance(Brush.color, NestBox)
     self.assertIsInstance(Brush.width, AttriBox)
+
+  def test_str(self) -> None:
+    """Test the string representation of the RGB color."""
+    self.assertEqual(str(self.black), '#000000')
+    self.assertEqual(str(self.schwartz), '#000000')
+    self.assertEqual(str(self.brush.color), '#FFFFFF')
 
   def test_color_getter(self) -> None:
     """Tests the default color of the brush."""

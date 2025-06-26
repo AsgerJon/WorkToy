@@ -145,6 +145,13 @@ class TestClassHooks(TestCase):
   implement the '__class_[HOOK]__' methods are called correctly.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_call(self) -> None:
     with self.assertRaises(ClassLevelCalled) as cm:
       ClassHooks("a", b=2)

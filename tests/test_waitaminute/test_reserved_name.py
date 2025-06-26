@@ -10,7 +10,7 @@ from unittest import TestCase
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import BaseObject, AbstractNamespace, AbstractMetaclass
-from worktoy.mcls.hooks import ReservedNames
+from worktoy.mcls.space_hooks import ReservedNames
 from worktoy.waitaminute import ReservedName
 
 if TYPE_CHECKING:  # pragma: no cover

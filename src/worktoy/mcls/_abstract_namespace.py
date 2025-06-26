@@ -9,7 +9,8 @@ from __future__ import annotations
 from ..text import monoSpace
 from ..waitaminute import HookException, DuplicateHookError
 from . import Base
-from .hooks import AbstractHook, ReservedNameHook, NameHook
+from .space_hooks import AbstractSpaceHook, ReservedNameSpaceHook, \
+  NameSpaceHook
 
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias
 
   Bases: TypeAlias = tuple[type, ...]
-  Hooks: TypeAlias = list[AbstractHook]
+  Hooks: TypeAlias = list[AbstractSpaceHook]
 
 
 class AbstractNamespace(dict):
@@ -60,8 +61,8 @@ class AbstractNamespace(dict):
   __hash_value__ = None
 
   #  Public Variables
-  reservedNameHook = ReservedNameHook()
-  nameHook = NameHook()
+  reservedNameHook = ReservedNameSpacePhase()
+  nameHook = NameSpacePhase()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -140,7 +141,7 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def addHook(cls, hook: AbstractHook) -> None:
+  def addPhase(cls, hook: AbstractSpaceHook) -> None:
     """Adds a hook to the list of hooks. """
     existingHooks = cls.classGetHooks()
     for existingHook in existingHooks:
@@ -176,7 +177,7 @@ class AbstractNamespace(dict):
       val = keyError
     for hook in self.getHooks():
       try:
-        hook.getItemHook(key, val)
+        hook.getItemPhase(key, val)
       except Exception as exception:
         raise HookException(exception, self, key, val, hook)
     if isinstance(val, KeyError):
@@ -191,8 +192,8 @@ class AbstractNamespace(dict):
       oldVal = None
     for hook in self.getHooks():
       if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(hook, AbstractHook)
-      if hook.setItemHook(key, val, oldVal):
+        assert isinstance(hook, AbstractSpaceHook)
+      if hook.setItemPhase(key, val, oldVal):
         break
     else:
       dict.__setitem__(self, key, val)
@@ -237,8 +238,8 @@ class AbstractNamespace(dict):
     namespace = dict()
     for hook in self.getHooks():
       if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(hook, AbstractHook)
-      namespace = hook.preCompileHook(namespace)
+        assert isinstance(hook, AbstractSpaceHook)
+      namespace = hook.preCompilePhase(namespace)
     return namespace
 
   def compile(self, ) -> dict:
@@ -261,6 +262,6 @@ class AbstractNamespace(dict):
     processing of the compiled object. """
     for hook in self.getHooks():
       if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(hook, AbstractHook)
-      namespace = hook.postCompileHook(namespace)
+        assert isinstance(hook, AbstractSpaceHook)
+      namespace = hook.postCompilePhase(namespace)
     return namespace

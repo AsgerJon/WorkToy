@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.mcls import AbstractMetaclass, AbstractNamespace
+from worktoy.mcls import AbstractMetaclass as AMeta
+from worktoy.mcls import AbstractNamespace as ASpace
 from worktoy.static import Dispatch, PreClass
 
 from typing import TYPE_CHECKING
@@ -39,29 +40,22 @@ class TestDelException(TestCase):
     method.
     """
 
+    space = ASpace(AMeta, 'Sus', (), )
     with self.assertRaises(DelException) as context:
-      class Sus(metaclass=AbstractMetaclass):
-        def __del__(self) -> None: pass
+      space['__del__'] = 'yikes'
     e = context.exception
     self.assertEqual(str(e), repr(e))
-    self.assertIs(e.mcls, AbstractMetaclass)
+    self.assertIs(e.mcls, AMeta)
     self.assertEqual(e.name, 'Sus')
     self.assertFalse(e.bases)
-    self.assertIsInstance(e.space, AbstractNamespace)
+    self.assertIsInstance(e.space, ASpace)
 
-  def test_del_implementation_with_bases(self) -> None:
-    """
-    Tests that the DelException class correctly handles bases when
-    implementing the __del__ method.
-    """
-
+    withBases = ASpace(AMeta, 'Sus', (AMeta,), )
     with self.assertRaises(DelException) as context:
-      class Sus(object, int, metaclass=AbstractMetaclass):
-        def __del__(self) -> None: pass
+      withBases['__del__'] = 'yikes'
     e = context.exception
     self.assertEqual(str(e), repr(e))
-    self.assertIs(e.mcls, AbstractMetaclass)
+    self.assertIs(e.mcls, AMeta)
     self.assertEqual(e.name, 'Sus')
-    self.assertEqual(e.bases, (object, int))
-    self.assertIsInstance(e.space, AbstractNamespace)
-    self.assertEqual
+    self.assertEqual(e.bases, (AMeta,))
+    self.assertIsInstance(e.space, ASpace)

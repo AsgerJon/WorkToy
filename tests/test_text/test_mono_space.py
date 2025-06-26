@@ -1,6 +1,6 @@
 """TestMonoSpace tests the monoSpace function."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024 Asger Jon Vistisen
+#  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from unittest import TestCase
@@ -10,6 +10,13 @@ from worktoy.text import monoSpace
 
 class TestMonoSpace(TestCase):
   """TestMonoSpace tests the monoSpace function."""
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
 
   def test_monoSpace(self) -> None:
     """Test the monoSpace function."""

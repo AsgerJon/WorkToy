@@ -75,6 +75,13 @@ class TestClassIterNext(TestCase):
   TestClassIterNext verifies '__class_iter__' and '__class_next__' hooks.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def testLazyClassIteration(self) -> None:
     """
     Tests that LazyClass yields expected values.

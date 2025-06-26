@@ -6,7 +6,7 @@ KeeHook provides the namespace hook for the KeeSpace namespace class.
 from __future__ import annotations
 
 from ..static import AbstractObject
-from ..mcls.hooks import AbstractHook
+from ..mcls.space_hooks import AbstractSpaceHook
 
 from . import _AutoMember
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeHook(AbstractHook):
+class KeeSpaceHook(AbstractSpaceHook):
   """
   KeeHook provides the namespace hook for the KeeSpace namespace class.
   """

@@ -22,6 +22,13 @@ class TestBasicMeta(TestCase):
   TestBasicMeta tests some basic functionalities of the AbstractMetaclass.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_good_class(self) -> None:
     """
     Test that the metaclass is set correctly.
@@ -202,10 +209,7 @@ class TestBasicMeta(TestCase):
         """
         Get the next item in the iteration.
         """
-        if cls.__iter_contents__:
-          return cls.__iter_contents__.pop(0)
-        cls.__iter_contents__ = None
-        raise StopIteration
+        return cls.__iter_contents__.pop(0)
 
     for someValue, item in zip(someValues, Foo):
       self.assertEqual(someValue, item)

@@ -11,6 +11,13 @@ from worktoy.text import stringList
 class TestStringList(TestCase):
   """TestStringList tests the StringList class."""
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_stringList(self) -> None:
     """Test the stringList function."""
     items = 'a, b, c, d'

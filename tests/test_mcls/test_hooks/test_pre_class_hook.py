@@ -7,19 +7,16 @@ module.
 from __future__ import annotations
 
 from unittest import TestCase
+from typing import TYPE_CHECKING
 
-from worktoy.mcls import AbstractMetaclass, BaseMeta, AbstractNamespace
-from worktoy.mcls.hooks import AbstractHook, PreClassHook
-from worktoy.parse import maybe
+from worktoy.mcls.space_hooks import PreClassSpaceHook
 from worktoy.static import PreClass, TypeSig
-from worktoy.text import monoSpace, stringList
-from worktoy.waitaminute import QuestionableSyntax, DelException, \
-  DuplicateHookError, HookException, TypeException
+from worktoy.text import stringList
+from worktoy.waitaminute import TypeException
 from worktoy.waitaminute import _Attribute  # NOQA
-from typing import TYPE_CHECKING, Iterator
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, TypeAlias
+  from typing import TypeAlias
 
   Bases: TypeAlias = tuple[type, ...]
 
@@ -43,7 +40,7 @@ class TestPreClassHook(TestCase):
     is called recursively.
     """
 
-    preClassHook = PreClassHook()
+    preClassHook = PreClassSpaceHook()
     with self.assertRaises(RecursionError):
       _ = preClassHook._getPreClass(_recursion=True)
 
@@ -53,7 +50,7 @@ class TestPreClassHook(TestCase):
     pre-class is not a class.
     """
     susClass = """Imma PreClass, trust me bro!"""
-    preClassHook = PreClassHook()
+    preClassHook = PreClassSpaceHook()
     setattr(preClassHook, '__pre_class__', susClass)
     with self.assertRaises(TypeException) as context:
       preClassHook._getPreClass()
@@ -68,7 +65,7 @@ class TestPreClassHook(TestCase):
     Tests that the 'PreClassHook' raises a 'TypeException' if the
     pre-class has a bad type signature.
     """
-    preClassHook = PreClassHook()
+    preClassHook = PreClassSpaceHook()
     setattr(preClassHook, '__pre_class__', PreClass('breh', 69420, ()))
     susTypeSigs = stringList("""yo, we be your TypeSigs, trust!""")
     setattr(preClassHook, '__type_sigs__', susTypeSigs)

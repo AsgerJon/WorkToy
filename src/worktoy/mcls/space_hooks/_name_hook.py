@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from ...waitaminute import QuestionableSyntax, DelException
 
-from . import AbstractHook
+from . import AbstractSpaceHook
 
 from typing import TYPE_CHECKING
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   NearMiss: TypeAlias = tuple[str, str]
 
 
-class NameHook(AbstractHook):
+class NameSpaceHook(AbstractSpaceHook):
   """
   NameHook intercepts names added to the namespace and filters out
   "near-miss" identifiers that resemble critical Python dunder methods.

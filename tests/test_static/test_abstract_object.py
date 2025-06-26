@@ -132,7 +132,7 @@ class TestAbstractObject(TestCase):
     Tests the accessors of 'AbstractObject'.
     """
 
-    class Prop(AbstractObject):
+    class Label(AbstractObject):
       """
       This subclass of 'AbstractObject' is used to test the accessors.
       """
@@ -150,12 +150,25 @@ class TestAbstractObject(TestCase):
         else:
           return out
 
+    class Prop(Label):
+      """
+      This subclass of 'AbstractObject' is used to test the accessors.
+      """
+
+      def __instance_set__(self, value: Any, **kwargs) -> None:
+        """
+        This method is called when the 'Prop' instance is set.
+        It sets the value of the 'value' attribute.
+        """
+        setattr(self.instance, self.getPrivateName(), value)
+
     class Foo:
       """
       This class owns the 'Prop' object being tested.
       """
 
       bar = Prop()
+      baz = Label()
 
     foo = Foo()
     privateName = Foo.bar.getPrivateName()
@@ -165,16 +178,18 @@ class TestAbstractObject(TestCase):
     self.assertEqual(e.varName, privateName)
     self.assertEqual(e.varType, (object,))
 
+    privateName = Foo.baz.getPrivateName()
     with self.assertRaises(ReadOnlyError) as context:
-      foo.bar = 69
+      foo.baz = 69
     e = context.exception
     self.assertIs(e.owningInstance, foo)
-    self.assertIs(e.descriptorObject, Foo.bar)
+    self.assertIs(e.descriptorObject, Foo.baz)
     self.assertIsInstance(e.existingValue, MissingVariable)
     self.assertEqual(e.existingValue.varName, privateName)
     self.assertEqual(e.existingValue.varType, (object,))
     self.assertEqual(e.newValue, 69)
 
+    privateName = Foo.bar.getPrivateName()
     with self.assertRaises(ProtectedError) as context:
       del foo.bar
     e = context.exception
@@ -183,6 +198,9 @@ class TestAbstractObject(TestCase):
     self.assertIsInstance(e.existingValue, MissingVariable)
     self.assertEqual(e.existingValue.varName, privateName)
     self.assertEqual(e.existingValue.varType, (object,))
+
+    foo.bar = 69
+    self.assertEqual(foo.bar, 69)
 
   def test_kwargs_parser(self) -> None:
     """
@@ -223,13 +241,9 @@ class TestAbstractObject(TestCase):
         """
         keyArgs = self._getKeywordArgs()
         ownerKeys = stringList("""owner, cls, type, class_""")
-        try:
-          out, _ = self.parseKwargs(type, *ownerKeys, **keyArgs)
-        except Exception as exception:
-          raise exception
-        else:
-          return out
-
+        out, _ = self.parseKwargs(type, *ownerKeys, **keyArgs)
+        return out
+      
     class Foo:
       """
       This class owns the 'CLS' object being tested.

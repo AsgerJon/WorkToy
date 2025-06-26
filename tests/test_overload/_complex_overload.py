@@ -18,6 +18,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
 
+import sys
+import gc
+
 
 class ComplexOverload(ComplexBase, metaclass=BaseMeta):
   """Complex number representation. """

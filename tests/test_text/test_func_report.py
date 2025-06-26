@@ -39,6 +39,8 @@ class TestFuncReport(TestCase):
 
     def bad() -> None: pass
 
+    self.assertIsNone(bad())
+
     with self.assertRaises(SyntaxError) as context:
       _ = funcReport(bad)
     e = context.exception
@@ -51,6 +53,8 @@ class TestFuncReport(TestCase):
     """
 
     def bad() -> None: pass
+
+    self.assertIsNone(bad())
 
     report = funcReport(bad, strict=False)
 
@@ -83,7 +87,6 @@ class TestFuncReport(TestCase):
       """
       This is a verbatim function.
       """
-      pass
 
     report = funcReport(verbatim)
 
@@ -96,7 +99,6 @@ class TestFuncReport(TestCase):
       """
       This function has no return type annotation.
       """
-      pass
 
     with self.assertRaises(SyntaxError) as context:
       _ = funcReport(no_return_type)
@@ -113,7 +115,6 @@ class TestFuncReport(TestCase):
       """
       This function has no return type annotation.
       """
-      pass
 
     report = funcReport(no_return_type, strict=False)
     self.assertIn('def no_return_type()', report)

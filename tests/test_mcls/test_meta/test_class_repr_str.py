@@ -48,6 +48,13 @@ class TestClassStrRepr(TestCase):
   TestClassStrRepr checks the class-level string and repr hooks.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def testClassStrHook(self) -> None:
     """
     Tests that __class_str__ is used in str(class).

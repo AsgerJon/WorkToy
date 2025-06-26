@@ -29,6 +29,13 @@ class Point3D(Point2D):
 class TestEZData(TestCase):
   """TestEZData - Test the EZData class."""
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def setUp(self) -> None:
     """Set up the test case."""
     self.point2d_0 = Point2D()

@@ -12,6 +12,13 @@ from worktoy.waitaminute import TypeException
 class TestWordWrap(TestCase):
   """TestWordWrap tests the wordWrap function."""
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def setUp(self) -> None:
     """Set up the test case."""
     self.paragraph = monoSpace("""Lorem ipsum dolor sit amet, adipiscing 

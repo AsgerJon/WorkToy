@@ -107,6 +107,13 @@ class TestClassMap(TestCase):
   Verifies dict-like behavior at the class level.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def testSetAndGetItem(self) -> None:
     """
     Tests setting and retrieving an item via ClassMap.
@@ -126,8 +133,15 @@ class TestClassMap(TestCase):
     """
     Tests deleting an item.
     """
+    ClassMap['to_delete'] = 69
+    self.assertEqual(ClassMap['to_delete'], 69)
+    del ClassMap['to_delete']
     with self.assertRaises(KeyError):
-      _ = ClassMap['Not Implemented']
+      _ = ClassMap['to_delete']
+    with self.assertRaises(KeyError):
+      _ = ClassMap['missing lol']
+    with self.assertRaises(KeyError):
+      del ClassMap['missing lol']
 
   def testGetMissingKey(self) -> None:
     """

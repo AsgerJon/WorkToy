@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from ...static import PreClass, TypeSig
 from ...waitaminute import TypeException
-from . import AbstractHook
+from . import AbstractSpaceHook
 
 from typing import TYPE_CHECKING
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class PreClassHook(AbstractHook):
+class PreClassSpaceHook(AbstractSpaceHook):
   """
   PreClassHook resolves the circular reference problem caused when a
   decorator or hook needs to refer to the class under construction —

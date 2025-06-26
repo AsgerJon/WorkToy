@@ -11,7 +11,9 @@ from ..waitaminute import VariableNotNone
 from ..static import TypeSig
 
 from . import AbstractNamespace, AbstractMetaclass
-from .hooks import OverloadHook, NameHook, ReservedNameHook, PreClassHook
+from .space_hooks import OverloadSpaceHook, NameSpaceHook, \
+  ReservedNameSpaceHook, \
+  PreClassSpaceHook
 
 from typing import TYPE_CHECKING
 
@@ -74,5 +76,5 @@ class BaseSpace(AbstractNamespace):
     overloadMap[key] = existingMap
     self.__overload_map__ = overloadMap
 
-  preClassHook = PreClassHook()
-  overloadHook = OverloadHook()
+  preClassHook = PreClassSpaceHook()
+  overloadHook = OverloadSpaceHook()

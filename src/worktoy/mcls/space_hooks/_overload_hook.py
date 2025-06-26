@@ -8,7 +8,7 @@ correct method based on the arguments passed to it.
 from __future__ import annotations
 
 from ...static import Dispatch
-from . import AbstractHook
+from . import AbstractSpaceHook
 
 from typing import TYPE_CHECKING
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class OverloadHook(AbstractHook):
+class OverloadSpaceHook(AbstractSpaceHook):
   """
  OverloadHook implements method overloading in the metaclass namespace
   system. It collects all functions decorated with `@overload` and

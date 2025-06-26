@@ -11,7 +11,7 @@ from unittest import TestCase
 from typing import TYPE_CHECKING
 
 from worktoy.waitaminute import DuplicateHookError
-from worktoy.mcls.hooks import AbstractHook
+from worktoy.mcls.space_hooks import AbstractSpaceHook
 
 from tests import WYD
 

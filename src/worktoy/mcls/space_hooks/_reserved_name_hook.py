@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from ...waitaminute import ReservedName
 
-from . import AbstractHook, ReservedNames
+from . import AbstractSpaceHook, ReservedNames
 
 from typing import TYPE_CHECKING
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class ReservedNameHook(AbstractHook):
+class ReservedNameSpaceHook(AbstractSpaceHook):
   """
   ReservedNameHook prevents redefinition of names that are reserved for
   use by Python or the metaclass system. These names are typically

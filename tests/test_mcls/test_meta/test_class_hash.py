@@ -173,6 +173,13 @@ class TestClassHash(TestCase):
   implement __class_hash__ are called correctly.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_class_hash(self):
     """
     Tests that the class hash is called correctly.

@@ -11,7 +11,7 @@ from unittest import TestCase
 from worktoy.text import stringList
 from worktoy.waitaminute import TypeException, KeeNumTypeException, \
   DuplicateKeeNum, EmptyKeeNumError, IllegalInstantiation
-from worktoy.keenum import KeeHook, KeeNum
+from worktoy.keenum import KeeSpaceHook, KeeNum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -21,6 +21,13 @@ if TYPE_CHECKING:  # pragma: no cover
 class TestKeeHook(TestCase):
   """TestKeeHook confirms the functionality provided by the KeeHook class by
   creating new derived classes."""
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
 
   def test_good_keenum(self) -> None:
     """

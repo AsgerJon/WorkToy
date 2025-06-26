@@ -95,6 +95,11 @@ class TestNewYeetDirectory(TestCase):
     """
     here = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
     there = os.path.join(here, 'never', 'gonna', 'give', 'you', 'up')
+    thereTop = os.path.join(here, 'never')
     os.makedirs(there, exist_ok=True)
-    yeetDirectory(there)
+    yeetDirectory(os.path.join(here, 'never', 'gonna', 'give', 'you', 'up'))
+    yeetDirectory(os.path.join(here, 'never', 'gonna', 'give', 'you'))
+    yeetDirectory(os.path.join(here, 'never', 'gonna', 'give'))
+    yeetDirectory(os.path.join(here, 'never', 'gonna'))
+    yeetDirectory(os.path.join(here, 'never'))
     self.assertFalse(os.path.exists(there), )

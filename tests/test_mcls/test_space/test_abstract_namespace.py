@@ -10,7 +10,7 @@ from unittest import TestCase
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass, AbstractNamespace
-from worktoy.mcls.hooks import AbstractHook
+from worktoy.mcls.space_hooks import AbstractSpaceHook
 from worktoy.waitaminute import DuplicateHookError, HookException
 from worktoy.waitaminute import _Attribute  # NOQA
 
@@ -42,7 +42,7 @@ class TestAbstractNamespace(TestCase):
     namespace already containing a hook with the same name.
     """
 
-    hookA, hookB = AbstractHook(), AbstractHook()
+    hookA, hookB = AbstractSpaceHook(), AbstractSpaceHook()
 
     class BaseNamespace(AbstractNamespace):
       """Base namespace for testing duplicate hooks."""
@@ -69,7 +69,7 @@ class TestAbstractNamespace(TestCase):
     class Yikes(Exception):
       """A custom exception to be raised by the hook."""
 
-    class SusHook(AbstractHook):
+    class SusSpaceHook(AbstractSpaceHook):
       """A hook that raises an exception."""
 
       def getItemHook(self, key: str, value: Any, ) -> bool:
@@ -80,7 +80,7 @@ class TestAbstractNamespace(TestCase):
 
     class SusSpace(AbstractNamespace):
       """A namespace that uses the 'SusHook'."""
-      sus = SusHook()
+      sus = SusSpaceHook()
 
     class SusMeta(AbstractMetaclass):
       """A metaclass that uses the 'SusSpace'."""
@@ -102,4 +102,4 @@ class TestAbstractNamespace(TestCase):
     self.assertIsInstance(e.namespaceObject, SusSpace)
     self.assertEqual(e.itemKey, '__name__')
     self.assertEqual(str(e.errorValue), str(KeyError('__name__')))
-    self.assertIsInstance(e.hookFunction, SusHook)
+    self.assertIsInstance(e.hookFunction, SusSpaceHook)

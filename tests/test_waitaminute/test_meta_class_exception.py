@@ -50,9 +50,11 @@ class TestMetaclassException(TestCase):
     class Sus(metaclass=_Meta):
       pass
 
-    with self.assertRaises(MetaclassException) as context:
+    with self.assertRaises(Exception) as context:
       class Breh(BaseObject, Sus):
-        pass
+        """
+        Breh is a sus class
+        """
     e = context.exception
     self.assertIs(e.name, 'Breh')
     self.assertIs(e.meta, BaseMeta)

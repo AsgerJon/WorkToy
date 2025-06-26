@@ -6,7 +6,7 @@ KeeSpace provides the namespace object for the KeeMeta metaclass.
 from __future__ import annotations
 
 from ..mcls import AbstractNamespace
-from . import KeeHook  # Private to module
+from . import KeeSpaceHook  # Private to module
 
 from typing import TYPE_CHECKING
 
@@ -24,4 +24,4 @@ class KeeSpace(AbstractNamespace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Public variables
-  keeHook = KeeHook()
+  keeHook = KeeSpaceHook()

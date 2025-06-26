@@ -215,8 +215,7 @@ class TestCurrent(TestCase):
     try:
       delattr(bar, '__current_owner__', )
     except AttributeError:
-      if """object has no attribute""" in str(e):
-        pass
+      pass
     with self.assertRaises(ReadOnlyError) as context:
       bar.curOwn = 420
     e = context.exception

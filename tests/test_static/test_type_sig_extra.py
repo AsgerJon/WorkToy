@@ -25,6 +25,13 @@ class TestTypeSigExtra(TestCase):
   '__repr__', '__str__' and '__eq__' methods.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def test_str_repr(self: Self) -> None:
     """
     Test the __repr__ method of TypeSig.

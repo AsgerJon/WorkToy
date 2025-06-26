@@ -1,5 +1,5 @@
 """
-AbstractHook provides an abstract baseclass for hooks used by the
+AbstractSpaceHook provides an abstract baseclass for hooks used by the
 namespaces in the metaclass system.
 """
 #  AGPL-3.0 license
@@ -16,11 +16,12 @@ if TYPE_CHECKING:  # pragma: no cover
   AccessorHook = Callable[[ASpace, str, Any], Any]
   CompileHook = Callable[[ASpace, dict], dict]
   Space: TypeAlias = Type[ASpace]
+  Meta: TypeAlias = Type[type]
 
 
-class AbstractHook(AbstractObject):
+class AbstractSpaceHook(AbstractObject):
   """
-  AbstractHook is the abstract base class for defining hook objects
+  AbstractSpaceHook is the abstract base class for defining hook objects
   used in conjunction with AbstractNamespace. These hooks enable modular,
   stage-specific interception during class body evaluation and namespace
   compilation within the metaclass system.
@@ -34,41 +35,41 @@ class AbstractHook(AbstractObject):
 
   ## Integration
 
-  To activate a hook, simply instantiate a subclass of AbstractHook inside
-  the body of a namespace class (i.e., a subclass of AbstractNamespace).
-  The descriptor protocol (`__set_name__`) ensures the hook registers
-  itself with the namespace automatically at definition time.
+  To activate a hook, simply instantiate a subclass of AbstractSpaceHook
+  inside the body of a namespace class (i.e., a subclass of
+  AbstractNamespace). The descriptor protocol (`__set_name__`) ensures the
+  hook registers itself with the namespace automatically at definition time.
 
   Example:
 
       class MyNamespace(AbstractNamespace):
-        overloadHook = OverloadHook()
-        validationHook = ReservedNameHook()
+        overloadHook = OverloadPhase()
+        validationHook = ReservedNamePhase()
 
   ## Lifecycle Hook Methods
 
   Subclasses may override any of the following methods to participate in
   different stages of the namespace lifecycle. All are optional.
 
-  - `setItemHook(self, key, value, oldValue) -> bool`
+  - `setItemPhase(self, key, value, oldValue) -> bool`
     Called just before a name is set in the namespace.
     Returning True blocks the default behavior.
 
-  - `getItemHook(self, key, value) -> bool`
+  - `getItemPhase(self, key, value) -> bool`
     Called just before a name is retrieved from the namespace.
     Returning True blocks the default behavior.
 
-  - `preCompileHook(self, compiled: dict) -> dict`
+  - `preCompilePhase(self, compiled: dict) -> dict`
     Called after the class body finishes executing, but before the
     namespace is finalized. May transform or replace namespace contents.
 
-  - `postCompileHook(self, compiled: dict) -> dict`
+  - `postCompilePhase(self, compiled: dict) -> dict`
     Called immediately before the finalized namespace is handed off to the
     metaclass. Can be used for final transformations or validation.
 
   ## Descriptor Behavior
 
-  AbstractHook implements the descriptor protocol. When accessed via a
+  AbstractSpaceHook implements the descriptor protocol. When accessed via a
   namespace class, it is bound with the following attributes:
 
   - `self.space` refers to the active namespace instance.
@@ -82,7 +83,7 @@ class AbstractHook(AbstractObject):
   Subclasses are expected to override only the relevant hook methods.
   If none are overridden, the hook has no effect.
 
-  The `addHook()` method of the namespace class is automatically invoked
+  The `addPhase()` method of the namespace class is automatically invoked
   during registration. Hook authors do not need to call it manually.
   """
 
@@ -96,35 +97,42 @@ class AbstractHook(AbstractObject):
 
   #  TYPE_CHECKING
   if TYPE_CHECKING:  # pragma: no cover
-    from . import AbstractHook
+    from . import AbstractSpaceHook
     from .. import AbstractNamespace
-    assert isinstance(AbstractHook.space, AbstractNamespace)
-    assert issubclass(AbstractHook.spaceClass, AbstractNamespace)
+    assert isinstance(AbstractSpaceHook.space, AbstractNamespace)
+    assert issubclass(AbstractSpaceHook.spaceClass, AbstractNamespace)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  def getItemHook(self, key: str, value: Any, ) -> bool:
+  def getItemPhase(self, key: str, value: Any, ) -> bool:
     """Hook for getItem. This is called before the __getitem__ method of
     the namespace object is called. The default implementation does nothing
     and returns False. """
 
-  def setItemHook(self, key: str, value: Any, oldValue: Any, ) -> bool:
+  def setItemPhase(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """Hook for setItem. This is called before the __setitem__ method of
     the namespace object is called. The default implementation does nothing
     and returns False. """
 
-  def preCompileHook(self, compiledSpace: dict) -> dict:
+  def preCompilePhase(self, compiledSpace: dict) -> dict:
     """Hook for preCompile. This is called before the __init__ method of
     the namespace object is called. The default implementation does nothing
     and returns the contents unchanged. """
     return compiledSpace
 
-  def postCompileHook(self, compiledSpace: dict) -> dict:
+  def postCompilePhase(self, compiledSpace: dict) -> dict:
     """Hook for postCompile. This is called after the __init__ method of
     the namespace object is called. The default implementation does nothing
     and returns the contents unchanged. """
     return compiledSpace
+
+  def newClassPhase(self, cls: Meta, ) -> Meta:
+    """
+    Final phase invoked by the metaclass after it has created the new
+    class object, but before returning it. This phase occurs before the
+    normal post class creation flow continues.
+    """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

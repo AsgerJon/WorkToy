@@ -66,6 +66,13 @@ class TestClassLenBoolContains(TestCase):
   Tests for '__class_len__', '__class_bool__', and '__class_contains__'.
   """
 
+  @classmethod
+  def tearDownClass(cls) -> None:
+    import sys
+    import gc
+    sys.modules.pop(__name__, None)
+    gc.collect()
+
   def testExplicitClassLen(self) -> None:
     """
     Tests class with defined '__class_len__'.

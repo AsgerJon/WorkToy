@@ -11,7 +11,7 @@ from random import shuffle, random
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass
-from worktoy.mcls.hooks import ReservedNames
+from worktoy.mcls.space_hooks import ReservedNames
 from worktoy.waitaminute import ReservedName, ReadOnlyError, ProtectedError
 from worktoy.parse import maybe, maybeType, maybeTypes
 
