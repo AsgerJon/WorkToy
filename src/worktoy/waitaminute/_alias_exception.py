@@ -11,8 +11,7 @@ name passed to its constructor during the '__set_name__' method.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import _Attribute
-from ..text import monoSpace
+from ..utilities import textFmt
 
 from typing import TYPE_CHECKING
 
@@ -32,8 +31,7 @@ class AliasException(RuntimeError):
       resolved.
   """
 
-  owner = _Attribute()
-  name = _Attribute()
+  __slots__ = ("owner", "name")
 
   def __init__(self, owner: type, name: str) -> None:
     """Initialize the AliasException object."""
@@ -46,6 +44,6 @@ class AliasException(RuntimeError):
     infoSpec = "Alias '%s' in '%s' could not resolve original name '%s'!"
     clsName = self.owner.__name__
     info = infoSpec % (self.name, clsName, self.name)
-    return monoSpace(info)
+    return textFmt(info)
 
   __repr__ = __str__

@@ -4,13 +4,12 @@ a 'str' object is not a valid absolute path. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.text import monoSpace
-from . import _Attribute
-
 from typing import TYPE_CHECKING
 
+from ..utilities import textFmt
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Union, Self, TypeAlias, LiteralString
+  from typing import Union, TypeAlias, LiteralString
 
   Path: TypeAlias = Union[str, bytes, LiteralString]
 
@@ -21,7 +20,7 @@ class PathSyntaxException(ValueError):
   a 'str' object is not a valid absolute path.
   """
 
-  badPath = _Attribute()
+  __slots__ = ('badPath',)
 
   def __init__(self, path: Path) -> None:
     """
@@ -39,6 +38,6 @@ class PathSyntaxException(ValueError):
     """
 
     infoSpec = """The path '%s' is not a valid, absolute path!"""
-    return monoSpace(infoSpec % self.badPath)
+    return textFmt(infoSpec % self.badPath)
 
   __repr__ = __str__

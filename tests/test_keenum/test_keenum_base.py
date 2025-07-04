@@ -11,11 +11,11 @@ from __future__ import annotations
 from unittest import TestCase
 from typing import TYPE_CHECKING
 
-from worktoy.attr import Field
+from worktoy.desc import Field
 from worktoy.keenum import KeeMeta
-from worktoy.parse import maybe
+from worktoy.utilities import maybe
 from worktoy.waitaminute import TypeException, MissingVariable
-from worktoy.waitaminute import IllegalInstantiation
+from worktoy.waitaminute.meta import IllegalInstantiation
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -99,12 +99,14 @@ class TestKeeNumBase(TestCase):
     Testing the errors raised when a member name is missing.
     """
     sus = self.__core_keenum__(_root=True)
-    with self.assertRaises(MissingVariable) as context:
+    with self.assertRaises(AttributeError) as context:
       _ = sus.name
     e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.varName, '__member_name__')
-    self.assertEqual(e.varType, (str,))
+    c = e.__cause__
+    self.assertIsInstance(c, MissingVariable)
+    self.assertEqual(str(c), repr(c))
+    self.assertEqual(c.varName, '__member_name__')
+    self.assertEqual(c.varType, str, )
 
   def test_bad_member_name_type(self) -> None:
     """
@@ -118,18 +120,20 @@ class TestKeeNumBase(TestCase):
     self.assertEqual(e.varName, '__member_name__')
     self.assertEqual(e.actualObject, 42)
     self.assertEqual(e.actualType, int)
-    self.assertEqual(e.expectedType, (str,))
+    self.assertEqual(e.expectedTypes, (str,))
 
   def test_missing_member_index(self) -> None:
     """
     Testing the errors raised when a member index is missing.
     """
     sus = self.__core_keenum__(_root=True)
-    with self.assertRaises(MissingVariable) as context:
+    with self.assertRaises(AttributeError) as context:
       _ = sus.index
     e = context.exception
-    self.assertEqual(e.varName, '__member_index__')
-    self.assertEqual(e.varType, (int,))
+    c = e.__cause__
+    self.assertIsInstance(c, MissingVariable)
+    self.assertEqual(c.varName, '__member_index__')
+    self.assertEqual(c.varType, int)
 
   def test_bad_member_index_type(self) -> None:
     """
@@ -143,7 +147,7 @@ class TestKeeNumBase(TestCase):
     self.assertEqual(e.varName, '__member_index__')
     self.assertEqual(e.actualObject, """i'm an int, trust!""")
     self.assertEqual(e.actualType, str)
-    self.assertEqual(e.expectedType, (int,))
+    self.assertEqual(e.expectedTypes, (int,))
 
   def test_missing_member_value(self) -> None:
     """
@@ -158,11 +162,12 @@ class TestKeeNumBase(TestCase):
     Testing the errors raised when a member value type is missing.
     """
     sus = self.__core_keenum__(_root=True)
-    with self.assertRaises(MissingVariable) as context:
+    with self.assertRaises(AttributeError) as context:
       _ = sus.valueType
     e = context.exception
-    self.assertEqual(e.varName, '__value_type__')
-    self.assertEqual(e.varType, (type,))
+    self.assertIsInstance(e.__cause__, MissingVariable)
+    self.assertEqual(e.__cause__.varName, '__value_type__')
+    self.assertEqual(e.__cause__.varType, type, )
 
   def test_bad_value_type(self) -> None:
     """
@@ -177,7 +182,7 @@ class TestKeeNumBase(TestCase):
     self.assertEqual(e.varName, '__value_type__')
     self.assertEqual(e.actualObject, susType)
     self.assertEqual(e.actualType, str)
-    self.assertEqual(e.expectedType, (type,))
+    self.assertEqual(e.expectedTypes, (type,))
 
   def test_str_repr(self) -> None:
     """

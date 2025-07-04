@@ -5,7 +5,7 @@ NameHook filters named used in the namespace system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...waitaminute import QuestionableSyntax, DelException
+from ...waitaminute.meta import QuestionableSyntax, DelException
 
 from . import AbstractSpaceHook
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   NearMiss: TypeAlias = tuple[str, str]
 
 
-class NameSpaceHook(AbstractSpaceHook):
+class NamespaceHook(AbstractSpaceHook):
   """
   NameHook intercepts names added to the namespace and filters out
   "near-miss" identifiers that resemble critical Python dunder methods.
@@ -88,7 +88,7 @@ class NameSpaceHook(AbstractSpaceHook):
       return True
     return False
 
-  def setItemHook(self, key: str, value: Any, oldValue: Any) -> bool:
+  def setItemPhase(self, key: str, value: Any, oldValue: Any) -> bool:
     """
     Hook for setItem. This is called before the __setitem__ method of
     the namespace object is called. The default implementation does nothing

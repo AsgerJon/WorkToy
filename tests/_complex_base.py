@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from math import atan2
 
-from worktoy.static import AbstractObject
+from worktoy.core import Object
 
 from typing import TYPE_CHECKING
 from worktoy.mcls import BaseMeta
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
-class ComplexBase(AbstractObject):
+class ComplexBase(Object):
   """Complex number representation. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

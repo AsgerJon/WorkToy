@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 
 from worktoy.mcls import BaseObject
 from worktoy.static import typeCast, overload
-from worktoy.static.zeroton import THIS
-from worktoy.waitaminute import TypeCastException
+from worktoy.core.sentinels import THIS
+from worktoy.waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.attr import AttriBox
+from worktoy.desc import AttriBox
 from worktoy.mcls import BaseMeta
 
 from . import ComplexOverload

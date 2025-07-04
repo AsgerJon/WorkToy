@@ -5,11 +5,7 @@ from __future__ import annotations
 
 from . import DataField, EZSpaceHook
 from ..mcls import BaseSpace
-from ..mcls.space_hooks import ReservedNameSpaceHook
-from ..parse import maybe
-from ..waitaminute import TypeException
-
-from typing import TYPE_CHECKING
+from ..utilities import maybe
 
 
 class EZSpace(BaseSpace):

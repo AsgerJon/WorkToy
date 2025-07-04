@@ -158,7 +158,7 @@ class TestFidGen(TestCase):
     self.assertEqual(e.varName, '__file_extension__')
     self.assertEqual(e.actualObject, 69420)
     self.assertEqual(e.actualType, int)
-    self.assertEqual(e.expectedType, (str,))
+    self.assertEqual(e.expectedTypes, (str,))
 
   def test_bad_value_set_ext_field(self) -> None:
     """

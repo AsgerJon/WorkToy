@@ -10,9 +10,9 @@ import sys
 from unittest import TestCase
 from typing import TYPE_CHECKING
 
-from worktoy.static import AbstractObject, Alias
+from worktoy.core import Object
+from worktoy.desc import Alias
 from worktoy.waitaminute import AliasException
-from worktoy.waitaminute import _Attribute  # NOQA
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias
@@ -70,7 +70,7 @@ class TestAlias(TestCase):
     """
 
     class Foo:
-      bar = AbstractObject()
+      bar = Object()
 
     class Alias2(Alias):
       """

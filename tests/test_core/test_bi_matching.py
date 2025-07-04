@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.core import bipartiteMatching
+from worktoy.utilities import bipartiteMatching
 
 from typing import TYPE_CHECKING
 

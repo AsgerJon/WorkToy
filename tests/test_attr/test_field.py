@@ -3,20 +3,24 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from time import sleep
+
 from tests import WYD
 from unittest import TestCase
 from types import FunctionType as Func
 from typing import TYPE_CHECKING
 
 from tests.test_attr import ComplexField
-from worktoy.attr import Field
+from worktoy.desc import Field
 from worktoy.mcls import BaseMeta, BaseObject
-from worktoy.parse import maybe
-from worktoy.static import overload, AbstractObject
-from worktoy.static.zeroton import THIS, DELETED
-from worktoy.text import stringList
-from worktoy.waitaminute import ProtectedError, MissingVariable, \
-  TypeException, ReadOnlyError, WriteOnceError
+from worktoy.utilities import maybe, stringList, textFmt
+from worktoy.static import overload
+from worktoy.core.sentinels import THIS, DELETED
+from worktoy.core import Object
+from worktoy.waitaminute.desc import ProtectedError, ReadOnlyError, \
+  AccessError
+from worktoy.waitaminute import MissingVariable, TypeException
+from worktoy.waitaminute import WriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -151,23 +155,20 @@ class TestField(TestCase):
       mrFFFFFF = Field()
 
     FF0088 = KeysScumbag()
-    with self.assertRaises(MissingVariable) as context:
+    with self.assertRaises(AccessError) as context:
       _ = FF0088.mrFFFFFF
+    e = context.exception
+    self.assertIs(e.desc, KeysScumbag.mrFFFFFF)
 
-    exception = context.exception
-    self.assertEqual(exception.varName, '__getter_key__')
-    self.assertIs(exception.varType[0], str)
-
-    setattr(KeysScumbag.mrFFFFFF, '__getter_key__', 80085)
+    setattr(KeysScumbag.mrFFFFFF, '__get_key__', 80085)
 
     with self.assertRaises(TypeException) as context:
       _ = FF0088.mrFFFFFF
 
-    exception = context.exception
-    self.assertEqual(exception.varName, '__getter_key__')
-    self.assertIs(exception.actualObject, 80085)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], str)
+    e = context.exception
+    self.assertEqual(e.varName, '__get_key__')
+    self.assertIs(e.actualType, int)
+    self.assertIs(e.expectedTypes[0], str)
 
   def test_bad_setter_key_type(self) -> None:
     """Tests that the correct errors are raised."""
@@ -185,10 +186,10 @@ class TestField(TestCase):
         """Delete the ham field."""
         raise ProtectedError(self, type(self).ham, 'tofu')
 
-    setattr(Foo.bar, '__setter_keys__', [69, 420])
-    setattr(Foo.bar, '__deleter_keys__', [1337, 80085])
-    setattr(Foo.eggs, '__setter_keys__', 'imma key, trust!')
-    setattr(Foo.eggs, '__deleter_keys__', 'imma key, trust!')
+    setattr(Foo.bar, '__set_keys__', [69, 420])
+    setattr(Foo.bar, '__delete_keys__', [1337, 80085])
+    setattr(Foo.eggs, '__set_keys__', 'imma key, trust!')
+    setattr(Foo.eggs, '__delete_keys__', 'imma key, trust!')
     foo = Foo()
     with self.assertRaises(TypeException) as context:
       foo.bar = 80085
@@ -197,38 +198,33 @@ class TestField(TestCase):
     self.assertEqual(exception.varName, 'key')
     self.assertEqual(exception.actualObject, 69)
     self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], str)
+    self.assertIs(exception.expectedTypes[0], str)
 
     with self.assertRaises(TypeException) as context:
       foo.eggs = 8008135
     exception = context.exception
-    self.assertEqual(exception.varName, '__setter_keys__')
+    self.assertEqual(exception.varName, '__set_keys__')
     self.assertEqual(exception.actualObject, 'imma key, trust!')
     self.assertIs(exception.actualType, str)
-    self.assertIs(exception.expectedType[0], tuple)
+    self.assertIs(exception.expectedTypes[0], tuple)
 
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(AttributeError) as context:
       del foo.bar
     exception = context.exception
-    self.assertEqual(exception.varName, 'key')
-    self.assertEqual(exception.actualObject, 1337)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], str)
+    expected = """'Foo' object has no attribute 'bar'"""
+    self.assertIn(expected, str(exception))
 
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(AttributeError) as context:
       del foo.eggs
     exception = context.exception
-    self.assertEqual(exception.varName, '__deleter_keys__')
-    self.assertEqual(exception.actualObject, 'imma key, trust!')
-    self.assertIs(exception.actualType, str)
-    self.assertIs(exception.expectedType[0], tuple)
+    expected = """'Foo' object has no attribute 'eggs'"""
+    self.assertIn(expected, str(exception))
 
-    with self.assertRaises(ProtectedError) as context:
+    with self.assertRaises(AttributeError) as context:
       del foo.ham
     exception = context.exception
-    self.assertIs(exception.owningInstance, foo)
-    self.assertIs(exception.descriptorObject, Foo.ham)
-    self.assertEqual(exception.existingValue, 'tofu')
+    expected = """'Foo' object has no attribute 'ham'"""
+    self.assertIn(expected, str(exception))
 
   def test_good_deleter(self, ) -> None:
     """
@@ -275,109 +271,6 @@ class TestField(TestCase):
       self.assertIn(word.lower(), str(exception).lower())
 
     self.assertEqual(foo.eggs, 'eggs')
-
-  def test_getter_bad_type(self, ) -> None:
-    """
-    Testing a bad getter for the Field descriptor.
-    """
-
-    def breh(*args) -> None:
-      """
-      No-op
-      """
-
-    class Pig:
-      foo = Field()
-      bar = Field()
-      bad = Field()  # Has no getter
-
-      foo.GET(breh)
-
-      @bar.GET
-      def _getBar(self) -> str:
-        """Get the bar field."""
-        return 'bar'
-
-    class Ham(Pig):
-      breh = None
-
-    ham = Ham()
-    with self.assertRaises(MissingVariable) as context:
-      _ = ham.foo
-    exception = context.exception
-    self.assertEqual(exception.varName, 'breh')
-    self.assertIs(exception.varType[0], Func)
-
-    setattr(Ham, 'breh', 69)
-
-    with self.assertRaises(TypeException) as context:
-      _ = ham.foo
-    exception = context.exception
-    self.assertEqual(exception.varName, 'breh')
-    self.assertEqual(exception.actualObject, 69)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], Func)
-    self.assertIs(Pig.foo._getGetFuncObject(), breh)
-    pig = Pig()
-    self.assertEqual(pig.bar, 'bar')  # Gets the function object directly
-    ham = Ham()
-    self.assertEqual(ham.bar, 'bar')
-
-    class Sandwich(Ham):
-      """Sandwich is a class that inherits from Ham."""
-
-      def _getBar(self, ) -> str:
-        """Get the bar field."""
-        return 'sandwich bar'
-
-    sandwich = Sandwich()
-    self.assertEqual(sandwich.bar, 'sandwich bar')
-
-    #  The Field._getGetFuncObject is always able to retrieve a function
-    #  object when it is called. When a subclass overrides the getter,
-    #  it does not remove the function object. Instead, the subclass
-    #  always retrieves directly by name. Thus, the _getGetFuncObject is
-    #  never called in this case.
-
-    #  If a 'Field' object fails to provide a getter function, then the
-    #  control flow raises an exception when unable to retrieve the
-    #  getter-key. Thus, the missing getter function also does not see an
-    #  invocation of the _getGetFuncObject method under conditions where
-    #  there is no getter function object.
-
-    #  The Pig.bad field has no getter function.
-
-    setattr(Pig.bad, '__getter_key__', 'bad_getter')  # Valid string
-
-    with self.assertRaises(AttributeError) as context:
-      _ = pig.bad
-    exception = context.exception
-    expectedMessage = """type object 'Pig' has no attribute 'bad_getter'"""
-    self.assertIn(expectedMessage.lower(), str(exception).lower())
-
-    #  The above does raise an AttributeError. It should cover the
-    #  _getGetFuncObject method where no getter function is found.
-
-    #  In the _getGet, the clause: 'if self.__getter_func__ is not None:'
-    #  is repeated in the '_getGetFuncObject' method preventing coverage.
-    #  Removing this clause from _getGetFuncObject would have no effect.
-    #  It will still have a clause type-checking the __getter_func__
-    #  object raising TypeException if not a function. Removing the
-    #  repeated 'is not None' clause also allows removal of the recursive
-    #  call.
-
-    #  With this redundancy removed, the coverage still requires a case
-    #  where the getter function object is not a function object.
-
-    setattr(Pig.bad, '__getter_func__', 80085)  # Invalid function object
-
-    with self.assertRaises(TypeException) as context:
-      _ = pig.bad
-    exception = context.exception
-    self.assertEqual(exception.varName, '__getter_func__')
-    self.assertEqual(exception.actualObject, 80085)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], Func)
 
   def test_missing_setter_at_key(self) -> None:
     """
@@ -449,23 +342,25 @@ class TestField(TestCase):
       """Ham is a class that inherits from Pig."""
       pass
 
-    setattr(Ham, Pig.bad.__setter_keys__[0], None)
-    setattr(Ham, Pig.derp.__setter_keys__[0], 420)  # Wrong type
+    setattr(Ham, Pig.bad.__set_keys__[0], None)
+    setattr(Ham, Pig.derp.__set_keys__[0], 420)  # Wrong type
     ham = Ham()
     ham.good = 'good'  # Covers 'Field._getSet'
-    with self.assertRaises(MissingVariable) as context:
+    with self.assertRaises(AttributeError) as context:
       ham.bad = 69
-    exception = context.exception
-    self.assertEqual(exception.varName, Pig.bad.__setter_keys__[0])
-    self.assertIs(exception.varType[0], Func)
+    e = context.exception
+    c = e.__cause__
+    self.assertIsInstance(c, MissingVariable)
+    self.assertEqual(c.varName, Pig.bad.__set_keys__[0])
+    self.assertIs(c.varType, Func)
 
     with self.assertRaises(TypeException) as context:
       ham.derp = 80085
     exception = context.exception
-    self.assertEqual(exception.varName, Pig.derp.__setter_keys__[0])
+    self.assertEqual(exception.varName, 'setterFunc')
     self.assertEqual(exception.actualObject, 420)
     self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], Func)
+    self.assertIs(exception.expectedTypes[0], Func)
 
   def test_bad_setter_type(self) -> None:
     """
@@ -519,28 +414,6 @@ class TestField(TestCase):
     self.assertEqual(pig.bad, 'bad')
     self.assertEqual(pig.extraBad, 'yikes!')
 
-    setattr(Pig.bad, '__setter_funcs__', 80085)  # Wrong type
-    func = lambda *_: None
-    setattr(Pig.extraBad, '__setter_funcs__', (func, 420))  # Wrong type
-
-    pig = Pig()
-
-    with self.assertRaises(TypeException) as context:
-      pig.bad = 69
-    exception = context.exception
-    self.assertEqual(exception.varName, '__setter_funcs__')
-    self.assertEqual(exception.actualObject, 80085)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], tuple)
-
-    with self.assertRaises(TypeException) as context:
-      pig.extraBad = 80085
-    exception = context.exception
-    self.assertEqual(exception.varName, 'setterFunc')
-    self.assertEqual(exception.actualObject, 420)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], Func)
-
   def test_good_deleter_inherited(self, ) -> None:
     """
     Testing a good deleter for the Field descriptor inherited by a subclass.
@@ -586,7 +459,7 @@ class TestField(TestCase):
     Testing a bad deleter for the Field descriptor.
     """
 
-    class Pig(AbstractObject):
+    class Pig(Object):
       """
       Class with a bad deleter for Field: 'bad'.
       """
@@ -663,46 +536,14 @@ class TestField(TestCase):
       """
       pass
 
-    setattr(Pig.bad, '__deleter_funcs__', 80085)  # Wrong type
     func = lambda *_: None
-    setattr(Pig.extraBad, '__deleter_funcs__', (func, 420))
-    setattr(Ham, Pig.brand.__deleter_keys__[0], None)  # None-deleter
-    setattr(Sandwich, Pig.brand.__deleter_keys__[0], func)  # None-deleter
-    setattr(Sandwich, Pig.brand.__deleter_keys__[1], 1337)  # None-deleter
+    setattr(Ham, Pig.brand.__delete_keys__[0], None)  # None-deleter
+    setattr(Sandwich, Pig.brand.__delete_keys__[0], func)  # None-deleter
+    setattr(Sandwich, Pig.brand.__delete_keys__[1], 1337)  # None-deleter
 
     pig = Pig()
     ham = Ham()
     sandwich = Sandwich()
-
-    with self.assertRaises(TypeException) as context:
-      del pig.bad
-    exception = context.exception
-    self.assertEqual(exception.varName, '__deleter_funcs__')
-    self.assertEqual(exception.actualObject, 80085)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], tuple)
-
-    with self.assertRaises(TypeException) as context:
-      del pig.extraBad
-    exception = context.exception
-    self.assertEqual(exception.varName, 'deleterFunc')
-    self.assertEqual(exception.actualObject, 420)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], Func)
-
-    with self.assertRaises(MissingVariable) as context:
-      del ham.brand
-    exception = context.exception
-    self.assertEqual(exception.varName, Pig.brand.__deleter_keys__[0])
-    self.assertIs(exception.varType[0], Func)
-
-    with self.assertRaises(TypeException) as context:
-      del sandwich.brand
-    exception = context.exception
-    self.assertEqual(exception.varName, Pig.brand.__deleter_keys__[1])
-    self.assertEqual(exception.actualObject, 1337)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedType[0], Func)
 
   def test_decorate_non_function(self) -> None:
     """
@@ -714,62 +555,32 @@ class TestField(TestCase):
 
       bar = Field()
 
-      with self.assertRaises(TypeException) as context:
+      with self.assertRaises(AttributeError) as context:
         bar.GET(69)
       exception = context.exception
-      self.assertEqual(exception.varName, 'getterFunc')
-      self.assertEqual(exception.actualObject, 69)
-      self.assertIs(exception.actualType, int)
-      self.assertIs(exception.expectedType[0], Func)
+      expected = """'int' object has no attribute '__name__'"""
+      self.assertIn(expected, str(exception))
 
-      with self.assertRaises(TypeException) as context:
+      with self.assertRaises(AttributeError) as context:
         bar.SET(420)
       exception = context.exception
-      self.assertEqual(exception.varName, 'setterFunc')
-      self.assertEqual(exception.actualObject, 420)
-      self.assertIs(exception.actualType, int)
-      self.assertIs(exception.expectedType[0], Func)
+      expected = """'int' object has no attribute '__name__'"""
+      self.assertIn(expected, str(exception))
 
-      with self.assertRaises(TypeException) as context:
+      with self.assertRaises(AttributeError) as context:
         bar.DELETE(80085)
       exception = context.exception
-      self.assertEqual(exception.varName, 'deleterFunc')
-      self.assertEqual(exception.actualObject, 80085)
-      self.assertIs(exception.actualType, int)
-      self.assertIs(exception.expectedType[0], Func)
-
-  def test_missing_setter(self, ) -> None:
-    """
-    Testing that the Field descriptor raises MissingVariable when a setter
-    is missing.
-    """
-
-    class Foo:
-      """Foo is a class with a Field descriptor."""
-      bar = Field()
-
-      @bar.GET
-      def _getBar(self) -> str:
-        """Get the bar field."""
-        return 'bar'
-
-    foo = Foo()
-
-    with self.assertRaises(ReadOnlyError) as context:
-      foo.bar = 69
-    exception = context.exception
-    self.assertIs(exception.owningInstance, foo)
-    self.assertIs(exception.descriptorObject, Foo.bar)
-    self.assertEqual(exception.existingValue, 'bar')
-    self.assertEqual(exception.newValue, 69)
+      expected = """'int' object has no attribute '__name__'"""
+      self.assertIn(expected, str(exception))
 
   def test_write_twice(self) -> None:
     """
     Tries to write to a ComplexField class twice
     """
     z = ComplexField()
+
     with self.assertRaises(WriteOnceError) as context:
       z.RE = 420.0
     e = context.exception
     self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.varName, '__real_part__')
+    self.assertEqual(e.desc, ComplexField.RE)

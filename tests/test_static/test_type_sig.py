@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.core import unpack
+from worktoy.utilities import unpack
 from worktoy.static import TypeSig, Dispatch
-from worktoy.waitaminute import HashMismatch, CastMismatch, FlexMismatch
-
+from worktoy.waitaminute.dispatch import HashMismatch, CastMismatch
+from worktoy.waitaminute.dispatch import FlexMismatch
 from typing import TYPE_CHECKING
 
 from tests import WYD  # Custom exception for testing

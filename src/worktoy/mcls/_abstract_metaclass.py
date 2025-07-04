@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from . import Base
 from . import AbstractNamespace as ASpace
+from ..core import MetaType
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -17,24 +18,7 @@ else:
   pass
 
 
-class _MetaMetaclass(type):
-  """
-  _MetaMetaclass is necessary for metaclasses to implement customized
-  dunder methods such as __str__ and __repr__. Please note the pattern
-  that metaclasses should have the meta-metaclass as both a b baseclass
-  *and* metaclass. This is consistent with the default behaviour
-  inheriting from 'type' whilst, possibly implicitly, using 'type' as the
-  metaclass.
-  """
-
-  def __str__(cls, ) -> str:
-    """Returns the name of the class. """
-    return """%s[metaclass=%s]""" % (cls.__name__, cls.__class__.__name__)
-
-  __repr__ = __str__
-
-
-class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
+class AbstractMetaclass(MetaType, metaclass=MetaType):
   """
   Abstract base for custom metaclasses that separates concerns between
   class construction and class behavior.
@@ -309,14 +293,14 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
       namespace = space.compile()
     else:
       namespace = space
-    return _MetaMetaclass.__new__(mcls, name, bases, namespace, **kw)
+    return MetaType.__new__(mcls, name, bases, namespace, **kw)
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
     """The __init__ method is invoked to initialize the class."""
     if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(space, ASpace)
       assert isinstance(bases, tuple)
-    _MetaMetaclass.__init__(cls, name, bases, space, **kwargs)
+    MetaType.__init__(cls, name, bases, space, **kwargs)
     cls._notifySubclassHook(cls, *bases)
 
   def __call__(cls, *args, **kwargs) -> Any:
@@ -358,7 +342,7 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     try:
       func = cls._dispatchClassHook('__class_str__')
     except NotImplementedError:
-      return super().__str__()
+      return MetaType.__str__(cls, )
     else:
       return func(cls)
 
@@ -368,7 +352,7 @@ class AbstractMetaclass(_MetaMetaclass, metaclass=_MetaMetaclass):
     try:
       func = cls._dispatchClassHook('__class_repr__')
     except NotImplementedError:
-      return super().__repr__()
+      return MetaType.__repr__(cls, )
     else:
       return func(cls)
 

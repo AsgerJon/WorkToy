@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from worktoy.text import monoSpace
+from worktoy.utilities import textFmt
 
 from worktoy.waitaminute import PathSyntaxException
 
@@ -39,6 +39,6 @@ def validateAvailablePath(path: Path, **kwargs) -> str:
     if not kwargs.get('strict', True):
       return ''
     infoSpec = """The path '%s' already exists!"""
-    info = monoSpace(infoSpec % path)
+    info = textFmt(infoSpec % path)
     raise FileExistsError(info)
   return os.path.normpath(path)

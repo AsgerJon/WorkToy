@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass, AbstractNamespace
 from worktoy.mcls.space_hooks import AbstractSpaceHook
-from worktoy.waitaminute import DuplicateHookError, HookException
-from worktoy.waitaminute import _Attribute  # NOQA
+from worktoy.waitaminute.meta import HookException, DuplicateHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias
@@ -50,7 +49,7 @@ class TestAbstractNamespace(TestCase):
 
     setattr(hookB, '__field_name__', 'breh')
 
-    with self.assertRaises(DuplicateHookError) as context:
+    with self.assertRaises(DuplicateHook) as context:
       BaseNamespace.addHook(hookA)  # For coverage, doesn't raise
       BaseNamespace.addHook(hookB)
     e = context.exception
@@ -72,7 +71,7 @@ class TestAbstractNamespace(TestCase):
     class SusSpaceHook(AbstractSpaceHook):
       """A hook that raises an exception."""
 
-      def getItemHook(self, key: str, value: Any, ) -> bool:
+      def getItemPhase(self, key: str, value: Any, ) -> bool:
         """
         Raises 'Yikes'
         """

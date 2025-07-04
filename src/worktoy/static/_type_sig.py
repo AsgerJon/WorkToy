@@ -6,19 +6,18 @@ that match it.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from collections.abc import Iterable
-
-from ..core import unpack, bipartiteMatching, permutate
-from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch, \
-  UnpackException, TypeCastException
-
-from .zeroton import THIS
-from . import PreClass, typeCast
-
 from typing import TYPE_CHECKING
 
+from worktoy.waitaminute.dispatch import HashMismatch, TypeCastException
+from worktoy.waitaminute.dispatch import CastMismatch, FlexMismatch
+from worktoy.waitaminute import UnpackException
+from worktoy.core.sentinels import THIS
+from worktoy.utilities import unpack, bipartiteMatching
+
+from . import PreClass, typeCast
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Union, Iterator
+  from typing import Any, Iterator
 
 
 class TypeSig:

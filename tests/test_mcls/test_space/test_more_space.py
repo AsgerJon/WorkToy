@@ -10,8 +10,7 @@ from unittest import TestCase
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import BaseMeta, AbstractNamespace
-from worktoy.text import stringList
-from worktoy.waitaminute import _Attribute  # NOQA
+from worktoy.utilities import stringList
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias

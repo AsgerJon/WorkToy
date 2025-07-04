@@ -6,7 +6,9 @@ namespaces in the metaclass system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...static import AbstractObject, Alias
+from . import SpaceDesc
+from ...core import Object
+from ...desc import Alias
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -19,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Meta: TypeAlias = Type[type]
 
 
-class AbstractSpaceHook(AbstractObject):
+class AbstractSpaceHook(Object):
   """
   AbstractSpaceHook is the abstract base class for defining hook objects
   used in conjunction with AbstractNamespace. These hooks enable modular,
@@ -91,16 +93,17 @@ class AbstractSpaceHook(AbstractObject):
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  #  Private variables
+  __space_object__ = None  # The owning namespace instance
+
   #  Public variables
-  space = Alias('instance')
-  spaceClass = Alias('owner')
+  space = SpaceDesc()  # The namespace instance this hook is bound to
 
   #  TYPE_CHECKING
   if TYPE_CHECKING:  # pragma: no cover
     from . import AbstractSpaceHook
     from .. import AbstractNamespace
     assert isinstance(AbstractSpaceHook.space, AbstractNamespace)
-    assert issubclass(AbstractSpaceHook.spaceClass, AbstractNamespace)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -133,6 +136,7 @@ class AbstractSpaceHook(AbstractObject):
     class object, but before returning it. This phase occurs before the
     normal post class creation flow continues.
     """
+    return cls
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -143,5 +147,14 @@ class AbstractSpaceHook(AbstractObject):
     After the super call, adds one self to the namespace class as a hook
     class.
     """
-    super().__set_name__(owner, name, **kwargs)
+    super().__set_name__(owner, name, )
     owner.addHook(self)
+
+  def __get__(self, instance: ASpace, owner: Space, **kwargs) -> Any:
+    """
+    Descriptor protocol method. Returns the bound hook instance with
+    `space` and `spaceClass` attributes set to the current namespace
+    instance and its class.
+    """
+    self.__space_object__ = instance
+    return self

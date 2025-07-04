@@ -9,14 +9,14 @@ from __future__ import annotations
 from math import atan2
 
 from tests import ComplexBase
-from worktoy.attr import Field
-from worktoy.parse import maybe
+from worktoy.desc import Field
+from worktoy.utilities import maybe
 from worktoy.waitaminute import WriteOnceError
 
 from typing import TYPE_CHECKING
 from worktoy.mcls import BaseMeta
 from worktoy.static import overload
-from worktoy.static.zeroton import THIS
+from worktoy.core.sentinels import THIS
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
@@ -81,7 +81,8 @@ class ComplexField(ComplexBase, metaclass=BaseMeta):
     if self.__real_part__ is None:
       self.__real_part__ = value
     else:
-      raise WriteOnceError('__real_part__', self.__real_part__, value)
+      desc = getattr(type(self), 'RE', )
+      raise WriteOnceError(desc, self.__real_part__, value)
 
   @IM.SET
   def _setImag(self, value: float) -> None:
@@ -91,7 +92,8 @@ class ComplexField(ComplexBase, metaclass=BaseMeta):
     if self.__imag_part__ is None:
       self.__imag_part__ = value
     else:
-      raise WriteOnceError('__imag_part__', self.__imag_part__, value)
+      desc = getattr(type(self), 'IM', )
+      raise WriteOnceError(desc, self.__imag_part__, value)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

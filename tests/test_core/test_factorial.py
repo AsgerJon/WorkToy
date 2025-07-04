@@ -9,7 +9,7 @@ import os
 from unittest import TestCase
 from typing import TYPE_CHECKING
 
-from worktoy.core import factorial
+from worktoy.utilities.mathematics import factorial
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -53,4 +53,5 @@ class TestFactorial(TestCase):
       factorial(-1)
     e = context.exception
     self.assertIsInstance(e, ValueError)
-    self.assertIn('is not defined for negative numbers', str(e))
+    expected = """factorial in 'worktoy.utilities.mathematics' does"""
+    self.assertIn(expected, str(e))

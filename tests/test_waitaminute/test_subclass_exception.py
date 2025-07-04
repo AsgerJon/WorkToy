@@ -12,7 +12,6 @@ from worktoy.static import Dispatch
 
 from typing import TYPE_CHECKING
 
-from worktoy.text import funcReport
 from worktoy.waitaminute import SubclassException
 
 if TYPE_CHECKING:  # pragma: no cover

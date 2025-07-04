@@ -8,7 +8,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.ezdata import EZData, EZMeta
-from worktoy.parse import maybe
+from worktoy.utilities import maybe
 
 from typing import TYPE_CHECKING
 

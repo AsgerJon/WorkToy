@@ -6,16 +6,13 @@ from __future__ import annotations
 
 import os
 
-from ..text import monoSpace
-
-from ..waitaminute import PathSyntaxException
-
+from ..utilities import textFmt
 from . import validateExistingDirectory
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias
+  pass
 
 
 def yeetDirectory(dirPath: str, **kwargs) -> None:
@@ -42,7 +39,7 @@ def yeetDirectory(dirPath: str, **kwargs) -> None:
   except NotADirectoryError as notADirectoryError:
     infoSpec = """The path received by 'yeetDirectory': '%s' is not a 
     directory!"""
-    info = monoSpace(infoSpec % dirPath)
+    info = textFmt(infoSpec % dirPath)
     raise NotADirectoryError(info) from notADirectoryError
   else:
     os.rmdir(dirPath)

@@ -6,12 +6,9 @@ about to be created.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..parse import maybe
-from ..waitaminute import MissingVariable, VariableNotNone, TypeException
-
-from . import AbstractObject
-
 from typing import TYPE_CHECKING
+
+from ..waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

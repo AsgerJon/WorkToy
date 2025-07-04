@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.attr import Field
-from worktoy.parse import maybe
-from worktoy.static import AbstractObject
+from worktoy.desc import Field
+from worktoy.utilities import maybe
+from worktoy.core import Object
 from worktoy.mcls import AbstractMetaclass
 from worktoy.waitaminute import TypeException
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class Thing(AbstractObject, metaclass=AbstractMetaclass):
+class Thing(Object, metaclass=AbstractMetaclass):
   """
   Thing reuses instances from the key. When calling the class with a key,
   if the class has already been instantiated with that key, it returns the

@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.core import unpack
-from worktoy.waitaminute import UnpackException, TypeCastException
+from worktoy.waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

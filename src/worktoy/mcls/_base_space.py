@@ -6,16 +6,12 @@ BaseSpace provides the namespace class used by worktoy.mcls.BaseMeta
 from __future__ import annotations
 
 from types import FunctionType as Func
+from typing import TYPE_CHECKING
 
 from ..waitaminute import VariableNotNone
 from ..static import TypeSig
-
 from . import AbstractNamespace, AbstractMetaclass
-from .space_hooks import OverloadSpaceHook, NameSpaceHook, \
-  ReservedNameSpaceHook, \
-  PreClassSpaceHook
-
-from typing import TYPE_CHECKING
+from .space_hooks import OverloadSpaceHook, PreClassSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Callable, Any

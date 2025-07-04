@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 
-from worktoy.text import monoSpace
+from worktoy.utilities import textFmt
 
 from typing import TYPE_CHECKING
 
@@ -32,12 +32,12 @@ def validateExistingDirectory(directory: str, **kwargs) -> str:
     if not kwargs.get('strict', True):
       return ''
     infoSpec = """No directory exists at: '%s'!"""
-    info = monoSpace(infoSpec % directory)
+    info = textFmt(infoSpec % directory)
     raise FileNotFoundError(info)
   if not os.path.isdir(directory):
     if not kwargs.get('strict', True):
       return ''
     infoSpec = """The path '%s' is not a directory!"""
-    info = monoSpace(infoSpec % directory)
+    info = textFmt(infoSpec % directory)
     raise NotADirectoryError(info)
   return os.path.normpath(directory)

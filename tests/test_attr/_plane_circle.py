@@ -6,11 +6,11 @@ PlaneCircle provides a plane circle with center implemented with
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.attr import AttriBox
+from worktoy.desc import AttriBox
 from worktoy.mcls import BaseObject
 from worktoy.static import overload
-from worktoy.static.zeroton import THIS
-from worktoy.text import stringList
+from worktoy.core.sentinels import THIS
+from worktoy.utilities import stringList
 
 from . import PlanePoint
 

@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass
 from worktoy.mcls.space_hooks import ReservedNames
-from worktoy.waitaminute import ReservedName, ReadOnlyError, ProtectedError
-from worktoy.waitaminute import _Attribute  # NOQA
+from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
+from worktoy.waitaminute.meta import ReservedName
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias
@@ -65,17 +65,15 @@ class TestReservedNameHook(TestCase):
     with self.assertRaises(ReadOnlyError) as context:
       foo.names = 'derp'
     e = context.exception
-    self.assertIs(e.owningInstance, foo)
-    self.assertIs(e.descriptorObject, Foo.names)
-    self.assertEqual(e.existingValue, foo.names)
-    self.assertEqual(e.newValue, 'derp')
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo.names)
+    self.assertEqual(e.newVal, 'derp')
 
     with self.assertRaises(ProtectedError) as context:
       del foo.names
     e = context.exception
-    self.assertIs(e.owningInstance, foo)
-    self.assertIs(e.descriptorObject, Foo.names)
-    self.assertIs(e.existingValue, foo.names)
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo.names)
 
   def test_str_repr_reserved_names(self) -> None:
     """
@@ -88,7 +86,8 @@ class TestReservedNameHook(TestCase):
     foo = Foo()
 
     strReservedNames = str(foo.names)
-    self.assertTrue(strReservedNames.startswith('ReservedNames:'))
+    expected = """ReservedNames"""
+    self.assertTrue(strReservedNames.startswith(expected))
     i = 0
     for i, name in enumerate(foo.names):
       self.assertIn(name, strReservedNames)

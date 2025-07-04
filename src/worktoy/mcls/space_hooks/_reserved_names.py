@@ -6,17 +6,16 @@ automatically by the interpreter.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...static import AbstractObject
+from ...utilities import textFmt
+from ...core import Object
 
 from typing import TYPE_CHECKING
-
-from ...text import monoSpace
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterable, Iterator, Self
 
 
-class ReservedNames(AbstractObject):
+class ReservedNames(Object):
   """
   ReservedNames provides a list of reserved names that are set
   automatically by the interpreter.
@@ -39,7 +38,7 @@ class ReservedNames(AbstractObject):
       '__firstlineno__',
       '__static_attributes__',
   ]
-  
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -65,6 +64,12 @@ class ReservedNames(AbstractObject):
     """Get the string representation of the metaclass."""
     info = 'ReservedNames:\n%s'
     names = '<br><tab>'.join([name for name in self])
-    return monoSpace(info % names)
+    return textFmt(info % names)
 
   __repr__ = __str__
+
+  def __instance_get__(self, *args, **kwargs) -> Any:
+    """
+    Get the reserved name by its string identifier.
+    """
+    return self

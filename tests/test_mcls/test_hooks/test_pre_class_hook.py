@@ -11,9 +11,8 @@ from typing import TYPE_CHECKING
 
 from worktoy.mcls.space_hooks import PreClassSpaceHook
 from worktoy.static import PreClass, TypeSig
-from worktoy.text import stringList
+from worktoy.utilities import stringList
 from worktoy.waitaminute import TypeException
-from worktoy.waitaminute import _Attribute  # NOQA
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias
@@ -58,7 +57,7 @@ class TestPreClassHook(TestCase):
     self.assertEqual(e.varName, '__pre_class__')
     self.assertIs(e.actualObject, susClass)
     self.assertIs(e.actualType, str)
-    self.assertIs(e.expectedType[0], PreClass, )
+    self.assertIs(e.expectedTypes[0], PreClass, )
 
   def test_bad_type_sig(self) -> None:
     """
@@ -78,9 +77,9 @@ class TestPreClassHook(TestCase):
     oldValue = 'urMom'
 
     with self.assertRaises(TypeException) as context:
-      preClassHook.setItemHook(key, val, oldValue)
+      preClassHook.setItemPhase(key, val, oldValue)
     e = context.exception
     self.assertEqual(e.varName, 'sig')
     self.assertEqual(e.actualObject, 'never')
     self.assertIs(e.actualType, str)
-    self.assertIs(e.expectedType[0], TypeSig)
+    self.assertIs(e.expectedTypes[0], TypeSig)

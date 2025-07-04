@@ -7,7 +7,7 @@ from types import FunctionType
 from typing import TYPE_CHECKING
 
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
-from ..waitaminute import attributeErrorFactory, ReservedName
+from ..waitaminute.meta import ReservedName
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterator
@@ -38,14 +38,14 @@ class EZSpaceHook(AbstractSpaceHook):
 
   #  Hook methods
 
-  def preCompileHook(self, compiledSpace: dict) -> dict:
+  def preCompilePhase(self, compiledSpace: dict) -> dict:
     """The preCompileHook method is called before the class is compiled."""
     dataFields = self.space.getDataFields()
     compiledSpace['__slots__'] = (
         *[dataField.key for dataField in dataFields],)
     return compiledSpace
 
-  def postCompileHook(self, compiledSpace: dict) -> dict:
+  def postCompilePhase(self, compiledSpace: dict) -> dict:
     """The postCompileHook method is called after the class is compiled."""
     dataFields = self.space.getDataFields()
     initMethod = self.initFactory(*dataFields)
@@ -68,7 +68,7 @@ class EZSpaceHook(AbstractSpaceHook):
     compiledSpace['__setitem__'] = setItemMethod
     return compiledSpace
 
-  def setItemHook(self, key: str, value: Any, oldValue: Any, ) -> bool:
+  def setItemPhase(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """The setItemHook method is called when an item is set in the
     enumeration."""
     if key in self.__auto_names__:

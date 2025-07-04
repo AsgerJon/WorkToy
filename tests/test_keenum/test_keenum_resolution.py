@@ -8,7 +8,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.keenum import auto, KeeNum
-from worktoy.parse import maybe
+from worktoy.utilities import maybe
 from worktoy.waitaminute import TypeException
 
 from typing import TYPE_CHECKING

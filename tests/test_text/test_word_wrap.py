@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.text import wordWrap, monoSpace
+from worktoy.utilities import wordWrap, textFmt
 from worktoy.waitaminute import TypeException
 
 
@@ -21,7 +21,7 @@ class TestWordWrap(TestCase):
 
   def setUp(self) -> None:
     """Set up the test case."""
-    self.paragraph = monoSpace("""Lorem ipsum dolor sit amet, adipiscing 
+    self.paragraph = textFmt("""Lorem ipsum dolor sit amet, adipiscing 
     elit. Sed do eiusmod tempor incididunt ut labore et dolore magna 
     aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco. <br>
     laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor 
@@ -51,7 +51,7 @@ class TestWordWrap(TestCase):
     self.assertEqual(e.varName, 'width')
     self.assertEqual(e.actualObject, 'not an int')
     self.assertEqual(e.actualType, str)
-    self.assertEqual(e.expectedType, (int,))
+    self.assertEqual(e.expectedTypes, (int,))
 
   def test_non_str_lines(self, ) -> None:
     """
@@ -64,4 +64,4 @@ class TestWordWrap(TestCase):
     self.assertEqual(e.varName, 'line')
     self.assertEqual(e.actualObject, 123)
     self.assertEqual(e.actualType, int)
-    self.assertEqual(e.expectedType, (str,))
+    self.assertEqual(e.expectedTypes, (str,))

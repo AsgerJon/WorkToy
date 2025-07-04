@@ -10,8 +10,8 @@ from unittest import TestCase
 from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeNum
-from worktoy.waitaminute import KeeNumTypeException, EmptyKeeNumError
-from worktoy.waitaminute import DuplicateKeeNum
+from worktoy.waitaminute.keenum import KeeNumTypeException, EmptyKeeNumError
+from worktoy.waitaminute.keenum import DuplicateKeeNum
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

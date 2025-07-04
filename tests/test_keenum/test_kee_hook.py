@@ -8,14 +8,16 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.text import stringList
-from worktoy.waitaminute import TypeException, KeeNumTypeException, \
-  DuplicateKeeNum, EmptyKeeNumError, IllegalInstantiation
-from worktoy.keenum import KeeSpaceHook, KeeNum
+from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.meta import IllegalInstantiation
+from worktoy.waitaminute.keenum import KeeNumTypeException, DuplicateKeeNum
+from worktoy.waitaminute.keenum import EmptyKeeNumError
+from worktoy.keenum import KeeNum
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  pass
 
 
 class TestKeeHook(TestCase):
@@ -181,7 +183,7 @@ class TestKeeHook(TestCase):
     self.assertEqual(e.varName, 'key')
     self.assertEqual(e.actualObject, 42.0)
     self.assertEqual(e.actualType, float)
-    self.assertEqual(e.expectedType, (int, str, tuple))
+    self.assertEqual(e.expectedTypes, (int, str, tuple))
 
   def test_bad_index(self) -> None:
     """

@@ -46,13 +46,10 @@ AttributeError: 'Sus' object has no attribute 'bar'
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import _Attribute
-from ..text import monoSpace
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  pass
 
 
 def attributeErrorFactory(owner: str, field: str) -> AttributeError:

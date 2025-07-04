@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import builtins
 
-from worktoy.waitaminute import MetaclassException, TypeException
+from worktoy.waitaminute.meta import MetaclassException
 
 oldBuild = builtins.__build_class__
 

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass, BaseMeta, BaseSpace, \
   AbstractNamespace
-from worktoy.text import stringList
+from worktoy.utilities import stringList
 from worktoy.waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover

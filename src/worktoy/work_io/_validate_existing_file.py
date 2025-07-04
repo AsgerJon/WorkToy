@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import os
 
-from worktoy.text import monoSpace
+from worktoy.utilities import textFmt
 
 from typing import TYPE_CHECKING
 
@@ -31,12 +31,12 @@ def validateExistingFile(file: str, **kwargs) -> str:
     if not kwargs.get('strict', True):
       return ''
     infoSpec = """No file exists at: '%s'!"""
-    info = monoSpace(infoSpec % file)
+    info = textFmt(infoSpec % file)
     raise FileNotFoundError(info)
   if not os.path.isfile(file):
     if not kwargs.get('strict', True):
       return ''
     infoSpec = """The path '%s' is not a file!"""
-    info = monoSpace(infoSpec % file)
+    info = textFmt(infoSpec % file)
     raise IsADirectoryError(info)
   return os.path.normpath(file)

@@ -4,12 +4,12 @@ name but different signatures. The overload decorator is used to"""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import TypeSig
-
 from typing import TYPE_CHECKING
 
+from . import TypeSig
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeAlias, Never
+  from typing import Callable
 
 
 def overload(*types: object, **kwargs: object) -> Callable:

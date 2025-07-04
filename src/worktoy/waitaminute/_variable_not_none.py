@@ -4,13 +4,17 @@ None."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..text import monoSpace
+from ..utilities import textFmt
 
-from . import _Attribute
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
   from typing import Any, Optional, Self
 
 
@@ -18,20 +22,44 @@ class VariableNotNone(Exception):
   """VariableNotNone should be raised when a variable is unexpectedly not
   None."""
 
-  name = _Attribute()
-  value = _Attribute()
+  __slots__ = ('name', 'value')
 
-  def __init__(self, _name: str, _value: Any) -> None:
+  def __init__(self, *args) -> None:
     """Initialize the VariableNotNone object."""
-    self.name, self.value = _name, _value
+    _name, _value = None, None
+    for arg in args:
+      if isinstance(arg, str):
+        if _name is None:
+          _name = arg
+          continue
+      if _value is None:
+        _value = arg
+    if _name is not None:
+      self.name = _name
+    if _value is not None:
+      self.value = _value
     Exception.__init__(self, )
 
   def __str__(self, ) -> str:
     """Get the info spec."""
-    infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
-    None!"""
-    valueStr = monoSpace(str(self.value), )
-    name = self.name
-    return monoSpace(infoSpec % (valueStr, name), )
+    if self.name is None and self.value is None:
+      infoSpec = """Unexpected value at name expected to be None!%s%s"""
+      name, valueStr = '', ''
+    elif self.name is None:
+      infoSpec = """Unexpected value: '%s' at name expected to be 
+      None!%s"""
+      name = ''
+      valueStr = textFmt(str(self.value), )
+    elif self.value is None:
+      infoSpec = """Unexpected value at name '%s' expected to be 
+      None!"""
+      name = self.name
+      valueStr = ''
+    else:
+      infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
+      None!"""
+      valueStr = textFmt(str(self.value), )
+      name = self.name
+    return textFmt(infoSpec % (valueStr, name), )
 
   __repr__ = __str__

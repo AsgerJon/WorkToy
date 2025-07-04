@@ -5,10 +5,10 @@ The _KeeNumBase class provides a base for the KeeNum class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..attr import Field
-from ..static import AbstractObject
+from ..desc import Field
+from ..core import Object
 from ..waitaminute import MissingVariable, TypeException
-from ..waitaminute import IllegalInstantiation
+from ..waitaminute.meta import IllegalInstantiation
 
 from typing import TYPE_CHECKING
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class _KeeNumBase(AbstractObject):
+class _KeeNumBase(Object):
   """
   The _KeeNumBase class provides a base for the KeeNum class.
   """
@@ -105,7 +105,7 @@ class _KeeNumBase(AbstractObject):
     Hash representation of the enumeration member.
     """
     clsName = type(self).__name__
-    baseNames = 'AbstractObject',
+    baseNames = 'Object',
     mclsName = 'type'
     clsHash = hash((clsName, *baseNames, mclsName))
     return hash((clsHash, self.name, self.value, self.index))

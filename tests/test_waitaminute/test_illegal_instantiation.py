@@ -9,8 +9,8 @@ from __future__ import annotations
 from unittest import TestCase
 from typing import TYPE_CHECKING
 
-from worktoy.static.zeroton import THIS
-from worktoy.waitaminute import IllegalInstantiation
+from worktoy.core.sentinels import THIS
+from worktoy.waitaminute.meta import IllegalInstantiation
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

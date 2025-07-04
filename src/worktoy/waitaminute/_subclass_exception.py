@@ -4,11 +4,9 @@ the expected base class. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import _Attribute
-
 from typing import TYPE_CHECKING
 
-from ..text import monoSpace
+from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Any, Callable, Never
@@ -18,8 +16,7 @@ class SubclassException(TypeError):
   """SubclassException should be raised when a class is not a subclass of
   the expected base class."""
 
-  cls = _Attribute()
-  expected = _Attribute()
+  __slots__ = ('cls', 'expected')
 
   def __init__(self, cls: type, base: type) -> None:
     """Initialize the exception with the object and expected base class."""
@@ -34,6 +31,6 @@ class SubclassException(TypeError):
     clsName = type(self.cls).__name__
     baseName = type(self.expected).__name__
     info = infoSpec % (clsName, baseName)
-    return monoSpace(info)
+    return textFmt(info)
 
   __repr__ = __str__

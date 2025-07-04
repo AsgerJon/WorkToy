@@ -5,13 +5,14 @@ KeeMeta provides the metaclass creating the KeeNum enumeration class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ..mcls import AbstractMetaclass
-from ..text import monoSpace
-from ..waitaminute import MissingVariable, TypeException, EmptyKeeNumError
-from ..waitaminute import IllegalInstantiation
+from ..utilities import textFmt
+from ..waitaminute import TypeException
+from ..waitaminute.meta import IllegalInstantiation
+from ..waitaminute.keenum import EmptyKeeNumError
 from . import KeeSpace, _KeeNumBase
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias, Any, Iterator
@@ -169,7 +170,7 @@ class KeeMeta(AbstractMetaclass):
         return entry
     infoSpec = """Index %d out of range for %s"""
     info = infoSpec % (index, cls.__name__)
-    raise IndexError(monoSpace(info))
+    raise IndexError(textFmt(info))
 
   def _getFromName(cls, name: str, **kwargs) -> Any:
     """

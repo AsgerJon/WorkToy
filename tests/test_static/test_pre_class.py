@@ -12,7 +12,7 @@ from worktoy.static import Dispatch, PreClass
 
 from typing import TYPE_CHECKING
 
-from worktoy.text import stringList
+from worktoy.utilities import stringList
 from worktoy.waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -44,7 +44,7 @@ class TestPreClass(TestCase):
     self.assertEqual(e.actualObject, badType)
     self.assertEqual(e.actualType, type(badType))
     self.assertEqual(
-        e.expectedType,
+        e.expectedTypes,
         (str, int, type, tuple, list),
     )
 
@@ -76,7 +76,7 @@ class TestPreClass(TestCase):
       _ = isinstance('breh', Pre)
     e = context.exception
     self.assertEqual(e.varName, '__hash_value__')
-    self.assertEqual(e.varType, (int,))
+    self.assertEqual(e.varType, int)
 
   def test_wrong_type_hash(self) -> None:
     """
@@ -90,7 +90,7 @@ class TestPreClass(TestCase):
     self.assertEqual(e.varName, '__hash_value__')
     self.assertEqual(e.actualObject, 'smoke w**d everyday!')
     self.assertEqual(e.actualType, str)
-    self.assertEqual(e.expectedType, (int,))
+    self.assertEqual(e.expectedTypes, (int,))
 
   def test_meta_class(self) -> None:
     """

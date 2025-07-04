@@ -6,15 +6,12 @@ TestClassReprStr tests the __class_repr__ and __class_str__ hooks
 from __future__ import annotations
 
 from unittest import TestCase
-
-from worktoy.static import AbstractObject
-from worktoy.mcls import AbstractMetaclass
-from worktoy.waitaminute import TypeException
-
 from typing import TYPE_CHECKING
 
+from worktoy.mcls import AbstractMetaclass
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  pass
 
 
 class VerboseClass(metaclass=AbstractMetaclass):

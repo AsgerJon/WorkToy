@@ -6,23 +6,20 @@ The 'worktoy.core' module provides the most primitive objects used by the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from . import sentinels
+from ._instance import ContextInstance
+from ._owner import ContextOwner
+from ._caller import ContextCaller
+from ._meta_type import MetaType
+from ._meta_object import MetaObject
 from ._object import Object
-from ._root import Root
-from ._desc import Desc
-from ._some import Some
-from ._factorial import factorial
-from ._permutate import permutate
-from ._unpack import unpack
-from ._bipartite_matching import bipartiteMatching
-from ._owner import Owner
 
 __all__ = [
+    'sentinels',
+    'ContextInstance',
+    'ContextOwner',
+    'ContextCaller',
+    'MetaType',
+    'MetaObject',
     'Object',
-    'Root',
-    'Desc',
-    'Some',
-    'factorial',
-    'permutate',
-    'unpack',
-    'bipartiteMatching',
 ]

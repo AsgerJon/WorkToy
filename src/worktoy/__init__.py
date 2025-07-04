@@ -18,11 +18,12 @@ The package consists of thr following modules:
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import parse
-from . import text
+from . import utilities
+from . import core
 from . import waitaminute
+from . import desc
+
 from . import static
 from . import mcls
-from . import attr
 from . import keenum
 from . import ezdata

@@ -7,12 +7,12 @@ using the AttriBox descriptor for real and imaginary parts.
 from __future__ import annotations
 
 from tests import ComplexBase
-from worktoy.attr import AttriBox
+from worktoy.desc import AttriBox
 
 from typing import TYPE_CHECKING
 from worktoy.mcls import BaseMeta
 from worktoy.static import overload
-from worktoy.static.zeroton import THIS
+from worktoy.core.sentinels import THIS
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self

@@ -12,7 +12,7 @@ type to create the enumeration member value.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..static import AbstractObject
+from ..core import Object
 
 from typing import TYPE_CHECKING
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class _AutoMember(AbstractObject):
+class _AutoMember(Object):
   """
   _AutoMember encapsulates future enumeration member objects. The 'auto'
   function instantiates this class during the class body execution. The
@@ -41,17 +41,17 @@ class _AutoMember(AbstractObject):
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  getKeywordArgs = AbstractObject._getKeywordArgs  # Going public
-  getPositionalArgs = AbstractObject._getPositionalArgs  # Going public
+  # getKeywordArgs = Object._getKeywordArgs  # Going public
+  # getPositionalArgs = Object._getPositionalArgs  # Going public
 
   def getValue(self) -> Any:
     """
     Returns the first positional argument
     """
-    return (self.getPositionalArgs() or [None, ])[0]
+    return (self.getPosArgs() or [None, ])[0]
 
 
-def auto(*args: Any, **kwargs: Any) -> AbstractObject:
+def auto(*args: Any, **kwargs: Any) -> Object:
   """
   The 'auto' function conveniently specifies a member of a KeeNum
   enumeration right in the class body.

@@ -8,13 +8,13 @@ from __future__ import annotations
 from random import random
 from math import atan2
 
-from worktoy.parse import maybe
-from worktoy.waitaminute import DispatchException
+from worktoy.utilities import maybe
+from worktoy.waitaminute.dispatch import DispatchException
 
 from typing import TYPE_CHECKING
 from worktoy.mcls import BaseMeta
 from worktoy.static import overload
-from worktoy.static.zeroton import THIS
+from worktoy.core.sentinels import THIS
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self

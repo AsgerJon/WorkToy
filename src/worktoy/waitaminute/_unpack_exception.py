@@ -9,12 +9,10 @@ this function does not consider strings or bytes as unpackable iterables.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import _Attribute
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias, Any
+  pass
 
 
 class UnpackException(ValueError):
@@ -26,9 +24,9 @@ class UnpackException(ValueError):
   this function does not consider strings or bytes as unpackable iterables.
   """
 
-  posArgs = _Attribute()  # type: tuple[Any, ...]
+  __slots__ = ('posArgs',)
 
-  def __init__(self, *args: Any) -> None:
+  def __init__(self, *args) -> None:
     """
     Initialize the UnpackException with an optional message.
     """

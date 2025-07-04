@@ -6,14 +6,8 @@ a hook is added multiple times to a class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
 from unittest import TestCase
 from typing import TYPE_CHECKING
-
-from worktoy.waitaminute import DuplicateHookError
-from worktoy.mcls.space_hooks import AbstractSpaceHook
-
-from tests import WYD
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

@@ -6,16 +6,16 @@ objects used in custom metaclasses.
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..text import monoSpace
-from ..waitaminute import HookException, DuplicateHookError
+from ..utilities import textFmt
+from ..waitaminute.meta import HookException, DuplicateHook
 from . import Base
-from .space_hooks import AbstractSpaceHook, ReservedNameSpaceHook, \
-  NameSpaceHook
+from .space_hooks import NamespaceHook, ReservedNamespaceHook
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias
+  from typing import Any, TypeAlias, Iterator
+  from .space_hooks import AbstractSpaceHook
 
   Bases: TypeAlias = tuple[type, ...]
   Hooks: TypeAlias = list[AbstractSpaceHook]
@@ -61,8 +61,8 @@ class AbstractNamespace(dict):
   __hash_value__ = None
 
   #  Public Variables
-  reservedNameHook = ReservedNameSpacePhase()
-  nameHook = NameSpacePhase()
+  reservedNameHook = ReservedNamespaceHook()
+  nameHook = NamespaceHook()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -99,14 +99,14 @@ class AbstractNamespace(dict):
       assert isinstance(cls, dict)
     return cls.__owner_hooks_list_name__
 
-  def getHooks(self, owner: type = None) -> Hooks:
+  def getHooks(self, owner: type = None) -> Iterator[AbstractSpaceHook]:
     """Getter-function for the AbstractHook classes. """
     cls = type(self)
     hooks = self.classGetHooks()
-    out = []
     for hook in hooks:
-      out.append(hook.__get__(self, cls))
-    return out
+      out = hook.__get__(self, cls, )
+      setattr(out, '__space_object__', self)
+      yield out
 
   @classmethod
   def classGetHooks(cls, ) -> Hooks:
@@ -141,7 +141,7 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def addPhase(cls, hook: AbstractSpaceHook) -> None:
+  def addHook(cls, hook: AbstractSpaceHook) -> None:
     """Adds a hook to the list of hooks. """
     existingHooks = cls.classGetHooks()
     for existingHook in existingHooks:
@@ -151,7 +151,7 @@ class AbstractNamespace(dict):
         if existingHook is hook:
           return
         hooks = (existingHook, hook)
-        raise DuplicateHookError(cls, newName, *hooks)
+        raise DuplicateHook(cls, newName, *hooks)
     pvtName = cls.getHookListName()
     setattr(cls, pvtName, [*existingHooks, hook])
 
@@ -176,6 +176,7 @@ class AbstractNamespace(dict):
     except KeyError as keyError:
       val = keyError
     for hook in self.getHooks():
+      setattr(hook, '__space_object__', self)
       try:
         hook.getItemPhase(key, val)
       except Exception as exception:
@@ -207,7 +208,7 @@ class AbstractNamespace(dict):
     mclsName = self.getMetaclass().__name__
     info = """Namespace object of type: '%s' created by the '__prepare__' 
     method on metaclass: '%s' with bases: (%s) to create class: '%s'."""
-    return monoSpace(info % (spaceName, mclsName, baseNames, clsName))
+    return textFmt(info % (spaceName, mclsName, baseNames, clsName))
 
   def __repr__(self, ) -> str:
     """Returns the string representation of the namespace object."""
@@ -237,6 +238,7 @@ class AbstractNamespace(dict):
     returned. """
     namespace = dict()
     for hook in self.getHooks():
+      setattr(hook, '__space_object__', self)
       if TYPE_CHECKING:  # pragma: no cover
         assert isinstance(hook, AbstractSpaceHook)
       namespace = hook.preCompilePhase(namespace)
@@ -261,6 +263,7 @@ class AbstractNamespace(dict):
     validations. Subclasses can implement this method to provide further
     processing of the compiled object. """
     for hook in self.getHooks():
+      setattr(hook, '__space_object__', self)
       if TYPE_CHECKING:  # pragma: no cover
         assert isinstance(hook, AbstractSpaceHook)
       namespace = hook.postCompilePhase(namespace)

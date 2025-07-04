@@ -6,16 +6,14 @@ TestEZSpace tests the EZSpace class from the ezdata module.
 from __future__ import annotations
 
 from unittest import TestCase
-
-from worktoy.ezdata import DataField, EZData, EZMeta
-
 from typing import TYPE_CHECKING
 
-from worktoy.text import stringList, monoSpace
-from worktoy.waitaminute import TypeException, ReservedName
+from worktoy.ezdata import EZData
+from worktoy.utilities import stringList
+from worktoy.waitaminute.meta import ReservedName
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any
 
 
 class TestEZSpace(TestCase):

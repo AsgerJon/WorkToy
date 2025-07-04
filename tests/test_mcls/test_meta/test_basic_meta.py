@@ -9,9 +9,8 @@ from unittest import TestCase
 from typing import TYPE_CHECKING, Iterator
 
 from worktoy.mcls import AbstractMetaclass, BaseMeta, AbstractNamespace
-from worktoy.parse import maybe
-from worktoy.waitaminute import QuestionableSyntax, DelException
-from worktoy.waitaminute import _Attribute  # NOQA
+from worktoy.utilities import maybe
+from worktoy.waitaminute.meta import QuestionableSyntax, DelException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
@@ -70,8 +69,7 @@ class TestBasicMeta(TestCase):
       Custom test exception
       """
 
-      cls = _Attribute()
-      sub = _Attribute()
+      __slots__ = ('cls', 'sub')
 
       def __init__(self, cls: type, sub: type) -> None:
         self.cls = cls

@@ -6,12 +6,15 @@ rather than type mismatch. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import _Attribute
-from ..text import monoSpace, joinWords
+try:
+  from typing import TYPE_CHECKING
+except ImportError:
+  try:
+    from typing_extensions import TYPE_CHECKING
+  except ImportError:
+    TYPE_CHECKING = False
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
   from typing import Any, Self
 
 
@@ -22,10 +25,7 @@ class TypeException(TypeError):
   None instead of the expected type.
   """
 
-  varName = _Attribute()
-  actualObject = _Attribute()  # This is the object that was received
-  actualType = _Attribute()
-  expectedType = _Attribute()
+  __slots__ = ('varName', 'actualObject', 'actualType', 'expectedTypes',)
 
   def __init__(self, name: str, obj: object, *types) -> None:
     """Initialize the TypeException with the name of the variable, the
@@ -34,17 +34,23 @@ class TypeException(TypeError):
     self.varName = name
     self.actualObject = obj
     self.actualType = type(obj)
-    self.expectedType = types
+    if isinstance(types[0], tuple) and len(types) == 1:
+      self.expectedTypes = types[0]
+    else:
+      self.expectedTypes = types
 
   def __str__(self) -> str:
     """String representation of the TypeException."""
-    spec = """%s! Expected type of variable '%s' to be one of: (%s), 
-    but received '%s' of type '%s'!"""
-    cls = type(self).__name__
-    exp = ', '.join([t.__name__ for t in self.expectedType])
-    valStr = ('%50s' % repr(self.actualObject))[:50].replace(' ', '')
-    valType = type(self.actualObject).__name__
-    info = spec % (cls, self.varName, exp, valStr, valType)
-    return monoSpace(info)
+    from ..utilities import joinWords, textFmt
+    infoSpec = """Expected object at name '%s' to be an instance of %s, 
+    but received object: '%s' of type '%s'!"""
+    typeNames = [t.__name__ for t in self.expectedTypes]
+    typeStr = joinWords(*["""'%s'""" % name for name in typeNames], )
+    objStr = repr(self.actualObject)
+    if len(objStr) > 50:
+      objStr = """%s...""" % objStr[:47]
+    clsType = type(self.actualObject).__name__
+    info = infoSpec % (self.varName, typeStr, objStr, clsType)
+    return textFmt(info)
 
   __repr__ = __str__

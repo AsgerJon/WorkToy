@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.text import stringList
+from worktoy.utilities import stringList
 
 
 class TestStringList(TestCase):

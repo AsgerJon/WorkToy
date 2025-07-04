@@ -7,15 +7,11 @@ the 'worktoy.waitaminute' module.
 from __future__ import annotations
 
 from unittest import TestCase
+from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass as AMeta
 from worktoy.mcls import AbstractNamespace as ASpace
-from worktoy.static import Dispatch, PreClass
-
-from typing import TYPE_CHECKING
-
-from worktoy.text import stringList
-from worktoy.waitaminute import MissingVariable, TypeException, DelException
+from worktoy.waitaminute.meta import DelException
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

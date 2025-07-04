@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.mcls import AbstractMetaclass
-from worktoy.static import AbstractObject
+from worktoy.core import Object
 
 from typing import TYPE_CHECKING
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterator
 
 
-class Name(AbstractObject):
+class Name(Object):
   """
   Descriptor class for method names.
   """

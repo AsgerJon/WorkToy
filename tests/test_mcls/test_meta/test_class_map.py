@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.mcls import AbstractMetaclass
-from worktoy.parse import maybe
+from worktoy.utilities import maybe
 
 from typing import TYPE_CHECKING
 

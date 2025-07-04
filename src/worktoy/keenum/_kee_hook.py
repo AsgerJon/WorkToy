@@ -5,15 +5,11 @@ KeeHook provides the namespace hook for the KeeSpace namespace class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..static import AbstractObject
-from ..mcls.space_hooks import AbstractSpaceHook
-
-from . import _AutoMember
-
 from typing import TYPE_CHECKING
 
-from ..waitaminute import KeeNumTypeException, DuplicateKeeNum, \
-  EmptyKeeNumError
+from ..mcls.space_hooks import AbstractSpaceHook
+from . import _AutoMember
+from ..waitaminute.keenum import KeeNumTypeException, DuplicateKeeNum
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -65,7 +61,7 @@ class KeeSpaceHook(AbstractSpaceHook):
     """
     return self.space.get('__future_value_type__', None)
 
-  def setItemHook(self, key: str, value: Any, oldValue: Any, ) -> bool:
+  def setItemPhase(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """
     The setItemHook method is called when an item is set in the
     namespace.
@@ -78,7 +74,7 @@ class KeeSpaceHook(AbstractSpaceHook):
     self._addMember(key.upper(), value)
     return False
 
-  def preCompileHook(self, compiledSpace: dict) -> dict:
+  def preCompilePhase(self, compiledSpace: dict) -> dict:
     """Hook for preCompile. This is called before the __init__ method of
     the namespace object is called. The default implementation does nothing
     and returns the contents unchanged. """

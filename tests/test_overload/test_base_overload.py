@@ -12,7 +12,7 @@ from unittest import TestCase
 from tests import WYD
 from worktoy.mcls import BaseObject
 from worktoy.static import Dispatch, overload
-from worktoy.waitaminute import DispatchException
+from worktoy.waitaminute.dispatch import DispatchException
 from . import ComplexOverload
 
 from typing import TYPE_CHECKING

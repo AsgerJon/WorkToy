@@ -12,7 +12,7 @@ from worktoy.ezdata import DataField, EZData, EZMeta
 
 from typing import TYPE_CHECKING
 
-from worktoy.text import stringList
+from worktoy.utilities import stringList
 from worktoy.waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -67,7 +67,7 @@ class TestDataField(TestCase):
     self.assertEqual(e.varName, 'val')
     self.assertEqual(e.actualObject, 69)
     self.assertEqual(e.actualType, int)
-    self.assertIn(str, e.expectedType)
+    self.assertIn(str, e.expectedTypes)
 
     with self.assertRaises(TypeException) as context:
       _ = DataField(69, str, int)
@@ -75,7 +75,7 @@ class TestDataField(TestCase):
     self.assertEqual(e.varName, 'key')
     self.assertEqual(e.actualObject, 69)
     self.assertEqual(e.actualType, int)
-    self.assertIn(str, e.expectedType)
+    self.assertIn(str, e.expectedTypes)
 
     with self.assertRaises(TypeException) as context:
       _ = DataField('key', 69, 420)
@@ -83,7 +83,7 @@ class TestDataField(TestCase):
     self.assertEqual(e.varName, 'type_')
     self.assertEqual(e.actualObject, 69)
     self.assertEqual(e.actualType, int)
-    self.assertIn(type, e.expectedType)
+    self.assertIn(type, e.expectedTypes)
 
     with self.assertRaises(TypeException) as context:
       _ = DataField('key', type, 1337)
@@ -91,7 +91,7 @@ class TestDataField(TestCase):
     self.assertEqual(e.varName, 'val')
     self.assertEqual(e.actualObject, 1337)
     self.assertEqual(e.actualType, int)
-    self.assertIn(type, e.expectedType)
+    self.assertIn(type, e.expectedTypes)
 
     with self.assertRaises(TypeException) as context:
       _ = DataField('key', type)
@@ -99,7 +99,7 @@ class TestDataField(TestCase):
     self.assertEqual(e.varName, 'val')
     self.assertIsNone(e.actualObject)
     self.assertIs(type(None), e.actualType)
-    self.assertIn(type, e.expectedType)
+    self.assertIn(type, e.expectedTypes)
 
   def test_eq(self) -> None:
     """

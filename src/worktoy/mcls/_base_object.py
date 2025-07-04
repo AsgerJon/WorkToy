@@ -6,17 +6,20 @@ BaseObject is the standard entry point for using the worktoy library.
 from __future__ import annotations
 
 from . import BaseMeta
-from ..static import AbstractObject
+from ..core import Object
 
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:  # pragma: no cover
+  pass
 
-class BaseObject(AbstractObject, metaclass=BaseMeta):
+
+class BaseObject(Object, metaclass=BaseMeta):
   """
-  BaseObject combines the core functionality of AbstractObject with the
+  BaseObject combines the core functionality of Object with the
   hook-based metaclass behavior of BaseMeta.
 
-  From AbstractObject, it inherits robust constructor handling, controlled
+  From Object, it inherits robust constructor handling, controlled
   descriptor mutation, and context-aware access to instance and owner
   information. From BaseMeta, it gains support for function overloading
   and other hook-based class construction features via BaseSpace.

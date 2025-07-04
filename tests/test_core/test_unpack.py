@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.core import unpack
+from worktoy.utilities import unpack
 from worktoy.waitaminute import UnpackException
 
 from typing import TYPE_CHECKING

@@ -9,8 +9,8 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.mcls import BaseObject, BaseMeta
-from worktoy.text import monoSpace
-from worktoy.waitaminute import MetaclassException
+from worktoy.utilities import textFmt
+from worktoy.waitaminute.meta import MetaclassException
 
 
 class TestMetaclassException(TestCase):
@@ -37,7 +37,7 @@ class TestMetaclassException(TestCase):
     e = context.exception
     expected = """was raised with no base classes incompatible 
       with the received metaclass"""
-    self.assertIn(monoSpace(expected), str(e))
+    self.assertIn(textFmt(expected), str(e))
 
   def test_str_repr(self) -> None:
     """

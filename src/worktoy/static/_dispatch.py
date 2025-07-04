@@ -9,15 +9,16 @@ from __future__ import annotations
 from types import FunctionType as Func
 from typing import TYPE_CHECKING
 
-from . import AbstractObject
-from ..attr import Field
+from ..core import Object
+from ..desc import Field
 from ..static import TypeSig
-from ..text import monoSpace
-from ..waitaminute import HashMismatch, CastMismatch, FlexMismatch
-from ..waitaminute import DispatchException
+from ..utilities import textFmt
+from ..waitaminute import attributeErrorFactory
+from ..waitaminute.dispatch import HashMismatch, CastMismatch, FlexMismatch
+from ..waitaminute.dispatch import DispatchException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeAlias
+  from typing import Any, Callable, TypeAlias, Type
 
   Types: TypeAlias = tuple[type, ...]
   Hashes: TypeAlias = list[int]
@@ -27,14 +28,14 @@ if TYPE_CHECKING:  # pragma: no cover
   CallMap: TypeAlias = dict[TypeSig, Callable]
 
 
-class Dispatch(AbstractObject):
+class Dispatch(Object):
   """
 Dispatch replaces the usual bound method when overloaded function
 objects are used. The Dispatch instance serves as a dynamic method
 selector, attached to a class attribute in place of the original
 function object.
 
-Dispatch achieves this by subclassing AbstractObject, which provides
+Dispatch achieves this by subclassing Object, which provides
 a full implementation of the descriptor protocol, including
 __get__, __set__, and __delete__. This allows Dispatch to operate as
 a descriptor that controls method binding and function dispatching.
@@ -73,32 +74,26 @@ instantiates Dispatch during class creation.
   #  Private variables
   __call_map__ = None
 
-  #  Public variables
-  __name__ = Field()
+  # #  Public variables
+  # __name__ = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def getTypeSigs(self) -> list[TypeSig]:
-    """
-    Getter-function for the type signatures supported.
-    """
+    """Getter-function for the type signatures supported. """
     return [*self.__call_map__.keys(), ]
 
   @classmethod
   def getLatestDispatch(cls) -> Func:
-    """
-    Getter-function for the most recently successful dispatch.
-    """
+    """Getter-function for the most recently successful dispatch. """
     return cls.__latest_dispatch__.__func__
 
-  @__name__.GET
-  def _getName(self, ) -> str:
-    """
-    Get the name of the function.
-    """
-    return self.getFieldName()
+  # @__name__.GET
+  # def _getName(self, ) -> str:
+  #   """Get the name of the function. """
+  #   return self.getFieldName()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -129,7 +124,7 @@ instantiates Dispatch during class creation.
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+  def __set_name__(self, owner: Type[Object], name: str, **kwargs) -> None:
     """
     When the owning class is created, Python calls this method to allowing
     the type signatures to be updated with the owner class. This is
@@ -137,7 +132,7 @@ instantiates Dispatch during class creation.
     class before it is created by using the 'THIS' token object in place
     of it.
     """
-    AbstractObject.__set_name__(self, owner, name, **kwargs)
+    Object.__set_name__(self, owner, name, )
     for sig, call in self.__call_map__.items():
       TypeSig.replaceTHIS(sig, owner)
 
@@ -231,15 +226,39 @@ instantiates Dispatch during class creation.
     Tries fast, cast and flex dispatches in that order before raising
     'DispatchException'.
     """
-    self._resetLatestDispatch()
-    lockedInstance = self.instance
-    return self._dispatch(lockedInstance, *args, **kwargs)
+    return self._dispatch(self.caller, *args, **kwargs)
 
   def __str__(self, ) -> str:
     """Get the string representation of the function."""
     sigStr = [str(sig) for sig in self.getTypeSigs()]
     info = """%s object supporting type signatures: \n%s"""
     sigLines = '<br><tab>'.join(sigStr)
-    return monoSpace(info % (self.__field_name__, sigLines))
+    return textFmt(info % (self.__field_name__, sigLines))
 
   __repr__ = __str__
+
+  def __get__(self, instance: Any, owner: Type[Object]) -> Any:
+    """
+    Returns the Dispatch instance for the given instance.
+    """
+    if instance is None:
+      return self
+
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
+      """
+      Wraps the call to the dispatch method with the instance as the
+      first argument.
+      """
+      return Dispatch._dispatch(self, instance, *args, **kwargs)
+
+    return wrapped
+
+  def __getattr__(self, key: str, ) -> Any:
+    fieldName = self.getFieldName()
+    ownerName = self.getFieldOwner().__name__
+    if key == '__name__':
+      return fieldName
+    if key == '__qual_name__':
+      return '%s.%s' % (ownerName, fieldName)
+    attributeError = attributeErrorFactory(ownerName, fieldName, )
+    raise attributeError

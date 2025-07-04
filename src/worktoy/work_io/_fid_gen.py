@@ -5,15 +5,15 @@ directory, it returns the next available filename of the given format."""
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
 
-from ..attr import Field
+from ..desc import Field
 from ..mcls import BaseObject
-from ..parse import maybe
+from ..utilities import maybe, stringList
 from ..static import overload
-from ..text import stringList
 from ..waitaminute import TypeException
 from . import validateExistingDirectory, validateAvailablePath
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Optional, Any, TypeAlias
@@ -183,6 +183,19 @@ class FidGen(BaseObject):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __get__(self, instance: Any, owner: type, **kwargs) -> FidGen:
+    """
+    When the owning class is created, Python calls this method to allowing
+    the type signatures to be updated with the owner class. This is
+    necessary as the type signatures are able to reference the owning
+    class before it is created by using the 'THIS' token object in place
+    of it.
+    """
+    if kwargs.get('_recursion', False):
+      raise RecursionError
+    self.__context_caller__ = instance
+    return self.__instance_get__()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

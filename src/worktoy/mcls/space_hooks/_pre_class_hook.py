@@ -107,7 +107,7 @@ class PreClassSpaceHook(AbstractSpaceHook):
       return self.__pre_class__
     raise TypeException('__pre_class__', self.__pre_class__, PreClass, )
 
-  def setItemHook(self, key: str, val: Any, old: Any, ) -> bool:
+  def setItemPhase(self, key: str, val: Any, old: Any, ) -> bool:
     """
     If key contains reference the class under construction by containing
     'THIS', replace with 'PreClass' object providing the hash and name of the
@@ -126,7 +126,7 @@ class PreClassSpaceHook(AbstractSpaceHook):
     else:
       return False
 
-  def postCompileHook(self, compiledSpace) -> dict:
+  def postCompilePhase(self, compiledSpace) -> dict:
     """
     Where a type signature in the overload map includes a base class,
     we create a new type signature pointing to the same function, but with

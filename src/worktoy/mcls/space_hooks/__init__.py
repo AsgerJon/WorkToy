@@ -6,18 +6,20 @@ Namespace system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._space_desc import SpaceDesc
 from ._reserved_names import ReservedNames
 from ._abstract_space_hook import AbstractSpaceHook
-from ._reserved_name_hook import ReservedNameSpaceHook
+from ._reserved_namespace_hook import ReservedNamespaceHook
 from ._pre_class_hook import PreClassSpaceHook
 from ._overload_hook import OverloadSpaceHook
-from ._name_hook import NameSpaceHook
+from ._name_hook import NamespaceHook
 
 __all__ = [
+    'SpaceDesc',
     'ReservedNames',
     'AbstractSpaceHook',
-    'ReservedNameSpaceHook',
+    'ReservedNamespaceHook',
     'PreClassSpaceHook',
     'OverloadSpaceHook',
-    'NameSpaceHook',
+    'NamespaceHook',
 ]

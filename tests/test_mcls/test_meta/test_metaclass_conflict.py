@@ -14,8 +14,8 @@ from unittest import TestCase
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass, BaseSpace
-from worktoy.waitaminute import VariableNotNone, MetaclassException
-from worktoy.waitaminute import _Attribute  # NOQA
+from worktoy.waitaminute import VariableNotNone
+from worktoy.waitaminute.meta import MetaclassException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias

@@ -103,7 +103,7 @@ class OverloadSpaceHook(AbstractSpaceHook):
   composition.
   """
 
-  def setItemHook(self, key: str, value: Any, old: Any, ) -> bool:
+  def setItemPhase(self, key: str, value: Any, old: Any, ) -> bool:
     """
     Set the item hook for the namespace system. This method is called
     when an item is set in the namespace system. It collects the
@@ -117,7 +117,7 @@ class OverloadSpaceHook(AbstractSpaceHook):
       self.space.addOverload(key, sig, value)
     return True
 
-  def postCompileHook(self, compiledSpace: dict) -> dict:
+  def postCompilePhase(self, compiledSpace: dict) -> dict:
     """
     Post compile hook for the namespace system. This method is called
     after the namespace system is compiled. It collects the overload

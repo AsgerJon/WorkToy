@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass, BaseSpace
 from worktoy.waitaminute import VariableNotNone
-from worktoy.waitaminute import _Attribute  # NOQA
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias

@@ -6,10 +6,10 @@ use of the overload functionality provided by the 'worktoy' library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.text import stringList
+from worktoy.utilities import stringList
 from worktoy.static import overload
-from worktoy.static.zeroton import THIS
-from worktoy.attr import AttriBox
+from worktoy.core.sentinels import THIS
+from worktoy.desc import AttriBox
 from worktoy.mcls import BaseMeta
 from tests import ComplexBase
 
@@ -17,9 +17,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
-
-import sys
-import gc
 
 
 class ComplexOverload(ComplexBase, metaclass=BaseMeta):
