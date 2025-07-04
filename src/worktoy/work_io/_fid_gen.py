@@ -192,8 +192,6 @@ class FidGen(BaseObject):
     class before it is created by using the 'THIS' token object in place
     of it.
     """
-    if kwargs.get('_recursion', False):
-      raise RecursionError
     self.__context_caller__ = instance
     return self.__instance_get__()
 
