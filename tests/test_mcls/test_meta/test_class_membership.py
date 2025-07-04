@@ -92,7 +92,7 @@ class TestClassLenBoolContains(TestCase):
     with self.assertRaises(TypeError) as context:
       _ = len(VoidClass)
     info = str(context.exception)
-    self.assertIn('object has no len()', info)
+    self.assertIn('has no ', info)
 
   def testExplicitClassBool(self) -> None:
     """

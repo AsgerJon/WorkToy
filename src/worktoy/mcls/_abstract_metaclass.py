@@ -11,9 +11,11 @@ from typing import TYPE_CHECKING
 from . import Base
 from . import AbstractNamespace as ASpace
 from ..core import MetaType
+from ..utilities import maybe
+from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, TypeAlias
 else:
   pass
 
@@ -292,228 +294,230 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     if hasattr(space, 'compile'):
       namespace = space.compile()
     else:
-      namespace = space
-    return MetaType.__new__(mcls, name, bases, namespace, **kw)
+      namespace = mcls.__prepare__(name, bases, **kw)
+      namespace = namespace.compile(space)
+    cls = MetaType.__new__(mcls, name, bases, namespace, **kw)
+    if hasattr(space, 'getHooks'):
+      for hook in space.getHooks():
+        cls = maybe(hook.newClassPhase(cls), cls)
+    return cls
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
     """The __init__ method is invoked to initialize the class."""
-    if TYPE_CHECKING:  # pragma: no cover
-      assert isinstance(space, ASpace)
-      assert isinstance(bases, tuple)
-    MetaType.__init__(cls, name, bases, space, **kwargs)
+    try:
+      cls.__class_init__(name, bases, space, **kwargs)
+    except NotImplementedError:
+      pass
     cls._notifySubclassHook(cls, *bases)
 
   def __call__(cls, *args, **kwargs) -> Any:
-    """The __call__ method is invoked when the class is called."""
     try:
-      func = cls._dispatchClassHook('__class_call__')
+      out = cls.__class_call__(*args, **kwargs)
     except NotImplementedError:
-      return super().__call__(*args, **kwargs)  # NOQA
-    else:
-      return func(cls, *args, **kwargs)
-
-  def __instancecheck__(cls, instance) -> bool:
-    """
-    This implementation allows the class to customize the instance
-    check by implementing a method called __class_instancecheck__.
-    """
-    try:
-      func = cls._dispatchClassHook('__class_instancecheck__')
-    except NotImplementedError:
-      return super().__instancecheck__(instance)  # NOQA
-    else:
-      return True if func(cls, instance) else False
-
-  def __subclasscheck__(cls, subclass) -> bool:
-    """
-    This implementation allows the class to customize the subclass
-    check by implementing a method called __class_subclasscheck__.
-    """
-    try:
-      func = cls._dispatchClassHook('__class_subclasscheck__')
-    except NotImplementedError:
-      return super().__subclasscheck__(subclass)  # NOQA
-    else:
-      return True if func(cls, subclass) else False
-
-  def __str__(cls, ) -> str:
-    """The __str__ method is invoked to get the string representation of
-    the class."""
-    try:
-      func = cls._dispatchClassHook('__class_str__')
-    except NotImplementedError:
-      return MetaType.__str__(cls, )
-    else:
-      return func(cls)
-
-  def __repr__(cls, ) -> str:
-    """The __repr__ method is invoked to get the string representation of
-    the class."""
-    try:
-      func = cls._dispatchClassHook('__class_repr__')
-    except NotImplementedError:
-      return MetaType.__repr__(cls, )
-    else:
-      return func(cls)
-
-  def __iter__(cls, ) -> Any:
-    """
-    The __iter__ method is invoked to iterate over the class.
-    """
-    try:
-      func = cls._dispatchClassHook('__class_iter__')
-    except NotImplementedError:
-      try:
-        out = super().__iter__()  # NOQA
-      except AttributeError as attributeError:
-        infoSpec = """'%s' object is not iterable"""
-        info = infoSpec % cls.__name__
-        raise TypeError(info) from attributeError
-    else:
-      return func(cls)
-
-  def __next__(cls, ) -> Any:
-    """The __next__ method is invoked to get the next item in the class."""
-    try:
-      func = cls._dispatchClassHook('__class_next__')
-    except NotImplementedError:
-      return super().__next__()  # NOQA
-    else:
-      return func(cls)
-
-  def __bool__(cls, ) -> bool:
-    """The __bool__ method is invoked to get the truth value of the
-    class."""
-    try:
-      func = cls._dispatchClassHook('__class_bool__')
-    except NotImplementedError:
-      return True  # By default, classes are truthy
-    else:
-      return True if func(cls) else False
-
-  def __contains__(cls, other: Any) -> bool:
-    """The __contains__ method is invoked to check if the item is in the
-    class."""
-    try:
-      containsFunc = cls._dispatchClassHook('__class_contains__')
-    except NotImplementedError:
-      pass
-    else:
-      return True if containsFunc(cls, other) else False
-    try:
-      for item in cls:
-        if item == other:
-          break
-      else:
-        return False
-    except Exception as exception:
-      raise
-    else:
-      return True
-
-  def __len__(cls, ) -> int:
-    """The __len__ method is invoked to get the length of the class."""
-    lenFunc, value = None, None
-    try:
-      lenFunc = cls._dispatchClassHook('__class_len__')
-    except NotImplementedError:
-      lenFunc = None
-    else:
-      return lenFunc(cls)
-    try:
-      out = cls.__fallback_len__()
-    except Exception as exception:
-      if isinstance(exception, (AttributeError, TypeError)):
-        infoSpec = """object has no len()"""
-        info = infoSpec
-        raise TypeError(info) from exception
-      raise exception
+      return MetaType.__call__(cls, *args, **kwargs)  # NOQA
     else:
       return out
 
-  def __hash__(cls, ) -> int:
-    """The __hash__ method is invoked to get the hash value of the class.
-    This is used to identify the class in dictionaries and sets."""
+  def __instancecheck__(cls, obj: Any) -> bool:
     try:
-      func = cls._dispatchClassHook('__class_hash__')
+      out = cls.__class_instancecheck__(obj)
+    except NotImplementedError:
+      return MetaType.__instancecheck__(cls, obj)  # NOQA
+    else:
+      return True if out else False
+
+  def __subclasscheck__(cls, subclass: type) -> bool:
+    try:
+      out = cls.__class_subclasscheck__(subclass)
+    except NotImplementedError:
+      return MetaType.__subclasscheck__(cls, subclass)  # NOQA
+    else:
+      return True if out else False
+
+  def __str__(cls) -> str:
+    try:
+      out = cls.__class_str__()
+    except NotImplementedError:
+      return MetaType.__str__(cls)  # NOQA
+    else:
+      return out
+
+  def __repr__(cls) -> str:
+    try:
+      out = cls.__class_repr__()
+    except NotImplementedError:
+      return MetaType.__repr__(cls)  # NOQA
+    else:
+      return out
+
+  def __iter__(cls) -> Any:
+    try:
+      out = cls.__class_iter__()
+    except NotImplementedError:
+      infoSpec = """type object '%s' is not iterable"""
+      info = infoSpec % type(cls).__name__
+      raise TypeError(info)
+    else:
+      return out
+
+  def __next__(cls) -> Any:
+    try:
+      out = cls.__class_next__()
+    except NotImplementedError:
+      return MetaType.__next__(cls)  # NOQA
+    else:
+      return out
+
+  def __bool__(cls) -> bool:
+    """
+    Here, too, I saw a nation of lost souls,
+    far more than were above: they strained their chests
+    against enormous weights, and with mad howls
+    rolled them at one another. Then in haste
+    they rolled them back, one party shouting out:
+    "Why do you hoard?" and the other: "Why do you waste?"
+    """
+    try:
+      out = cls.__class_bool__()
+    except NotImplementedError:
+      try:
+        out = len(cls)  # NOQA
+      except Exception as exception:
+        return True
+      else:
+        return True if out else False
+    else:
+      return True if out else False
+
+  def __contains__(cls, item: Any) -> bool:
+    try:
+      out = cls.__class_contains__(item)
+    except NotImplementedError:
+      out = None
+      try:
+        for clsItem in cls:
+          if clsItem == item:
+            out = True
+            break
+        else:
+          out = False
+      except Exception as exception:
+        infoSpec = """argument of type '%s' is not iterable"""
+        info = infoSpec % type(cls).__name__
+        raise TypeError(info) from exception
+      else:
+        return True if out else False
+    else:
+      return True if out else False
+
+  def __len__(cls) -> int:
+    try:
+      out = cls.__class_len__()
+    except NotImplementedError:
+      try:
+        countingWithAsger = sum([1 for derp in cls])
+      except Exception as exception:  # NOQA
+        return len(MetaType)  # NOQA
+      else:
+        return countingWithAsger
+    else:
+      return out
+
+  def __hash__(cls) -> int:
+    try:
+      out = cls.__class_hash__()
     except NotImplementedError:
       baseNames = [b.__name__ for b in cls.__bases__]
-      mcls = type(cls)
-      return hash((cls.__name__, *baseNames, mcls.__name__))
+      metaName = type(cls).__name__
+      nameTuple = (cls.__name__, *baseNames, metaName)
+      return hash(nameTuple)  # NOQA
     else:
-      return func(cls)
+      return out
 
   def __eq__(cls, other: Any) -> bool:
-    """
-    The __eq__ method is invoked to check if the class is equal to
-    another object.
-    """
-    if cls is other:
-      return True
-    if type(cls) is not type(other):
-      return NotImplemented
     try:
-      func = cls._dispatchClassHook('__class_eq__')
+      out = cls.__class_eq__(other)
     except NotImplementedError:
-      return NotImplemented
+      return MetaType.__eq__(cls, other)  # NOQA
     else:
-      return True if func(cls, other) else False
+      if out is NotImplemented:
+        return NotImplemented
+      return True if out else False
 
-  def __getattr__(cls, key: str) -> Any:
-    """
-    The __getattr__ method is invoked to get the attribute of the
-    class.
-    """
+  def __ne__(cls, other: Any) -> bool:
     try:
-      func = cls._dispatchClassHook('__class_getattr__', )
+      out = cls.__class_ne__(other)
     except NotImplementedError:
-      infoSpec = """type object '%s' has no attribute '%s'"""
-      info = infoSpec % (cls.__name__, key)
-      raise AttributeError(info)
+      try:
+        notOut = cls.__class_eq__(other)
+      except NotImplementedError:
+        return MetaType.__ne__(cls, other)  # NOQA
+      else:
+        if notOut is NotImplemented:
+          return NotImplemented
+        return False if notOut else True
     else:
-      return func(cls, key)
+      if out is NotImplemented:
+        return NotImplemented
+      return True if out else False
 
-  def __setattr__(cls, name: str, value: Any) -> None:
-    """The __setattr__ method is invoked to set the attribute of the
-    class."""
-    try:
-      func = cls._dispatchClassHook('__class_setattr__')
-    except NotImplementedError:
-      return super().__setattr__(name, value)
-    else:
-      return func(cls, name, value)
-
-  def __delattr__(cls, name: str) -> None:
-    """The __delattr__ method is invoked to delete the attribute of the
-    class."""
-    try:
-      func = cls._dispatchClassHook('__class_delattr__')
-    except NotImplementedError:
-      return super().__delattr__(name)
-    else:
-      return func(cls, name)
-
-  #  Notice the absense of __getitem__ here. If implemented, it would
-  #  override the standard Python behavior.
+  #  DO NOT REMOVE THIS COMMENTED OUT METHOD
+  # def __getitem__(cls, item: Any) -> Any:
+  #   """
+  #   This method is intentionally commented out — not removed — to ensure
+  #   discoverability and traceability.
+  #   """
+  #
+  #   For an explanation, see the '__class_getitem__' note in the 'NameHook'
+  #   class, located in 'worktoy.mcls.space_hooks'. In short, the interpreter
+  #   handles '__class_getitem__' directly as of Python 3.7, making this
+  #   override unnecessary and potentially conflicting.
 
   def __setitem__(cls, item: Any, value: Any) -> None:
-    """The __setitem__ method is invoked to set the item in the class."""
     try:
-      func = cls._dispatchClassHook('__class_setitem__')
+      out = cls.__class_setitem__(item, value)
     except NotImplementedError:
-      return super().__setitem__(item, value)  # NOQA
+      return MetaType.__setitem__(cls, item, value)  # NOQA
     else:
-      return func(cls, item, value)
+      return None
 
   def __delitem__(cls, item: Any) -> None:
-    """The __delitem__ method is invoked to delete the item from the
-    class."""
     try:
-      func = cls._dispatchClassHook('__class_delitem__')
+      out = cls.__class_delitem__(item)
     except NotImplementedError:
-      return super().__delitem__(item)  # NOQA
+      return MetaType.__delitem__(cls, item)  # NOQA
     else:
-      return func(cls, item)
+      return None
+
+  def __getattr__(cls, name: str) -> Any:
+    """Do not use the 'dot' operator to access class attributes during
+    this method! Instead, the clunky 'object.__getattribute__' must be
+    used to avoid infinite recursion. This is not an edge case, if you
+    bring the 'dot' operator into an implementation here, it is recursion
+    time!"""
+    try:
+      classGetAttr = object.__getattribute__(cls, '__class_getattr__')
+      out = classGetAttr.__func__(cls, name)
+    except NotImplementedError:
+      raise AttributeError(name)
+    else:
+      return out
+
+  def __setattr__(cls, name: str, value: Any) -> None:
+    try:
+      out = cls.__class_setattr__(name, value)
+    except NotImplementedError:
+      return MetaType.__setattr__(cls, name, value)  # NOQA
+    else:
+      return None
+
+  def __delattr__(cls, name: str) -> None:
+    try:
+      out = cls.__class_delattr__(name)
+    except NotImplementedError:
+      return MetaType.__delattr__(cls, name)  # NOQA
+    else:
+      return None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -528,30 +532,6 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
       hook(cls)
     return cls
 
-  def _dispatchClassHook(cls, name: str, ) -> Func:
-    """
-    If the class implements a method called '__class_[name]__', this
-    method returns the underlying function object. Otherwise, it raises
-    'NotImplementedError'.
-    #TODO: Implement support for '__class_init__'. Is good for a finalizer.
-    """
-    if name in cls.__dict__:
-      return cls.__dict__[name].__func__
-    infoSpec = """'%s' object has no method '%s'"""
-    info = infoSpec % (cls.__name__, name)
-    # print(info)
-    raise NotImplementedError
-
   def getNamespace(cls) -> ASpace:
     """Get the namespace object for the class."""
     return getattr(cls, '__namespace__', )
-
-  def __fallback_len__(cls, ) -> int:
-    """
-    Length tries to fall back to using iteration
-    """
-    value = 0
-    for _ in cls:
-      value += 1
-    else:
-      return value

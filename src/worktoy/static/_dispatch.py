@@ -27,6 +27,10 @@ if TYPE_CHECKING:  # pragma: no cover
   CastMap: TypeAlias = dict[Types, Callable]
   CallMap: TypeAlias = dict[TypeSig, Callable]
 
+from icecream import ic  # type: ignore[import]
+
+ic.configureOutput(includeContext=True, )
+
 
 class Dispatch(Object):
   """
@@ -163,8 +167,6 @@ instantiates Dispatch during class creation.
     """
     exceptions = []
     for sig, call in self.__call_map__.items():
-      if self.owner in sig:
-        continue
       try:
         posArgs = sig.cast(*args)
       except CastMismatch as castMismatch:
@@ -221,13 +223,6 @@ instantiates Dispatch during class creation.
     self._resetLatestDispatch()
     raise DispatchException(self, *args, )
 
-  def __call__(self, *args: Any, **kwargs: Any) -> Any:
-    """
-    Tries fast, cast and flex dispatches in that order before raising
-    'DispatchException'.
-    """
-    return self._dispatch(self.caller, *args, **kwargs)
-
   def __str__(self, ) -> str:
     """Get the string representation of the function."""
     sigStr = [str(sig) for sig in self.getTypeSigs()]
@@ -258,7 +253,7 @@ instantiates Dispatch during class creation.
     ownerName = self.getFieldOwner().__name__
     if key == '__name__':
       return fieldName
-    if key == '__qual_name__':
+    if key == '__qualname__':
       return '%s.%s' % (ownerName, fieldName)
     attributeError = attributeErrorFactory(ownerName, fieldName, )
     raise attributeError

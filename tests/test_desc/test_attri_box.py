@@ -135,3 +135,15 @@ class TestAttriBox(TestCase):
     self.assertEqual(self.circle2.center.x, self.point3.x)
     self.assertEqual(self.circle2.center.y, self.point3.y)
     self.assertEqual(self.circle2.radius, 69.0)
+
+  def test_custom_field_type(self) -> None:
+    """Test custom field type."""
+
+    bar = Bar()
+    self.assertIsInstance(Bar.ham, AttriBox)
+    self.assertIsInstance(Bar.eggs, AttriBox)
+    self.assertIs(Bar().ham.__wrapped__, Bar)
+    self.assertIs(bar.eggs.__wrapped__, bar)
+
+    with self.assertRaises(Yikes):
+      Bar.ham = Foo(69 + 420j)

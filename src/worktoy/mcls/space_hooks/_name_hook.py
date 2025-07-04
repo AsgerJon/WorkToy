@@ -5,6 +5,8 @@ NameHook filters named used in the namespace system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from types import FunctionType as Func
+
 from ...waitaminute.meta import QuestionableSyntax, DelException
 
 from . import AbstractSpaceHook
@@ -57,6 +59,49 @@ class NamespaceHook(AbstractSpaceHook):
 """
 
   @classmethod
+  def _getClassDunders(cls) -> list[str]:
+    """
+    Get the class dunder names that are allowed in the namespace.
+    """
+    return [
+        '__class_call__',
+        '__class_init__',
+        '__class_instancecheck__',
+        '__class_subclasscheck__',
+        '__class_str__',
+        '__class_repr__',
+        '__class_iter__',
+        '__class_next__',
+        '__class_bool__',
+        '__class_contains__',
+        '__class_len__',
+        '__class_hash__',
+        '__class_eq__',
+        '__class_ne__',
+        #  '__class_getitem__',  See footnote below
+        '__class_setitem__',
+        '__class_delitem__',
+        '__class_getattr__',
+        '__class_setattr__',
+        '__class_delattr__',
+        #  NOTE: '__class_getitem__' is commented out, rather than
+        #  omitted, allowing this explanatory note to be found easily.
+        #
+        #  Since Python 3.7, support for the '__class_getitem__' became a
+        #  feature of the interpreter itself. In fact, it inspired the
+        #  implementation of all of the above class level hooks. Uniquely
+        #  for '__class_getitem__', if it is defined on the class,
+        #  the metaclass implementation of '__getitem__' will not be
+        #  called.
+        #
+        #  This behaviour is opposite to the other hooks, as they
+        #  are implemented here. 'AbstractMetaclass' provides
+        #  implementations of the dunder methods, such that derived
+        #  may implement the methods to achieve behaviour otherwise
+        #  requiring metaclass reimplementation.
+    ]
+
+  @classmethod
   def _getNearMisses(cls) -> list[NearMiss]:
     """
     Get the near-miss names.
@@ -102,3 +147,32 @@ class NamespaceHook(AbstractSpaceHook):
       bases = self.space.getBases()
       raise DelException(mcls, name, bases, self.space)
     return self._validateName(key)
+
+  def postCompilePhase(self, compiledSpace: dict) -> dict:
+    """
+    Hook for postCompile. This is called after the __init__ method of
+    the namespace object is called. The default implementation does nothing
+    and returns the contents unchanged.
+    """
+    dunderNames = self._getClassDunders()
+    for name in dunderNames:
+      if name not in compiledSpace:
+        compiledSpace[name] = self._defaultDunderFactory(name)
+    return compiledSpace
+
+  @staticmethod
+  def _defaultDunderFactory(name: str) -> classmethod:
+    """
+    Default dunder factory for the namespace hook.
+    """
+
+    def dunderStruck(cls, *args, **kwargs) -> str:
+      """
+      Default dunder method for the namespace hook.
+      """
+      raise NotImplementedError
+
+    setattr(dunderStruck, '__name__', name)
+    setattr(dunderStruck, '__qualname__', name)
+
+    return classmethod(dunderStruck)

@@ -154,17 +154,21 @@ class TupleEq(metaclass=AbstractMetaclass):
     """
     Returns True if the other class is also TupleEq.
     """
-
-    otherItems = None
-
+    if other is None:
+      return False
     try:
-      otherItems = list(other)
+      out = None
+      for selfItem, otherItem in zip(cls, other):
+        if selfItem != otherItem:
+          out = False
+      else:
+        out = True
     except TypeError as typeError:
       if 'is not iterable' in str(typeError):
-        return False
+        return NotImplemented
       raise
     else:
-      return True if all(i == j for i, j in zip(cls, otherItems)) else False
+      return maybe(out, NotImplemented)  # NOQA
 
 
 class TestClassHash(TestCase):

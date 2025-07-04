@@ -5,12 +5,14 @@ from __future__ import annotations
 
 from time import sleep
 
+from icecream import ic
+
 from tests import WYD
 from unittest import TestCase
 from types import FunctionType as Func
 from typing import TYPE_CHECKING
 
-from tests.test_attr import ComplexField
+from tests.test_desc import ComplexField
 from worktoy.desc import Field
 from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.utilities import maybe, stringList, textFmt
@@ -19,11 +21,14 @@ from worktoy.core.sentinels import THIS, DELETED
 from worktoy.core import Object
 from worktoy.waitaminute.desc import ProtectedError, ReadOnlyError, \
   AccessError
-from worktoy.waitaminute import MissingVariable, TypeException
+from worktoy.waitaminute import MissingVariable, TypeException, \
+  attributeErrorFactory
 from worktoy.waitaminute import WriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Any
+
+ic.configureOutput(includeContext=True)
 
 
 class R2(metaclass=BaseMeta):
@@ -177,14 +182,28 @@ class TestField(TestCase):
       """
       Foo is a class with a Field descriptor.
       """
+
+      __ham_value__ = None
+
       bar = Field()
       eggs = Field()
       ham = Field()
 
+      @ham.GET
+      def _getHam(self) -> Any:
+        if self.__ham_value__ is None:
+          attributeError = attributeErrorFactory('Foo', 'ham')
+          raise attributeError
+        return self.__ham_value__
+
+      @ham.SET
+      def _setHam(self, value: Any) -> None:
+        self.__ham_value__ = value
+
       @ham.DELETE
       def _deleteHam(self) -> None:
         """Delete the ham field."""
-        raise ProtectedError(self, type(self).ham, 'tofu')
+        raise ProtectedError(self, type(self).ham, 'get rect!')
 
     setattr(Foo.bar, '__set_keys__', [69, 420])
     setattr(Foo.bar, '__delete_keys__', [1337, 80085])
@@ -220,11 +239,23 @@ class TestField(TestCase):
     expected = """'Foo' object has no attribute 'eggs'"""
     self.assertIn(expected, str(exception))
 
+    #  Deleting when no value is present, raises AttributeError
     with self.assertRaises(AttributeError) as context:
       del foo.ham
     exception = context.exception
     expected = """'Foo' object has no attribute 'ham'"""
     self.assertIn(expected, str(exception))
+
+    foo.ham = 69
+    #  With a value set, trying to delete invokes the decorated deleter,
+    #  this particular one raises ProtectedError
+
+    with self.assertRaises(ProtectedError) as context:
+      del foo.ham
+    e = context.exception
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo.ham)
+    self.assertEqual(e.oldVal, 'get rect!')
 
   def test_good_deleter(self, ) -> None:
     """

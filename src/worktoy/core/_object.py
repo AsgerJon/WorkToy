@@ -51,7 +51,6 @@ class Object(object, metaclass=MetaType):
   __field_name__ = None
   __pos_args__ = None
   __key_args__ = None
-  __context_caller__ = None
   __context_instance__ = None
   __context_owner__ = None
   __call_chain__ = []
@@ -60,7 +59,6 @@ class Object(object, metaclass=MetaType):
   directory = Directory()
   instance = ContextInstance()
   owner = ContextOwner()
-  caller = ContextCaller()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -89,7 +87,7 @@ class Object(object, metaclass=MetaType):
       raise TypeException('__pos_args__', self.__pos_args__, list, tuple, )
     thisObj = maybe(kwargs.get('THIS', self.__context_instance__), THIS)
     ownerObj = maybe(kwargs.get('OWNER', self.__context_owner__), OWNER)
-    descObj = maybe(kwargs.get('DESC', self.__context_caller__), DESC)
+    descObj = maybe(kwargs.get('DESC', self), )
     out = []
     for arg in self.__pos_args__:
       if arg is THIS:
@@ -113,7 +111,7 @@ class Object(object, metaclass=MetaType):
       raise TypeException('__key_args__', self.__key_args__, dict, )
     thisObj = maybe(kwargs.get('THIS', self.__context_instance__), THIS)
     ownerObj = maybe(kwargs.get('OWNER', self.__context_owner__), OWNER)
-    descObj = maybe(kwargs.get('DESC', self.__context_caller__), self)
+    descObj = maybe(kwargs.get('DESC', self), )
     out = dict()
     for key, value in self.__key_args__.items():
       if value is THIS:
@@ -139,13 +137,6 @@ class Object(object, metaclass=MetaType):
     """Returns the contextual owner or raises 'WithoutException'"""
     if self.hasContext():
       return self.__context_owner__
-    from ..waitaminute.desc import WithoutException
-    raise WithoutException(self)
-
-  def getContextCaller(self) -> Any:
-    """Returns the contextual caller or raises 'WithoutException'"""
-    if self.hasContext():
-      return self.__context_caller__
     from ..waitaminute.desc import WithoutException
     raise WithoutException(self)
 
@@ -275,7 +266,6 @@ class Object(object, metaclass=MetaType):
     Creates a context for the descriptor. The context is used to
     store the instance and owner of the descriptor.
     """
-    self.__context_caller__ = self.__context_instance__
     self.__context_instance__ = instance
     self.__context_owner__ = owner
     return self

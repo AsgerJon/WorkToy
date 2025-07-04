@@ -130,8 +130,32 @@ class TestClassInstanceCheck(TestCase):
     Tests that a class with __float__ counts as a self.Number subclass.
     """
 
-    class Floaty:
-      def __float__(self) -> float:
-        return 42.0
+    class Bad:
+      def __floating_trust_me_bro__(self) -> float:
+        return '1337 here bro!'
 
-    self.assertTrue(issubclass(Floaty, self.Number))
+    class Good:
+      def __float__(self) -> float:
+        return .1337
+
+      def __int__(self) -> int:
+        return 80085
+
+      def __complex__(self) -> complex:
+        return 69 + 420j
+
+    self.assertFalse(issubclass(Bad, self.Number))
+    self.assertTrue(issubclass(Good, self.Number))
+    with self.assertRaises(TypeError) as context:
+      _ = float(Bad())
+    self.assertEqual(int(Good()), 80085)
+    self.assertAlmostEqual(float(Good()), 0.1337)
+    self.assertAlmostEqual(complex(Good()).real, 69)
+    self.assertAlmostEqual(complex(Good()).imag, 420)
+    self.assertIsInstance(Bad().__floating_trust_me_bro__(), str)
+
+  def testSelfSubclass(self) -> None:
+    """
+    Tests that self.Number is a subclass of itself.
+    """
+    self.assertTrue(issubclass(self.Number, self.Number))

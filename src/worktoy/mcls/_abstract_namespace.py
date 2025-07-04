@@ -67,6 +67,7 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
   def getBases(self) -> Bases:
     """Returns the base classes of the class under creation."""
     return (*self.__base_classes__,)
@@ -231,12 +232,13 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  def preCompile(self, ) -> dict:
+  def preCompile(self, namespace: dict = None) -> dict:
     """The return value from this method is passed to the compile method.
     Subclasses can implement this method to provide special objects at
     particular names in the namespace. By default, an empty dictionary is
     returned. """
-    namespace = dict()
+    if namespace is None:
+      namespace = dict()
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       if TYPE_CHECKING:  # pragma: no cover
@@ -244,11 +246,11 @@ class AbstractNamespace(dict):
       namespace = hook.preCompilePhase(namespace)
     return namespace
 
-  def compile(self, ) -> dict:
+  def compile(self, namespace: dict = None) -> dict:
     """This method is responsible for building the final namespace object.
     Subclasses may reimplement preCompile or postCompile as needed,
     but must not reimplement this method."""
-    namespace = self.preCompile()
+    namespace = self.preCompile(namespace)
     for (key, val) in dict.items(self, ):
       namespace[key] = val
     namespace = self.postCompile(namespace)

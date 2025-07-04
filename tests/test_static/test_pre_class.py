@@ -6,13 +6,10 @@ TestPreClass tests the PreClass class from the static module.
 from __future__ import annotations
 
 from unittest import TestCase
-
-from worktoy.mcls import AbstractMetaclass
-from worktoy.static import Dispatch, PreClass
-
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import stringList
+from worktoy.static import PreClass
+from worktoy.mcls import AbstractMetaclass
 from worktoy.waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
