@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class R2(metaclass=BaseMeta):
-  """R2 is a class that represents a point in 2D space."""
+  """R2 is a class that represents a point in the plane."""
 
   __fallback_r0__ = 0.0
   __fallback_r1__ = 0.0
