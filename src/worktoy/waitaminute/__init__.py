@@ -10,7 +10,6 @@ from . import desc
 from . import meta
 from . import dispatch
 from ._attribute_error_factory import attributeErrorFactory
-from ._alias_exception import AliasException
 from ._type_exception import TypeException
 from ._write_once_error import WriteOnceError
 from ._missing_variable import MissingVariable
@@ -24,7 +23,6 @@ ___all__ = [
     'meta',
     'dispatch',
     'attributeErrorFactory',
-    'AliasException',
     'TypeException',
     'WriteOnceError',
     'MissingVariable',

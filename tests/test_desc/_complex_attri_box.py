@@ -6,11 +6,10 @@ using the AttriBox descriptor for real and imaginary parts.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from tests import ComplexBase
 from worktoy.desc import AttriBox
 
 from typing import TYPE_CHECKING
-from worktoy.mcls import BaseMeta
+from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS
 
@@ -18,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
-class ComplexAttriBox(ComplexBase, metaclass=BaseMeta):
+class ComplexAttriBox(BaseObject, metaclass=BaseMeta):
   """Complex number representation. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

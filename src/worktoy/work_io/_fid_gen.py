@@ -65,7 +65,7 @@ class FidGen(BaseObject):
     """
     Creator-function for the file specification.
     """
-    baseName = maybe(self.__base_name__, self.owner.__name__, )
+    baseName = maybe(self.__base_name__, type(self).__name__, )
     chars = []
     for i, char in enumerate(baseName):
       if char.upper() == char:

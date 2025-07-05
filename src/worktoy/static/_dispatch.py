@@ -221,7 +221,7 @@ instantiates Dispatch during class creation.
       self._setLatestDispatch(self._flexDispatch)
       return out
     self._resetLatestDispatch()
-    raise DispatchException(self, *args, )
+    raise DispatchException(self, ins, *args, )
 
   def __str__(self, ) -> str:
     """Get the string representation of the function."""
@@ -244,7 +244,8 @@ instantiates Dispatch during class creation.
       Wraps the call to the dispatch method with the instance as the
       first argument.
       """
-      return Dispatch._dispatch(self, instance, *args, **kwargs)
+
+      return self._dispatch(instance, *args, **kwargs)
 
     return wrapped
 

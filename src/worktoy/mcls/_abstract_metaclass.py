@@ -19,6 +19,10 @@ if TYPE_CHECKING:  # pragma: no cover
 else:
   pass
 
+from icecream import ic
+
+ic.configureOutput(includeContext=True)
+
 
 class AbstractMetaclass(MetaType, metaclass=MetaType):
   """
@@ -434,34 +438,14 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     else:
       return out
 
-  def __eq__(cls, other: Any) -> bool:
-    try:
-      out = cls.__class_eq__(other)
-    except NotImplementedError:
-      return MetaType.__eq__(cls, other)  # NOQA
-    else:
-      if out is NotImplemented:
-        return NotImplemented
-      return True if out else False
+  #  DO NOT REMOVE THE FOLLOWING COMMENTED OUT METHODS
+  # def __eq__(cls, other: Any) -> bool:
+  #   """This method is disabled because of highly undefined behaviour!"""
+  #
+  #  def __ne__(cls, other: Any) -> bool:
+  #    """See above"""
 
-  def __ne__(cls, other: Any) -> bool:
-    try:
-      out = cls.__class_ne__(other)
-    except NotImplementedError:
-      try:
-        notOut = cls.__class_eq__(other)
-      except NotImplementedError:
-        return MetaType.__ne__(cls, other)  # NOQA
-      else:
-        if notOut is NotImplemented:
-          return NotImplemented
-        return False if notOut else True
-    else:
-      if out is NotImplemented:
-        return NotImplemented
-      return True if out else False
-
-  #  DO NOT REMOVE THIS COMMENTED OUT METHOD
+  #  DO NOT REMOVE THIS COMMENTED OUT METHOD  (not related to above)
   # def __getitem__(cls, item: Any) -> Any:
   #   """
   #   This method is intentionally commented out — not removed — to ensure

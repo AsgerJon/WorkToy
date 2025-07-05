@@ -22,3 +22,10 @@ class TestDispatch(TestCase):
     import gc
     sys.modules.pop(__name__, None)
     gc.collect()
+
+  def test_ad_hoc(self) -> None:
+    """
+    Test ad-hoc metaclass functionality.
+    """
+
+    self.assertIsInstance(Dispatch, type)

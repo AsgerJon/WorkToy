@@ -128,7 +128,7 @@ class Field(Object):
     """
     setterKeys = self._getSetterKeys(val)
     if not setterKeys:
-      raise ReadOnlyError(self, val, )
+      raise ReadOnlyError(self.instance, self, val, )
     instance = self.getContextInstance()
     setterFuncs = [getattr(instance, k) for k in setterKeys]
     setterFuncs = [f for f in setterFuncs if callable(f)]
@@ -140,8 +140,7 @@ class Field(Object):
     All decorated deleters are retrieved in the same fashion as the getter.
     """
     deleterKeys = self._getDeleterKeys()
-    instance = self.getContextInstance()
     if not deleterKeys:
-      raise ProtectedError(instance, self, )
+      raise ProtectedError(self.instance, self, )
     for key in deleterKeys:
-      getattr(instance, key, )(**kwargs)
+      getattr(self.instance, key, )(**kwargs)

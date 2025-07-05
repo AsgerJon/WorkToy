@@ -54,3 +54,13 @@ class TestNewYeetDirectory(BaseTest):
       trollDir = os.path.join(self.emptyDir, 'trololololo%d' % i)
       with self.assertRaises(FileNotFoundError) as context:
         scrapDirectory(trollDir)
+
+  def test_scrap_file(self) -> None:
+    """Testing scrapDirectory with a file."""
+    for tempFile in self.tempFiles:
+      with self.assertRaises(NotADirectoryError) as context:
+        scrapDirectory(tempFile)
+      e = context.exception
+      expected = """The path received by """, """is not a directory!"""
+      for expectedPart in expected:
+        self.assertIn(expectedPart, str(e), )

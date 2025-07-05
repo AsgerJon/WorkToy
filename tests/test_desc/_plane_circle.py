@@ -63,11 +63,11 @@ class PlaneCircle(BaseObject):
     self.__init__(PlanePoint(x, y), r, **kwargs)
 
   @overload(THIS)
-  def __init__(self, **kwargs) -> None:
+  def __init__(self, other: Self, **kwargs) -> None:
     """
     Initializes the PlaneCircle with a center and radius.
     """
-    self.__init__(self.center, self.radius, **kwargs)
+    self.__init__(other.center, other.radius, **kwargs)
 
   @overload()
   def __init__(self, **kwargs) -> None:

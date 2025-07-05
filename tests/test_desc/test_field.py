@@ -3,30 +3,26 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from time import sleep
-
-from icecream import ic
-
-from tests import WYD
 from unittest import TestCase
-from types import FunctionType as Func
 from typing import TYPE_CHECKING
 
 from tests.test_desc import ComplexField
 from worktoy.desc import Field
 from worktoy.mcls import BaseMeta, BaseObject
-from worktoy.utilities import maybe, stringList, textFmt
+from worktoy.utilities import maybe, stringList
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS, DELETED
 from worktoy.core import Object
-from worktoy.waitaminute.desc import ProtectedError, ReadOnlyError, \
-  AccessError
-from worktoy.waitaminute import MissingVariable, TypeException, \
-  attributeErrorFactory
+from worktoy.utilities.mathematics import pi
+from worktoy.waitaminute.desc import ProtectedError, ReadOnlyError
+from worktoy.waitaminute.desc import AccessError
+from worktoy.waitaminute import TypeException, attributeErrorFactory
 from worktoy.waitaminute import WriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
+
+from icecream import ic
 
 ic.configureOutput(includeContext=True)
 
@@ -141,14 +137,22 @@ class TestField(TestCase):
 
   def test_bad_delete(self) -> None:
     """Tests that the correct errors are raised."""
-    with self.assertRaises(ProtectedError):
+    with self.assertRaises(ProtectedError) as context:
       del self.R2_0.r0
-    with self.assertRaises(ProtectedError):
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    with self.assertRaises(ProtectedError) as context:
       del self.R2_0.r1
-    with self.assertRaises(ProtectedError):
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    with self.assertRaises(ProtectedError) as context:
       del self.C_0.r0
-    with self.assertRaises(ProtectedError):
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    with self.assertRaises(ProtectedError) as context:
       del self.C_0.r1
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
 
   def test_no_key(self, ) -> None:
     """Tests that the correct errors are raised."""
@@ -163,6 +167,7 @@ class TestField(TestCase):
     with self.assertRaises(AccessError) as context:
       _ = FF0088.mrFFFFFF
     e = context.exception
+    self.assertEqual(str(e), repr(e))
     self.assertIs(e.desc, KeysScumbag.mrFFFFFF)
 
     setattr(KeysScumbag.mrFFFFFF, '__get_key__', 80085)
@@ -650,3 +655,63 @@ class TestField(TestCase):
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.desc, ComplexField.RE)
+
+  def test_complex_field(self) -> None:
+    """
+    Tests the ComplexField class.
+    """
+    z = ComplexField(69.0, 420.0, )
+    self.assertAlmostEqual(abs(z) ** 2, 69 ** 2 + 420 ** 2)
+    self.assertAlmostEqual(z.ABS ** 2, 69 ** 2 + 420 ** 2)
+    z = ComplexField(1 + 1j)
+    self.assertAlmostEqual(z.ARG * 4, pi)
+    z = ComplexField(1 + 0j)
+    self.assertAlmostEqual(z.ARG, 0.0)
+    z = ComplexField(0 + 1j)
+    self.assertAlmostEqual(z.ARG, pi / 2)
+
+  def test_zero_arg(self) -> None:
+    """
+    Tests that the argument of a zero complex number is zero.
+    """
+    z = ComplexField(0.0, 0.0)
+    self.assertFalse(z)
+    self.assertAlmostEqual(z.ABS, 0.0)
+    with self.assertRaises(ZeroDivisionError):
+      _ = z.ARG
+
+  def test_write_once(self) -> None:
+    """
+    Tests that the ComplexField class raises WriteOnceError when trying to
+    write to a read-only field.
+    """
+    z = ComplexField(69.0, 420.0)
+    with self.assertRaises(WriteOnceError) as context:
+      z.RE = 80085.0
+    e = context.exception
+    self.assertIs(e.desc, ComplexField.RE)
+    self.assertEqual(e.oldValue, 69.0)
+    self.assertEqual(e.newValue, 80085.0)
+    with self.assertRaises(WriteOnceError) as context:
+      z.IM = 80085.0
+    e = context.exception
+    self.assertIs(e.desc, ComplexField.IM)
+    self.assertEqual(e.oldValue, 420.0)
+    self.assertEqual(e.newValue, 80085.0)
+
+  def test_int_init(self) -> None:
+    """
+    Tests that the ComplexField class can be initialized with integers.
+    """
+    z = ComplexField(69, 420)
+    self.assertAlmostEqual(z.RE, 69.0)
+    self.assertAlmostEqual(z.IM, 420.0)
+    z = ComplexField(z)
+    self.assertAlmostEqual(z.RE, 69.0)
+    self.assertAlmostEqual(z.IM, 420.0)
+    z = ComplexField(69)
+    self.assertAlmostEqual(z.RE, 69.0)
+    self.assertAlmostEqual(z.IM, 0.0)
+    z = ComplexField((69.0, 420.0), )
+    self.assertAlmostEqual(z.RE, 69.0)
+    self.assertAlmostEqual(z.IM, 420.0)

@@ -17,102 +17,12 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class Integer:
-  """
-  Integer wrapper for integer values not used for indexing.
-  """
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Fallback Variables
-  __fallback_value__ = 0
-
-  #  Private Variables
-  __inner_value__ = None
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def _getValue(self) -> int:
-    """
-    Returns the inner value.
-    """
-    return maybe(self.__inner_value__, self.__fallback_value__)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def _setValue(self, value: int) -> None:
-    """
-    Sets the inner value.
-    """
-    if not isinstance(value, int):
-      raise TypeException('value', value, int)
-    self.__inner_value__ = value
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __init__(self, value: int) -> None:
-    """
-    Initializes the Integer wrapper with a value.
-    """
-    try:
-      self._setValue(int(value))
-    except Exception as exception:
-      raise TypeException('value', value, int) from exception
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __int__(self, ) -> int:
-    """
-    Returns the inner value as an integer.
-    """
-    return self._getValue()
-
-  def __getattr__(self, key: str) -> Any:
-    """
-    If key is the name of a method in 'int', return wrapper simulating
-    bound method.
-    """
-    try:
-      intFunc = getattr(int, key)
-    except AttributeError as attributeError:
-      raise attributeError
-    else:
-      selfValue = self._getValue()
-
-      def wrapper(other: int) -> int:
-        """
-        Simulates a bound method of 'int'.
-        """
-        return intFunc(selfValue, other)
-
-      return wrapper
-
-  def __eq__(self, other: Any) -> bool:
-    """
-    Compares the inner value with another value.
-    """
-    if isinstance(other, Integer):
-      return True if self._getValue() == other._getValue() else False
-    if isinstance(other, int):
-      return True if self._getValue() == other else False
-    return False
-
-
 class Speed(KeeNum):
   """
   Speed wrapper for integer values used for indexing.
   """
-  FAST = auto(Integer(1))
-  SLOW = auto(Integer(2))
+  FAST = auto(1)
+  SLOW = auto(2)
 
 
 # Test enum class

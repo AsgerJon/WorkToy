@@ -38,7 +38,7 @@ class Directory:
     return os.path.abspath(os.path.dirname(filePath))
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
-    raise ReadOnlyError(instance, self, value)
+    raise ReadOnlyError(instance, self, value, )
 
   def __delete__(self, instance: Any, **kwargs) -> Never:
-    raise ProtectedError(instance, self)
+    raise ProtectedError(self, instance, )

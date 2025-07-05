@@ -6,14 +6,18 @@ fundamental object in the 'worktoy' library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+import os
 from unittest import TestCase
 
+from worktoy.core import Object, ContextInstance
 from worktoy.core.sentinels import DESC, THIS, OWNER
 from worktoy.mcls import BaseObject
 
 from typing import TYPE_CHECKING
 
-from worktoy.waitaminute.desc import WithoutException
+from worktoy.utilities import Directory
+from worktoy.waitaminute.desc import WithoutException, ReadOnlyError, \
+  ProtectedError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
@@ -62,6 +66,7 @@ class TestObjectUmbrella(TestCase):
     with self.assertRaises(WithoutException) as context:
       _ = Bar.foo1.instance
     e = context.exception
+    self.assertEqual(str(e), repr(e))
     self.assertIs(e.desc, Bar.foo1)
 
   def testBadContext(self) -> None:
@@ -69,9 +74,24 @@ class TestObjectUmbrella(TestCase):
 
     with self.assertRaises(WithoutException) as context:
       Bar.foo1.__enter__()
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
 
   def testGoodContext(self) -> None:
     """Tests context manager"""
     bar = Bar()
     self.assertEqual(bar.foo1, 69)
- 
+
+  def testClassContextInstance(self) -> None:
+    """Tests class context manager with instance"""
+    self.assertIsInstance(Object.instance, ContextInstance)
+
+  def testObjectDirectory(self) -> None:
+    """Tests that Object has a directory."""
+
+    self.assertIsInstance(Object.directory, Directory)
+    self.assertTrue(os.path.exists(Object().directory))
+    with self.assertRaises(ReadOnlyError) as context:
+      Object().directory = 'breh'
+    with self.assertRaises(ProtectedError) as context:
+      del Object().directory

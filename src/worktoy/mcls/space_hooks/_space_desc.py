@@ -23,9 +23,3 @@ class SpaceDesc:
     if instance is None:
       return self
     return getattr(instance, '__space_object__')
-
-  def __set__(self, instance: Any, value: Any) -> None:
-    """
-    Sets the space hook of the 'AbstractSpaceHook' instance.
-    """
-    setattr(instance, '__space_object__', value)

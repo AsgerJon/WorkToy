@@ -50,13 +50,6 @@ class Thing(Object, metaclass=AbstractMetaclass):
     """
     return maybe(cls.__instance_registry__, dict())
 
-  @name.GET
-  def _getName(self) -> str:
-    """
-    Get the name of the instance.
-    """
-    return self.__instance_name__
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -70,40 +63,6 @@ class Thing(Object, metaclass=AbstractMetaclass):
     if key not in existing:
       existing[key] = instance
       cls.__instance_registry__ = existing
-
-  @name.SET
-  def _setName(self, name: str) -> None:
-    """
-    Set the name of the instance.
-    """
-    if not isinstance(name, str):
-      raise TypeException('name', name, str)
-    self.__instance_name__ = name
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __contains__(self, key: str) -> bool:
-    """
-    Check if the instance registry contains the key.
-    """
-    existing = self._getInstances()
-    return True if key in existing else False
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __init__(self, key: str) -> None:
-    self.__instance_name__ = key
-
-  def __str__(self) -> str:
-    """
-    String representation of the Thing instance.
-    """
-    infoSpec = """%s named: '%s'"""
-    return infoSpec % (type(self).__name__, self.name)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

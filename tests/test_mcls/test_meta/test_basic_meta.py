@@ -304,33 +304,6 @@ class TestBasicMeta(TestCase):
     expectedHash = hash(('Bar', 'object', 'BaseMeta'))
     self.assertEqual(hash(Bar), expectedHash)
 
-  def test_eq(self) -> None:
-    """
-    Test that the metaclass supports equality checks.
-    """
-
-    class Foo(metaclass=BaseMeta):
-      """
-      Foo is a class with BaseMeta as its metaclass.
-      """
-
-      @classmethod
-      def __class_eq__(cls, other: Any) -> bool:
-        """
-        Check equality of the class.
-        """
-        if hasattr(other, '__name__'):
-          # If the other object has a __name__ attribute, compare names.
-          return True if cls.__name__ == other.__name__ else False
-        return NotImplemented
-
-    self.assertTrue(Foo == Foo)
-    self.assertFalse(Foo == object)
-    self.assertFalse(Foo != Foo)
-    self.assertTrue(Foo != object)
-    self.assertTrue(Foo != 420)
-    self.assertFalse(Foo == 420)
-
   def test_good_del(self) -> None:
     """
     Test that the metaclass supports deletion.

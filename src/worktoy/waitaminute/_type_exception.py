@@ -6,15 +6,9 @@ rather than type mismatch. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
@@ -34,10 +28,7 @@ class TypeException(TypeError):
     self.varName = name
     self.actualObject = obj
     self.actualType = type(obj)
-    if isinstance(types[0], tuple) and len(types) == 1:
-      self.expectedTypes = types[0]
-    else:
-      self.expectedTypes = types
+    self.expectedTypes = types
 
   def __str__(self) -> str:
     """String representation of the TypeException."""

@@ -10,8 +10,7 @@ from worktoy.utilities import stringList
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS
 from worktoy.desc import AttriBox
-from worktoy.mcls import BaseMeta
-from tests import ComplexBase
+from worktoy.mcls import BaseMeta, BaseObject
 
 from typing import TYPE_CHECKING
 
@@ -19,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
 
 
-class ComplexOverload(ComplexBase, metaclass=BaseMeta):
+class ComplexOverload(BaseObject):
   """Complex number representation. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -60,8 +59,6 @@ class ComplexOverload(ComplexBase, metaclass=BaseMeta):
   @overload()
   def __init__(self, **kwargs) -> None:
     """Initialize the complex number."""
-    if TYPE_CHECKING:  # pragma: no cover
-      assert callable(self.__init__)
     self.__init__(0.0, 0.0)
     realKeys = stringList("""real, re, x""")
     imagKeys = stringList("""imag, im, y""")

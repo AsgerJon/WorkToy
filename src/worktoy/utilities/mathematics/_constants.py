@@ -8,99 +8,92 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import maybe
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Union
+  pass
 
 
-def _exp(z: float) -> float:
-  """Returns the exponential of z using the Taylor series expansion."""
-  if z < 0:
-    return 1 / _exp(-z)
-  term = 1e16  # <--- NEW
-  result = 1e16  # <--- NEW
-  n = 1
-
-  while abs(term) > 1e-48:
-    term *= z / n
-    result += term
-    n += 1
-    if n > 100:
-      break
-  else:
-    return 1e-16 * result
-  raise RecursionError  # pragma: no cover
-
-
-def _e() -> float:
-  """Returns the base of the natural logarithm."""
-  return _exp(1)
-
-
-def _arctan(z: float) -> float:
+def _arctanPi(z: float, shift: float = None, **kwargs) -> float:
   """Using Taylor series to compute arctan to compute pi."""
-  if z < 0:
-    return -_arctan(-z)
-  if z > 1:
-    return _pi() / 2 - _arctan(1 / z)
-
+  if shift is None:
+    shift = 1e12
   term = z
   result = z
   n = 1
 
-  while abs(term) > 1e-32:
+  while abs(term) > kwargs.get('epsilon', 1e-32):
     term *= -z * z
     result += term / (2 * n + 1)
     n += 1
-    if n > 100:
-      break
   else:
-    return 1e12 * result
-  raise RecursionError  # pragma: no cover
+    return shift * result
 
 
 def _pi() -> float:
   """Returns the value of pi."""
-  out = 44 * _arctan(1 / 57)
-  out += 7 * _arctan(1 / 239)
-  out -= 12 * _arctan(1 / 682)
-  return (4 * out + 96 * _arctan(1 / 12943)) * 1e-12
+  out = 44 * _arctanPi(1 / 57)
+  out += 7 * _arctanPi(1 / 239)
+  out -= 12 * _arctanPi(1 / 682)
+  return (4 * out + 96 * _arctanPi(1 / 12943)) * 1e-12
 
 
 pi = _pi()
-e = _e()
 
 
-def _log(x: float) -> Union[float, complex]:
-  if not isinstance(x, (float, int)):
-    raise TypeError
-  if x ** 2 < 1e-16:
-    raise ZeroDivisionError
-  if x < 0:
-    return _log(-x) + pi * 1j
-  if x < 1:
-    return -_log(1 / x)
-  if x > e:
-    return _log(x / e) + 1
-  if (1 - x) ** 2 < 1e-32:
-    return 0
-  term = (x - 1) / x
-  result = term
+def _arctan(x: float) -> float:
+  """Returns the arctangent of x using the Taylor series expansion."""
+  return _arctanPi(x, shift=1, )
+
+
+def _arcTanUnit(x: float) -> float:
+  """
+  Implements a Taylor series expansion for the arctangent function
+  for values near 1.
+  """
+
+  result = pi / 4
+  term = (x - 1) / (x + 1)
+  w = (x - 1) / (x + 1)
   n = 1
-
   while abs(term) > 1e-32:
-    term *= (x - 1) / x
-    if not isinstance(term, (int, float, complex)):
-      break
-    result += term / (n + 1)
+    result += term / (2 * n - 1)
+    term *= -w ** 2
     n += 1
-    if n > 10000:
+    if n > 100:  # pragma: no cover
       break
   else:
     return result
-  raise RecursionError('x: %.24f' % result)  # pragma: no cover
+  raise RecursionError  # pragma: no cover
 
 
-log = _log
-exp = _exp
+def arcTan(x: float) -> float:
+  """
+  Returns the arctangent of a complex number.
+  Uses the Taylor series expansion for values near 1.
+  """
+  if abs(x) < 1e-16:
+    return 0.0
+  if abs(x - 1) < 1e-16:
+    return pi / 4
+  if abs(x - 1) < 0.5:
+    return _arcTanUnit(x)
+  if x < 0:
+    return -arcTan(-x)
+  if x > 1:
+    return pi / 2 - arcTan(1 / x)
+  return _arctan(x)
+
+
+def atan2(y: float, x: float) -> float:
+  """Returns the arctangent of y/x, handling the quadrant correctly."""
+  if x > 0:
+    return arcTan(y / x)
+  if x < 0:
+    if y >= 0:
+      return arcTan(y / x) + pi
+    else:
+      return arcTan(y / x) - pi
+  if y > 0:
+    return pi / 2
+  if y < 0:
+    return -pi / 2
+  return 0.0

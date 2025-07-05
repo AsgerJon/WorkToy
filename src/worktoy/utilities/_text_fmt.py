@@ -80,7 +80,7 @@ def textFmt(*args: Any, **kwargs: Any) -> str:
   #  Replace tokens with temporary symbols
   parts = [a.replace(nLIn, newTemp).replace(tabIn, tabTemp) for a in words]
   #  Join the parts into a single string
-  text = ''.join(str(part) for part in parts)
+  text = ' '.join(str(part) for part in parts)
   #  Replace multiple spaces with a single space
   text = ' '.join(text.split())
   #  Replace newlines and tabs with the appropriate symbols

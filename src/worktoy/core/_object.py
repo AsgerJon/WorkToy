@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe
-from . import ContextInstance, ContextOwner, ContextCaller, MetaType
+from . import ContextInstance, MetaType
 from .sentinels import THIS, DESC, OWNER, DELETED, LOCKED
 from ..waitaminute import TypeException, MissingVariable, \
   attributeErrorFactory
@@ -58,7 +58,6 @@ class Object(object, metaclass=MetaType):
   #  Public Variables
   directory = Directory()
   instance = ContextInstance()
-  owner = ContextOwner()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -236,7 +235,7 @@ class Object(object, metaclass=MetaType):
     'root' attribute.
     """
     from ..waitaminute.desc import ReadOnlyError
-    raise ReadOnlyError(self, value)
+    raise ReadOnlyError(self.instance, self, value)
 
   def __instance_delete__(self, oldVal: Any, *args, **kwargs) -> None:
     """

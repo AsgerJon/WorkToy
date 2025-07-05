@@ -6,6 +6,7 @@ across the 'worktoy' library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._class_body_template import ClassBodyTemplate
 from ._bipartite_matching import bipartiteMatching
 from ._unpack import unpack
 from ._maybe import maybe
@@ -16,6 +17,7 @@ from ._join_words import joinWords
 from ._word_wrap import wordWrap
 
 __all__ = [
+    'ClassBodyTemplate',
     'bipartiteMatching',
     'unpack',
     'maybe',

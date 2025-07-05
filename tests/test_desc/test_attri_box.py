@@ -147,3 +147,24 @@ class TestAttriBox(TestCase):
 
     with self.assertRaises(Yikes):
       Bar.ham = Foo(69 + 420j)
+
+  def test_delete(self) -> None:
+    """Test deleting values."""
+    p = PlanePoint(69, 420)
+    self.assertAlmostEqual(p.x, 69.0)
+    self.assertAlmostEqual(p.y, 420.0)
+    del p.x
+    del p.y
+    with self.assertRaises(AttributeError) as context:
+      _ = p.x
+    with self.assertRaises(AttributeError) as context:
+      _ = p.y
+    p = PlanePoint(0.1337, 0.80085)
+    self.assertAlmostEqual(p.x, 0.1337)
+    self.assertAlmostEqual(p.y, 0.80085)
+    with self.assertRaises(AttributeError) as context:
+      del p.x
+      del p.x
+    with self.assertRaises(AttributeError) as context:
+      del p.y
+      del p.y

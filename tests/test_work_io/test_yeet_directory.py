@@ -58,9 +58,27 @@ class TestYeetDirectory(BaseTest):
     with self.assertRaises(FileNotFoundError):
       yeetDirectory(self.emptyPath)
 
+  def test_yeet_non_existent_non_strict(self) -> None:
+    """
+    Tests that yeetDirectory does not raise an error when the directory does
+    not exist and strict mode is disabled.
+    """
+    self.assertFalse(yeetDirectory(self.emptyPath, strict=False))
+
   def test_yeet_malformed(self) -> None:
     """
     Tests that yeetDirectory raises an error when the path is malformed.
     """
-    with self.assertRaises(PathSyntaxException):
+    with self.assertRaises(PathSyntaxException) as context:
       yeetDirectory('imma dir, trust me bro!')
+    e = context.exception
+    self.assertEqual(repr(e), str(e))
+
+  def test_yeet_nested(self) -> None:
+    """
+    Tests that yeetDirectory can handle nested directories.
+    """
+    self.assertTrue(validateExistingDirectory(self.nestedDir))
+    yeetDirectory(self.nestedDir)
+    with self.assertRaises(FileNotFoundError):
+      validateExistingDirectory(self.nestedDir, )

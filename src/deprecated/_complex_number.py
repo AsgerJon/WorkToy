@@ -29,36 +29,14 @@ class Number:
   __fallback_value__ = 0
   __default_value__ = None
 
-  def getPrivateName(self, ) -> str:
-    """Getter-function for the private name."""
-    return '__pvt_%s' % self.__field_name__
-
   def __set_name__(self, owner: type, name: str) -> None:
     """Set the name of the field and the owner of the field."""
     self.__field_name__ = name
     self.__field_owner__ = owner
 
-  def __get__(self, instance: object, owner: type) -> Any:
-    """Get the value of the field."""
-    if instance is None:
-      return self
-    pvtName = self.getPrivateName()
-    defVal = maybe(self.__default_value__, self.__fallback_value__)
-    return getattr(instance, pvtName, defVal)
-
-  def __set__(self, instance: object, value: Any) -> None:
-    """Set the value of the field."""
-    if instance is None:
-      raise TypeError('Cannot set attribute on class')
-    pvtName = self.getPrivateName()
-    setattr(instance, pvtName, value)
-
   def __init__(self, *args) -> None:
     """Initialize the Number object."""
-    for arg in args:
-      if isinstance(arg, (int, float, complex)):
-        self.__default_value__ = arg
-        break
+    self.__default_value__, *_ = args
 
 
 class ComplexNumber(metaclass=BaseMeta):
@@ -66,14 +44,6 @@ class ComplexNumber(metaclass=BaseMeta):
 
   RE = Number(0.0)
   IM = Number(0.0)
-
-  @classmethod
-  def rand(cls, maxAbs: float = None) -> Self:
-    """Generate a random complex number."""
-    if maxAbs is None:
-      return cls.rand(1.0)
-    out = cls(random(), random())
-    return maxAbs / abs(out) * out
 
   @overload(float, float)
   def __init__(self, x: float, y: float) -> None:

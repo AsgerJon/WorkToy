@@ -19,6 +19,10 @@ if TYPE_CHECKING:  # pragma: no cover
   Meta: TypeAlias = Type[type]
   MetaMeta: TypeAlias = Type[Meta]
 
+from icecream import ic
+
+ic.configureOutput(includeContext=True)
+
 
 class _Space:
   """
@@ -26,13 +30,23 @@ class _Space:
   object class used by the metaclass.
   """
 
-  def __get__(self, mcls: Meta, mmcls: MetaMeta, ) -> Any:
+  __field_name__ = None
+  __field_owner__ = None
+
+  def __get__(self, mcls: type, mmcls: type, ) -> Any:
     if mcls is None:
-      return self
-    if not hasattr(mcls, '__prepare__'):
-      return None
+      if mmcls is self.__field_owner__:
+        return self
+      return self.__get__(mmcls, mmcls)
     testSpace = mcls.__prepare__('test', (), )
     return type(testSpace)
+
+  def __set_name__(self, owner: type, name: str) -> None:
+    """
+    Sets the name of the descriptor in the owner class.
+    """
+    self.__field_name__ = name
+    self.__field_owner__ = owner
 
 
 class MetaType(type):

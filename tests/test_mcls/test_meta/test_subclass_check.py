@@ -72,3 +72,26 @@ class TestSubclassCheck(TestCase):
     """
     self.assertIsSubclass(int, Nummer)
     self.assertIsSubclass(float, Nummer)
+
+  def test_non_strict_self_sub(self) -> None:
+    """issubclass(a, a) should always return True."""
+    self.assertIsSubclass(Nummer, Nummer)
+
+  def test_non_subclass(self) -> None:
+    self.assertIsNotSubclass(str, Nummer)
+
+  def test_deep_subclass(self) -> None:
+    """
+    Tests that a subclass of a subclass is still considered a subclass.
+    """
+
+    class En(Nummer):
+      pass
+
+    class To(En):
+      pass
+
+    class Tre(To):
+      pass
+
+    self.assertIsSubclass(Tre, Nummer)

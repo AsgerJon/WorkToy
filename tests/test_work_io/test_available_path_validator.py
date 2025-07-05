@@ -45,6 +45,8 @@ class TestAvailablePathValidator(BaseTest):
     """Test the available path validator with a malformed path."""
     with self.assertRaises(PathSyntaxException) as context:
       validateAvailablePath('imma a path, trust!')
+    e = context.exception
+    self.assertEqual(repr(e), str(e))
 
   def test_existing_dir_path(self) -> None:
     """Test the available path validator with a directory path."""

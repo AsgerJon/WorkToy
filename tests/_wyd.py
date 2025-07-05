@@ -6,49 +6,8 @@ development of tests.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import sys
-import gc
 
-
-def cleanUserModules() -> None:
-  """
-  Removes modules that start with 'prefix', or '__main__' tests.
-  Keeps builtins and stdlib.
-  """
-
-  yeetNot = {
-      '_wyd',
-      'sys',
-      'gc',
-      'builtins',
-      'types',
-      'abc',
-      'collections',
-      'collections.abc',
-      'importlib',
-      'importlib.util',
-      'warnings',
-      'functools',
-      'typing',
-      'inspect',
-      'dataclasses',
-      'unittest',
-      'typing_extensions',
-      'copy',
-      'contextlib',
-      '__future__',
-      __name__,
-  }
-
-  modList = list(sys.modules)
-  for modName in modList:
-    if modName in yeetNot:
-      continue
-    sys.modules.pop(modName, None)
-  gc.collect()
-
-
-class WYD(TypeError, ValueError):
+class WYD(Exception):
   """
   Custom exception raised if something stupid happens because testing code.
   """

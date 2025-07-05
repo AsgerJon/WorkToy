@@ -47,15 +47,4 @@ class AccessError(DescriptorException, AttributeError):
     info = infoSpec % (descTypeName, ownerName, fieldName)
     return textFmt(info)
 
-  def attributeError(self) -> AttributeError:
-    """
-    Generates an instance of AttributeError identical to the one raised by
-    the interpreter when an object does not have the requested attribute.
-    """
-    infoSpec = """AttributeError: '%s' object has no attribute '%s'"""
-    owner = self.desc.__field_owner__.__name__
-    fieldName = self.desc.__field_name__
-    info = infoSpec % (owner, fieldName)
-    return AttributeError(info)  # type: ignore[return-value]
-
   __repr__ = __str__

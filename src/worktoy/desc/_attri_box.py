@@ -14,6 +14,10 @@ from worktoy.core.sentinels import DELETED
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
+from icecream import ic
+
+ic.configureOutput(includeContext=True, )
+
 
 class AttriBox(Object):
   """
@@ -60,8 +64,6 @@ class AttriBox(Object):
     pvtName = self.getPrivateName()
     if hasattr(instance, pvtName):
       return getattr(instance, pvtName)
-    if kwargs.get('_recursion', False):
-      raise RecursionError
     fieldObject = self._createFieldObject()
     setattr(instance, pvtName, fieldObject)
     return self.__instance_get__(instance, _recursion=True)
@@ -74,7 +76,7 @@ class AttriBox(Object):
     instance = self.getContextInstance()
     fieldType = self.getFieldType()
     pvtName = self.getPrivateName()
-    if isinstance(value, fieldType):
+    if isinstance(value, fieldType) or kwargs.get('_root', False):
       return setattr(instance, pvtName, value)
     setattr(instance, pvtName, fieldType(value))
 
@@ -83,18 +85,8 @@ class AttriBox(Object):
     Deletes the value of the field for the given instance. If the value is
     not set, it does nothing.
     """
-    instance = self.getContextInstance()
-    try:
-      _ = self.__instance_get__(instance, _recursion=True)
-    except Exception as exception:
-      infoSpec = """%s: '%s' object has no attribute '%s'."""
-      eType = 'AttributeError'
-      owner = type(instance).__name__
-      fieldName = getattr(self, '__field_name__', 'object')
-      info = infoSpec % (eType, owner, fieldName)
-      raise AttributeError(info) from exception
-    else:
-      self.__instance_set__(instance, DELETED, **kwargs)
+    self._deletedGuard(self.getContextInstance(), self.__instance_get__())
+    self.__instance_set__(DELETED, _root=True)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

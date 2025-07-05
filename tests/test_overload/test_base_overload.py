@@ -117,7 +117,7 @@ class TestBaseOverload(TestCase):
       foo.bar(69, 420)
     e = context.exception
     self.assertIs(e.dispatchObject, Foo.bar)
-    self.assertEqual(e.receivedArguments, (69, 420))
+    self.assertEqual(e.receivedArguments, (foo, 69, 420))
     self.assertEqual(str(e), repr(e))
     with self.assertRaises(WYD):
       foo.bar(69)

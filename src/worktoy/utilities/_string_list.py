@@ -10,9 +10,10 @@ separator may be specified by passing a non-empty iterable of strings.
 from __future__ import annotations
 
 from . import maybe
+from ..waitaminute import TypeException
 
 
-def stringList(*args: str, **kwargs: str) -> list[str]:
+def stringList(*args: str, **kwargs) -> list[str]:
   """
   Splits input strings using all provided separators in sequence.
 
@@ -20,16 +21,15 @@ def stringList(*args: str, **kwargs: str) -> list[str]:
   separator is applied in turn, so that later separators act on results
   of earlier splits.
   """
-  seps = kwargs.get('seps', None)
-  sep = kwargs.get('sep', None)
-  if sep is None:
-    sep = kwargs.get('separator', None)
-  if seps is not None and sep is not None:
-    raise ValueError("Specify either 'sep' or 'seps', not both.")
-  if seps is None:
-    seps = [maybe(sep, ', '), ]
-  posArgs = [str(arg) for arg in args if str(arg)]
-  for sep in seps:
-    base = sep.join([*posArgs, ])
-    posArgs = base.split(sep)
-  return [s.strip() for s in posArgs if s.strip() != '']
+  sep = kwargs.get('separator', ', ')
+  if isinstance(sep, str):
+    out = []
+    for arg in args:
+      out.extend(arg.split(sep))
+    return [a.strip() for a in out if a.strip()]
+  if isinstance(sep, (list, tuple)):
+    out = [*args, ]
+    for s in sep:
+      out = stringList(*out, separator=s)
+    return [a.strip() for a in out if a.strip()]
+  raise TypeException('separator', sep, str, list, tuple)

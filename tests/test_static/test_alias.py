@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from worktoy.core import Object
 from worktoy.desc import Alias
-from worktoy.waitaminute import AliasException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias
@@ -44,24 +43,6 @@ class TestAlias(TestCase):
     with self.assertRaises(RuntimeError) as context:
       class Foo:
         breh = Alias('lmao')
-    e = context.exception
-    info = 'python: %s: %s' % (sys.version, type(e).__name__)
-    f = None
-    try:
-      f = open('test_alias.log', 'w')
-    except:
-      raise
-    else:
-      f.write(info + '\n')
-    finally:
-      if hasattr(f, 'close'):
-        f.close()
-    if isinstance(e, AliasException):
-      self.assertEqual(e.owner.__name__, 'Foo')  # Cause can't access lol
-      self.assertEqual(e.name, 'breh')
-      self.assertEqual(str(e), repr(e))
-    else:
-      self.assertIsInstance(e, RuntimeError)
 
   def test_good_alias(self) -> None:
     """

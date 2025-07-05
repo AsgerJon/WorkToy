@@ -22,6 +22,8 @@ class BaseTest(TestCase):
   'test_work_io' module.
   """
 
+  __continue_pressed__ = False  # Class variable
+
   @classmethod
   def _createFile(cls, spec: str, index: int) -> Any:
     fileName = spec % index
@@ -74,3 +76,22 @@ class BaseTest(TestCase):
     cls.emptyPath = os.path.join(cls.testDir, 'empty_path')  # empty
     cls.fileSpec = '_test_%d.tmp'
     cls.tempFiles = [cls._createFile(cls.fileSpec, i) for i in range(10)]
+    cls.nestedDir = os.path.join(cls.testDir, 'nested_dir')
+    os.makedirs(cls.nestedDir, exist_ok=True)
+    names = ['foo', 'bar', 'baz']
+    nest = os.path.join(cls.nestedDir, 'nested')
+    os.makedirs(nest, exist_ok=True)
+    for name in names:
+      nestFile = os.path.join(nest, name, '%s_%%d.tmp' % name)
+      nestDir = os.path.join(nest, name)
+      os.makedirs(nestDir, exist_ok=True)
+      for i in range(5):
+        cls._createFile(nestFile, i)
+    if not BaseTest.__continue_pressed__ and False:  # pragma: no cover
+      if os.environ.get('PYTEST_COVERAGE', None) is not None:
+        return
+      try:
+        infoSpec = """Press Any Key to Continue...\n"""
+        _ = input(infoSpec)
+      finally:
+        BaseTest.__continue_pressed__ = True

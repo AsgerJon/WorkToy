@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from types import FunctionType as Func
 
+from ...utilities import textFmt
 from ...waitaminute.meta import QuestionableSyntax, DelException
 
 from . import AbstractSpaceHook
@@ -76,7 +77,7 @@ class NamespaceHook(AbstractSpaceHook):
         '__class_contains__',
         '__class_len__',
         '__class_hash__',
-        '__class_eq__',
+        #  '__class_eq__',  Exhibits highly undefined behaviour!
         '__class_ne__',
         #  '__class_getitem__',  See footnote below
         '__class_setitem__',
@@ -156,8 +157,13 @@ class NamespaceHook(AbstractSpaceHook):
     """
     dunderNames = self._getClassDunders()
     for name in dunderNames:
-      if name not in compiledSpace:
+      try:
+        _ = self.space.deepGetItem(name)
+      except KeyError as keyError:
         compiledSpace[name] = self._defaultDunderFactory(name)
+        continue
+      else:
+        continue
     return compiledSpace
 
   @staticmethod
@@ -174,5 +180,6 @@ class NamespaceHook(AbstractSpaceHook):
 
     setattr(dunderStruck, '__name__', name)
     setattr(dunderStruck, '__qualname__', name)
+    setattr(dunderStruck, '__dunder_struck__', True)
 
     return classmethod(dunderStruck)

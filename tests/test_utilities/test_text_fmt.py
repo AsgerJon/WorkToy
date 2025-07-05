@@ -42,3 +42,16 @@ class TestMonoSpace(TestCase):
     expected = """Left:  Right"""
     actual = textFmt(sample)
     self.assertEqual(expected, actual)
+
+  def test_empty(self) -> None:
+    """Tests if textFmt returns an empty string when given an empty
+    string."""
+    self.assertEqual(textFmt(), '')
+    self.assertEqual(textFmt(''), '')
+
+  def test_non_str(self) -> None:
+    """Tests if textFmt raises a TypeError when given a non-string
+    input."""
+    expected = '69 420 1337'
+    actual = textFmt(69, 420, 1337)
+    self.assertEqual(expected, actual)

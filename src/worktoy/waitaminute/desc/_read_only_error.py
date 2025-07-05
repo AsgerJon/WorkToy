@@ -21,9 +21,9 @@ class ReadOnlyError(DescriptorException):
 
   __slots__ = ('instance', 'desc', 'newVal',)
 
-  def __init__(self, desc: Any, val: Any) -> None:
+  def __init__(self, instance: Any, desc: Any, val: Any, ) -> None:
     """Initialize the ReadOnlyError."""
-    self.instance = desc.__context_instance__
+    self.instance = instance
     self.desc = desc
     self.newVal = val
     DescriptorException.__init__(self, )

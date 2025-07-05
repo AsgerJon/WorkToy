@@ -77,6 +77,7 @@ class TestEZSpace(TestCase):
           Initializes the plane with coordinates.
           """
     e = context.exception
+    self.assertEqual(str(e), repr(e))
     self.assertEqual(e.resName, '__init__')
 
   def test_deviant_class(self) -> None:

@@ -20,10 +20,4 @@ class ContextInstance:
     """Returns the instance of the 'Object' instance."""
     if instance is None:
       return self
-    if TYPE_CHECKING:  # pragma: no cover
-      from worktoy.core import Object
-      assert isinstance(instance, Object)
-    contextInstance = instance.getContextInstance()
-    if contextInstance is None:  # must resolve next level up
-      raise NotImplementedError
-    return contextInstance
+    return instance.getContextInstance()

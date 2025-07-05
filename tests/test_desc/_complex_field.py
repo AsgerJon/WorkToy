@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from math import atan2
 
-from tests import ComplexBase
 from worktoy.desc import Field
 from worktoy.utilities import maybe
 from worktoy.waitaminute import WriteOnceError
 
 from typing import TYPE_CHECKING
-from worktoy.mcls import BaseMeta
+from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS
 
@@ -22,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
-class ComplexField(ComplexBase, metaclass=BaseMeta):
+class ComplexField(BaseObject, metaclass=BaseMeta):
   """Complex number representation. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -67,7 +66,9 @@ class ComplexField(ComplexBase, metaclass=BaseMeta):
   @ARG.GET
   def _getArg(self) -> float:
     """Get the argument of the complex number."""
-    return atan2(self.IM, self.RE)
+    if self:
+      return atan2(self.IM, self.RE)
+    raise ZeroDivisionError
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -145,3 +146,15 @@ class ComplexField(ComplexBase, metaclass=BaseMeta):
     if TYPE_CHECKING:  # pragma: no cover
       assert callable(self.__init__)
     self.__init__(0.0, 0.0)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __bool__(self) -> bool:
+    """Return True if the complex number is non-zero."""
+    return True if self.ABS > 1e-16 else False
+
+  def __abs__(self) -> float:
+    """Return the absolute value of the complex number."""
+    return self.ABS

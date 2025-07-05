@@ -59,6 +59,7 @@ class AbstractNamespace(dict):
   __base_classes__ = None
   __key_args__ = None
   __hash_value__ = None
+  __compiled_space__ = None
 
   #  Public Variables
   reservedNameHook = ReservedNamespaceHook()
@@ -71,6 +72,23 @@ class AbstractNamespace(dict):
   def getBases(self) -> Bases:
     """Returns the base classes of the class under creation."""
     return (*self.__base_classes__,)
+
+  def deepGetItem(self, item: str, **kwargs) -> Any:
+    """
+    Looks up the given key in the self. If not found, then each base class
+    is searched.
+    """
+    for key, val in dict.items(self, ):
+      if key == item:
+        return val
+    for base in self.getBases():
+      try:
+        out = getattr(base, item)
+      except AttributeError:
+        continue
+      else:
+        return out
+    raise KeyError(item)
 
   def _computeHash(self, ) -> int:
     """
@@ -256,6 +274,7 @@ class AbstractNamespace(dict):
     namespace = self.postCompile(namespace)
     namespace['__metaclass__'] = self.getMetaclass()
     namespace['__namespace__'] = self
+    self.__compiled_space__ = namespace
     return namespace
 
   def postCompile(self, namespace: dict) -> dict:

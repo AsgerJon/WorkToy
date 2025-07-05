@@ -6,7 +6,6 @@ class creation flow in 'worktoy.core'.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._duplicate_slot import DuplicateSlot
 from ._illegal_instantiation import IllegalInstantiation
 from ._hook_exception import HookException
 from ._duplicate_hook import DuplicateHook
@@ -16,7 +15,6 @@ from ._questionable_syntax import QuestionableSyntax
 from ._reserved_name import ReservedName
 
 __all__ = [
-    'DuplicateSlot',
     'DuplicateHook',
     'IllegalInstantiation',
     'HookException',

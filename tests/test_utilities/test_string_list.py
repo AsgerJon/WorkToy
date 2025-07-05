@@ -6,6 +6,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.utilities import stringList
+from worktoy.waitaminute import TypeException
 
 
 class TestStringList(TestCase):
@@ -58,3 +59,22 @@ class TestStringList(TestCase):
     expected = ['1, 2, fizz, 4,', ', 6, 7, 8, 9, 10']
     actual = stringList(sample, separator=sep)
     self.assertEqual(expected, actual)
+
+  def test_multiple_separators(self) -> None:
+    """Test the stringList function with multiple separators."""
+    sample = 'a, b; c, d'
+    expected = ['a', 'b', 'c', 'd']
+    actual = stringList(sample, separator=[', ', '; '])
+    self.assertEqual(len(expected), len(actual))
+    for e, a in zip(expected, actual):
+      self.assertEqual(e, a)
+
+  def test_invalid_separator(self) -> None:
+    with self.assertRaises(TypeException) as context:
+      stringList('a, b, c', separator=80085)
+    e = context.exception
+    self.assertEqual(e.varName, 'separator')
+    self.assertEqual(e.actualObject, 80085)
+    self.assertEqual(e.actualType, int)
+    for type_ in [str, list, tuple]:
+      self.assertIn(type_, e.expectedTypes)

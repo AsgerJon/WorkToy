@@ -39,14 +39,14 @@ class Alias(Object):
     """
     Sets the value of the aliased descriptor.
     """
-    realDesc = getattr(type(instance), '__real_name__', )
+    realDesc = getattr(type(instance), self.__real_name__, )
     return realDesc.__set__(instance, value, **kwargs)
 
   def __delete__(self, instance: Any, **kwargs) -> None:
     """
     Deletes the value of the aliased descriptor.
     """
-    realDesc = getattr(type(instance), '__real_name__', )
+    realDesc = getattr(type(instance), self.__real_name__, )
     return realDesc.__delete__(instance, **kwargs)
 
   def __set_name__(self, owner: Type[Object], name: str) -> None:

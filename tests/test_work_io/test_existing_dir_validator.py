@@ -44,6 +44,8 @@ class TestExistingDirValidator(BaseTest):
     """Test the error raised on a malformed directory."""
     with self.assertRaises(PathSyntaxException) as context:
       validateExistingDirectory('imma dir, trust me bro!')
+    e = context.exception
+    self.assertEqual(repr(e), str(e))
 
   def test_file(self, ) -> None:
     """Test the existing directory validator with a file."""

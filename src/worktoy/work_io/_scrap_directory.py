@@ -24,7 +24,7 @@ def scrapDirectory(dirPath: str, **kwargs) -> None:
     if kwargs.get('strict', True):
       raise fileNotFoundError
   except NotADirectoryError as notADirectoryError:
-    infoSpec = """The path received by 'yeetDirectory': '%s' is not a 
+    infoSpec = """The path received by 'scrapDirectory': '%s' is not a 
     directory!"""
     info = textFmt(infoSpec % dirPath)
     raise NotADirectoryError(info) from notADirectoryError

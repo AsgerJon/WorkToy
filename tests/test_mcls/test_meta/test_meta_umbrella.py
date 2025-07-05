@@ -8,27 +8,14 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.mcls import AbstractMetaclass
+from worktoy.core import MetaType
+from worktoy.core._meta_type import _Space  # NOQA
+from worktoy.mcls import AbstractMetaclass, AbstractNamespace
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
-
-
-class Foo(metaclass=AbstractMetaclass):
-  """Foo implements neither __class_eq__ nor __class_ne__."""
-  pass
-
-
-class Bar(Foo):
-  """Bar does implement __class_ne__, but not __class_eq__."""
-
-  @classmethod
-  def __class_ne__(cls, other: Any) -> bool:
-    if other is Foo:
-      return True
-    return NotImplemented
 
 
 class TestMetaUmbrella(TestCase):
@@ -44,13 +31,11 @@ class TestMetaUmbrella(TestCase):
     sys.modules.pop(__name__, None)
     gc.collect()
 
-  def testClassEquality(self) -> None:
+  def testNamespaceDescriptor(self) -> None:
     """
-    Test that classes without __class_eq__ or __class_ne__ fall back to
-    default equality checks.
+    Test ad-hoc metaclass functionality.
     """
-    self.assertTrue(Foo == Foo)
-    self.assertFalse(Foo != Foo)
-    self.assertFalse(Foo == 69, 420)
-    self.assertTrue(Bar != Foo)
-    self.assertFalse(Bar != Bar)
+    self.assertIsInstance(MetaType.namespaceClass, _Space)
+    self.assertIs(AbstractMetaclass.namespaceClass, AbstractNamespace)
+
+    class Foo: pass

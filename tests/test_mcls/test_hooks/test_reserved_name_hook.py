@@ -45,6 +45,7 @@ class TestReservedNameHook(TestCase):
         """A class to test reserved names."""
         __module__ = """I'm the module, trust me bro!"""
     e = context.exception
+    self.assertEqual(str(e), repr(e))
     self.assertEqual(e.resName, '__module__')
 
   def test_reserved_name_descriptor_class(self) -> None:
@@ -65,6 +66,7 @@ class TestReservedNameHook(TestCase):
     with self.assertRaises(ReadOnlyError) as context:
       foo.names = 'derp'
     e = context.exception
+    self.assertEqual(str(e), repr(e))
     self.assertIs(e.instance, foo)
     self.assertIs(e.desc, Foo.names)
     self.assertEqual(e.newVal, 'derp')
@@ -72,6 +74,7 @@ class TestReservedNameHook(TestCase):
     with self.assertRaises(ProtectedError) as context:
       del foo.names
     e = context.exception
+    self.assertEqual(str(e), repr(e))
     self.assertIs(e.instance, foo)
     self.assertIs(e.desc, Foo.names)
 

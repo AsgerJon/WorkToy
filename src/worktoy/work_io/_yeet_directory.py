@@ -44,7 +44,6 @@ def yeetDirectory(dirPath: str, **kwargs) -> None:
     itemPath = os.path.join(dirPath, item)
     if os.path.isdir(itemPath):
       yeetDirectory(itemPath, strict=False)
-      os.rmdir(itemPath)
       continue
     os.remove(itemPath)
   else:

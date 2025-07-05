@@ -43,6 +43,8 @@ class TestExistingFileValidator(BaseTest):
     """Test the error raised on a malformed file."""
     with self.assertRaises(PathSyntaxException) as context:
       validateExistingFile('imma file, trust me bro!')
+    e = context.exception
+    self.assertEqual(repr(e), str(e))
 
   def test_is_dir(self) -> None:
     """Test the existing file validator with a directory."""
