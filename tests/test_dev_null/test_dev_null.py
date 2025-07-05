@@ -38,7 +38,7 @@ class TestDevNull(TestCase):
         raise WYD(e)
 
     with self.assertRaises(WYD):
-      raise WYD("""breh""")
+      raise WYD("""lmao""")
 
   def test_class_body_template(self) -> None:
     """Tests that the class body template exists."""
