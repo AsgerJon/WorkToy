@@ -12,15 +12,18 @@ import sys
 
 from unittest import TestCase
 
+from . import BaseTest
 from tests import WYD
+from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import validateExistingFile
 
 
-class TestExistingFileValidator(TestCase):
+class TestExistingFileValidator(BaseTest):
   """TestExistingFileValidator tests the existing file validator."""
 
   @classmethod
   def tearDownClass(cls) -> None:
+    super().tearDownClass()
     import sys
     import gc
     sys.modules.pop(__name__, None)
@@ -28,48 +31,29 @@ class TestExistingFileValidator(TestCase):
 
   def test_good_file(self) -> None:
     """Test the existing file validator."""
-    thisFile = os.path.normpath(os.path.abspath(__file__))
-    validatedFile = validateExistingFile(thisFile)
-    self.assertEqual(validatedFile, thisFile)
+    for tempFile in self.tempFiles:
+      self.assertEqual(validateExistingFile(tempFile), tempFile)
 
-  def test_no_file(self, ) -> None:
-    """Test the existing file validator with a non-existing file."""
-    here = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
-    nameSpec = lambda n: os.path.join(here, '__no_dir_%06d.sus' % n)
-    c = 0
-    while os.path.exists(nameSpec(c)):
-      c += 1
-      if c > 100:
-        raise WYD(RecursionError)
-    else:
-      with self.assertRaises(FileNotFoundError) as context:
-        validateExistingFile(nameSpec(c))
-      e = context.exception
-      self.assertIsInstance(e, FileNotFoundError)
-      self.assertIn('No file exists at:', str(e))
+  def test_bad_file(self) -> None:
+    """Test the existing file validator with a bad file."""
+    with self.assertRaises(FileNotFoundError) as context:
+      validateExistingFile(self.emptyPath)
 
-  def test_no_file_strict(self) -> None:
-    """Test the existing file validator with a non-existing file in strict
-    mode."""
-    here = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
-    nameSpec = lambda n: os.path.join(here, '__no_dir_%06d.sus' % n)
-    c = 0
-    while os.path.exists(nameSpec(c)):
-      c += 1
-      if c > 100:
-        raise WYD(RecursionError)
-    else:
-      validatedFile = validateExistingFile(nameSpec(c), strict=False)
-      validatedDir = validateExistingFile(here, strict=False)
-      with self.assertRaises(FileNotFoundError) as context:
-        validateExistingFile(nameSpec(c), )
-      with self.assertRaises(IsADirectoryError) as context:
-        validateExistingFile(here)
+  def test_malformed_file(self) -> None:
+    """Test the error raised on a malformed file."""
+    with self.assertRaises(PathSyntaxException) as context:
+      validateExistingFile('imma file, trust me bro!')
 
-  def test_is_directory(self) -> None:
+  def test_is_dir(self) -> None:
     """Test the existing file validator with a directory."""
-    with self.assertRaises(IsADirectoryError) as context:
-      validateExistingFile(os.path.dirname(__file__))
-    e = context.exception
-    self.assertIsInstance(e, IsADirectoryError)
-    self.assertIn('is not a file', str(e))
+    for dirPath in (self.tempDir, self.testDir, self.emptyDir):
+      with self.assertRaises(IsADirectoryError) as context:
+        validateExistingFile(dirPath)
+      e = context.exception
+      self.assertIn('is not a file', str(e))
+
+  def test_is_dir_not_strict(self) -> None:
+    """Test the existing file validator with a directory in non-strict
+    mode."""
+    for dirPath in (self.tempDir, self.testDir, self.emptyDir):
+      self.assertFalse(validateExistingFile(dirPath, strict=False), )

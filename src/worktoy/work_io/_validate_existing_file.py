@@ -9,6 +9,8 @@ from worktoy.utilities import textFmt
 
 from typing import TYPE_CHECKING
 
+from worktoy.waitaminute import PathSyntaxException
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Optional, Union, Self, Callable, TypeAlias
 
@@ -27,6 +29,8 @@ def validateExistingFile(file: str, **kwargs) -> str:
     FileNotFoundError: If the file does not exist.
     IsADirectoryError: If the path is a directory.
   """
+  if not os.path.isabs(file):
+    raise PathSyntaxException(file)
   if not os.path.exists(file):
     if not kwargs.get('strict', True):
       return ''
@@ -39,4 +43,4 @@ def validateExistingFile(file: str, **kwargs) -> str:
     infoSpec = """The path '%s' is not a file!"""
     info = textFmt(infoSpec % file)
     raise IsADirectoryError(info)
-  return os.path.normpath(file)
+  return str(os.path.normpath(file))

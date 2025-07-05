@@ -10,6 +10,8 @@ from worktoy.utilities import textFmt
 
 from typing import TYPE_CHECKING
 
+from worktoy.waitaminute import PathSyntaxException
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Optional, Union, Self, Callable, TypeAlias
 
@@ -28,6 +30,8 @@ def validateExistingDirectory(directory: str, **kwargs) -> str:
     FileNotFoundError: If the directory does not exist.
     NotADirectoryError: If the path is not a directory.
   """
+  if not os.path.isabs(directory):
+    raise PathSyntaxException(directory)
   if not os.path.exists(directory):
     if not kwargs.get('strict', True):
       return ''

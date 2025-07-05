@@ -41,4 +41,4 @@ def validateAvailablePath(path: Path, **kwargs) -> str:
     infoSpec = """The path '%s' already exists!"""
     info = textFmt(infoSpec % path)
     raise FileExistsError(info)
-  return os.path.normpath(path)
+  return str(os.path.normpath(path))

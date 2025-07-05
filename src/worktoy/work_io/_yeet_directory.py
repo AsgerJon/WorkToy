@@ -1,5 +1,7 @@
-"""The 'yeetDirectory' function removes a directory with all contents.
-Effectively the same as: 'rm -rf <directory>'."""
+"""
+The 'yeetDirectory' function removes a directory with all contents.
+Effectively the same as: 'rm -rf <directory>'.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
@@ -10,6 +12,8 @@ from ..utilities import textFmt
 from . import validateExistingDirectory
 
 from typing import TYPE_CHECKING
+
+from ..waitaminute import PathSyntaxException
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -23,23 +27,25 @@ def yeetDirectory(dirPath: str, **kwargs) -> None:
   Args:
     dirPath (str): The path to the directory to remove.
 
-  Returns:
-    str: The path of the removed directory.
-
   Raises:
     FileNotFoundError: If the directory does not exist.
     NotADirectoryError: If the path is not a directory.
     PathSyntaxException: If the path is not absolute.
   """
-  try:
-    validateExistingDirectory(dirPath)
-  except FileNotFoundError as fileNotFoundError:
-    if kwargs.get('strict', True):
-      raise fileNotFoundError
-  except NotADirectoryError as notADirectoryError:
-    infoSpec = """The path received by 'yeetDirectory': '%s' is not a 
-    directory!"""
+  if not os.path.isabs(dirPath):
+    raise PathSyntaxException(dirPath)
+  if not os.path.exists(dirPath):
+    if not kwargs.get('strict', True):
+      return
+    infoSpec = """No directory exists at: '%s'!"""
     info = textFmt(infoSpec % dirPath)
-    raise NotADirectoryError(info) from notADirectoryError
+    raise FileNotFoundError(info)
+  for item in os.listdir(dirPath):
+    itemPath = os.path.join(dirPath, item)
+    if os.path.isdir(itemPath):
+      yeetDirectory(itemPath, strict=False)
+      os.rmdir(itemPath)
+      continue
+    os.remove(itemPath)
   else:
     os.rmdir(dirPath)

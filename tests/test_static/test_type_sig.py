@@ -61,26 +61,9 @@ class Dispatcher:
     if self.__field_name__ == '__init__':
       return None
     owner, castMeMaybe = [*args, None][:2]
-    if self.__field_owner__ is not owner:
-      infoSpec = """Field owner mismatch! Expected: '%s', got: '%s'!"""
-      fieldOwner = self.__field_owner__.__name__
-      susOwner = owner.__name__
-      info = infoSpec % (fieldOwner, susOwner)
-      raise WYD(info)
-    if isinstance(castMeMaybe, self.__field_owner__):
-      return castMeMaybe
-    if isinstance(castMeMaybe, CastMeNot):
-      raise TypeError
     if isinstance(castMeMaybe, Castable) or castMeMaybe is None:
       return object.__new__(self.__field_owner__, )
-    if isinstance(castMeMaybe, TrollCastMe):
-      return castMeMaybe
-    castables = (CastMeNot, Castable, TrollCastMe, type(None))
-    infoSpec = """Only try casting one of: (%s), not: '%s'!"""
-    castStr = ', '.join([type_.__name__ for type_ in castables])
-    castNot = type(castMeMaybe).__name__
-    info = infoSpec % (castStr, castNot)
-    raise WYD(info)
+    return castMeMaybe
 
 
 class HasOverloadDispatcher(Dispatcher):

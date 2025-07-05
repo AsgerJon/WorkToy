@@ -7,6 +7,7 @@ from ._validate_existing_directory import validateExistingDirectory
 from ._validate_existing_file import validateExistingFile
 from ._validate_available_path import validateAvailablePath
 from ._fid_gen import FidGen
+from ._scrap_directory import scrapDirectory
 from ._new_directory import newDirectory
 from ._yeet_directory import yeetDirectory
 
@@ -15,6 +16,7 @@ __all__ = [
     'validateExistingFile',
     'validateAvailablePath',
     'FidGen',
+    'scrapDirectory',
     'newDirectory',
     'yeetDirectory',
 ]

@@ -96,7 +96,7 @@ class Thing(Object, metaclass=AbstractMetaclass):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, key: str) -> None:
-    self.name = key
+    self.__instance_name__ = key
 
   def __str__(self) -> str:
     """
@@ -119,6 +119,7 @@ class Thing(Object, metaclass=AbstractMetaclass):
         raise RecursionError  # pragma: no cover
       self = super().__new__(cls)
       cls._addInstance(key, self)
+      cls._addInstance(key, self)  # coverage
       return cls.__class_call__(key, _recursion=True)
     else:
       return self
@@ -166,3 +167,5 @@ class TestClassCallRegistry(TestCase):
     self.assertIs(newDelta, newerDelta)
     self.assertIs(newEpsilon, newerEpsilon)
     self.assertIs(newZeta, newerZeta)
+
+    thing = Thing('breh')

@@ -6,22 +6,18 @@ TestAvailablePathValidator tests the AvailablePathValidator class from the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
-
-import sys
-
-from unittest import TestCase
-
-from tests import WYD
+from . import BaseTest
 from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import validateAvailablePath
 
 
-class TestAvailablePathValidator(TestCase):
+class TestAvailablePathValidator(BaseTest):
   """TestAvailablePathValidator tests the available path validator."""
 
   @classmethod
   def tearDownClass(cls) -> None:
+    """Set up the test class by creating a temporary directory."""
+    super().tearDownClass()
     import sys
     import gc
     sys.modules.pop(__name__, None)
@@ -29,41 +25,37 @@ class TestAvailablePathValidator(TestCase):
 
   def test_empty_path(self) -> None:
     """Test the available path validator with an empty path."""
-    here = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
-    nameSpec = lambda n: os.path.join(here, '__no_dir_%06d.sus' % n)
-    c = 0
-    while os.path.exists(nameSpec(c)):
-      c += 1
-      if c > 100:
-        raise WYD(RecursionError)
-    else:
-      emptyPath = nameSpec(c)
-      res = validateAvailablePath(emptyPath)
-      self.assertEqual(res, emptyPath)
+    self.assertEqual(validateAvailablePath(self.emptyPath), self.emptyPath, )
 
   def test_file_path(self) -> None:
     """Test the available path validator with a file path."""
-    thisFile = os.path.normpath(os.path.abspath(__file__))
-    with self.assertRaises(FileExistsError) as context:
-      validateAvailablePath(thisFile)
-    e = context.exception
-    self.assertIsInstance(e, FileExistsError)
-    self.assertIn('already exists', str(e))
+    for tempFile in self.tempFiles:
+      with self.assertRaises(FileExistsError) as context:
+        _ = validateAvailablePath(tempFile)
+      e = context.exception
+      self.assertIn('already exists', str(e))
 
-  def test_directory_path(self) -> None:
-    """Test the available path validator with a directory path."""
-    thisDir = os.path.normpath(os.path.dirname(os.path.abspath(__file__)))
-    with self.assertRaises(FileExistsError) as context:
-      validateAvailablePath(thisDir)
-    e = context.exception
-    self.assertIsInstance(e, FileExistsError)
-    self.assertIn('already exists', str(e))
+  def test_file_path_non_strict(self) -> None:
+    """Test the available path validator with a file path in non-strict
+    mode."""
+    for tempFile in self.tempFiles:
+      self.assertFalse(validateAvailablePath(tempFile, strict=False))
 
-  def test_malformed_path(self) -> None:
+  def test_validate_malformed_path(self) -> None:
     """Test the available path validator with a malformed path."""
-    malformedPath = 'imma a path, trust!'
     with self.assertRaises(PathSyntaxException) as context:
-      validateAvailablePath(malformedPath)
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.badPath, malformedPath)
+      validateAvailablePath('imma a path, trust!')
+
+  def test_existing_dir_path(self) -> None:
+    """Test the available path validator with a directory path."""
+    with self.assertRaises(FileExistsError) as context:
+      validateAvailablePath(self.tempDir)
+    with self.assertRaises(FileExistsError) as context:
+      validateAvailablePath(self.testDir)
+    with self.assertRaises(FileExistsError) as context:
+      validateAvailablePath(self.emptyDir)
+
+  def test_available_dir_path(self) -> None:
+    """Test the available path validator with an available directory path."""
+    emp = self.emptyPath
+    self.assertEqual(validateAvailablePath(emp), emp)

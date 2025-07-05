@@ -5,16 +5,9 @@ None."""
 from __future__ import annotations
 
 from ..utilities import textFmt
+from typing import TYPE_CHECKING
 
-try:
-  from typing import TYPE_CHECKING
-except ImportError:
-  try:
-    from typing_extensions import TYPE_CHECKING
-  except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Optional, Self
 
 
@@ -26,40 +19,15 @@ class VariableNotNone(Exception):
 
   def __init__(self, *args) -> None:
     """Initialize the VariableNotNone object."""
-    _name, _value = None, None
-    for arg in args:
-      if isinstance(arg, str):
-        if _name is None:
-          _name = arg
-          continue
-      if _value is None:
-        _value = arg
-    if _name is not None:
-      self.name = _name
-    if _value is not None:
-      self.value = _value
+    self.name, self.value, *_ = [*args, None, None]
     Exception.__init__(self, )
 
   def __str__(self, ) -> str:
     """Get the info spec."""
-    if self.name is None and self.value is None:
-      infoSpec = """Unexpected value at name expected to be None!%s%s"""
-      name, valueStr = '', ''
-    elif self.name is None:
-      infoSpec = """Unexpected value: '%s' at name expected to be 
-      None!%s"""
-      name = ''
-      valueStr = textFmt(str(self.value), )
-    elif self.value is None:
-      infoSpec = """Unexpected value at name '%s' expected to be 
-      None!"""
-      name = self.name
-      valueStr = ''
-    else:
-      infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
-      None!"""
-      valueStr = textFmt(str(self.value), )
-      name = self.name
+    infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
+    None!"""
+    valueStr = textFmt(str(self.value), )
+    name = self.name
     return textFmt(infoSpec % (valueStr, name), )
 
   __repr__ = __str__

@@ -14,7 +14,7 @@ from worktoy.utilities import maybe
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Iterator
 
 
 class Christiania(metaclass=AbstractMetaclass):
@@ -55,60 +55,15 @@ class MutableEq(metaclass=AbstractMetaclass):
     return maybe(cls.__inner_store__, dict())
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @classmethod
-  def _storeItem(cls, key: Any, value: Any) -> None:
-    """
-    Sets an item in the inner store dictionary.
-    """
-    existing = cls._getInnerStore()
-    existing[key] = value
-    cls.__inner_store__ = existing
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def __class_iter__(cls, ) -> type:  # Self
+  def __class_iter__(cls, ) -> Iterator[str]:  # Self
     """
     Prepares iteration state and returns class as iterator.
     """
-    keys = [k for k, v in cls._getInnerStore().items()]
-    cls.__iter_contents__ = [*reversed(keys), ]
-    return cls
-
-  @classmethod
-  def __class_next__(cls) -> Any:
-    """
-    Manually produces next item or raises StopIteration.
-    """
-    if cls.__iter_contents__:
-      return cls.__iter_contents__.pop()
-    cls.__iter_contents__ = None
-    raise StopIteration
-
-  @classmethod
-  def __class_eq__(cls, otherCls: Any) -> bool:
-    """
-    Returns True if the other class is also MutableEq.
-    """
-    otherItems = None
-    try:
-      otherItems = list(otherCls)
-    except TypeError as typeError:
-      if 'is not iterable' in str(typeError):
-        return False
-      raise
-    else:
-      if len(cls) != len(otherItems):
-        return False
-      for self, other in zip(cls, otherItems):
-        if self != other:
-          return False
-      return True
+    yield from cls._getInnerStore().keys()
 
   @classmethod
   def __class_len__(cls) -> int:
@@ -116,25 +71,6 @@ class MutableEq(metaclass=AbstractMetaclass):
     Returns the length of the inner store dictionary.
     """
     return len(cls._getInnerStore())
-
-  @classmethod
-  def __class_bool__(cls) -> bool:
-    """
-    Returns True if the inner store dictionary is not empty.
-    """
-    for _ in cls:
-      return True
-    return False
-
-  @classmethod
-  def __class_contains__(cls, key: str, ) -> bool:
-    """
-    Returns True if the key is in the inner store dictionary.
-    """
-    for k in cls:
-      if k == key:
-        return True
-    return False
 
 
 class TupleEq(metaclass=AbstractMetaclass):

@@ -207,25 +207,20 @@ class TestField(TestCase):
 
     setattr(Foo.bar, '__set_keys__', [69, 420])
     setattr(Foo.bar, '__delete_keys__', [1337, 80085])
-    setattr(Foo.eggs, '__set_keys__', 'imma key, trust!')
-    setattr(Foo.eggs, '__delete_keys__', 'imma key, trust!')
+    setattr(Foo.eggs, '__set_keys__', ('imma key, trust!',))
+    setattr(Foo.eggs, '__delete_keys__', ('imma key, trust!',))
     foo = Foo()
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(TypeError) as context:
       foo.bar = 80085
-
     exception = context.exception
-    self.assertEqual(exception.varName, 'key')
-    self.assertEqual(exception.actualObject, 69)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedTypes[0], str)
+    expected = """attribute name must be string, not 'int'"""
+    self.assertIn(expected, str(exception))
 
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(AttributeError) as context:
       foo.eggs = 8008135
     exception = context.exception
-    self.assertEqual(exception.varName, '__set_keys__')
-    self.assertEqual(exception.actualObject, 'imma key, trust!')
-    self.assertIs(exception.actualType, str)
-    self.assertIs(exception.expectedTypes[0], tuple)
+    expected = """has no attribute"""
+    self.assertIn(expected, str(exception))
 
     with self.assertRaises(AttributeError) as context:
       del foo.bar
@@ -343,7 +338,6 @@ class TestField(TestCase):
       @good.SET
       def _setGood(self, value: str) -> None:
         """Set the good field."""
-        pass
 
       @derp.GET
       def _getDerp(self) -> str:
@@ -369,29 +363,70 @@ class TestField(TestCase):
     self.assertEqual(pig.derp, 'derp')
     self.assertEqual(pig.extraBad, 'yikes!')
 
-    class Ham(Pig):
-      """Ham is a class that inherits from Pig."""
-      pass
+  def test_no_setter(self) -> None:
+    """Tests a class without setters at a descriptor"""
 
-    setattr(Ham, Pig.bad.__set_keys__[0], None)
-    setattr(Ham, Pig.derp.__set_keys__[0], 420)  # Wrong type
-    ham = Ham()
-    ham.good = 'good'  # Covers 'Field._getSet'
-    with self.assertRaises(AttributeError) as context:
-      ham.bad = 69
+    class SetMeNot(Object):
+      """SetMeNot is a class with a Field descriptor without a setter."""
+      __foo_val__ = 69
+      foo = Field()
+
+      def __init__(self, val: int = None) -> None:
+        """Initialize the SetMeNot object."""
+        self.__foo_val__ = maybe(val, self.__foo_val__)
+
+      @foo.GET
+      def _getFoo(self) -> int:
+        return self.__foo_val__
+
+    setMeNot = SetMeNot()
+    self.assertEqual(setMeNot.foo, 69)
+    with self.assertRaises(ReadOnlyError) as context:
+      setMeNot.foo = 420
     e = context.exception
-    c = e.__cause__
-    self.assertIsInstance(c, MissingVariable)
-    self.assertEqual(c.varName, Pig.bad.__set_keys__[0])
-    self.assertIs(c.varType, Func)
+    self.assertIs(e.instance, setMeNot)
+    self.assertIs(e.desc, SetMeNot.foo)
+    self.assertEqual(e.newVal, 420)
+    with self.assertRaises(ProtectedError) as context:
+      del setMeNot.foo
+    e = context.exception
+    self.assertIs(e.instance, setMeNot)
+    self.assertIs(e.desc, SetMeNot.foo)
 
-    with self.assertRaises(TypeException) as context:
-      ham.derp = 80085
+  def test_deleter(self) -> None:
+    """Tests a deleter that it works and raises when no value to delete"""
+
+    class YeetMeNot(Object):
+      """YeetMeNot is a class with a Field descriptor with a deleter."""
+      __foo_val__ = 69
+      foo = Field()
+
+      def __init__(self, val: int = None) -> None:
+        """Initialize the YeetMeNot object."""
+        self.__foo_val__ = maybe(val, self.__foo_val__)
+
+      @foo.GET
+      def _getFoo(self) -> int:
+        return self.__foo_val__
+
+      @foo.DELETE
+      def _deleteFoo(self) -> None:
+        """Delete the foo field."""
+        setattr(self, '__foo_val__', DELETED)
+
+    yeetMeNot = YeetMeNot()
+    self.assertEqual(yeetMeNot.foo, 69)
+    del yeetMeNot.foo
+    with self.assertRaises(AttributeError) as context:
+      _ = yeetMeNot.foo
     exception = context.exception
-    self.assertEqual(exception.varName, 'setterFunc')
-    self.assertEqual(exception.actualObject, 420)
-    self.assertIs(exception.actualType, int)
-    self.assertIs(exception.expectedTypes[0], Func)
+    expected = 'has no attribute'
+    self.assertIn(expected, str(exception))
+    with self.assertRaises(AttributeError) as context:
+      del yeetMeNot.foo
+    exception = context.exception
+    expected = 'has no attribute'
+    self.assertIn(expected, str(exception))
 
   def test_bad_setter_type(self) -> None:
     """

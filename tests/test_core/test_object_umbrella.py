@@ -22,23 +22,12 @@ if TYPE_CHECKING:  # pragma: no cover
 class Foo(BaseObject):
   def __instance_get__(self, *args, **kwargs) -> Any:
     pvtName = self.getPrivateName()
-    print('%s Instance: %s' % (self.__field_name__, self.instance))
-    print('%s Owner: %s' % (self.__field_name__, self.owner))
     return getattr(self.instance, pvtName, 69)
 
 
 class Bar(BaseObject):
   foo1 = Foo(THIS, OWNER, DESC)
   foo2 = Foo(tom=THIS, dick=OWNER, harry=DESC)
-
-  def __instance_get__(self, *args, **kwargs) -> Any:
-    print('%s Instance: %s' % (self.__field_name__, self.instance))
-    print('%s Owner: %s' % (self.__field_name__, self.owner))
-    return self.foo1
-
-
-class Ham(BaseObject):
-  bar1 = Bar()
 
 
 class TestObjectUmbrella(TestCase):
@@ -74,3 +63,15 @@ class TestObjectUmbrella(TestCase):
       _ = Bar.foo1.instance
     e = context.exception
     self.assertIs(e.desc, Bar.foo1)
+
+  def testBadContext(self) -> None:
+    """Tests context manager"""
+
+    with self.assertRaises(WithoutException) as context:
+      Bar.foo1.__enter__()
+
+  def testGoodContext(self) -> None:
+    """Tests context manager"""
+    bar = Bar()
+    self.assertEqual(bar.foo1, 69)
+ 

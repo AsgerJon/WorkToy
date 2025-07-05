@@ -38,3 +38,19 @@ class TestJoinWords(TestCase):
     sample = 'Tom', 'Dick', 'Harry'
     expected = 'Tom, Dick and Harry'
     self.assertEqual(joinWords(*sample), expected)
+
+  def test_list(self) -> None:
+    """Tests a list"""
+    sampleTuple = 'Tom', 'Dick', 'Harry'
+    sampleList = [*sampleTuple, ]
+    tupleRes = joinWords(sampleTuple, )
+    listRes = joinWords(sampleList, )
+    self.assertEqual(tupleRes, listRes)
+
+  def test_not_str(self, ) -> None:
+    """Tests passing an object not of str and not of tuple or list"""
+    intWord = 80085
+    floatWord = .1337
+    complexWord = 69 + 420j
+    for word in [intWord, floatWord, complexWord]:
+      self.assertEqual(str(word), joinWords(word))

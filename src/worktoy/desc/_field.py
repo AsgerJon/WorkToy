@@ -22,6 +22,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, Iterator
 
+from icecream import ic
+
+ic.configureOutput(includeContext=True)
+
 
 class Field(Object):
   """
@@ -59,48 +63,17 @@ class Field(Object):
       raise AccessError(self)
     raise TypeException('__get_key__', self.__get_key__, str)
 
-  def _getSetterKeys(self, newValue: Any = None) -> Iterator[str]:
+  def _getSetterKeys(self, newValue: Any = None) -> tuple[str, ...]:
     """Iterates over setter keys. The 'newValue' is used only to compose
     error message. """
-    if isinstance(self.__set_keys__, (tuple, list)):
-      key = None
-      for key in self.__set_keys__:
-        if not isinstance(key, str):
-          raise TypeException('key', key, str)
-        yield key
-      else:
-        if key is None:  # Happens only with empty key list
-          raise ReadOnlyError(self, newValue)
-        return
-    elif self.__set_keys__ is None:
-      return
-    else:
-      raise TypeException('__set_keys__', self.__set_keys__, tuple, list)
+    return (*[k for k in maybe(self.__set_keys__, ()) if k],)
 
-  def _getDeleterKeys(self) -> Iterator[str]:
-    if isinstance(self.__delete_keys__, (tuple, list)):
-      key = None
-      for key in maybe(self.__delete_keys__, ()):
-        if not isinstance(key, str):
-          raise TypeException('key', key, str)
-        yield key
-      else:
-        if key is None:
-          return
-    elif self.__delete_keys__ is None:
-      instance = self.getContextInstance()
-      owner = self.getContextOwner()
-      ownerName = owner.__name__
-      getterKey = self._getGetterKey()
-      try:
-        oldVal = getattr(instance, getterKey, )
-      except AttributeError as attributeError0:
-        attributeError = attributeErrorFactory(ownerName, getterKey)
-        raise attributeError from attributeError0
-      else:
-        raise ProtectedError(instance, self, oldVal)
-    else:
-      raise TypeException('__del_keys__', self.__delete_keys__, tuple, list)
+  def _getDeleterKeys(self) -> tuple[str, ...]:
+    """
+    Returns the keys of the deleter methods. If no deleter methods are
+    registered, returns an empty tuple.
+    """
+    return (*[k for k in maybe(self.__delete_keys__, ()) if k],)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -147,31 +120,28 @@ class Field(Object):
     """
     getterKey = self._getGetterKey()
     getterFunc = getattr(self.getContextInstance(), getterKey, )
-    if getterFunc is None:
-      raise MissingVariable(getterKey, Func, )
-    if not callable(getterFunc):
-      raise TypeException('getterFunc', getterFunc, Func, )
     return getterFunc(*args, **kwargs)
 
   def __instance_set__(self, val: Any, *args, **kwargs) -> None:
     """
     All decorated setters are retrieved in the same fashion as the getter.
     """
+    setterKeys = self._getSetterKeys(val)
+    if not setterKeys:
+      raise ReadOnlyError(self, val, )
     instance = self.getContextInstance()
-    for key in self._getSetterKeys(val):
-      setterFunc = getattr(instance, key, )
-      if setterFunc is None:
-        owner = self.getContextOwner()
-        ownerName = owner.__name__
-        raise MissingVariable(key, Func, )
-      if not callable(setterFunc):
-        raise TypeException('setterFunc', setterFunc, Func, )
+    setterFuncs = [getattr(instance, k) for k in setterKeys]
+    setterFuncs = [f for f in setterFuncs if callable(f)]
+    for setterFunc in setterFuncs:
       setterFunc(val, *args, **kwargs)
 
   def __instance_delete__(self, *args, **kwargs) -> None:
     """
     All decorated deleters are retrieved in the same fashion as the getter.
     """
+    deleterKeys = self._getDeleterKeys()
     instance = self.getContextInstance()
-    for key in self._getDeleterKeys():
+    if not deleterKeys:
+      raise ProtectedError(instance, self, )
+    for key in deleterKeys:
       getattr(instance, key, )(**kwargs)

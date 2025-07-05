@@ -133,13 +133,6 @@ class Object(object, metaclass=MetaType):
     from ..waitaminute.desc import WithoutException
     raise WithoutException(self)
 
-  def getContextOwner(self) -> type:
-    """Returns the contextual owner or raises 'WithoutException'"""
-    if self.hasContext():
-      return self.__context_owner__
-    from ..waitaminute.desc import WithoutException
-    raise WithoutException(self)
-
   def hasContext(self) -> bool:
     """
     Returns True if the descriptor has a context, i.e. if it has been
@@ -149,8 +142,6 @@ class Object(object, metaclass=MetaType):
     ins = self.__context_instance__
     if own is LOCKED or own is None:
       return False
-    if ins is LOCKED or ins is None:
-      raise RuntimeError
     return True
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -218,11 +209,6 @@ class Object(object, metaclass=MetaType):
     """
     Must be used with along with 'exitContext'.
     """
-    if not self.hasContext():
-      from ..waitaminute.desc import WithoutException
-      if exception is None:
-        raise WithoutException(self)
-      raise WithoutException(self, ) from exception
     try:
       if exception is not None:
         raise exception
@@ -293,42 +279,12 @@ class Object(object, metaclass=MetaType):
       raise AttributeError(info)
     return value
 
-  def resolveRoot(self, ) -> Any:
-    """
-    Resolves the root of the descriptor. This is used to access the
-    root instance of the descriptor.
-    """
-    return self.dro()[-1]
-
-  def dro(self, ) -> tuple[Self, ...]:
-    """
-    Returns the descriptor resolution order (DRO) of the descriptor.
-    """
-    if self.hasContext():
-      contextInstance = self.getContextInstance()
-      if contextInstance is None or contextInstance is LOCKED:
-        from ..waitaminute.desc import WithoutException
-        raise WithoutException(self)
-      try:
-        out = (self,) + contextInstance.dro()
-      except AttributeError as attributeError:
-        if """has no attribute 'dro'""" in str(attributeError):
-          return self, contextInstance
-        raise attributeError
-      else:
-        return out
-    return self,
-
   def getPrivateName(self, ) -> str:
     """
     Returns the name chain of the descriptor. This is used to access
     the name of the descriptor in the context of the instance.
     """
-    name, *fields = self.dro()
-    name = name.__field_name__
-    names = [getattr(f, '__name__', '') for f in fields]
-    names = [n for n in names if n]
-    fieldName = '%s%s' % (name, ''.join([str.capitalize(f) for f in names]))
+    fieldName = self.__field_name__
     pattern = re.compile(r'(?<!^)(?=[A-Z])')
     return '__%s__' % pattern.sub('_', fieldName).lower()
 
