@@ -6,12 +6,12 @@ objects used in custom metaclasses.
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ..utilities import textFmt
 from ..waitaminute.meta import HookException, DuplicateHook
 from . import Base
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator

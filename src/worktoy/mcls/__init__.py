@@ -20,7 +20,6 @@ Finally, the metaclass returns the created class object."""
 from __future__ import annotations
 
 from . import space_hooks
-
 from ._nuthin import newBuild as _newBuild  # Private
 from ._type_names import Spaces, Base, Space, Types
 from ._abstract_namespace import AbstractNamespace

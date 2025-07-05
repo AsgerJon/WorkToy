@@ -5,10 +5,10 @@ BaseObject is the standard entry point for using the worktoy library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import BaseMeta
 from ..core import Object
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

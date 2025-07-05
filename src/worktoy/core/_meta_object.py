@@ -34,12 +34,12 @@ class inheritance, but fundamentally different.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import MetaType
-
 from typing import TYPE_CHECKING
 
+from . import MetaType
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeVar, Type, Any
+  pass
 
 
 class MetaObject(MetaType, metaclass=MetaType):

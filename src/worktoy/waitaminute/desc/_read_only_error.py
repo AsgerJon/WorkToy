@@ -5,10 +5,10 @@ that the attribute is read-only. """
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import DescriptorException
 from ...utilities import textFmt
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

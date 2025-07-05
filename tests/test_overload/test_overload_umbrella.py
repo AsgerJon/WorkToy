@@ -17,10 +17,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias, Any
 
-from icecream import ic
-
-ic.configureOutput(includeContext=True)
-
 
 class Foo(BaseObject):
   """Foo implements neither __overload_eq__ nor __overload_ne__."""

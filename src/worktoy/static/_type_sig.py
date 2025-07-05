@@ -13,7 +13,6 @@ from worktoy.waitaminute.dispatch import CastMismatch, FlexMismatch
 from worktoy.waitaminute import UnpackException
 from worktoy.core.sentinels import THIS
 from worktoy.utilities import unpack, bipartiteMatching
-
 from . import PreClass, typeCast
 
 if TYPE_CHECKING:  # pragma: no cover

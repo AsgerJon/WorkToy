@@ -10,7 +10,6 @@ from types import FunctionType as Func
 from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..desc import Field
 from ..static import TypeSig
 from ..utilities import textFmt
 from ..waitaminute import attributeErrorFactory
@@ -26,10 +25,6 @@ if TYPE_CHECKING:  # pragma: no cover
   TypesMap: TypeAlias = dict[Types, Callable]
   CastMap: TypeAlias = dict[Types, Callable]
   CallMap: TypeAlias = dict[TypeSig, Callable]
-
-from icecream import ic  # type: ignore[import]
-
-ic.configureOutput(includeContext=True, )
 
 
 class Dispatch(Object):

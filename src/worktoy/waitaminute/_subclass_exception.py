@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Any, Callable, Never
+  pass
 
 
 class SubclassException(TypeError):

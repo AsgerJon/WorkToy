@@ -7,12 +7,9 @@ Effectively the same as: 'rm -rf <directory>'.
 from __future__ import annotations
 
 import os
-
-from ..utilities import textFmt
-from . import validateExistingDirectory
-
 from typing import TYPE_CHECKING
 
+from ..utilities import textFmt
 from ..waitaminute import PathSyntaxException
 
 if TYPE_CHECKING:  # pragma: no cover

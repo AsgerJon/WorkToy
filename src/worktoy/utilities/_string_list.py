@@ -9,7 +9,6 @@ separator may be specified by passing a non-empty iterable of strings.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import maybe
 from ..waitaminute import TypeException
 
 

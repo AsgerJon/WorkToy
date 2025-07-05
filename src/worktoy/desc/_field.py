@@ -9,22 +9,15 @@ method and the descriptor uses the overridden method instead.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import FunctionType as Func
+from typing import TYPE_CHECKING
 
 from ..core import Object
 from ..utilities import maybe
-from ..waitaminute import MissingVariable, TypeException
-from ..waitaminute import attributeErrorFactory
+from ..waitaminute import TypeException
 from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Iterator
-
-from icecream import ic
-
-ic.configureOutput(includeContext=True)
+  from typing import Any, Callable
 
 
 class Field(Object):

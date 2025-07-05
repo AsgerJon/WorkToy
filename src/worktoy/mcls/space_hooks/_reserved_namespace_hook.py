@@ -5,11 +5,10 @@ ReservedNameHook protects reserved names from being overridden.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...waitaminute.meta import ReservedName
-
-from . import AbstractSpaceHook, ReservedNames
-
 from typing import TYPE_CHECKING
+
+from ...waitaminute.meta import ReservedName
+from . import AbstractSpaceHook, ReservedNames
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

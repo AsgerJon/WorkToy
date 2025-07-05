@@ -7,10 +7,10 @@ class. This is necessary to prevent metaclass conflicts.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Mapping
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeVar, TypeAlias, Union, Self
+  from typing import Any, Type, TypeAlias, Union, Self
 
   Bases: TypeAlias = tuple[type, ...]
   Namespace: TypeAlias = dict[str, Any]
@@ -18,10 +18,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
   Meta: TypeAlias = Type[type]
   MetaMeta: TypeAlias = Type[Meta]
-
-from icecream import ic
-
-ic.configureOutput(includeContext=True)
 
 
 class _Space:

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Never
+  pass
 
 
 class IllegalInstantiation(TypeError):

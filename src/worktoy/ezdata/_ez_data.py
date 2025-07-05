@@ -5,9 +5,9 @@ EZData leverages the 'worktoy' library to provide a dataclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import EZMeta
-
 from typing import TYPE_CHECKING
+
+from . import EZMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

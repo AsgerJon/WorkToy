@@ -5,14 +5,10 @@ NameHook filters named used in the namespace system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import FunctionType as Func
-
-from ...utilities import textFmt
-from ...waitaminute.meta import QuestionableSyntax, DelException
-
-from . import AbstractSpaceHook
-
 from typing import TYPE_CHECKING
+
+from ...waitaminute.meta import QuestionableSyntax, DelException
+from . import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias

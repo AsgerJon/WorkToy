@@ -23,12 +23,12 @@ which signals the 'Desc.__get__' method to raise 'AttributeError'.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import Sentinel
-
 from typing import TYPE_CHECKING
 
+from . import Sentinel
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeVar, Self, Never
+  pass
 
 
 class DELETED(Sentinel):

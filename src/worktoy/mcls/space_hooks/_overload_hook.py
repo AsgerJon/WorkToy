@@ -7,10 +7,10 @@ correct method based on the arguments passed to it.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ...static import Dispatch
 from . import AbstractSpaceHook
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

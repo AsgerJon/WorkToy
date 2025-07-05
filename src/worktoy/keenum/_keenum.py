@@ -7,8 +7,9 @@ the class here is a placeholder of sorts.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import KeeMeta
 from typing import TYPE_CHECKING
+
+from . import KeeMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Iterator, Any

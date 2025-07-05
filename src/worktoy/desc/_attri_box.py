@@ -14,10 +14,6 @@ from worktoy.core.sentinels import DELETED
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
-from icecream import ic
-
-ic.configureOutput(includeContext=True, )
-
 
 class AttriBox(Object):
   """

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any
 
 
 class DuplicateKeeNum(Exception):

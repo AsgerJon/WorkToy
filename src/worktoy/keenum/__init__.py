@@ -6,7 +6,6 @@ The 'worktoy.keenum' module provides the enumerating KeeNum class.
 from __future__ import annotations
 
 from ._keenum_base import _KeeNumBase  # Private
-
 from ._auto import auto
 from ._auto import _AutoMember
 from ._kee_hook import KeeSpaceHook

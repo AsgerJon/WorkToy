@@ -6,9 +6,9 @@ object has failed to cast a collection of arguments to itself.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import HashMismatch
-
 from typing import TYPE_CHECKING
+
+from . import HashMismatch
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

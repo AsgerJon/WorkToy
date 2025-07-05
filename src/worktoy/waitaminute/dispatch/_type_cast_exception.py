@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, TypeAlias, Union
+  from typing import Any
 
 
 class TypeCastException(TypeError):

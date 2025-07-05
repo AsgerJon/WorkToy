@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Union, Iterator
+  from typing import Any, TypeAlias
 
   SlotInts: TypeAlias = dict[Any, tuple[int, ...]]
   SlotMap: TypeAlias = dict[Any, int]

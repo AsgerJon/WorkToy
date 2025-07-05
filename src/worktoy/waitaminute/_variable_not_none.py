@@ -4,11 +4,12 @@ None."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..utilities import textFmt
 from typing import TYPE_CHECKING
 
+from ..utilities import textFmt
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Optional, Self
+  pass
 
 
 class VariableNotNone(Exception):

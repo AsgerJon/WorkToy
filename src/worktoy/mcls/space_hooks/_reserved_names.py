@@ -6,13 +6,13 @@ automatically by the interpreter.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ...utilities import textFmt
 from ...core import Object
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterable, Iterator, Self
+  from typing import Any, Iterator
 
 
 class ReservedNames(Object):

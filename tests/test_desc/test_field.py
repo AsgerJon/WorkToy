@@ -22,10 +22,6 @@ from worktoy.waitaminute import WriteOnceError
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
-from icecream import ic
-
-ic.configureOutput(includeContext=True)
-
 
 class R2(metaclass=BaseMeta):
   """R2 is a class that represents a point in 2D space."""

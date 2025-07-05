@@ -5,12 +5,12 @@ The _KeeNumBase class provides a base for the KeeNum class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ..desc import Field
 from ..core import Object
 from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute.meta import IllegalInstantiation
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

@@ -4,15 +4,13 @@
 from __future__ import annotations
 
 import os
-
-from worktoy.utilities import textFmt
-
 from typing import TYPE_CHECKING
 
+from worktoy.utilities import textFmt
 from worktoy.waitaminute import PathSyntaxException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Optional, Union, Self, Callable, TypeAlias
+  pass
 
 
 def validateExistingFile(file: str, **kwargs) -> str:

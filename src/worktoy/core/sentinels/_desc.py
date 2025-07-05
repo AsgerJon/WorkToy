@@ -6,12 +6,12 @@ descriptor flow along with THIS and OWNER.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import Sentinel
-
 from typing import TYPE_CHECKING
 
+from . import Sentinel
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeVar
+  pass
 
 
 class DESC(Sentinel):

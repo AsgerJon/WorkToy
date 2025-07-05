@@ -5,14 +5,14 @@ KeeMeta provides the metaclass creating the KeeNum enumeration class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ..mcls import AbstractMetaclass
 from ..utilities import textFmt
 from ..waitaminute import TypeException
 from ..waitaminute.meta import IllegalInstantiation
 from ..waitaminute.keenum import EmptyKeeNumError
 from . import KeeSpace, _KeeNumBase
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias, Any, Iterator

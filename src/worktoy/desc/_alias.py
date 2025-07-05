@@ -6,12 +6,12 @@ one inherited from a parent.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..core import Object
-
 from typing import TYPE_CHECKING
 
+from ..core import Object
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeVar, Type
+  from typing import Any, Type
 
 
 class Alias(Object):

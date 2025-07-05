@@ -5,10 +5,10 @@ KeeSpace provides the namespace object for the KeeMeta metaclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ..mcls import AbstractNamespace
 from . import KeeSpaceHook  # Private to module
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

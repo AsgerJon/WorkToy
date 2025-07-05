@@ -14,10 +14,6 @@ from worktoy.mcls import AbstractMetaclass
 if TYPE_CHECKING:  # pragma: no cover
   pass
 
-from icecream import ic
-
-ic.configureOutput(includeContext=True)
-
 
 class Christiania(metaclass=AbstractMetaclass):
   """

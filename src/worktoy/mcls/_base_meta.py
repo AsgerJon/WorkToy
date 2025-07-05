@@ -6,11 +6,11 @@ protocol central to the worktoy library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import AbstractMetaclass
 from . import BaseSpace as BSpace
 from . import Types
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

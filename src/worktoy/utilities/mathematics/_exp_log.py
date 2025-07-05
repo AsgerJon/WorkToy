@@ -5,9 +5,9 @@ Provides the exponential function and natural logarithm
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import cos, sin, pi, atan2
-
 from typing import TYPE_CHECKING
+
+from . import cos, sin, atan2
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Union

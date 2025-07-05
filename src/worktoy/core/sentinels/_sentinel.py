@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from worktoy.utilities import maybe
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeVar, Self, Never
+  from typing import Self, Never
 
   Bases = tuple[type, ...]
 

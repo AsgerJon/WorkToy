@@ -12,9 +12,9 @@ type to create the enumeration member value.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..core import Object
-
 from typing import TYPE_CHECKING
+
+from ..core import Object
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

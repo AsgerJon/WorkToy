@@ -5,23 +5,17 @@ AbstractMetaclass provides the baseclass for custom metaclasses.
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import FunctionType as Func
 from typing import TYPE_CHECKING
 
 from . import Base
 from . import AbstractNamespace as ASpace
 from ..core import MetaType
 from ..utilities import maybe
-from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias
+  from typing import Any
 else:
   pass
-
-from icecream import ic
-
-ic.configureOutput(includeContext=True)
 
 
 class AbstractMetaclass(MetaType, metaclass=MetaType):

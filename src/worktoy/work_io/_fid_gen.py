@@ -5,6 +5,7 @@ directory, it returns the next available filename of the given format."""
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from ..desc import Field
 from ..mcls import BaseObject
@@ -12,8 +13,6 @@ from ..utilities import maybe, stringList
 from ..static import overload
 from ..waitaminute import TypeException
 from . import validateExistingDirectory, validateAvailablePath
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Optional, Any, TypeAlias

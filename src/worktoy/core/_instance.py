@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeVar, Callable
+  from typing import Any
 
 
 class ContextInstance:

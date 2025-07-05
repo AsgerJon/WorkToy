@@ -6,11 +6,11 @@ objects having the hash and name of the future class ahead of class creation.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ...static import PreClass, TypeSig
 from ...waitaminute import TypeException
 from . import AbstractSpaceHook
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

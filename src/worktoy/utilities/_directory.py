@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import sys
 import os
-
 from typing import TYPE_CHECKING
 
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError

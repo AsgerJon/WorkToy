@@ -5,10 +5,9 @@ path. """
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from . import validateAvailablePath
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Union, TypeAlias, LiteralString

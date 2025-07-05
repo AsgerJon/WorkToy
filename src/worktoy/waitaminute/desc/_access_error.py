@@ -14,7 +14,7 @@ from . import DescriptorException
 from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type
+  pass
 
 
 class AccessError(DescriptorException, AttributeError):
