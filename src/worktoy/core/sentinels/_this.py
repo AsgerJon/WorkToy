@@ -1,6 +1,6 @@
 """
 THIS is the sentinel object representing the class currently under
-construction. Similar to the
+construction.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
