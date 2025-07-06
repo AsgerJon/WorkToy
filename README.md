@@ -1,4 +1,10 @@
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy) [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy) 
+[![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
+
+
+
 
 # worktoy v0.99.xx
 
