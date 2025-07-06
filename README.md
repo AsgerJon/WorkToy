@@ -1,4 +1,5 @@
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy) [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy) [![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/) [![PyPI](https://img.shields.io/pypi/pyversions/worktoy)](https://pypi.org/project/worktoy/) 
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy) [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy) [![PyPI](https://img.shields.io/pypi/pyversions/worktoy)](https://pypi.org/project/worktoy/) 
+[![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/)
 
 
 
