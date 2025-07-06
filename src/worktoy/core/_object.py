@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe
 from . import ContextInstance, MetaType
-from .sentinels import THIS, DESC, OWNER, DELETED, LOCKED
+from .sentinels import THIS, DESC, OWNER, DELETED
 from ..waitaminute import TypeException, MissingVariable, \
   attributeErrorFactory
 from ..waitaminute.desc import AccessError
@@ -139,7 +139,7 @@ class Object(object, metaclass=MetaType):
     """
     own = self.__context_owner__
     ins = self.__context_instance__
-    if own is LOCKED or own is None:
+    if own is None:
       return False
     return True
 
@@ -151,8 +151,6 @@ class Object(object, metaclass=MetaType):
     object.__init__(self)
     self.__pos_args__ = args
     self.__key_args__ = kwargs
-    self.__context_instance__ = LOCKED
-    self.__context_owner__ = LOCKED
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -260,8 +258,8 @@ class Object(object, metaclass=MetaType):
     Exits the context of the descriptor. The method restores the
     descriptor to its previous state.
     """
-    self.__context_instance__ = LOCKED
-    self.__context_owner__ = LOCKED
+    self.__context_instance__ = None
+    self.__context_owner__ = None
     return self
 
   def _deletedGuard(self, instance: Any, value: Any) -> Any:
