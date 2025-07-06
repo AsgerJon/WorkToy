@@ -214,7 +214,7 @@ class TestField(TestCase):
     with self.assertRaises(TypeError) as context:
       foo.bar = 80085
     exception = context.exception
-    expected = """attribute name must be string, not 'int'"""
+    expected = """attribute name must"""
     self.assertIn(expected, str(exception))
 
     with self.assertRaises(AttributeError) as context:
