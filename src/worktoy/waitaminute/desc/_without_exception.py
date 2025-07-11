@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import maybe
-
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
@@ -31,6 +29,7 @@ class WithoutException(RuntimeError):
     fbOwner = 'NO-OWNER'
     ownerName = getattr(self.desc.getFieldOwner(), '__name__', fbOwner)
     fbName = 'NO-FIELD'
+    from worktoy.utilities import maybe
     fieldName = maybe(self.desc.getFieldName(), fbName)
     info = infoSpec % (ownerName, fieldName)
     return info

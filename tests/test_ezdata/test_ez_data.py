@@ -5,12 +5,13 @@ TestEZData - Test the EZData class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
-
-from worktoy.ezdata import EZData, EZMeta
-from worktoy.utilities import maybe
+from . import EZTest
+from worktoy.ezdata import EZData
 
 from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+  pass
 
 
 class Point2D(EZData):
@@ -26,15 +27,8 @@ class Point3D(Point2D):
   z = 1337
 
 
-class TestEZData(TestCase):
+class TestEZData(EZTest):
   """TestEZData - Test the EZData class."""
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def setUp(self) -> None:
     """Set up the test case."""

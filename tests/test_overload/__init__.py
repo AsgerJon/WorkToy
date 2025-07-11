@@ -6,8 +6,10 @@ functionality as a whole.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._overload_test import OverloadTest
 from ._complex_overload import ComplexOverload
 
 ___all__ = [
     'ComplexOverload',  # Example class shared by tests
+    'OverloadTest',
 ]

@@ -53,6 +53,18 @@ class AbstractSpaceHook(Object):
   Subclasses may override any of the following methods to participate in
   different stages of the namespace lifecycle. All are optional.
 
+  - `setAnnotationPhase(self, key, value) -> bool`
+    Called when the namespace encounters an annotation. Please note that
+    with 'from __future__ import annotations' enabled, this method
+    may be called with a string naming an as yet unavailable type.
+    However, if the type annotated is available in the scope of the class
+    body, the resolved type is passed. For this reason, there is no point
+    in implementing such a resolver in a hook.
+
+    It is not possible to augment the annotations dictionary in this
+    phase. Thus, the return value is ignored. Raise an exception if
+    necessary.
+
   - `setItemPhase(self, key, value, oldValue) -> bool`
     Called just before a name is set in the namespace.
     Returning True blocks the default behavior.
@@ -68,6 +80,10 @@ class AbstractSpaceHook(Object):
   - `postCompilePhase(self, compiled: dict) -> dict`
     Called immediately before the finalized namespace is handed off to the
     metaclass. Can be used for final transformations or validation.
+
+  - `newClassPhase(self, cls) -> Meta`
+    Called after the metaclass has created
+    the new class object, but before returning it.
 
   ## Descriptor Behavior
 
@@ -108,6 +124,13 @@ class AbstractSpaceHook(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def setAnnotationPhase(self, key: str, value: Any, ) -> Any:
+    """Hook for setAnnotation. This is called when the namespace encounters
+    an annotation. The default implementation does nothing and returns the
+    value unchanged. If you want to block the annotation, raise an exception.
+    """
+
   def getItemPhase(self, key: str, value: Any, ) -> bool:
     """Hook for getItem. This is called before the __getitem__ method of
     the namespace object is called. The default implementation does nothing
@@ -130,7 +153,7 @@ class AbstractSpaceHook(Object):
     and returns the contents unchanged. """
     return compiledSpace
 
-  def newClassPhase(self, cls: Meta, ) -> Meta:
+  def newClassPhase(self, cls: Meta, ) -> Meta:  # NOQA
     """
     Final phase invoked by the metaclass after it has created the new
     class object, but before returning it. This phase occurs before the

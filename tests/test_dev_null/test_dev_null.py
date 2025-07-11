@@ -3,24 +3,14 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
-from unittest import TestCase
+from tests import BaseTest
 
 from tests import WYD
 from worktoy.utilities import ClassBodyTemplate
 
-Func = type('_', (type,), dict(__instancecheck__=callable))('_', (), {})
 
-
-class TestDevNull(TestCase):
+class TestDevNull(BaseTest):
   """TestDevNull tests that stuff exists. """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def setUp(self, ) -> None:
     """Set up the test case."""

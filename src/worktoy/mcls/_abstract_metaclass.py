@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING
 from . import Base
 from . import AbstractNamespace as ASpace
 from ..core import MetaType
+from ..core.sentinels import METACALL
 from ..utilities import maybe
+from ..waitaminute import attributeErrorFactory
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -211,6 +213,10 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     this metaclass does look for '__class_eq__' on the class, but falls
     back to __class_hash__.
 
+  - __class_init__(...)
+    Allows classes to define custom initialization logic that runs after
+    the class body has executed.
+
   The following hooks allows dictionary-like access to the class.
 
   - __class_getitem__(cls, item: Any) -> Any
@@ -260,11 +266,6 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   Finally, the following hooks are logically meaningless:
 
-  - __class_init__(...)
-    There is no sensible point at which this would be called. Class
-    objects are constructed by metaclasses, and no outer context exists
-    in which to simulate an “init” phase.
-
   - __class_new__(...)
     Similar to above, class creation is driven by the metaclass’s
     __new__, and there is no standard mechanism for a class to override
@@ -278,6 +279,8 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   - __class_getattribute__(...)
     [REDACTED: Cognito Hazard]
   """
+
+  __abstract_metaclass__ = True
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Base, **kwargs) -> ASpace:
@@ -301,70 +304,58 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
-    """The __init__ method is invoked to initialize the class."""
-    try:
-      cls.__class_init__(name, bases, space, **kwargs)
-    except NotImplementedError:
-      pass
-    cls._notifySubclassHook(cls, *bases)
+    """
+    This method is invoked before the class returns from the
+    '__build_class__'. While this is the intended place to initialize,
+    it is unclear exactly what is available at this point. And since the
+    parent implementation ('type.__init__') is a no-op, introducing
+    functionality here has resulted in undefined behavior.
+
+    The recommendation is to leave this method as a no-op and then
+    implement the convenient '__post_init__' method, which is guaranteed
+    to be invoked only after the builtin '__build_class__' has finished
+    with the class.
+    """
+    pass
 
   def __call__(cls, *args, **kwargs) -> Any:
-    try:
-      out = cls.__class_call__(*args, **kwargs)
-    except NotImplementedError:
-      return MetaType.__call__(cls, *args, **kwargs)  # NOQA
-    else:
-      return out
+    if cls.__class_call__ is METACALL:
+      return MetaType.__call__(cls, *args, **kwargs)
+    return cls.__class_call__(*args, **kwargs)
 
   def __instancecheck__(cls, obj: Any) -> bool:
-    try:
-      out = cls.__class_instancecheck__(obj)
-    except NotImplementedError:
-      return MetaType.__instancecheck__(cls, obj)  # NOQA
-    else:
-      return True if out else False
+    if cls.__class_instancecheck__ is METACALL:
+      return MetaType.__instancecheck__(cls, obj)
+    return cls.__class_instancecheck__(obj)
 
   def __subclasscheck__(cls, subclass: type) -> bool:
-    try:
-      out = cls.__class_subclasscheck__(subclass)
-    except NotImplementedError:
-      return MetaType.__subclasscheck__(cls, subclass)  # NOQA
-    else:
-      return True if out else False
+    if cls.__class_subclasscheck__ is METACALL:
+      return MetaType.__subclasscheck__(cls, subclass)
+    return cls.__class_subclasscheck__(subclass)
 
   def __str__(cls) -> str:
-    try:
-      out = cls.__class_str__()
-    except NotImplementedError:
+    if cls.__class_str__ is METACALL:
       return MetaType.__str__(cls)  # NOQA
-    else:
-      return out
+    return cls.__class_str__()
 
   def __repr__(cls) -> str:
-    try:
-      out = cls.__class_repr__()
-    except NotImplementedError:
-      return MetaType.__repr__(cls)  # NOQA
-    else:
-      return out
+    if cls.__class_repr__ is METACALL:
+      return MetaType.__repr__(cls)
+    return cls.__class_repr__()
 
   def __iter__(cls) -> Any:
-    try:
-      out = cls.__class_iter__()
-    except NotImplementedError:
+    if cls.__class_iter__ is METACALL:
       infoSpec = """type object '%s' is not iterable"""
       info = infoSpec % type(cls).__name__
       raise TypeError(info)
-    else:
-      return out
+    return cls.__class_iter__()
 
   def __next__(cls) -> Any:
-    try:
-      out = cls.__class_next__()
-    except NotImplementedError:
-      return MetaType.__next__(cls)  # NOQA
-    else:
-      return out
+    if cls.__class_next__ is METACALL:
+      infoSpec = """type object '%s' is not an iterator"""
+      info = infoSpec % type(cls).__name__
+      raise TypeError(info)
+    return cls.__class_next__()
 
   def __bool__(cls) -> bool:
     """
@@ -375,62 +366,44 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     they rolled them back, one party shouting out:
     "Why do you hoard?" and the other: "Why do you waste?"
     """
-    try:
-      out = cls.__class_bool__()
-    except NotImplementedError:
-      try:
-        out = len(cls)  # NOQA
-      except Exception as exception:
+    if cls.__class_bool__ is not METACALL:
+      return cls.__class_bool__()
+    if cls.__class_len__ is not METACALL:
+      return True if cls.__class_len__() else False
+    if cls.__class_iter__ is not METACALL:
+      for _ in cls:
         return True
-      else:
-        return True if out else False
-    else:
-      return True if out else False
+      return False
+    return True  # Default behavior if no custom bool or len defined
 
   def __contains__(cls, item: Any) -> bool:
-    try:
-      out = cls.__class_contains__(item)
-    except NotImplementedError:
-      out = None
-      try:
-        for clsItem in cls:
-          if clsItem == item:
-            out = True
-            break
-        else:
-          out = False
-      except Exception as exception:
-        infoSpec = """argument of type '%s' is not iterable"""
-        info = infoSpec % type(cls).__name__
-        raise TypeError(info) from exception
-      else:
-        return True if out else False
-    else:
-      return True if out else False
+    if cls.__class_contains__ is not METACALL:
+      return cls.__class_contains__(item)
+    if cls.__class_iter__ is not METACALL:
+      for clsItem in cls:
+        if clsItem == item:
+          return True
+      return False
+    infoSpec = """argument of type '%s' is not iterable"""
+    info = infoSpec % type(cls).__name__
+    raise TypeError(info)
 
   def __len__(cls) -> int:
-    try:
-      out = cls.__class_len__()
-    except NotImplementedError:
-      try:
-        countingWithAsger = sum([1 for derp in cls])
-      except Exception as exception:  # NOQA
-        return len(MetaType)  # NOQA
-      else:
-        return countingWithAsger
-    else:
-      return out
+    if cls.__class_len__ is not METACALL:
+      return cls.__class_len__()
+    if cls.__class_iter__ is not METACALL:
+      return sum(1 for _ in cls)  # Count items in the iterator
+    infoSpec = """type object '%s' has no len()"""
+    info = infoSpec % type(cls).__name__
+    raise TypeError(info)
 
   def __hash__(cls) -> int:
-    try:
-      out = cls.__class_hash__()
-    except NotImplementedError:
+    if cls.__class_hash__ is METACALL:
       baseNames = [b.__name__ for b in cls.__bases__]
       metaName = type(cls).__name__
       nameTuple = (cls.__name__, *baseNames, metaName)
       return hash(nameTuple)  # NOQA
-    else:
-      return out
+    return cls.__class_hash__()
 
   #  DO NOT REMOVE THE FOLLOWING COMMENTED OUT METHODS
   # def __eq__(cls, other: Any) -> bool:
@@ -438,7 +411,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   #
   #  def __ne__(cls, other: Any) -> bool:
   #    """See above"""
-
+  #
   #  DO NOT REMOVE THIS COMMENTED OUT METHOD  (not related to above)
   # def __getitem__(cls, item: Any) -> Any:
   #   """
@@ -452,20 +425,18 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   #   override unnecessary and potentially conflicting.
 
   def __setitem__(cls, item: Any, value: Any) -> None:
-    try:
-      out = cls.__class_setitem__(item, value)
-    except NotImplementedError:
-      return MetaType.__setitem__(cls, item, value)  # NOQA
-    else:
-      return None
+    if cls.__class_setitem__ is METACALL:
+      infoSpec = """type object '%s' is not subscriptable"""
+      info = infoSpec % cls.__name__
+      raise TypeError(info)
+    return cls.__class_setitem__(item, value)
 
   def __delitem__(cls, item: Any) -> None:
-    try:
-      out = cls.__class_delitem__(item)
-    except NotImplementedError:
-      return MetaType.__delitem__(cls, item)  # NOQA
-    else:
-      return None
+    if cls.__class_delitem__ is METACALL:
+      infoSpec = """type object '%s' does not support item deletion"""
+      info = infoSpec % cls.__name__
+      raise TypeError(info)
+    return cls.__class_delitem__(item)
 
   def __getattr__(cls, name: str) -> Any:
     """Do not use the 'dot' operator to access class attributes during
@@ -473,29 +444,19 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     used to avoid infinite recursion. This is not an edge case, if you
     bring the 'dot' operator into an implementation here, it is recursion
     time!"""
-    try:
-      classGetAttr = object.__getattribute__(cls, '__class_getattr__')
-      out = classGetAttr.__func__(cls, name)
-    except NotImplementedError:
-      raise AttributeError(name)
-    else:
-      return out
+    if cls.__class_getattr__ is METACALL:
+      raise attributeErrorFactory(cls, name)
+    return cls.__class_getattr__(name, )
 
   def __setattr__(cls, name: str, value: Any) -> None:
-    try:
-      out = cls.__class_setattr__(name, value)
-    except NotImplementedError:
+    if cls.__class_setattr__ is METACALL:
       return MetaType.__setattr__(cls, name, value)  # NOQA
-    else:
-      return None
+    return cls.__class_setattr__(name, value)
 
   def __delattr__(cls, name: str) -> None:
-    try:
-      out = cls.__class_delattr__(name)
-    except NotImplementedError:
-      return MetaType.__delattr__(cls, name)  # NOQA
-    else:
-      return None
+    if cls.__class_delattr__ is METACALL:
+      return MetaType.__delattr__(cls, name)
+    return cls.__class_delattr__(name)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -512,4 +473,11 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   def getNamespace(cls) -> ASpace:
     """Get the namespace object for the class."""
-    return getattr(cls, '__namespace__', )
+    return type.__getattribute__(cls, '__namespace__', )
+
+  def __post_init__(cls, name: str, bases: Base, spc: ASpace, **kw) -> None:
+    """This method is invoked after the __build_class__ has finished with
+    this class. It is here any '__class_init__' methods are invoked. """
+    if cls.__class_init__ is not METACALL:
+      cls.__class_init__(name, bases, spc, **kw)
+    cls._notifySubclassHook(cls, *bases)

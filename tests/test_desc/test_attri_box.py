@@ -5,20 +5,15 @@ TestAttriBox tests the AttriBox class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from tests import WYD
-
-from unittest import TestCase
-
-from worktoy.desc import AttriBox
-from worktoy.core.sentinels import THIS, OWNER, DELETED
-from worktoy.waitaminute import MissingVariable, TypeException
-from worktoy.waitaminute import VariableNotNone
-from . import PlanePoint, PlaneCircle
-
+from . import DescTest
 from typing import TYPE_CHECKING
 
+from worktoy.desc import AttriBox
+from worktoy.core.sentinels import THIS, OWNER
+from . import PlanePoint, PlaneCircle
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any
 
 
 class Yikes(Exception):
@@ -47,7 +42,7 @@ class Bar:
   eggs = AttriBox[Foo](THIS)
 
 
-class TestAttriBox(TestCase):
+class TestAttriBox(DescTest):
   """TestAttriBox tests the AttriBox class."""
 
   @classmethod

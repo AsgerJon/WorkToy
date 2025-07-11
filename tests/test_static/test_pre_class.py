@@ -5,9 +5,9 @@ TestPreClass tests the PreClass class from the static module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from . import StaticTest
 from worktoy.static import PreClass
 from worktoy.mcls import AbstractMetaclass
 from worktoy.waitaminute import MissingVariable, TypeException
@@ -16,17 +16,10 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestPreClass(TestCase):
+class TestPreClass(StaticTest):
   """
   TestPreClass tests the PreClass class.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_bad_type(self) -> None:
     """

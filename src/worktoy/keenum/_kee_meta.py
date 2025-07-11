@@ -73,12 +73,16 @@ class KeeMeta(AbstractMetaclass):
     """
     Prepare the class namespace.
     """
+    if kwargs.get('trustMeBro', False):
+      return dict()
     return KeeSpace(mcls, name, bases, **kwargs)
 
   def __new__(mcls, name: str, bases: Bases, space: KeeSpace, **kw) -> Self:
     """
     Create a new instance of the KeeMeta metaclass.
     """
+    if kw.get('trustMeBro', False):
+      return mcls.getCoreKeeNum()
     if name == 'KeeNum' or kw.get('_root', False):
       return super().__new__(mcls, name, bases, space, **kw)
     coreKeeNum = mcls.getCoreKeeNum()
@@ -92,13 +96,15 @@ class KeeMeta(AbstractMetaclass):
     if name == 'KeeNum':
       return
     futureEntries = getattr(cls, '__future_entries__', )
+    if not futureEntries:
+      raise EmptyKeeNumError(cls.__name__)
     actualEntries = dict()
-    valueType = getattr(cls, '__future_value_type__', None)
-    if valueType is None:
-      raise EmptyKeeNumError(name)
+    valueType = None
     memberValues = []
     memberNames = []
     for i, (name, value) in enumerate(futureEntries.items()):
+      if not isinstance(valueType, type):
+        valueType = type(value)
       entry = cls(_root=True)
       entry.__member_name__ = name
       entry.__member_value__ = value

@@ -10,7 +10,7 @@ is correctly replaced with the far superior:
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass, BaseSpace
@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 
-class TestMetaclassConflict(TestCase):
+class TestMetaclassConflict(MCLSTest):
   """
   TestMetaclassConflict tests that the confusing error message:
   'metaclass conflict: the metaclass of a derived class must be a (
@@ -31,13 +31,6 @@ class TestMetaclassConflict(TestCase):
   replaced with the far superior:
   'The metaclasses of the bases are not compatible.'
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_metaclass_conflict(self) -> None:
     """

@@ -3,9 +3,9 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from . import DescTest
 from tests.test_desc import ComplexField
 from worktoy.desc import Field
 from worktoy.mcls import BaseMeta, BaseObject
@@ -83,7 +83,7 @@ class ComplexNumber(R2):
     self.r1 = z.imag
 
 
-class TestField(TestCase):
+class TestField(DescTest):
   """Test the Field descriptor functionality."""
 
   @classmethod

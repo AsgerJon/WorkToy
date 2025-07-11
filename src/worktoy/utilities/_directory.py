@@ -14,8 +14,6 @@ import sys
 import os
 from typing import TYPE_CHECKING
 
-from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
-
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Never
 
@@ -37,7 +35,9 @@ class Directory:
     return os.path.abspath(os.path.dirname(filePath))
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
+    from worktoy.waitaminute.desc import ReadOnlyError
     raise ReadOnlyError(instance, self, value, )
 
   def __delete__(self, instance: Any, **kwargs) -> Never:
+    from worktoy.waitaminute.desc import ProtectedError
     raise ProtectedError(self, instance, )

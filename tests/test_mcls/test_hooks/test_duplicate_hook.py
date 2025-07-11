@@ -6,25 +6,18 @@ a hook is added multiple times to a class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestDuplicateHook(TestCase):
+class TestDuplicateHook(MCLSTest):
   """
   TestDuplicateHook tests that the DuplicateHookError correctly raises when
   a hook is added multiple times to a class.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_duplicate_hook(self) -> None:
     """

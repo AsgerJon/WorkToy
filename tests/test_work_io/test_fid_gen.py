@@ -6,14 +6,14 @@ TestFidGen tests the FidGen class and its functionality.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest import TestCase
 import os
 
+from . import WorkIOTest
 from worktoy.waitaminute import TypeException
 from worktoy.work_io import FidGen, validateExistingFile
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias, Any
+  pass
 
 here_ = os.path.abspath(os.path.dirname(__file__))
 
@@ -25,7 +25,7 @@ class FooBar:
   fidGen = FidGen(dir=here_, ext='tmp', name='t3st')
 
 
-class TestFidGen(TestCase):
+class TestFidGen(WorkIOTest):
   """
   TestFidGen tests the FidGen class and its functionality. Since this
   class is not used by the rest of the code, the test will explicitly test
@@ -36,13 +36,6 @@ class TestFidGen(TestCase):
   space for an integer. The lowest integer resulting in a path not already
   occupied is return by the 'nextName' property.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   @staticmethod
   def touch(filePath: str, ) -> None:

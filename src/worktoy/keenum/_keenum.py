@@ -12,36 +12,43 @@ from typing import TYPE_CHECKING
 from . import KeeMeta
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Iterator, Any
+  from typing import Iterator, Any, Callable
 
 
-  class Member:
-    """
-    Is that enough, pycharm?
-    """
-
-    name: str
-    value: Any
+def trust(callMeMaybe: Callable) -> Callable:
+  setattr(callMeMaybe, '__trust_me_bro__', True)
+  return callMeMaybe
 
 
-  class KeeNum(dict):
-    """
-    This is just so pycharm will chill out with warnings about KeeNum
-    """
+class Member:
+  """
+  Is that enough, pycharm?
+  """
 
-    name: str
-    value: Any
+  name: str
+  value: Any
 
-    def __init__(self, *args, **kwargs) -> None:
-      """KeeNum is a placeholder for the KeeMeta metaclass."""
 
-    def __iter__(self) -> Iterator:
-      pass
+class KeeNum(metaclass=KeeMeta, trustMeBro=True):
+  """
+  This is just so pycharm will chill out with warnings about KeeNum
+  """
 
-    def __getitem__(self, item) -> Member:
-      pass
+  name: str
+  value: Any
 
-    def __setitem__(self, key, value) -> None:
-      pass
-else:
-  KeeNum = KeeMeta.getCoreKeeNum()
+  @trust
+  def __init__(self, *args, **kwargs) -> None:
+    """KeeNum is a placeholder for the KeeMeta metaclass."""
+
+  @trust
+  def __iter__(self) -> Iterator:
+    """Just for pycharm to chill out."""
+
+  @trust
+  def __getitem__(self, item) -> Member:
+    """Just for pycharm to chill out."""
+
+  @trust
+  def __setitem__(self, key, value) -> None:
+    """Just for pycharm to chill out."""

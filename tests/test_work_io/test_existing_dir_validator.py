@@ -12,13 +12,13 @@ import sys
 
 from unittest import TestCase
 
-from . import BaseTest
+from . import WorkIOTest
 from tests import WYD
 from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import validateExistingDirectory
 
 
-class TestExistingDirValidator(BaseTest):
+class TestExistingDirValidator(WorkIOTest):
   """TestExistingDirValidator tests the existing directory validator."""
 
   @classmethod

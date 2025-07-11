@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..utilities import textFmt
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
@@ -33,7 +35,6 @@ class WriteOnceError(TypeError):
     oldStr = str(self.oldValue)
     newStr = str(self.newValue)
     info = infoSpec % (ownerName, fieldName, oldStr, newStr)
-    from worktoy.utilities import textFmt
     return textFmt(info)
 
   __repr__ = __str__

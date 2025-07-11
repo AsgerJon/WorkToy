@@ -6,28 +6,24 @@ correctly.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import OverloadTest
 
 from worktoy.desc import AttriBox
 from worktoy.mcls import BaseMeta, BaseObject
 
-from . import ComplexOverload
+from . import ComplexOverload, OverloadTest
 
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Any, Self
 
-class TestComplex(TestCase):
+
+class TestComplex(OverloadTest):
   """
   TestComplex tests that the ComplexOverload helper class functions
   correctly.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_metaclass(self, ) -> None:
     """

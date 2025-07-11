@@ -7,9 +7,9 @@ the 'worktoy' library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass, BaseSpace
 from worktoy.waitaminute import VariableNotNone
 
@@ -19,19 +19,12 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 
-class TestBaseSpace(TestCase):
+class TestBaseSpace(MCLSTest):
   """
   TestBaseSpace tests the BaseSpace class which provides the namespace used
   by BaseMeta to implement the overload protocol used across the 'worktoy'
   library.
   """
-
-  @classmethod
-  def tearDownClass(cls):
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_unexpected_overload_map(self) -> None:
     """

@@ -6,7 +6,7 @@ TestClassMap tests that classes derived from 'BaseMeta' that implement
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 
 from worktoy.mcls import AbstractMetaclass
 from worktoy.utilities import maybe
@@ -102,17 +102,10 @@ class NoDictSupport(metaclass=AbstractMetaclass):
   """Used to verify fallback error behavior."""
 
 
-class TestClassMap(TestCase):
+class TestClassMap(MCLSTest):
   """
   Verifies dict-like behavior at the class level.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def testSetAndGetItem(self) -> None:
     """
@@ -161,12 +154,12 @@ class TestClassMap(TestCase):
     """
     Class without __class_setitem__ should raise AttributeError.
     """
-    with self.assertRaises(AttributeError):
+    with self.assertRaises(TypeError):
       NoDictSupport['fail'] = 1
 
   def testDelFallback(self) -> None:
     """
     Class without __class_delitem__ should raise AttributeError.
     """
-    with self.assertRaises(AttributeError):
+    with self.assertRaises(TypeError):
       del NoDictSupport['fail']

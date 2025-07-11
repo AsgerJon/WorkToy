@@ -5,11 +5,14 @@ Tests more advanced features of KeeNum.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import KeeTest
 
 from worktoy.keenum import auto, KeeNum
 
 from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+  pass
 
 
 class Fruit(KeeNum):
@@ -54,7 +57,7 @@ class Steps(KeeNum):
   STEP3 = auto()
 
 
-class TestKeeNum(TestCase):
+class TestKeeNum(KeeTest):
 
   @classmethod
   def tearDownClass(cls) -> None:

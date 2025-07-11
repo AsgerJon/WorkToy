@@ -6,9 +6,9 @@ is because the 'unittest' module is not fit for purpose.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.mcls import BaseMeta, AbstractNamespace
 from worktoy.utilities import stringList
 
@@ -47,17 +47,10 @@ class SusClass(metaclass=HookedMeta):  # No trustMeBro=True
   """
 
 
-class TestMoreSpace(TestCase):
+class TestMoreSpace(MCLSTest):
   """
   TestMoreSpace does some more testing of the AbstractNamespace class.
   """
-
-  @classmethod
-  def tearDownClass(cls):
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_str_repr(self) -> None:
     """

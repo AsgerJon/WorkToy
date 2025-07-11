@@ -84,7 +84,8 @@ class _Sentinel(type):
     except KeyError as keyError:
       if kwargs.get('_recursion', False):
         raise keyError from RecursionError
-      cls = super().__new__(mcls, name, (), {}, **kwargs)
+      namespace = dict()
+      cls = super().__new__(mcls, name, (), namespace, **kwargs)
       mcls._registerSentinel(cls)
       return mcls.__new__(mcls, name, (), {}, _recursion=True)
     else:
@@ -97,6 +98,14 @@ class _Sentinel(type):
     from worktoy.waitaminute.meta import IllegalInstantiation
     raise IllegalInstantiation(cls)
 
+  def __str__(cls) -> str:
+    """
+    Return the string representation of the sentinel.
+    """
+    return """<Sentinel: '%s'>""" % cls.__name__
+
+  __repr__ = __str__
+
 
 class Sentinel(metaclass=_Sentinel):
   """
@@ -104,5 +113,4 @@ class Sentinel(metaclass=_Sentinel):
   module. It prevents instantiation and ensures that only one instance of
   each sentinel exists.
   """
-
-  __slots__ = ()
+  pass

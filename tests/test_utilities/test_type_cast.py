@@ -5,11 +5,12 @@ TestTypeCast tests the 'typeCast' function from the 'worktoy.static' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import UtilitiesTest
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import BaseObject
-from worktoy.static import typeCast, overload
+from worktoy.static import overload
+from worktoy.utilities import typeCast
 from worktoy.core.sentinels import THIS
 from worktoy.waitaminute.dispatch import TypeCastException
 
@@ -17,17 +18,10 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestTypeCast(TestCase):
+class TestTypeCast(UtilitiesTest):
   """
   TestTypeCast tests the 'typeCast' function from the 'worktoy.static'
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_exact(self) -> None:
     """
@@ -196,10 +190,8 @@ class TestTypeCast(TestCase):
     """
     self.assertTrue(typeCast(bool, 1))
     self.assertFalse(typeCast(bool, 0))
-    self.assertTrue(typeCast(bool, 'True'))
-    self.assertTrue(typeCast(bool, 'False'))
-    self.assertTrue(typeCast(bool, [1, 2, 3]))
-    self.assertFalse(typeCast(bool, []))
+    self.assertTrue(typeCast(bool, True))
+    self.assertFalse(typeCast(bool, False))
 
   def test_bad_targets(self, ) -> None:
     """
@@ -222,22 +214,20 @@ class TestTypeCast(TestCase):
     self.assertEqual(typeCast(frozenset, frozenset()), frozenset())
     self.assertEqual(typeCast(dict, {}), {})
 
-  def test_good_unpacked_to_target(self) -> None:
+  def test_str_to_str(self) -> None:
     """
-    Test that 'typeCast(target, arg)' can unpack 'arg' to match 'target'.
+    Test that 'typeCast(str, arg)' returns 'arg' when 'arg' is an instance of
+    'str'.
     """
-    self.assertEqual(typeCast(int, (42,)), 42)
-    self.assertEqual(typeCast(str, ['hello']), 'hello')
-    self.assertEqual(typeCast(float, [3.14]), 3.14)
+    self.assertEqual(typeCast(str, 'hello'), 'hello')
 
-  def test_bad_unpacked_to_target(self) -> None:
+  def test_bad_bytes_to_str(self) -> None:
     """
-    Test that 'typeCast(target, arg)' raises TypeError when 'arg' cannot be
-    unpacked to match 'target'.
+    Creates a bad bytes object that causes an exception when any attempt
+    is made to decode it under 'utf-8' encoding.
     """
+    bad_bytes = bytes([0x80, 0xFF])  # Invalid UTF-8 byte sequence
     with self.assertRaises(TypeCastException) as context:
-      typeCast(int, ['breh', ])
+      typeCast(str, bad_bytes)
     e = context.exception
     self.assertEqual(str(e), repr(e))
-    self.assertIs(e.type_, int)
-    self.assertEqual(e.arg, 'breh', )

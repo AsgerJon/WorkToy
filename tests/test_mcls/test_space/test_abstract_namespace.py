@@ -6,7 +6,7 @@ TestAbstractNamespace provides the basic unit tests for the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass, AbstractNamespace
@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 
-class TestAbstractNamespace(TestCase):
+class TestAbstractNamespace(MCLSTest):
   """
   Much of the functionality of the 'AbstractNamespace' class is depended
   upon by the combined functionality of the metaclass systems. This
@@ -27,13 +27,6 @@ class TestAbstractNamespace(TestCase):
   remaining functionality. Thus, this test class is mostly testing subtle
   edge cases.
   """
-
-  @classmethod
-  def tearDownClass(cls):
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_duplicate_hook(self) -> None:
     """

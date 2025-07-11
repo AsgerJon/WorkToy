@@ -6,7 +6,7 @@ module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from typing import TYPE_CHECKING
 
 from worktoy.mcls.space_hooks import PreClassSpaceHook
@@ -20,18 +20,11 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 
-class TestPreClassHook(TestCase):
+class TestPreClassHook(MCLSTest):
   """
   TestPreClassHook tests the 'PreClassHook' from the 'worktoy.mcls.hooks'
   module.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_recursion(self) -> None:
     """

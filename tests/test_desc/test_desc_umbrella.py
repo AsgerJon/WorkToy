@@ -6,19 +6,17 @@ classes found in the 'worktoy.desc' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
-
 from typing import TYPE_CHECKING
 
+from . import DescTest
 from . import ComplexAttriBox, PlaneCircle, PlanePoint
-from worktoy.mcls import AbstractNamespace
 from worktoy.mcls.space_hooks import SpaceDesc, AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  pass
 
 
-class TestDescUmbrella(TestCase):
+class TestDescUmbrella(DescTest):
   """
   TestDescUmbrella covers obscure edge cases and esoteric fallbacks of the
   classes found in the 'worktoy.desc' module.

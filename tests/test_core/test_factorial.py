@@ -5,27 +5,19 @@ TestFactorial tests the factorial function from the 'worktoy.core' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from . import CoreTest
 from worktoy.utilities.mathematics import factorial
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestFactorial(TestCase):
+class TestFactorial(CoreTest):
   """
   TestFactorial tests the factorial function from the 'worktoy.core' module.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_factorial(self) -> None:
     """

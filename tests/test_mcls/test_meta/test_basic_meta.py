@@ -5,7 +5,7 @@ TestBasicMeta tests some basic functionalities of the AbstractMetaclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from typing import TYPE_CHECKING, Iterator
 
 from worktoy.mcls import AbstractMetaclass, BaseMeta
@@ -16,17 +16,10 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
 
-class TestBasicMeta(TestCase):
+class TestBasicMeta(MCLSTest):
   """
   TestBasicMeta tests some basic functionalities of the AbstractMetaclass.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_good_class(self) -> None:
     """
@@ -231,16 +224,16 @@ class TestBasicMeta(TestCase):
         """
         return cls
 
-    with self.assertRaises(AttributeError) as context:
+    with self.assertRaises(TypeError) as context:
       _ = list(Foo)
     e = context.exception
-    expected = """has no attribute"""
+    expected = """is not an iterator"""
     self.assertIn(expected, str(e))
 
     with self.assertRaises(TypeError) as context:
       _ = len(Foo)
     e = context.exception
-    expected = """has no"""
+    expected = """is not an iterator"""
     self.assertIn(expected, str(e))
 
   def test_very_bad_old_fashioned_iteration(self) -> None:
@@ -273,7 +266,7 @@ class TestBasicMeta(TestCase):
         """
         raise Trolololololo
 
-    with self.assertRaises(TypeError) as context:
+    with self.assertRaises(Trolololololo) as context:
       _ = len(Derp)
     e = context.exception
 

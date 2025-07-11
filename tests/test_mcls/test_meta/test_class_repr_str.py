@@ -5,7 +5,7 @@ TestClassReprStr tests the __class_repr__ and __class_str__ hooks
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass
@@ -40,17 +40,10 @@ class SilentClass:
   """
 
 
-class TestClassStrRepr(TestCase):
+class TestClassStrRepr(MCLSTest):
   """
   TestClassStrRepr checks the class-level string and repr hooks.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def testClassStrHook(self) -> None:
     """

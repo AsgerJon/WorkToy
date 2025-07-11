@@ -5,40 +5,48 @@ EZData leverages the 'worktoy' library to provide a dataclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
 from . import EZMeta
+from ..mcls import BaseObject
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
-
-Func = type('_', (type,), dict(__instancecheck__=callable))('_', (), {})
+  from typing import Callable
 
 
-def trustMeBro(callMeMaybe: Func) -> Func:
+def _root(callMeMaybe: Callable) -> Callable:
   """
-  This is a decorator that can be used to mark a function as a root
-  function in the EZData class.
+  _root is a decorator that ensures the decorated function is called
+  with the root class of EZData.
   """
-  callMeMaybe.__is_root__ = True
+
+  setattr(callMeMaybe, '__is_root__', True)
   return callMeMaybe
 
 
-class EZData(metaclass=EZMeta):
+class EZData(BaseObject, metaclass=EZMeta):
   """
   EZData is a dataclass that provides a simple way to define data
   structures with validation and serialization capabilities.
   """
-  pass
 
-  @trustMeBro
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @_root
   def __init__(self, *args, **kwargs) -> None:
-    """
-    Here for type hinting purposes only!
-    """
+    """This is just here for type checking purposes. The EZMeta control
+    flow removes it with the auto-generated __init__ method."""
 
-  @trustMeBro
-  def __len__(self, *args, **kwargs) -> None:
-    """
-    Here for type hinting purposes only!
-    """
+  @_root
+  def __iter__(self, ) -> Iterator:
+    """See documentation for __init__ above."""
+
+  @_root
+  def __setitem__(self, *_) -> None:
+    """See documentation for __init__ above."""
+
+  @_root
+  def __getitem__(self, *_) -> None:
+    """See documentation for __init__ above."""

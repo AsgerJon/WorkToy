@@ -8,7 +8,7 @@ required for the central functionality of the 'TypeSig' class, such as
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import StaticTest
 from typing import TYPE_CHECKING
 
 from worktoy.static import TypeSig
@@ -17,20 +17,13 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
 
 
-class TestTypeSigExtra(TestCase):
+class TestTypeSigExtra(StaticTest):
   """
   TestTypeSigExtra tests auxiliary functionality of the 'TypeSig' class from
   the 'worktoy.static' module. This includes test for the functionality not
   required for the central functionality of the 'TypeSig' class, such as
   '__repr__', '__str__' and '__eq__' methods.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_str_repr(self: Self) -> None:
     """

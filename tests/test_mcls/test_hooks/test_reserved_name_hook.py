@@ -6,13 +6,12 @@ TestReservedNameHook tests the 'ReservedNameHook' from the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
 from worktoy.mcls.space_hooks import ReservedNames
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
-from worktoy.waitaminute.meta import ReservedName
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias
@@ -20,18 +19,11 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 
-class TestReservedNameHook(TestCase):
+class TestReservedNameHook(MCLSTest):
   """
   TestReservedNameHook tests the 'ReservedNameHook' from the
   'worktoy.mcls.hooks' module.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_repeated_reserved_name(self) -> None:
     """
@@ -40,13 +32,13 @@ class TestReservedNameHook(TestCase):
     assignments to the same reserved name.
     """
 
-    with self.assertRaises(ReservedName) as context:
+    susModule = """I'm the module, trust me bro!"""
+    with self.assertRaises(KeyError) as context:
       class SusModule(metaclass=AbstractMetaclass):
         """A class to test reserved names."""
-        __module__ = """I'm the module, trust me bro!"""
+        __module__ = susModule
     e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.resName, '__module__')
+    self.assertIn(susModule, str(e))
 
   def test_reserved_name_descriptor_class(self) -> None:
     """

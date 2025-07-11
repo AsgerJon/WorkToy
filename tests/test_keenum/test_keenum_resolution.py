@@ -5,16 +5,13 @@ Tests how well KeeNum classes resolve their members.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
-
-from worktoy.keenum import auto, KeeNum
-from worktoy.utilities import maybe
-from worktoy.waitaminute import TypeException
-
 from typing import TYPE_CHECKING
 
+from . import KeeTest
+from worktoy.keenum import auto, KeeNum
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  pass
 
 
 class Speed(KeeNum):
@@ -32,7 +29,7 @@ class Mode(KeeNum):
   TURBO = auto('fast')  # duplicate value
 
 
-class TestKeeNumLookup(TestCase):
+class TestKeeNumLookup(KeeTest):
 
   @classmethod
   def tearDownClass(cls) -> None:

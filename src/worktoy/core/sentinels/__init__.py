@@ -18,8 +18,8 @@ Contents:
   an instance of the class. Similar to 'typing.Self'.
   - OWNER: Similar to THIS, but specifying the class itself, rather than
   an instance of it.
-  - DESC: Used by 'AttriBox' along with THIS and OWNER, specifying an
-  reference to the descriptor object itself.
+  - DESC: Used by 'AttriBox' along with THIS and OWNER, specifying the
+  present descriptor.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -30,6 +30,8 @@ from ._deleted import DELETED
 from ._owner import OWNER
 from ._this import THIS
 from ._desc import DESC
+from ._wild_card import WILDCARD
+from ._meta_call import METACALL
 
 __all__ = [
     'Sentinel',
@@ -37,4 +39,6 @@ __all__ = [
     'OWNER',
     'THIS',
     'DESC',
+    'WILDCARD',
+    'METACALL',
 ]

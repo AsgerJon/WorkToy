@@ -6,7 +6,7 @@ implement the '__class_[HOOK]__' methods are called correctly.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 
 from worktoy.mcls import AbstractMetaclass
 from worktoy.core import Object
@@ -139,18 +139,11 @@ class ClassHooks(metaclass=AbstractMetaclass):
     raise ClassLevelCalled("next")
 
 
-class TestClassHooks(TestCase):
+class TestClassHooks(MCLSTest):
   """
   TestClassHooks tests that classes derived from 'AbstractMetaclass' that
   implement the '__class_[HOOK]__' methods are called correctly.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_call(self) -> None:
     with self.assertRaises(ClassLevelCalled) as cm:

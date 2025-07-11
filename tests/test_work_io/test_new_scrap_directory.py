@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from . import BaseTest
+from . import WorkIOTest
 from tests import WYD
 from worktoy.work_io import validateExistingDirectory, scrapDirectory
 from worktoy.work_io import newDirectory, validateAvailablePath
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestNewYeetDirectory(BaseTest):
+class TestNewYeetDirectory(WorkIOTest):
   """TestNewYeetDirectory tests the newDirectory and scrapDirectory
   functions."""
 

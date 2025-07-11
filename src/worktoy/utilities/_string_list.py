@@ -9,8 +9,6 @@ separator may be specified by passing a non-empty iterable of strings.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..waitaminute import TypeException
-
 
 def stringList(*args: str, **kwargs) -> list[str]:
   """
@@ -31,4 +29,5 @@ def stringList(*args: str, **kwargs) -> list[str]:
     for s in sep:
       out = stringList(*out, separator=s)
     return [a.strip() for a in out if a.strip()]
+  from ..waitaminute import TypeException
   raise TypeException('separator', sep, str, list, tuple)

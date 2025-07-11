@@ -5,8 +5,7 @@ TestAlias tests the 'Alias' class from the 'worktoy.desc' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
-
+from . import DescTest
 from worktoy.core import Object
 from worktoy.core.sentinels import DELETED
 from worktoy.desc import Alias, Field
@@ -53,16 +52,8 @@ class MusicDisc(NameTag):
   title = Alias('name')  # Reuses the 'name' but under attribute 'title'
 
 
-class TestAlias(TestCase):
+class TestAlias(DescTest):
   """TestAlias tests the Alias class."""
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    """Clean up the test class."""
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_alias(self) -> None:
     """Test the Alias class."""

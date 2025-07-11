@@ -8,7 +8,7 @@ to target the _KeeNumBase class directly.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import KeeTest
 from typing import TYPE_CHECKING
 
 from worktoy.desc import Field
@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class TestKeeNumBase(TestCase):
+class TestKeeNumBase(KeeTest):
   """
   TestKeeNumBase tests the KeeNumBase class. This class provides a base for
   the KeeNum class, but this class creation process if quite unconventional.

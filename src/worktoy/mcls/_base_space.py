@@ -8,6 +8,7 @@ from __future__ import annotations
 from types import FunctionType as Func
 from typing import TYPE_CHECKING
 
+from ..core.sentinels import WILDCARD
 from ..waitaminute import VariableNotNone
 from ..static import TypeSig
 from . import AbstractNamespace, AbstractMetaclass
@@ -39,21 +40,27 @@ class BaseSpace(AbstractNamespace):
     """Build the overload map for the namespace."""
     if self.__overload_map__ is not None:
       raise VariableNotNone('__overload_map__', self.__overload_map__)
-    mcls = self.getMetaclass()
-    bases = self.getBases()
-    baseSpaces = []
+    entries = {}
+    for space in self.getMRONamespaces():
+      if hasattr(space, 'getOverloadMap'):
+        overloadMap = space.getOverloadMap()
+        for key, overloads in overloadMap.items():
+          existing = entries.get(key, [])
+          for sig, func in overloads.items():
+            existing.append((sig, func))
+          entries[key] = existing
     self.__overload_map__ = {}
-    for base in bases:
-      if isinstance(base, AbstractMetaclass):
-        baseSpaces.append(base.getNamespace())
-    while baseSpaces:
-      space = baseSpaces.pop()
-      baseOverloadMap = space.getOverloadMap()
-      for key, overloads in baseOverloadMap.items():
-        existing = self.__overload_map__.get(key, {})
-        for sig, func in overloads.items():
-          existing[sig] = func
-        self.__overload_map__[key] = existing
+    for key, overloads in entries.items():
+      entry = dict()
+      for sig, func in overloads:
+        if WILDCARD in sig:  # wait
+          continue
+        entry[sig] = func
+      for sig, func in overloads:
+        if WILDCARD not in sig:  # done before
+          continue
+        entry[sig] = func
+      self.__overload_map__[key] = entry
 
   def getOverloadMap(self, **kwargs) -> OverloadMap:
     """Get the overload map for the namespace."""

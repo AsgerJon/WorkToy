@@ -11,7 +11,7 @@ from ._auto import _AutoMember
 from ._kee_hook import KeeSpaceHook
 from ._kee_space import KeeSpace
 from ._kee_meta import KeeMeta
-from ._keenum import KeeNum
+from ._keenum import KeeNum, trust
 
 __all__ = [
     'auto',
@@ -19,4 +19,5 @@ __all__ = [
     'KeeSpace',
     'KeeMeta',
     'KeeNum',
+    'trust',
 ]

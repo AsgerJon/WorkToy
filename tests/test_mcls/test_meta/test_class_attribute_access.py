@@ -11,12 +11,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
-from unittest import TestCase
+from .. import MCLSTest
 from typing import Any
 from worktoy.mcls import AbstractMetaclass
+
+if TYPE_CHECKING:  # pragma: no cover
+  pass
 
 
 class ClassAccessor(metaclass=AbstractMetaclass):
@@ -43,17 +43,10 @@ class NoAccessors(metaclass=AbstractMetaclass):
   foo = 42
 
 
-class TestClassAttributeHooks(TestCase):
+class TestClassAttributeHooks(MCLSTest):
   """
   Verifies functionality and fallback behavior of accessor hooks.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def setUp(self) -> None:
     """
@@ -123,19 +116,6 @@ class TestClassAttributeHooks(TestCase):
     self.assertEqual(FallbackOnly.knownAttr, 123)
     self.assertEqual(FallbackOnly.foo, '<foo>')
     self.assertEqual(FallbackOnly.bar, '<bar>')
-
-  def testFallbackRaisesManually(self) -> None:
-    """
-    '__class_getattr__' may explicitly raise AttributeError.
-    """
-
-    class StrictFallback(metaclass=AbstractMetaclass):
-      @classmethod
-      def __class_getattr__(cls, name: str) -> Any:
-        raise AttributeError(f"{cls.__name__} has no '{name}'")
-
-    with self.assertRaisesRegex(AttributeError, "no 'wut'"):
-      _ = StrictFallback.wut
 
   def testOverrideBlocksFallback(self) -> None:
     """

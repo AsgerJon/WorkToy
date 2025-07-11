@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import textFmt
+
 if TYPE_CHECKING:  # pragma: no cover
   from worktoy.mcls import AbstractNamespace
   from worktoy.mcls.space_hooks import AbstractSpaceHook
@@ -61,6 +63,6 @@ class HookException(Exception):
         self.namespaceObject, self.itemKey, self.errorValue,
         self.hookFunction, self.initialException
     )
-    return info
+    return textFmt(info)
 
   __repr__ = __str__

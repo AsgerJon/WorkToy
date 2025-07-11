@@ -6,9 +6,9 @@ TestKeeNumExceptions tests the KeeNum exceptions raised by the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from . import KeeTest
 from worktoy.keenum import KeeNum
 from worktoy.waitaminute.keenum import KeeNumTypeException, EmptyKeeNumError
 from worktoy.waitaminute.keenum import DuplicateKeeNum
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestKeeNumExceptions(TestCase):
+class TestKeeNumExceptions(KeeTest):
   """
   TestKeeNumExceptions tests the KeeNum exceptions raised by the
   'worktoy.keenum' module.
@@ -70,3 +70,16 @@ class TestKeeNumExceptions(TestCase):
     self.assertEqual(str(e), repr(e))
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.className, 'EmptyKeeNum')
+
+  def test_type_error(self) -> None:
+    """
+    Tests that a KeeNumTypeException is raised when a KeeNum class has
+    members with inconsistent types.
+    """
+    with self.assertRaises(KeeNumTypeException) as context:
+      class InvalidKeeNum(KeeNum):
+        FLOAT = 69.0
+        INT = 420
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertIn("""value '420' of type 'int',""", str(e))

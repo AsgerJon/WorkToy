@@ -10,7 +10,7 @@ subclasses of itself.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
 
 from typing import TYPE_CHECKING
@@ -40,19 +40,12 @@ class Nummer(metaclass=AbstractMetaclass):
     return False
 
 
-class TestSubclassCheck(TestCase):
+class TestSubclassCheck(MCLSTest):
   """
   TestSubclassCheck checks that classes derived from the 'AbstractMetaclass'
   can customize the behaviour of the 'issubclass' method when testing if
   another object should be regarded as a subclass of the class.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def assertIsSubclass(self, subclass: type, cls: Any) -> None:
     """

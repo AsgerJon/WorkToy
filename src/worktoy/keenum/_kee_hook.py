@@ -9,16 +9,24 @@ from typing import TYPE_CHECKING
 
 from ..mcls.space_hooks import AbstractSpaceHook
 from . import _AutoMember
+from ..utilities import maybe
 from ..waitaminute.keenum import KeeNumTypeException, DuplicateKeeNum
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Optional
 
 
 class KeeSpaceHook(AbstractSpaceHook):
   """
   KeeHook provides the namespace hook for the KeeSpace namespace class.
   """
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Private Variables
+  __future_value_type__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -30,42 +38,31 @@ class KeeSpaceHook(AbstractSpaceHook):
     """
     if isinstance(value, _AutoMember):
       value = value.getValue()
-    if value is None:
-      if kwargs.get('_recursion2', False):
-        raise RecursionError  # pragma: no cover
-      return self._addMember(name, name, _recursion2=True)
-    valueType = self._getValueType()
-    if valueType is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError  # pragma: no cover
-      self._setValueType(type(value))
-      return self._addMember(name, value, _recursion=True)
-    else:
-      if not isinstance(value, valueType):
-        raise KeeNumTypeException(name, value, valueType)
+    value = maybe(value, name)
     existing = self.space.get('__future_entries__', {})
-    if name in existing:
-      raise DuplicateKeeNum(name, value)
+    if existing:
+      if name in existing:
+        raise DuplicateKeeNum(name, value)
+      for _, val in existing.items():
+        valType = type(val)
+        if not isinstance(value, valType):
+          raise KeeNumTypeException(name, value, valType)
     existing[name] = value
     self.space['__future_entries__'] = existing
 
-  def _setValueType(self, valueType: type, ) -> None:
-    """
-    Set the value type for the KeeSpace namespace.
-    """
-    self.space['__future_value_type__'] = valueType
-
-  def _getValueType(self) -> type:
+  def _getValueType(self) -> Optional[type]:
     """
     Get the value type for the KeeSpace namespace.
     """
-    return self.space.get('__future_value_type__', None)
+    return getattr(self.space, '__future_value_type__', None)
 
   def setItemPhase(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """
     The setItemHook method is called when an item is set in the
     namespace.
     """
+    if hasattr(value, '__trust_me_bro__'):  # ignores, stubs only
+      return True
     if key.startswith('__') and key.endswith('__'):
       # Skip special keys
       return False
@@ -79,4 +76,5 @@ class KeeSpaceHook(AbstractSpaceHook):
     the namespace object is called. The default implementation does nothing
     and returns the contents unchanged. """
     compiledSpace['__future_entries__'] = dict()
+    compiledSpace['__future_value_type__'] = self._getValueType()
     return compiledSpace

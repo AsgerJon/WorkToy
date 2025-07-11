@@ -49,6 +49,7 @@ class ProtectedError(DescriptorException):
     infoSpec = """Attempted to delete protected attribute '%s.%s' 
       with value: '%s'"""
     info = infoSpec % (fieldOwner, fieldName, str(oldValue))
+
     return textFmt(info)
 
   __repr__ = __str__

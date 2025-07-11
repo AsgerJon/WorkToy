@@ -7,13 +7,13 @@ class defining them without any inheritance or other complications.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import OverloadTest
 
 from tests import WYD
 from worktoy.mcls import BaseObject
 from worktoy.static import Dispatch, overload
 from worktoy.waitaminute.dispatch import DispatchException
-from . import ComplexOverload
+from . import ComplexOverload, OverloadTest
 
 from typing import TYPE_CHECKING
 
@@ -21,22 +21,12 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestBaseOverload(TestCase):
+class TestBaseOverload(OverloadTest):
   """
   TestBaseOverload tests the simple use of the overload functionality. By
   simple, we mean the simple case of overloaded constructors tested on the
   class defining them without any inheritance or other complications.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    """
-    Clean up the test case by removing the latest dispatch.
-    """
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def setUp(self, ) -> None:
     """

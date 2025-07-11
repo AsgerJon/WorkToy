@@ -7,11 +7,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import BaseMeta
+from . import BaseMeta, AbstractMetaclass
 from ..core import Object
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
+
+
+class breh(metaclass=AbstractMetaclass): pass
 
 
 class BaseObject(Object, metaclass=BaseMeta):

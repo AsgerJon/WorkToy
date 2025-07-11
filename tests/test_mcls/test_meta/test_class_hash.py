@@ -6,7 +6,7 @@ implement __class_hash__ are called correctly.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from .. import MCLSTest
 from typing import TYPE_CHECKING
 
 from worktoy.mcls import AbstractMetaclass
@@ -41,18 +41,11 @@ class TupleEq(metaclass=AbstractMetaclass):
     return 420
 
 
-class TestClassHash(TestCase):
+class TestClassHash(MCLSTest):
   """
   TestClassHash tests that classes derived from 'AbstractMetaclass' that
   implement __class_hash__ are called correctly.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_class_hash(self):
     """

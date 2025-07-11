@@ -6,25 +6,17 @@ metaclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
-
+from . import WaitAMinuteTest
 from worktoy.mcls import BaseObject, BaseMeta
 from worktoy.utilities import textFmt
 from worktoy.waitaminute.meta import MetaclassException
 
 
-class TestMetaclassException(TestCase):
+class TestMetaclassException(WaitAMinuteTest):
   """
   TestMetaclassException tests the exception handling in the WaitAMinute
   metaclass.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_raises(self, ) -> None:
     """

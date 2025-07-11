@@ -6,19 +6,29 @@ objects used in custom metaclasses.
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
+import builtins
+import sys
 from typing import TYPE_CHECKING
+from warnings import warn
 
-from ..utilities import textFmt
+from icecream import ic
+
+from ..utilities import textFmt, maybe, resolveMRO, runtimeResolveType
+from ..waitaminute import TypeException
 from ..waitaminute.meta import HookException, DuplicateHook
 from . import Base
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
 
+ic.configureOutput(includeContext=True)
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Iterator
+  from typing import Any, TypeAlias, Iterator, Union, Self
   from .space_hooks import AbstractSpaceHook
 
   Bases: TypeAlias = tuple[type, ...]
   Hooks: TypeAlias = list[AbstractSpaceHook]
+  MROSpace: TypeAlias = dict[str, list[Any]]
+  TypeName: TypeAlias = Union[str, type]
 
 
 class AbstractNamespace(dict):
@@ -57,9 +67,14 @@ class AbstractNamespace(dict):
   __meta_class__ = None
   __class_name__ = None
   __base_classes__ = None
+  __class_mro__ = None
   __key_args__ = None
   __hash_value__ = None
   __compiled_space__ = None
+  __deferred_annotations__ = None
+  __type_annotations__ = None
+  __class_annotations__ = None
+  __global_scope__ = None
 
   #  Public Variables
   reservedNameHook = ReservedNamespaceHook()
@@ -81,13 +96,8 @@ class AbstractNamespace(dict):
     for key, val in dict.items(self, ):
       if key == item:
         return val
-    for base in self.getBases():
-      try:
-        out = getattr(base, item)
-      except AttributeError:
-        continue
-      else:
-        return out
+    if item in self.getMROSpace():
+      return self.getMROSpace()[item]
     raise KeyError(item)
 
   def _computeHash(self, ) -> int:
@@ -155,6 +165,46 @@ class AbstractNamespace(dict):
     """Returns the keyword arguments passed to the class."""
     return {**self.__key_args__, **dict()}
 
+  def getMRO(self, ) -> list[type]:
+    """Returns the method resolution order of the class."""
+    return self.__class_mro__
+
+  def getMROSpace(self, ) -> MROSpace:
+    """Combines the namespaces of all bases in the MRO into a single
+    'dict' object with each value being a list of all values provided. """
+    mroClasses = [b for b in self.getMRO() if hasattr(b, '__namespace__')]
+    mroSpaces = [getattr(b, '__namespace__', ) for b in mroClasses]
+    compiledSpaces = [getattr(s, '__compiled_space__') for s in mroSpaces]
+    out = dict()
+    for compiledSpace in compiledSpaces:
+      for key, val in compiledSpace.items():
+        existing = out.get(key, [])
+        out[key] = [*existing, val]
+    return out
+
+  def getMRONamespaces(self) -> list[Self]:
+    """Returns for each class in the MRO the instance of
+    AbstractNamespace, or subclass of it, used to create it. Nothing is
+    returned for classes not derive from 'AbstractMetaclass' or subclass. """
+    mroClasses = [b for b in self.getMRO() if hasattr(b, '__namespace__')]
+    return [getattr(b, '__namespace__', None) for b in mroClasses]
+
+  def getGlobalScope(self) -> dict:
+    """Returns the global scope of the namespace."""
+    return {**maybe(object.__getattribute__(self, '__global_scope__'), {})}
+
+  def getClassAnnotations(self) -> dict:
+    """Returns the current contents of the '__annotations__' dict. """
+    return maybe(self.__class_annotations__, dict())
+
+  def getDeferredAnnotations(self) -> dict[str, str]:
+    """Returns the deferred annotations"""
+    return maybe(self.__deferred_annotations__, dict())
+
+  def getTypeAnnotations(self, ) -> dict:
+    """Returns the type annotations. """
+    return maybe(self.__type_annotations__, dict())
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -174,6 +224,18 @@ class AbstractNamespace(dict):
     pvtName = cls.getHookListName()
     setattr(cls, pvtName, [*existingHooks, hook])
 
+  def setClassAnnotation(self, updated: dict) -> None:
+    """Updates the '__annotations__' dict with the given dictionary
+    received"""
+    existing = self.getClassAnnotations()
+    for (key, type_) in updated.items():
+      if key in existing:
+        if type_ == existing[key]:
+          continue
+      self.setAnnotation(key, type_)
+      existing[key] = type_
+    self.__class_annotations__ = existing
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -183,6 +245,7 @@ class AbstractNamespace(dict):
     self.__class_name__ = name
     self.__base_classes__ = [*bases, ]
     self.__key_args__ = kwargs or {}
+    self.__class_mro__ = resolveMRO(*bases, )
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -194,28 +257,33 @@ class AbstractNamespace(dict):
       val = dict.__getitem__(self, key)
     except KeyError as keyError:
       val = keyError
+    if key == '__annotations__':
+      if isinstance(val, dict):
+        self.setClassAnnotation(val)
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       try:
         hook.getItemPhase(key, val)
       except Exception as exception:
         raise HookException(exception, self, key, val, hook)
-    if isinstance(val, KeyError):
-      raise val
-    return val
+    else:
+      if isinstance(val, KeyError):
+        raise val
+      return val
 
-  def __setitem__(self, key: str, val: object, **kwargs) -> None:
+  def __setitem__(self, key: str, val: Any, **kwargs) -> None:
     """Sets the value of the key."""
+    if key == '__module__':
+      globScope = {**vars(sys.modules[val]), }
+      object.__setattr__(self, '__global_scope__', globScope)
     try:
       oldVal = dict.__getitem__(self, key)
     except KeyError:
       oldVal = None
     for hook in self.getHooks():
-      if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(hook, AbstractSpaceHook)
       if hook.setItemPhase(key, val, oldVal):
-        break
-    else:
+        break  # Breaks out of the loop if handled by hook.
+    else:  # If no 'break', the 'else' block is executed.
       dict.__setitem__(self, key, val)
 
   def __str__(self, ) -> str:
@@ -247,9 +315,18 @@ class AbstractNamespace(dict):
       kwargStr = ', %s' % kwargStr
     return """%s(%s%s)""" % (spaceName, args, kwargStr)
 
+  def __getattribute__(self, key: str) -> Any:
+    """This reimplementation was made by a highly skilled professional in
+    a safe environment, DO NOT ATTEMPT THIS AT HOME!"""
+    if key == '__global_scope__':
+      info = """Direct access to the '__global_scope__' is prohibited!"""
+      raise RuntimeError(info)
+    return object.__getattribute__(self, key)
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
   def preCompile(self, namespace: dict = None) -> dict:
     """The return value from this method is passed to the compile method.
     Subclasses can implement this method to provide special objects at
@@ -259,8 +336,6 @@ class AbstractNamespace(dict):
       namespace = dict()
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
-      if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(hook, AbstractSpaceHook)
       namespace = hook.preCompilePhase(namespace)
     return namespace
 
@@ -274,6 +349,7 @@ class AbstractNamespace(dict):
     namespace = self.postCompile(namespace)
     namespace['__metaclass__'] = self.getMetaclass()
     namespace['__namespace__'] = self
+    namespace['__keyword_arguments__'] = self.getKwargs()
     self.__compiled_space__ = namespace
     return namespace
 
@@ -285,7 +361,34 @@ class AbstractNamespace(dict):
     processing of the compiled object. """
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
-      if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(hook, AbstractSpaceHook)
       namespace = hook.postCompilePhase(namespace)
     return namespace
+
+  def setAnnotation(self, key: str, type_: type, **kwargs) -> None:
+    """Sets the type annotation for the given key."""
+    if isinstance(type_, type) or kwargs.get('_deferred', False):
+      for hook in self.getHooks():
+        setattr(hook, '__space_object__', self)
+        hook.setAnnotationPhase(key, type_)
+      if isinstance(type_, type):
+        return self.setTypeAnnotation(key, type_)
+      elif isinstance(type_, str):
+        return self.setDeferredAnnotation(key, type_)
+    if isinstance(type_, str):
+      if hasattr(builtins, type_):
+        type_ = getattr(builtins, type_)
+        return self.setAnnotation(key, type_, _deferred=False)
+      if type_ in self.getGlobalScope():
+        type_ = self.getGlobalScope()[type_]
+        return self.setAnnotation(key, type_, _deferred=False)
+      else:
+        try:
+          type_ = runtimeResolveType(type_, )
+        except ImportError:
+          return self.setAnnotation(key, type_, _deferred=True)
+        else:
+          return self.setAnnotation(key, type_, _deferred=False)
+    raise TypeException('type_', type_, str, type, )
+
+  def setTypeAnnotation(self, key: str, type_: type) -> None:
+    """Sets the type annotation at 'key' to 'type_'. """

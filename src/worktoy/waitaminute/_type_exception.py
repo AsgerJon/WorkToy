@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..utilities import textFmt, joinWords
+
 if TYPE_CHECKING:  # pragma: no cover
   pass
 
@@ -32,7 +34,6 @@ class TypeException(TypeError):
 
   def __str__(self) -> str:
     """String representation of the TypeException."""
-    from ..utilities import joinWords, textFmt
     infoSpec = """Expected object at name '%s' to be an instance of %s, 
     but received object: '%s' of type '%s'!"""
     typeNames = [t.__name__ for t in self.expectedTypes]

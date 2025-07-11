@@ -5,7 +5,7 @@ TestEZSpace tests the EZSpace class from the ezdata module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import EZTest
 from typing import TYPE_CHECKING
 
 from worktoy.ezdata import EZData
@@ -16,19 +16,12 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class TestEZSpace(TestCase):
+class TestEZSpace(EZTest):
   """
   TestEZSpace tests the EZSpace class from the ezdata module. As EZSpace
   is part of the custom metaclass creation flow used by the EZData module,
   these tests will create various EZData subclasses.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_good_class(self) -> None:
     """
@@ -221,10 +214,10 @@ class TestEZSpace(TestCase):
     self.assertEqual(point.x, 1337)
     self.assertEqual(point.y, 80085)
 
-    with self.assertRaises(KeyError) as context:
+    with self.assertRaises(AttributeError) as context:
       _ = point['z']
     e = context.exception
-    self.assertEqual(str(e), "'z'")
+    self.assertIn("'z'", str(e), )
 
     with self.assertRaises(KeyError) as context:
       point['z'] = 1337

@@ -6,17 +6,18 @@ provided by the 'worktoy.core.sentinels' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import CoreTest
+from worktoy.core.sentinels import DESC, THIS, OWNER, METACALL, WILDCARD
+from worktoy.core.sentinels import Sentinel, DELETED
+from worktoy.core.sentinels._sentinel import _Sentinel  # NOQA
 
 from typing import TYPE_CHECKING
 
-from worktoy.core.sentinels._sentinel import _Sentinel  # NOQA
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  pass
 
 
-class TestSentinels(TestCase):
+class TestSentinels(CoreTest):
   """
   TestSentinels performs edge case focused testing of the 'Sentinel' classes
   provided by the 'worktoy.core.sentinels' module.
@@ -26,12 +27,10 @@ class TestSentinels(TestCase):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
+  def setUp(self) -> None:
+    self.sentinels = [
+        THIS, OWNER, DESC, METACALL, WILDCARD, DELETED
+    ]
 
   def test_recursion(self, ) -> None:
     """
@@ -42,3 +41,15 @@ class TestSentinels(TestCase):
       _ = _Sentinel.__new__(_Sentinel, 'breh', (), {}, _recursion=True)
     e = context.exception
     self.assertEqual(str(e), str(KeyError('breh')))
+
+  def test_str_repr(self) -> None:
+    """
+    Tests the string representation of a Sentinel
+    """
+    for sentinel in self.sentinels:
+      self.assertEqual(str(sentinel), repr(sentinel))
+      self.assertIsInstance(sentinel, _Sentinel)
+
+  def test_ad_hoc(self) -> None:
+    for sentinel in self.sentinels:
+      print(sentinel)

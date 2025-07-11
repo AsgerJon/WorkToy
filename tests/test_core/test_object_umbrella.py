@@ -7,20 +7,18 @@ fundamental object in the 'worktoy' library.
 from __future__ import annotations
 
 import os
-from unittest import TestCase
+from typing import TYPE_CHECKING
 
+from . import CoreTest
 from worktoy.core import Object, ContextInstance
 from worktoy.core.sentinels import DESC, THIS, OWNER
 from worktoy.mcls import BaseObject
-
-from typing import TYPE_CHECKING
-
 from worktoy.utilities import Directory
-from worktoy.waitaminute.desc import WithoutException, ReadOnlyError, \
-  ProtectedError
+from worktoy.waitaminute.desc import WithoutException, ReadOnlyError
+from worktoy.waitaminute.desc import ProtectedError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any
 
 
 class Foo(BaseObject):
@@ -34,18 +32,11 @@ class Bar(BaseObject):
   foo2 = Foo(tom=THIS, dick=OWNER, harry=DESC)
 
 
-class TestObjectUmbrella(TestCase):
+class TestObjectUmbrella(CoreTest):
   """
   TestObjectUmbrella covers obscure edge cases and esoteric fallbacks of the
   fundamental object in the 'worktoy' library.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def testSentinelResolution(self) -> None:
     """

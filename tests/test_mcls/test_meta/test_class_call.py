@@ -5,15 +5,13 @@ TestClassCall tests that the class call hook enables actual functionality.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.desc import Field
 from worktoy.utilities import maybe
 from worktoy.core import Object
 from worktoy.mcls import AbstractMetaclass
-from worktoy.waitaminute import TypeException
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -84,14 +82,7 @@ class Thing(Object, metaclass=AbstractMetaclass):
       return self
 
 
-class TestClassCallRegistry(TestCase):
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
+class TestClassCallRegistry(MCLSTest):
 
   def setUp(self) -> None:
     """

@@ -6,12 +6,12 @@ TestAvailablePathValidator tests the AvailablePathValidator class from the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import BaseTest
+from . import WorkIOTest
 from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import validateAvailablePath
 
 
-class TestAvailablePathValidator(BaseTest):
+class TestAvailablePathValidator(WorkIOTest):
   """TestAvailablePathValidator tests the available path validator."""
 
   @classmethod

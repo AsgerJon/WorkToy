@@ -3,20 +3,13 @@
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import UtilitiesTest
 
 from worktoy.utilities import textFmt
 
 
-class TestMonoSpace(TestCase):
+class TestMonoSpace(UtilitiesTest):
   """TestMonoSpace tests the textFmt function."""
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_textFmt(self) -> None:
     """Test the textFmt function."""

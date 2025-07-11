@@ -9,6 +9,8 @@ from __future__ import annotations
 from . import desc
 from . import meta
 from . import dispatch
+from . import keenum
+from . import ez
 from ._attribute_error_factory import attributeErrorFactory
 from ._type_exception import TypeException
 from ._write_once_error import WriteOnceError
@@ -22,6 +24,8 @@ ___all__ = [
     'desc',
     'meta',
     'dispatch',
+    'keenum',
+    'ez',
     'attributeErrorFactory',
     'TypeException',
     'WriteOnceError',

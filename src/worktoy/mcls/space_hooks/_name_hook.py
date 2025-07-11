@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...core.sentinels import METACALL
 from ...waitaminute.meta import QuestionableSyntax, DelException
 from . import AbstractSpaceHook
 
@@ -145,37 +146,25 @@ class NamespaceHook(AbstractSpaceHook):
       raise DelException(mcls, name, bases, self.space)
     return self._validateName(key)
 
-  def postCompilePhase(self, compiledSpace: dict) -> dict:
+  def preCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    Hook for postCompile. This is called after the __init__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns the contents unchanged.
+    Populates the class dunder hooks with the 'METACALL' sentinel object.
     """
     dunderNames = self._getClassDunders()
     for name in dunderNames:
       try:
         _ = self.space.deepGetItem(name)
       except KeyError as keyError:
-        compiledSpace[name] = self._defaultDunderFactory(name)
+        compiledSpace[name] = METACALL
         continue
       else:
         continue
     return compiledSpace
 
-  @staticmethod
-  def _defaultDunderFactory(name: str) -> classmethod:
+  def postCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    Default dunder factory for the namespace hook.
+    Hook for postCompile. This is called after the __init__ method of
+    the namespace object is called. The default implementation does nothing
+    and returns the contents unchanged.
     """
-
-    def dunderStruck(cls, *args, **kwargs) -> str:
-      """
-      Default dunder method for the namespace hook.
-      """
-      raise NotImplementedError
-
-    setattr(dunderStruck, '__name__', name)
-    setattr(dunderStruck, '__qualname__', name)
-    setattr(dunderStruck, '__dunder_struck__', True)
-
-    return classmethod(dunderStruck)
+    return compiledSpace

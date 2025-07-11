@@ -9,10 +9,12 @@ from ._complex_attri_box import ComplexAttriBox
 from ._complex_field import ComplexField
 from ._plane_point import PlanePoint
 from ._plane_circle import PlaneCircle
+from ._desc_test import DescTest
 
 __all__ = [
     'ComplexAttriBox',
     'ComplexField',
     'PlanePoint',
     'PlaneCircle',
+    'DescTest',
 ]

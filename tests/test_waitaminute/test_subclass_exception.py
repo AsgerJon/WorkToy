@@ -6,30 +6,20 @@ TestSubclassException tests the SubclassException class from the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
-
-from worktoy.static import Dispatch
-
 from typing import TYPE_CHECKING
 
+from . import WaitAMinuteTest
 from worktoy.waitaminute import SubclassException
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestSubclassException(TestCase):
+class TestSubclassException(WaitAMinuteTest):
   """
   TestSubclassException tests the SubclassException class from the
   'worktoy.waitaminute' module.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_base(self) -> None:
     """

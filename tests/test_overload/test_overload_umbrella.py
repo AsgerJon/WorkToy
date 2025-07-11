@@ -6,11 +6,13 @@ overload system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import OverloadTest
 
 from worktoy.core.sentinels import THIS
 from worktoy.mcls import BaseObject
 from worktoy.static import overload
+
+from . import OverloadTest
 
 from typing import TYPE_CHECKING
 
@@ -36,19 +38,12 @@ class Foo(BaseObject):
     self.__instance_name__ = name
 
 
-class TestOverloadUmbrella(TestCase):
+class TestOverloadUmbrella(OverloadTest):
   """
   TestOverloadUmbrella covers obscure edge cases and esoteric fallbacks of
   the
   overload system.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def setUp(self) -> None:
     self.foo = Foo(69, '420')

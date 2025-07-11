@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe
-from . import ContextInstance, MetaType
+from . import ContextInstance, MetaType, MetaObject
 from .sentinels import THIS, DESC, OWNER, DELETED
 from ..waitaminute import TypeException, MissingVariable, \
   attributeErrorFactory
@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Trace: TypeAlias = Optional[TracebackType]
 
 
-class Object(object, metaclass=MetaType):
+class Object(metaclass=MetaType):
   """
   Object provides the most basic object used by the 'worktoy' library. It
   stands in for the 'object' type by adding functionality that must be

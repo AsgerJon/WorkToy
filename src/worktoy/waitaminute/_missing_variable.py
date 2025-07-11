@@ -5,6 +5,7 @@ and requires initialization. """
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -28,7 +29,6 @@ class MissingVariable(Exception):
     name = self.varName
     clscName = self.varType.__name__
     info = infoSpec % (name, clscName)
-    from ..utilities import textFmt
     return textFmt(info)
 
   __repr__ = __str__

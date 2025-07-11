@@ -3,7 +3,7 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import StaticTest
 
 from worktoy.static import Dispatch
 
@@ -13,15 +13,8 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestDispatch(TestCase):
+class TestDispatch(StaticTest):
   """TestDispatch tests the Dispatch class."""
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_ad_hoc(self) -> None:
     """

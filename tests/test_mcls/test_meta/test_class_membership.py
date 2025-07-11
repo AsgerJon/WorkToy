@@ -5,7 +5,8 @@ __class_contains__ methods.
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
-from unittest import TestCase
+
+from .. import MCLSTest
 
 from worktoy.mcls import AbstractMetaclass
 
@@ -61,17 +62,10 @@ class ContainClass(metaclass=AbstractMetaclass):
     return item in {'foo', 'bar', 'baz'}
 
 
-class TestClassLenBoolContains(TestCase):
+class TestClassLenBoolContains(MCLSTest):
   """
   Tests for '__class_len__', '__class_bool__', and '__class_contains__'.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def testExplicitClassLen(self) -> None:
     """

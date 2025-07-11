@@ -73,9 +73,6 @@ instantiates Dispatch during class creation.
   #  Private variables
   __call_map__ = None
 
-  # #  Public variables
-  # __name__ = Field()
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -89,27 +86,18 @@ instantiates Dispatch during class creation.
     """Getter-function for the most recently successful dispatch. """
     return cls.__latest_dispatch__.__func__
 
-  # @__name__.GET
-  # def _getName(self, ) -> str:
-  #   """Get the name of the function. """
-  #   return self.getFieldName()
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
   def _resetLatestDispatch(cls) -> None:
-    """
-    Reset the latest dispatch to None.
-    """
+    """Reset the latest dispatch to None. """
     cls.__latest_dispatch__ = None
 
   @classmethod
   def _setLatestDispatch(cls, dispatch: Callable) -> None:
-    """
-    Set the latest dispatch to the given dispatch.
-    """
+    """Set the latest dispatch to the given dispatch. """
     cls.__latest_dispatch__ = dispatch
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -140,9 +128,7 @@ instantiates Dispatch during class creation.
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _fastDispatch(self, ins: Any, *args, **kwargs) -> Any:
-    """
-    Fast dispatch the function call.
-    """
+    """Fast dispatch the function call. """
     exceptions = []
     for sig, call in self.__call_map__.items():
       try:
@@ -156,10 +142,8 @@ instantiates Dispatch during class creation.
       raise [RuntimeError, *exceptions][-1]
 
   def _castDispatch(self, ins: Any, *args, **kwargs) -> Any:
-    """
-    Dispatches the function call with arguments cast to the expected
-    types.
-    """
+    """Dispatches the function call with arguments cast to the expected
+    types."""
     exceptions = []
     for sig, call in self.__call_map__.items():
       try:
@@ -173,9 +157,7 @@ instantiates Dispatch during class creation.
       raise [RuntimeError, *exceptions][-1]
 
   def _flexDispatch(self, ins: Any, *args, **kwargs) -> Any:
-    """
-    The most flexible attempt to dispatch the function call.
-    """
+    """The most flexible attempt to dispatch the function call. """
     exceptions = []
     for sig, call in self.__call_map__.items():
       try:
@@ -189,10 +171,8 @@ instantiates Dispatch during class creation.
       raise [RuntimeError, *exceptions][-1]
 
   def _dispatch(self, ins: Any, *args: Any, **kwargs: Any) -> Any:
-    """
-    Dispatches the function call by trying fast, cast and flex in that
-    order.
-    """
+    """Dispatches the function call by trying fast, cast and flex in that
+    order. """
     self._setLatestDispatch(self._fastDispatch)
     exceptions = []
     try:
@@ -228,17 +208,13 @@ instantiates Dispatch during class creation.
   __repr__ = __str__
 
   def __get__(self, instance: Any, owner: Type[Object]) -> Any:
-    """
-    Returns the Dispatch instance for the given instance.
-    """
+    """Returns the Dispatch instance for the given instance."""
     if instance is None:
       return self
 
     def wrapped(*args: Any, **kwargs: Any) -> Any:
-      """
-      Wraps the call to the dispatch method with the instance as the
-      first argument.
-      """
+      """Wraps the call to the dispatch method with the instance as the
+      first argument. """
 
       return self._dispatch(instance, *args, **kwargs)
 

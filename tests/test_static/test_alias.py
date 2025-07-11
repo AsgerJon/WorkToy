@@ -6,10 +6,9 @@ works as expected.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import sys
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from . import StaticTest
 from worktoy.core import Object
 from worktoy.desc import Alias
 
@@ -19,18 +18,11 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 
-class TestAlias(TestCase):
+class TestAlias(StaticTest):
   """
   TestAlias tests that the 'Alias' class from the 'worktoy.static' module
   works as expected.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def test_missing_parent(self) -> None:
     """

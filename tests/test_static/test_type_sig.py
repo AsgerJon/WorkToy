@@ -5,7 +5,7 @@ TestTypeSig tests the TypeSig class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import StaticTest
 
 from worktoy.utilities import unpack
 from worktoy.static import TypeSig, Dispatch
@@ -92,17 +92,10 @@ class Bad:
   __init__ = HasOverloadDispatcher()
 
 
-class TestTypeSig(TestCase):
+class TestTypeSig(StaticTest):
   """
   Unit tests for TypeSig: fast, cast, flex.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def setUp(self) -> None:
     """

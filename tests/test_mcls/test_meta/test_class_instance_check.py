@@ -6,29 +6,18 @@ TestClassInstanceCheck tests the functionality of the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
 from typing import TYPE_CHECKING
 
-from worktoy.mcls import AbstractMetaclass, BaseMeta, BaseSpace, \
-  AbstractNamespace
+from .. import MCLSTest
+from worktoy.mcls import AbstractMetaclass
 from worktoy.utilities import stringList
 from worktoy.waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
-import sys
-import gc
 
-sys.modules.pop(AbstractMetaclass.__module__, None)
-sys.modules.pop(AbstractNamespace.__module__, None)
-sys.modules.pop(BaseMeta.__module__, None)
-sys.modules.pop(BaseSpace.__module__, None)
-gc.collect()
-from worktoy.mcls import AbstractMetaclass
-
-
-class TestClassInstanceCheck(TestCase):
+class TestClassInstanceCheck(MCLSTest):
   """
   TestClassInstanceCheck tests the functionality of the
   '__class_instancecheck__' hook.

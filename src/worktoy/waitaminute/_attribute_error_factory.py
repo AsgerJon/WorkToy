@@ -48,16 +48,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..utilities import textFmt
+
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Any
 
 
-def attributeErrorFactory(owner: str, field: str) -> AttributeError:
+def attributeErrorFactory(owner: Any, field: str) -> AttributeError:
   """
   Factory function that creates an AttributeError with a message that
   matches the built-in message if a given object does not have a given
   attribute.
   """
+  if isinstance(owner, type):
+    owner = owner.__name__
+  if not isinstance(owner, str):
+    owner = type(owner).__name__
   infoSpec = """AttributeError: '%s' object has no attribute '%s'"""
   info = infoSpec % (str(owner), str(field))
-  return AttributeError(info)  # type: ignore[return-value]
+  return AttributeError(textFmt(info))

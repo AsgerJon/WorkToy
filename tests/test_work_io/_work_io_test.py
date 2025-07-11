@@ -7,16 +7,15 @@ BaseTest provides a common base class for the test classes in the
 from __future__ import annotations
 
 import os
-from time import sleep
-from unittest import TestCase
-
 from typing import TYPE_CHECKING
 
+from tests import BaseTest
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeVar, Callable, Self
+  from typing import Any
 
 
-class BaseTest(TestCase):
+class WorkIOTest(BaseTest):
   """
   BaseTest provides a common base class for the test classes in the
   'test_work_io' module.
@@ -87,11 +86,11 @@ class BaseTest(TestCase):
       os.makedirs(nestDir, exist_ok=True)
       for i in range(5):
         cls._createFile(nestFile, i)
-    if not BaseTest.__continue_pressed__ and False:  # pragma: no cover
+    if not WorkIOTest.__continue_pressed__ and False:  # pragma: no cover
       if os.environ.get('PYTEST_COVERAGE', None) is not None:
         return
       try:
         infoSpec = """Press Any Key to Continue...\n"""
         _ = input(infoSpec)
       finally:
-        BaseTest.__continue_pressed__ = True
+        WorkIOTest.__continue_pressed__ = True

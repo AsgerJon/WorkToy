@@ -6,13 +6,13 @@ creating new derived classes.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import KeeTest
 
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.meta import IllegalInstantiation
 from worktoy.waitaminute.keenum import KeeNumTypeException, DuplicateKeeNum
 from worktoy.waitaminute.keenum import EmptyKeeNumError
-from worktoy.keenum import KeeNum
+from worktoy.keenum import KeeNum, auto
 
 from typing import TYPE_CHECKING
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestKeeHook(TestCase):
+class TestKeeHook(KeeTest):
   """TestKeeHook confirms the functionality provided by the KeeHook class by
   creating new derived classes."""
 
@@ -171,19 +171,19 @@ class TestKeeHook(TestCase):
     from unsupporterd identifier types.
     """
 
-    class RGB(KeeNum):
-      """RGB is a KeeNum enumeration for RGB colors."""
-      RED = (255, 0, 0)
-      GREEN = (0, 255, 0)
-      BLUE = (0, 0, 255)
-
     with self.assertRaises(TypeException) as context:
+      class RGB(KeeNum):
+        """RGB is a KeeNum enumeration for RGB colors."""
+        RED = auto(255, 0, 0)
+        GREEN = auto(0, 255, 0)
+        BLUE = auto(0, 0, 255)
+
       _ = RGB[42.0]
     e = context.exception
     self.assertEqual(e.varName, 'key')
     self.assertEqual(e.actualObject, 42.0)
     self.assertEqual(e.actualType, float)
-    self.assertEqual(e.expectedTypes, (int, str, tuple))
+    self.assertEqual(e.expectedTypes, (int, str, int))
 
   def test_bad_index(self) -> None:
     """

@@ -3,9 +3,18 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import DataField, EZSpaceHook
+from icecream import ic
+
+from . import EZSpaceHook, EZSlot
 from ..mcls import BaseSpace
 from ..utilities import maybe
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Any, Optional, Self
+
+ic.configureOutput(includeContext=True)
 
 
 class EZSpace(BaseSpace):
@@ -18,7 +27,7 @@ class EZSpace(BaseSpace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __data_fields__ = None
+  __ez_slots__ = None
 
   #  Public Variables
   ezHook = EZSpaceHook()
@@ -27,28 +36,44 @@ class EZSpace(BaseSpace):
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def getDataFields(self) -> list[DataField]:
+  def getEZSlots(self) -> list[EZSlot]:
     """Get the data fields."""
-    out = maybe(self.__data_fields__, [])
-    bases = [*self.getBases(), ]
-    for base in bases:
-      space = getattr(base, '__namespace__', None)
-      fields = getattr(space, '__data_fields__', None)
-      if fields is None:
-        continue
-      for field in fields:
-        if field.key not in [f.key for f in out]:
-          out.append(field)
-    return out
+    return maybe(self.__ez_slots__, [])
+
+  def getDeepEZSlots(self) -> list[EZSlot]:
+    """Get the data fields, including those from the EZHook."""
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def addField(self, key: str, type_: type, val: object) -> None:
-    """Add a field to the data fields."""
-    if self.__data_fields__ is None:
-      self.__data_fields__ = []
-    dataField = DataField(key, type_, val)
-    existing = self.getDataFields()
-    self.__data_fields__ = [*existing, dataField]
+  def addSlot(self, ezSlot: EZSlot) -> None:
+    """Adds the EZSlot to the data fields. """
+    existing = self.getEZSlots()
+    ezSlot.__owner_name__ = self.getClassName()
+    self.__ez_slots__ = [*existing, ezSlot]
+
+  def addRegularSlot(self, key: str, val: object) -> None:
+    """Add a key-value pair to the data fields. Called by the EZHook from
+    inside the '__setitem__'. """
+    ezSlot = EZSlot(key, )
+    ezSlot.__type_value__ = type(val)
+    ezSlot.__default_value__ = val
+    self.addSlot(ezSlot)
+
+  def addTypeOnlySlot(self, key: str, type_: type) -> None:
+    """Add a key-value pair to the data fields with a specific type. Called
+    by the EZHook from inside the '__setitem__'. """
+    ezSlot = EZSlot(key, )
+    ezSlot.__type_value__ = type_
+    ezSlot.__default_value__ = type_()
+    existing = self.getEZSlots()
+    self.__ez_slots__ = [*existing, ezSlot]
+    self.addSlot(ezSlot)
+
+  def addTypeDeferredSlot(self, key: str, deferredType: str) -> None:
+    """Add a deferred field to the data fields. Called by the EZHook from
+    inside the '__setitem__'. """
+    ezSlot = EZSlot(key)
+    ezSlot.__deferred_type__ = deferredType
+    self.addSlot(ezSlot)

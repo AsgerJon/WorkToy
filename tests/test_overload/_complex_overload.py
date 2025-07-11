@@ -6,13 +6,13 @@ use of the overload functionality provided by the 'worktoy' library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.utilities import stringList
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS
 from worktoy.desc import AttriBox
-from worktoy.mcls import BaseMeta, BaseObject
-
-from typing import TYPE_CHECKING
+from worktoy.mcls import BaseObject
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self

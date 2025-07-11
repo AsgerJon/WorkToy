@@ -7,7 +7,7 @@ TestMath tests the mathematical utilities in the
 from __future__ import annotations
 
 from random import random
-from unittest import TestCase
+from . import UtilitiesTest
 from typing import TYPE_CHECKING
 
 from worktoy.utilities.mathematics import e, pi, log, exp, sin, cos, tan, \
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestMath(TestCase):
+class TestMath(UtilitiesTest):
   """
   TestMath tests the mathematical utilities in the
   'worktoy.utilities.mathematics' module.

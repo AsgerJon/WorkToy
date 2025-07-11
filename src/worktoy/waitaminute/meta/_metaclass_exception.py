@@ -67,6 +67,7 @@ class MetaclassException(TypeError):
       MetaclassException was raised with no base classes incompatible 
       with the received metaclass '%s' while defining class '%s'."""
       info = infoSpec % (mcls.__name__, name)
+      from ...utilities import textFmt
       raise TypeError(textFmt(info))
     TypeError.__init__(self, )
 

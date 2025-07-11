@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.waitaminute.dispatch import HashMismatch, TypeCastException
-from worktoy.waitaminute.dispatch import CastMismatch, FlexMismatch
-from worktoy.waitaminute import UnpackException
-from worktoy.core.sentinels import THIS
-from worktoy.utilities import unpack, bipartiteMatching
-from . import PreClass, typeCast
+from ..waitaminute.dispatch import HashMismatch, TypeCastException
+from ..waitaminute.dispatch import CastMismatch, FlexMismatch
+from ..waitaminute import UnpackException
+from ..core.sentinels import THIS, WILDCARD
+from ..utilities import unpack, bipartiteMatching, typeCast
+from . import PreClass
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterator
@@ -183,10 +183,6 @@ class TypeSig:
   __hash_value__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -199,9 +195,7 @@ class TypeSig:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __iter__(self, ) -> Iterator[type]:
-    """
-    Implementation of iteration
-    """
+    """Implementation of iteration."""
     yield from (self.__raw_types__ or ())
 
   def __hash__(self, ) -> int:
@@ -271,7 +265,7 @@ class TypeSig:
     methods, but requires exact matching. Passing an 'int' object where a
     'float' object is expected, raises 'HashMismatch'.
     """
-    if len(args) == len(self):
+    if len(args) == len(self) and WILDCARD not in self.__raw_types__:
       if hash(self) == hash((*[type(arg) for arg in args],)):
         return (*args,)
     raise HashMismatch(self, *args)
@@ -292,6 +286,9 @@ class TypeSig:
       raise CastMismatch(self, *args)
     castArgs = []
     for type_, arg in zip(self.__raw_types__, args):
+      if type_ is WILDCARD:
+        castArgs.append(arg)
+        continue
       if isinstance(arg, type_):
         castArgs.append(arg)
         continue
@@ -323,7 +320,7 @@ class TypeSig:
     for type_ in self:
       candidates = []
       for i, arg in enumerate(args):
-        if isinstance(arg, type_):
+        if isinstance(arg, type_) or type_ is WILDCARD:
           candidates.append(i)
       else:
         if not candidates:

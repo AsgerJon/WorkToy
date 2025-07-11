@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..utilities import textFmt
+
 if TYPE_CHECKING:  # pragma: no cover
   pass
 
@@ -42,6 +44,6 @@ class UnpackException(ValueError):
     argument 'strict' to False."""
     argStr = '\n  '.join([str(arg) for arg in self.posArgs])
     info = infoSpec % argStr
-    return info
+    return textFmt(info)
 
   __repr__ = __str__

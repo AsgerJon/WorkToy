@@ -4,8 +4,8 @@ module."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._base_test import BaseTest
+from ._work_io_test import WorkIOTest
 
 __all__ = [
-    'BaseTest',
+    'WorkIOTest',
 ]

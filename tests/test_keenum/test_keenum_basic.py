@@ -5,11 +5,13 @@ Tests the basic functionality of the KeeNum class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from typing import TYPE_CHECKING
 
+from . import KeeTest
 from worktoy.keenum import auto, KeeNum
 
-from typing import TYPE_CHECKING
+if TYPE_CHECKING:  # pragma: no cover
+  pass
 
 
 class WeekDay(KeeNum):
@@ -48,7 +50,7 @@ class Wochentag(KeeNum):
   SUNDAY = auto('Sonntag')
 
 
-class TestKeeNum(TestCase):
+class TestKeeNum(KeeTest):
   """Test the KeeNum class."""
 
   @classmethod

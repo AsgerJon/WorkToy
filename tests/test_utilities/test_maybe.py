@@ -6,14 +6,10 @@ function.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from unittest import TestCase
+from . import UtilitiesTest
 from random import shuffle, random
 from typing import TYPE_CHECKING
 
-from worktoy.mcls import AbstractMetaclass
-from worktoy.mcls.space_hooks import ReservedNames
-from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
-from worktoy.waitaminute.meta import ReservedName
 from worktoy.utilities import maybe
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -22,17 +18,10 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 
-class TestMaybe(TestCase):
+class TestMaybe(UtilitiesTest):
   """
   TestMaybe tests the 'maybe' function from the 'worktoy.parse' module.
   """
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
 
   def setUp(self) -> None:
     """

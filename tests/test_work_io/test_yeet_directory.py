@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import BaseTest
+from . import WorkIOTest
 from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import yeetDirectory, validateExistingFile
 from worktoy.work_io import validateExistingDirectory
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-class TestYeetDirectory(BaseTest):
+class TestYeetDirectory(WorkIOTest):
   """
   TestYeetDirectory tests the yeetDirectory function from the
   'worktoy.work_io' module.

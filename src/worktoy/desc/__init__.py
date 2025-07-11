@@ -15,9 +15,11 @@ from __future__ import annotations
 from ._alias import Alias
 from ._field import Field
 from ._attri_box import AttriBox
+from ._label_box import LabelBox
 
 __all__ = [
     'Alias',
     'Field',
     'AttriBox',
+    'LabelBox',
 ]
