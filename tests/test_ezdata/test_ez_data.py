@@ -5,6 +5,8 @@ TestEZData - Test the EZData class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+import builtins
+
 from . import EZTest
 from worktoy.ezdata import EZData
 
@@ -103,3 +105,4 @@ class TestEZData(EZTest):
 
   def test_ad_hoc(self) -> None:
     """Test ad-hoc EZData instances."""
+    print(getattr(builtins, 'int'))

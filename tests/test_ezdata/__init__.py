@@ -9,8 +9,6 @@ from __future__ import annotations
 from ._base_values import baseValues
 from ._regular_class import RegularClass
 from ._sub_class import Mid1, Mid2, Mid3, SubClass
-from ._annotated_class import AnnotatedClass
-from ._annotated_class import MidNote1, MidNote2, MidNote3, SubNotated
 from ._ez_test import EZTest
 
 __all__ = [
@@ -19,10 +17,5 @@ __all__ = [
     'Mid2',
     'Mid3',
     'SubClass',
-    'AnnotatedClass',
-    'MidNote1',
-    'MidNote2',
-    'MidNote3',
-    'SubNotated',
     'EZTest',
 ]

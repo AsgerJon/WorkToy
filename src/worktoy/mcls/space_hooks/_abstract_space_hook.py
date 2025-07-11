@@ -125,6 +125,11 @@ class AbstractSpaceHook(Object):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def preparePhase(self, space: ASpace, ) -> None:
+    """Hook for prepare. This runs during the __init__ method of the
+    namespace object. This phase does not allow changes to the namespace,
+    to interrupt the flow, raise an exception. """
+
   def setAnnotationPhase(self, key: str, value: Any, ) -> Any:
     """Hook for setAnnotation. This is called when the namespace encounters
     an annotation. The default implementation does nothing and returns the

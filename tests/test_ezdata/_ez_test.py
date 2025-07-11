@@ -11,7 +11,6 @@ from tests import BaseTest
 
 from . import baseValues
 from . import RegularClass, Mid1, Mid2, Mid3, SubClass
-from . import AnnotatedClass, MidNote1, MidNote2, MidNote3, SubNotated
 
 from typing import TYPE_CHECKING
 
@@ -47,11 +46,6 @@ class EZTest(BaseTest):
         Mid2,
         Mid3,
         SubClass,
-        AnnotatedClass,
-        MidNote1,
-        MidNote2,
-        MidNote3,
-        SubNotated,
     ]
     cls.sampleInstances = []
     for sampleClass in cls.sampleClasses:

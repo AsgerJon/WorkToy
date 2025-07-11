@@ -17,33 +17,33 @@ class AnnotatedClass(EZData):
   annotations in order to test if EZData correctly interprets them as slots.
   """
 
-  varA: int
-  varB: int
-  varC: int
+  A: int
+  B: int
+  C: int
 
 
 class MidNote1(AnnotatedClass):
   """MidNote1 is a subclass of AnnotatedClass with additional slots."""
 
-  varD: int
-  varE: int
-  varF: int
+  D: int
+  E: int
+  F: int
 
 
 class MidNote2(MidNote1):
   """MidNote2 continues from MidNote1 with more slots."""
 
-  varG: int
-  varH: int
-  varI: int
+  G: int
+  H: int
+  I: int
 
 
 class MidNote3(MidNote2):
   """MidNote3 continues from MidNote2 with even more slots."""
 
-  varJ: int
-  varK: int
-  varL: int
+  J: int
+  K: int
+  L: int
 
 
 class SubNotated(MidNote3):
@@ -52,6 +52,6 @@ class SubNotated(MidNote3):
   slot as annotations when inherited.
   """
 
-  varM: int
-  varN: int
-  varO: int
+  M: int
+  N: int
+  O: int

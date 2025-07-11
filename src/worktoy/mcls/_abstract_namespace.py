@@ -246,6 +246,9 @@ class AbstractNamespace(dict):
     self.__base_classes__ = [*bases, ]
     self.__key_args__ = kwargs or {}
     self.__class_mro__ = resolveMRO(*bases, )
+    for hook in self.getHooks():
+      setattr(hook, '__space_object__', self)
+      hook.preparePhase(self)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -332,6 +335,8 @@ class AbstractNamespace(dict):
     Subclasses can implement this method to provide special objects at
     particular names in the namespace. By default, an empty dictionary is
     returned. """
+    if '__annotations__' in self:
+      self.setClassAnnotation(dict.__getitem__(self, '__annotations__'))
     if namespace is None:
       namespace = dict()
     for hook in self.getHooks():
@@ -364,31 +369,42 @@ class AbstractNamespace(dict):
       namespace = hook.postCompilePhase(namespace)
     return namespace
 
-  def setAnnotation(self, key: str, type_: type, **kwargs) -> None:
-    """Sets the type annotation for the given key."""
-    if isinstance(type_, type) or kwargs.get('_deferred', False):
-      for hook in self.getHooks():
-        setattr(hook, '__space_object__', self)
-        hook.setAnnotationPhase(key, type_)
-      if isinstance(type_, type):
-        return self.setTypeAnnotation(key, type_)
-      elif isinstance(type_, str):
-        return self.setDeferredAnnotation(key, type_)
-    if isinstance(type_, str):
-      if hasattr(builtins, type_):
-        type_ = getattr(builtins, type_)
-        return self.setAnnotation(key, type_, _deferred=False)
-      if type_ in self.getGlobalScope():
-        type_ = self.getGlobalScope()[type_]
-        return self.setAnnotation(key, type_, _deferred=False)
-      else:
-        try:
-          type_ = runtimeResolveType(type_, )
-        except ImportError:
-          return self.setAnnotation(key, type_, _deferred=True)
-        else:
-          return self.setAnnotation(key, type_, _deferred=False)
-    raise TypeException('type_', type_, str, type, )
-
   def setTypeAnnotation(self, key: str, type_: type) -> None:
     """Sets the type annotation at 'key' to 'type_'. """
+    existing = self.getTypeAnnotations()
+    if key in existing:
+      if existing[key] == type_:
+        return
+    existing[key] = type_
+    self.__type_annotations__ = existing
+    for hook in self.getHooks():
+      setattr(hook, '__space_object__', self)
+      hook.setAnnotationPhase(key, type_)
+
+  def setDeferredAnnotation(self, key: str, typeName: str) -> None:
+    existing = self.getDeferredAnnotations()
+    if key in existing:
+      if existing[key] == typeName:
+        return
+    existing[key] = typeName
+    self.__deferred_annotations__ = existing
+
+  def setAnnotation(self, key: str, typeName: str, **kwargs) -> None:
+    """Sets the type annotation for the given key."""
+    try:
+      type_ = self.resolveType(typeName)
+    except NameError:
+      self.setDeferredAnnotation(key, typeName)
+    else:
+      self.setTypeAnnotation(key, type_)
+
+  def resolveType(self, typeName: str) -> type:
+    """Tries to resolve the 'type' object having name 'typeName'. """
+    if hasattr(builtins, typeName):
+      return getattr(builtins, typeName)
+    if typeName in self.getGlobalScope():
+      return self.getGlobalScope()[typeName]
+    mainScope = sys.modules['__main__']
+    if typeName in mainScope:
+      return mainScope['__main__']
+    raise NameError(typeName)

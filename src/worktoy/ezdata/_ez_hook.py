@@ -4,26 +4,24 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import warnings
-from warnings import warn
 
-from ..core import Object
+from icecream import ic
+
+from ..mcls import AbstractNamespace as ASpace
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import textFmt, maybe, stringList
 from ..waitaminute import TypeException, attributeErrorFactory
-from ..waitaminute.desc import ProtectedError
-from ..waitaminute.ez import DeferredTypeException, UnorderedEZException, \
-  UnfrozenHashException, FrozenEZException, EZDeleteException
+from ..waitaminute.ez import UnorderedEZException, EZDeleteException
+from ..waitaminute.ez import UnfrozenHashException, FrozenEZException
 from ..waitaminute.meta import ReservedName
-
-from icecream import ic
+from . import EZSlot
 
 ic.configureOutput(includeContext=True)
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterator, Callable, TypeAlias, Any, Never, Optional
+  from typing import Any, Iterator, Callable, TypeAlias, Any, Never
 
-  from worktoy.ezdata import EZData, EZMeta, EZSlot
+  from worktoy.ezdata import EZData
 
   Slots: TypeAlias = tuple[str, ...]
   SlotTypes: TypeAlias = Callable[[EZData, str], type]
@@ -67,6 +65,9 @@ class EZSpaceHook(AbstractSpaceHook):
 
   #  Private Variables
   __new_callables__ = None
+  __added_slots__ = None
+  __typehint_mode__ = None
+  __normal_mode__ = None
 
   #  Public Variables
   reservedNames = ReservedNames()
@@ -103,41 +104,38 @@ class EZSpaceHook(AbstractSpaceHook):
     """Returns a list of callables introduced by the current class body. """
     return maybe(self.__new_callables__, [])
 
+  def _getAddedSlots(self) -> list[EZSlot]:
+    """Returns a list of slots added by the current class body."""
+    addedSlots = maybe(self.__added_slots__, [])
+    ownerName = self.space.getClassName()
+    out = []
+    for ezSlot in addedSlots:
+      if ezSlot.__owner_name__ == ownerName:
+        out.append(ezSlot)
+    return out
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _addNewCallable(self, callMeMaybe: Callable) -> None:
-    """Adds a new callable to the list of new callables."""
-    existing = self._getNewCallables()
-    self.__new_callables__ = [*existing, callMeMaybe]
+  def addSlot(self, ezSlot: EZSlot, **kwargs) -> None:
+    """Adds a slot entry"""
+    existing = self._getAddedSlots()
+    if ezSlot in existing:
+      return
+    ezSlot.__owner_name__ = self.space.getClassName()
+    self.__added_slots__ = [*existing, ezSlot]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def slotsGen(self, ) -> list[EZSlot]:
-    """Creates the '__slots__' tuple during the preCompilePhase."""
-    mroSpace = [self.space, *self.space.getMRONamespaces(), ]
-    ezSlots = []
-    for space in reversed(mroSpace):
-      if hasattr(space, 'getEZSlots', ):
-        for ezSlot in space.getEZSlots():
-          if ezSlot in ezSlots:
-            continue
-          ezSlots.append(ezSlot)
-    return ezSlots
-
-  def preCompilePhase(self, compiledSpace: dict) -> dict:
-    """The preCompileHook method is called before the class is compiled."""
-    ezSlots = self.slotsGen()
-    for name, factory in self._getAutoNameFactoryDict().items():
-      compiledSpace[name] = factory()
-    return compiledSpace
-
   def postCompilePhase(self, compiledSpace: dict) -> dict:
     """The postCompileHook method is called after the class is compiled."""
-    ezSlots = self.slotsGen()
+    ezSlots = self._getAddedSlots()
+    for name, factory in self._getAutoNameFactoryDict().items():
+      if name not in compiledSpace:
+        compiledSpace[name] = factory()
     compiledSpace['__slot_objects__'] = ezSlots
     compiledSpace['__slots__'] = [ez.name for ez in ezSlots]
     return compiledSpace
@@ -177,21 +175,19 @@ class EZSpaceHook(AbstractSpaceHook):
     if key in self.reservedNames:
       return False  # Already handled by ReservedNameHook
     if callable(value):
-      self._addNewCallable(value)
       return False
-    for descName in ['__instance_get__', '__instance_set__']:
-      descFunc = getattr(type(value), descName, None)
-      if descFunc is not None:
-        if descFunc is not getattr(Object, descName):
-          return False  #
-    self.space.addRegularSlot(key, value)
+    if hasattr(value, '__get__'):
+      return False
+    ezSlot = EZSlot(key)
+    ezSlot.__type_value__ = type(value)
+    ezSlot.__default_value__ = value
+    self.addSlot(ezSlot)
     return True
 
-  def setAnnotationPhase(self, key: str, value: Any) -> Any:
-    """Adds annotations to slots"""
-    if isinstance(value, str):
-      raise DeferredTypeException(key, value)
-    self.space.addTypeOnlySlot(key, value)
+  def preparePhase(self, space: ASpace, ) -> None:
+    for base in self.space.getBases():
+      for ezSlot in getattr(base, '__slot_objects__', []):
+        self.addSlot(ezSlot)
 
   # \_____________________________________________________________________/ #
   #  Method factories
