@@ -6,9 +6,9 @@ using the AttriBox descriptor for real and imaginary parts.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import AttriBox
-
 from typing import TYPE_CHECKING
+
+from worktoy.desc import AttriBox
 from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS

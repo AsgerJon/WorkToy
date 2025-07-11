@@ -6,7 +6,6 @@ package.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._base_values import baseValues
 from ._regular_class import RegularClass
 from ._sub_class import Mid1, Mid2, Mid3, SubClass
 from ._ez_test import EZTest

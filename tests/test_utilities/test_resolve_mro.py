@@ -7,7 +7,6 @@ module.
 from __future__ import annotations
 
 from worktoy.utilities import resolveMRO
-
 from . import UtilitiesTest
 
 

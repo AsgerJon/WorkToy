@@ -6,12 +6,11 @@ implement the '__class_[HOOK]__' methods are called correctly.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from .. import MCLSTest
+from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
 from worktoy.core import Object
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterator

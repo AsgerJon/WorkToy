@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def trust(callMeMaybe: Callable) -> Callable:
-  setattr(callMeMaybe, '__trust_me_bro__', True)
+  setattr(callMeMaybe, '__is_root__', True)
   return callMeMaybe
 
 

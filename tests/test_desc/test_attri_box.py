@@ -5,9 +5,9 @@ TestAttriBox tests the AttriBox class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import DescTest
 from typing import TYPE_CHECKING
 
+from . import DescTest
 from worktoy.desc import AttriBox
 from worktoy.core.sentinels import THIS, OWNER
 from . import PlanePoint, PlaneCircle

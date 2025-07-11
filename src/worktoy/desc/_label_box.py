@@ -18,15 +18,14 @@ class Foo:
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import AttriBox
-
 from typing import TYPE_CHECKING
 
+from . import AttriBox
 from ..core.sentinels import DELETED
 from ..waitaminute import WriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeVar
+  from typing import Any
 
 
 class LabelBox(AttriBox):

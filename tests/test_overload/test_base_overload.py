@@ -7,15 +7,13 @@ class defining them without any inheritance or other complications.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import OverloadTest
+from typing import TYPE_CHECKING
 
 from tests import WYD
 from worktoy.mcls import BaseObject
 from worktoy.static import Dispatch, overload
 from worktoy.waitaminute.dispatch import DispatchException
 from . import ComplexOverload, OverloadTest
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

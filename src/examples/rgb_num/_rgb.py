@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from worktoy.ezdata import EZData
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeVar
+  pass
 
 
 class RGB(EZData):

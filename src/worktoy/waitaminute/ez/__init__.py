@@ -7,7 +7,6 @@ by the 'worktoy.ezdata' module.
 from __future__ import annotations
 
 from ._ez_multiple_inheritance import EZMultipleInheritance
-from ._deferred_type_exception import DeferredTypeException
 from ._unordered_ez_exception import UnorderedEZException
 from ._unfrozen_hash_exception import UnfrozenHashException
 from ._frozen_ez_exception import FrozenEZException
@@ -15,7 +14,6 @@ from ._ez_delete_exception import EZDeleteException
 
 ___all__ = [
     'EZMultipleInheritance',
-    'DeferredTypeException',
     'UnorderedEZException',
     'UnfrozenHashException',
     'FrozenEZException',

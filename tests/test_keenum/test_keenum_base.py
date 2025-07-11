@@ -8,9 +8,9 @@ to target the _KeeNumBase class directly.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import KeeTest
 from typing import TYPE_CHECKING
 
+from . import KeeTest
 from worktoy.desc import Field
 from worktoy.keenum import KeeMeta
 from worktoy.utilities import maybe

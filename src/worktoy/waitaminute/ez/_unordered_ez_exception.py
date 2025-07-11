@@ -26,7 +26,7 @@ class UnorderedEZException(TypeError):
 
   __slots__ = ('className', 'fieldName', 'fieldType')
 
-  def __init__(self, className: str, *args) -> None:
+  def __init__(self, *args) -> None:
     """
     Initialize the UnorderedEzException exception.
 
@@ -34,8 +34,12 @@ class UnorderedEZException(TypeError):
     :param fieldName: Optional name of the field that does not support
     ordering.
     """
-    self.className = className
-    self.fieldName, self.fieldType, *_ = [*args, None, None]
+    cls, fName, fType, *_ = [*args, None, None]
+    self.className = getattr(cls, '__name__', cls)
+    self.fieldName, self.fieldType = None, None
+    if fType is not None:
+      self.fieldType = fType
+      self.fieldName = fName
     TypeError.__init__(self, )
 
   def _isOrderedStr(self) -> str:

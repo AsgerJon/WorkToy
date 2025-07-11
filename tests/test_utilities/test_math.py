@@ -7,10 +7,10 @@ TestMath tests the mathematical utilities in the
 from __future__ import annotations
 
 from random import random
-from . import UtilitiesTest
 from typing import TYPE_CHECKING
 
-from worktoy.utilities.mathematics import e, pi, log, exp, sin, cos, tan, \
+from . import UtilitiesTest
+from worktoy.utilities.mathematics import pi, log, exp, sin, cos, tan, \
   cosh, sinh, arcTan, tanh, atan2
 
 if TYPE_CHECKING:  # pragma: no cover

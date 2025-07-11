@@ -6,12 +6,6 @@ validator in the work_io module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
-
-import sys
-
-from unittest import TestCase
-
 from . import WorkIOTest
 from tests import WYD
 from worktoy.waitaminute import PathSyntaxException

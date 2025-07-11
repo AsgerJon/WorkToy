@@ -6,9 +6,9 @@ across the 'worktoy' library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._slice_len import sliceLen
 from ._type_cast import typeCast
 from ._class_body_template import ClassBodyTemplate
-from ._runtime_resolve_type import runtimeResolveType
 from ._bipartite_matching import bipartiteMatching
 from ._unpack import unpack
 from ._maybe import maybe
@@ -20,9 +20,9 @@ from ._resolve_mro import resolveMRO
 from ._word_wrap import wordWrap
 
 __all__ = [
+    'sliceLen',
     'typeCast',
     'ClassBodyTemplate',
-    'runtimeResolveType',
     'bipartiteMatching',
     'unpack',
     'maybe',

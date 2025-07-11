@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe
-from . import ContextInstance, MetaType, MetaObject
+from . import ContextInstance, MetaType
 from .sentinels import THIS, DESC, OWNER, DELETED
 from ..waitaminute import TypeException, MissingVariable, \
   attributeErrorFactory

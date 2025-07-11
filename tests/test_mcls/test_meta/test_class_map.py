@@ -6,12 +6,11 @@ TestClassMap tests that classes derived from 'BaseMeta' that implement
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from .. import MCLSTest
+from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
 from worktoy.utilities import maybe
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

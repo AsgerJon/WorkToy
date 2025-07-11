@@ -60,32 +60,9 @@ class EZDesc(Object):
 
   def __init__(self, key: str, *args) -> None:
     self.__keyword_argument__ = key
-    type_, defVal = None, None
-    for arg in args:
-      if isinstance(arg, type) and type_ is None:
-        type_ = arg
-        continue
-      if isinstance(type_, type):
-        if isinstance(arg, type_):
-          defVal = arg
-          break
-        raise TypeException('value', arg, type_, )
-      defVal = arg
-    else:
-      if type_ is None and defVal is None:
-        self.__value_type__ = self.__fallback_type__
-        self.__default_value__ = self.__value_type__()
-      elif type_ is None:
-        self.__value_type__ = type(defVal)
-        self.__default_value__ = defVal
-      elif defVal is None:
-        self.__value_type__ = type_
-        self.__default_value__ = self.__value_type__()
-      else:
-        if not isinstance(defVal, type_):
-          raise TypeException('value', defVal, type_, )
-        self.__value_type__ = type_
-        self.__default_value__ = defVal
+    type_, defVal, *_ = [*args, None, None]
+    self.__value_type__ = type_
+    self.__default_value__ = defVal
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -96,7 +73,7 @@ class EZDesc(Object):
     This method is called when the descriptor is accessed on an instance.
     It should return the value of the descriptor for that instance.
     """
-    kwargs = self.instance.__keyword_arguments__
+    kwargs = maybe(self.instance.__namespace__.__key_args__, dict())
     value = kwargs.get(self.__keyword_argument__, self.__default_value__)
     valueType = self._getValueType()
     if valueType is bool:

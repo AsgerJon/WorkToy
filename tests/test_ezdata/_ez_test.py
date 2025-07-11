@@ -7,15 +7,13 @@ the unittest.TestCase class."""
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from tests import BaseTest
-
-from . import baseValues
-from . import RegularClass, Mid1, Mid2, Mid3, SubClass
-
 from typing import TYPE_CHECKING
 
+from tests import BaseTest
+from . import RegularClass, Mid1, Mid2, Mid3, SubClass
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Type, Any, Iterator
+  pass
 
 
 class EZTest(BaseTest):
@@ -24,17 +22,6 @@ class EZTest(BaseTest):
   the test class from sys.modules and runs the garbage collector.
   Additionally, it implements assertIsSubclass which is oddly missing from
   the unittest.TestCase class."""
-
-  @staticmethod
-  def getBaseValues(n: int = None) -> Iterator[int]:
-    """Returns the base values for the test classes. If n is provided,
-    returns a tuple of the first n base values."""
-    if n is None:
-      for item in baseValues:
-        yield item
-    else:
-      for i in range(n):
-        yield baseValues[i % len(baseValues)]
 
   @classmethod
   def setUpClass(cls) -> None:
@@ -47,7 +34,3 @@ class EZTest(BaseTest):
         Mid3,
         SubClass,
     ]
-    cls.sampleInstances = []
-    for sampleClass in cls.sampleClasses:
-      sample = sampleClass(*cls.getBaseValues(len(sampleClass)), )
-      cls.sampleInstances.append(sample)

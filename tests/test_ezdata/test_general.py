@@ -5,13 +5,13 @@ These tests are made by chat-GPT 4.1
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import EZTest
 from worktoy.ezdata import EZData
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeVar
+  pass
 
 
 class Point2D(EZData):

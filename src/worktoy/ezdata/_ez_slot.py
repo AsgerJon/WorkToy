@@ -3,11 +3,12 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Self
+from typing import TYPE_CHECKING, Self
 
 from ..desc import Field
 from ..mcls import BaseObject
-from ..utilities import maybe, runtimeResolveType
+from ..utilities import maybe
+from ..waitaminute import MissingVariable
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -47,11 +48,7 @@ class EZSlot(BaseObject):
   def _getTypeValue(self, **kwargs) -> type:
     """Get the type value of the slot."""
     if self.__type_value__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      type_ = runtimeResolveType(self.__deferred_type__, )
-      self.__type_value__ = type_
-      return self._getTypeValue(_recursion=True)
+      raise MissingVariable('food', int)
     return self.__type_value__
 
   @defaultValue.GET
@@ -76,15 +73,6 @@ class EZSlot(BaseObject):
 
   def __init__(self, name: str) -> None:
     self.__future_name__ = name
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @staticmethod
-  def _resolveDeferredType(defType: str, ) -> Optional[type]:
-    """Resolve the deferred type of the slot."""
-    return {**globals(), }.get(defType, None)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

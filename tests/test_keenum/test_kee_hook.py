@@ -6,15 +6,14 @@ creating new derived classes.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import KeeTest
+from typing import TYPE_CHECKING
 
+from . import KeeTest
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.meta import IllegalInstantiation
 from worktoy.waitaminute.keenum import KeeNumTypeException, DuplicateKeeNum
 from worktoy.waitaminute.keenum import EmptyKeeNumError
 from worktoy.keenum import KeeNum, auto
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

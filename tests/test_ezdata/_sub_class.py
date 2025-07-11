@@ -6,12 +6,12 @@ functionality of EZData.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import RegularClass
-
 from typing import TYPE_CHECKING
 
+from . import RegularClass
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  pass
 
 
 class Mid1(RegularClass):

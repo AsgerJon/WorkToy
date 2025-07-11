@@ -6,7 +6,6 @@ RGBNum enumerates colors represented by instances of the RGB dataclass.
 from __future__ import annotations
 
 from worktoy.keenum import KeeNum, auto
-
 from . import RGB
 
 

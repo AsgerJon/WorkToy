@@ -5,14 +5,12 @@ TestTypeSig tests the TypeSig class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import StaticTest
-
-from worktoy.utilities import unpack
-from worktoy.static import TypeSig, Dispatch
-from worktoy.waitaminute.dispatch import HashMismatch, CastMismatch
-from worktoy.waitaminute.dispatch import FlexMismatch
 from typing import TYPE_CHECKING
 
+from . import StaticTest
+from worktoy.static import TypeSig
+from worktoy.waitaminute.dispatch import HashMismatch
+from worktoy.waitaminute.dispatch import FlexMismatch
 from tests import WYD  # Custom exception for testing
 
 if TYPE_CHECKING:  # pragma: no cover

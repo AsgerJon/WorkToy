@@ -6,12 +6,12 @@ provided by the 'worktoy.core.sentinels' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import CoreTest
 from worktoy.core.sentinels import DESC, THIS, OWNER, METACALL, WILDCARD
-from worktoy.core.sentinels import Sentinel, DELETED
+from worktoy.core.sentinels import DELETED
 from worktoy.core.sentinels._sentinel import _Sentinel  # NOQA
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

@@ -61,7 +61,7 @@ class KeeSpaceHook(AbstractSpaceHook):
     The setItemHook method is called when an item is set in the
     namespace.
     """
-    if hasattr(value, '__trust_me_bro__'):  # ignores, stubs only
+    if hasattr(value, '__is_root__'):  # ignores, stubs only
       return True
     if key.startswith('__') and key.endswith('__'):
       # Skip special keys

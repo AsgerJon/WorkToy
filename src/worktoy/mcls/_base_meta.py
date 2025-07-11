@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 from . import AbstractMetaclass
 from . import BaseSpace as BSpace
 from . import Types
-from ..core import MetaType
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

@@ -6,17 +6,14 @@ correctly.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import OverloadTest
+from typing import TYPE_CHECKING
 
 from worktoy.desc import AttriBox
 from worktoy.mcls import BaseMeta, BaseObject
-
 from . import ComplexOverload, OverloadTest
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  pass
 
 
 class TestComplex(OverloadTest):

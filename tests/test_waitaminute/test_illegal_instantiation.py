@@ -6,9 +6,9 @@ TestIllegalInstantiation tests the IllegalInstantiation class from the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import WaitAMinuteTest
 from typing import TYPE_CHECKING
 
+from . import WaitAMinuteTest
 from worktoy.core.sentinels import THIS
 from worktoy.waitaminute.meta import IllegalInstantiation
 

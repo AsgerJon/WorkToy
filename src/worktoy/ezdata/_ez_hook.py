@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from icecream import ic
-
 from ..mcls import AbstractNamespace as ASpace
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import textFmt, maybe, stringList
@@ -16,10 +14,8 @@ from ..waitaminute.ez import UnfrozenHashException, FrozenEZException
 from ..waitaminute.meta import ReservedName
 from . import EZSlot
 
-ic.configureOutput(includeContext=True)
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterator, Callable, TypeAlias, Any, Never
+  from typing import Any, Iterator, Callable, TypeAlias, Any, Never, Self
 
   from worktoy.ezdata import EZData
 
@@ -43,6 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
   __LEN__: TypeAlias = Callable[[EZData], int]
   __GETITEM__: TypeAlias = Callable[[EZData, str], Any]
   __SETITEM__: TypeAlias = Callable[[EZData, str, Any], None]
+  __DELITEM__: TypeAlias = Callable[[EZData, str], Never]
   __GETATTR__: TypeAlias = Callable[[EZData, str], Any]
   __SETATTR__: TypeAlias = Callable[[EZData, str, Any], None]
   __DELATTR__: TypeAlias = Callable[[EZData, str], Never]
@@ -91,7 +88,14 @@ class EZSpaceHook(AbstractSpaceHook):
         '__len__'    : self.lenFactory,
         '__getitem__': self.getItemFactory,
         '__setitem__': self.setItemFactory,
+        '__delitem__': self.delItemFactory,
         '__getattr__': self.getAttrFactory,
+        '__setattr__': self.setAttrFactory,
+        '__delattr__': self.delAttrFactory,
+        '__lt__'     : self.ltFactory,
+        '__le__'     : self.leFactory,
+        '__gt__'     : self.gtFactory,
+        '__ge__'     : self.geFactory,
         'asTuple'    : self.asTupleFactory,
         'asDict'     : self.asDictFactory,
     }
@@ -99,10 +103,6 @@ class EZSpaceHook(AbstractSpaceHook):
   def _getBadNames(self) -> list[str]:
     """Returns a tuple of names that are reserved and should not be used."""
     return stringList(self.__bad_names__, )
-
-  def _getNewCallables(self) -> list[Callable]:
-    """Returns a list of callables introduced by the current class body. """
-    return maybe(self.__new_callables__, [])
 
   def _getAddedSlots(self) -> list[EZSlot]:
     """Returns a list of slots added by the current class body."""
@@ -130,43 +130,37 @@ class EZSpaceHook(AbstractSpaceHook):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def preCompilePhase(self, compiledSpace: dict) -> dict:
+    """Sets the factory created functions"""
+    for name, factory in self._getAutoNameFactoryDict().items():
+      compiledSpace[name] = factory()
+    return compiledSpace
+
   def postCompilePhase(self, compiledSpace: dict) -> dict:
     """The postCompileHook method is called after the class is compiled."""
     ezSlots = self._getAddedSlots()
-    for name, factory in self._getAutoNameFactoryDict().items():
-      if name not in compiledSpace:
-        compiledSpace[name] = factory()
+    if self.space.getKwargs().get('order', False) and ezSlots:
+      for ezSlot in ezSlots:
+        val = ezSlot.__default_value__
+        try:
+          _ = val < val or val > val
+        except Exception as exception:
+          if 'not supported between instances of ' in str(exception):
+            clsName = self.space.getClassName()
+            fName = ezSlot.name
+            fType = ezSlot.typeValue
+            raise UnorderedEZException(clsName, fName, fType)
+          raise exception
+        else:
+          continue
     compiledSpace['__slot_objects__'] = ezSlots
     compiledSpace['__slots__'] = [ez.name for ez in ezSlots]
     return compiledSpace
 
   def setItemPhase(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """
-    Checks that 'key' is not the name of a method for which the hook
-    provides an auto-generated factory. This may be bypassed by the
-    '__is_root__' attribute on 'value'. Please note that while this does
-    suppress the exception, the value will be overridden by the hook.
-
-    The following cases are not handled by this hook:
-
-    - If 'key' is a reserved name, the ReservedNameHook has already
-    handled it, but still allowed it through. This means that it is a
-    'write once' attribute, and that this key, value pair must be allowed
-    through.
-
-    - If 'value' is a callable or a descriptor. Please note that
-    descriptors are identified by the presence of the '__instance_get__'
-    or '__instance_set__' methods. These are present on all 'Object'
-    subclasses. To use a descriptor class in a slot, use a type-hint,
-    for example:
-
-    class Foo(EZData):
-      bar: MyDescriptor  # no instantiation
-
-    Special note when using 'from __future__ import annotations':
-    Support of forward references is not implemented as unlike methods,
-    fields in data classes do require runtime resolution of types. This is
-    in contrast to methods, which ignore type hints at runtime.
+    Creates a slot entry for the given key and value, when value is not a
+    callable, a descriptor or a special reserved name.
     """
     if key in self._getBadNames():
       if not hasattr(value, '__is_root__'):
@@ -212,8 +206,12 @@ class EZSpaceHook(AbstractSpaceHook):
           continue
         if not isinstance(arg, slot.typeValue):
           if slot.typeValue is not str:
-            setattr(self, slot.name, slot.typeValue(arg))
-            continue
+            try:
+              setattr(self, slot.name, slot.typeValue(arg))
+            except Exception as e:
+              raise TypeException('arg', arg, slot.typeValue, ) from e
+            else:
+              continue
           raise TypeException('arg', arg, slot.typeValue, )
         setattr(self, slot.name, arg)
       for key, val in kwargs.items():
@@ -229,84 +227,74 @@ class EZSpaceHook(AbstractSpaceHook):
     setattr(__init__, '__auto_generated__', True)
     return __init__
 
-  @staticmethod
-  def lessFactory(**kwargs) -> __LT__:
-    """Creates the inequality methods for the EZData class."""
-
-    def func(self, other: EZData) -> bool:
-      """
-      Instances of EZData are less than each other if their first data
-      field is less than the other's first data field.
-      """
-      if type(self) is not type(other):
-        return NotImplemented
-      if not type(self).isOrdered:
-        raise UnorderedEZException(self.space.getClassName(), )
-      for slot in self.__slots__:
-        try:
-          if getattr(self, slot) < getattr(other, slot):
-            return True
-          if getattr(self, slot) > getattr(other, slot):
-            return False
-          if kwargs.get('equal', False):
-            return False
-        except TypeError as typeError:
-          if 'not supported between instances of' in str(typeError):
-            clsName = self.space.getClassName()
-            fName = slot
-            slotObject = None
-            for slotObject in self.__slot_objects__:
-              if slotObject.name == slot:
-                break
-            else:
-              raise typeError
-            fType = slotObject.typeValue
-            raise UnorderedEZException(clsName, fName, fType) from typeError
-          raise typeError
-      return True if kwargs.get('equal', False) else False
-
-    return func
-
   @classmethod
   def ltFactory(cls, ) -> __LT__:
     """Creates the '__lt__' method for the EZData class. """
-    func = cls.lessFactory(equal=False)
-    setattr(func, '__name__', '__lt__')
-    setattr(func, '__qualname__', '__lt__')
-    setattr(func, '__auto_generated__', True)
-    return func
+
+    def __lt__(self, other: Self) -> bool:
+      if not type(self).isOrdered:
+        raise UnorderedEZException(type(self).__name__)
+      if type(self) is not type(other):
+        return NotImplemented
+      for slot in getattr(self, '__slots__'):
+        selfVal, otherVal = getattr(self, slot), getattr(other, slot)
+        if selfVal < otherVal:
+          return True
+        elif selfVal > otherVal:
+          return False
+        continue
+      return False
+
+    return __lt__
 
   @classmethod
   def leFactory(cls, ) -> __LE__:
     """Creates the '__le__' method for the EZData class. """
-    func = cls.lessFactory(equal=True)
-    setattr(func, '__name__', '__le__')
-    setattr(func, '__qualname__', '__le__')
-    setattr(func, '__auto_generated__', True)
-    return func
 
-  @staticmethod
-  def gtFactory() -> __GT__:
+    def __le__(self, other: Self) -> bool:  # NOQA
+      if not type(self).isOrdered:
+        raise UnorderedEZException(type(self).__name__)
+      if type(self) is not type(other):
+        return NotImplemented
+      slot = self.__slots__[0]
+      selfValue, otherValue = getattr(self, slot), getattr(other, slot)
+      return False if selfValue > otherValue else True
+
+    return __le__
+
+  @classmethod
+  def gtFactory(cls, ) -> __GT__:
     """Creates the '__gt__' method for the EZData class."""
 
-    def __gt__(self, other: EZData) -> bool:
+    def __gt__(self, other: Self) -> bool:
+      if not type(self).isOrdered:
+        raise UnorderedEZException(type(self).__name__)
       if type(self) is not type(other):
         return NotImplemented
-      return other < self  # Uses __lt__
+      for slot in getattr(self, '__slots__'):
+        selfVal, otherVal = getattr(self, slot), getattr(other, slot)
+        if selfVal > otherVal:
+          return True
+        elif selfVal < otherVal:
+          return False
+        continue
+      return False
 
-    setattr(__gt__, '__auto_generated__', True)
     return __gt__
 
-  @staticmethod
-  def geFactory() -> __GE__:
+  @classmethod
+  def geFactory(cls, ) -> __GE__:
     """Creates the '__ge__' method for the EZData class. """
 
-    def __ge__(self, other: EZData) -> bool:
+    def __ge__(self, other: Self) -> bool:
+      if not type(self).isOrdered:
+        raise UnorderedEZException(type(self).__name__)
       if type(self) is not type(other):
         return NotImplemented
-      return other <= self  # Uses __le__
+      slot = self.__slots__[0]
+      selfValue, otherValue = getattr(self, slot), getattr(other, slot)
+      return False if selfValue < otherValue else True
 
-    setattr(__ge__, '__auto_generated__', True)
     return __ge__
 
   @staticmethod
@@ -335,12 +323,13 @@ class EZSpaceHook(AbstractSpaceHook):
 
     def __hash__(self) -> int:
       """The hash of an EZData instance is the hash of its data fields."""
-      if not type(self).isFrozen:
+      if type(self).isFrozen:
         values = []
         for slot in self.__slots__:
           values.append(getattr(self, slot))
         return hash((*values,))
-      raise UnfrozenHashException(self.space.getClassName())
+      clsName = self.__slot_objects__[0].ownerName
+      raise UnfrozenHashException(clsName)
 
     setattr(__hash__, '__auto_generated__', True)
     return __hash__
@@ -390,9 +379,7 @@ class EZSpaceHook(AbstractSpaceHook):
     """The iterFactory method is called when the class is created."""
 
     def __iter__(self, ) -> Iterator:
-      """
-      Implementation of the iteration protocol
-      """
+      """Implementation of the iteration protocol"""
       for key in self.__slots__:
         yield getattr(self, key)
 
@@ -433,30 +420,15 @@ class EZSpaceHook(AbstractSpaceHook):
         #  identifier may initially have been an 'int' value, resolved to
         #  a 'str' value as described above.
         if identifier in self.__slots__:
-          try:
-            value = getattr(self, identifier)
-          except Exception as exception:
-            raise exception
-          else:
-            if value is None:
-              try:
-                value = type(self).__getattr__(self, identifier)
-              except Exception as exception:
-                infoSpec = """Unable to retrieve value for attribute '%s' in 
-                '%s' object!"""
-                clsName = type(self).__name__
-                info = infoSpec % (identifier, clsName)
-                raise AttributeError(textFmt(info)) from exception
-              else:
-                return value
-            return value
-        raise attributeErrorFactory(type(self), identifier)
+          return getattr(self, identifier)
+        e = attributeErrorFactory(type(self), identifier)
+        raise KeyError(identifier) from e
       if isinstance(identifier, slice):
         sliceKeys = self.__slots__[identifier]
         out = []
         for sliceKey in sliceKeys:
           out.append(self[sliceKey])
-        return out
+        return (*out,)
       raise TypeException('key', identifier, str, int, slice)
 
     setattr(__getitem__, '__auto_generated__', True)
@@ -464,16 +436,82 @@ class EZSpaceHook(AbstractSpaceHook):
 
   @staticmethod
   def setItemFactory() -> __SETITEM__:
-    """The setItemFactory method is called when the class is created."""
 
-    def __setitem__(self, key: str, value: object) -> None:
-      """The __setitem__ method is called when the class is created."""
-      if key in self.__slots__:
-        return setattr(self, key, value)
-      raise KeyError(key)
+    def __setitem__(self, identifier: Any, value: Any) -> None:
+      """
+      Assigns value(s) to this object’s slots via integer index, slot name,
+      or slice.
+
+      - If 'identifier' is an int, it is interpreted as a positional index
+        into the slot sequence. Negative indices are supported. Raises
+        IndexError if out of range.
+
+      - If 'identifier' is a str, it must match one of the defined slot
+        names, otherwise KeyError is raised.
+
+      - If 'identifier' is a slice, it refers to a contiguous subset of slot
+        names. The 'value' assigned must be an iterable of equal length. If
+        lengths differ, raises IndexError. If a string is provided as the
+        'value', raises TypeError with an explanatory message—this
+        prevents the common error of assigning an iterable of characters,
+        but bytes and bytearray are allowed.
+
+      Raises TypeException if 'identifier' is not an int, str, or slice.
+      """
+
+      if isinstance(identifier, int):
+        if identifier < 0:
+          return self.__setitem__(identifier + len(self), value)
+        if identifier < len(self):
+          return self.__setitem__(self.__slots__[identifier], value)
+        infoSpec = """Index %d out of range for '%s' with %d slots."""
+        clsName = type(self).__name__
+        info = infoSpec % (identifier, clsName, len(self))
+        raise IndexError(textFmt(info))
+      if isinstance(identifier, str):
+        if identifier in self.__slots__:
+          return setattr(self, identifier, value)
+        raise KeyError(identifier)
+      if isinstance(identifier, slice):
+        if isinstance(value, str):
+          infoSpec = """Tried setting slice: 'self[%s]' to a 'str' object: 
+          '%s'. Because this is nearly always not meant to be taken as an 
+          iterable of characters, 'EZData' does not allow this despite the 
+          fact that Python technically does. Please note that this 
+          prohibition applies only to 'str' not to 'bytes' or 'bytearray'."""
+          info = textFmt(infoSpec % (identifier, value))
+          raise TypeError(info)
+        sliceSlots = self.__slots__[identifier]
+        if len(sliceSlots) != len(value):
+          infoSpec = """Slice '%s' of '%s' with %d slots cannot be set to 
+          value of length %d!"""
+          clsName = type(self).__name__
+          lenSlots = len(self)
+          lenValue = len(value)
+          info = infoSpec % (identifier, clsName, lenSlots, lenValue)
+          raise IndexError(textFmt(info))
+        for (slot, val) in zip(sliceSlots, value):
+          self.__setitem__(slot, val)
+        else:
+          return
+      raise TypeException('key', identifier, str, int, slice)
 
     setattr(__setitem__, '__auto_generated__', True)
     return __setitem__
+
+  @staticmethod
+  def delItemFactory() -> __DELITEM__:
+    """Creates '__delitem__' method that always raise TypeError"""
+
+    def __delitem__(self, key: Any) -> Never:
+      infoSpec = """EZData classes does not support deletion of slots, 
+      but received "del self['%s']" on class: '%s'!"""
+      clsName = type(self).__name__
+      info = infoSpec % (key, clsName)
+      raise TypeError(textFmt(info))
+
+    setattr(__delitem__, '__auto_generated__', True)
+    return __delitem__
 
   @staticmethod
   def getAttrFactory() -> __GETATTR__:
@@ -490,28 +528,8 @@ class EZSpaceHook(AbstractSpaceHook):
         raise attributeErrorFactory(self, key)
       value = None
       exception = None
-      for slot in self.__slot_objects__:
-        if slot.name == key:
-          if slot.defaultValue is not None:
-            value = slot.defaultValue
-            break
-          if slot.typeValue is not None:
-            value = slot.typeValue()
-            break
-          try:
-            value = self.resolveSlotDefault(key)
-          except Exception as e:
-            exception = e
-          else:
-            break
-      if value is None:
-        infoSpec = """Unable to resolve default value for slot '%s' in 
-        '%s' object!"""
-        clsName = type(self).__name__
-        info = infoSpec % (key, clsName)
-        if exception is None:
-          raise AttributeError(textFmt(info))
-        raise AttributeError(textFmt(info)) from exception
+      slot = [s for s in self.__slot_objects__ if s.name == key][0]
+      value = getattr(slot, 'defaultValue')
       setattr(self, key, value)
       return value
 
@@ -519,35 +537,41 @@ class EZSpaceHook(AbstractSpaceHook):
     return __getattr__
 
   @staticmethod
-  def setAttrFactory(*dataFields) -> __SETITEM__:
+  def setAttrFactory() -> __SETATTR__:
     """The setAttrFactory method is called when the class is created."""
 
     def __setattr__(self, key: str, value: Any) -> None:
       """Sets the value of the given key in the EZData instance."""
+      if key not in self.__slots__:
+        raise attributeErrorFactory(self, key)
       if type(self).isFrozen:
-        clsName = self.space.getClassName()
-        oldValue = getattr(self, key, )
-        raise FrozenEZException(key, clsName, oldValue, value)
-      if key in self.__slots__:
-        return object.__setattr__(self, key, value)
-      raise KeyError(key)
+        try:
+          oldValue = object.__getattribute__(self, key, )
+        except AttributeError:
+          return object.__setattr__(self, key, value)
+        else:
+          slot0 = self.__slot_objects__[0]
+          clsName = slot0.ownerName
+          oldValue = getattr(self, key, )
+          raise FrozenEZException(key, clsName, oldValue, value)
+      return object.__setattr__(self, key, value)
 
     setattr(__setattr__, '__auto_generated__', True)
     return __setattr__
 
   @staticmethod
-  def delAttrFactory(*dataFields) -> __DELATTR__:
+  def delAttrFactory() -> __DELATTR__:
     """The delAttrFactory method is called when the class is created."""
 
     def __delattr__(self, key: str) -> Never:
       """Illegal deleter"""
-      raise EZDeleteException(self.space.getClassName(), key, )
+      raise EZDeleteException(type(self), key, )
 
     setattr(__delattr__, '__auto_generated__', True)
     return __delattr__
 
   @staticmethod
-  def asTupleFactory(*ezSlots) -> AS_TUPLE:
+  def asTupleFactory() -> AS_TUPLE:
     """The asTupleFactory method is called when the class is created."""
 
     def asTuple(self, ) -> tuple:
@@ -558,7 +582,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return asTuple
 
   @staticmethod
-  def asDictFactory(*ezSlots) -> AS_DICT:
+  def asDictFactory() -> AS_DICT:
     """The asDictFactory method is called when the class is created."""
 
     def asDict(self: EZData) -> dict:

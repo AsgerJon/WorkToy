@@ -6,22 +6,21 @@ AbstractMetaclass from the worktoy.mcls module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Never
+
 from tests import WYD
 from worktoy.core.sentinels import WILDCARD
 from worktoy.desc import AttriBox
 from worktoy.static import overload
 from worktoy.waitaminute.meta import ReservedName
 from .. import MCLSTest
-
 from worktoy.core import MetaType, Object
 from worktoy.core._meta_type import _Space  # NOQA
 from worktoy.mcls import AbstractMetaclass, AbstractNamespace, BaseMeta, \
   BaseObject
 
-from typing import TYPE_CHECKING, Never
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any
 
 
 class TestMetaUmbrella(MCLSTest):
@@ -194,3 +193,42 @@ class TestMetaUmbrella(MCLSTest):
       else:
         typeStr = typeStr.ljust(40)
       info = infoSpec % (key, typeStr)
+
+  def testAbstractNamespaceGlobalScope(self) -> None:
+    """
+    Tests that the global scope of AbstractNamespace behaves as expected.
+    """
+
+    class Foo:
+      pass
+
+    class Breh(Object, metaclass=AbstractMetaclass):
+      """A test class for AbstractNamespace global scope."""
+      x = AttriBox[int](0)
+      y = AttriBox[int](0)
+
+    with self.assertRaises(RuntimeError) as context:
+      _ = Breh.__namespace__.__global_scope__
+    e = context.exception
+    self.assertIn('Direct access to the', str(e))
+    self.assertIn('__global_scope__', str(e))
+
+    Breh.__namespace__.setTypeAnnotation('lmao', True)
+    Breh.__namespace__.setTypeAnnotation('lmao', False)
+    Breh.__namespace__.setTypeAnnotation('lmao', False)
+
+    Breh.__namespace__.setDeferredAnnotation('lol', 'bool')
+    Breh.__namespace__.setDeferredAnnotation('lol', 'int')
+    Breh.__namespace__.setDeferredAnnotation('lol', 'int')
+
+    Breh.__namespace__.setAnnotation('haha', 'trolololololo')
+
+    Breh.__namespace__.setClassAnnotation({'lmao': 'bool'})
+    Breh.__namespace__.setClassAnnotation({'lmao': 'int'})
+    Breh.__namespace__.setClassAnnotation({'lmao': 'float'})
+
+    Breh.__namespace__.resolveType('annotations')
+
+    lol = AbstractNamespace(AbstractMetaclass, 'lol', ())
+    object.__setattr__(lol, '__global_scope__', dict())
+    lol.resolveType('annotations')

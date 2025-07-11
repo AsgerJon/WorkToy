@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ..core.sentinels import WILDCARD
 from ..waitaminute import VariableNotNone
 from ..static import TypeSig
-from . import AbstractNamespace, AbstractMetaclass
+from . import AbstractNamespace
 from .space_hooks import OverloadSpaceHook, PreClassSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover

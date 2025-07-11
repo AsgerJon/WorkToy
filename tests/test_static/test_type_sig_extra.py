@@ -8,9 +8,9 @@ required for the central functionality of the 'TypeSig' class, such as
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import StaticTest
 from typing import TYPE_CHECKING
 
+from . import StaticTest
 from worktoy.static import TypeSig
 
 if TYPE_CHECKING:  # pragma: no cover

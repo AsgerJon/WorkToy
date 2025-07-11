@@ -6,9 +6,9 @@ TestAbstractNamespace provides the basic unit tests for the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from .. import MCLSTest
 from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass, AbstractNamespace
 from worktoy.mcls.space_hooks import AbstractSpaceHook
 from worktoy.waitaminute.meta import HookException, DuplicateHook

@@ -14,12 +14,12 @@ predictedMRO == actualMRO
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import joinWords, textFmt, maybe
-
 from typing import TYPE_CHECKING
 
+from . import joinWords, textFmt
+
 if TYPE_CHECKING:  # pragma no cover
-  from typing import Any
+  pass
 
 
 def resolveMRO(*bases: type, **kwargs) -> list[type]:

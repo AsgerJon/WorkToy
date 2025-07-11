@@ -6,18 +6,17 @@ PlaneCircle provides a plane circle with center implemented with
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.desc import AttriBox
 from worktoy.mcls import BaseObject
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS
 from worktoy.utilities import stringList
-
 from . import PlanePoint
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Optional, Self
+  from typing import Self
 
 
 class PlaneCircle(BaseObject):

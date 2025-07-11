@@ -6,14 +6,14 @@ library, found in the 'worktoy.static' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import StaticTest
 from typing import TYPE_CHECKING
 
+from . import StaticTest
 from worktoy.core import Object
 from worktoy.core.sentinels import THIS, OWNER
 from worktoy.utilities import stringList
 from worktoy.waitaminute import MissingVariable, TypeException
-from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
+from worktoy.waitaminute.desc import ReadOnlyError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Any

@@ -7,7 +7,6 @@ which is used to cast values to specific types.
 from __future__ import annotations
 
 from . import UtilitiesTest
-
 from worktoy.utilities import typeCast
 from worktoy.waitaminute.dispatch import TypeCastException
 

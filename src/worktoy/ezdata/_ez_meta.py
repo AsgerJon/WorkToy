@@ -5,16 +5,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from icecream import ic
-
 from . import EZDesc
-from ..mcls import AbstractMetaclass, Base, BaseMeta
+from ..mcls import Base, BaseMeta
 from ..ezdata import EZSpace
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
-
-ic.configureOutput(includeContext=True)
 
 
 class EZMeta(BaseMeta):
@@ -37,7 +33,3 @@ class EZMeta(BaseMeta):
   def __prepare__(mcls, name: str, bases: Base, **kwargs: dict) -> EZSpace:
     """Prepare the class namespace."""
     return EZSpace(mcls, name, bases, **kwargs)
-
-  def __len__(cls) -> int:
-    """Return the number of class variables."""
-    return len(getattr(cls, '__slots__', ()))

@@ -6,8 +6,9 @@ a hook is added multiple times to a class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from .. import MCLSTest
 from typing import TYPE_CHECKING
+
+from .. import MCLSTest
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

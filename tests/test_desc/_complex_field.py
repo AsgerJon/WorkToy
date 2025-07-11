@@ -7,12 +7,11 @@ using the Field descriptor for real and imaginary parts.
 from __future__ import annotations
 
 from math import atan2
+from typing import TYPE_CHECKING
 
 from worktoy.desc import Field
 from worktoy.utilities import maybe
 from worktoy.waitaminute import WriteOnceError
-
-from typing import TYPE_CHECKING
 from worktoy.mcls import BaseMeta, BaseObject
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS

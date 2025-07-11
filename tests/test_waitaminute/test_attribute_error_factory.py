@@ -5,14 +5,13 @@ TestAttributeErrorFactory is a factory for creating AttributeError instances.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import WaitAMinuteTest
-
-from worktoy.waitaminute import attributeErrorFactory
-
 from typing import TYPE_CHECKING
 
+from . import WaitAMinuteTest
+from worktoy.waitaminute import attributeErrorFactory
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type
+  pass
 
 
 class Foo:

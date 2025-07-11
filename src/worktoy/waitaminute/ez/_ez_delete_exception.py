@@ -22,18 +22,18 @@ class EZDeleteException(TypeError):
   allow deletion of fields.
   """
 
-  __slots__ = ('fieldName', 'className')
+  __slots__ = ('name', 'cls')
 
-  def __init__(self, fieldName: str, className: str) -> None:
-    self.fieldName = fieldName
-    self.className = className
+  def __init__(self, cls: type, name: str, ) -> None:
+    self.cls = cls
+    self.name = name
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
     infoSpec = """Attempted to delete field '%s' in EZData subclass '%s'. 
     EZData subclasses do not allow deletion of fields. """
-    fName = self.fieldName
-    clsName = self.className
+    fName = self.name
+    clsName = self.cls.__name__
     info = infoSpec % (fName, clsName)
     return textFmt(info, )
 

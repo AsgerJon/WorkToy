@@ -44,9 +44,28 @@ class EZData(BaseObject, metaclass=EZMeta):
     """See documentation for __init__ above."""
 
   @_root
+  def __len__(self, ) -> int:
+    """See documentation for __init__ above."""
+
+  @_root
   def __setitem__(self, *_) -> None:
     """See documentation for __init__ above."""
 
   @_root
   def __getitem__(self, *_) -> None:
     """See documentation for __init__ above."""
+
+  @classmethod
+  def __class_len__(cls, ) -> int:
+    """Return the number of class variables."""
+    return len(getattr(cls, '__slots__', ()))
+
+  @classmethod
+  def __class_iter__(cls, ) -> Iterator[str]:
+    """Iterate over the class variables."""
+    yield from getattr(cls, '__slots__', ())
+
+  @classmethod
+  def __class_contains__(cls, item: str) -> bool:
+    """Check if the class contains the given item."""
+    return item in getattr(cls, '__slots__', ())

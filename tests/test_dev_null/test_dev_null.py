@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from tests import BaseTest
-
 from tests import WYD
 from worktoy.utilities import ClassBodyTemplate
 

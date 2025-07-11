@@ -6,14 +6,9 @@ TypeCast encapsulates the logic for instantiating a type from arguments.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from types import FunctionType as Func
-
-from icecream import ic
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
-
-ic.configureOutput(includeContext=True)
 
 
 def typeCast(target: type, arg: Any) -> Any:

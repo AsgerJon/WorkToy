@@ -10,11 +10,9 @@ is correctly replaced with the far superior:
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from .. import MCLSTest
 from typing import TYPE_CHECKING
 
-from worktoy.mcls import AbstractMetaclass, BaseSpace
-from worktoy.waitaminute import VariableNotNone
+from .. import MCLSTest
 from worktoy.waitaminute.meta import MetaclassException
 
 if TYPE_CHECKING:  # pragma: no cover

@@ -6,18 +6,15 @@ overload system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import OverloadTest
+from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import THIS
 from worktoy.mcls import BaseObject
 from worktoy.static import overload
-
 from . import OverloadTest
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias, Any
+  from typing import Self
 
 
 class Foo(BaseObject):

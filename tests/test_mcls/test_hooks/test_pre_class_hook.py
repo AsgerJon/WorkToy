@@ -6,9 +6,9 @@ module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from .. import MCLSTest
 from typing import TYPE_CHECKING
 
+from .. import MCLSTest
 from worktoy.mcls.space_hooks import PreClassSpaceHook
 from worktoy.static import PreClass, TypeSig
 from worktoy.utilities import stringList

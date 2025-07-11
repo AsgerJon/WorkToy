@@ -6,10 +6,10 @@ function.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import UtilitiesTest
 from random import shuffle, random
 from typing import TYPE_CHECKING
 
+from . import UtilitiesTest
 from worktoy.utilities import maybe
 
 if TYPE_CHECKING:  # pragma: no cover

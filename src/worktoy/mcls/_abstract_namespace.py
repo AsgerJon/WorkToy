@@ -9,17 +9,11 @@ from __future__ import annotations
 import builtins
 import sys
 from typing import TYPE_CHECKING
-from warnings import warn
 
-from icecream import ic
-
-from ..utilities import textFmt, maybe, resolveMRO, runtimeResolveType
-from ..waitaminute import TypeException
+from ..utilities import textFmt, maybe, resolveMRO
 from ..waitaminute.meta import HookException, DuplicateHook
 from . import Base
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
-
-ic.configureOutput(includeContext=True)
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator, Union, Self
@@ -405,6 +399,6 @@ class AbstractNamespace(dict):
     if typeName in self.getGlobalScope():
       return self.getGlobalScope()[typeName]
     mainScope = sys.modules['__main__']
-    if typeName in mainScope:
-      return mainScope['__main__']
+    if hasattr(mainScope, typeName):
+      return getattr(mainScope, typeName)
     raise NameError(typeName)

@@ -69,7 +69,6 @@ In practical terms:
 from __future__ import annotations
 
 import builtins
-
 from typing import TYPE_CHECKING
 
 from ..waitaminute.meta import MetaclassException
@@ -78,7 +77,7 @@ from ..waitaminute.ez import EZMultipleInheritance
 oldBuild = builtins.__build_class__
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeVar, TypeAlias, Type, Union
+  from typing import TypeAlias, Type, Union
   from . import AbstractMetaclass
 
   META: TypeAlias = Union[Type[AbstractMetaclass], Type[type]]

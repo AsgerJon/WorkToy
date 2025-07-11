@@ -5,15 +5,15 @@ TestLabelBox tests the LabelBox class from the worktoy.desc module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.core import Object
 from worktoy.desc import LabelBox
 from worktoy.waitaminute import WriteOnceError
 from . import DescTest
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type
+  pass
 
 
 class Foo(Object):

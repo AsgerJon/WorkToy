@@ -6,13 +6,13 @@ coordinates implemented with 'AttriBox'.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.desc import AttriBox
 from worktoy.mcls import BaseObject
 from worktoy.static import overload
 from worktoy.core.sentinels import THIS
 from worktoy.utilities import stringList
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
