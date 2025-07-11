@@ -3,7 +3,7 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from ..desc import Field
 from ..mcls import BaseObject
@@ -11,7 +11,7 @@ from ..utilities import maybe
 from ..waitaminute import MissingVariable
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Self
 
 
 class EZSlot(BaseObject):

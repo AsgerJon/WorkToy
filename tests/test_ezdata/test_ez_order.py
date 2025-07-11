@@ -521,6 +521,17 @@ class TestEZOrder(EZTest):
     self.assertEqual(e.fieldName, 'a')
     self.assertEqual(e.fieldType, complex)
 
+    with self.assertRaises(UnorderedEZException) as context:
+      class OrderableMismatch(EZData, order=True):
+        b: int = 2
+        c: str = 'three'
+        a: complex = 1 + 2j  # coverage gymnastics
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertEqual(e.className, 'OrderableMismatch')
+    self.assertEqual(e.fieldName, 'a')
+    self.assertEqual(e.fieldType, complex)
+
   def test_coverage_gymnastics(self) -> None:
     """Really gotta reach for this one!"""
 

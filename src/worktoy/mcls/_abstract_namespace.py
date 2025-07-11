@@ -398,7 +398,4 @@ class AbstractNamespace(dict):
       return getattr(builtins, typeName)
     if typeName in self.getGlobalScope():
       return self.getGlobalScope()[typeName]
-    mainScope = sys.modules['__main__']
-    if hasattr(mainScope, typeName):
-      return getattr(mainScope, typeName)
     raise NameError(typeName)

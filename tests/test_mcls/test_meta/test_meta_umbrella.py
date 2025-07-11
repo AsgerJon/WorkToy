@@ -6,7 +6,7 @@ AbstractMetaclass from the worktoy.mcls module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Never
+from typing import TYPE_CHECKING
 
 from tests import WYD
 from worktoy.core.sentinels import WILDCARD
@@ -16,11 +16,11 @@ from worktoy.waitaminute.meta import ReservedName
 from .. import MCLSTest
 from worktoy.core import MetaType, Object
 from worktoy.core._meta_type import _Space  # NOQA
-from worktoy.mcls import AbstractMetaclass, AbstractNamespace, BaseMeta, \
-  BaseObject
+from worktoy.mcls import AbstractMetaclass, AbstractNamespace
+from worktoy.mcls import BaseMeta, BaseObject
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Never
 
 
 class TestMetaUmbrella(MCLSTest):
@@ -230,5 +230,5 @@ class TestMetaUmbrella(MCLSTest):
     Breh.__namespace__.resolveType('annotations')
 
     lol = AbstractNamespace(AbstractMetaclass, 'lol', ())
-    object.__setattr__(lol, '__global_scope__', dict())
-    lol.resolveType('annotations')
+    object.__setattr__(lol, '__global_scope__', dict(lmao=True))
+    lol.resolveType('lmao')

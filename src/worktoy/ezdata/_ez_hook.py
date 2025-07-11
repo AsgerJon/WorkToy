@@ -151,8 +151,6 @@ class EZSpaceHook(AbstractSpaceHook):
             fType = ezSlot.typeValue
             raise UnorderedEZException(clsName, fName, fType)
           raise exception
-        else:
-          continue
     compiledSpace['__slot_objects__'] = ezSlots
     compiledSpace['__slots__'] = [ez.name for ez in ezSlots]
     return compiledSpace
