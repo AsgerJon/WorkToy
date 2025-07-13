@@ -31,3 +31,7 @@ class BaseTest(TestCase):
   def assertIsNotSubclass(self, subClass: type, superClass: type, ) -> None:
     """Assert that 'subClass' is not a subclass of 'superClass'."""
     self.assertFalse(issubclass(subClass, superClass))
+
+  def assertNotIsSubclass(self, *args) -> None:
+    """Same as above"""
+    self.assertIsNotSubclass(*args)

@@ -75,7 +75,7 @@ class NamespaceHook(AbstractSpaceHook):
         '__class_len__',
         '__class_hash__',
         #  '__class_eq__',  Exhibits highly undefined behaviour!
-        '__class_ne__',
+        #  '__class_ne__',  See above
         #  '__class_getitem__',  See footnote below
         '__class_setitem__',
         '__class_delitem__',
@@ -131,7 +131,7 @@ class NamespaceHook(AbstractSpaceHook):
       return True
     return False
 
-  def setItemPhase(self, key: str, value: Any, oldValue: Any) -> bool:
+  def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
     Hook for setItem. This is called before the __setitem__ method of
     the namespace object is called. The default implementation does nothing

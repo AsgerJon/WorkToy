@@ -104,9 +104,7 @@ class AbstractNamespace(dict):
     return hash((clsName, *baseNames, mclsName,))
 
   def getHash(self, **kwargs) -> int:
-    """
-    Resolves the hash value for the future class.
-    """
+    """Resolves the hash value for the future class."""
     computedHash = self._computeHash()
     if self.__hash_value__ is None:
       if kwargs.get('_recursion', False):
@@ -300,10 +298,7 @@ class AbstractNamespace(dict):
     spaceName = type(self).__name__
     clsName = self.getClassName()
     mclsName = self.getMetaclass().__name__
-    if bases:
-      baseNames = '%s,' % ', '.join([base.__name__ for base in bases])
-    else:
-      baseNames = ''
+    baseNames = '%s' % ', '.join([base.__name__ for base in bases])
     mclsName = self.getMetaclass().__name__
     args = """%s, '%s', (%s)""" % (mclsName, clsName, baseNames)
     kwargs = [(k, v) for (k, v) in self.getKwargs().items()]

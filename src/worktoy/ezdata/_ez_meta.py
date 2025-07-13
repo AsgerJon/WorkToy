@@ -32,4 +32,5 @@ class EZMeta(BaseMeta):
   @classmethod
   def __prepare__(mcls, name: str, bases: Base, **kwargs: dict) -> EZSpace:
     """Prepare the class namespace."""
+    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return EZSpace(mcls, name, bases, **kwargs)

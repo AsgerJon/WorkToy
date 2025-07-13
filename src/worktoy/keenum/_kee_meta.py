@@ -1,29 +1,34 @@
 """
-KeeMeta provides the metaclass creating the KeeNum enumeration class.
+KeeMeta provides the metaclass for the 'worktoy.keenum' module.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from ._kee_desc import Base, MRO, Members, IsRoot
+from ..desc import Field
+from ..mcls import BaseMeta
 
-from ..mcls import AbstractMetaclass
-from ..utilities import textFmt
+from . import KeeSpace as KSpace, Kee
+
+from typing import TYPE_CHECKING, Iterator
+
+from ..utilities import maybe, textFmt
 from ..waitaminute import TypeException
-from ..waitaminute.meta import IllegalInstantiation
-from ..waitaminute.keenum import EmptyKeeNumError
-from . import KeeSpace, _KeeNumBase
+from ..waitaminute.keenum import KeeNameError, KeeIndexError
+from ..waitaminute.keenum import KeeMemberError, KeeValueError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias, Any, Iterator
+  from typing import Any, TypeAlias, Self
+
+  from . import KeeNum
 
   Bases: TypeAlias = tuple[type, ...]
-  MTypes: TypeAlias = dict[str, type]
 
 
-class KeeMeta(AbstractMetaclass):
+class KeeMeta(BaseMeta):
   """
-  KeeMeta provides the metaclass creating the KeeNum enumeration class.
+  KeeMeta provides the metaclass for the 'worktoy.keenum' module.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -31,191 +36,171 @@ class KeeMeta(AbstractMetaclass):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __core_keenum__ = None  # Future KeeNum base class
+  __allow_instantiation__ = False
+  __num_members__ = None
+  __is_root__ = None
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @classmethod
-  def _createCoreKeeNum(mcls, ) -> Self:
-    """
-    Creator function for the core KeeNum class.
-    """
-
-    class KeeNum(_KeeNumBase, metaclass=mcls):
-      """
-      KeeNum provides the base class for enumerating classes with
-      restricted and predefined instances called members.
-      """
-      pass
-
-    setattr(mcls, '__core_keenum__', KeeNum)
-
-  @classmethod
-  def getCoreKeeNum(mcls, **kwargs) -> type:
-    """
-    Get the core KeeNum class.
-    """
-    if mcls.__core_keenum__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError  # pragma: no cover
-      mcls._createCoreKeeNum()
-      return mcls.getCoreKeeNum(_recursion=True)
-    return mcls.__core_keenum__
+  #  Public Variables
+  isRoot = IsRoot()
+  base = Base()
+  mroNum = MRO()
+  members = Members()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> KeeSpace:
-    """
-    Prepare the class namespace.
-    """
-    if kwargs.get('trustMeBro', False):
-      return dict()
-    return KeeSpace(mcls, name, bases, **kwargs)
+  def __prepare__(mcls, name: str, bases: Bases, **kw: Any) -> KSpace:
+    """Prepares the namespace for the class."""
+    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
+    return KSpace(mcls, name, bases, **kw)
 
-  def __new__(mcls, name: str, bases: Bases, space: KeeSpace, **kw) -> Self:
+  def __new__(mcls, name: str, bases: Bases, space: KSpace, **kw) -> Self:
     """
-    Create a new instance of the KeeMeta metaclass.
+    Creates a new instance of the class.
+    This method is called when the class is created.
     """
-    if kw.get('trustMeBro', False):
-      return mcls.getCoreKeeNum()
-    if name == 'KeeNum' or kw.get('_root', False):
-      return super().__new__(mcls, name, bases, space, **kw)
-    coreKeeNum = mcls.getCoreKeeNum()
-    return super().__new__(mcls, name, (coreKeeNum,), space, **kw)
-
-  def __init__(cls, name: str, bases: Bases, space: KeeSpace, **kw) -> None:
-    """
-    Initialize the KeeMeta metaclass.
-    """
-    super().__init__(name, bases, space, **kw)
+    cls = super().__new__(mcls, name, bases, space, **kw)
+    cls.__num_members__ = []
     if name == 'KeeNum':
-      return
-    futureEntries = getattr(cls, '__future_entries__', )
-    if not futureEntries:
-      raise EmptyKeeNumError(cls.__name__)
-    actualEntries = dict()
-    valueType = None
-    memberValues = []
-    memberNames = []
-    for i, (name, value) in enumerate(futureEntries.items()):
-      if not isinstance(valueType, type):
-        valueType = type(value)
-      entry = cls(_root=True)
-      entry.__member_name__ = name
-      entry.__member_value__ = value
-      entry.__member_index__ = i
-      memberValues.append(value)
-      memberNames.append(name)
-      actualEntries[name] = entry
-      setattr(cls, name, entry)
+      return cls
+    base = bases[0]
+    cls.__allow_instantiation__ = True
 
-    setattr(cls, '__value_type__', valueType)
-    setattr(cls, '__member_entries__', actualEntries)
-    delattr(cls, '__future_entries__')
-    delattr(cls, '__future_value_type__')
+    for i, (key, kee) in enumerate(space.__enumeration_members__.items()):
+      self = getattr(base, key, None)
+      if self is None:
+        self = cls(kee, )
+      setattr(cls, key, self)
+      cls.__num_members__.append(self)
+    cls.__allow_instantiation__ = False
+    return cls
 
   def __call__(cls, *args, **kwargs) -> Any:
     """
-    Only the _addMember method is allowed to create instances of the
-    KeeNum class.
+    Prevents instantiation of the class.
+    This method is called when the class is instantiated.
     """
-    if not kwargs.get('_root', False):
-      try:
-        member = cls.__getitem__(args[0])
-      except Exception as exception:
-        raise IllegalInstantiation(cls) from exception
-      else:
-        return member
-    self = super().__call__(**kwargs)
-    return self
+    if cls.__allow_instantiation__:
+      return super().__call__(*args, **kwargs)
+    return cls._resolveMember(args[0])
 
-  def __len__(cls) -> int:
+  def __getitem__(cls, identifier: Any) -> Kee:
     """
-    Get the number of members in the KeeNum class.
+    Gets a member of the enumeration by index or key.
+    This method is used to get a member of the enumeration by index or key.
     """
-    out = 0
-    for _ in cls:
-      out += 1
+    return cls._resolveMember(identifier)
+
+  def __iter__(cls, ) -> Iterator[Self]:
+    """
+    Iterates over the members of the enumeration.
+    This method is used to iterate over the members of the enumeration.
+    """
+    yield from cls.members
+
+  def __len__(cls, ) -> int:
+    """
+    Returns the number of members in the enumeration.
+    This method is used to get the number of members in the enumeration.
+    """
+    return sum(1 for _ in cls)
+
+  def __contains__(cls, identifier: Any) -> bool:
+    """
+    Checks if the enumeration contains a member by index or key.
+    This method is used to check if the enumeration contains a member.
+    """
+    try:
+      _ = cls._resolveMember(identifier)
+    except (IndexError, KeyError):
+      return False
     else:
-      return out
+      return True
 
-  def __iter__(cls, ) -> Iterator:
+  def __instancecheck__(cls, instance: Any) -> bool:
     """
-    Iterate over the members of the KeeNum class.
+    Checks if the instance is a member of the enumeration.
+    This method is used to check if the instance is a member of the
+    enumeration.
     """
-    yield from getattr(cls, '__member_entries__', ).values()
+    return True if issubclass(type(instance), cls) else False
 
-  def __getitem__(cls, key: str) -> Any:
+  def __subclasscheck__(cls, subclass: type) -> bool:
     """
-    Get a member by its name.
+    Checks if the subclass is a subclass of the enumeration.
+    This method is used to check if the subclass is a subclass of the
+    enumeration.
     """
-    valueType = getattr(cls, '__value_type__', None)
-    if isinstance(key, int):
-      return cls._getFromIndex(key)
-    if isinstance(key, str):
-      return cls._getFromName(key)
-    if isinstance(key, valueType):
-      return cls._getFromValue(key)
-    raise TypeException('key', key, int, str, valueType)
-
-  def _getFromIndex(cls, index: int) -> Any:
-    """
-    Get a member by its index. If the value type is 'int' and the index is
-    negative, this method assumes that the index does not match any value
-    type.
-    """
-    if index < 0:
-      return cls._getFromIndex(len(cls) + index)
-    for entry in cls:
-      if entry.index == index:
-        return entry
-    infoSpec = """Index %d out of range for %s"""
-    info = infoSpec % (index, cls.__name__)
-    raise IndexError(textFmt(info))
-
-  def _getFromName(cls, name: str, **kwargs) -> Any:
-    """
-    Get a member by its name. If the value type is 'str', this method
-    assumes that the identifier does not match any value type.
-    """
-    for entry in cls:
-      if entry.name == name:
-        return entry
-    for entry in cls:
-      entryName = entry.name.lower().replace('_', '')
-      lookupName = name.lower().replace('_', '')
-      if entryName == lookupName:
-        return entry
-    raise KeyError(name)
-
-  def _getFromValue(cls, value: Any, **kwargs) -> Any:
-    """
-    Get a member by its value.
-    """
-    for entry in cls:
-      if entry.value == value:
-        return entry
-    raise ValueError(value)
+    if not hasattr(subclass, '__mro__'):
+      return False
+    for item in subclass.__mro__:
+      if item is cls:
+        return True
+    return False
 
   def __str__(cls) -> str:
     """
-    String representation of the KeeMeta metaclass.
+    Returns a string representation of the enumeration.
+    This method is used to get a string representation of the enumeration.
     """
-    if cls.__name__ == 'KeeNum':
-      return """<class 'KeeNum'>"""
-    valueType = getattr(cls, '__value_type__', )
-    typeName = '' if valueType is str else valueType.__name__
+    infoSpec = """<KeeNum '%s': %d members>"""
     clsName = cls.__name__
-    infoSpec = """%s(KeeNum)[%s]"""
-    return infoSpec % (clsName, typeName)
+    n = len(cls.__num_members__)
+    info = infoSpec % (clsName, n)
+    return info
 
   __repr__ = __str__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def _resolveMember(cls, identifier: Any) -> Any:
+    """
+    Resolves a member of the enumeration.
+    This method is used to resolve a member of the enumeration.
+    """
+    if isinstance(identifier, int):
+      return cls._resolveIndex(identifier)
+    if isinstance(identifier, str):
+      return cls._resolveKey(identifier)
+    if type(type(identifier)) is type(cls):
+      for member in cls:
+        if member is identifier:
+          return member
+      raise KeeMemberError(cls, identifier)
+    from . import KeeNum
+    raise TypeException('identifier', identifier, int, str, KeeNum)
+
+  def _resolveIndex(cls, index: int) -> Kee:
+    """
+    Resolves a member of the enumeration by index.
+    This method is used to resolve a member of the enumeration by index.
+    """
+    if index < 0:
+      return cls[len(cls) + index]
+    if index < len(cls):
+      return cls.__num_members__[index]
+    raise KeeIndexError(cls, index)
+
+  def _resolveKey(cls, key: str) -> Kee:
+    """
+    Resolves a member of the enumeration by key.
+    This method is used to resolve a member of the enumeration by key.
+    """
+    for member in cls.__num_members__:
+      if member.name.lower() == key.lower():
+        return member
+    raise KeeNameError(cls, key)
+
+  def fromValue(cls, value: Any) -> KeeNum:
+    """
+    Resolves a member of the enumeration by value.
+    This method is used to resolve a member of the enumeration by value.
+    """
+    for member in cls.__num_members__:
+      if member.value == value:
+        return member
+    raise KeeValueError(cls, value)

@@ -69,3 +69,7 @@ class EZData(BaseObject, metaclass=EZMeta):
   def __class_contains__(cls, item: str) -> bool:
     """Check if the class contains the given item."""
     return item in getattr(cls, '__slots__', ())
+
+  def __set_name__(self, owner: type, name: str) -> None:
+    """Removes 'Object.__set_name__' which would set attributes on the
+    instance. """

@@ -385,17 +385,6 @@ class TestEZOrder(EZTest):
       else:
         self.assertEqual(slot, i)
 
-    D = MutableLong()
-
-    roll = -1337
-    D[roll] = 8008135
-    posRoll = roll + len(D) * (-roll // len(D) + 1)
-    print('posRoll:', posRoll)
-
-    for i, slot in enumerate(D):
-      if slot > len(D):
-        print(slot, i, roll)
-
   def test_bad_set_item(self) -> None:
     """Testing __setitem__ on indices not in range."""
     A = OrderFull(0, 1, 2, )

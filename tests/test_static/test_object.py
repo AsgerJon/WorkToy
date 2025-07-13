@@ -49,11 +49,13 @@ class TestObject(StaticTest):
     e = context.exception
     self.assertEqual(e.varName, '__field_name__')
     self.assertEqual(e.varType, str, )
+    self.assertEqual(str(e), repr(e))
     with self.assertRaises(MissingVariable) as context:
       _ = obj.getFieldOwner()
     e = context.exception
     self.assertEqual(e.varName, '__field_owner__')
     self.assertEqual(e.varType, type, )
+    self.assertEqual(str(e), repr(e))
 
   def test_bad_arg_types(self) -> None:
     """
@@ -70,6 +72,7 @@ class TestObject(StaticTest):
     self.assertEqual(e.actualObject, 69)
     self.assertEqual(e.actualType, int)
     self.assertEqual({*e.expectedTypes}, {list, tuple})
+    self.assertEqual(str(e), repr(e))
     with self.assertRaises(TypeException) as context:
       _ = obj.getKeyArgs()
     e = context.exception
@@ -77,11 +80,10 @@ class TestObject(StaticTest):
     self.assertEqual(e.actualObject, 420)
     self.assertEqual(e.actualType, int)
     self.assertEqual(e.expectedTypes, (dict,))
+    self.assertEqual(str(e), repr(e))
 
   def test_THIS(self, ) -> None:
-    """
-    Tests that the 'THIS' property returns the correct value.
-    """
+    """Tests that the 'THIS' property returns the correct value. """
 
     class Bar(Object):
       """

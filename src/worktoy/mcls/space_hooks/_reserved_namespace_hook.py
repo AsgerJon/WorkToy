@@ -63,7 +63,7 @@ class ReservedNamespaceHook(AbstractSpaceHook):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def setItemPhase(self, key: str, value: Any, oldValue: Any) -> bool:
+  def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
     The setItemHook method is called when an item is set in the
     namespace.

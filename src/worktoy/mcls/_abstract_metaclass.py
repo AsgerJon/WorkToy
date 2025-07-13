@@ -15,9 +15,7 @@ from ..utilities import maybe
 from ..waitaminute import attributeErrorFactory
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
-else:
-  pass
+  from typing import Any, Self
 
 
 class AbstractMetaclass(MetaType, metaclass=MetaType):
@@ -288,9 +286,10 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     implementation ensures that the created class has access to the safe
     __init__ and __init_subclass__ through the BaseObject class in its
     method resolution order."""
+    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return ASpace(mcls, name, bases, **kwargs)
 
-  def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> type:
+  def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> Self:
     """The __new__ method is invoked to create the class."""
     if hasattr(space, 'compile'):
       namespace = space.compile()

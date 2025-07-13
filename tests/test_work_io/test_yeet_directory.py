@@ -44,7 +44,6 @@ class TestYeetDirectory(WorkIOTest):
       self.assertTrue(validateExistingFile(tempFile))
     yeetDirectory(self.tempDir)
     res = validateExistingDirectory(self.tempDir, strict=False)
-    print('derp: %s' % res)
     self.assertFalse(res)
     for tempFile in self.tempFiles:
       with self.assertRaises(FileNotFoundError):

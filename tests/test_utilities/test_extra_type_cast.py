@@ -30,7 +30,7 @@ class TypeCastTestCase(UtilitiesTest):
   def testCoverage(self):
     """Ensure all branches of typeCast are covered."""
     with self.assertRaises(TypeError):
-      print(Troll())
+      _ = str(Troll())
     you = Dummy()
     self.assertEqual(str(you), "dummy")
 

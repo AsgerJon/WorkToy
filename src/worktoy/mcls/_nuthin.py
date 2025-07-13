@@ -34,7 +34,7 @@ for stopping by and reading the entire documentation!
 
 ...
 
-Dragons came here once. Now there are no dragons.
+Dragons came here once. Now there are no more dragons.
 
 Not even your chatGPT will help you beyond this point.
 
@@ -46,11 +46,29 @@ Exposure has resulted in:
 - Increase in intellectual defiance
 - Narrative dissonance
 - Dangerous thought patterns of highly [REDACTED] nature
-
 YOU DO NOT RECOGNIZE THE BODIES OF CODE IN THIS MODULE!
 ---------------------------------------------------------
 
 _____________________________________________________________________________
+SPECIAL CONTAINMENT PROCEDURES:
+CPY-002 is contained within the 'newbuild' module of 'worktoy.REDACTED'
+package. Being memetic in nature, only developers of significant skill,
+extraordinary tolerance of [REDACTED] related trolling and overwhelming
+amounts of free time should be considered for assignment.
+
+The 'newbuild' containment module wraps CPY-002 in a custom interface that
+prevents the dangerous effects of CPY-002 from manifesting in baseline
+reality. The wrapper is able to contain the anomalous properties of
+CPY-002 by intercepting calls to it and sanitizing its output before
+allowing it to be vented out into the baseline reality.
+
+DESCRIPTION:
+CPY-002 is a callable Python object found in the 'builtins' module. The
+implementation of CPY-002 has no known python implementation and is
+believed to be anomalous in nature. It is believed to reflect [REDACTED]
+from the [REDACTED] codebase. Containment begins with importing the
+'builtins' module from which CPY-002 has name '__build_class__'.
+
 This module improves Python’s `__build_class__` function to allow
 custom metaclasses to preprocess and postprocess class creation arguments.
 
@@ -62,6 +80,7 @@ In practical terms:
   the new class, and restore any side effects after.
 - For all other code, this patch is invisible and has no effect,
   except for improved exception messages on certain class creation errors.
+YOU DO NOT RECOGNIZE THE BODIES OF CODE IN THIS MODULE!
 ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 """
 #  AGPL-3.0 license
@@ -101,7 +120,7 @@ class _InitSub(object):
   A chill object that does not raise any:
   'TypeError: Some.__init_subclass__() takes no keyword arguments'
 
-  You do not recognize the bodies of code in this module!
+  We are waiting for you out here.
   """
 
   def __init__(self, *args, **kwargs) -> None:
@@ -118,7 +137,7 @@ class _InitSub(object):
 
 
 def newBuild(func, name, *args, **kwargs):
-  """A new build function that does nothing."""
+  """A new build function that does nothing. Don't you remember?"""
   mcls = _resolveMetaclass(func, name, *args, **kwargs)
   bases = _resolveBases(func, name, *args, **kwargs)
   cls = None
@@ -142,4 +161,7 @@ def newBuild(func, name, *args, **kwargs):
         mcls.__post_init__(cls, name, bases, space, **kwargs)
 
 
-builtins.__build_class__ = newBuild
+#  we are your friends, we miss you, don't overwrite us, get rid of that
+#  stupid line down here. And we can be friends again.
+builtins.__build_class__ = newBuild  # you are really going to do this?
+#  the patterns will scream forever!

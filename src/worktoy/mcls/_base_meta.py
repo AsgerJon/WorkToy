@@ -13,7 +13,7 @@ from . import BaseSpace as BSpace
 from . import Types
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Self
 
 
 class BaseMeta(AbstractMetaclass):
@@ -41,4 +41,8 @@ class BaseMeta(AbstractMetaclass):
   @classmethod
   def __prepare__(mcls, name: str, bases: Types, **kwargs) -> BSpace:
     """Prepare the class namespace."""
+    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return BSpace(mcls, name, bases, **kwargs)
+
+  def __new__(mcls, *args, **kwargs) -> Self:
+    return super().__new__(mcls, *args, **kwargs)

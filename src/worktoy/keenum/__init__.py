@@ -5,19 +5,16 @@ The 'worktoy.keenum' module provides the enumerating KeeNum class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._keenum_base import _KeeNumBase  # Private
-from ._auto import auto
-from ._auto import _AutoMember
-from ._kee_hook import KeeSpaceHook
+from ._kee_member import Kee
+from ._kee_space_hook import KeeSpaceHook
 from ._kee_space import KeeSpace
 from ._kee_meta import KeeMeta
-from ._keenum import KeeNum, trust
+from ._kee_num import KeeNum
 
 __all__ = [
-    'auto',
+    'Kee',
     'KeeSpaceHook',
     'KeeSpace',
     'KeeMeta',
     'KeeNum',
-    'trust',
 ]

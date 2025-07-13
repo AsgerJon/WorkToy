@@ -49,7 +49,3 @@ class TestSentinels(CoreTest):
     for sentinel in self.sentinels:
       self.assertEqual(str(sentinel), repr(sentinel))
       self.assertIsInstance(sentinel, _Sentinel)
-
-  def test_ad_hoc(self) -> None:
-    for sentinel in self.sentinels:
-      print(sentinel)

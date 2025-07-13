@@ -19,7 +19,7 @@ Finally, the metaclass returns the created class object."""
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import space_hooks
+from . import space_hooks  # Public sub package
 from ._nuthin import newBuild as _newBuild  # Private
 from ._type_names import Spaces, Base, Space, Types
 from ._abstract_namespace import AbstractNamespace
@@ -29,7 +29,7 @@ from ._base_meta import BaseMeta
 from ._base_object import BaseObject
 
 __all__ = [
-    'hooks',
+    'space_hooks',
     'Spaces',
     'Base',
     'Space',
