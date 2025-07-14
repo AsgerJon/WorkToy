@@ -84,9 +84,7 @@ maintainers) are allowed to take in their capacity as project maintainers.
   in good faith reflecting an honest effort in service of advancing the
   project.
 
-- Open source AI systems are exempted from the requirement of good faith.
-  Instead, maintainers determine that a person operating the AI is acting
-  in bad faith.
+- Maintainers must evaluate AI generated contributions on the same grounds as any other contribution. See section below for sepecifics related to AI generated contributions.
 
 ### External Reviewer Responsibilities
 
