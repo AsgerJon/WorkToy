@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
-  from ...keenum import KeeMeta, KeeNum
+  from ...keenum import KeeMeta
 
 
 class KeeValueError(ValueError):

@@ -5,14 +5,13 @@ TestNumDict tests that KeeNum enumerations can be used as dictionary keys.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.keenum import KeeNum, KeeMeta
-
-from . import KeeTest, RootRGB, MoreRGB, EvenMoreRGB, RGBNum
-
 from typing import TYPE_CHECKING
 
+from worktoy.keenum import KeeNum
+from . import KeeTest, RGBNum
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Type
+  pass
 
 
 class TestNumDict(KeeTest):
@@ -34,3 +33,6 @@ class TestNumDict(KeeTest):
       self.assertIsInstance(key, KeeNum)
       self.assertIsInstance(val, str)
       self.assertEqual(val, str.capitalize(key.name))
+
+
+"""PYTHONDONTWRITEBYTECODE=1"""

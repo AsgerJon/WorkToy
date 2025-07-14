@@ -9,12 +9,12 @@ guaranteed to have same identity as those in the base class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import AbstractKeeDesc
-
 from typing import TYPE_CHECKING
 
+from . import AbstractKeeDesc
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias
+  from typing import Type, TypeAlias
 
   from .. import KeeMeta
 

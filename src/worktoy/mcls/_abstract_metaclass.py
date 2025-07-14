@@ -265,9 +265,8 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   Finally, the following hooks are logically meaningless:
 
   - __class_new__(...)
-    Similar to above, class creation is driven by the metaclass’s
-    __new__, and there is no standard mechanism for a class to override
-    or participate in that step on its own behalf.
+    This method would be entirely meaningless as it refers to a hook that
+    runs before the class is created.
 
   - __class_del__(...)
     This remains unimplemented for the same reason as why the namespace
@@ -282,10 +281,16 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Base, **kwargs) -> ASpace:
-    """The __prepare__ method is invoked before the class is created. This
-    implementation ensures that the created class has access to the safe
-    __init__ and __init_subclass__ through the BaseObject class in its
-    method resolution order."""
+    """
+    The __prepare__ method is invoked before the class is created. This
+    method instantiates the namespace object used to collect the class
+    body. The default implementation in 'type' returns a plain empty
+    'dict' object. Subclasses of 'AbstractMetaclass' may override this
+    method to provide a further customized namespace object.
+
+    Also, this method removes nothing from the 'bases' tuple. Subclasses
+    should also remove nothing from the 'bases' tuple.
+    """
     bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return ASpace(mcls, name, bases, **kwargs)
 

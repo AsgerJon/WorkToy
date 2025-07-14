@@ -11,14 +11,13 @@ value pairs to collect as future members of the enumeration.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..mcls.space_hooks import AbstractSpaceHook
-
-from . import Kee
-
 from typing import TYPE_CHECKING
 
+from ..mcls.space_hooks import AbstractSpaceHook
+from . import Kee
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional, Type, TypeAlias, Callable, Self
+  from typing import Any, Type, TypeAlias, Callable
   from . import KeeMeta
 
   __INIT__: TypeAlias = Callable[[KeeMeta, Kee], None]

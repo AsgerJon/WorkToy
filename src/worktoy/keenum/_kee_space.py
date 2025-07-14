@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 from ..mcls import BaseSpace
 from . import KeeSpaceHook, Kee
-from ..utilities import maybe
 from ..waitaminute.keenum import KeeDuplicate, KeeTypeException
 
 if TYPE_CHECKING:  # pragma: no cover

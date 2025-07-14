@@ -5,15 +5,11 @@ KeeMeta provides the metaclass for the 'worktoy.keenum' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._kee_desc import Base, MRO, Members, IsRoot
-from ..desc import Field
-from ..mcls import BaseMeta
-
-from . import KeeSpace as KSpace, Kee
-
 from typing import TYPE_CHECKING, Iterator
 
-from ..utilities import maybe, textFmt
+from ._kee_desc import Base, MRO, Members, IsRoot
+from ..mcls import BaseMeta
+from . import KeeSpace as KSpace, Kee
 from ..waitaminute import TypeException
 from ..waitaminute.keenum import KeeNameError, KeeIndexError
 from ..waitaminute.keenum import KeeMemberError, KeeValueError

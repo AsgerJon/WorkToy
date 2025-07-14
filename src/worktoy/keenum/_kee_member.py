@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 from worktoy.core import Object
 from worktoy.desc import Field
 from worktoy.utilities import maybe
-from worktoy.waitaminute import WriteOnceError, VariableNotNone
+from worktoy.waitaminute import VariableNotNone
 from worktoy.waitaminute.keenum import KeeCaseException
 
 if TYPE_CHECKING:  # pragma: no cover

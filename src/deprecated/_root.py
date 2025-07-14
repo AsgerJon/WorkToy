@@ -6,12 +6,11 @@ inheriting enumeration, that subclassed KeeNum.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import AbstractKeeDesc
-
 from typing import TYPE_CHECKING
 
+from . import AbstractKeeDesc
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias
   from .. import KeeMeta
 
 

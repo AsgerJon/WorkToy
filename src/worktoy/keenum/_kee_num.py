@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 from . import KeeMeta, Kee
 from ..core import Object
 from ..desc import Field
-from ..utilities import maybe
 from ..waitaminute.keenum import KeeWriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover

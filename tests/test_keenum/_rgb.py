@@ -3,12 +3,12 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.ezdata import EZData
-
 from typing import TYPE_CHECKING
 
+from worktoy.ezdata import EZData
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias
+  pass
 
 
 class RGB(EZData, frozen=True, order=True):

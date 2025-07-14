@@ -6,16 +6,15 @@ enumerations by chaining a series of color enumerating classes.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.keenum._kee_desc import AbstractKeeDesc
 from worktoy.waitaminute.keenum import KeeValueError, KeeTypeException
 from . import KeeTest, RGB, RootRGB, MoreRGB, EvenMoreRGB, RGBNum
-
 from worktoy.keenum import KeeNum, Kee, KeeMeta
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type
+  from typing import Any
 
 
 class TestNumMRO(KeeTest):

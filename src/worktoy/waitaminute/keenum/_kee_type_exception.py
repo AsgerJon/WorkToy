@@ -33,7 +33,7 @@ class KeeTypeException(TypeError):
     expected type to be: '%s'!"""
     name = self.name
     typeNames = [t.__name__ for t in self.expectedTypes]
-    from ...utilities import textFmt, joinWords
+    from ...utilities import joinWords
     typeStr = joinWords(*["""'%s'""" % name for name in typeNames], )
     value = str(self.value)
     valueType = type(self.value).__name__

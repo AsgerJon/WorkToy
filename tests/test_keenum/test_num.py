@@ -5,18 +5,17 @@ TestNum provides the basic tests for the KeeNum class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.keenum import KeeNum, Kee, KeeMeta
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.waitaminute.keenum import KeeNameError, KeeIndexError, \
   KeeMemberError, KeeDuplicate, KeeTypeException, KeeCaseException, \
   KeeWriteOnceError
-
 from . import KeeTest, RootRGB, RGB
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Type, Any, Callable
+  pass
 
 
 class Weekday(KeeNum):
