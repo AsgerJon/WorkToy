@@ -12,9 +12,7 @@ from . import FileAccess, KeeTest
 
 
 class TestFileAccess(KeeTest):
-  """
-  Unit tests for FileAccess flag behavior.
-  """
+  """Unit tests for FileAccess flag behavior."""
 
   def testSingleFlags(self) -> None:
     """Test single flag values."""
