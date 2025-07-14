@@ -1,10 +1,6 @@
-[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy) [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy) 
+[![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy) [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy)
 [![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-
-
-
-
 
 # worktoy v0.99.xx
 
@@ -12,9 +8,10 @@ The **worktoy** provides utilities for Python development focused on
 reducing boilerplate code, type-safety and readability. Each release is
 tested thoroughly on each supported Python version from 3.7* to 3.13.
 
-Note: *Python 3.7 is no longer acceptable for production use as of 2025.
-Support for it should not be taken as an endorsement of staying on an
-outdated version well past end-of-life.*
+Note: *Not an endorsement. If your open source project requires Python 3.7,
+it's time to update. There are plenty of people willing to help you. If
+your project is not open source, you are advised to read AGPL-3.0 on your
+way out.
 
 # Table of Contents
 
@@ -74,13 +71,14 @@ import sys
 from math import atan2, cos, sin  # Provides necessary math functions
 
 from worktoy.mcls import BaseObject
-from worktoy.attr import AttriBox, Field
-from worktoy.static import overload, THIS
+from worktoy.desc import AttriBox, Field
+from worktoy.static import overload
+from worktoy.core.sentinels import THIS
 
-try:
-  from typing import Self
-except ImportError:  # Older versions of Python
-  Self = object  # Never used at runtime, just for type-hinting
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+  from typing import Self  # For type hinting in the class methods
 
 
 class ComplexNumber(BaseObject):
@@ -146,7 +144,7 @@ class ComplexNumber(BaseObject):
 
   #  Virtual accessor methods
   @ABS.GET
-  def _getAbs(self):
+  def _getAbs(self) -> float:
     """
     The @ABS.GET decorator specifies that this method is the getter
     for the ABS property. When the ABS property is accessed through an

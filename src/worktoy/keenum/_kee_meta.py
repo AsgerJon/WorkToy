@@ -61,7 +61,9 @@ class KeeMeta(BaseMeta):
     cls.__num_members__ = []
     if name == 'KeeNum':
       return cls
-    base = bases[0]
+    base = (bases or [None])[0]
+    # if not hasattr(base, '__enumeration_members__'):
+    #   raise TypeException('base', base, Kee, )
     cls.__allow_instantiation__ = True
 
     for i, (key, kee) in enumerate(space.__enumeration_members__.items()):
@@ -88,6 +90,14 @@ class KeeMeta(BaseMeta):
     This method is used to get a member of the enumeration by index or key.
     """
     return cls._resolveMember(identifier)
+
+  # def __getattr__(cls, name: str) -> Kee:
+  #   """
+  #   Gets a member of the enumeration by name.
+  #   This method is used to get a member of the enumeration by name.
+  #   """
+  #   return cls._resolveKey(name)
+  #
 
   def __iter__(cls, ) -> Iterator[Self]:
     """

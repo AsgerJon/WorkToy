@@ -12,6 +12,7 @@ from ._class_body_template import ClassBodyTemplate
 from ._bipartite_matching import bipartiteMatching
 from ._unpack import unpack
 from ._maybe import maybe
+from ._replace_flex import replaceFlex
 from ._text_fmt import textFmt
 from ._string_list import stringList
 from ._directory import Directory
@@ -26,6 +27,7 @@ __all__ = [
     'bipartiteMatching',
     'unpack',
     'maybe',
+    'replaceFlex',
     'textFmt',
     'stringList',
     'Directory',

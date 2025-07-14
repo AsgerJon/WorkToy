@@ -7,7 +7,6 @@ validator in the work_io module.
 from __future__ import annotations
 
 from . import WorkIOTest
-from tests import WYD
 from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import validateExistingFile
 

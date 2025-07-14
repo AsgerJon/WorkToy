@@ -9,6 +9,9 @@ from ._is_root import IsRoot
 from ._base import Base
 from ._mro import MRO
 from ._members import Members
+from ._flags import Flags
+from ._names import Names
+from ._flag_type import FlagType
 
 __all__ = [
     'IsRoot',
@@ -16,4 +19,7 @@ __all__ = [
     'Base',
     'MRO',
     'Members',
+    'Flags',
+    'Names',
+    'FlagType',
 ]

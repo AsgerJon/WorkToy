@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.core import Object
 from worktoy.desc import Field
-from worktoy.utilities import maybe
+from worktoy.utilities import maybe, textFmt
 from worktoy.waitaminute import VariableNotNone
 from worktoy.waitaminute.keenum import KeeCaseException
 
@@ -143,3 +143,12 @@ class Kee(Object):
         return self
     self.__field_value__ = self.type_(*args, **kwargs)
     return self
+
+  def __str__(self) -> str:
+    """Return the string representation of the member."""
+    infoSpec = """<%s member: %s>"""
+    clsName = type(self).__name__
+    info = infoSpec % (clsName, self.name)
+    return textFmt(info)
+
+  __repr__ = __str__

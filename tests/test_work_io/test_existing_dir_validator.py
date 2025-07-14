@@ -7,7 +7,6 @@ TestExistingDirValidator tests the ExistingDirValidator class from the
 from __future__ import annotations
 
 from . import WorkIOTest
-from tests import WYD
 from worktoy.waitaminute import PathSyntaxException
 from worktoy.work_io import validateExistingDirectory
 

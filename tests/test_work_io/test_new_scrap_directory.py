@@ -9,7 +9,6 @@ import os
 from typing import TYPE_CHECKING
 
 from . import WorkIOTest
-from tests import WYD
 from worktoy.work_io import validateExistingDirectory, scrapDirectory
 from worktoy.work_io import newDirectory, validateAvailablePath
 

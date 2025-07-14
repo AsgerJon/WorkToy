@@ -66,7 +66,7 @@ class KeeSpace(BaseSpace):
   def __init__(self, mcls: type, name: str, bases: Bases, **kwargs) -> None:
     """Initializes the KeeSpace. """
     super().__init__(mcls, name, bases, **kwargs)
-    base = bases[0]
+    base = (bases or [None])[0]
     if hasattr(base, '__namespace__'):
       baseSpace = base.__namespace__
       if getattr(baseSpace, '__enumeration_members__', None) is not None:

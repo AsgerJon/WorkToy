@@ -11,7 +11,6 @@ from . import StaticTest
 from worktoy.static import TypeSig
 from worktoy.waitaminute.dispatch import HashMismatch
 from worktoy.waitaminute.dispatch import FlexMismatch
-from tests import WYD  # Custom exception for testing
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Any

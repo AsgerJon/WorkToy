@@ -137,7 +137,3 @@ class TestNumMRO(KeeTest):
     self.assertEqual(e.value, RGB(69, 420, 1337))
     self.assertEqual(set(e.expectedTypes), {int, })
     self.assertEqual(str(e), repr(e))
-
-  def test_bad_case(self) -> None:
-    """Test that the case of the member names is preserved."""
-   
