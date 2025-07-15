@@ -62,7 +62,7 @@ def attributeErrorFactory(owner: Any, field: str) -> AttributeError:
   """
   if isinstance(owner, type):
     owner = owner.__name__
-  if not isinstance(owner, str):
+  elif not isinstance(owner, str):
     owner = type(owner).__name__
   infoSpec = """AttributeError: '%s' object has no attribute '%s'"""
   info = infoSpec % (str(owner), str(field))

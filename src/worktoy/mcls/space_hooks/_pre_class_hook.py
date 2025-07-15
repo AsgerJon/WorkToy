@@ -6,9 +6,9 @@ objects having the hash and name of the future class ahead of class creation.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
-from ...static import PreClass, TypeSig
+from ...static import PreClass, TypeSig, DescLoad
 from ...waitaminute import TypeException
 from . import AbstractSpaceHook
 
@@ -107,14 +107,18 @@ class PreClassSpaceHook(AbstractSpaceHook):
       return self.__pre_class__
     raise TypeException('__pre_class__', self.__pre_class__, PreClass, )
 
-  def setItemPhase(self, key: str, val: Any, old: Any, ) -> bool:
+  def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
     If key contains reference the class under construction by containing
     'THIS', replace with 'PreClass' object providing the hash and name of the
     future class.
     """
+    if not isinstance(val, DescLoad):
+      return False
+    self.register(*val.__type_sig__, )(val.__field_function__)
     preClass = self._getPreClass()
     typeSigs = getattr(val, '__type_sigs__', None)
+
     if typeSigs is None:
       return False
     for sig in typeSigs:
@@ -157,3 +161,22 @@ class PreClassSpaceHook(AbstractSpaceHook):
     else:
       self.space.__overload_map__ = newLoadMap
     return compiledSpace
+
+  @staticmethod
+  def register(*types: object, **kwargs: object) -> Callable:
+    """Function objects decorated with the @overload decorator may have same
+    name but different signatures. The overload decorator is used to
+    create a function object that can be called with different argument
+    types. """
+
+    typeSig = TypeSig(*types)
+
+    def hereIsMyNumber(callMeMaybe: Callable) -> Callable:
+      """Here is my number"""
+      existing = getattr(callMeMaybe, '__type_sigs__', ())
+      setattr(callMeMaybe, '__type_sigs__', (*[*existing, typeSig],))
+      setattr(callMeMaybe, '__is_overloaded__', True)
+
+      return callMeMaybe
+
+    return hereIsMyNumber

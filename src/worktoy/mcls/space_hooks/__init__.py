@@ -13,6 +13,7 @@ from ._reserved_namespace_hook import ReservedNamespaceHook
 from ._pre_class_hook import PreClassSpaceHook
 from ._overload_hook import OverloadSpaceHook
 from ._name_hook import NamespaceHook
+from ._load_space_hook import LoadSpaceHook
 
 __all__ = [
     'SpaceDesc',
@@ -22,4 +23,5 @@ __all__ = [
     'PreClassSpaceHook',
     'OverloadSpaceHook',
     'NamespaceHook',
+    'LoadSpaceHook',
 ]

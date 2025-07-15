@@ -103,18 +103,18 @@ class OverloadSpaceHook(AbstractSpaceHook):
   composition.
   """
 
-  def setItemPhase(self, key: str, value: Any, old: Any, ) -> bool:
+  def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
     Set the item hook for the namespace system. This method is called
     when an item is set in the namespace system. It collects the
     overload decorated methods and replaces them with a dispatcher that
     calls the correct method based on the arguments passed to it.
     """
-    if getattr(value, '__is_overloaded__', None) is None:
+    if getattr(val, '__is_overloaded__', None) is None:
       return False
-    typeSigs = getattr(value, '__type_sigs__', None)
+    typeSigs = getattr(val, '__type_sigs__', None)
     for sig in typeSigs:
-      self.space.addOverload(key, sig, value)
+      self.space.addOverload(key, sig, val)
     return True
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:

@@ -6,10 +6,10 @@ namespaces in the metaclass system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import SpaceDesc
 from ...core import Object
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Type
@@ -19,6 +19,10 @@ if TYPE_CHECKING:  # pragma: no cover
   CompileHook = Callable[[ASpace, dict], dict]
   Space: TypeAlias = Type[ASpace]
   Meta: TypeAlias = Type[type]
+  from . import AbstractSpaceHook
+  from .. import AbstractNamespace
+
+  assert isinstance(AbstractSpaceHook.space, AbstractNamespace)
 
 
 class AbstractSpaceHook(Object):
@@ -114,12 +118,6 @@ class AbstractSpaceHook(Object):
 
   #  Public variables
   space = SpaceDesc()  # The namespace instance this hook is bound to
-
-  #  TYPE_CHECKING
-  if TYPE_CHECKING:  # pragma: no cover
-    from . import AbstractSpaceHook
-    from .. import AbstractNamespace
-    assert isinstance(AbstractSpaceHook.space, AbstractNamespace)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -276,6 +276,7 @@ class AbstractNamespace(dict):
     except KeyError:
       oldVal = None
     for hook in self.getHooks():
+      setattr(hook, '__space_object__', self)
       if hook.setItemPhase(key, val, oldVal):
         break  # Breaks out of the loop if handled by hook.
     else:  # If no 'break', the 'else' block is executed.

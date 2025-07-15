@@ -7,11 +7,13 @@ from __future__ import annotations
 from ._pre_class import PreClass
 from ._type_sig import TypeSig
 from ._dispatch import Dispatch
+from ._desc_load import DescLoad
 from ._overload import overload
 
 __all__ = [
     'PreClass',
     'TypeSig',
     'Dispatch',
+    'DescLoad',
     'overload',
 ]

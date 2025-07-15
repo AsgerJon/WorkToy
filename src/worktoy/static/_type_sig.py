@@ -188,7 +188,7 @@ class TypeSig:
 
   def __init__(self, *types: Any) -> None:
     """Initialize the TypeSig instance."""
-    self.__raw_types__ = types
+    self.__raw_types__ = (*types,)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PYTHON API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

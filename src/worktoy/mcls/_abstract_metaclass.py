@@ -304,6 +304,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     cls = MetaType.__new__(mcls, name, bases, namespace, **kw)
     if hasattr(space, 'getHooks'):
       for hook in space.getHooks():
+        setattr(hook, '__space_object__', space)
         cls = maybe(hook.newClassPhase(cls), cls)
     return cls
 

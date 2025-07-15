@@ -6,18 +6,20 @@ BaseSpace provides the namespace class used by worktoy.mcls.BaseMeta
 from __future__ import annotations
 
 from types import FunctionType as Func
-from typing import TYPE_CHECKING
 
 from ..core.sentinels import WILDCARD
+from ..utilities import maybe
 from ..waitaminute import VariableNotNone
 from ..static import TypeSig
 from . import AbstractNamespace
-from .space_hooks import OverloadSpaceHook, PreClassSpaceHook
+from .space_hooks import OverloadSpaceHook, PreClassSpaceHook, LoadSpaceHook
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Callable, Any
 
   OverloadMap: TypeAlias = dict[str, dict[TypeSig, Callable[..., Any]]]
+  Bases: TypeAlias = tuple[type, ...]
 
 
 class BaseSpace(AbstractNamespace):
@@ -34,50 +36,49 @@ class BaseSpace(AbstractNamespace):
   `worktoy.mcls.hooks`. This namespace is returned from BaseMeta.__prepare__.
   """
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Private Variables
   __overload_map__ = None
 
-  def _buildOverloadMap(self, ) -> None:
-    """Build the overload map for the namespace."""
-    if self.__overload_map__ is not None:
-      raise VariableNotNone('__overload_map__', self.__overload_map__)
-    entries = {}
+  #  Public Variables
+  loadSpaceHook = LoadSpaceHook()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init__(self, mcls: type, name: str, bases: Bases, **kw) -> None:
+    AbstractNamespace.__init__(self, mcls, name, bases, **kw)
+    self.__overload_map__ = dict()
     for space in self.getMRONamespaces():
-      if hasattr(space, 'getOverloadMap'):
-        overloadMap = space.getOverloadMap()
-        for key, overloads in overloadMap.items():
-          existing = entries.get(key, [])
-          for sig, func in overloads.items():
-            existing.append((sig, func))
-          entries[key] = existing
-    self.__overload_map__ = {}
-    for key, overloads in entries.items():
-      entry = dict()
-      for sig, func in overloads:
-        if WILDCARD in sig:  # wait
-          continue
-        entry[sig] = func
-      for sig, func in overloads:
-        if WILDCARD not in sig:  # done before
-          continue
-        entry[sig] = func
-      self.__overload_map__[key] = entry
+      for name, sigFunc in getattr(space, '__overload_map__', {}).items():
+        if name not in self.__overload_map__:
+          self.__overload_map__[name] = dict()
+        for sig, func in sigFunc.items():
+          if sig not in self.__overload_map__[name]:
+            self.__overload_map__[name][sig] = func
 
-  def getOverloadMap(self, **kwargs) -> OverloadMap:
-    """Get the overload map for the namespace."""
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def addOverload(self, name: str, sig: TypeSig, func: Callable) -> None:
     if self.__overload_map__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError  # pragma: no cover
-      self._buildOverloadMap()
-      return self.getOverloadMap(_recursion=True)
-    return self.__overload_map__
+      self.__overload_map__ = dict()
+    if name not in self.__overload_map__:
+      self.__overload_map__[name] = dict()
+    self.__overload_map__[name][sig] = func
 
-  def addOverload(self, key: str, sig: TypeSig, func: Func) -> None:
-    """Add an overload to the overload map."""
-    overloadMap = self.getOverloadMap()
-    existingMap = overloadMap.get(key, {})
-    existingMap[sig] = func
-    overloadMap[key] = existingMap
-    self.__overload_map__ = overloadMap
+  def addOverloads(self, *loads: tuple[str, TypeSig, Callable]) -> None:
+    """
+    Adds multiple overloads to the namespace.
+    Each overload is a dictionary mapping TypeSig to Callable.
+    """
+    for load in loads:
+      self.addOverload(*load, )
 
-  preClassHook = PreClassSpaceHook()
-  overloadHook = OverloadSpaceHook()
+  def getOverloads(self, ) -> OverloadMap:
+    return maybe(self.__overload_map__, {})
