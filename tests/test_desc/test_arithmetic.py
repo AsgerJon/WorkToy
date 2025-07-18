@@ -10,7 +10,6 @@ from random import random
 from typing import TYPE_CHECKING
 
 from . import DescTest
-from tests.test_dispatch import ComplexNumber, ComplexSubclass, ComplexMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -39,7 +38,7 @@ class TestArithmetic(DescTest):
         ComplexMetaSub,
     ]
     self.posArgs = dict()
-    n = 1  # Number of samples in each quadrant
+    n = 8  # Number of samples in each quadrant. Keep at 1 when developing
     for cls in self.classes:
       self.posArgs[cls] = []
       for _ in range(n):
