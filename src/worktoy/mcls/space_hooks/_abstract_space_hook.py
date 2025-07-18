@@ -6,10 +6,10 @@ namespaces in the metaclass system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import SpaceDesc
 from ...core import Object
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Type

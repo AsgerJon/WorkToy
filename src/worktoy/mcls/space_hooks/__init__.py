@@ -10,8 +10,6 @@ from ._space_desc import SpaceDesc
 from ._reserved_names import ReservedNames
 from ._abstract_space_hook import AbstractSpaceHook
 from ._reserved_namespace_hook import ReservedNamespaceHook
-from ._pre_class_hook import PreClassSpaceHook
-from ._overload_hook import OverloadSpaceHook
 from ._name_hook import NamespaceHook
 from ._load_space_hook import LoadSpaceHook
 
@@ -20,8 +18,6 @@ __all__ = [
     'ReservedNames',
     'AbstractSpaceHook',
     'ReservedNamespaceHook',
-    'PreClassSpaceHook',
-    'OverloadSpaceHook',
     'NamespaceHook',
     'LoadSpaceHook',
 ]

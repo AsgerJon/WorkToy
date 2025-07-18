@@ -14,7 +14,7 @@ Contents:
   for the instance to 'DELETED'. The same descriptor then raises the
   appropriate 'AttributeError' when '__get__' would return 'DELETED'.
   - THIS: Allows references to classes from within the class bodies. Used
-  by the 'AttriBox' descriptors and the '@overload' decorators to specify
+  by the 'AttriBox' descriptors and the '@Overload' decorators to specify
   an instance of the class. Similar to 'typing.Self'.
   - OWNER: Similar to THIS, but specifying the class itself, rather than
   an instance of it.
@@ -32,6 +32,7 @@ from ._this import THIS
 from ._desc import DESC
 from ._wild_card import WILDCARD
 from ._meta_call import METACALL
+from ._fallback import FALLBACK
 
 __all__ = [
     'Sentinel',
@@ -41,4 +42,5 @@ __all__ = [
     'DESC',
     'WILDCARD',
     'METACALL',
+    'FALLBACK',
 ]

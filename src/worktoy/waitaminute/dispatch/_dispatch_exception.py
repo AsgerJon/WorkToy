@@ -12,7 +12,12 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from worktoy.static import Dispatch
+  from typing import Any, TypeAlias, Type
+
+  Args: TypeAlias = tuple[Any, ...]
+  Excs: TypeAlias = tuple[Exception, ...]
+
+  from worktoy.dispatch import Dispatcher
 
 
 class DispatchException(TypeError):
@@ -22,29 +27,27 @@ class DispatchException(TypeError):
   this exception subclasses TypeError such that it can be caught by external
   error handlers. """
 
-  __slots__ = ('dispatchObject', 'receivedArguments')
+  __slots__ = ('dispatch', 'args', 'excs')
 
-  def __init__(self, dispatch: Dispatch, *args) -> None:
-    self.dispatchObject = dispatch
-    self.receivedArguments = args
+  def __init__(self, dispatch: Dispatcher, args: Args, excs: Excs) -> None:
+    self.dispatch = dispatch
+    self.args = args
+    self.excs = excs
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
     """
     Return a string representation of the DispatchException.
     """
-    ownerName = self.dispatchObject.getFieldOwner().__name__
-    fieldName = self.dispatchObject.getFieldName()
-    clsName = type(self.dispatchObject).__name__
-    header = '%s object at %s.%s' % (clsName, ownerName, fieldName)
-    typeArgs = [type(arg).__name__ for arg in self.receivedArguments]
-    argStr = '%s' % ', '.join(typeArgs)
-    typeSigs = self.dispatchObject.getTypeSigs()
-    typeSigStr = [str(sig) for sig in typeSigs]
-    sigStr = '<br><tab>'.join(typeSigStr)
-
-    infoSpec = """%s received arguments with signature: <br><tab>%s
-    <br>which does not match any of the expected signatures:<br><tab>%s"""
-    return textFmt(infoSpec % (header, argStr, sigStr))
+    infoSpec = """Dispatcher object: '%s' failed to dispatch arguments: 
+    <br><tab>%s<br><tab>matching type signature: '%s'<br> encountering 
+    exceptions: <br><tab>%s"""
+    dispStr = str(self.dispatch)
+    argsStr = ', '.join(str(arg) for arg in self.args)
+    from ...dispatch import TypeSignature
+    typeStr = str(TypeSignature.fromArgs(*self.args))
+    excsStr = ', '.join(str(exc) for exc in self.excs)
+    info = infoSpec % (dispStr, argsStr, typeStr, excsStr)
+    return textFmt(info, )
 
   __repr__ = __str__

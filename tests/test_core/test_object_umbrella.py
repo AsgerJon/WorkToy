@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+from worktoy.waitaminute import TypeException
 from . import CoreTest
 from worktoy.core import Object, ContextInstance
 from worktoy.core.sentinels import DESC, THIS, OWNER
@@ -86,3 +87,32 @@ class TestObjectUmbrella(CoreTest):
       Object().directory = 'breh'
     with self.assertRaises(ProtectedError) as context:
       del Object().directory
+
+  def testKeyArgs(self, ) -> None:
+    """Keyword argument related coverage gymnastics"""
+    foo = Object(a=0, b=1, c=2)
+    kwargs = foo.getKeyArgs()
+    for i, c in enumerate('abc'):
+      self.assertEqual(kwargs[c], i)
+
+  def testParseKwargs(self, ) -> None:
+    """Tests the parsing of keyword arguments."""
+    foo = Object(a=0, b=1, c=2)
+    kwargs = foo.getKeyArgs()
+    breh, kwargs = foo.parseKwargs(69, 420, 'a', int, **kwargs)
+    self.assertEqual(breh, 0)
+    lol, kwargs = foo.parseKwargs(**kwargs)
+    with self.assertRaises(TypeException) as context:
+      lol, kwargs = foo.parseKwargs('b', str, set, **kwargs)
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertEqual(e.varName, 'b')
+    self.assertEqual(e.actualObject, 1)
+    self.assertEqual(e.actualType, int)
+    self.assertEqual(e.expectedTypes, (str, set))
+
+    lol, kwargs = foo.parseKwargs('breh', complex, **dict())
+    lol, kwargs = foo.parseKwargs('breh', complex, float, **dict())
+    lol, kwargs = foo.parseKwargs('breh', complex, int, **dict())
+    lol, kwargs = foo.parseKwargs('breh', float, int, **dict())
+    lol, kwargs = foo.parseKwargs('breh', float, **dict())

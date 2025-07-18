@@ -1,6 +1,6 @@
 """
-DescTest subclasses the tests.BaseTest class to provide a shared base
-class for the test classes in the tests.test_desc package.
+DescTest provides a common base class for test classes in the
+'tests.test_desc' package.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -16,6 +16,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DescTest(BaseTest):
   """
-  DescTest subclasses the tests.BaseTest class to provide a shared base
-  class for the test classes in the tests.test_desc package.
+  DescTest provides a common base class for test classes in the
+  'tests.test_desc' package.
   """

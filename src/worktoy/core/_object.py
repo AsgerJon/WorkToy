@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING
 from ..utilities import Directory, maybe
 from . import ContextInstance, MetaType
 from .sentinels import THIS, DESC, OWNER, DELETED
-from ..waitaminute import TypeException, MissingVariable, \
-  attributeErrorFactory
+from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.desc import AccessError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -63,27 +62,16 @@ class Object(metaclass=MetaType):
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def getFieldOwner(self) -> Optional[type]:
+  def getFieldOwner(self) -> type:
     """Getter for the field owner of the descriptor object"""
-    if self.__field_owner__ is None:
-      from ..waitaminute import MissingVariable
-      raise MissingVariable('__field_owner__', type)
     return self.__field_owner__
 
   def getFieldName(self) -> Optional[str]:
     """Getter for the field name of the descriptor object"""
-    if self.__field_name__ is None:
-      from ..waitaminute import MissingVariable
-      raise MissingVariable('__field_name__', str)
     return self.__field_name__
 
   def getPosArgs(self, **kwargs) -> tuple[Any, ...]:
     """Getter for the positional arguments of the object."""
-    if self.__pos_args__ is None:
-      return ()
-    if not isinstance(self.__pos_args__, (list, tuple)):
-      from ..waitaminute import TypeException
-      raise TypeException('__pos_args__', self.__pos_args__, list, tuple, )
     thisObj = maybe(kwargs.get('THIS', self.__context_instance__), THIS)
     ownerObj = maybe(kwargs.get('OWNER', self.__context_owner__), OWNER)
     descObj = maybe(kwargs.get('DESC', self), )
@@ -103,11 +91,6 @@ class Object(metaclass=MetaType):
 
   def getKeyArgs(self, **kwargs) -> dict[str, Any]:
     """Getter for the keyword arguments of the object."""
-    if self.__key_args__ is None:
-      return dict()
-    if not isinstance(self.__key_args__, dict):
-      from ..waitaminute import TypeException
-      raise TypeException('__key_args__', self.__key_args__, dict, )
     thisObj = maybe(kwargs.get('THIS', self.__context_instance__), THIS)
     ownerObj = maybe(kwargs.get('OWNER', self.__context_owner__), OWNER)
     descObj = maybe(kwargs.get('DESC', self), )
@@ -156,7 +139,7 @@ class Object(metaclass=MetaType):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __set_name__(self, owner: Type[object], name: str) -> None:
+  def __set_name__(self, owner: type, name: str) -> None:
     self.__field_owner__ = owner
     self.__field_name__ = name
 
@@ -209,8 +192,6 @@ class Object(metaclass=MetaType):
     try:
       if exception is not None:
         raise exception
-    except MissingVariable as missingVariable:
-      raise AttributeError from missingVariable
     finally:
       self.exitContext()
 

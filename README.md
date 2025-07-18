@@ -72,7 +72,7 @@ from math import atan2, cos, sin  # Provides necessary math functions
 
 from worktoy.mcls import BaseObject
 from worktoy.desc import AttriBox, Field
-from worktoy.static import overload
+from worktoy.static import Overload
 from worktoy.core.sentinels import THIS
 
 from typing import TYPE_CHECKING
@@ -97,10 +97,10 @@ class ComplexNumber(BaseObject):
 
   #  Constructor methods
 
-  @overload(float, float)  # Instantiating from two floats
-  @overload(float, int)
-  @overload(int, float)
-  @overload(int, int)
+  @Overload(float, float)  # Instantiating from two floats
+  @Overload(float, int)
+  @Overload(int, float)
+  @Overload(int, int)
   def __init__(self, realPart: float, imagPart: float) -> None:
     """
     This constructor is overloaded with any combination of int and float.
@@ -110,7 +110,7 @@ class ComplexNumber(BaseObject):
     self.REAL = float(realPart)
     self.IMAG = float(imagPart)
 
-  @overload(complex)  # Instantiating from a complex number instead
+  @Overload(complex)  # Instantiating from a complex number instead
   def __init__(self, complexNumber: complex) -> None:
     """
     To instantiate from a complex number, a different function
@@ -119,7 +119,7 @@ class ComplexNumber(BaseObject):
     self.REAL = complexNumber.real
     self.IMAG = complexNumber.imag
 
-  @overload(THIS)  # THIS?
+  @Overload(THIS)  # THIS?
   def __init__(self, other: Self) -> None:
     """
     But what if you wanted to instantiate the class from another instance
@@ -130,7 +130,7 @@ class ComplexNumber(BaseObject):
     self.REAL = other.REAL
     self.IMAG = other.IMAG
 
-  @overload()  # No arguments
+  @Overload()  # No arguments
   def __init__(self, **kwargs) -> None:
     """
     This constructor is called when no positional arguments are given. The

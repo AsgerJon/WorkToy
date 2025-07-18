@@ -94,25 +94,6 @@ class AbstractNamespace(dict):
       return self.getMROSpace()[item]
     raise KeyError(item)
 
-  def _computeHash(self, ) -> int:
-    """
-    Computes the hash value for the future class.
-    """
-    clsName = self.getClassName()
-    baseNames = [base.__name__ for base in self.getBases()]
-    mclsName = self.getMetaclass().__name__
-    return hash((clsName, *baseNames, mclsName,))
-
-  def getHash(self, **kwargs) -> int:
-    """Resolves the hash value for the future class."""
-    computedHash = self._computeHash()
-    if self.__hash_value__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError  # pragma: no cover
-      self.__hash_value__ = computedHash
-      return self.getHash(_recursion=True)
-    return self.__hash_value__
-
   @classmethod
   def getHookListName(cls, ) -> str:
     """Getter-function for the name of the hook list. """
@@ -181,22 +162,6 @@ class AbstractNamespace(dict):
     mroClasses = [b for b in self.getMRO() if hasattr(b, '__namespace__')]
     return [getattr(b, '__namespace__', None) for b in mroClasses]
 
-  def getGlobalScope(self) -> dict:
-    """Returns the global scope of the namespace."""
-    return {**maybe(object.__getattribute__(self, '__global_scope__'), {})}
-
-  def getClassAnnotations(self) -> dict:
-    """Returns the current contents of the '__annotations__' dict. """
-    return maybe(self.__class_annotations__, dict())
-
-  def getDeferredAnnotations(self) -> dict[str, str]:
-    """Returns the deferred annotations"""
-    return maybe(self.__deferred_annotations__, dict())
-
-  def getTypeAnnotations(self, ) -> dict:
-    """Returns the type annotations. """
-    return maybe(self.__type_annotations__, dict())
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -215,18 +180,6 @@ class AbstractNamespace(dict):
         raise DuplicateHook(cls, newName, *hooks)
     pvtName = cls.getHookListName()
     setattr(cls, pvtName, [*existingHooks, hook])
-
-  def setClassAnnotation(self, updated: dict) -> None:
-    """Updates the '__annotations__' dict with the given dictionary
-    received"""
-    existing = self.getClassAnnotations()
-    for (key, type_) in updated.items():
-      if key in existing:
-        if type_ == existing[key]:
-          continue
-      self.setAnnotation(key, type_)
-      existing[key] = type_
-    self.__class_annotations__ = existing
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -252,9 +205,6 @@ class AbstractNamespace(dict):
       val = dict.__getitem__(self, key)
     except KeyError as keyError:
       val = keyError
-    if key == '__annotations__':
-      if isinstance(val, dict):
-        self.setClassAnnotation(val)
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       try:
@@ -268,9 +218,9 @@ class AbstractNamespace(dict):
 
   def __setitem__(self, key: str, val: Any, **kwargs) -> None:
     """Sets the value of the key."""
-    if key == '__module__':
-      globScope = {**vars(sys.modules[val]), }
-      object.__setattr__(self, '__global_scope__', globScope)
+    # if key == '__module__':
+    #   globScope = {**vars(sys.modules[val]), }
+    #   object.__setattr__(self, '__global_scope__', globScope)
     try:
       oldVal = dict.__getitem__(self, key)
     except KeyError:
@@ -308,14 +258,6 @@ class AbstractNamespace(dict):
       kwargStr = ', %s' % kwargStr
     return """%s(%s%s)""" % (spaceName, args, kwargStr)
 
-  def __getattribute__(self, key: str) -> Any:
-    """This reimplementation was made by a highly skilled professional in
-    a safe environment, DO NOT ATTEMPT THIS AT HOME!"""
-    if key == '__global_scope__':
-      info = """Direct access to the '__global_scope__' is prohibited!"""
-      raise RuntimeError(info)
-    return object.__getattribute__(self, key)
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -325,8 +267,6 @@ class AbstractNamespace(dict):
     Subclasses can implement this method to provide special objects at
     particular names in the namespace. By default, an empty dictionary is
     returned. """
-    if '__annotations__' in self:
-      self.setClassAnnotation(dict.__getitem__(self, '__annotations__'))
     if namespace is None:
       namespace = dict()
     for hook in self.getHooks():
@@ -358,40 +298,3 @@ class AbstractNamespace(dict):
       setattr(hook, '__space_object__', self)
       namespace = hook.postCompilePhase(namespace)
     return namespace
-
-  def setTypeAnnotation(self, key: str, type_: type) -> None:
-    """Sets the type annotation at 'key' to 'type_'. """
-    existing = self.getTypeAnnotations()
-    if key in existing:
-      if existing[key] == type_:
-        return
-    existing[key] = type_
-    self.__type_annotations__ = existing
-    for hook in self.getHooks():
-      setattr(hook, '__space_object__', self)
-      hook.setAnnotationPhase(key, type_)
-
-  def setDeferredAnnotation(self, key: str, typeName: str) -> None:
-    existing = self.getDeferredAnnotations()
-    if key in existing:
-      if existing[key] == typeName:
-        return
-    existing[key] = typeName
-    self.__deferred_annotations__ = existing
-
-  def setAnnotation(self, key: str, typeName: str, **kwargs) -> None:
-    """Sets the type annotation for the given key."""
-    try:
-      type_ = self.resolveType(typeName)
-    except NameError:
-      self.setDeferredAnnotation(key, typeName)
-    else:
-      self.setTypeAnnotation(key, type_)
-
-  def resolveType(self, typeName: str) -> type:
-    """Tries to resolve the 'type' object having name 'typeName'. """
-    if hasattr(builtins, typeName):
-      return getattr(builtins, typeName)
-    if typeName in self.getGlobalScope():
-      return self.getGlobalScope()[typeName]
-    raise NameError(typeName)

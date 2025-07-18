@@ -6,10 +6,10 @@ and creates an entry in the namespace.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.mcls.space_hooks import AbstractSpaceHook
-from worktoy.static import DescLoad, Dispatch
-
 from typing import TYPE_CHECKING
+
+from worktoy.dispatch import Dispatcher
+from worktoy.mcls.space_hooks import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type, TypeAlias
@@ -24,21 +24,15 @@ class LoadSpaceHook(AbstractSpaceHook):
   """
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    """
-    If key contains reference the class under construction by containing
-    'THIS', replace with 'PreClass' object providing the hash and name of
-    the future class.
-    """
-    if not isinstance(val, DescLoad):
+    if not isinstance(val, Dispatcher):
       return False
-    func = val.func
-    name = func.__name__
-    for sig in val.sigs:
-      self.space.addOverload(name, sig, func)
+    sig, func = None, None
+    for sig, func in val.__sig_funcs__:
+      self.space.addOverload(key, sig, func)
     return True
 
   def postCompilePhase(self, compiledSpace) -> dict:
     """Populates the namespace with the collected DescLoad instances. """
     for name, sigFunc in self.space.getOverloads().items():
-      compiledSpace[name] = Dispatch(sigFunc)
+      compiledSpace[name] = Dispatcher(sigFunc)
     return compiledSpace

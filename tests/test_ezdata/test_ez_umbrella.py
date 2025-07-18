@@ -17,32 +17,15 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class RGB(EZData):
-  red: int
-  green: int
-  blue: int
+  red = 255
+  green = 255
+  blue = 255
 
 
 class TestEZUmbrella(EZTest):
   """
   TestEZUmbrella covers the more esoteric lines of code in the ezdata module.
   """
-
-  def test_ez_slot(self) -> None:
-    """
-    Test that EZData classes can be created with slots.
-    """
-    ez = EZSlot('breh')
-    ez.__type_value__ = None
-    with self.assertRaises(AttributeError):
-      _ = ez.typeValue
-    ez.__deferred_type__ = 'int'
-    self.assertEqual(ez._getDeferredType(), 'int')
-    ez = EZSlot('breh')
-    self.assertIsNone(ez._getDeferredType())
-    setattr(ez, '__type_value__', int)
-    self.assertIs(ez.typeValue, int)
-    self.assertNotEqual(ez, 'lol')
-    self.assertEqual(str(ez), repr(ez))
 
   def test_ez_struct(self) -> None:
     """
@@ -137,3 +120,13 @@ class TestEZUmbrella(EZTest):
     self.assertEqual(point.x, 1)
     self.assertEqual(point.y, 69)
     self.assertEqual(point.z, 420)
+
+  def test_ez_slot(self) -> None:
+    """
+    Test that EZSlot classes can be created with slots.
+    """
+
+    ez = EZSlot('breh')
+    setattr(ez, '__type_value__', int)
+    self.assertNotEqual(ez, object)
+    self.assertEqual(str(ez), repr(ez))

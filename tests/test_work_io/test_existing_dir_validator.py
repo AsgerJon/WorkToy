@@ -14,14 +14,6 @@ from worktoy.work_io import validateExistingDirectory
 class TestExistingDirValidator(WorkIOTest):
   """TestExistingDirValidator tests the existing directory validator."""
 
-  @classmethod
-  def tearDownClass(cls) -> None:
-    super().tearDownClass()
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
-
   def test_good_dir(self) -> None:
     """Test the existing directory validator."""
     validateExistingDirectory(self.tempDir)

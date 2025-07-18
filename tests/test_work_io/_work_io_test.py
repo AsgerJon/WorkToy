@@ -86,11 +86,3 @@ class WorkIOTest(BaseTest):
       os.makedirs(nestDir, exist_ok=True)
       for i in range(5):
         cls._createFile(nestFile, i)
-    if not WorkIOTest.__continue_pressed__ and False:  # pragma: no cover
-      if os.environ.get('PYTEST_COVERAGE', None) is not None:
-        return
-      try:
-        infoSpec = """Press Any Key to Continue...\n"""
-        _ = input(infoSpec)
-      finally:
-        WorkIOTest.__continue_pressed__ = True

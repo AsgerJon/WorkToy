@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..mcls import BaseObject
 from ..utilities import maybe
-from ..waitaminute import MissingVariable
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
@@ -24,7 +23,6 @@ class EZSlot(BaseObject):
   #  Private Variables
   __future_name__ = None
   __type_value__ = None
-  __deferred_type__ = None
   __default_value__ = None
   __global_scope__ = None
   __owner_name__ = None
@@ -47,8 +45,6 @@ class EZSlot(BaseObject):
   @typeValue.GET
   def _getTypeValue(self, **kwargs) -> type:
     """Get the type value of the slot."""
-    if self.__type_value__ is None:
-      raise MissingVariable('food', int)
     return self.__type_value__
 
   @defaultValue.GET
@@ -60,12 +56,6 @@ class EZSlot(BaseObject):
   def _getOwnerName(self) -> str:
     """Get the owner name of the slot."""
     return self.__owner_name__
-
-  def _getDeferredType(self) -> str:
-    """Get the deferred type of the slot."""
-    if isinstance(self.__type_value__, type):
-      return self.__type_value__.__name__
-    return self.__deferred_type__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -95,7 +85,7 @@ class EZSlot(BaseObject):
     infoSpec = """%s<%s.%s>(%s: %s)"""
     clsName = type(self).__name__
     valName = maybe(self.__default_value__, '[NONE]')
-    typeName = self._getDeferredType()
+    typeName = self.typeValue.__name__
     info = infoSpec % (clsName, self.ownerName, self.name, typeName, valName)
     return info
 

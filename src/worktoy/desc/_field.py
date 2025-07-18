@@ -17,7 +17,9 @@ from ..waitaminute import TypeException
 from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable
+  from typing import Any, Callable, TypeAlias
+
+  CallMeMaybe: TypeAlias = Callable[..., Any]
 
 
 class Field(Object):
@@ -50,22 +52,14 @@ class Field(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _getGetterKey(self) -> str:
-    if isinstance(self.__get_key__, str):
-      return self.__get_key__
-    if self.__get_key__ is None:
+    if not isinstance(self.__get_key__, str):
       raise AccessError(self)
-    raise TypeException('__get_key__', self.__get_key__, str)
+    return self.__get_key__
 
   def _getSetterKeys(self, newValue: Any = None) -> tuple[str, ...]:
-    """Iterates over setter keys. The 'newValue' is used only to compose
-    error message. """
     return (*[k for k in maybe(self.__set_keys__, ()) if k],)
 
   def _getDeleterKeys(self) -> tuple[str, ...]:
-    """
-    Returns the keys of the deleter methods. If no deleter methods are
-    registered, returns an empty tuple.
-    """
     return (*[k for k in maybe(self.__delete_keys__, ()) if k],)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -134,6 +128,33 @@ class Field(Object):
     """
     deleterKeys = self._getDeleterKeys()
     if not deleterKeys:
-      raise ProtectedError(self.instance, self, )
+      oldVal = self.__instance_get__()
+      raise ProtectedError(self.instance, self, oldVal)
     for key in deleterKeys:
       getattr(self.instance, key, )(**kwargs)
+
+  #  For linters who won't chill out
+  if TYPE_CHECKING:  # pragma: no cover
+    __add__: CallMeMaybe
+    __sub__: CallMeMaybe
+    __mul__: CallMeMaybe
+    __truediv__: CallMeMaybe
+    __floordiv__: CallMeMaybe
+    __mod__: CallMeMaybe
+    __divmod__: CallMeMaybe
+    __pow__: CallMeMaybe
+    __lshift__: CallMeMaybe
+    __rshift__: CallMeMaybe
+    __and__: CallMeMaybe
+    __xor__: CallMeMaybe
+    __or__: CallMeMaybe
+    __lt__: CallMeMaybe
+    __le__: CallMeMaybe
+    __eq__: CallMeMaybe
+    __ne__: CallMeMaybe
+    __gt__: CallMeMaybe
+    __ge__: CallMeMaybe
+    __hash__: CallMeMaybe
+    __bool__: CallMeMaybe
+    __str__: CallMeMaybe
+    __repr__: CallMeMaybe

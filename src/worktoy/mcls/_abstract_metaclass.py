@@ -480,6 +480,11 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     """Get the namespace object for the class."""
     return type.__getattribute__(cls, '__namespace__', )
 
+  @classmethod
+  def getNamespaceClass(mcls) -> type:
+    """Get the namespace class for the class."""
+    return type(mcls.__prepare__('_', ()))
+
   def __post_init__(cls, name: str, bases: Base, spc: ASpace, **kw) -> None:
     """This method is invoked after the __build_class__ has finished with
     this class. It is here any '__class_init__' methods are invoked. """

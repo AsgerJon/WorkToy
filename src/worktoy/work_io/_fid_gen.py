@@ -7,10 +7,10 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+from ..dispatch import overload
 from ..desc import Field
 from ..mcls import BaseObject
 from ..utilities import maybe, stringList
-from ..static import overload
 from ..waitaminute import TypeException
 from . import validateExistingDirectory, validateAvailablePath
 

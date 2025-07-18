@@ -14,7 +14,6 @@ from . import ez
 from ._attribute_error_factory import attributeErrorFactory
 from ._type_exception import TypeException
 from ._write_once_error import WriteOnceError
-from ._missing_variable import MissingVariable
 from ._variable_not_none import VariableNotNone
 from ._unpack_exception import UnpackException
 from ._path_syntax_exception import PathSyntaxException
@@ -29,7 +28,6 @@ ___all__ = [
     'attributeErrorFactory',
     'TypeException',
     'WriteOnceError',
-    'MissingVariable',
     'VariableNotNone',
     'UnpackException',
     'PathSyntaxException',

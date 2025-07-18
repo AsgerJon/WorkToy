@@ -78,7 +78,7 @@ class TestMath(UtilitiesTest):
 
   def test_bad_log(self) -> None:
     """Test bad log inputs."""
-    with self.assertRaises(TypeError):
+    with self.assertRaises(ValueError):
       log('breh')
     with self.assertRaises(ZeroDivisionError):
       log(0.0)

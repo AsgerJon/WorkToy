@@ -31,5 +31,5 @@ pip install worktoy --pre
 ## Function Overloading
 
 Subclasses of ```EZData``` and ```BaseObject``` can use the
-```@overload``` decorator to overload functions. For example:
+```@Overload``` decorator to overload functions. For example:
 

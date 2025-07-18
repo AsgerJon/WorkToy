@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.dispatch import overload
 from . import UtilitiesTest
 from worktoy.mcls import BaseObject
-from worktoy.static import overload
 from worktoy.utilities import typeCast
 from worktoy.core.sentinels import THIS
 from worktoy.waitaminute.dispatch import TypeCastException
@@ -231,3 +231,12 @@ class TestTypeCast(UtilitiesTest):
       typeCast(str, bad_bytes)
     e = context.exception
     self.assertEqual(str(e), repr(e))
+
+  def test_int_to_float(self) -> None:
+    """
+    Test that 'typeCast(float, arg)' returns 'arg' when 'arg' is an
+    instance of
+    'int'.
+    """
+    for value in [69, 420, 1337, 80085, 8008135]:
+      self.assertAlmostEqual(typeCast(float, value), float(value))

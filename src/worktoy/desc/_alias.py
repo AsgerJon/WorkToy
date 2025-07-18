@@ -50,12 +50,7 @@ class Alias(Object):
     return realDesc.__delete__(instance, **kwargs)
 
   def __set_name__(self, owner: Type[Object], name: str) -> None:
-    try:
-      _ = getattr(owner, self.__real_name__)
-    except AttributeError as attributeError:
-      raise RuntimeError from attributeError
-    else:
-      Object.__set_name__(self, owner, name)
+    Object.__set_name__(self, owner, name)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

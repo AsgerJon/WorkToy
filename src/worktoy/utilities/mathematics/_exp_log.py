@@ -70,6 +70,7 @@ def exp(z: complex) -> complex:
 
 
 def log(z: complex, ) -> complex:
+  z = complex(z)
   r = abs(z)
   t = atan2(z.imag, z.real)
   return _log(r) + t * 1j

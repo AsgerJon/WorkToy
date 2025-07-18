@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.waitaminute.meta import ReservedName
 from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
 from worktoy.mcls.space_hooks import ReservedNames
@@ -33,12 +34,13 @@ class TestReservedNameHook(MCLSTest):
     """
 
     susModule = """I'm the module, trust me bro!"""
-    with self.assertRaises(KeyError) as context:
+    with self.assertRaises(ReservedName) as context:
       class SusModule(metaclass=AbstractMetaclass):
         """A class to test reserved names."""
         __module__ = susModule
     e = context.exception
-    self.assertIn(susModule, str(e))
+    self.assertEqual(str(e), repr(e))
+    self.assertEqual(e.resName, '__module__')
 
   def test_reserved_name_descriptor_class(self) -> None:
     """

@@ -1,91 +1,27 @@
 """
-TestAlias tests the 'Alias' class from the 'worktoy.desc' module.
+TestAlias tests specific functionality of the 'Alias' descriptor not
+covered by the contextual tests in 'DescTest'.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import DescTest
-from worktoy.core import Object
-from worktoy.core.sentinels import DELETED
-from worktoy.desc import Alias, Field
+from . import DescTest, ComplexAlias
 
+from typing import TYPE_CHECKING
 
-class NameTag(Object):
-  """NameTag is a simple class with a name attribute. """
-
-  __fallback_name__ = 'NameTag'
-  __inner_name__ = None
-  name = Field()
-
-  def __init__(self, name: str) -> None:
-    self.name = name
-
-  @name.GET
-  def _getName(self) -> str:
-    """Get the name of the NameTag."""
-    return self.__inner_name__
-
-  @name.SET
-  def _setName(self, value: str) -> None:
-    """Set the name of the NameTag."""
-    self.__inner_name__ = value
-
-  @name.DELETE
-  def _delName(self) -> None:
-    """Delete the name of the NameTag."""
-    self.__inner_name__ = DELETED
-
-  def __str__(self) -> str:
-    """Return the string representation of the NameTag."""
-    infoSpec = """%s(%s)"""
-    clsName = type(self).__name__
-    info = infoSpec % (clsName, self.name)
-    return info
-
-  __repr__ = __str__
-
-
-class MusicDisc(NameTag):
-  """MusicDisc is a subclass of NameTag with a specific name. """
-
-  title = Alias('name')  # Reuses the 'name' but under attribute 'title'
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Any, Dict, Optional
 
 
 class TestAlias(DescTest):
-  """TestAlias tests the Alias class."""
+  """
+  TestAlias tests specific functionality of the 'Alias' descriptor not
+  covered by the contextual tests in 'DescTest'.
+  """
 
-  def test_alias(self) -> None:
-    """Test the Alias class."""
-    disc = MusicDisc('Bohemian Rhapsody')
-    self.assertEqual(disc.name, 'Bohemian Rhapsody')
-    self.assertEqual(disc.title, 'Bohemian Rhapsody')
+  def test_delete(self, ) -> None:
+    """Test that deleting an alias works as expected."""
+    z = ComplexAlias(1.0, 2.0)
 
-    disc.title = 'Another One Bites the Dust'
-    self.assertEqual(disc.name, 'Another One Bites the Dust')
-    self.assertEqual(disc.title, 'Another One Bites the Dust')
-
-    disc.name = 'We Will Rock You'
-    self.assertEqual(disc.name, 'We Will Rock You')
-    self.assertEqual(disc.title, 'We Will Rock You')
-
-    self.assertEqual(str(disc), repr(disc))
-
-  def test_alias_deletion(self) -> None:
-    """Test deleting the alias attributes. Some music titles should be
-    deleted."""
-
-    disc = MusicDisc('This is how you remind me')
-
-    del disc.name  # Get that outta here!
-
-    self.assertIs(object.__getattribute__(disc, '__inner_name__'), DELETED)
-
-    with self.assertRaises(AttributeError):
-      _ = disc.name
-    with self.assertRaises(AttributeError):
-      del disc.name
-    with self.assertRaises(AttributeError):
-      _ = disc.title
-    with self.assertRaises(AttributeError):
-      del disc.title
+    del z.x

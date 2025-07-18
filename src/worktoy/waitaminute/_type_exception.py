@@ -37,7 +37,7 @@ class TypeException(TypeError):
     infoSpec = """Expected object at name '%s' to be an instance of %s, 
     but received object: '%s' of type '%s'!"""
     typeNames = [t.__name__ for t in self.expectedTypes]
-    typeStr = joinWords(*["""'%s'""" % name for name in typeNames], )
+    typeStr = joinWords(*["""'%s'""" % name for name in typeNames], set='or')
     objStr = repr(self.actualObject)
     if len(objStr) > 50:
       objStr = """%s...""" % objStr[:47]
