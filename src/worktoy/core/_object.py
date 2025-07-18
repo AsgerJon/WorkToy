@@ -27,16 +27,35 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Object(metaclass=MetaType):
   """
-  Object provides the most basic object used by the 'worktoy' library. It
-  stands in for the 'object' type by adding functionality that must be
-  shared by every object in the library.
+  Fundamental base class for all objects in the 'worktoy' library.
 
-  The class implements '__init__' that collects and holds references to
-  the positional and keyword arguments passed to the constructor. These
-  are later available through the 'getPosArgs' and 'getKeyArgs' methods.
-  The class also implements '__set_name__' used by the descriptor protocol
-  to inform instances defined in class bodies when the owning class is
-  created and the name by which they appear in the class.
+  This class provides full-featured descriptor context management. When
+  subclassing, you need only implement `__instance_get__`,
+  `__instance_set__`, and `__instance_delete__`. The owning instance
+  is always made available as `self.instance` within these methods.
+
+  Deletion is handled by assigning the `DELETED` sentinel to the relevant
+  attribute or storage, so that a future call to `__instance_get__` will
+  return `DELETED`. The core machinery ensures this triggers an
+  AttributeError on access.
+
+  Example implementation:
+    .. code-block:: python
+
+    def __instance_get__(self) -> Any:
+      return self.instance._value
+
+    def __instance_set__(self, value: Any) -> None:
+      self.instance._value = value
+
+    def __instance_delete__(self, oldVal: Any) -> None:
+      self.instance._value = DELETED  # Ensures next get raises
+      AttributeError
+
+  Do not override `__get__`, `__set__`, or `__delete__` unless you are
+  extending or altering the core behavior. Context, error handling, and
+  attribute protection are managed by Object and its metaclass.
+
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -201,26 +220,45 @@ class Object(metaclass=MetaType):
 
   def __instance_get__(self, *args, **kwargs) -> Any:
     """
-    Subclasses should implement this method to define the
-    instance-specific getter. The root instance is accessed through the
-    'root' attribute.
+    Instance-specific getter for this descriptor.
+
+    When called, `self.instance` is the object this descriptor is bound to.
+    Subclasses should override this to define attribute retrieval logic.
+
+    Returns:
+      Any: The attribute value, or the DELETED sentinel if deleted.
+
+    Example:
+      .. code-block:: python
+      return self.instance._value
     """
     return self
 
   def __instance_set__(self, value: Any, *args, **kwargs) -> None:
     """
-    Subclasses should implement this method to define the
-    instance-specific setter. The root instance is accessed through the
-    'root' attribute.
+    Instance-specific setter for this descriptor.
+
+    When called, `self.instance` is the object this descriptor is bound to.
+    Subclasses should override to define attribute assignment logic.
+
+    Example:
+      .. code-block:: python
+      self.instance._value = value
     """
     from ..waitaminute.desc import ReadOnlyError
     raise ReadOnlyError(self.instance, self, value)
 
   def __instance_delete__(self, oldVal: Any, *args, **kwargs) -> None:
     """
-    Subclasses should implement this method to define the
-    instance-specific deleter. The root instance is accessed through the
-    'root' attribute.
+    Instance-specific deleter for this descriptor.
+
+    To signal deletion, assign the `DELETED` sentinel to your storage,
+    so that the next `__instance_get__` returns `DELETED`. This ensures
+    the core will raise AttributeError on further access.
+
+    Example:
+      .. code-block:: python
+      self.instance._value = DELETED
     """
     from ..waitaminute.desc import ProtectedError
     raise ProtectedError(self.instance, self, oldVal)
