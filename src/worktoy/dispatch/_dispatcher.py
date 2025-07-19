@@ -88,11 +88,6 @@ class Dispatcher(Object):
   def __call__(self, instance: Any, *args: Any, **kwargs: Any) -> Any:
     #  FAST
     argSig = TypeSignature.fromArgs(*args, )
-    hashFunc = dict.get(self._getSigFuncMap(), argSig, None)
-    # if hashFunc is not None:
-    #   return hashFunc(instance, *args, **kwargs)
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    #  SLOW
     slowArgs = []
     sigFuncs = self._getSigFuncList()
     posArgs = None

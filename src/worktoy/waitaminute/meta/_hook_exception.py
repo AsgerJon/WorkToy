@@ -1,6 +1,8 @@
-"""HookException is raised from the AbstractNamespace class to wrap
+"""
+HookException is raised from the AbstractNamespace class to wrap
 exceptions raised by __getitem__ hooks. This is necessary to avoid
-confusion with the expected KeyError exception in the metacall system."""
+confusion with the expected KeyError exception in the metacall system.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations

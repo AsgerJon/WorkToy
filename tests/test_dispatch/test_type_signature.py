@@ -201,20 +201,6 @@ class TestDispatcher(DispatcherTest):
     self.assertGreater(len(repr(sigFloatFloat)), len(repr(sigFloat)))
 
   def test_mro_len(self) -> None:
-    """Test that the MRO length of TypeSignature is 1."""
     testTypes = (int, float, str, bool, tuple, list, dict, set, frozenset,)
     for type_ in testTypes:
-      print("""Testing MRO length for type: %s""" % type_)
-      try:
-        sig = TypeSignature(type_)
-        n = sig.mroLen()
-      except Exception as exception:
-        infoSpec = """Caught %s: %s"""
-        excType = type(exception).__name__
-        excStr = str(exception)
-        info = infoSpec % (excType, excStr)
-        print(textFmt(info))
-      else:
-        print("""MRO length for type %s: %d""" % (type_, n))
-      finally:
-        print('-' * 40)
+      self.assertIsInstance(TypeSignature(type_).mroLen(), int)

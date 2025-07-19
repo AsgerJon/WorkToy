@@ -6,19 +6,17 @@ class from the 'worktoy.dispatch' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.core.sentinels import FALLBACK, WILDCARD
 from worktoy.desc import AttriBox
 from worktoy.waitaminute.dispatch import CastMismatch
-from worktoy.waitaminute.meta import ReservedName
 from worktoy.dispatch import Dispatcher, TypeSignature
-
-from . import DispatcherTest, ComplexSubclass, ComplexNumber, PlanePoint, \
-  SusComplex, ComplexMetaSub, SpacePoint
-
-from typing import TYPE_CHECKING
+from . import DispatcherTest, ComplexSubclass, ComplexNumber, PlanePoint
+from . import SusComplex, ComplexMetaSub, SpacePoint
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias, Self
+  pass
 
 
 class TestDispatchUmbrella(DispatcherTest):
@@ -172,3 +170,8 @@ class TestDispatchUmbrella(DispatcherTest):
     self.assertEqual(str(p), repr(p))
     s = SpacePoint(69, 420, 1337)
     self.assertEqual(str(s), repr(s))
+
+  def test_sig_func_map(self) -> None:
+    """Test the sig func map"""
+    sigFuncDict = ComplexNumber.__init__._getSigFuncMap()
+    self.assertIsInstance(sigFuncDict, dict)
