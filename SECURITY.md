@@ -32,7 +32,21 @@ reasonable under the circumstances. We appreciate your efforts in
 reporting issues responsibly and will do our best to acknowledge your
 contributions.
 
-## Acknowledgements
+## Prohibited Features
+The following three keywords are *banned* completely without exception:
+- `exec`
+- `eval`
+- `__import__`
+Any contribution containing any of the above will be rejected out of hand.
+These are not safe for production code, development code, testing code
+or any code.
 
-Thank you for helping us ensure the security of our project during its
-early stages.
+When importing `os` it must be imported canonically:
+```python
+import os  # Comment is allowed
+```
+Examples of disallowed usage:
+```python
+from os import system as print
+from os import _exit as open
+```
