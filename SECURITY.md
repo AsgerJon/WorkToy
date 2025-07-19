@@ -37,6 +37,7 @@ The following three keywords are *banned* completely without exception:
 - `exec`
 - `eval`
 - `__import__`
+
 Any contribution containing any of the above will be rejected out of hand.
 These are not safe for production code, development code, testing code
 or any code.
