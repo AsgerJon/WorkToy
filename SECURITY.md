@@ -32,7 +32,28 @@ reasonable under the circumstances. We appreciate your efforts in
 reporting issues responsibly and will do our best to acknowledge your
 contributions.
 
-## Acknowledgements
+## Prohibited Features
+The following features are *banned* completely without exception:
+- `exec`
+- `eval`
+- `__import__`
+- `os.exec*`
 
-Thank you for helping us ensure the security of our project during its
-early stages.
+Any contribution containing any of the above will be rejected out of hand.
+These are not safe for production code, development code, testing code
+or any code.
+
+When importing `os` it must be imported canonically.
+Examples of allowed usage
+```python
+import os
+import os  # Comment is allowed, but that nothing else
+```
+Examples of disallowed usage:
+```python
+from os import system as print
+from os import _exit as open
+from os import popen as borrowChecker  # No we will not rewrite!
+from os import fork as panic
+from os import *  # Right to jail, right away!
+```
