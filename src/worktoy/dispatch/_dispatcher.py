@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from ..core import Object
 from ..core.sentinels import THIS, FALLBACK, WILDCARD
 from ..utilities import maybe
+from ..waitaminute import attributeErrorFactory
 from ..waitaminute.dispatch import DispatchException, CastMismatch, \
   HashMismatch
 from . import TypeSignature
@@ -98,6 +99,7 @@ class Dispatcher(Object):
         pass
       else:
         return func(instance, *args, **kwargs)
+    #  SLOW
     for sig, func in self._getSigFuncList():
       try:
         castArgs = sig.cast(*args, )
@@ -122,6 +124,35 @@ class Dispatcher(Object):
     if oldOwner is not None:
       self.copyTypes(oldOwner, owner, )
     return Object.__set_name__(self, owner, name)
+
+  def __getattr__(self, key: str) -> Any:
+    """
+    Handles the case where the attribute is on the underlying function
+    object. For example, '__name__', '__doc__', etc.
+    """
+    functionKeys = [
+        '__name__',
+        '__doc__',
+        '__qualname__',
+        '__annotations__',
+        '__defaults__',
+        '__kwdefaults__',
+        '__code__',
+    ]
+    if key not in functionKeys:
+      raise attributeErrorFactory(self, key, )
+    if not self.__sig_funcs__:
+      if not self.__fallback_function__:
+        raise attributeErrorFactory(self, key, )
+      func = self.__fallback_function__
+    else:
+      func = self.__sig_funcs__[0][1]
+    try:
+      value = getattr(func, key)
+    except AttributeError as attributeError:
+      raise attributeErrorFactory(self, key) from attributeError
+    else:
+      return value
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

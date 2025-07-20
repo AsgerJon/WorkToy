@@ -1,4 +1,5 @@
-"""The 'worktoy.mcls' module provides the base custom metaclass and
+"""
+The 'worktoy.mcls' module provides the base custom metaclass and
 namespace uses across the 'worktoy' library. The pattern used is for the
 namespace class to implement a method called 'compile' which decides the
 actual namespace to be used in the class creation based on the code found
@@ -14,7 +15,8 @@ metaclass validates the 'dict' object and finally passes it to the
 the metaclass checks each baseclass for the presence of a method called
 '__subclasshook__'. If it exists, the method is called with the created
 class object allowing the baseclass to modify or even reject the class.
-Finally, the metaclass returns the created class object."""
+Finally, the metaclass returns the created class object.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
