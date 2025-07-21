@@ -187,20 +187,3 @@ class TestComplex(DispatcherTest):
           actual = z0 ** z1
           self.assertIsInstance(actual, cls)
           self.assertAlmostEqual(complex(actual), expected)
-
-  def test_fallback(self) -> None:
-    """Tests the fallback constructor of the complex number classes."""
-    with self.assertRaises(WYD) as context:
-      ComplexSubclass(object, object, object, object, object, )
-    e = context.exception
-    self.assertIn(str(e), repr(e))
-
-  def test_wild(self, ) -> None:
-    """Tests the wildcard argument handling in the complex number classes."""
-    z = ComplexSubclass(69 + 420j, '69', '420', )
-    self.assertIsInstance(z, ComplexSubclass)
-    self.assertIsInstance(z, ComplexNumber)
-    self.assertAlmostEqual(z.RE, 69.0)
-    self.assertAlmostEqual(z.IM, 420.0)
-    self.assertAlmostEqual(complex(z), 69 + 420j)
-    self.assertEqual(z.__test_notes__, ('69', '420',))

@@ -6,7 +6,7 @@ functionality.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.dispatch import Dispatcher, TypeSignature
+from worktoy.dispatch import Dispatcher, TypeSig
 from worktoy.waitaminute.dispatch import DispatchException
 
 from . import DispatcherTest, PlanePoint, SpacePoint
@@ -28,7 +28,7 @@ class TestDescriptorOverloadBasic(DispatcherTest):
     self.assertTrue(hasattr(PlanePoint, '__init__'))
     self.assertIsInstance(PlanePoint.__init__, Dispatcher)
     for key, val in PlanePoint.__init__.__sig_funcs__:
-      self.assertIsInstance(key, TypeSignature)
+      self.assertIsInstance(key, TypeSig)
       self.assertTrue(callable(val))
 
   def test_good_init(self) -> None:

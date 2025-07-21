@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.dispatch import Dispatcher
+from worktoy.dispatch import Overload, Dispatcher
 from worktoy.mcls.space_hooks import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -24,15 +24,21 @@ class LoadSpaceHook(AbstractSpaceHook):
   """
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    if not isinstance(val, Dispatcher):
+    if not isinstance(val, Overload):
       return False
-    sig, func = None, None
-    for sig, func in val.__sig_funcs__:
-      self.space.addOverload(key, sig, func)
+    sigs = [val.sig]
+    while isinstance(val.func, Overload):
+      val = val.func
+      sigs.append(val.sig)
+    for sig in sigs:
+      self.space.addOverload(key, sig, val.func)
     return True
 
   def postCompilePhase(self, compiledSpace) -> dict:
     """Populates the namespace with the collected DescLoad instances. """
     for name, sigFunc in self.space.getOverloads().items():
-      compiledSpace[name] = Dispatcher(sigFunc)
+      dispatcher = Dispatcher()
+      for sig, func in sigFunc.items():
+        dispatcher.addSigFunc(sig, func)
+      compiledSpace[name] = dispatcher
     return compiledSpace

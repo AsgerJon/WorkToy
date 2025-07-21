@@ -7,12 +7,13 @@ which facilitates mapping from type signatures to function objects.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._type_signature import TypeSignature
+from ._type_sig import TypeSig
 from ._dispatcher import Dispatcher
-from ._overload import overload
+from ._overload import overload, Overload
 
 __all__ = [
-    'TypeSignature',
+    'TypeSig',
     'Dispatcher',
     'overload',
+    'Overload',
 ]

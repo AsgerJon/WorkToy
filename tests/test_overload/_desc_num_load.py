@@ -1,5 +1,6 @@
 """
-The NumLoad provides a class that uses KeeNum classes in the overloads.
+DescNumLoad provides a descriptor based implementation of the same
+scenario as the 'NumLoad' class.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -8,28 +9,27 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from worktoy.desc import Field
-from worktoy.dispatch import overload
-from worktoy.mcls import BaseObject
+from worktoy.dispatch import Dispatcher
 from . import FlagRoll, WeekNum
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class NumLoad(BaseObject):
+class DescNumLoad:
   """
-  NumLoad provides a class that uses KeeNum classes in the overloads.
+  DescNumLoad provides a descriptor based implementation of the same
+  scenario as the 'NumLoad' class.
   """
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
   __loaded_object__ = None
 
   #  Public Variables
   loaded = Field()
+
+  #  Overload Functions
+  __init__ = Dispatcher()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -57,43 +57,43 @@ class NumLoad(BaseObject):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @overload(FlagRoll)
+  @__init__.overload(FlagRoll)
   def __init__(self, flag: FlagRoll) -> None:
     """Initialize the NumLoad with a FlagRoll instance."""
     self.loaded = flag
 
-  @overload(str)
+  @__init__.overload(str)
   def __init__(self, flag: str) -> None:
     """Initialize the NumLoad with a string representation of a FlagRoll."""
     self.loaded = flag
 
-  @overload(WeekNum)
+  @__init__.overload(WeekNum)
   def __init__(self, week: WeekNum) -> None:
     """Initialize the NumLoad with a WeekNum instance."""
     self.loaded = week
 
-  @overload(WeekNum, FlagRoll)
-  @overload(FlagRoll, WeekNum)
+  @__init__.overload(WeekNum, FlagRoll)
+  @__init__.overload(FlagRoll, WeekNum)
   def __init__(self, *args) -> None:
     """Initialize the NumLoad with both a FlagRoll and a WeekNum."""
     self.loaded = str(args)
 
-  @overload(FlagRoll, str)
+  @__init__.overload(FlagRoll, str)
   def __init__(self, *args) -> None:
     """Initialize the NumLoad with a FlagRoll and a string."""
     self.loaded = str(args)
 
-  @overload(WeekNum, str)
+  @__init__.overload(WeekNum, str)
   def __init__(self, *args) -> None:
     """Initialize the NumLoad with a WeekNum and a string."""
     self.loaded = str(args)
 
-  @overload(str, WeekNum)
-  @overload(str, FlagRoll)
-  @overload(FlagRoll, WeekNum, str)
-  @overload(WeekNum, FlagRoll, str)
-  @overload(str, FlagRoll, WeekNum)
-  @overload(str, WeekNum, FlagRoll)
+  @__init__.overload(str, WeekNum)
+  @__init__.overload(str, FlagRoll)
+  @__init__.overload(FlagRoll, WeekNum, str)
+  @__init__.overload(WeekNum, FlagRoll, str)
+  @__init__.overload(str, FlagRoll, WeekNum)
+  @__init__.overload(str, WeekNum, FlagRoll)
   def __init__(self, *args) -> None:
     """Initialize the NumLoad with a FlagRoll, a WeekNum, and a string."""
     self.loaded = str(args)

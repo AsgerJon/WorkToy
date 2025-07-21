@@ -57,22 +57,6 @@ class ComplexSubclass(ComplexNumber):
     zStr = complex(z.replace(' ', '').lower().replace('i', 'j'))
     ComplexNumber.__init__(self, zStr)
 
-  @__init__.overload(complex, WILDCARD, WILDCARD)
-  def __init__(self, z: complex, *args) -> None:
-    """
-    Constructor for ComplexSubclass that accepts a complex number.
-    """
-    self.RE = z.real
-    self.IM = z.imag
-    self.__test_notes__ = args
-
-  @__init__.overload(FALLBACK)
-  def __init__(self, *args) -> None:
-    """
-    Fallback constructor for ComplexSubclass.
-    """
-    raise WYD('imagine falling back')
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

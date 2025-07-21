@@ -5,7 +5,8 @@ TestLoad tests the NumLoad scenario for overloading with KeeNum classes.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import NumLoad, OverloadTest, WeekNum, FlagRoll
+from . import NumLoad, OverloadTest, WeekNum, FlagRoll, DescNumLoad, \
+  SubDescNumLoad
 
 from typing import TYPE_CHECKING
 
@@ -39,8 +40,20 @@ class TestLoad(OverloadTest):
         (WeekNum.SUNDAY, 'lmao'),
         (FlagRoll[9], 'yeet'),
     )
-    for arg in args:
-      numLoad = NumLoad(*arg, )
-      expected = numLoad.loaded
-      actual = str(arg)
-      self.assertIn(expected, actual)
+    for cls in (NumLoad, DescNumLoad, SubDescNumLoad):
+      for arg in args:
+        load = cls(*arg, )
+        expected = load.loaded
+        actual = str(arg)
+        self.assertIn(expected, actual)
+
+    subLoad = SubDescNumLoad(FlagRoll.NEVER, FlagRoll.GONNA, FlagRoll.GIVE)
+    expected = str((FlagRoll.NEVER, FlagRoll.GONNA, FlagRoll.GIVE))
+    self.assertIn(expected, subLoad.loaded)
+
+    self.assertEqual(subLoad.loaded, subLoad.subLoaded)
+
+    args = object, object, object, object
+    sub = SubDescNumLoad(*args)
+    self.assertEqual(sub.loaded, str(args))
+    self.assertEqual(sub.subLoaded, str(args))

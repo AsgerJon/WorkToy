@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.dispatch import Dispatcher
 from worktoy.core.sentinels import THIS
 from worktoy.desc import AttriBox
 
@@ -26,7 +27,6 @@ class PlanePoint:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
-  from worktoy.dispatch import Dispatcher
   __init__ = Dispatcher()
 
   #  Public Variables

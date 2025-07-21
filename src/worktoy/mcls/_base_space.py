@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..dispatch import TypeSignature
+from ..dispatch import TypeSig
 from ..utilities import maybe
 from . import AbstractNamespace
 from .space_hooks import LoadSpaceHook
@@ -15,7 +15,7 @@ from .space_hooks import LoadSpaceHook
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Callable, Any
 
-  SigFunc: TypeAlias = dict[TypeSignature, Callable[..., Any]]
+  SigFunc: TypeAlias = dict[TypeSig, Callable[..., Any]]
   OverloadMap: TypeAlias = dict[str, SigFunc]
   Bases: TypeAlias = tuple[type, ...]
 
@@ -64,7 +64,7 @@ class BaseSpace(AbstractNamespace):
   def addOverload(
       self,
       name: str,
-      sig: TypeSignature,
+      sig: TypeSig,
       func: Callable
   ) -> None:
     if name not in self.__overload_map__:

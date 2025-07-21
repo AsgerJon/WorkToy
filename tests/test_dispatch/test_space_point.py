@@ -6,13 +6,12 @@ TestSpacePoint tests overloaded methods on subclasses as exposed by the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.dispatch import TypeSignature
-from . import SpacePoint, PlanePoint, DispatcherTest
-
 from typing import TYPE_CHECKING
 
+from . import SpacePoint, DispatcherTest
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class TestSpacePoint(DispatcherTest):

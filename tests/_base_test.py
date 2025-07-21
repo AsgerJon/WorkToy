@@ -8,12 +8,43 @@ the 'tearDownClass' method and adds 'assertIsSubclass' (and negation).
 from __future__ import annotations
 
 from unittest import TestCase
+from random import randint
+
+from worktoy.utilities import maybe
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Self, Type, TypeAlias, Any, Iterator, Tuple
+
+  IntSample: TypeAlias = Iterator[tuple[int, ...]]
 
 
 class BaseTest(TestCase):
   """BaseTest provides a base class shared by the testing classes in the
   tests package. It implements module unloading in the 'tearDownClass'
   method and adds 'assertIsSubclass' (and negation)."""
+
+  @staticmethod
+  def generateRandomIntegers(*args) -> IntSample:
+    """
+    Generates a list of tuples containing random integers.
+    Arguments:
+      args = (n, N, a, b)
+        n: Number of tuples to generate. Default is 1.
+        N: Number of integers in each tuple. Default is 1.
+        a: Minimum integer value (inclusive). Default is 0.
+        b: Maximum integer value (exclusive). Default is 256.
+      if a > b, then a and b are swapped.
+    Returns:
+      A list of 'N' tuples, each containing 'n' random integers in
+      range [a, b).
+    """
+    n, N, a, b, *_ = [*args, None, None, None, None]
+    n, N, a, b = maybe(n, 1), maybe(N, 1), maybe(a, 0), maybe(b, 256),
+    a, b = (a, b) if a < b else (b, a)
+    for _ in range(N):
+      yield tuple(randint(a, b - 1) for _ in range(n))
 
   @classmethod
   def tearDownClass(cls) -> None:

@@ -6,22 +6,28 @@ objects and thus provides the core overloading functionality.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from types import FunctionType as Func
+from types import MethodType as Meth
 
 from ..core import Object
-from ..core.sentinels import THIS, FALLBACK, WILDCARD
-from ..utilities import maybe
-from ..waitaminute import attributeErrorFactory
-from ..waitaminute.dispatch import DispatchException, CastMismatch, \
-  HashMismatch
-from . import TypeSignature
+from ..core.sentinels import FALLBACK
+from ..utilities import maybe, typeCast
+from ..waitaminute import TypeException, VariableNotNone
+from ..waitaminute.desc import ReadOnlyError, ProtectedError
+
+from ..dispatch import TypeSig
+
+from typing import TYPE_CHECKING
+
+from ..waitaminute.dispatch import DispatchException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias, Self
+  from typing import Any, Callable, Never, TypeAlias, Optional, Self
 
-  FuncObject: TypeAlias = Callable[..., Any]
-  SigFuncMap: TypeAlias = Dict[TypeSignature, FuncObject]
-  SigFuncList: TypeAlias = list[tuple[TypeSignature, FuncObject]]
+  Method: TypeAlias = Callable[[Any, ...], Any]
+  Decorator: TypeAlias = Callable[[Method], Self]
+  SigFuncList: TypeAlias = list[tuple[TypeSig, Method]]
+  SigFuncMap: TypeAlias = dict[TypeSig, Method]
 
 
 class Dispatcher(Object):
@@ -36,154 +42,157 @@ class Dispatcher(Object):
 
   #  Private Variables
   __sig_funcs__ = None
+  __fallback_func__ = None
+  __field_name__ = None
+  __field_owner__ = None
+
+  #  Public Variables
+
+  #  Virtual Variables
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @staticmethod
-  def _sortSigFuncs(sigFuncs: SigFuncList) -> SigFuncList:
-    out = sorted(sigFuncs, key=lambda x: x[0].mroLen(), reverse=True)
-    out = sorted(out, key=lambda x: int(FALLBACK in x[0]), )
-    return sorted(out, key=lambda x: int(WILDCARD in x[0]), )
+  def _getSigFuncList(self) -> SigFuncList:
+    return maybe(self.__sig_funcs__, [])
 
-  def _getSigFuncList(self, ) -> SigFuncList:
-    noTHIS = []
-    for sig, func in self.__sig_funcs__:
-      if THIS in sig:
-        continue
-      noTHIS.append((sig, func,))
-    return self._sortSigFuncs(noTHIS, )
+  def _getSigFuncMap(self) -> SigFuncMap:
+    return {sig: func for sig, func in self._getSigFuncList()}
 
-  def _getSigFuncMap(self, ) -> SigFuncMap:
-    return {k: v for k, v in self._getSigFuncList()}
-
-  def _getFallbackFunction(self, ) -> Callable:
-    for sig, func in self.__sig_funcs__:
-      if FALLBACK in sig:
-        return func
-    raise ValueError(FALLBACK)
+  def _getFallbackFunction(self) -> Optional[Method]:
+    return self.__fallback_func__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, sigFuncs: Optional[SigFuncList] = None) -> None:
-    if isinstance(sigFuncs, dict):
-      sigFuncs = [(sig, func,) for sig, func in sigFuncs.items()]
-    self.__sig_funcs__ = maybe(sigFuncs, [], )
+  def addSigFunc(self, sig: TypeSig, func: Method) -> Method:
+    """
+    Add a signature-function pair to the internal signature-function map.
+    """
+    existing = self._getSigFuncList()
+    if func is self:
+      self.__sig_funcs__ = [*existing, (sig, existing[-1][-1])]
+    else:
+      self.__sig_funcs__ = [*existing, (sig, func,)]
+    return func
+
+  def _setFallbackFunction(self, func: Method) -> Method:
+    if not callable(func):
+      raise TypeException('__fallback_func__', func, Func, Meth)
+    if self.__fallback_func__ is not None:
+      raise VariableNotNone('__fallback_func__', self.__fallback_func__)
+    self.__fallback_func__ = func
+    return func
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __get__(self, instance: Any, owner: type) -> Any:
+    """
+    Descriptor protocol method to return a decorator that can be used to
+    register functions with specific type signatures.
+    """
     if instance is None:
       return self
+    sigFuncMap = self._getSigFuncMap()
 
-    def wrap(*args, **kwargs) -> Any:
-      return self(instance, *args, **kwargs)
-
-    return wrap
-
-  def __call__(self, instance: Any, *args: Any, **kwargs: Any) -> Any:
-    #  FAST
-    argSig = TypeSignature.fromArgs(*args, )
-    slowArgs = []
-    sigFuncs = self._getSigFuncList()
-    posArgs = None
-    for sig, func in sigFuncs:
-      try:
-        posArgs = sig.fast(*args)
-      except HashMismatch:
-        pass
-      else:
+    def dispatch(*args, **kwargs) -> Any:
+      argSig = TypeSig.fromArgs(*args, )
+      func = sigFuncMap.get(argSig, None)
+      #  FASTEST
+      if func is not None:
         return func(instance, *args, **kwargs)
-    #  SLOW
-    for sig, func in self._getSigFuncList():
-      try:
-        castArgs = sig.cast(*args, )
-      except CastMismatch:
-        continue
-      else:
-        return func(instance, *castArgs, **kwargs)
-    else:
-      try:
-        fallbackFunc = self._getFallbackFunction()
-      except ValueError as valueError:
-        raise DispatchException(self, args, (valueError,))
-      return fallbackFunc(instance, *args, **kwargs)
+      #  FAST
+      for sig, func in sigFuncMap.items():
+        if len(argSig) != len(sig):
+          continue
+        for arg, type_ in zip(args, sig):
+          if not isinstance(arg, type_):
+            break
+        else:
+          return func(instance, *args, **kwargs)
+      #  SLOW
+      for sig, func in sigFuncMap.items():
+        castArgs = []
+        if len(argSig) != len(sig):
+          continue
+        for arg, type_ in zip(args, sig):
+          if isinstance(arg, type_):
+            castArgs.append(arg)
+            continue
+          try:
+            castedArg = typeCast(type_, arg)
+          except (ValueError, TypeError):
+            break
+          else:
+            castArgs.append(castedArg)
+        else:
+          return func(instance, *castArgs, **kwargs)
+      #  FALLBACK
+      fallback = self._getFallbackFunction()
+      if callable(fallback):
+        return fallback(instance, *args, **kwargs)
+      raise DispatchException(self, args, )
+
+    return dispatch
+
+  def __call__(self, instance: Any, *args, **kwargs) -> Any:
+    """
+    Allows invoking the dispatcher when accessed through the owning class.
+    """
+    return self.__get__(instance, type(instance))(*args, **kwargs)
+
+  def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
+    """Illegal setter operation"""
+    raise ReadOnlyError(self, instance, value)
+
+  def __delete__(self, instance: Any, **kwargs) -> Never:
+    """Illegal delete operation"""
+    raise ProtectedError(instance, self, )
 
   def __set_name__(self, owner: type, name: str) -> None:
-    """
-    Set the name of the dispatcher in the owner class.
-    This is called when the dispatcher is assigned to a class variable.
-    """
-    self.copyTypes(THIS, owner, )
-    oldOwner = self.getFieldOwner()
-    if oldOwner is not None:
-      self.copyTypes(oldOwner, owner, )
-    return Object.__set_name__(self, owner, name)
+    self.__field_name__ = name
+    self.__field_owner__ = owner
+    self.swapAllTHIS(owner)
 
-  def __getattr__(self, key: str) -> Any:
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def clone(self, ) -> Self:
     """
-    Handles the case where the attribute is on the underlying function
-    object. For example, '__name__', '__doc__', etc.
+    Create a clone of this DescriptorOverload instance.
     """
-    functionKeys = [
-        '__name__',
-        '__doc__',
-        '__qualname__',
-        '__annotations__',
-        '__defaults__',
-        '__kwdefaults__',
-        '__code__',
-    ]
-    if key not in functionKeys:
-      raise attributeErrorFactory(self, key, )
-    if not self.__sig_funcs__:
-      if not self.__fallback_function__:
-        raise attributeErrorFactory(self, key, )
-      func = self.__fallback_function__
-    else:
-      func = self.__sig_funcs__[0][1]
-    try:
-      value = getattr(func, key)
-    except AttributeError as attributeError:
-      raise attributeErrorFactory(self, key) from attributeError
-    else:
-      return value
+    newLoad = type(self)()
+    newLoad.__sig_funcs__ = self._getSigFuncList()
+    fallback = self._getFallbackFunction()
+    if fallback is not None:
+      newLoad.__fallback_func__ = fallback
+    return newLoad
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def copyTypes(self, *types: type) -> None:
-    oldSigFuncs = self.__sig_funcs__
-    newSigFuncs = []
-    for sig, func in oldSigFuncs:
-      newSig = sig.swapType(*types, )
-      newSigFuncs.append((newSig, func,))
-      if newSig == sig:
-        continue
-      newSigFuncs.append((sig, func,))
-    self.__sig_funcs__ = self._sortSigFuncs(newSigFuncs)
-
-  def overload(self, *types) -> Callable[[FuncObject], Self]:
-    def decorator(func: FuncObject) -> Self:
-      sig = TypeSignature(*types, )
-      self.__sig_funcs__.append((sig, func,))
+  def overload(self, *types: type) -> Decorator:
+    def decorator(func: Method) -> Self:
+      """Decorator to register the function with the given types."""
+      self.addSigFunc(TypeSig(*types), func)
       return self
 
     return decorator
 
-  def clone(self, ) -> Self:
+  def fallback(self, func: Method) -> Decorator:
+    self._setFallbackFunction(func)
+    return self
+
+  def swapAllTHIS(self, thisType: type) -> None:
     """
-    Clone the dispatcher, creating a new instance with the same type
-    signatures, functions, field name and field owner.
+    Swap all occurrences of THIS in the registered signatures with the
+    provided type.
     """
-    cls = type(self)
-    out = cls([*self._getSigFuncList(), ])
-    owner, name = self.getFieldOwner(), self.getFieldName()
-    out.__set_name__(owner, name)
-    return out
+    for sig, func in self._getSigFuncList():
+      sig.swapTHIS(thisType)

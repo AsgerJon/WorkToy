@@ -29,10 +29,9 @@ class DispatchException(TypeError):
 
   __slots__ = ('dispatch', 'args', 'excs')
 
-  def __init__(self, dispatch: Dispatcher, args: Args, excs: Excs) -> None:
+  def __init__(self, dispatch: Dispatcher, args: Args, ) -> None:
     self.dispatch = dispatch
     self.args = args
-    self.excs = excs
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
@@ -40,14 +39,12 @@ class DispatchException(TypeError):
     Return a string representation of the DispatchException.
     """
     infoSpec = """Dispatcher object: '%s' failed to dispatch arguments: 
-    <br><tab>%s<br><tab>matching type signature: '%s'<br> encountering 
-    exceptions: <br><tab>%s"""
+    <br><tab>%s<br><tab>matching type signature: '%s'<br>"""
     dispStr = str(self.dispatch)
     argsStr = ', '.join(str(arg) for arg in self.args)
-    from ...dispatch import TypeSignature
-    typeStr = str(TypeSignature.fromArgs(*self.args))
-    excsStr = ', '.join(str(exc) for exc in self.excs)
-    info = infoSpec % (dispStr, argsStr, typeStr, excsStr)
+    from ...dispatch import TypeSig
+    typeStr = str(TypeSig.fromArgs(*self.args))
+    info = infoSpec % (dispStr, argsStr, typeStr)
     return textFmt(info, )
 
   __repr__ = __str__
