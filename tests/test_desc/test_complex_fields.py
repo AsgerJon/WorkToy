@@ -6,15 +6,12 @@ the 'ComplexFields' class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import sys
-
-from worktoy.desc import Field
-from . import DescTest, ComplexFields, ComplexFieldsSubclass
-
 from typing import TYPE_CHECKING
 
+from . import DescTest, ComplexFields, ComplexFieldsSubclass
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class TestComplexFields(DescTest):

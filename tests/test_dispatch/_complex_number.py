@@ -5,16 +5,15 @@ ComplexNumber provides testing of the inline function overloader.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.core.sentinels import THIS
 from worktoy.desc import AttriBox, Field
 from worktoy.dispatch import Dispatcher
-
-from typing import TYPE_CHECKING, Iterator
-
 from worktoy.utilities.mathematics import atan2, exp, log
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias, Self
+  from typing import Any, Self, Iterator
 
 
 class ComplexNumber:

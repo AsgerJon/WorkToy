@@ -6,15 +6,14 @@ TestComplex tests the overloading functionality as represented by the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from tests import WYD
+from typing import TYPE_CHECKING
+
 from worktoy.utilities import stringList
 from worktoy.utilities.mathematics import sin, cos
 from . import DispatcherTest, ComplexNumber, ComplexSubclass, ComplexMeta
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias
+  pass
 
 
 class TestComplex(DispatcherTest):

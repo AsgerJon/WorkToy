@@ -5,13 +5,13 @@ EZData leverages the 'worktoy' library to provide a dataclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 from . import EZMeta
 from ..mcls import BaseObject
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Callable
+  from typing import Callable, Iterator
 
 
 def _root(callMeMaybe: Callable) -> Callable:

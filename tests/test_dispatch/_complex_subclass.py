@@ -6,14 +6,12 @@ inheritance works as expected with the overload system.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from tests import WYD
-from worktoy.core.sentinels import FALLBACK, WILDCARD
-from ._complex_number import ComplexNumber
-
 from typing import TYPE_CHECKING
 
+from ._complex_number import ComplexNumber
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias, Self
+  pass
 
 
 class ComplexSubclass(ComplexNumber):

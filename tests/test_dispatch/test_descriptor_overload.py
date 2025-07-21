@@ -6,15 +6,14 @@ functionality.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.dispatch import Dispatcher, TypeSig
-from worktoy.waitaminute.dispatch import DispatchException
-
-from . import DispatcherTest, PlanePoint, SpacePoint
-
 from typing import TYPE_CHECKING
 
+from worktoy.dispatch import Dispatcher, TypeSig
+from worktoy.waitaminute.dispatch import DispatchException
+from . import DispatcherTest, PlanePoint, SpacePoint
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias
+  pass
 
 
 class TestDescriptorOverloadBasic(DispatcherTest):

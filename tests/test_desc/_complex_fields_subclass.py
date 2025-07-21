@@ -6,12 +6,12 @@ functionality applied to subclasses.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import ComplexFields
-
 from typing import TYPE_CHECKING
 
+from . import ComplexFields
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class ComplexFieldsSubclass(ComplexFields):

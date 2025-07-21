@@ -6,12 +6,12 @@ the 'ComplexBox' class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import ComplexBox, DescTest
-
 from typing import TYPE_CHECKING
 
+from . import ComplexBox, DescTest
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class TestComplexBox(DescTest):

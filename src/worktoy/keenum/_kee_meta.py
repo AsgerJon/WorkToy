@@ -5,7 +5,7 @@ KeeMeta provides the metaclass for the 'worktoy.keenum' module.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 from ._kee_desc import Base, MRO, Members, IsRoot
 from ..mcls import BaseMeta
@@ -15,7 +15,7 @@ from ..waitaminute.keenum import KeeNameError, KeeIndexError
 from ..waitaminute.keenum import KeeMemberError, KeeValueError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Self
+  from typing import Any, TypeAlias, Self, Iterator
 
   from . import KeeNum
 

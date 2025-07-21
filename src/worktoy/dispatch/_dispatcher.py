@@ -8,17 +8,13 @@ from __future__ import annotations
 
 from types import FunctionType as Func
 from types import MethodType as Meth
+from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..core.sentinels import FALLBACK
 from ..utilities import maybe, typeCast
 from ..waitaminute import TypeException, VariableNotNone
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
-
 from ..dispatch import TypeSig
-
-from typing import TYPE_CHECKING
-
 from ..waitaminute.dispatch import DispatchException
 
 if TYPE_CHECKING:  # pragma: no cover

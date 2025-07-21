@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from worktoy.desc import LabelBox, Field
-from worktoy.utilities import maybe
 from worktoy.utilities.mathematics import atan2, exp, log
 
 if TYPE_CHECKING:  # pragma: no cover

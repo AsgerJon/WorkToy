@@ -10,15 +10,15 @@ to instantiate that type.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
-from worktoy.core.sentinels import THIS, FALLBACK
+from worktoy.core.sentinels import THIS
 from worktoy.desc import Field, LabelBox
 from worktoy.dispatch import Dispatcher
 from worktoy.utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Optional, Iterator
+  from typing import Any, Iterator, Self
 
 
 class DescLoad:

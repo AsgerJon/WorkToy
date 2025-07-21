@@ -6,12 +6,12 @@ covered by the contextual tests in 'DescTest'.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import DescTest, ComplexAlias
-
 from typing import TYPE_CHECKING
 
+from . import DescTest, ComplexAlias
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class TestAlias(DescTest):

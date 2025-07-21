@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 
 from ..core import Object
 from ..utilities import maybe
-from ..waitaminute import TypeException
 from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 
 if TYPE_CHECKING:  # pragma: no cover

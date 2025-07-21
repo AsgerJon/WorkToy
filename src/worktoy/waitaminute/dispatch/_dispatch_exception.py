@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Type
+  from typing import Any, TypeAlias
 
   Args: TypeAlias = tuple[Any, ...]
   Excs: TypeAlias = tuple[Exception, ...]

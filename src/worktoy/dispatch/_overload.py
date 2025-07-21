@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from worktoy.desc import Field
-from worktoy.dispatch import Dispatcher, TypeSig
+from worktoy.dispatch import TypeSig
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias

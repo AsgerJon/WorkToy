@@ -6,11 +6,10 @@ descriptor for real and imaginary parts.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import AttriBox, Field
-from worktoy.utilities.mathematics import atan2, log, exp, pi
-from worktoy.utilities import maybe
-
 from typing import TYPE_CHECKING
+
+from worktoy.desc import AttriBox, Field
+from worktoy.utilities.mathematics import atan2, log, exp
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Iterator

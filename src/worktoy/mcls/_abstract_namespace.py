@@ -6,11 +6,9 @@ objects used in custom metaclasses.
 #  Copyright (c) 2024-2025 Asger Jon Vistisen
 from __future__ import annotations
 
-import builtins
-import sys
 from typing import TYPE_CHECKING
 
-from ..utilities import textFmt, maybe, resolveMRO
+from ..utilities import textFmt, resolveMRO
 from ..waitaminute.meta import HookException, DuplicateHook
 from . import Base
 from .space_hooks import NamespaceHook, ReservedNamespaceHook

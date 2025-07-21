@@ -6,11 +6,11 @@ ComplexFields provides a complex number implementation for testing
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.desc import Field
 from worktoy.utilities import maybe
 from worktoy.utilities.mathematics import atan2, exp, log
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Iterator

@@ -7,10 +7,10 @@ Specifically, such that the subclass extends the supported type signatures.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.desc import Field
 from . import DescNumLoad, FlagRoll
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

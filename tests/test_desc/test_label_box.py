@@ -5,15 +5,14 @@ TestLabelBox provides unit tests specifically for the `LabelBox` descriptor.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import LabelBox
-from worktoy.waitaminute import WriteOnceError
-
-from . import DescTest
-
 from typing import TYPE_CHECKING
 
+from worktoy.desc import LabelBox
+from worktoy.waitaminute import WriteOnceError
+from . import DescTest
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class TestLabelBox(DescTest):

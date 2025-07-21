@@ -6,19 +6,18 @@ covered by the contextual tests in 'DescTest'.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from tests import WYD
 from worktoy.core.sentinels import DELETED
 from worktoy.desc import Field
 from worktoy.utilities import maybe
 from worktoy.waitaminute.desc import ProtectedError, ReadOnlyError, \
   AccessError
-
 from . import DescTest
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class TestField(DescTest):

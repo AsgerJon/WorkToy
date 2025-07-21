@@ -6,6 +6,8 @@ TestMetaUmbrella provides some coverage gymnastics for the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.core import MetaType
 from worktoy.core._meta_type import _Space
 from worktoy.mcls import (BaseObject, BaseSpace, BaseMeta,
@@ -13,10 +15,8 @@ from worktoy.mcls import (BaseObject, BaseSpace, BaseMeta,
                           AbstractMetaclass)
 from .. import MCLSTest
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias, Self
+  pass
 
 
 class TestMetaUmbrella(MCLSTest):

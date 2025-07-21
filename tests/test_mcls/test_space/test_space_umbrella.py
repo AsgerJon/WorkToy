@@ -4,16 +4,15 @@
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.mcls.space_hooks import AbstractSpaceHook, SpaceDesc
 from worktoy.waitaminute.meta import ReservedName
 from .. import MCLSTest
-
-from worktoy.mcls import BaseObject, BaseSpace, BaseMeta
-
-from typing import TYPE_CHECKING
+from worktoy.mcls import BaseObject
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, Dict, Optional, TypeAlias, Self
+  pass
 
 
 class TestSpaceUmbrella(MCLSTest):

@@ -5,9 +5,9 @@ FlagRoll provides a KeeFlags for use with the NumLoad test.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.keenum import KeeFlags, Kee
-
 from typing import TYPE_CHECKING
+
+from worktoy.keenum import KeeFlags, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

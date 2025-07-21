@@ -5,7 +5,7 @@ TestBasicMeta tests some basic functionalities of the AbstractMetaclass.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass, BaseMeta
@@ -13,7 +13,7 @@ from worktoy.utilities import maybe
 from worktoy.waitaminute.meta import QuestionableSyntax, DelException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any, Self, Iterator
 
 
 class TestBasicMeta(MCLSTest):

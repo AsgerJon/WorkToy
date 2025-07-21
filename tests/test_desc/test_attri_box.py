@@ -6,14 +6,13 @@ covered by the contextual tests in 'DescTest'.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import AttriBox
-
-from . import DescTest
-
 from typing import TYPE_CHECKING
 
+from worktoy.desc import AttriBox
+from . import DescTest
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Dict, Optional
+  pass
 
 
 class TestAttriBox(DescTest):

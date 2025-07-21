@@ -5,15 +5,12 @@ TestDescLoad tests the 'DescLoad' scenario overloading scenario.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import randint
-
-from worktoy.utilities import textFmt
-from . import DescLoad, OverloadTest, WeekNum, FlagRoll
-
 from typing import TYPE_CHECKING
 
+from . import DescLoad, OverloadTest
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Type, TypeAlias, Any
+  from typing import Self, TypeAlias
 
   IntSample: TypeAlias = list[tuple[int, ...]]
 

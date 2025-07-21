@@ -9,13 +9,12 @@ from __future__ import annotations
 
 from unittest import TestCase
 from random import randint
+from typing import TYPE_CHECKING
 
 from worktoy.utilities import maybe
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Type, TypeAlias, Any, Iterator, Tuple
+  from typing import TypeAlias, Iterator
 
   IntSample: TypeAlias = Iterator[tuple[int, ...]]
 
