@@ -9,10 +9,11 @@ from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeNum, Kee, KeeMeta
 from worktoy.waitaminute import TypeException, VariableNotNone
+from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
 from worktoy.waitaminute.keenum import KeeNameError, KeeIndexError, \
   KeeMemberError, KeeDuplicate, KeeTypeException, KeeCaseException, \
   KeeWriteOnceError
-from . import KeeTest, RootRGB, RGB, BrushTest
+from . import KeeTest, RootRGB, RGB, BrushTest, RGBNum
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -220,4 +221,24 @@ class TestNum(KeeTest):
     """Test that the class variable 'num' is set correctly."""
     brushTest = BrushTest()
     self.assertIsInstance(brushTest, BrushTest)
-    print(brushTest.color)
+
+    class Foo:
+      colorNum = RGBNum.RED
+
+    foo = Foo()
+
+    with self.assertRaises(ReadOnlyError) as context:
+      foo.colorNum = 'breh'
+    e = context.exception
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo.colorNum)
+    self.assertEqual(e.newVal, 'breh')
+    self.assertEqual(str(e), repr(e))
+
+    with self.assertRaises(ProtectedError) as context:
+      del foo.colorNum
+    e = context.exception
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo.colorNum)
+    self.assertIs(e.oldVal, RGBNum.RED)
+    self.assertEqual(str(e), repr(e))

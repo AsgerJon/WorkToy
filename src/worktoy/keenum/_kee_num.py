@@ -85,10 +85,7 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     """This reimplementation of '__set_name__' is necessary to prevent the
     '__setattr__' method above from raising when a class wants an
     enumeration defined in its namespace. """
-    object.__setattr__(self, '__frozen_state__', False)
-    if issubclass(owner, type(self)):
-      Object.__set_name__(self, owner, name)
-    object.__setattr__(self, '__frozen_state__', True)
+    pass
 
   def __get__(self, instance: Any, owner: type) -> KeeNum:
     """Implementation of '__get__' is necessary for the same reason as
@@ -101,7 +98,7 @@ class KeeNum(Object, metaclass=KeeMeta, ):
 
   def __delete__(self, instance: Any, **kwargs) -> Never:
     """Ensures 'ProtectedError' is raised instead of 'KeeWriteOnceError'."""
-    raise ProtectedError(instance, self, )
+    raise ProtectedError(instance, self, self)
 
   def __int__(self) -> int:
     """Return the index of the member."""
