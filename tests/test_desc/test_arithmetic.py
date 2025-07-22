@@ -9,7 +9,9 @@ from __future__ import annotations
 from random import random
 from typing import TYPE_CHECKING
 
+from worktoy.dispatch import TypeSig
 from . import DescTest
+from tests.test_dispatch import Comflex, ComflexMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -26,6 +28,7 @@ class TestArithmetic(DescTest):
     from . import ComplexLabel, ComplexAlias
     from tests.test_dispatch import ComplexNumber, ComplexSubclass
     from tests.test_dispatch import ComplexMeta, ComplexMetaSub
+    from tests.test_dispatch import Comflex, ComflexMeta
     self.classes = [
         ComplexBox,
         ComplexFields,
@@ -36,6 +39,8 @@ class TestArithmetic(DescTest):
         ComplexSubclass,
         ComplexMeta,
         ComplexMetaSub,
+        Comflex,
+        ComflexMeta
     ]
     self.posArgs = dict()
     n = 1  # Number of samples in each quadrant. Keep at 1 when developing
@@ -216,3 +221,32 @@ class TestArithmetic(DescTest):
       c = complex(z)
       self.assertAlmostEqual(c.real, 69.)
       self.assertAlmostEqual(c.imag, 420.)
+
+  def test_comflex(self, ) -> None:
+    """
+    More coverage gymnastics
+    """
+    z = 69 + 420j
+    x = 1337.
+    for Z in (Comflex, ComflexMeta):
+      z1 = Comflex(x, z)
+      z2 = Comflex(z, x)
+      self.assertAlmostEqual(z1.RE, x + z.real)
+      self.assertAlmostEqual(z1.IM, z.imag)
+      self.assertAlmostEqual(z2.RE, x + z.real)
+      self.assertAlmostEqual(z2.IM, z.imag)
+
+  def test_fallback(self) -> None:
+    for Z in (Comflex, ComflexMeta):
+      gym = Z.__init__._getSigFuncMap()[TypeSig(float, complex)]
+      breh = Z(0j)
+      gym(breh, 'never', 'gonna', 'give', 'you', 'up', 69., 420 + 1337j)
+      self.assertEqual(breh.RE, 69. + 420.)
+      self.assertEqual(breh.IM, 1337.)
+
+  def test_flex(self) -> None:
+    """Test the ComflexMeta constructor"""
+
+    z = ComflexMeta(69 + 420j, 1337.)
+    self.assertAlmostEqual(z.RE, 69. + 1337.)
+    self.assertAlmostEqual(z.IM, 420.)

@@ -11,6 +11,8 @@ from ._complex_number import ComplexNumber
 from ._complex_subclass import ComplexSubclass
 from ._complex_meta import ComplexMeta
 from ._complex_meta_sub import ComplexMetaSub, SusComplex
+from ._comflex import Comflex
+from ._comflex_meta import ComflexMeta
 
 __all__ = [
     'DispatcherTest',
@@ -21,4 +23,6 @@ __all__ = [
     'ComplexMeta',
     'ComplexMetaSub',
     'SusComplex',
+    'Comflex',
+    'ComflexMeta',
 ]

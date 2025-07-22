@@ -1,5 +1,6 @@
 """
-ComplexNumber provides testing of the inline function overloader.
+ComFlex provides a poorly named complex number implementation featuring
+use of the 'flex' decorator allowing flexible overloading.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
@@ -16,9 +17,10 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Iterator
 
 
-class ComplexNumber:
+class Comflex:
   """
-  ComplexNumber provides testing of the inline function overloader.
+  ComFlex provides a poorly named complex number implementation featuring
+  use of the 'flex' decorator allowing flexible overloading.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -162,22 +164,32 @@ class ComplexNumber:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @__init__.overload(float, float)
-  def __init__(self, RE: float, IM: float) -> None:
-    self.RE = RE
-    self.IM = IM
+  def __init__(self, re: float, im: float) -> None:
+    self.RE = re
+    self.IM = im
 
-  @__init__.overload(complex)
-  def __init__(self, z: complex) -> None:
-    self.__init__(z.real, z.imag)
+  @__init__.flex(float, complex)
+  def __init__(self, *args, ) -> None:
+    z, x = None, None
+    for arg in args:
+      if isinstance(arg, complex):
+        z = arg
+      elif isinstance(arg, float):
+        x = arg
+    self.RE = x + z.real
+    self.IM = z.imag
 
   @__init__.overload(THIS)
   def __init__(self, other: Self) -> None:
-    self.__init__(other.RE, other.IM)
+    self.RE = other.RE
+    self.IM = other.IM
 
-  @__init__.overload(float)
-  def __init__(self, RE: float) -> None:
-    self.__init__(RE, 0.0)
+  @__init__.overload(int, int)
+  def __init__(self, re: int, im: int) -> None:
+    self.RE = float(re)
+    self.IM = float(im)
 
-  @__init__.overload()
-  def __init__(self) -> None:
-    self.__init__(0.0, 0.0)
+  @__init__.overload(complex)
+  def __init__(self, z: complex) -> None:
+    self.RE = float(z.real)
+    self.IM = float(z.imag)

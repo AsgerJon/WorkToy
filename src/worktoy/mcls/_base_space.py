@@ -39,7 +39,8 @@ class BaseSpace(AbstractNamespace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __overload_map__ = None
+  __overload_map__ = dict()
+  __fallback_map__ = dict()
 
   #  Public Variables
   loadSpaceHook = LoadSpaceHook()
@@ -52,10 +53,14 @@ class BaseSpace(AbstractNamespace):
     AbstractNamespace.__init__(self, mcls, name, bases, **kw)
     self.__overload_map__ = dict()
     for space in self.getMRONamespaces():
-      for name, sigFunc in getattr(space, '__overload_map__', {}).items():
+      for name, sigFunc in getattr(space, '__overload_map__', ).items():
         self.__overload_map__[name] = dict()
         for sig, func in sigFunc.items():
           self.__overload_map__[name][sig] = func
+      for name, func in getattr(space, '__fallback_map__', ).items():
+        existing = maybe(self.__fallback_map__, dict())
+        existing[name] = func
+        self.__fallback_map__ = existing
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -70,6 +75,20 @@ class BaseSpace(AbstractNamespace):
     if name not in self.__overload_map__:
       self.__overload_map__[name] = dict()
     self.__overload_map__[name][sig] = func
+
+  def getFallbacks(self) -> dict[str, Callable]:
+    """
+    Get the fallback functions for the overloads.
+    """
+    return maybe(self.__fallback_map__, dict())
+
+  def addFallback(self, key: str, func: Callable) -> None:
+    """
+    Set a fallback function for the given key in the overload map.
+    """
+    existing = maybe(self.__fallback_map__, dict())
+    existing[key] = func
+    self.__fallback_map__ = existing
 
   def getOverloads(self, ) -> OverloadMap:
     return maybe(self.__overload_map__, {})

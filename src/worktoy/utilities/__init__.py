@@ -6,6 +6,7 @@ across the 'worktoy' library.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._perm import perm
 from ._slice_len import sliceLen
 from ._type_cast import typeCast
 from ._class_body_template import ClassBodyTemplate
@@ -21,6 +22,7 @@ from ._resolve_mro import resolveMRO
 from ._word_wrap import wordWrap
 
 __all__ = [
+    'perm',
     'sliceLen',
     'typeCast',
     'ClassBodyTemplate',

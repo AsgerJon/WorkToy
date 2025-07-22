@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.dispatch import TypeSig, overload
 from . import DescLoad, OverloadTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -98,3 +99,20 @@ class TestDescLoad(OverloadTest):
     descSample2 = DescLoad(1, 2, 3, 4, 5, 6)
     self.assertNotEqual(descSample, descSample2)
     self.assertEqual(str(descSample2), repr(descSample2))
+
+  def test_overload(self) -> None:
+    """Tests the 'Overload' class. """
+
+    def func() -> None:
+      """A sample function for testing."""
+
+    sig = TypeSig(int, int)
+
+    load = overload(int, int, )(func, )
+    self.assertEqual(load.__name__, func.__name__)
+    for s, f in load:
+      self.assertEqual(s, sig)
+      self.assertIs(f, func)
+
+    with self.assertRaises(AttributeError):
+      _ = load.__trolololo__

@@ -11,7 +11,7 @@ from types import MethodType as Meth
 from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..utilities import maybe, typeCast
+from ..utilities import maybe, typeCast, perm
 from ..waitaminute import TypeException, VariableNotNone
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..dispatch import TypeSig
@@ -74,7 +74,7 @@ class Dispatcher(Object):
       self.__sig_funcs__ = [*existing, (sig, func,)]
     return func
 
-  def _setFallbackFunction(self, func: Method) -> Method:
+  def setFallbackFunction(self, func: Method) -> Method:
     if not callable(func):
       raise TypeException('__fallback_func__', func, Func, Meth)
     if self.__fallback_func__ is not None:
@@ -182,8 +182,21 @@ class Dispatcher(Object):
     return decorator
 
   def fallback(self, func: Method) -> Decorator:
-    self._setFallbackFunction(func)
+    self.setFallbackFunction(func)
     return self
+
+  def flex(self, *types: type, ) -> Decorator:
+    """
+    Decorator to register a function that can handle any type signature.
+    This function will be called if no other signature matches.
+    """
+
+    def decorator(func: Method) -> Self:
+      for p in perm(*types, ):
+        self.addSigFunc(TypeSig(*p), func)
+      return self
+
+    return decorator
 
   def swapAllTHIS(self, thisType: type) -> None:
     """

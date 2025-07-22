@@ -69,7 +69,7 @@ class TestDispatchUmbrella(DispatcherTest):
     dispatcher = Dispatcher()
     self.assertIsNone(dispatcher._getFallbackFunction())
     with self.assertRaises(TypeException) as context:
-      dispatcher._setFallbackFunction('breh')
+      dispatcher.setFallbackFunction('breh')
     e = context.exception
     self.assertEqual(set(e.expectedTypes), {Func, Meth})
     self.assertEqual(e.varName, '__fallback_func__')
@@ -79,10 +79,10 @@ class TestDispatchUmbrella(DispatcherTest):
     def breh() -> None:
       """breh"""
 
-    dispatcher._setFallbackFunction(breh)
+    dispatcher.setFallbackFunction(breh)
 
     with self.assertRaises(VariableNotNone) as context:
-      dispatcher._setFallbackFunction(breh)
+      dispatcher.setFallbackFunction(breh)
     e = context.exception
     self.assertEqual(e.name, '__fallback_func__')
     self.assertIs(e.value, breh)

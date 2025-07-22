@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.dispatch import Overload, Dispatcher
+from worktoy.dispatch import overload, Dispatcher
 from worktoy.mcls.space_hooks import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -24,14 +24,13 @@ class LoadSpaceHook(AbstractSpaceHook):
   """
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    if not isinstance(val, Overload):
+    if not isinstance(val, overload):
       return False
-    sigs = [val.sig]
-    while isinstance(val.func, Overload):
-      val = val.func
-      sigs.append(val.sig)
-    for sig in sigs:
-      self.space.addOverload(key, sig, val.func)
+    if val.isFallback():
+      self.space.addFallback(key, val.getFallback())
+      return True
+    for sig, func in val:
+      self.space.addOverload(key, sig, func)
     return True
 
   def postCompilePhase(self, compiledSpace) -> dict:
@@ -40,5 +39,8 @@ class LoadSpaceHook(AbstractSpaceHook):
       dispatcher = Dispatcher()
       for sig, func in sigFunc.items():
         dispatcher.addSigFunc(sig, func)
+      fallback = self.space.getFallbacks().get(name, None)
+      if fallback is not None:
+        dispatcher.setFallbackFunction(fallback)
       compiledSpace[name] = dispatcher
     return compiledSpace

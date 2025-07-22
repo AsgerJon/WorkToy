@@ -6,7 +6,7 @@ TestDispatcher provides tests for the 'TypeSig' class from the
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.dispatch import TypeSig, Dispatcher
+from worktoy.dispatch import TypeSig, Dispatcher, overload
 from worktoy.utilities import stringList, textFmt
 from . import DispatcherTest
 
@@ -130,3 +130,16 @@ class TestDispatcher(DispatcherTest):
 
     self.assertEqual(Parent().foo('breh'), 'fallback')
     self.assertEqual(Child().foo(69, 420, 1337), 'Child(69, 420, 1337)')
+
+  def test_overload_call(self, ) -> None:
+    """Tests that 'overload' created intermediate objects correctly raises
+    TypeError when called."""
+
+    def func() -> None:
+      """Placeholder function."""
+
+    sig = TypeSig(int, int)
+    load = overload(sig, func)
+
+    with self.assertRaises(TypeError):
+      _ = load(69, 420)  # NOQA, it's okay pycharm, 'unreachable' i kno.
