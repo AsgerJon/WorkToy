@@ -10,10 +10,11 @@ from typing import TYPE_CHECKING
 from . import KeeMeta, Kee
 from ..core import Object
 from ..desc import Field
+from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.keenum import KeeWriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Never
 
 
 class KeeNum(Object, metaclass=KeeMeta, ):
@@ -79,6 +80,28 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     if object.__getattribute__(self, '__frozen_state__'):
       raise KeeWriteOnceError(self, name)
     return object.__setattr__(self, name, value)
+
+  def __set_name__(self, owner: type, name: str) -> None:
+    """This reimplementation of '__set_name__' is necessary to prevent the
+    '__setattr__' method above from raising when a class wants an
+    enumeration defined in its namespace. """
+    object.__setattr__(self, '__frozen_state__', False)
+    if issubclass(owner, type(self)):
+      Object.__set_name__(self, owner, name)
+    object.__setattr__(self, '__frozen_state__', True)
+
+  def __get__(self, instance: Any, owner: type) -> KeeNum:
+    """Implementation of '__get__' is necessary for the same reason as
+    '__set_name__'. """
+    return self
+
+  def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
+    """Ensures 'ReadOnlyError' is raised instead of 'KeeWriteOnceError'."""
+    raise ReadOnlyError(instance, self, value)
+
+  def __delete__(self, instance: Any, **kwargs) -> Never:
+    """Ensures 'ProtectedError' is raised instead of 'KeeWriteOnceError'."""
+    raise ProtectedError(instance, self, )
 
   def __int__(self) -> int:
     """Return the index of the member."""

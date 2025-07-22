@@ -12,7 +12,7 @@ from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.waitaminute.keenum import KeeNameError, KeeIndexError, \
   KeeMemberError, KeeDuplicate, KeeTypeException, KeeCaseException, \
   KeeWriteOnceError
-from . import KeeTest, RootRGB, RGB
+from . import KeeTest, RootRGB, RGB, BrushTest
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -215,3 +215,9 @@ class TestNum(KeeTest):
     self.assertEqual(e.member, Breh.FOO)
     self.assertEqual(e.attribute, 'lmao')
     self.assertEqual(str(e), repr(e))
+
+  def test_class_variable_num(self) -> None:
+    """Test that the class variable 'num' is set correctly."""
+    brushTest = BrushTest()
+    self.assertIsInstance(brushTest, BrushTest)
+    print(brushTest.color)
