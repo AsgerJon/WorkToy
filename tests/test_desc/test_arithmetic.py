@@ -43,7 +43,7 @@ class TestArithmetic(DescTest):
       ComflexMeta
     ]
     self.posArgs = dict()
-    n = 1  # Number of samples in each quadrant. Keep at 1 when developing
+    n = 8  # Number of samples in each quadrant. Keep at 1 when developing
     for cls in self.classes:
       self.posArgs[cls] = []
       for _ in range(n):
