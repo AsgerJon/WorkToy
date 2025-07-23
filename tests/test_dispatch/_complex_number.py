@@ -181,3 +181,7 @@ class ComplexNumber:
   @__init__.overload()
   def __init__(self) -> None:
     self.__init__(0.0, 0.0)
+
+  @__init__.finalize
+  def __init__(self, *args, **kwargs) -> None:
+    pass

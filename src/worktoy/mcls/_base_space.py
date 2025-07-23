@@ -41,6 +41,7 @@ class BaseSpace(AbstractNamespace):
   #  Private Variables
   __overload_map__ = dict()
   __fallback_map__ = dict()
+  __finalizer_map__ = dict()
 
   #  Public Variables
   loadSpaceHook = LoadSpaceHook()
@@ -61,6 +62,10 @@ class BaseSpace(AbstractNamespace):
         existing = maybe(self.__fallback_map__, dict())
         existing[name] = func
         self.__fallback_map__ = existing
+      for name, func in getattr(space, '__finalizer_map__', ).items():
+        existing = maybe(self.__finalizer_map__, dict())
+        existing[name] = func
+        self.__finalizer_map__ = existing
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -76,11 +81,8 @@ class BaseSpace(AbstractNamespace):
       self.__overload_map__[name] = dict()
     self.__overload_map__[name][sig] = func
 
-  def getFallbacks(self) -> dict[str, Callable]:
-    """
-    Get the fallback functions for the overloads.
-    """
-    return maybe(self.__fallback_map__, dict())
+  def getOverloads(self, ) -> OverloadMap:
+    return maybe(self.__overload_map__, {})
 
   def addFallback(self, key: str, func: Callable) -> None:
     """
@@ -90,5 +92,22 @@ class BaseSpace(AbstractNamespace):
     existing[key] = func
     self.__fallback_map__ = existing
 
-  def getOverloads(self, ) -> OverloadMap:
-    return maybe(self.__overload_map__, {})
+  def getFallbacks(self) -> dict[str, Callable]:
+    """
+    Get the fallback functions for the overloads.
+    """
+    return maybe(self.__fallback_map__, dict())
+
+  def addFinalizer(self, key: str, func: Callable) -> None:
+    """
+    Add a finalize function for the given key in the overload map.
+    """
+    existing = maybe(self.__finalizer_map__, dict())
+    existing[key] = func
+    self.__finalizer_map__ = existing
+
+  def getFinalizers(self, ) -> dict[str, Callable]:
+    """
+    Get the finalize functions for the overloads.
+    """
+    return maybe(self.__finalizer_map__, dict())

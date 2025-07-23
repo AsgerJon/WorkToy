@@ -37,6 +37,7 @@ class overload:  # NOQA
   __next_func__ = None
   __latest_func__ = None
   __fallback_func__ = None
+  __finalizer_func__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -58,6 +59,14 @@ class overload:  # NOQA
     """Get the fallback function for the overload."""
     return self.__fallback_func__
 
+  def isFinalizer(self) -> bool:
+    """Check if the current overload is a finalizer function."""
+    return False if self.__finalizer_func__ is None else True
+
+  def getFinalizer(self, ) -> Method:
+    """Get the finalizer function for the overload."""
+    return self.__finalizer_func__
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -71,10 +80,6 @@ class overload:  # NOQA
   def _extendLatest(self, sig: TypeSig) -> None:
     """Extend the latest function with a new signature."""
     self._addSigFunc(sig, self._getLatestFunc())
-
-  def _setFallbackFunc(self, func: Method) -> None:
-    """Set the fallback function for the overload."""
-    self.__fallback_func__ = func
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -117,6 +122,14 @@ class overload:  # NOQA
     overload."""
     self = cls(_root=True)
     self.__fallback_func__ = func
+    return self
+
+  @classmethod
+  def finalize(cls, func: Method) -> Self:
+    """Create a decorator that sets the finalizer function for the
+    overload."""
+    self = cls(_root=True)
+    self.__finalizer_func__ = func
     return self
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -41,6 +41,7 @@ class Dispatcher(Object):
   __fallback_func__ = None
   __field_name__ = None
   __field_owner__ = None
+  __finalizer_func__ = None
 
   #  Public Variables
 
@@ -58,6 +59,12 @@ class Dispatcher(Object):
 
   def _getFallbackFunction(self) -> Optional[Method]:
     return self.__fallback_func__
+
+  def _getFinalizerFunction(self) -> Optional[Method]:
+    """
+    Get the finalizer function if it exists.
+    """
+    return self.__finalizer_func__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -82,6 +89,18 @@ class Dispatcher(Object):
     self.__fallback_func__ = func
     return func
 
+  def setFinalizerFunction(self, func: Method) -> Method:
+    """
+    Set the finalizer function that will be called when the dispatcher is
+    deleted or finalized.
+    """
+    if not callable(func):
+      raise TypeException('__finalizer_func__', func, Func, Meth)
+    if self.__finalizer_func__ is not None:
+      raise VariableNotNone('__finalizer_func__', self.__finalizer_func__)
+    self.__finalizer_func__ = func
+    return func
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -98,9 +117,13 @@ class Dispatcher(Object):
     def dispatch(*args, **kwargs) -> Any:
       argSig = TypeSig.fromArgs(*args, )
       func = sigFuncMap.get(argSig, None)
+      finalizer = self._getFinalizerFunction()
       #  FASTEST
       if func is not None:
-        return func(instance, *args, **kwargs)
+        value = func(instance, *args, **kwargs)
+        if finalizer is not None:
+          return maybe(finalizer(instance, value), value)
+        return value
       #  FAST
       for sig, func in sigFuncMap.items():
         if len(argSig) != len(sig):
@@ -109,7 +132,10 @@ class Dispatcher(Object):
           if not isinstance(arg, type_):
             break
         else:
-          return func(instance, *args, **kwargs)
+          value = func(instance, *args, **kwargs)
+          if finalizer is not None:
+            return maybe(finalizer(instance, value), value)
+          return value
       #  SLOW
       for sig, func in sigFuncMap.items():
         castArgs = []
@@ -126,11 +152,17 @@ class Dispatcher(Object):
           else:
             castArgs.append(castedArg)
         else:
-          return func(instance, *castArgs, **kwargs)
+          value = func(instance, *castArgs, **kwargs)
+          if finalizer is not None:
+            return maybe(finalizer(instance, value), value)
+          return value
       #  FALLBACK
       fallback = self._getFallbackFunction()
       if callable(fallback):
-        return fallback(instance, *args, **kwargs)
+        value = fallback(instance, *args, **kwargs)
+        if finalizer is not None:
+          return maybe(finalizer(instance, value), value)
+        return value
       raise DispatchException(self, args, )
 
     return dispatch
@@ -180,6 +212,10 @@ class Dispatcher(Object):
       return self
 
     return decorator
+
+  def finalize(self, func: Method) -> Decorator:
+    self.setFinalizerFunction(func)
+    return self
 
   def fallback(self, func: Method) -> Decorator:
     self.setFallbackFunction(func)

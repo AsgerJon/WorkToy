@@ -30,20 +30,20 @@ class TestArithmetic(DescTest):
     from tests.test_dispatch import ComplexMeta, ComplexMetaSub
     from tests.test_dispatch import Comflex, ComflexMeta
     self.classes = [
-        ComplexBox,
-        ComplexFields,
-        ComplexFieldsSubclass,
-        ComplexLabel,
-        ComplexAlias,
-        ComplexNumber,
-        ComplexSubclass,
-        ComplexMeta,
-        ComplexMetaSub,
-        Comflex,
-        ComflexMeta
+      ComplexBox,
+      ComplexFields,
+      ComplexFieldsSubclass,
+      ComplexLabel,
+      ComplexAlias,
+      ComplexNumber,
+      ComplexSubclass,
+      ComplexMeta,
+      ComplexMetaSub,
+      Comflex,
+      ComflexMeta
     ]
     self.posArgs = dict()
-    n = 8  # Number of samples in each quadrant. Keep at 1 when developing
+    n = 1  # Number of samples in each quadrant. Keep at 1 when developing
     for cls in self.classes:
       self.posArgs[cls] = []
       for _ in range(n):

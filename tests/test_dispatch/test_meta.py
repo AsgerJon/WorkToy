@@ -69,9 +69,6 @@ class TestMeta(DispatcherTest):
     def breh() -> None:
       """Placeholder function."""
 
-    foo._setFallbackFunc(breh)
-    self.assertEqual(foo.__name__, 'breh')
-
     bar = overload(_root=True)
     with self.assertRaises(AttributeError):
       _ = bar.__name__
