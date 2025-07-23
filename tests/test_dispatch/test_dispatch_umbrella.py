@@ -10,6 +10,7 @@ from types import FunctionType as Func
 from types import MethodType as Meth
 from typing import TYPE_CHECKING
 
+from tests import WYD
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.dispatch import Dispatcher, TypeSig, overload
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
@@ -197,3 +198,59 @@ class TestDispatchUmbrella(DispatcherTest):
     self.assertIn('finalized', foo.__inner_value__)
     self.assertEqual(foo.bar('never', 'gonna', 'give', 'you', 'up'), None)
     self.assertIn('finalized', foo.__inner_value__)
+
+  def test_bad_finalizer(self) -> None:
+    """Testing errors raised in finalizers"""
+
+    class Foo:
+      bar = Dispatcher()
+
+      __inner_value__ = None
+
+      @bar.overload(int, int)
+      def bar(self, x: int, y: int) -> None:
+        """Overloaded method for two integers."""
+        self.__inner_value__ = str(x + y)
+
+      @bar.overload(int)
+      def bar(self, x: int) -> None:
+        """Overloaded method for one integer."""
+        self.__inner_value__ = str(x)
+
+      @bar.overload(str)
+      def bar(self, cmd: str) -> None:
+        """Overloaded method for a string."""
+        if cmd == 'raise':
+          raise ValueError('This is a test error from the bar method.')
+        self.__inner_value__ = cmd
+
+      @bar.fallback
+      def bar(self, *args, **kwargs) -> None:
+        """Fallback method for unsupported types."""
+        self.__inner_value__ = '%s | %s' % (str(args, ), str(kwargs, ))
+
+      @bar.finalize
+      def bar(self, *args, **kwargs) -> None:
+        """Finalizer method for the bar method."""
+        if 'finalRaise' in args or 'raise' in args:
+          raise WYD
+        self.__inner_value__ = 'finalized: %s' % (self.__inner_value__,)
+
+    foo = Foo()
+    self.assertEqual(foo.bar(69, 420), None)
+    self.assertEqual(foo.__inner_value__, 'finalized: 489')
+    self.assertEqual(foo.bar(69), None)
+    self.assertEqual(foo.__inner_value__, 'finalized: 69')
+    foo.bar(69, 420, 1337, lmao=True)
+    expected = """finalized: (69, 420, 1337) | {'lmao': True}"""
+    self.assertEqual(foo.__inner_value__, expected)
+    self.assertEqual(foo.bar(True, False), None)
+    self.assertIn('finalized', foo.__inner_value__)
+    self.assertEqual(foo.bar('never', 'gonna', 'give', 'you', 'up'), None)
+    self.assertIn('finalized', foo.__inner_value__)
+
+    with self.assertRaises(WYD):
+      foo.bar('finalRaise')
+
+    with self.assertRaises(ValueError):
+      foo.bar('raise')
