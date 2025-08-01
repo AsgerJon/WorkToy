@@ -29,6 +29,9 @@ class LoadSpaceHook(AbstractSpaceHook):
     if val.isFallback():
       self.space.addFallback(key, val.getFallback())
       return True
+    if val.isFinalizer():
+      self.space.addFinalizer(key, val.getFinalizer())
+      return True
     for sig, func in val:
       self.space.addOverload(key, sig, func)
     return True
@@ -42,5 +45,8 @@ class LoadSpaceHook(AbstractSpaceHook):
       fallback = self.space.getFallbacks().get(name, None)
       if fallback is not None:
         dispatcher.setFallbackFunction(fallback)
+      finalizer = self.space.getFinalizers().get(name, None)
+      if finalizer is not None:
+        dispatcher.setFinalizerFunction(finalizer)
       compiledSpace[name] = dispatcher
     return compiledSpace

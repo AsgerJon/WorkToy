@@ -6,6 +6,7 @@ objects and thus provides the core overloading functionality.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+import sys
 from types import FunctionType as Func
 from types import MethodType as Meth
 from typing import TYPE_CHECKING
@@ -41,6 +42,7 @@ class Dispatcher(Object):
   __fallback_func__ = None
   __field_name__ = None
   __field_owner__ = None
+  __finalizer_func__ = None
 
   #  Public Variables
 
@@ -58,6 +60,12 @@ class Dispatcher(Object):
 
   def _getFallbackFunction(self) -> Optional[Method]:
     return self.__fallback_func__
+
+  def _getFinalizerFunction(self) -> Optional[Method]:
+    """
+    Get the finalizer function if it exists.
+    """
+    return self.__finalizer_func__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -82,6 +90,18 @@ class Dispatcher(Object):
     self.__fallback_func__ = func
     return func
 
+  def setFinalizerFunction(self, func: Method) -> Method:
+    """
+    Set the finalizer function that will be called when the dispatcher is
+    deleted or finalized.
+    """
+    if not callable(func):
+      raise TypeException('__finalizer_func__', func, Func, Meth)
+    if self.__finalizer_func__ is not None:
+      raise VariableNotNone('__finalizer_func__', self.__finalizer_func__)
+    self.__finalizer_func__ = func
+    return func
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -91,47 +111,58 @@ class Dispatcher(Object):
     Descriptor protocol method to return a decorator that can be used to
     register functions with specific type signatures.
     """
+    finalizer = self._getFinalizerFunction()
     if instance is None:
       return self
     sigFuncMap = self._getSigFuncMap()
 
     def dispatch(*args, **kwargs) -> Any:
-      argSig = TypeSig.fromArgs(*args, )
-      func = sigFuncMap.get(argSig, None)
-      #  FASTEST
-      if func is not None:
-        return func(instance, *args, **kwargs)
-      #  FAST
-      for sig, func in sigFuncMap.items():
-        if len(argSig) != len(sig):
-          continue
-        for arg, type_ in zip(args, sig):
-          if not isinstance(arg, type_):
-            break
-        else:
+      try:
+        argSig = TypeSig.fromArgs(*args, )
+        func = sigFuncMap.get(argSig, None)
+        #  FASTEST
+        if func is not None:
           return func(instance, *args, **kwargs)
-      #  SLOW
-      for sig, func in sigFuncMap.items():
-        castArgs = []
-        if len(argSig) != len(sig):
-          continue
-        for arg, type_ in zip(args, sig):
-          if isinstance(arg, type_):
-            castArgs.append(arg)
+        #  FAST
+        for sig, func in sigFuncMap.items():
+          if len(argSig) != len(sig):
             continue
-          try:
-            castedArg = typeCast(type_, arg)
-          except (ValueError, TypeError):
-            break
+          for arg, type_ in zip(args, sig):
+            if not isinstance(arg, type_):
+              break
           else:
-            castArgs.append(castedArg)
-        else:
-          return func(instance, *castArgs, **kwargs)
-      #  FALLBACK
-      fallback = self._getFallbackFunction()
-      if callable(fallback):
-        return fallback(instance, *args, **kwargs)
-      raise DispatchException(self, args, )
+            return func(instance, *args, **kwargs)
+        #  SLOW
+        for sig, func in sigFuncMap.items():
+          castArgs = []
+          if len(argSig) != len(sig):
+            continue
+          for arg, type_ in zip(args, sig):
+            if isinstance(arg, type_):
+              castArgs.append(arg)
+              continue
+            try:
+              castedArg = typeCast(type_, arg)
+            except (ValueError, TypeError):
+              break
+            else:
+              castArgs.append(castedArg)
+          else:
+            return func(instance, *castArgs, **kwargs)
+        #  FALLBACK
+        fallback = self._getFallbackFunction()
+        if callable(fallback):
+          return fallback(instance, *args, **kwargs)
+        raise DispatchException(self, args, )
+      finally:
+        _, exception, __ = sys.exc_info()
+        if callable(finalizer):
+          try:
+            finalizer(instance, *args, **kwargs)
+          except Exception as finalException:
+            if exception is None:
+              raise finalException
+            raise exception from finalException
 
     return dispatch
 
@@ -180,6 +211,10 @@ class Dispatcher(Object):
       return self
 
     return decorator
+
+  def finalize(self, func: Method) -> Decorator:
+    self.setFinalizerFunction(func)
+    return self
 
   def fallback(self, func: Method) -> Decorator:
     self.setFallbackFunction(func)

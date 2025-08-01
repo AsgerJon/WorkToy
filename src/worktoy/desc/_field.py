@@ -33,7 +33,7 @@ class Field(Object):
   @SET - Decorate any number of methods as setters. Every such method runs
   in response to __set__
 
-  @DEL - Decorate any number of methods as deleters. Optionally, implement
+  @DELETE - Decorate any number of methods as deleters. Optionally, implement
   by setting the value to the 'DELETED' sentinel object.
   """
 

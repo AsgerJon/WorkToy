@@ -17,7 +17,7 @@ from worktoy.utilities.mathematics import exp, log
 from . import ComplexBox
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any, Self, Iterator
 
 
 class ComplexAlias(ComplexBox):

@@ -18,8 +18,8 @@ from ._attri_box import AttriBox
 from ._label_box import LabelBox
 
 __all__ = [
-    'Alias',
-    'Field',
-    'AttriBox',
-    'LabelBox',
+  'Alias',
+  'Field',
+  'AttriBox',
+  'LabelBox',
 ]

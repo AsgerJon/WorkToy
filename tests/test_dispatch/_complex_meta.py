@@ -191,3 +191,12 @@ class ComplexMeta(metaclass=BaseMeta):
   @overload()
   def __init__(self) -> None:
     self.__init__(0.0, 0.0)
+
+  @overload.finalize
+  def __init__(self, *args, **kwargs) -> None:
+    """
+    Finalize the constructor for the overload decorator.
+    This is a no-op, as the actual initialization is handled by the
+    other overloads.
+    """
+    pass
