@@ -11,7 +11,7 @@ import re
 from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe
-from . import ContextInstance, MetaType
+from . import ContextInstance, MetaType, ContextOwner
 from .sentinels import THIS, DESC, OWNER, DELETED
 from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.desc import AccessError
@@ -76,6 +76,7 @@ class Object(metaclass=MetaType):
   #  Public Variables
   directory = Directory()
   instance = ContextInstance()
+  owner = ContextOwner()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -131,6 +132,13 @@ class Object(metaclass=MetaType):
     """Returns the contextual instance or raises 'WithoutException'"""
     if self.hasContext():
       return self.__context_instance__
+    from ..waitaminute.desc import WithoutException
+    raise WithoutException(self)
+
+  def getContextOwner(self) -> type:
+    """Returns the contextual owner or raises 'WithoutException'"""
+    if self.hasContext():
+      return self.__context_owner__
     from ..waitaminute.desc import WithoutException
     raise WithoutException(self)
 

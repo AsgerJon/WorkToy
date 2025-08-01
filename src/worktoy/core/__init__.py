@@ -7,13 +7,14 @@ The 'worktoy.core' module provides the most primitive objects used by the
 from __future__ import annotations
 
 from . import sentinels
-from ._instance import ContextInstance
+from ._instance_owner import ContextInstance, ContextOwner
 from ._meta_type import MetaType
 from ._object import Object
 
 __all__ = [
     'sentinels',
     'ContextInstance',
+    'ContextOwner',
     'MetaType',
     'Object',
 ]

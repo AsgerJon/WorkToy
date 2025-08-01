@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.waitaminute import TypeException
 from . import CoreTest
-from worktoy.core import Object, ContextInstance
+from worktoy.core import Object, ContextInstance, ContextOwner
 from worktoy.core.sentinels import DESC, THIS, OWNER
 from worktoy.mcls import BaseObject
 from worktoy.utilities import Directory
@@ -28,9 +28,15 @@ class Foo(BaseObject):
     return getattr(self.instance, pvtName, 69)
 
 
+class Owned(BaseObject):
+  def __instance_get__(self, *args, **kwargs) -> Any:
+    return self.owner
+
+
 class Bar(BaseObject):
   foo1 = Foo(THIS, OWNER, DESC)
   foo2 = Foo(tom=THIS, dick=OWNER, harry=DESC)
+  owned = Owned()
 
 
 class TestObjectUmbrella(CoreTest):
@@ -60,6 +66,16 @@ class TestObjectUmbrella(CoreTest):
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertIs(e.desc, Bar.foo1)
+    with self.assertRaises(WithoutException) as context:
+      _ = Bar.foo1.owner
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertIs(e.desc, Bar.foo1)
+    with self.assertRaises(WithoutException) as context:
+      _ = Bar.owned.owner
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertIs(e.desc, Bar.owned)
 
   def testBadContext(self) -> None:
     """Tests context manager"""
@@ -73,6 +89,15 @@ class TestObjectUmbrella(CoreTest):
     """Tests context manager"""
     bar = Bar()
     self.assertEqual(bar.foo1, 69)
+    self.assertIs(bar.owned, Bar)
+    self.assertIsInstance(Bar.owned, Owned)
+
+  def testGoodClassContext(self) -> None:
+    """Tests class context manager"""
+    self.assertIsInstance(Bar.foo1, Foo)
+    self.assertIsInstance(Bar.foo2, Foo)
+    self.assertIsInstance(Bar.owned, Owned)
+    self.assertIsInstance(Bar.owner, ContextOwner)
 
   def testClassContextInstance(self) -> None:
     """Tests class context manager with instance"""
