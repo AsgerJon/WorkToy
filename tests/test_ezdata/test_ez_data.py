@@ -27,6 +27,12 @@ class Point3D(Point2D):
   z = 1337
 
 
+class OrderedPoint2D(EZData, order=True):
+  """Point in 2d space with ordering"""
+  x = 69
+  y = 420
+
+
 class TestEZData(EZTest):
   """TestEZData - Test the EZData class."""
 
@@ -100,3 +106,23 @@ class TestEZData(EZTest):
     self.assertNotEqual(self.point2d_0, Point2D(1))
     self.assertEqual(self.point3d_0, Point3D())
     self.assertNotEqual(self.point3d_0, Point3D(1))
+
+  def test_lt(self) -> None:
+    """Test the less than comparison of EZData instances."""
+    lower = OrderedPoint2D(1, 2)
+    alsoLower = OrderedPoint2D(1, 2)
+    almostLower = OrderedPoint2D(1, 3)
+    higher = OrderedPoint2D(2, 3)
+    self.assertTrue(lower < higher)
+    self.assertFalse(higher < lower)
+    self.assertFalse(lower < alsoLower)
+    self.assertFalse(alsoLower < lower)
+    self.assertTrue(lower < almostLower)
+    self.assertFalse(almostLower < lower)
+    #  less or equal:
+    self.assertTrue(lower <= higher)
+    self.assertFalse(higher <= lower)
+    self.assertTrue(lower <= alsoLower)
+    self.assertTrue(alsoLower <= lower)
+    self.assertTrue(lower <= almostLower)
+    self.assertFalse(almostLower <= lower)

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from ._kee_desc import Base, MRO, Members, IsRoot
 from ..mcls import BaseMeta
 from . import KeeSpace as KSpace, Kee
-from ..waitaminute import TypeException
+from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.keenum import KeeNameError, KeeIndexError
 from ..waitaminute.keenum import KeeMemberError, KeeValueError
 
@@ -91,13 +91,18 @@ class KeeMeta(BaseMeta):
     """
     return cls._resolveMember(identifier)
 
-  # def __getattr__(cls, name: str) -> Kee:
-  #   """
-  #   Gets a member of the enumeration by name.
-  #   This method is used to get a member of the enumeration by name.
-  #   """
-  #   return cls._resolveKey(name)
-  #
+  def __getattr__(cls, name: str) -> Kee:
+    """
+    Gets a member of the enumeration by name.
+    This method is used to get a member of the enumeration by name.
+    """
+    try:
+      self = cls._resolveKey(name)
+    except KeeNameError as keeNameError:
+      error = attributeErrorFactory(cls, name)
+      raise error from keeNameError
+    else:
+      return self
 
   def __iter__(cls, ) -> Iterator[Self]:
     """
@@ -177,8 +182,13 @@ class KeeMeta(BaseMeta):
         if member is identifier:
           return member
       raise KeeMemberError(cls, identifier)
-    from . import KeeNum
-    raise TypeException('identifier', identifier, int, str, KeeNum)
+    try:
+      member = cls.fromValue(identifier)
+    except KeeValueError:
+      from . import KeeNum
+      raise TypeException('identifier', identifier, int, str, KeeNum)
+    else:
+      return member
 
   def _resolveIndex(cls, index: int) -> Kee:
     """

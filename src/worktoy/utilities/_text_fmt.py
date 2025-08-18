@@ -64,8 +64,8 @@ def textFmt(*args: Any, **kwargs: Any) -> str:
     if isinstance(arg, str):
       if arg:
         words.append(arg)
-      continue
-    words.append(str(arg))
+    else:
+      words.append(str(arg))
   else:
     if not words:
       return ''

@@ -35,7 +35,7 @@ class WorkIOTest(BaseTest):
     else:
       f.write("""This is a temporary file for testing purposes.""")
     finally:
-      try:
+      try:  # pragma: no cover
         f.close()
       except AttributeError:  # pragma: no cover
         pass

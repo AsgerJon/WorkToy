@@ -30,6 +30,20 @@ class Weekday(KeeNum):
   SUNDAY = Kee[str]('Søndag')
 
 
+class Compass(KeeNum):
+  """Compass enumeration."""
+  NULL = Kee[complex](0 + 0j)  # Falsy because of name being 'NULL'
+  ALSO_NULL = Kee[complex](0 + 0j)  # Falsy because of value
+  EAST = Kee[complex](1 + 0j)
+  NORTH = Kee[complex](0 + 1j)
+  WEST = Kee[complex](-1 + 0j)
+  SOUTH = Kee[complex](0 - 1j)
+  NORTHEAST = Kee[complex](1 + 1j)
+  NORTHWEST = Kee[complex](-1 + 1j)
+  SOUTHEAST = Kee[complex](1 - 1j)
+  SOUTHWEST = Kee[complex](-1 - 1j)
+
+
 class TestNum(KeeTest):
   """TestNum provides the basic tests for the KeeNum class."""
 
@@ -242,3 +256,71 @@ class TestNum(KeeTest):
     self.assertIs(e.desc, Foo.colorNum)
     self.assertIs(e.oldVal, RGBNum.RED)
     self.assertEqual(str(e), repr(e))
+
+  def test_getattr(self, ) -> None:
+    """Tests the getattr method."""
+    self.assertIs(Weekday.MONDAY, Weekday.__getattr__('MONDAY'))
+    self.assertIs(Weekday.TUESDAY, Weekday.__getattr__('TUESDAY'))
+    self.assertIs(Weekday.WEDNESDAY, Weekday.__getattr__('WEDNESDAY'))
+    self.assertIs(Weekday.THURSDAY, Weekday.__getattr__('THURSDAY'))
+    self.assertIs(Weekday.FRIDAY, Weekday.__getattr__('FRIDAY'))
+    self.assertIs(Weekday.SATURDAY, Weekday.__getattr__('SATURDAY'))
+    self.assertIs(Weekday.SUNDAY, Weekday.__getattr__('SUNDAY'))
+
+    self.assertIs(Compass.EAST, Compass.__getattr__('EAST'))
+    self.assertIs(Compass.NORTH, Compass.__getattr__('NORTH'))
+    self.assertIs(Compass.WEST, Compass.__getattr__('WEST'))
+    self.assertIs(Compass.SOUTH, Compass.__getattr__('SOUTH'))
+    self.assertIs(Compass.NORTHEAST, Compass.__getattr__('NORTHEAST'))
+    self.assertIs(Compass.NORTHWEST, Compass.__getattr__('NORTHWEST'))
+    self.assertIs(Compass.SOUTHEAST, Compass.__getattr__('SOUTHEAST'))
+    self.assertIs(Compass.SOUTHWEST, Compass.__getattr__('SOUTHWEST'))
+
+  def test_getattr_hard(self, ) -> None:
+    """Tests the case-insensitive getattr method."""
+    self.assertIs(Weekday.MONDAY, Weekday.monday)
+    self.assertIs(Weekday.TUESDAY, Weekday.tuesday)
+    self.assertIs(Weekday.WEDNESDAY, Weekday.wednesday)
+    self.assertIs(Weekday.THURSDAY, Weekday.thursday)
+    self.assertIs(Weekday.FRIDAY, Weekday.friday)
+    self.assertIs(Weekday.SATURDAY, Weekday.saturday)
+    self.assertIs(Weekday.SUNDAY, Weekday.sunday)
+
+    self.assertIs(Compass.EAST, Compass.east)
+    self.assertIs(Compass.NORTH, Compass.north)
+    self.assertIs(Compass.WEST, Compass.west)
+    self.assertIs(Compass.SOUTH, Compass.south)
+    self.assertIs(Compass.NORTHEAST, Compass.northeast)
+    self.assertIs(Compass.NORTHWEST, Compass.northwest)
+    self.assertIs(Compass.SOUTHEAST, Compass.southeast)
+    self.assertIs(Compass.SOUTHWEST, Compass.southwest)
+
+  def test_from_value(self) -> None:
+    """Tests the from_value method."""
+    self.assertIs(Compass.fromValue(1 + 0j), Compass.EAST)
+    self.assertIs(Compass.fromValue(0 + 1j), Compass.NORTH)
+    self.assertIs(Compass.fromValue(-1 + 0j), Compass.WEST)
+    self.assertIs(Compass.fromValue(0 - 1j), Compass.SOUTH)
+    self.assertIs(Compass.fromValue(1 + 1j), Compass.NORTHEAST)
+    self.assertIs(Compass.fromValue(-1 + 1j), Compass.NORTHWEST)
+    self.assertIs(Compass.fromValue(1 - 1j), Compass.SOUTHEAST)
+    self.assertIs(Compass.fromValue(-1 - 1j), Compass.SOUTHWEST)
+
+  def test_from_value_hard(self, ) -> None:
+    """Tests calling the class such that it falls back to 'fromValue'."""
+    self.assertIs(Compass(1 + 0j), Compass.EAST)
+    self.assertIs(Compass(0 + 1j), Compass.NORTH)
+    self.assertIs(Compass(-1 + 0j), Compass.WEST)
+    self.assertIs(Compass(0 - 1j), Compass.SOUTH)
+    self.assertIs(Compass(1 + 1j), Compass.NORTHEAST)
+    self.assertIs(Compass(-1 + 1j), Compass.NORTHWEST)
+    self.assertIs(Compass(1 - 1j), Compass.SOUTHEAST)
+    self.assertIs(Compass(-1 - 1j), Compass.SOUTHWEST)
+
+  def test_bool(self, ) -> None:
+    """Tests the bool method."""
+    for direction in Compass:
+      if direction in [Compass.NULL, Compass.ALSO_NULL]:
+        self.assertFalse(direction)
+      else:
+        self.assertTrue(direction)

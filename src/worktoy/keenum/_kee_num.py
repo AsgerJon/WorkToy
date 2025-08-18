@@ -100,6 +100,15 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     """Ensures 'ProtectedError' is raised instead of 'KeeWriteOnceError'."""
     raise ProtectedError(instance, self, self)
 
+  def __bool__(self, ) -> bool:
+    """
+    Members named 'NULL' are always falsy. Other members reflect the
+    truthiness of their value.
+    """
+    if self.name.lower() == 'null':
+      return False
+    return True if self.value else False
+
   def __int__(self) -> int:
     """Return the index of the member."""
     return self.index

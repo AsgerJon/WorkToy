@@ -45,7 +45,7 @@ class UnorderedEZException(TypeError):
   def _isOrderedStr(self) -> str:
     """When 'isOrdered' is 'False'."""
     infoSpec = """Attempted to sort EZData subclass '%s' which has the 
-    'isOrdered' flag set to 'False'. """
+    'order' class keyword set to 'False'. """
     info = infoSpec % self.className
     from worktoy.utilities import textFmt
     return textFmt(info, )

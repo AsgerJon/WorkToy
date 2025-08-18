@@ -254,9 +254,14 @@ class EZSpaceHook(AbstractSpaceHook):
         raise UnorderedEZException(type(self).__name__)
       if type(self) is not type(other):
         return NotImplemented
-      slot = self.__slots__[0]
-      selfValue, otherValue = getattr(self, slot), getattr(other, slot)
-      return False if selfValue > otherValue else True
+      for slot in getattr(self, '__slots__'):
+        selfVal, otherVal = getattr(self, slot), getattr(other, slot)
+        if selfVal < otherVal:
+          return True
+        elif selfVal > otherVal:
+          return False
+        continue
+      return True
 
     return __le__
 
@@ -289,9 +294,14 @@ class EZSpaceHook(AbstractSpaceHook):
         raise UnorderedEZException(type(self).__name__)
       if type(self) is not type(other):
         return NotImplemented
-      slot = self.__slots__[0]
-      selfValue, otherValue = getattr(self, slot), getattr(other, slot)
-      return False if selfValue < otherValue else True
+      for slot in getattr(self, '__slots__'):
+        selfVal, otherVal = getattr(self, slot), getattr(other, slot)
+        if selfVal > otherVal:
+          return True
+        elif selfVal < otherVal:
+          return False
+        continue
+      return True
 
     return __ge__
 

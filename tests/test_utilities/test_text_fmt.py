@@ -41,6 +41,21 @@ class TestMonoSpace(UtilitiesTest):
     self.assertEqual(textFmt(), '')
     self.assertEqual(textFmt(''), '')
 
+  def test_empty_strings(self) -> None:
+    """
+    Tests multiple arguments to textFmt that include blank lines.
+    """
+    actual = textFmt('foo', str(), 'bar')
+    expected = 'foo bar'
+    for item in ('foo', '', 'bar'):
+      infoSpec = """%4s (%5s) of type: %s"""
+      typeName = type(item).__name__
+      truthiness = 'True' if item else 'False'
+      info = infoSpec % (item, truthiness, typeName)
+      print(info)
+    print(actual)
+    self.assertEqual(expected, actual)
+
   def test_non_str(self) -> None:
     """Tests if textFmt raises a TypeError when given a non-string
     input."""
