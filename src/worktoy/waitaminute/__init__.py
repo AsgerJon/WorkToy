@@ -18,6 +18,7 @@ from ._variable_not_none import VariableNotNone
 from ._unpack_exception import UnpackException
 from ._path_syntax_exception import PathSyntaxException
 from ._subclass_exception import SubclassException
+from ._missing_variable import MissingVariable
 
 ___all__ = [
     'desc',
@@ -32,4 +33,5 @@ ___all__ = [
     'UnpackException',
     'PathSyntaxException',
     'SubclassException',
+    'MissingVariable',
 ]

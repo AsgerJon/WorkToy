@@ -126,3 +126,23 @@ class TestEZData(EZTest):
     self.assertTrue(alsoLower <= lower)
     self.assertTrue(lower <= almostLower)
     self.assertFalse(almostLower <= lower)
+
+  def test_gt(self) -> None:
+    """Test the greater than comparison of EZData instances."""
+    lower = OrderedPoint2D(1, 2)
+    alsoLower = OrderedPoint2D(1, 2)
+    almostLower = OrderedPoint2D(1, 3)
+    higher = OrderedPoint2D(2, 3)
+    self.assertTrue(higher > lower)
+    self.assertFalse(lower > higher)
+    self.assertTrue(higher > alsoLower)
+    self.assertFalse(alsoLower > higher)
+    self.assertTrue(almostLower > lower)
+    self.assertFalse(lower > almostLower)
+    #  greater or equal:
+    self.assertTrue(higher >= lower)
+    self.assertFalse(lower >= higher)
+    self.assertTrue(alsoLower >= lower)
+    self.assertTrue(lower >= alsoLower)
+    self.assertTrue(almostLower >= lower)
+    self.assertFalse(lower >= almostLower)

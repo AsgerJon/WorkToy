@@ -47,13 +47,6 @@ class TestMonoSpace(UtilitiesTest):
     """
     actual = textFmt('foo', str(), 'bar')
     expected = 'foo bar'
-    for item in ('foo', '', 'bar'):
-      infoSpec = """%4s (%5s) of type: %s"""
-      typeName = type(item).__name__
-      truthiness = 'True' if item else 'False'
-      info = infoSpec % (item, truthiness, typeName)
-      print(info)
-    print(actual)
     self.assertEqual(expected, actual)
 
   def test_non_str(self) -> None:
