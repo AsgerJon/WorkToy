@@ -16,9 +16,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class MissingVariable(AttributeError):
-  """MissingVariable is a custom exception class raise to indicate that a
+  """
+  MissingVariable is a custom exception class raise to indicate that a
   variable has not been assigned a value when accessed. Generally indicates
-  that the variable has no fallback value."""
+  that the variable has no fallback value.
+  """
 
   __slots__ = ('name', 'instance', 'type_')
 
