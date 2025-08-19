@@ -23,6 +23,11 @@ class KeeFlags(KeeNum, metaclass=KeeFlagsMeta):
   KeeFlags is a metaclass that dynamically creates instances of KeeFlags
   for each boolean valued entry. It allows for the creation of an
   enumeration consisting of all possible combinations of boolean flags.
+
+  Important Attributes:
+  - flags: A descriptor returning the flags of a particular enumeration
+  that are HIGH.
+
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
