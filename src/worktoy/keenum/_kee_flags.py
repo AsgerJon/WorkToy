@@ -42,12 +42,11 @@ class KeeFlags(KeeNum, metaclass=KeeFlagsMeta):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getValue(self) -> int:
+  def _getValue(self) -> Any:
     """Returns the integer value of the KeeFlags instance. """
-
     included = list(KeeNum._getValue(self))
     if not included:
-      return 0
+      return self.__flag_type__()
     out = included[0].getValue()
     for kee in included:
       out |= kee.getValue()

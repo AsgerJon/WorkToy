@@ -17,6 +17,8 @@ from ..waitaminute.keenum import KeeNameError
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Self, Any
 
+  from . import KeeNum
+
   Bases: TypeAlias = tuple[type, ...]
 
 

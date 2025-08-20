@@ -43,7 +43,6 @@ class KeeSpaceHook(AbstractSpaceHook):
     """Hook for setItem. This is called before the __setitem__ method of
     the namespace object is called. The default implementation does nothing
     and returns False. """
-
     if isinstance(val, Kee):
       self.space.addNum(key, val)
       return True
