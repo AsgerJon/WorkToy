@@ -59,6 +59,6 @@ class TestMissingVariable(WaitAMinuteTest):
       _ = foo.bar
     e = context.exception
     self.assertIs(e.instance, foo)
-    self.assertEqual(e.name, 'bar')
+    self.assertEqual(e.varName, 'bar')
     self.assertIs(e.type_, object)
     self.assertEqual(str(e), repr(e))
