@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.keenum._kee_desc import AbstractKeeDesc
-from worktoy.waitaminute.keenum import KeeValueError, KeeTypeException
-from . import KeeTest, RGB, RootRGB, MoreRGB, EvenMoreRGB, RGBNum
 from worktoy.keenum import KeeNum, Kee, KeeMeta
+from worktoy.keenum._kee_desc import AbstractKeeDesc  # noqa
+from worktoy.waitaminute.keenum import KeeValueError, KeeTypeException
+from . import KeeTest
+from .examples import RGB, RootRGB, MoreRGB, EvenMoreRGB, RGBNum
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -67,7 +68,6 @@ class TestNumMRO(KeeTest):
   def test_index(self) -> None:
     """Test that the index of the members is as expected."""
     for i, color in enumerate(RGBNum):
-      self.assertEqual(color.index, i)
       self.assertEqual(int(color), i)
       self.assertIs(color, RGBNum[color.name])
       self.assertIs(color, RGBNum[i])

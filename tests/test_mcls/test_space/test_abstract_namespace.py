@@ -95,3 +95,37 @@ class TestAbstractNamespace(MCLSTest):
     self.assertEqual(e.itemKey, '__name__')
     self.assertEqual(str(e.errorValue), str(KeyError('__name__')))
     self.assertIsInstance(e.hookFunction, SusSpaceHook)
+
+  def testInconsistentMRO(self, ) -> None:
+    """
+    Tests that the 'AbstractNamespace' raises a 'TypeError' when the MRO
+    is inconsistent.
+    """
+
+    class X:
+      """Leaf base X."""
+      pass
+
+    class Y:
+      """Leaf base Y."""
+      pass
+
+    class A(X, Y):
+      """Demands X before Y."""
+      pass
+
+    class B(Y, X):
+      """Demands Y before X."""
+      pass
+
+    with self.assertRaises(TypeError) as context:
+      _ = AbstractNamespace(type, '_', (A, B))
+    e = context.exception
+    expected = """cannot form a consistent mro"""
+    self.assertIn(expected, str(e))
+
+    #  With _strictMRO=False there should be no error, but '__class_mro__'
+    #  will not be populated
+
+    namespace = AbstractNamespace(type, '_', (A, B), _strictMRO=False)
+    self.assertIsNone(namespace.__class_mro__)

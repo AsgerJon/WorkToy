@@ -278,6 +278,10 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   """
 
   __abstract_metaclass__ = True
+  __class_getattr__ = METACALL
+  __class_setattr__ = METACALL
+  __class_delattr__ = METACALL
+  __class_call__ = METACALL
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Base, **kwargs) -> ASpace:

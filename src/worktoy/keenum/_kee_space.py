@@ -33,6 +33,7 @@ class KeeSpace(BaseSpace):
   __enumeration_members__ = None
   __member_type__ = None
   __num_list__ = None
+  __null_value__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -43,7 +44,7 @@ class KeeSpace(BaseSpace):
     if self.__enumeration_members__ is None:
       self.__enumeration_members__ = dict()
     member.name = name
-    member.index = len(self.__enumeration_members__)
+    member.__field_index__ = len(self.__enumeration_members__)
     member = self.typeGuard(member)
     if name in self.__enumeration_members__:
       raise KeeDuplicate(name, member)
@@ -74,3 +75,7 @@ class KeeSpace(BaseSpace):
         baseMembers = baseSpace.__enumeration_members__
         for key in baseMembers:
           self.__enumeration_members__[key] = baseMembers[key]
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

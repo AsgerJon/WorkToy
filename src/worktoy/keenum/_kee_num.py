@@ -36,6 +36,7 @@ class KeeNum(Object, metaclass=KeeMeta, ):
   #  Public Variables
   index = Field()
   value = Field()
+  valueType = Field()
   kee = Field()
 
   #  Virtual Variables
@@ -55,7 +56,7 @@ class KeeNum(Object, metaclass=KeeMeta, ):
 
   @index.GET
   def _getIndex(self) -> int:
-    return self.kee.index
+    return int(self.kee)
 
   @value.GET
   def _getValue(self) -> Any:

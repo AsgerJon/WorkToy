@@ -184,11 +184,25 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, mcls: type, name: str, bases: Base, **kwargs) -> None:
+    """
+    Please note that setting the '_strictMRO' keyword argument to 'False'
+    allows inconsistent MROs. In such cases, it is the responsibility of
+    the caller to ensure consistency by alternative means.
+    """
     self.__meta_class__ = mcls
     self.__class_name__ = name
     self.__base_classes__ = [*bases, ]
     self.__key_args__ = kwargs or {}
-    self.__class_mro__ = resolveMRO(*bases, )
+    try:
+      self.__class_mro__ = resolveMRO(*bases, )
+    except TypeError as typeError:
+      #  MRO inconsistency is the only 'TypeError' that 'resolveMRO' is
+      #  capable of raising. For this reason, we omit the brittle
+      #  inspection check of the exception message. The reason
+      #  'resolveMRO' will never raise any other 'TypeError' is because it
+      #  would always raise 'AttributeError' first. 
+      if kwargs.get('_strictMRO', True):
+        raise typeError
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       hook.preparePhase(self)

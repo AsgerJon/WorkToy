@@ -8,19 +8,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.keenum import KeeSpace, Kee
-from worktoy.mcls import BaseSpace
-from worktoy.utilities import maybe
-from worktoy.waitaminute import TypeException
-from worktoy.waitaminute.keenum import KeeDuplicate
+from . import KeeFlag, KeeFlagsHook
+from ..mcls import BaseSpace, AbstractNamespace
+from ..utilities import maybe, resolveMRO
+from ..waitaminute.keenum import KeeDuplicate
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, Type, TypeAlias
+  from typing import Self, Type, TypeAlias, Callable, Self
+
+  from . import KeeFlags
+  from . import KeeFlagsMeta as KFMeta
 
   Bases: TypeAlias = tuple[Type, ...]
+  GetKeeFlags: TypeAlias = Callable[[Self], dict[str, KeeFlag]]
 
 
-class KeeFlagsSpace(KeeSpace):
+class KeeFlagsSpace(BaseSpace):
   """
   KeeFlagsSpace subclasses KeeSpace from the worktoy.keenum package
   providing the namespace object required for KeeFlags.
@@ -32,67 +35,115 @@ class KeeFlagsSpace(KeeSpace):
 
   #  Private Variables
   __kee_flags__ = None
-  __flag_type__ = None
+  __base_flags__ = None
+
+  #  Space Hooks
+  keeFlagsHook = KeeFlagsHook()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def addNum(self, name: str, member: Kee, ) -> Any:
-    """
-    Returns the KeeFlags instance associated with this space.
-    """
-    member.name = name
-    member.index = len(self.__kee_flags__)
-    if self.__flag_type__ is None:
-      self.__flag_type__ = member.type_
-    elif self.__flag_type__ is not member.type_:
-      raise TypeException('member', member, self.__flag_type__, )
-    if name in self.__kee_flags__:
-      raise KeeDuplicate(name, member)
-    self.__kee_flags__[name] = member
+  def _getBaseFlags(self, ) -> dict[str, KeeFlag]:
+    return maybe(self.__base_flags__, dict())
+
+  def getKeeFlags(self, ) -> dict[str, KeeFlag]:
+    baseFlags = self._getBaseFlags()
+    keeFlags = maybe(self.__kee_flags__, dict())
+    for name, keeFlag in keeFlags.items():
+      baseFlags[name] = keeFlag
+    return baseFlags
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def addBaseFlag(self, name: str, keeFlag: KeeFlag, **kwargs) -> None:
+    """Adds a """
+    existing = self._getBaseFlags()
+    existing[name] = keeFlag
+    self.__base_flags__ = existing
+
+  def addKeeFlag(self, name: str, keeFlag: KeeFlag, **kwargs) -> None:
+    baseFlags = self._getBaseFlags()
+    keeFlags = self.getKeeFlags()
+    if name in maybe(self.__kee_flags__, dict()):
+      raise KeeDuplicate(name, keeFlag)
+    keeFlag.__member_index__ = len(baseFlags) + len(keeFlags)
+    keeFlag.__member_name__ = name
+    keeFlag.__field_name__ = name
+    keeFlags[name] = keeFlag
+    self.__kee_flags__ = keeFlags
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, mcls: type, name: str, bases: Bases, **kwargs) -> None:
-    BaseSpace.__init__(self, mcls, name, bases, **kwargs)
-    self.__enumeration_members__ = None
-    base = (bases or [None])[0]
-    if base.__name__ == 'KeeFlags':
-      self.__kee_flags__ = dict()
-      self.__flag_type__ = None
+  def __init__(self, mcls: KFMeta, name: str, bases: Bases, **kw) -> None:
+    if name == 'KeeFlags':
+      BaseSpace.__init__(self, mcls, name, bases, **kw)
     else:
-      space = getattr(base, '__namespace__', dict())
-      self.__kee_flags__ = getattr(space, '__kee_flags__', dict())
-      self.__flag_type__ = getattr(space, '__flag_type__', None)
+      AbstractNamespace.__init__(
+          self,
+          mcls,
+          name,
+          bases,
+          _strictMRO=False,
+          **kw
+      )
+      if self.__class_mro__ is None:
+        self.__class_mro__ = [*bases, resolveMRO(mcls.__kee_class__, )]
+      self.__kee_flags__ = None
+      cls = type(self)
+      for base in bases:
+        baseSpace = getattr(base, '__namespace__', None)
+        for name, keeFlag in baseSpace.getKeeFlags().items():
+          self.addBaseFlag(name, keeFlag)
+      for space in self.getMRONamespaces():
+        for name, sigFunc in getattr(space, '__overload_map__', ).items():
+          self.__overload_map__[name] = dict()
+          for sig, func in sigFunc.items():
+            self.__overload_map__[name][sig] = func
+        for name, func in getattr(space, '__fallback_map__', ).items():
+          existing = maybe(self.__fallback_map__, dict())
+          existing[name] = func
+          self.__fallback_map__ = existing
+        for name, func in getattr(space, '__finalizer_map__', ).items():
+          existing = maybe(self.__finalizer_map__, dict())
+          existing[name] = func
+          self.__finalizer_map__ = existing
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def expandNum(self, ) -> Self:
-    """Creates a num instance for each combination of flags. """
-    N = 2 ** len(self.__kee_flags__)  # Number of combinations
-    for i in range(N):
-      included = []
-      for j, (name, member) in enumerate(self.__kee_flags__.items()):
-        if i & (1 << j):
-          included.append(member)
-      included.sort(key=lambda m: m.index)
-      items = [m.name for m in included]
-      name = '_'.join(items) or 'NULL'
-      kee = Kee[set](set(included))
-      KeeSpace.addNum(self, name, kee)
-    return self
+  @classmethod
+  def _getKeeFlagsFactory(cls, ) -> GetKeeFlags:
+    """
+    Factory function creating the getter function for the dictionary of
+    the 'KeeFlag' objects forming the basis of the 'KeeFlags' class.
+    """
+
+    def func(cls_: Type[KeeFlags]) -> dict[str, KeeFlag]:
+      out = dict()
+      for i, (name, flag) in enumerate(cls_.__kee_flags__.items()):
+        out[name] = flag.clone(cls_, i)
+      return out
+
+    setattr(func, '__name__', 'getKeeFlags')
+    docSpec = """Getter function for the flags dictionary."""
+    setattr(func, '__doc__', docSpec)
+    return func
 
   def postCompile(self, namespace: dict) -> dict:
     """
-    Post-compiles the namespace by expanding the flags.
-    This method is called after the namespace has been compiled.
+    Post compile is called after the class has been created.
+    This method is used to finalize the namespace.
     """
-    namespace = KeeSpace.postCompile(self, namespace)
-    namespace['__kee_flags__'] = maybe(self.__kee_flags__, dict())
-    namespace['__flag_type__'] = maybe(self.__flag_type__, object)
+    namespace = BaseSpace.postCompile(self, namespace)
+    if self.getClassName() == 'KeeFlags':
+      return namespace
+    namespace['__kee_flags__'] = self.getKeeFlags()
+    namespace['__kee_members__'] = None
+    namespace['getKeeFlags'] = classmethod(self._getKeeFlagsFactory())
     return namespace

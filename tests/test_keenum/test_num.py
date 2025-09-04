@@ -10,10 +10,12 @@ from typing import TYPE_CHECKING
 from worktoy.keenum import KeeNum, Kee, KeeMeta
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
-from worktoy.waitaminute.keenum import KeeNameError, KeeIndexError, \
-  KeeMemberError, KeeDuplicate, KeeTypeException, KeeCaseException, \
-  KeeWriteOnceError
-from . import KeeTest, RootRGB, RGB, BrushTest, RGBNum
+from worktoy.waitaminute.keenum import KeeNameError, KeeIndexError
+from worktoy.waitaminute.keenum import KeeMemberError, KeeDuplicate
+from worktoy.waitaminute.keenum import KeeTypeException, KeeCaseException
+from worktoy.waitaminute.keenum import KeeWriteOnceError
+from . import KeeTest
+from .examples import RootRGB, RGB, Brush, RGBNum
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -74,7 +76,6 @@ class TestNum(KeeTest):
   def test_contains_indices(self) -> None:
     """Tests that contains accepts indices as members"""
     for day in Weekday:
-      self.assertIn(day.index, Weekday)
       self.assertIn(int(day), Weekday)
 
   def test_bad_contains(self) -> None:
@@ -114,7 +115,6 @@ class TestNum(KeeTest):
     for day in Weekday:
       self.assertIn(day, Weekday)
       self.assertIn(day.name, Weekday)
-      self.assertIn(day.index, Weekday)
       self.assertIn(int(day), Weekday)
     for i in range(69):
       for j, day in enumerate(Weekday):
@@ -204,14 +204,6 @@ class TestNum(KeeTest):
     self.assertEqual(e.value, 'LMAO')
     self.assertEqual(str(e), repr(e))
 
-    breh.index = 69
-    with self.assertRaises(VariableNotNone) as context:
-      breh.index = 420
-    e = context.exception
-    self.assertEqual(e.name, 'index')
-    self.assertEqual(e.value, 69)
-    self.assertEqual(str(e), repr(e))
-
     class Breh(KeeNum):
       FOO = Kee[int](69)
       BAR = Kee[int]('420')
@@ -233,8 +225,8 @@ class TestNum(KeeTest):
 
   def test_class_variable_num(self) -> None:
     """Test that the class variable 'num' is set correctly."""
-    brushTest = BrushTest()
-    self.assertIsInstance(brushTest, BrushTest)
+    brushTest = Brush()
+    self.assertIsInstance(brushTest, Brush)
 
     class Foo:
       colorNum = RGBNum.RED

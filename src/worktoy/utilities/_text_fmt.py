@@ -83,4 +83,4 @@ def textFmt(*args: Any, **kwargs: Any) -> str:
   #  Replace multiple spaces with a single space
   text = ' '.join(text.split())
   #  Replace newlines and tabs with the appropriate symbols
-  return text.replace(newTemp, nLOut).replace(tabTemp, tabOut).strip()
+  return text.replace(newTemp, nLOut).replace(tabTemp, tabOut)

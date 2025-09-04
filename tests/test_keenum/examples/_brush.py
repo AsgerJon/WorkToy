@@ -9,7 +9,7 @@ from worktoy.mcls import BaseObject
 from . import RGBNum
 
 
-class BrushTest(BaseObject):
+class Brush(BaseObject):
   """BrushTest tests owning of RGBNum instances."""
 
   color = RGBNum.RED

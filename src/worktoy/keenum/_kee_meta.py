@@ -17,7 +17,7 @@ from ..waitaminute.keenum import KeeMemberError, KeeValueError
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Self, Iterator
 
-  from . import KeeNum
+  from . import KeeNum, KeeFlags
 
   Bases: TypeAlias = tuple[type, ...]
 
@@ -84,14 +84,14 @@ class KeeMeta(BaseMeta):
       return super().__call__(*args, **kwargs)
     return cls._resolveMember(args[0])
 
-  def __getitem__(cls, identifier: Any) -> Kee:
+  def __getitem__(cls, identifier: Any) -> KeeNum:
     """
     Gets a member of the enumeration by index or key.
     This method is used to get a member of the enumeration by index or key.
     """
     return cls._resolveMember(identifier)
 
-  def __getattr__(cls, name: str) -> Kee:
+  def __getattr__(cls, name: str) -> KeeFlags:
     """
     Gets a member of the enumeration by name.
     This method is used to get a member of the enumeration by name.

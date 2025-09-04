@@ -6,7 +6,9 @@ The 'worktoy.keenum' module provides the enumerating KeeNum class.
 from __future__ import annotations
 
 from ._kee_member import Kee
+from ._kee_flag import KeeFlag
 from ._kee_space_hook import KeeSpaceHook
+from ._kee_flags_hook import KeeFlagsHook
 from ._kee_space import KeeSpace
 from ._kee_meta import KeeMeta
 from ._kee_num import KeeNum
@@ -16,6 +18,7 @@ from ._kee_flags import KeeFlags
 
 __all__ = [
     'Kee',
+    'KeeFlag',
     'KeeSpaceHook',
     'KeeSpace',
     'KeeMeta',

@@ -25,11 +25,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.core import Object
-from worktoy.desc import Field
-from worktoy.utilities import maybe, textFmt
-from worktoy.waitaminute import VariableNotNone
-from worktoy.waitaminute.keenum import KeeCaseException
+from ..core import Object
+from ..desc import Field
+from ..utilities import maybe, textFmt
+from ..waitaminute import VariableNotNone
+from ..waitaminute.keenum import KeeCaseException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Type, TypeAlias
@@ -51,10 +51,10 @@ class Kee(Object):
   #  Private Variables
   __field_index__ = None
   __field_type__ = None
+  __field_value__ = None
 
   #  Public Variables
   name = Field()
-  index = Field()
 
   #  Virtual Variables
   type_ = Field()
@@ -86,11 +86,6 @@ class Kee(Object):
     """Set by 'Object.__set_name__' when the enumeration is created."""
     return self.__field_name__
 
-  @index.GET
-  def _getIndex(self) -> int:
-    """Set by 'Object.__set_name__' when the enumeration is created."""
-    return self.__field_index__
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -107,12 +102,6 @@ class Kee(Object):
     if self.__field_name__ is not None:
       raise VariableNotNone('name', self.__field_name__)
     self.__field_name__ = name
-
-  @index.SET
-  def _setIndex(self, index: int) -> None:
-    if self.__field_index__ is not None:
-      raise VariableNotNone('index', self.__field_index__)
-    self.__field_index__ = index
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -143,6 +132,9 @@ class Kee(Object):
         return self
     self.__field_value__ = self.type_(*args, **kwargs)
     return self
+
+  def __int__(self, ) -> int:
+    return self.__field_index__
 
   def __str__(self) -> str:
     """Return the string representation of the member."""

@@ -8,7 +8,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeNum
-from . import KeeTest, RGBNum
+from . import KeeTest
+from .examples import RGBNum
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

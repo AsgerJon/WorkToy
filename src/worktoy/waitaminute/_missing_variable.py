@@ -22,10 +22,10 @@ class MissingVariable(AttributeError):
   that the variable has no fallback value.
   """
 
-  __slots__ = ('name', 'instance', 'type_')
+  __slots__ = ('instance', 'varName', 'type_')
 
   def __init__(self, instance: Any, name: str, type_: type) -> None:
-    self.name = name
+    self.varName = name
     self.instance = instance
     self.type_ = type_
     AttributeError.__init__(self, )
@@ -33,7 +33,7 @@ class MissingVariable(AttributeError):
   def __str__(self) -> str:
     infoSpec = """Missing variable '%s' of type '%s' in instance '%s'!"""
     instanceName = getattr(self.instance, '__name__', 'Unknown')
-    info = infoSpec % (self.name, self.type_.__name__, instanceName)
+    info = infoSpec % (self.varName, self.type_.__name__, instanceName)
     return textFmt(info)
 
   __repr__ = __str__

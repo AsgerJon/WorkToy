@@ -76,10 +76,7 @@ class Dispatcher(Object):
     Add a signature-function pair to the internal signature-function map.
     """
     existing = self._getSigFuncList()
-    if func is self:
-      self.__sig_funcs__ = [*existing, (sig, existing[-1][-1])]
-    else:
-      self.__sig_funcs__ = [*existing, (sig, func,)]
+    self.__sig_funcs__ = [*existing, (sig, func,)]
     return func
 
   def setFallbackFunction(self, func: Method) -> Method:

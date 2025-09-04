@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .examples import FlagsExample, SubclassExample
+from .examples import FileAccess, KeyboardModifier
 from tests import BaseTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -15,3 +17,11 @@ if TYPE_CHECKING:  # pragma: no cover
 class KeeTest(BaseTest):
   """KeeTest provides a common test class for the 'tests.test_keenum'
   module. """
+
+  def setUp(self, ) -> None:
+    self.exampleFlags = [
+        FlagsExample,
+        FileAccess,
+        KeyboardModifier,
+        SubclassExample,
+    ]
