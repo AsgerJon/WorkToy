@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class Month(KeeNum):
-  """Month enumerates the months of the year."""
+  """Month enumerates the months of the year. """
   JANUARY = Kee[str]("""Januar""")
   FEBRUARY = Kee[str]("""Februar""")
   MARCH = Kee[str]("""Marts""")
