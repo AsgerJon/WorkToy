@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
+from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
 from worktoy.desc import Field
 from . import Month, WeekDay
@@ -94,18 +95,25 @@ class Dato(BaseObject):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __new__(cls, *args, **kwargs) -> Self:
+  @overload(date)
+  def __new__(cls, dateObject: date) -> Self:
     self = object.__new__(cls)
-    if isinstance((args or [None])[0], date):
-      self.__date_object__ = args[0]
-    else:
-      self.__date_object__ = date(*args, **kwargs)
+    self.__date_object__ = dateObject
     return self
+
+  @overload(int, Month, int)
+  def __new__(cls, year: int, month: Month, day: int) -> Self:
+    newDate = date(year, month.index + 1, day)
+    return cls(newDate)
+
+  @overload()
+  def __new__(cls, ) -> Self:
+    return cls(date.today())
 
   @classmethod
   def rightNow(cls, ) -> Self:
     """Returns a 'Dato' object representing today's date."""
-    return cls(date.today())
+    return cls()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

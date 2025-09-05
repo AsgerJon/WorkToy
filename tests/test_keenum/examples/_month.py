@@ -27,7 +27,3 @@ class Month(KeeNum):
   OCTOBER = Kee[str]("""Oktober""")
   NOVEMBER = Kee[str]("""November""")
   DECEMBER = Kee[str]("""December""")
-
-  def __index__(self, ) -> int:
-    """Increment to work with datetime module."""
-    return KeeNum.__index__(self) + 1
