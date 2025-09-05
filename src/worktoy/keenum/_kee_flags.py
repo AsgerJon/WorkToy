@@ -182,6 +182,9 @@ class KeeFlags(metaclass=KeeFlagsMeta):
       return True if self.index == other.index else False
     return False
 
+  def __hash__(self, ) -> int:
+    return hash((hash(type(self)), *self.highs))
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

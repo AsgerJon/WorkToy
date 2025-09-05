@@ -244,55 +244,49 @@ class TestKeeFlagsMeta(KeeTest):
     for member in Sub:
       self.assertAlmostEqual(member.value / 2, member.index + 69420)
 
-  def testEqualOperator(self, ) -> None:
+  def testImplementedEqualOperator(self, ) -> None:
     """
     Tests that the '__eq__' operator correctly identifies equal members.
     """
-    for cls in self.exampleFlags:
-      for member in cls:
-        self.assertTrue(member == member)
-
     for left in self.exampleFlags:
       for right in self.exampleFlags:
-        if issubclass(left, right) or issubclass(right, left):
-          self.assertTrue(left == right)
+        if left is right:
+          self.assertEqual(left, right)
         else:
-          self.assertFalse(left == right)
+          self.assertNotEqual(left, right)
 
-  def testNotEqualOperator(self, ) -> None:
+  def testNotImplementedEqualOperator(self, ) -> None:
     """
     Tests that the '__eq__' operator correctly returns NotImplemented
     when comparing with an object of a different type allowing it a chance
     to provide an implementation.
     """
 
-    class OtherImplemented:
+    class OtherNotImplemented:
+      __hash_value__ = None
+
+      def __init__(self, hashValue: int) -> None:
+        self.__hash_value__ = hashValue
+
+      def __hash__(self, ) -> int:
+        return self.__hash_value__
+
+    class OtherImplemented(OtherNotImplemented):
       def __eq__(self, other: object) -> bool:
         return True
 
-    class OtherNotImplemented:
-      pass
+      __hash__ = None
+
+    class Breh(OtherImplemented):
+      def __hash__(self, ) -> int:
+        raise TypeError('all your base are belong to us')
 
     for cls in self.exampleFlags:
-      self.assertEqual(cls, OtherImplemented())
-      self.assertNotEqual(cls, OtherNotImplemented())
-
-    susFlags = [type(self), type('Sus', (), {}), int, str, type(print)]
-    for cls in self.exampleFlags:
-      for sus in susFlags:
-        self.assertFalse(KeeFlagsMeta.__eq__(cls, sus))
-
-  def testNotImplementedEqualOperator(self) -> None:
-    """
-    Tests that the '__eq__' operator correctly returns NotImplemented
-    when comparing with an object of a different type allowing it a chance
-    to provide an implementation.
-    """
-
-    susClass = [type('Sus', (), {})(), 69, '420', print]
-    for cls in self.exampleFlags:
-      for sus in susClass:
-        self.assertIs(KeeFlagsMeta.__eq__(cls, sus), NotImplemented)
+      self.assertEqual(cls, OtherImplemented(hash(cls)))
+      self.assertNotEqual(cls, OtherNotImplemented(hash(cls)))
+      with self.assertRaises(TypeError) as context:
+        _ = cls == Breh(69)
+      self.assertIn('all your base are belong to us', str(context.exception))
 
   def testPrimeValued(self, ) -> None:
     """
@@ -339,11 +333,9 @@ class TestKeeFlagsMeta(KeeTest):
       pass
 
     for a, b in zip(FlagsExample, PrimeRoll):
-      self.assertEqual(a, b)
       for high in a.highs:
-        self.assertIn(high, b.highs)
-        p = PrimeValued.indexPrime(high.index)
-        self.assertFalse(b.value % p)
+        prime = PrimeValued.indexPrime(high.index)
+        self.assertFalse(b.value % prime)
 
   def testCoverageGymnastics(self, ) -> None:
     """

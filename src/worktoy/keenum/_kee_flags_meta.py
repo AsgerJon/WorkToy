@@ -161,11 +161,17 @@ class KeeFlagsMeta(BaseMeta):
     return cls._resolveMember(identifier)
 
   def __eq__(cls, other: Any) -> bool:
-    if not isinstance(other, type):
-      return NotImplemented
-    if cls is other or issubclass(cls, other) or issubclass(other, cls):
-      return True
-    return False
+    try:
+      otherHash = hash(other)
+    except TypeError as typeError:
+      if 'hashable type' in str(typeError):
+        return NotImplemented
+      raise typeError
+    else:
+      return NotImplemented if otherHash == hash(cls) else False
+
+  def __hash__(cls, ) -> int:
+    return hash((cls.__name__, cls.__module__,))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -5,6 +5,7 @@ TestNum provides the basic tests for the KeeNum class.
 #  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
+from datetime import date
 from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeNum, Kee, KeeMeta
@@ -15,35 +16,11 @@ from worktoy.waitaminute.keenum import KeeMemberError, KeeDuplicate
 from worktoy.waitaminute.keenum import KeeTypeException, KeeCaseException
 from worktoy.waitaminute.keenum import KeeWriteOnceError
 from . import KeeTest
-from .examples import RootRGB, RGB, Brush, RGBNum
+from .examples import WeekDay, Compass, Brush, RGBNum, RootRGB, RGB, Dato, \
+  Month
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
-
-
-class Weekday(KeeNum):
-  """Weekday enumeration."""
-  MONDAY = Kee[str]('Mandag')
-  TUESDAY = Kee[str]('Tirsdag')
-  WEDNESDAY = Kee[str]('Onsdag')
-  THURSDAY = Kee[str]('Torsdag')
-  FRIDAY = Kee[str]('Fredag')
-  SATURDAY = Kee[str]('Lørdag')
-  SUNDAY = Kee[str]('Søndag')
-
-
-class Compass(KeeNum):
-  """Compass enumeration."""
-  NULL = Kee[complex](0 + 0j)  # Falsy because of name being 'NULL'
-  ALSO_NULL = Kee[complex](0 + 0j)  # Falsy because of value
-  EAST = Kee[complex](1 + 0j)
-  NORTH = Kee[complex](0 + 1j)
-  WEST = Kee[complex](-1 + 0j)
-  SOUTH = Kee[complex](0 - 1j)
-  NORTHEAST = Kee[complex](1 + 1j)
-  NORTHWEST = Kee[complex](-1 + 1j)
-  SOUTHEAST = Kee[complex](1 - 1j)
-  SOUTHWEST = Kee[complex](-1 - 1j)
 
 
 class TestNum(KeeTest):
@@ -52,100 +29,134 @@ class TestNum(KeeTest):
   def test_ad_hoc(self) -> None:
     """Test ad-hoc functionality."""
 
-    for day in Weekday:
-      self.assertIsInstance(day, Weekday)
+    for day in WeekDay:
+      self.assertIsInstance(day, WeekDay)
       self.assertIsInstance(day, KeeNum)
       self.assertEqual(repr(day), str(day))
 
   def test_contains_members(self) -> None:
-    """Test that the members of the Weekday enumeration are as expected."""
-    self.assertEqual(len(Weekday), 7)
-    self.assertIn(Weekday.MONDAY, Weekday)
-    self.assertIn(Weekday.TUESDAY, Weekday)
-    self.assertIn(Weekday.WEDNESDAY, Weekday)
-    self.assertIn(Weekday.THURSDAY, Weekday)
-    self.assertIn(Weekday.FRIDAY, Weekday)
-    self.assertIn(Weekday.SATURDAY, Weekday)
-    self.assertIn(Weekday.SUNDAY, Weekday)
+    """Test that the members of the WeekDay enumeration are as expected."""
+    self.assertEqual(len(WeekDay), 7)
+    self.assertIn(WeekDay.MONDAY, WeekDay)
+    self.assertIn(WeekDay.TUESDAY, WeekDay)
+    self.assertIn(WeekDay.WEDNESDAY, WeekDay)
+    self.assertIn(WeekDay.THURSDAY, WeekDay)
+    self.assertIn(WeekDay.FRIDAY, WeekDay)
+    self.assertIn(WeekDay.SATURDAY, WeekDay)
+    self.assertIn(WeekDay.SUNDAY, WeekDay)
 
   def test_contains_keys(self) -> None:
     """Tests that contains accepts keys as members"""
-    for day in Weekday:
-      self.assertIn(day.name, Weekday)
+    for day in WeekDay:
+      self.assertIn(day.name, WeekDay)
 
   def test_contains_indices(self) -> None:
     """Tests that contains accepts indices as members"""
-    for day in Weekday:
-      self.assertIn(int(day), Weekday)
+    for day in WeekDay:
+      self.assertIn(int(day), WeekDay)
 
   def test_bad_contains(self) -> None:
     """Tests that contains does not accept non-members."""
-    self.assertNotIn('Mandag', Weekday)
-    self.assertNotIn('Tirsdag', Weekday)
-    self.assertNotIn('Onsdag', Weekday)
-    self.assertNotIn('Torsdag', Weekday)
-    self.assertNotIn('Fredag', Weekday)
-    self.assertNotIn('Lørdag', Weekday)
-    self.assertNotIn('Søndag', Weekday)
+    self.assertNotIn('Mandag', WeekDay)
+    self.assertNotIn('Tirsdag', WeekDay)
+    self.assertNotIn('Onsdag', WeekDay)
+    self.assertNotIn('Torsdag', WeekDay)
+    self.assertNotIn('Fredag', WeekDay)
+    self.assertNotIn('Lørdag', WeekDay)
+    self.assertNotIn('Søndag', WeekDay)
 
   def test_keenum(self) -> None:
-    """Test that the Weekday class is a KeeNum."""
+    """Test that the WeekDay class is a KeeNum."""
     self.assertIs(KeeNum.base, KeeNum)
     self.assertEqual(str(KeeNum), repr(KeeNum))
-    self.assertEqual(str(Weekday), repr(Weekday))
+    self.assertEqual(str(WeekDay), repr(WeekDay))
 
-  def test_good_instancecheck(self) -> None:
-    self.assertIsInstance(Weekday, KeeMeta)
+  def test_is_instancecheck(self) -> None:
+    for cls in self.exampleNums:
+      self.assertIsInstance(cls, KeeMeta)
+      for member in cls:
+        self.assertIsInstance(member, cls)
+        self.assertIsInstance(member, KeeNum)
 
-  def test_good_subclasscheck(self) -> None:
-    self.assertIsSubclass(Weekday, KeeNum)
+  def test_is_subclasscheck(self) -> None:
+    for cls in self.exampleNums:
+      self.assertIsSubclass(cls, KeeNum)
 
-  def test_bad_instancecheck(self) -> None:
-    """Test that the Weekday class is not an instance of KeeNum."""
-    self.assertNotIsInstance("""Imma a KeeNum, trust me bro!""", KeeMeta)
-    self.assertNotIsInstance(type('imma a Kee, trust!', (), {}), KeeMeta)
+  def test_is_not_instancecheck(self) -> None:
+    """Test that the WeekDay class is not an instance of KeeNum."""
+    items = [
+        69,
+        420.0,
+        """Imma a KeeNum, trust me bro!""",
+        type('Keeeeee', (), {}),
+    ]
+    for cls in self.exampleNums:
+      for item in items:
+        self.assertNotIsInstance(item, cls)
+        self.assertNotIsInstance(item, KeeNum)
+
+  def test_is_not_subclasscheck(self) -> None:
+    """Test that the WeekDay class is not a subclass of KeeNum."""
+    items = [
+        int, float, str, type
+    ]
+    for cls in self.exampleNums:
+      for item in items:
+        self.assertNotIsSubclass(item, cls)
+        self.assertNotIsSubclass(item, KeeNum)
 
   def test_bad_subclasscheck(self) -> None:
-    """Test that the Weekday class is not a subclass of KeeNum."""
-    self.assertNotIsSubclass("""Imma a KeeNum, trust me bro!""", KeeNum)
-    self.assertNotIsSubclass(type('imma a Kee, trust!', (), {}), KeeNum)
+    """Test that the WeekDay class is not a subclass of KeeNum."""
+    items = [
+        69,
+        420.0,
+        """Imma a KeeNum, trust me bro!""",
+    ]
+    for cls in self.exampleNums:
+      for item in items:
+        with self.assertRaises(TypeError) as context:
+          _ = issubclass(item, cls)
+        e = context.exception
+        e = context.exception
+        self.assertIn('arg 1 must be a class', str(e))
+        self.assertNotIsSubclass(type('imma a Kee, trust!', (), {}), cls)
 
   def test_good_resolve_member(self) -> None:
     """Test that the resolve_member method works as expected."""
-    for day in Weekday:
-      self.assertIn(day, Weekday)
-      self.assertIn(day.name, Weekday)
-      self.assertIn(int(day), Weekday)
+    for day in WeekDay:
+      self.assertIn(day, WeekDay)
+      self.assertIn(day.name, WeekDay)
+      self.assertIn(int(day), WeekDay)
     for i in range(69):
-      for j, day in enumerate(Weekday):
-        self.assertIs(Weekday[j - i * len(Weekday)], day)
+      for j, day in enumerate(WeekDay):
+        self.assertIs(WeekDay[j - i * len(WeekDay)], day)
 
   def test_bad_resolve_member(self) -> None:
     """Test that the correct exception is raised when failing to resolve a
     member. """
     with self.assertRaises(KeeNameError) as context:
-      _ = Weekday['trololololo']
+      _ = WeekDay['trololololo']
     e = context.exception
-    self.assertIs(e.keenum, Weekday)
+    self.assertIs(e.keenum, WeekDay)
     self.assertEqual(e.name, 'trololololo')
     self.assertEqual(str(e), repr(e))
 
     with self.assertRaises(KeeIndexError) as context:
-      _ = Weekday[69420]
+      _ = WeekDay[69420]
     e = context.exception
-    self.assertIs(e.keenum, Weekday)
+    self.assertIs(e.keenum, WeekDay)
     self.assertEqual(e.index, 69420)
     self.assertEqual(str(e), repr(e))
 
     with self.assertRaises(KeeMemberError) as context:
-      _ = Weekday[RootRGB.RED]
+      _ = WeekDay[RootRGB.RED]
     e = context.exception
-    self.assertIs(e.keenum, Weekday)
+    self.assertIs(e.keenum, WeekDay)
     self.assertIs(e.member, RootRGB.RED)
     self.assertEqual(str(e), repr(e))
 
     with self.assertRaises(TypeException) as context:
-      _ = Weekday[0.8008135]
+      _ = WeekDay[0.8008135]
     e = context.exception
     self.assertEqual(e.varName, 'identifier')
     self.assertEqual(e.actualObject, 0.8008135)
@@ -157,7 +168,7 @@ class TestNum(KeeTest):
     enumeration with duplicate members."""
     #  Testing duplicating member from base class
     with self.assertRaises(KeeDuplicate) as context:
-      class DuperTrooperIsLegend(Weekday):
+      class DuperTrooperIsLegend(WeekDay):
         MONDAY = Kee[str]('breh')
     e = context.exception
     self.assertEqual(str(e), repr(e))
@@ -251,13 +262,13 @@ class TestNum(KeeTest):
 
   def test_getattr(self, ) -> None:
     """Tests the getattr method."""
-    self.assertIs(Weekday.MONDAY, Weekday.__getattr__('MONDAY'))
-    self.assertIs(Weekday.TUESDAY, Weekday.__getattr__('TUESDAY'))
-    self.assertIs(Weekday.WEDNESDAY, Weekday.__getattr__('WEDNESDAY'))
-    self.assertIs(Weekday.THURSDAY, Weekday.__getattr__('THURSDAY'))
-    self.assertIs(Weekday.FRIDAY, Weekday.__getattr__('FRIDAY'))
-    self.assertIs(Weekday.SATURDAY, Weekday.__getattr__('SATURDAY'))
-    self.assertIs(Weekday.SUNDAY, Weekday.__getattr__('SUNDAY'))
+    self.assertIs(WeekDay.MONDAY, WeekDay.__getattr__('MONDAY'))
+    self.assertIs(WeekDay.TUESDAY, WeekDay.__getattr__('TUESDAY'))
+    self.assertIs(WeekDay.WEDNESDAY, WeekDay.__getattr__('WEDNESDAY'))
+    self.assertIs(WeekDay.THURSDAY, WeekDay.__getattr__('THURSDAY'))
+    self.assertIs(WeekDay.FRIDAY, WeekDay.__getattr__('FRIDAY'))
+    self.assertIs(WeekDay.SATURDAY, WeekDay.__getattr__('SATURDAY'))
+    self.assertIs(WeekDay.SUNDAY, WeekDay.__getattr__('SUNDAY'))
 
     self.assertIs(Compass.EAST, Compass.__getattr__('EAST'))
     self.assertIs(Compass.NORTH, Compass.__getattr__('NORTH'))
@@ -270,13 +281,13 @@ class TestNum(KeeTest):
 
   def test_getattr_hard(self, ) -> None:
     """Tests the case-insensitive getattr method."""
-    self.assertIs(Weekday.MONDAY, Weekday.monday)
-    self.assertIs(Weekday.TUESDAY, Weekday.tuesday)
-    self.assertIs(Weekday.WEDNESDAY, Weekday.wednesday)
-    self.assertIs(Weekday.THURSDAY, Weekday.thursday)
-    self.assertIs(Weekday.FRIDAY, Weekday.friday)
-    self.assertIs(Weekday.SATURDAY, Weekday.saturday)
-    self.assertIs(Weekday.SUNDAY, Weekday.sunday)
+    self.assertIs(WeekDay.MONDAY, WeekDay.monday)
+    self.assertIs(WeekDay.TUESDAY, WeekDay.tuesday)
+    self.assertIs(WeekDay.WEDNESDAY, WeekDay.wednesday)
+    self.assertIs(WeekDay.THURSDAY, WeekDay.thursday)
+    self.assertIs(WeekDay.FRIDAY, WeekDay.friday)
+    self.assertIs(WeekDay.SATURDAY, WeekDay.saturday)
+    self.assertIs(WeekDay.SUNDAY, WeekDay.sunday)
 
     self.assertIs(Compass.EAST, Compass.east)
     self.assertIs(Compass.NORTH, Compass.north)
@@ -316,3 +327,49 @@ class TestNum(KeeTest):
         self.assertFalse(direction)
       else:
         self.assertTrue(direction)
+
+  def test_dato(self, ) -> None:
+    """
+    The 'Dato' class uses 'KeeNum' classes as attributes. This test aims
+    at testing 'KeeNum' in a 'real-world' scenario rather than in a test
+    coverage gymnastics type situation.
+    """
+    today = Dato.rightNow()
+    self.assertIsInstance(today, Dato)
+    self.assertIsInstance(today.year, int)
+    self.assertIsInstance(today.month, Month)
+    self.assertIsInstance(today.day, int)
+    self.assertIsInstance(today.weekDay, WeekDay)
+    self.assertEqual(today.datetimeDate, date.today())
+
+    tomorrow = today.tomorrow()
+    for _ in range(69):
+      self.assertIsInstance(tomorrow, Dato)
+      self.assertIsInstance(tomorrow.year, int)
+      self.assertIsInstance(tomorrow.month, Month)
+      self.assertIsInstance(tomorrow.day, int)
+      self.assertIsInstance(tomorrow.weekDay, WeekDay)
+      tomorrow = tomorrow.tomorrow()
+
+    delta = tomorrow.datetimeDate - today.datetimeDate
+    self.assertEqual(delta.days - 1, 69)
+
+    yesterday = today.yesterday()
+    for _ in range(420):
+      self.assertIsInstance(yesterday, Dato)
+      self.assertIsInstance(yesterday.year, int)
+      self.assertIsInstance(yesterday.month, Month)
+      self.assertIsInstance(yesterday.day, int)
+      self.assertIsInstance(yesterday.weekDay, WeekDay)
+      yesterday = yesterday.yesterday()
+
+    delta = today.datetimeDate - yesterday.datetimeDate
+    self.assertEqual(delta.days - 1, 420)
+
+    greatScott = Dato(1985, Month.OCTOBER, 26)
+    self.assertEqual(greatScott.year, 1985)
+    self.assertIs(greatScott.month, Month.OCTOBER)
+    self.assertEqual(greatScott.day, 26)
+    self.assertIs(greatScott.weekDay, WeekDay.SATURDAY)
+    self.assertIn('26. Oktober, 1985', str(greatScott))
+    self.assertIn('Dato(1985, Month.OCTOBER, 26)', repr(greatScott))

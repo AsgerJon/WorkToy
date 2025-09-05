@@ -14,6 +14,10 @@ from ._file_access import FileAccess
 from ._keyboard_modifier import KeyboardModifier
 from ._mouse_button import MouseButton
 from ._rgb_num import RootRGB, MoreRGB, EvenMoreRGB, RGBNum
+from ._week_day import WeekDay
+from ._compass import Compass
+from ._month import Month
+from ._dato import Dato
 from ._brush import Brush
 
 __all__ = [
@@ -28,5 +32,9 @@ __all__ = [
     'MoreRGB',
     'EvenMoreRGB',
     'RGBNum',
+    'WeekDay',
+    'Compass',
+    'Month',
+    'Dato',
     'Brush',
 ]

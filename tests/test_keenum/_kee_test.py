@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from .examples import FlagsExample, SubclassExample
 from .examples import FileAccess, KeyboardModifier
+from .examples import RootRGB, MoreRGB, EvenMoreRGB, RGBNum, Month, WeekDay
 from tests import BaseTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -24,4 +25,7 @@ class KeeTest(BaseTest):
         FileAccess,
         KeyboardModifier,
         SubclassExample,
+    ]
+    self.exampleNums = [
+        RootRGB, MoreRGB, EvenMoreRGB, RGBNum, Month, WeekDay
     ]

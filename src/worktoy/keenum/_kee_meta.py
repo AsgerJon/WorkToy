@@ -17,7 +17,7 @@ from ..waitaminute.keenum import KeeMemberError, KeeValueError
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Self, Iterator
 
-  from . import KeeNum, KeeFlags
+  from . import KeeNum
 
   Bases: TypeAlias = tuple[type, ...]
 
@@ -67,7 +67,9 @@ class KeeMeta(BaseMeta):
     cls.__allow_instantiation__ = True
 
     for i, (key, kee) in enumerate(space.__enumeration_members__.items()):
-      self = getattr(base, key, None)
+      self = None
+      for base in bases:
+        self = getattr(base, key, None)
       if self is None:
         self = cls(kee, )
       setattr(cls, key, self)
@@ -84,14 +86,14 @@ class KeeMeta(BaseMeta):
       return super().__call__(*args, **kwargs)
     return cls._resolveMember(args[0])
 
-  def __getitem__(cls, identifier: Any) -> KeeNum:
+  def __getitem__(cls, identifier: Any) -> Any:
     """
     Gets a member of the enumeration by index or key.
     This method is used to get a member of the enumeration by index or key.
     """
     return cls._resolveMember(identifier)
 
-  def __getattr__(cls, name: str) -> KeeFlags:
+  def __getattr__(cls, name: str) -> Any:
     """
     Gets a member of the enumeration by name.
     This method is used to get a member of the enumeration by name.
@@ -136,7 +138,12 @@ class KeeMeta(BaseMeta):
     This method is used to check if the instance is a member of the
     enumeration.
     """
-    return True if issubclass(type(instance), cls) else False
+    for member in cls:
+      if member == instance:
+        return True
+    if issubclass(type(instance), cls):
+      return True
+    return False
 
   def __subclasscheck__(cls, subclass: type) -> bool:
     """
@@ -144,12 +151,15 @@ class KeeMeta(BaseMeta):
     This method is used to check if the subclass is a subclass of the
     enumeration.
     """
-    if not hasattr(subclass, '__mro__'):
+    try:
+      _ = issubclass(subclass, object)
+    except Exception as exception:
+      raise exception
+    else:
+      for item in subclass.__mro__:
+        if item is cls:
+          return True
       return False
-    for item in subclass.__mro__:
-      if item is cls:
-        return True
-    return False
 
   def __str__(cls) -> str:
     """

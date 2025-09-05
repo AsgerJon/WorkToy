@@ -114,6 +114,8 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     """Return the index of the member."""
     return self.index
 
+  __index__ = __int__
+
   def __hash__(self) -> int:
     """Return the hash of the member."""
     return hash((type(self), self.index))

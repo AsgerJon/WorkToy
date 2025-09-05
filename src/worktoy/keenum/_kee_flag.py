@@ -202,6 +202,9 @@ class KeeFlag:
       return NotImplemented
     return True if self.index == other.index else False
 
+  def __hash__(self, ) -> int:
+    return hash((self.__field_owner__, self.__field_name__, self.index))
+
   __index__ = _getIndex
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

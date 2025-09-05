@@ -10,15 +10,16 @@ from typing import TYPE_CHECKING
 
 from . import KeeFlag, KeeFlagsHook
 from ..mcls import BaseSpace, AbstractNamespace
-from ..utilities import maybe, resolveMRO
+from ..utilities import maybe
 from ..waitaminute.keenum import KeeDuplicate
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Type, TypeAlias, Callable, Self
 
   from . import KeeFlags
-  from . import KeeFlagsMeta as KFMeta
+  from . import KeeFlagsMeta
 
+  KFMType: TypeAlias = Type[KeeFlagsMeta]
   Bases: TypeAlias = tuple[Type, ...]
   GetKeeFlags: TypeAlias = Callable[[Self], dict[str, KeeFlag]]
 
@@ -79,7 +80,7 @@ class KeeFlagsSpace(BaseSpace):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, mcls: KFMeta, name: str, bases: Bases, **kw) -> None:
+  def __init__(self, mcls: KFMType, name: str, bases: Bases, **kw) -> None:
     if name == 'KeeFlags':
       BaseSpace.__init__(self, mcls, name, bases, **kw)
     else:
@@ -91,8 +92,6 @@ class KeeFlagsSpace(BaseSpace):
           _strictMRO=False,
           **kw
       )
-      if self.__class_mro__ is None:
-        self.__class_mro__ = [*bases, resolveMRO(mcls.__kee_class__, )]
       self.__kee_flags__ = None
       cls = type(self)
       for base in bases:
