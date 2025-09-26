@@ -20,6 +20,7 @@ from ._directory import Directory
 from ._join_words import joinWords
 from ._resolve_mro import resolveMRO
 from ._word_wrap import wordWrap
+from . import mathematics
 
 __all__ = [
     'perm',
@@ -36,4 +37,5 @@ __all__ = [
     'joinWords',
     'resolveMRO',
     'wordWrap',
+    'mathematics',
 ]
