@@ -13,8 +13,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class IllegalInstantiation(TypeError):
-  """IllegalInstantiation is a custom exception raised to indicate than
-  an attempt was made to instantiate a class under illegal conditions."""
+  """
+  IllegalInstantiation is a custom exception raised to indicate than
+  an attempt was made to instantiate a class under illegal conditions.
+  """
 
   __slots__ = ('cls',)
 
