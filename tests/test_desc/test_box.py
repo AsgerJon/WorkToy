@@ -42,6 +42,7 @@ class TestBox(DescTest):
     boxOwner = BoxOwner()
     self.assertEqual(boxOwner.value.name, 'value')
     self.assertIs(boxOwner.value.owner, BoxOwner)
+    self.assertEqual(boxOwner.value.value, 69.0)
 
   def testInit(self, ) -> None:
     """
