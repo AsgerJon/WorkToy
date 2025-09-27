@@ -9,6 +9,9 @@ from ._complex_fields_subclass import ComplexFieldsSubclass
 from ._complex_box import ComplexBox
 from ._complex_label import ComplexLabel
 from ._complex_alias import ComplexAlias
+from ._boxed_float import BoxedFloat
+from ._boxed_object import BoxedObject
+from ._box_owner import BoxOwner
 from ._desc_test import DescTest
 
 __all__ = [
@@ -17,5 +20,8 @@ __all__ = [
     'ComplexBox',
     'ComplexLabel',
     'ComplexAlias',
+    'BoxedFloat',
+    'BoxedObject',
+    'BoxOwner',
     'DescTest',
 ]

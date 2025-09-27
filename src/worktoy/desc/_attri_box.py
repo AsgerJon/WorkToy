@@ -41,15 +41,37 @@ class AttriBox(Object):
 
   def _createFieldObject(self, ) -> Any:
     """
-    Creates a new instance of the field type. This method is called when
-    the field is accessed for the first time.
+    Creates a new instance of the field type. When no field object exists
+    for a given instance, this method is invoked to create one. This
+    method creates it by passing stored positional and keyword arguments
+    to the field type constructor.
+
+    If the field type has a __set_name__ method, it is called with the
+    owner and field name passed to the __set_name__ method of the
+    AttriBox. Otherwise, it attempts to set the following dynamic
+    attributes:
+    __field_name__ - This is the name by which this instance of AttriBox
+    appeared in the class body of the owning class.
+    __field_owner__ - This is the class in whose body this instance of
+    AttriBox appeared.
+    __field_box__ - This is the instance of AttriBox itself.
     """
     instance = self.getContextInstance()
     fieldType = self.getFieldType()
     owner = type(instance)
     args = self.getPosArgs(THIS=instance, OWNER=owner, DESC=self)
     kwargs = self.getKeyArgs(THIS=instance, OWNER=owner, DESC=self)
-    return fieldType(*args, **kwargs)
+    fieldObject = fieldType(*args, **kwargs)
+    if hasattr(fieldType, '__set_name__'):
+      fieldObject.__set_name__(owner, self.getFieldName())
+    else:
+      try:
+        setattr(fieldObject, '__field_name__', self.getFieldName())
+        setattr(fieldObject, '__field_owner__', owner)
+        setattr(fieldObject, '__field_box__', self)
+      except AttributeError:
+        pass
+    return fieldObject
 
   def __instance_get__(self, *args, **kwargs) -> Any:
     """
