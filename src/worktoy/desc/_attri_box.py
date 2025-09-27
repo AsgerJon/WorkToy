@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.core import Object
-from worktoy.core.sentinels import DELETED
+from ..core import Object
+from ..core.sentinels import DELETED
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self

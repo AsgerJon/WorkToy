@@ -13,7 +13,7 @@ from ...core import Object
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Type
-  from worktoy.mcls import AbstractNamespace as ASpace
+  from .. import AbstractNamespace as ASpace
 
   AccessorHook = Callable[[ASpace, str, Any], Any]
   CompileHook = Callable[[ASpace, dict], dict]

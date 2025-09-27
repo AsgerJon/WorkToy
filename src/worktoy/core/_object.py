@@ -8,13 +8,15 @@ shared by every object in the library.
 from __future__ import annotations
 
 import re
+
 from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe
-from . import ContextInstance, MetaType, ContextOwner
-from .sentinels import THIS, DESC, OWNER, DELETED
 from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.desc import AccessError
+
+from .sentinels import THIS, DESC, OWNER, DELETED
+from . import ContextInstance, MetaType, ContextOwner
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Optional, Type, TypeAlias

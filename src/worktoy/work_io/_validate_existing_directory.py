@@ -7,8 +7,8 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import textFmt
-from worktoy.waitaminute import PathSyntaxException
+from ..utilities import textFmt
+from ..waitaminute import PathSyntaxException
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.dispatch import overload, Dispatcher
-from worktoy.mcls.space_hooks import AbstractSpaceHook
+from ...dispatch import overload, Dispatcher
+from . import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type, TypeAlias

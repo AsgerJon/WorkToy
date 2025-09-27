@@ -11,7 +11,7 @@ from ..utilities import textFmt
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
-  from worktoy.core import Object
+  from ..core import Object
 
 
 class WriteOnceError(TypeError):

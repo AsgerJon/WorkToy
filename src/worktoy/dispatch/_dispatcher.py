@@ -7,9 +7,9 @@ objects and thus provides the core overloading functionality.
 from __future__ import annotations
 
 import sys
+
 from types import FunctionType as Func
 from types import MethodType as Meth
-from typing import TYPE_CHECKING
 
 from ..core import Object
 from ..utilities import maybe, typeCast, perm
@@ -17,6 +17,8 @@ from ..waitaminute import TypeException, VariableNotNone
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..dispatch import TypeSig
 from ..waitaminute.dispatch import DispatchException
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, Never, TypeAlias, Optional, Self
@@ -43,10 +45,6 @@ class Dispatcher(Object):
   __field_name__ = None
   __field_owner__ = None
   __finalizer_func__ = None
-
-  #  Public Variables
-
-  #  Virtual Variables
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

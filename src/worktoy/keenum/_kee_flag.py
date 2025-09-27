@@ -33,7 +33,7 @@ from ..waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Tuple, Self, Iterator
-  from worktoy.keenum import KeeFlagsMeta
+  from ..keenum import KeeFlagsMeta
 
 
 class KeeFlag:

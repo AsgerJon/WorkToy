@@ -33,6 +33,7 @@ from ._desc import DESC
 from ._wild_card import WILDCARD
 from ._meta_call import METACALL
 from ._fallback import FALLBACK
+from ._function import Function
 
 __all__ = [
     'Sentinel',
@@ -43,4 +44,5 @@ __all__ = [
     'WILDCARD',
     'METACALL',
     'FALLBACK',
+    'Function',
 ]

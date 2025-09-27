@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import maybe
+from ...utilities import maybe
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Never

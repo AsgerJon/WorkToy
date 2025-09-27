@@ -136,7 +136,7 @@ class _InitSub(object):
     object.__init_subclass__()
 
 
-def newBuild(func, name, *args, **kwargs):
+def newBuild(func, name, *args, **kwargs) -> type:
   """A new build function that does nothing. Don't you remember?"""
   mcls = _resolveMetaclass(func, name, *args, **kwargs)
   bases = _resolveBases(func, name, *args, **kwargs)

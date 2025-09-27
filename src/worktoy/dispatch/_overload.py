@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.dispatch import TypeSig
+from ..dispatch import TypeSig
 from ..utilities import maybe, perm
 from ..waitaminute import attributeErrorFactory
 

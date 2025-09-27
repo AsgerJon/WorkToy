@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities.mathematics import pi
+from . import pi
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Union

@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.core.sentinels import THIS
-from worktoy.utilities import textFmt
+from ..core.sentinels import THIS
+from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Self, Iterator, Union
@@ -24,16 +24,8 @@ class TypeSig:
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Class Variables
-
-  #  Fallback Variables
-
   #  Private Variables
   __raw_types__ = None
-
-  #  Public Variables
-
-  #  Virtual Variables
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -41,10 +33,6 @@ class TypeSig:
 
   def _getRawTypes(self) -> RawTypes:
     return self.__raw_types__
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -68,8 +56,6 @@ class TypeSig:
     yield from self._getRawTypes()
 
   def __hash__(self, ) -> int:
-    # if THIS in self:
-    #   raise NotImplementedError
     return hash(self._getRawTypes())
 
   def __len__(self, ) -> int:
