@@ -8,8 +8,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..mcls import BaseSpace
-from . import KeeSpaceHook, Kee
 from ..waitaminute.keenum import KeeDuplicate, KeeTypeException
+
+from . import KeeSpaceHook, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Dict, TypeAlias

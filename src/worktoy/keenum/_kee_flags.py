@@ -57,6 +57,7 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..utilities import textFmt
 from ..waitaminute import MissingVariable, TypeException
+
 from . import KeeFlag, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover

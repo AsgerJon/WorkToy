@@ -6,12 +6,12 @@ KeeNum provides the shared baseclass for KeeNum enumerating classes.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
-from . import KeeMeta, Kee
 from ..core import Object
 from ..desc import Field
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.keenum import KeeWriteOnceError
+
+from . import KeeMeta, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Never

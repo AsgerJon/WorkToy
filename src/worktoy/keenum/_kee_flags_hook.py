@@ -7,8 +7,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import KeeFlag
 from ..mcls.space_hooks import AbstractSpaceHook
+
+from . import KeeFlag
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

@@ -11,9 +11,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..dispatch import TypeSig
 from ..utilities import maybe, perm
 from ..waitaminute import attributeErrorFactory
+
+from . import TypeSig
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Self, Iterator, Never

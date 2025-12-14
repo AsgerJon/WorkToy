@@ -15,8 +15,9 @@ from ..core import Object
 from ..utilities import maybe, typeCast, perm
 from ..waitaminute import TypeException, VariableNotNone
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
-from ..dispatch import TypeSig
 from ..waitaminute.dispatch import DispatchException
+
+from . import TypeSig
 
 from typing import TYPE_CHECKING
 

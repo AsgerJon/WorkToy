@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import KeeFlag, KeeFlagsHook
 from ..mcls import BaseSpace, AbstractNamespace
 from ..utilities import maybe
 from ..waitaminute.keenum import KeeDuplicate
+
+from . import KeeFlag, KeeFlagsHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Type, TypeAlias, Callable, Self
@@ -85,12 +86,12 @@ class KeeFlagsSpace(BaseSpace):
       BaseSpace.__init__(self, mcls, name, bases, **kw)
     else:
       AbstractNamespace.__init__(
-          self,
-          mcls,
-          name,
-          bases,
-          _strictMRO=False,
-          **kw
+        self,
+        mcls,
+        name,
+        bases,
+        _strictMRO=False,
+        **kw
       )
       self.__kee_flags__ = None
       cls = type(self)

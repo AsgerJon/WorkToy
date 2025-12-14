@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..mcls.space_hooks import AbstractSpaceHook
+
 from . import Kee
 
 if TYPE_CHECKING:  # pragma: no cover

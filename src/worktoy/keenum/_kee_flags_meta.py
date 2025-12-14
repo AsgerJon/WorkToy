@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt, maybe
+
 from . import KeeFlag
 from . import KeeFlagsSpace as KFSpace
 

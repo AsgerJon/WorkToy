@@ -15,13 +15,27 @@ The package consists of thr following modules:
 - 'keenum': Provides the 'KeeNum' class for creating enums.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2024-2025 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from . import utilities
-from . import core
 from . import waitaminute
+from . import core
 from . import desc
+from . import dispatch
 from . import mcls
 from . import keenum
 from . import ezdata
+from . import work_io
+
+__all__ = [
+  'utilities',
+  'waitaminute',
+  'core',
+  'desc',
+  'dispatch',
+  'mcls',
+  'keenum',
+  'ezdata',
+  'work_io',
+]

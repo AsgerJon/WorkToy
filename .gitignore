@@ -169,10 +169,6 @@ _scratcher.py
 /docs/
 sym.md
 
-
-
-
-
 /main_tester_class01.py
 /main_tester_class02.py
 /main_tester_class03.py
@@ -185,6 +181,4 @@ sym.md
 /main.py
 /old_main.py
 /main_old.py
-/yolo.py
 /temp/test_dir/test_file.txt
-/run_coverage.sh

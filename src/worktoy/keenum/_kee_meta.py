@@ -9,10 +9,11 @@ from typing import TYPE_CHECKING
 
 from ._kee_desc import Base, MRO, Members, IsRoot
 from ..mcls import BaseMeta
-from . import KeeSpace as KSpace, Kee
 from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.keenum import KeeNameError, KeeIndexError
 from ..waitaminute.keenum import KeeMemberError, KeeValueError
+
+from . import KeeSpace as KSpace, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Self, Iterator
