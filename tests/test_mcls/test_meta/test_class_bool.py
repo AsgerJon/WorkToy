@@ -160,4 +160,5 @@ class TestClassBool(MCLSTest):
     self.assertEqual(str(e), repr(e))
 
     with self.assertRaises(TypeError):
-      class Yikes(Foo, Bar): pass
+      class Yikes(Foo, Bar):
+        pass

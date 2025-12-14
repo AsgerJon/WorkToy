@@ -195,7 +195,8 @@ class TestClassHooks(MCLSTest):
     self.assertEqual(cm.exception.methodName, "instancecheck")
 
   def test_subclasscheck(self) -> None:
-    class Foo: pass
+    class Foo:
+      pass
 
     with self.assertRaises(ClassLevelCalled) as cm:
       issubclass(Foo, ClassHooks)

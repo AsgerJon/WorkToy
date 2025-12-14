@@ -26,8 +26,6 @@ class TestPerm(UtilitiesTest):
     tomDickHarry = ['Tom', 'Dick', 'Harry']
     self.assertEqual(len([*perm(*tomDickHarry, ), ]), 6)
 
-    return self
-
   def test_52(self) -> None:
     """Testing playing cards"""
     cards = 'T', 'J', 'Q', 'K', 'A'

@@ -143,7 +143,8 @@ class TypeCastTestCase(UtilitiesTest):
     d = {'a': 1, 'b': 2}
     self.assertEqual(typeCast(dict, d), d)
 
-    class CustomDict(dict): pass
+    class CustomDict(dict):
+      pass
 
     self.assertEqual(typeCast(dict, CustomDict({'x': 10})), {'x': 10})
     with self.assertRaises(TypeCastException):
@@ -155,7 +156,8 @@ class TypeCastTestCase(UtilitiesTest):
     """Casts to type. Only classes accepted."""
     self.assertIs(typeCast(type, int), int)
 
-    class MyClass: pass
+    class MyClass:
+      pass
 
     self.assertIs(typeCast(type, MyClass), MyClass)
     with self.assertRaises(TypeCastException):
