@@ -6,7 +6,7 @@
 
 The **worktoy** provides utilities for Python development focused on
 reducing boilerplate code, type-safety and readability. Each release is
-tested thoroughly on each supported Python version from 3.7* to 3.13.
+tested thoroughly on each supported Python version from 3.7* to 3.14.
 
 Note: *Not an endorsement. If your open source project requires Python 3.7,
 it's time to update. There are plenty of people willing to help you. If
