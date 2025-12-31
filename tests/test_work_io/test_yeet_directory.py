@@ -23,18 +23,6 @@ class TestYeetDirectory(WorkIOTest):
   'worktoy.work_io' module.
   """
 
-  @classmethod
-  def tearDownClass(cls) -> None:
-    """
-    Cleans up the test environment by removing the temporary directory and
-    its contents.
-    """
-    super().tearDownClass()
-    import sys
-    import gc
-    sys.modules.pop(__name__, None)
-    gc.collect()
-
   def test_yeet_temp(self) -> None:
     """
     Tests that yeetDirectory empties the temporary directory.

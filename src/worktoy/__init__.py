@@ -5,14 +5,15 @@ included features. The modules provided depend on each other in
 implementation, but can be used independently.
 
 The package consists of thr following modules:
-- 'parse': For low-level parsing.
-- 'text': For working with text.
-- 'waitaminute': Provides custom exception classes.
-- 'static': For parsing of objects.
-- 'mcls': Provides custom metaclasses.
-- 'attr': Provides custom descriptors.
-- 'ezdata': Provides the 'EZData' class for creating data classes.
-- 'keenum': Provides the 'KeeNum' class for creating enums.
+- utilities: A set of general-purpose utility functions and classes.
+- waitaminute: Tools for managing execution flow and timing.
+- core: Core functionalities and base classes for the package.
+- desc: Descriptor protocol utilities.
+- dispatch: Function and method dispatching used by overload system.
+- mcls: Custom metaclass implementations.
+- keenum: Enumeration utilities.
+- ezdata: Dataclass implementation.
+- work_io: Input/output utilities for file and directory management.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025 Asger Jon Vistisen
