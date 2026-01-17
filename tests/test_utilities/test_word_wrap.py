@@ -57,3 +57,15 @@ class TestWordWrap(UtilitiesTest):
     self.assertEqual(e.actualObject, 123)
     self.assertEqual(e.actualType, int)
     self.assertEqual(e.expectedTypes, (str,))
+
+  def test_samples(self, ) -> None:
+    """
+    Testing the wordWrap function with sample inputs.
+    """
+
+    words = str.split(self.sentence)
+    minWord = min([len(word) for word in words])
+    for i in [7, 6, 5, 4, 3, 2]:
+      wrapped = wordWrap(i * int(minWord) + 1, self.sentence)
+      for word in words:
+        self.assertIn(word, wrapped)

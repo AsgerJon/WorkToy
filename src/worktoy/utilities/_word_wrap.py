@@ -1,9 +1,10 @@
-"""The 'worktoy.workWrap' function receives an integer defining character
+"""
+The 'worktoy.wordWrap' function receives an integer defining character
 width and any number of strings. The function then returns a list of
 strings containing the words from the strings received such that each
 entry in the list does not exceed the character width. """
 #  AGPL-3.0 license
-#  Copyright (c) 2024-2025 Asger Jon Vistisen
+#  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 
@@ -26,6 +27,8 @@ def wordWrap(width: int, *textLines, **kwargs) -> str:
     if word.lower() == newLine or len(' '.join([*line, word])) > width:
       lines.append(' '.join(line))
       line = []
-      continue
     line.append(word)
+  else:
+    if line:
+      lines.append(' '.join(line))
   return '\n'.join(lines)
