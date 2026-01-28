@@ -3,9 +3,10 @@ TestArithmetic tests the shared arithmetic implementations on each of the
 complex number implementations.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import os
 from random import random
 from typing import TYPE_CHECKING
 
@@ -25,25 +26,28 @@ class TestArithmetic(DescTest):
 
   def setUp(self) -> None:
     from . import ComplexBox, ComplexFields, ComplexFieldsSubclass
-    from . import ComplexLabel, ComplexAlias
+    from . import ComplexFix, ComplexAlias
     from tests.test_dispatch import ComplexNumber, ComplexSubclass
     from tests.test_dispatch import ComplexMeta, ComplexMetaSub
     from tests.test_dispatch import Comflex, ComflexMeta
     self.classes = [
-        ComplexBox,
-        ComplexFields,
-        ComplexFieldsSubclass,
-        ComplexLabel,
-        ComplexAlias,
-        ComplexNumber,
-        ComplexSubclass,
-        ComplexMeta,
-        ComplexMetaSub,
-        Comflex,
-        ComflexMeta
+      ComplexBox,
+      ComplexFields,
+      ComplexFieldsSubclass,
+      ComplexFix,
+      ComplexAlias,
+      ComplexNumber,
+      ComplexSubclass,
+      ComplexMeta,
+      ComplexMetaSub,
+      Comflex,
+      ComflexMeta
     ]
     self.posArgs = dict()
-    n = 1  # Number of samples in each quadrant. Keep at 1 when developing
+    n = 8  # Number during tests in CI/CD
+    #  Reduces 'n' to 1 during development.
+    if os.environ.get('DEVELOPMENT_ENVIRONMENT'):  # pragma: no cover
+      n = 1
     for cls in self.classes:
       self.posArgs[cls] = []
       for _ in range(n):

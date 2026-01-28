@@ -3,7 +3,7 @@ The 'worktoy.utilities' module provides small, standalone utilities used
 across the 'worktoy' library.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._perm import perm
@@ -15,6 +15,7 @@ from ._unpack import unpack
 from ._maybe import maybe
 from ._replace_flex import replaceFlex
 from ._text_fmt import textFmt
+from ._exception_info import ExceptionInfo
 from ._string_list import stringList
 from ._directory import Directory
 from ._join_words import joinWords
@@ -23,19 +24,20 @@ from ._word_wrap import wordWrap
 from . import mathematics
 
 __all__ = [
-    'perm',
-    'sliceLen',
-    'typeCast',
-    'ClassBodyTemplate',
-    'bipartiteMatching',
-    'unpack',
-    'maybe',
-    'replaceFlex',
-    'textFmt',
-    'stringList',
-    'Directory',
-    'joinWords',
-    'resolveMRO',
-    'wordWrap',
-    'mathematics',
+  'perm',
+  'sliceLen',
+  'typeCast',
+  'ClassBodyTemplate',
+  'bipartiteMatching',
+  'unpack',
+  'maybe',
+  'replaceFlex',
+  'textFmt',
+  'ExceptionInfo',
+  'stringList',
+  'Directory',
+  'joinWords',
+  'resolveMRO',
+  'wordWrap',
+  'mathematics',
 ]

@@ -1,4 +1,5 @@
-"""ProtectedError is raised to indicate an attempt to delete a protected
+"""
+ProtectedError is raised to indicate an attempt to delete a protected
 object. For example, a descriptor class could implement the '__delete__'
 method to always raise this exception. This provides a more detailed
 error. Particularly because both TypeError and AttributeError are being
@@ -9,7 +10,7 @@ The ProtectedError class inherits from both TypeError and AttributeError,
 ensuring that it is caught in exception clauses pertaining to either.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -22,7 +23,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class ProtectedError(DescriptorException):
-  """ProtectedError is raised to indicate an attempt to delete a protected
+  """
+  ProtectedError is raised to indicate an attempt to delete a protected
   object. For example, a descriptor class could implement the '__delete__'
   method to always raise this exception. This provides a more detailed
   error. Particularly because both TypeError and AttributeError are being

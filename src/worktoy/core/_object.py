@@ -4,17 +4,15 @@ stands in for the 'object' type by adding functionality that must be
 shared by every object in the library.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import re
-
 from typing import TYPE_CHECKING
 
-from ..utilities import Directory, maybe
+from ..utilities import Directory, maybe, textFmt
 from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.desc import AccessError
-
 from .sentinels import THIS, DESC, OWNER, DELETED
 from . import ContextInstance, MetaType, ContextOwner
 
@@ -151,6 +149,12 @@ class Object(metaclass=MetaType):
     """
     own = self.__context_owner__
     ins = self.__context_instance__
+    if (ins is None) ^ (own is None):
+      infoSpec = """Encountered inconsistent context state! The context 
+      owner and instance must both be 'None' or neither be 'None', 
+      but received instance: '%s' and owner: '%s'."""
+      info = infoSpec % (str(ins), str(own))
+      raise RuntimeError(textFmt(info, ))
     if own is None:
       return False
     return True
@@ -291,18 +295,14 @@ class Object(metaclass=MetaType):
     self.__context_owner__ = None
     return self
 
-  def _deletedGuard(self, instance: Any, value: Any) -> Any:
+  def _deletedGuard(self, instance: Any, value: Any, ) -> Any:
     """
     A guard that raises an exception if the value is 'DELETED'. This is
     used to prevent accessing deleted attributes.
     """
     if value is DELETED:
-      infoSpec = """%s: '%s' object has no attribute '%s'."""
-      eType = 'AttributeError'
-      ownerName = type(instance).__name__
-      fieldName = getattr(self, '__field_name__', 'object')
-      info = infoSpec % (eType, ownerName, fieldName)
-      raise AttributeError(info)
+      attributeError = attributeErrorFactory(instance, self.__field_name__)
+      raise AttributeError(attributeError)
     return value
 
   def getPrivateName(self, ) -> str:

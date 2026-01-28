@@ -1,7 +1,9 @@
 """TestWordWrap tests the wordWrap function."""
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
+
+from random import shuffle
 
 from . import UtilitiesTest
 from worktoy.utilities import wordWrap, textFmt
@@ -69,3 +71,15 @@ class TestWordWrap(UtilitiesTest):
       wrapped = wordWrap(i * int(minWord) + 1, self.sentence)
       for word in words:
         self.assertIn(word, wrapped)
+
+    wordBag = []
+    while words:
+      wordBag.append(words.pop())
+      maxWord = max([len(word) for word in wordBag])
+      allWords = len(' '.join(wordBag)) + 1
+      for _ in range(7):
+        shuffle(wordBag)
+        for i in range(maxWord, allWords):
+          wrapped = wordWrap(i, textFmt(*wordBag))
+          for word in wordBag:
+            self.assertIn(word, wrapped)

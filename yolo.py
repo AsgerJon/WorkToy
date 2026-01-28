@@ -13,7 +13,7 @@ from typing import Callable
 from worktoy.utilities import stringList
 
 
-def yolo(*args: Callable) -> None:
+def _yolo(*args: Callable) -> None:
   """The 'yolo' function receives any number of callables and runs them."""
   tic = time.perf_counter_ns()
   startTime = time.ctime()
@@ -86,6 +86,18 @@ def yolo(*args: Callable) -> None:
   else:
     msg = """Runtime: %d seconds - Completed on %s"""
     print(msg % (seconds, time.ctime()))
+
+
+def yolo(*args: Callable) -> None:
+  """The 'yolo' function receives any number of callables and runs them."""
+  os.environ['DEVELOPMENT_ENVIRONMENT'] = '1'
+  try:
+    _yolo(*args)
+  finally:
+    try:
+      del os.environ['DEVELOPMENT_ENVIRONMENT']
+    except KeyError:
+      pass
 
 
 def runTests(verbosity: int = None) -> int:

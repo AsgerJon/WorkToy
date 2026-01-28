@@ -6,6 +6,8 @@
 
 set -eu
 
+export DEVELOPMENT_ENVIRONMENT=1
+
 runTests() {
   reportDir="htmlcov"
 

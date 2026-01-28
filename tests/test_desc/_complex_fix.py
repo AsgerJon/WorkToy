@@ -1,29 +1,38 @@
 """
-ComplexLabel provides a complex number implementation for testing the
-'LabelBox' descriptor class from the 'worktoy.desc' module.
+ComplexFix provides a complex number implementation for testing the
+'FixBox' descriptor class from the 'worktoy.desc' module.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from random import random
 from typing import TYPE_CHECKING
 
-from worktoy.desc import LabelBox, Field
+from worktoy.desc import FixBox, Field
+from worktoy.dispatch import overload
+from worktoy.mcls import BaseObject
+from worktoy.utilities import stringList
 from worktoy.utilities.mathematics import atan2, exp, log
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Iterator
 
 
-class ComplexLabel:
+class ComplexFix(BaseObject):
   """
-  ComplexLabel provides a complex number implementation for testing the
-  'LabelBox' descriptor class from the 'worktoy.desc' module.
+  ComplexFix provides a complex number implementation for testing the
+  'FixBox' descriptor class from the 'worktoy.desc' module.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+  __real_keys__ = stringList("""real, x, RE, cos""")
+  __imag_keys__ = stringList("""imag, y, IM, sin""")
+  __key_groups__ = __real_keys__, __imag_keys__
 
   #  Fallback Variables
   __fallback_real__ = 0.0
@@ -34,8 +43,8 @@ class ComplexLabel:
   __imag_part__ = None
 
   #  Public Variables
-  RE = LabelBox[float](0.0)
-  IM = LabelBox[float](0.0)
+  RE = FixBox[float](0.0)
+  IM = FixBox[float](0.0)
 
   #  Virtual Variables
   ABS = Field()
@@ -94,7 +103,7 @@ class ComplexLabel:
       return other
     try:
       other = cls(other)
-    except (ValueError, TypeError) as exception:
+    except (ValueError, TypeError):
       return NotImplemented
     else:
       return other
@@ -160,13 +169,53 @@ class ComplexLabel:
   def __abs__(self, ) -> float:
     return self.ABS
 
+  def __pos__(self) -> Self:
+    """
+    Returns the conjugate of the complex number.
+    """
+    cls = type(self)
+    return cls(self.RE, -self.IM)
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, *args, **kwargs) -> None:
-    if len(args) == 1:
-      arg = complex(args[0])
-      self.RE, self.IM = arg.real, arg.imag
-    else:
-      self.RE, self.IM, *_ = args
+  @overload(float, float)
+  def __init__(self, realPart: float, imagPart: float) -> None:
+    self.RE = realPart
+    self.IM = imagPart
+
+  @overload(complex)
+  def __init__(self, other: complex) -> None:
+    self.RE = other.real
+    self.IM = other.imag
+
+  @overload()
+  def __init__(self, **kwargs) -> None:
+    _x, _y = None, None
+    for group in self.__key_groups__:
+      for key in group:
+        if key in kwargs:
+          value = kwargs.pop(key)
+          if key in self.__real_keys__:
+            _x = value
+          else:
+            _y = value
+          break
+    if _x is not None:
+      self.RE = _x
+    if _y is not None:
+      self.IM = _y
+
+  @classmethod
+  def rand(cls, *args, ) -> Self:
+    a, b, *_ = (*args, 0.0, 1.0)
+    minVal, maxVal = min(a, b), max(a, b)
+    realVal = (maxVal - minVal) * random() + minVal
+    imagVal = (maxVal - minVal) * random() + minVal
+    return cls(realVal, imagVal)
+
+  @classmethod
+  def rands(cls, n: int, *args, ) -> Iterator[Self]:
+    for _ in range(n):
+      yield cls.rand(*args, )

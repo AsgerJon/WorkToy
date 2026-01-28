@@ -3,20 +3,20 @@ TestObjectUmbrella covers obscure edge cases and esoteric fallbacks of the
 fundamental object in the 'worktoy' library.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
+import os
 
 from worktoy.waitaminute import TypeException
-from . import CoreTest
 from worktoy.core import Object, ContextInstance, ContextOwner
 from worktoy.core.sentinels import DESC, THIS, OWNER
 from worktoy.mcls import BaseObject
 from worktoy.utilities import Directory
 from worktoy.waitaminute.desc import WithoutException, ReadOnlyError
 from worktoy.waitaminute.desc import ProtectedError
+from . import CoreTest
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -102,6 +102,21 @@ class TestObjectUmbrella(CoreTest):
   def testClassContextInstance(self) -> None:
     """Tests class context manager with instance"""
     self.assertIsInstance(Object.instance, ContextInstance)
+
+  def testCorruptedContext(self, ) -> None:
+    """Tests the exception raised during corrupted context. """
+    obj = Object()
+    setattr(obj, '__context_owner__', 69)
+    with self.assertRaises(RuntimeError) as context:
+      _ = obj.hasContext()
+    e = context.exception
+    self.assertIn('69', str(e))
+    obj2 = Object()
+    setattr(obj2, '__context_instance__', 420)
+    with self.assertRaises(RuntimeError) as context:
+      _ = obj2.hasContext()
+    e = context.exception
+    self.assertIn('420', str(e))
 
   def testObjectDirectory(self) -> None:
     """Tests that Object has a directory."""

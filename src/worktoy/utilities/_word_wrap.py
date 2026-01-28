@@ -29,6 +29,5 @@ def wordWrap(width: int, *textLines, **kwargs) -> str:
       line = []
     line.append(word)
   else:
-    if line:
-      lines.append(' '.join(line))
+    lines.append(' '.join(line))
   return '\n'.join(lines)

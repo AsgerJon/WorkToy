@@ -3,13 +3,16 @@ AttriBox implements a lazily instantiated and strongly typed descriptor
 class.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ..core import Object
 from ..core.sentinels import DELETED
+from ..utilities import typeCast
+from ..waitaminute import TypeException
+from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
@@ -78,33 +81,46 @@ class AttriBox(Object):
     Returns the value of the field for the given instance. If the value is
     not set, it initializes it with a new instance of the field type.
     """
-    instance = self.getContextInstance()
     pvtName = self.getPrivateName()
-    if hasattr(instance, pvtName):
-      return getattr(instance, pvtName)
+    try:
+      value = getattr(self.instance, pvtName)
+    except AttributeError as attributeError:
+      pass
+    else:
+      return value
+    if kwargs.get('_recursion', False):
+      raise RecursionError
     fieldObject = self._createFieldObject()
-    setattr(instance, pvtName, fieldObject)
-    return self.__instance_get__(instance, _recursion=True)
+    setattr(self.instance, pvtName, fieldObject)
+    return self.__instance_get__(_recursion=True)
 
   def __instance_set__(self, value: Any, *args, **kwargs) -> None:
     """
     Sets the value of the field for the given instance. If the value is
     not set, it initializes it with a new instance of the field type.
     """
-    instance = self.getContextInstance()
     fieldType = self.getFieldType()
     pvtName = self.getPrivateName()
     if isinstance(value, fieldType) or kwargs.get('_root', False):
-      return setattr(instance, pvtName, value)
-    setattr(instance, pvtName, fieldType(value))
+      return setattr(self.instance, pvtName, value)
+    #  Catch recursion
+    if kwargs.get('_recursion', False):
+      raise RecursionError
+    #  Attempt to 'typeCast'
+    try:
+      castedValue = typeCast(fieldType, value)
+    except TypeCastException as typeCastException:
+      raise TypeException('value', value, fieldType) from typeCastException
+    else:
+      return self.__instance_set__(castedValue, _recursion=True)
 
   def __instance_delete__(self, *args, **kwargs) -> None:
     """
     Deletes the value of the field for the given instance. If the value is
     not set, it does nothing.
     """
-    self._deletedGuard(self.getContextInstance(), self.__instance_get__())
-    self.__instance_set__(DELETED, _root=True)
+    pvtName = self.getPrivateName()
+    setattr(self.instance, pvtName, DELETED)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -126,3 +142,10 @@ class AttriBox(Object):
     """
     Object.__init__(self, *args, **kwargs)
     return self
+
+  def __delete__(self, instance: Any, **kwargs) -> None:
+    try:
+      Object.__delete__(self, instance, **kwargs)
+    except AttributeError as attributeError:
+      fieldName = self.getFieldName()
+      raise AttributeError(fieldName) from attributeError

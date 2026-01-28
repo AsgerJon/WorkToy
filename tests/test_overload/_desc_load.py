@@ -7,13 +7,13 @@ the attempting to cast an argument to a type, arises from a prior attempt
 to instantiate that type.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import THIS
-from worktoy.desc import Field, LabelBox
+from worktoy.desc import Field, FixBox
 from worktoy.dispatch import Dispatcher
 from worktoy.utilities import textFmt
 
@@ -44,12 +44,12 @@ class DescLoad:
 
   #  Public Variables
   loaded = Field()
-  x = LabelBox[int](0)
-  y = LabelBox[int](0)
-  z = LabelBox[int](0)
-  u = LabelBox[int](0)
-  v = LabelBox[int](0)
-  w = LabelBox[int](0)
+  x = FixBox[int](0)
+  y = FixBox[int](0)
+  z = FixBox[int](0)
+  u = FixBox[int](0)
+  v = FixBox[int](0)
+  w = FixBox[int](0)
 
   #  Overload Variables
   __init__ = Dispatcher()

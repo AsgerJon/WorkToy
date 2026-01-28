@@ -39,7 +39,7 @@ jobs:
         if: ${{ matrix.python-version == '3.14' && failure() }}
         run: |
           echo "Python 3.14 is not yet available in GitHub Actions."
-          echo "Unit tests for versions 3.7 to 3.12 did pass successfully."
+          echo "Unit tests for versions 3.7 to 3.13 did pass successfully."
           echo "Publication will proceed."
 
       - name: Set RUNNING_TESTS environment variable

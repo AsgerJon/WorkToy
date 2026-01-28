@@ -22,10 +22,11 @@ Contents:
   present descriptor.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._sentinel import Sentinel
+from ._place_holder import PLACE_HOLDER
 from ._deleted import DELETED
 from ._owner import OWNER
 from ._this import THIS
@@ -36,13 +37,14 @@ from ._fallback import FALLBACK
 from ._function import Function
 
 __all__ = [
-    'Sentinel',
-    'DELETED',
-    'OWNER',
-    'THIS',
-    'DESC',
-    'WILDCARD',
-    'METACALL',
-    'FALLBACK',
-    'Function',
+  'Sentinel',
+  'PLACE_HOLDER',
+  'DELETED',
+  'OWNER',
+  'THIS',
+  'DESC',
+  'WILDCARD',
+  'METACALL',
+  'FALLBACK',
+  'Function',
 ]
