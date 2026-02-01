@@ -3,7 +3,7 @@ a typo, such as '__set_item__' instead of '__setitem__' or '__setname__'
 instead of '__set_name__'.
 This is a"""
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

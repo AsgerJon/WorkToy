@@ -5,7 +5,7 @@ recognize situations where a descriptor has raised an exception. These
 exceptions propagate *without* being passed to the fallback method.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

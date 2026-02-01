@@ -4,7 +4,7 @@ metaclasses used across the library both derive from and base on this
 class. This is necessary to prevent metaclass conflicts.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -4,7 +4,7 @@ motivated by the fact that Python strings spanning multiple lines contains
 the linebreaks verbatim, which is almost never desired.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import os

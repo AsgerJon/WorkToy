@@ -4,7 +4,7 @@ given arguments. Because the overload protocol relies on type matching,
 this exception subclasses TypeError such that it can be caught by external
 error handlers. """
 #  AGPL-3.0 license
-#  Copyright (c) 2024-2025 Asger Jon Vistisen
+#  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

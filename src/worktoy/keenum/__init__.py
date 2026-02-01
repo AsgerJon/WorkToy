@@ -2,7 +2,7 @@
 The 'worktoy.keenum' module provides the enumerating KeeNum class.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._kee_member import Kee
@@ -17,13 +17,13 @@ from ._kee_flags_meta import KeeFlagsMeta
 from ._kee_flags import KeeFlags
 
 __all__ = [
-    'Kee',
-    'KeeFlag',
-    'KeeSpaceHook',
-    'KeeSpace',
-    'KeeMeta',
-    'KeeNum',
-    'KeeFlagsSpace',
-    'KeeFlagsMeta',
-    'KeeFlags',
+  'Kee',
+  'KeeFlag',
+  'KeeSpaceHook',
+  'KeeSpace',
+  'KeeMeta',
+  'KeeNum',
+  'KeeFlagsSpace',
+  'KeeFlagsMeta',
+  'KeeFlags',
 ]

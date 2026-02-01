@@ -2,12 +2,12 @@
 TestKeeFlagsMeta tests the KeeFlagsMeta metaclass functionality.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.waitaminute.keenum import KeeDuplicate
+from worktoy.waitaminute.keenum import KeeFlagDuplicate
 from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsMeta, KeeNum
 from worktoy.desc import Field
 from worktoy.utilities import perm
@@ -34,10 +34,10 @@ class TestKeeFlagsMeta(KeeTest):
     Tests that 'KeeFlagsMeta' correctly implements the 'valueType' field.
     """
     metaAttributes = dict(
-        flags=Field,
-        memberList=Field,
-        memberDict=Field,
-        valueType=Field
+      flags=Field,
+      memberList=Field,
+      memberDict=Field,
+      valueType=Field
     )
     for key, value in metaAttributes.items():
       self.assertTrue(hasattr(KeeFlagsMeta, key))
@@ -178,13 +178,17 @@ class TestKeeFlagsMeta(KeeTest):
 
   def testBaseDuplicateFlag(self, ) -> None:
     """Tests that defining a duplicate flag raises an error."""
-    with self.assertRaises(KeeDuplicate) as context:
+    a = KeeFlag()
+    b = KeeFlag()
+    with self.assertRaises(KeeFlagDuplicate) as context:
       class StackedOverflow(KeeFlags):
-        BREH = KeeFlag()
-        BREH = KeeFlag()
+        BREH = a
+        BREH = b
     e = context.exception
+    self.assertEqual(str(e), repr(e))
     self.assertEqual(e.name, 'BREH')
-    self.assertIsInstance(e.value, KeeFlag)
+    self.assertIs(e.oldFlag, a)
+    self.assertIs(e.newFlag, b)
 
   def testCustomGetValue(self) -> None:
     """Tests that defining a custom 'getValue' method works as intended."""

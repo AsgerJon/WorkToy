@@ -6,14 +6,13 @@ that the owning class is derived from 'BaseMeta' or a subclass of
 'worktoy.dispatch' instead.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ..utilities import maybe, perm
 from ..waitaminute import attributeErrorFactory
-
 from . import TypeSig
 
 if TYPE_CHECKING:  # pragma: no cover

@@ -3,7 +3,7 @@ AbstractNamespace class provides a base class for custom namespace
 objects used in custom metaclasses.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 from ..utilities import textFmt, resolveMRO
 from ..waitaminute.meta import HookException, DuplicateHook
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
-
 from . import Base
 
 if TYPE_CHECKING:  # pragma: no cover

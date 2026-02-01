@@ -1,7 +1,7 @@
 """FidGen provides filename generator. Given a format specification and a
 directory, it returns the next available filename of the given format."""
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import os
@@ -219,8 +219,8 @@ class FidGen(BaseObject):
   def _getCommonExtensions() -> list[str]:
     """Returns a list of common file extensions."""
     return stringList(
-        """json, txt, csv, xml, html, pdf, doc, csv, py, 
-        mkv, mp4, mp3, wav, jpg, png, gif, zip, tar, gz, bz2"""
+      """json, txt, csv, xml, html, pdf, doc, csv, py, 
+      mkv, mp4, mp3, wav, jpg, png, gif, zip, tar, gz, bz2"""
     )
 
   @classmethod

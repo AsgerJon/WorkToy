@@ -3,15 +3,14 @@ KeeFlagsSpace subclasses KeeSpace from the worktoy.keenum package
 providing the namespace object required for KeeFlags.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ..mcls import BaseSpace, AbstractNamespace
 from ..utilities import maybe
-from ..waitaminute.keenum import KeeDuplicate
-
+from ..waitaminute.keenum import KeeFlagDuplicate
 from . import KeeFlag, KeeFlagsHook
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -70,7 +69,8 @@ class KeeFlagsSpace(BaseSpace):
     baseFlags = self._getBaseFlags()
     keeFlags = self.getKeeFlags()
     if name in maybe(self.__kee_flags__, dict()):
-      raise KeeDuplicate(name, keeFlag)
+      oldFlag = self.__kee_flags__[name]
+      raise KeeFlagDuplicate(name, oldFlag, keeFlag)
     keeFlag.__member_index__ = len(baseFlags) + len(keeFlags)
     keeFlag.__member_name__ = name
     keeFlag.__field_name__ = name

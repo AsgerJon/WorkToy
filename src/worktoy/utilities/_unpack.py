@@ -3,7 +3,7 @@ The 'unpack' function squeezes a tuple of arguments until no array like
 member remains.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from collections.abc import Iterable

@@ -3,7 +3,7 @@ errors. Specifically, this exception should NOT be raised if the object is
 None instead of the expected type. This is because None indicates absense
 rather than type mismatch. """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

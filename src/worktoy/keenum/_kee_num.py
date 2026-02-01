@@ -2,15 +2,15 @@
 KeeNum provides the shared baseclass for KeeNum enumerating classes.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from ..core import Object
 from ..desc import Field
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.keenum import KeeWriteOnceError
-
 from . import KeeMeta, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -56,7 +56,7 @@ class KeeNum(Object, metaclass=KeeMeta, ):
 
   @index.GET
   def _getIndex(self) -> int:
-    return int(self.kee)
+    return self.kee.index
 
   @value.GET
   def _getValue(self) -> Any:

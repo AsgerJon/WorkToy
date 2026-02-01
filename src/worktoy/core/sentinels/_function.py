@@ -4,7 +4,7 @@ functions, builtin functions, or functions defined in class bodies,
 but retrieved through instances or through the class itself.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from ...waitaminute.meta import IllegalInstantiation
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Never
+  from typing import Any
 
 
 class _Root:
@@ -60,15 +60,15 @@ class _MetaFunction(type):
         """If you just put 'pass', it is not considered covered lmao"""
 
     mcls.__func_types__ = [
-        type(lambda: None),
-        type(print),
-        type(foo),
-        type(Bar.baz),
-        type(Bar.qux),
-        type(Bar.quux),
-        type(Bar().baz),
-        type(Bar().qux),
-        type(Bar().quux),
+      type(lambda: None),
+      type(print),
+      type(foo),
+      type(Bar.baz),
+      type(Bar.qux),
+      type(Bar.quux),
+      type(Bar().baz),
+      type(Bar().qux),
+      type(Bar().quux),
     ]
 
   @classmethod

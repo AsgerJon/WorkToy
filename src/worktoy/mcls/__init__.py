@@ -18,7 +18,7 @@ class object allowing the baseclass to modify or even reject the class.
 Finally, the metaclass returns the created class object.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2024-2025 Asger Jon Vistisen
+#  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from . import space_hooks  # Public sub package
@@ -31,14 +31,14 @@ from ._base_meta import BaseMeta
 from ._base_object import BaseObject
 
 __all__ = [
-    'space_hooks',
-    'Spaces',
-    'Base',
-    'Space',
-    'Types',
-    'AbstractNamespace',
-    'AbstractMetaclass',
-    'BaseSpace',
-    'BaseMeta',
-    'BaseObject',
+  'space_hooks',
+  'Spaces',
+  'Base',
+  'Space',
+  'Types',
+  'AbstractNamespace',
+  'AbstractMetaclass',
+  'BaseSpace',
+  'BaseMeta',
+  'BaseObject',
 ]

@@ -1,12 +1,14 @@
 #!/usr/bin/env sh
 #
 # AGPL-3.0 license
-# Copyright (c) 2025 Asger Jon Vistisen
+# Copyright (c) 2025-2026 Asger Jon Vistisen
 #
 
 set -eu
 
 export DEVELOPMENT_ENVIRONMENT=1
+export PYTHONDONTWRITEBYTECODE=1
+
 
 runTests() {
   reportDir="htmlcov"

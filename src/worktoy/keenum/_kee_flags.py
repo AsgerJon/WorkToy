@@ -49,7 +49,7 @@ body. However, while
 
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -57,7 +57,6 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..utilities import textFmt
 from ..waitaminute import MissingVariable, TypeException
-
 from . import KeeFlag, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover

@@ -2,7 +2,7 @@
 TestNum provides the basic tests for the KeeNum class.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from datetime import date
@@ -85,10 +85,10 @@ class TestNum(KeeTest):
   def test_is_not_instancecheck(self) -> None:
     """Test that the WeekDay class is not an instance of KeeNum."""
     items = [
-        69,
-        420.0,
-        """Imma a KeeNum, trust me bro!""",
-        type('Keeeeee', (), {}),
+      69,
+      420.0,
+      """Imma a KeeNum, trust me bro!""",
+      type('Keeeeee', (), {}),
     ]
     for cls in self.exampleNums:
       for item in items:
@@ -98,7 +98,7 @@ class TestNum(KeeTest):
   def test_is_not_subclasscheck(self) -> None:
     """Test that the WeekDay class is not a subclass of KeeNum."""
     items = [
-        int, float, str, type
+      int, float, str, type
     ]
     for cls in self.exampleNums:
       for item in items:
@@ -108,9 +108,9 @@ class TestNum(KeeTest):
   def test_bad_subclasscheck(self) -> None:
     """Test that the WeekDay class is not a subclass of KeeNum."""
     items = [
-        69,
-        420.0,
-        """Imma a KeeNum, trust me bro!""",
+      69,
+      420.0,
+      """Imma a KeeNum, trust me bro!""",
     ]
     for cls in self.exampleNums:
       for item in items:
@@ -167,23 +167,29 @@ class TestNum(KeeTest):
     """Test that a duplicate exception is raised when creating an
     enumeration with duplicate members."""
     #  Testing duplicating member from base class
+    breh = Kee[str]('breh')
     with self.assertRaises(KeeDuplicate) as context:
       class DuperTrooperIsLegend(WeekDay):
-        MONDAY = Kee[str]('breh')
+        MONDAY = breh
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.name, 'MONDAY')
-    self.assertEqual(e.value.getValue(), 'breh')
+    self.assertIs(e.oldMember, WeekDay.MONDAY.kee)
+    self.assertIs(e.newMember, breh)
 
     #  Testing duplicating member in same class
     with self.assertRaises(KeeDuplicate) as context:
+      a = Kee[str]('Mandag')
+      b = Kee[str]('Tirsdag')
+
       class DuperTrooperIsLegend2(KeeNum):
-        MONDAY = Kee[str]('Mandag')
-        MONDAY = Kee[str]('Mandag')
+        MONDAY = a
+        MONDAY = b
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.name, 'MONDAY')
-    self.assertEqual(e.value.getValue(), 'Mandag')
+    self.assertIs(e.oldMember, a)
+    self.assertIs(e.newMember, b)
 
   def test_bad_type(self) -> None:
     """Test that a NotImplementedError is raised when the member type is not

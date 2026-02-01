@@ -4,7 +4,7 @@ exceptions raised by __getitem__ hooks. This is necessary to avoid
 confusion with the expected KeyError exception in the metacall system.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -32,11 +32,11 @@ class HookException(Exception):
   """
 
   __slots__ = (
-      'initialException',
-      'namespaceObject',
-      'itemKey',
-      'errorValue',
-      'hookFunction'
+    'initialException',
+    'namespaceObject',
+    'itemKey',
+    'errorValue',
+    'hookFunction'
   )
 
   def __init__(
@@ -62,8 +62,8 @@ class HookException(Exception):
     Hook: '%s'! Initial exception: %s"""
     cls = type(self).__name__
     info = spec % (
-        self.namespaceObject, self.itemKey, self.errorValue,
-        self.hookFunction, self.initialException
+      self.namespaceObject, self.itemKey, self.errorValue,
+      self.hookFunction, self.initialException
     )
     return textFmt(info)
 

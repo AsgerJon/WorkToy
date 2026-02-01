@@ -34,7 +34,7 @@ Classes must be based on baseclasses derived from the same metaclass or
 subclass of it.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -80,11 +80,11 @@ class MetaclassException(TypeError):
     different metaclass: '%s' which is not a subclass of '%s'."""
 
     names = [
-        self.name,
-        self.meta.__name__,
-        self.badBase.__name__,
-        self.badMeta.__name__,
-        self.meta.__name__
+      self.name,
+      self.meta.__name__,
+      self.badBase.__name__,
+      self.badMeta.__name__,
+      self.meta.__name__
     ]
 
     info = infoSpec % (*names,)

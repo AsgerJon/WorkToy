@@ -4,7 +4,7 @@ specific to the implementation of the descriptor protocol in the 'worktoy'
 library.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._descriptor_exception import DescriptorException
@@ -14,9 +14,9 @@ from ._read_only_error import ReadOnlyError
 from ._without_exception import WithoutException
 
 __all__ = [
-    'DescriptorException',
-    'AccessError',
-    'ReadOnlyError',
-    'ProtectedError',
-    'WithoutException',
+  'DescriptorException',
+  'AccessError',
+  'ReadOnlyError',
+  'ProtectedError',
+  'WithoutException',
 ]

@@ -2,17 +2,17 @@
 KeeMeta provides the metaclass for the 'worktoy.keenum' module.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ._kee_desc import Base, MRO, Members, IsRoot
+from ..core import Object
 from ..mcls import BaseMeta
 from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.keenum import KeeNameError, KeeIndexError
 from ..waitaminute.keenum import KeeMemberError, KeeValueError
-
 from . import KeeSpace as KSpace, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -60,11 +60,8 @@ class KeeMeta(BaseMeta):
     """
     cls = super().__new__(mcls, name, bases, space, **kw)
     cls.__num_members__ = []
-    if name == 'KeeNum':
+    if not [b for b in bases if b is not Object]:
       return cls
-    base = (bases or [None])[0]
-    # if not hasattr(base, '__enumeration_members__'):
-    #   raise TypeException('base', base, Kee, )
     cls.__allow_instantiation__ = True
 
     for i, (key, kee) in enumerate(space.__enumeration_members__.items()):

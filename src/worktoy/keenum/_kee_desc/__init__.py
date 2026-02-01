@@ -1,7 +1,7 @@
 """The 'worktoy.keenum._kee_desc' module provides a private collection of
 classes and functions for the 'worktoy.keenum' module."""
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._abstract_kee_desc import AbstractKeeDesc
@@ -11,9 +11,9 @@ from ._mro import MRO
 from ._members import Members
 
 __all__ = [
-    'IsRoot',
-    'AbstractKeeDesc',
-    'Base',
-    'MRO',
-    'Members',
+  'IsRoot',
+  'AbstractKeeDesc',
+  'Base',
+  'MRO',
+  'Members',
 ]

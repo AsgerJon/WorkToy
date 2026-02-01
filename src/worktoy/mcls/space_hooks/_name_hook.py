@@ -2,7 +2,7 @@
 NameHook filters named used in the namespace system.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -62,41 +62,41 @@ class NamespaceHook(AbstractSpaceHook):
     Get the class dunder names that are allowed in the namespace.
     """
     return [
-        '__class_call__',
-        '__class_init__',
-        '__class_instancecheck__',
-        '__class_subclasscheck__',
-        '__class_str__',
-        '__class_repr__',
-        '__class_iter__',
-        '__class_next__',
-        '__class_bool__',
-        '__class_contains__',
-        '__class_len__',
-        '__class_hash__',
-        #  '__class_eq__',  Exhibits highly undefined behaviour!
-        #  '__class_ne__',  See above
-        #  '__class_getitem__',  See footnote below
-        '__class_setitem__',
-        '__class_delitem__',
-        '__class_getattr__',
-        '__class_setattr__',
-        '__class_delattr__',
-        #  NOTE: '__class_getitem__' is commented out, rather than
-        #  omitted, allowing this explanatory note to be found easily.
-        #
-        #  Since Python 3.7, support for the '__class_getitem__' became a
-        #  feature of the interpreter itself. In fact, it inspired the
-        #  implementation of all of the above class level hooks. Uniquely
-        #  for '__class_getitem__', if it is defined on the class,
-        #  the metaclass implementation of '__getitem__' will not be
-        #  called.
-        #
-        #  This behaviour is opposite to the other hooks, as they
-        #  are implemented here. 'AbstractMetaclass' provides
-        #  implementations of the dunder methods, such that derived
-        #  may implement the methods to achieve behaviour otherwise
-        #  requiring metaclass reimplementation.
+      '__class_call__',
+      '__class_init__',
+      '__class_instancecheck__',
+      '__class_subclasscheck__',
+      '__class_str__',
+      '__class_repr__',
+      '__class_iter__',
+      '__class_next__',
+      '__class_bool__',
+      '__class_contains__',
+      '__class_len__',
+      '__class_hash__',
+      #  '__class_eq__',  Exhibits highly undefined behaviour!
+      #  '__class_ne__',  See above
+      #  '__class_getitem__',  See footnote below
+      '__class_setitem__',
+      '__class_delitem__',
+      '__class_getattr__',
+      '__class_setattr__',
+      '__class_delattr__',
+      #  NOTE: '__class_getitem__' is commented out, rather than
+      #  omitted, allowing this explanatory note to be found easily.
+      #
+      #  Since Python 3.7, support for the '__class_getitem__' became a
+      #  feature of the interpreter itself. In fact, it inspired the
+      #  implementation of all of the above class level hooks. Uniquely
+      #  for '__class_getitem__', if it is defined on the class,
+      #  the metaclass implementation of '__getitem__' will not be
+      #  called.
+      #
+      #  This behaviour is opposite to the other hooks, as they
+      #  are implemented here. 'AbstractMetaclass' provides
+      #  implementations of the dunder methods, such that derived
+      #  may implement the methods to achieve behaviour otherwise
+      #  requiring metaclass reimplementation.
     ]
 
   @classmethod
@@ -105,10 +105,10 @@ class NamespaceHook(AbstractSpaceHook):
     Get the near-miss names.
     """
     return [
-        ('__set_name__', '__setname__'),  # NOQA, miss-spelled name
-        ('__getitem__', '__get_item__'),
-        ('__setitem__', '__set_item__'),
-        ('__delitem__', '__del_item__'),
+      ('__set_name__', '__setname__'),  # NOQA, miss-spelled name
+      ('__getitem__', '__get_item__'),
+      ('__setitem__', '__set_item__'),
+      ('__delitem__', '__del_item__'),
     ]
 
   @classmethod

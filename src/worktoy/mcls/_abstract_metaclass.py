@@ -2,7 +2,7 @@
 AbstractMetaclass provides the baseclass for custom metaclasses.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,7 +11,6 @@ from ..core import MetaType
 from ..core.sentinels import METACALL
 from ..utilities import maybe
 from ..waitaminute import attributeErrorFactory
-
 from . import Base
 from . import AbstractNamespace as ASpace
 

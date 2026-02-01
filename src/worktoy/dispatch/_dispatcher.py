@@ -3,23 +3,20 @@ Dispatcher encapsulates the mapping from type signature to function
 objects and thus provides the core overloading functionality.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import sys
-
 from types import FunctionType as Func
 from types import MethodType as Meth
+from typing import TYPE_CHECKING
 
 from ..core import Object
 from ..utilities import maybe, typeCast, perm
 from ..waitaminute import TypeException, VariableNotNone
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.dispatch import DispatchException
-
 from . import TypeSig
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, Never, TypeAlias, Optional, Self

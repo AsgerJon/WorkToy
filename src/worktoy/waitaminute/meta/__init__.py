@@ -3,7 +3,7 @@ The 'worktoy.waitaminute.meta' provides the custom exceptions used by the
 class creation flow in 'worktoy.core'.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._illegal_instantiation import IllegalInstantiation
@@ -15,11 +15,11 @@ from ._questionable_syntax import QuestionableSyntax
 from ._reserved_name import ReservedName
 
 __all__ = [
-    'DuplicateHook',
-    'IllegalInstantiation',
-    'HookException',
-    'MetaclassException',
-    'DelException',
-    'QuestionableSyntax',
-    'ReservedName',
+  'DuplicateHook',
+  'IllegalInstantiation',
+  'HookException',
+  'MetaclassException',
+  'DelException',
+  'QuestionableSyntax',
+  'ReservedName',
 ]

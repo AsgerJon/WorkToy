@@ -3,7 +3,7 @@ The 'yeetDirectory' function removes a directory with all contents.
 Effectively the same as: 'rm -rf <directory>'.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import os

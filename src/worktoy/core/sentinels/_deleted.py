@@ -20,7 +20,7 @@ DELETED sentinel. Then, the first lookup finds the DELETED sentinel,
 which signals the 'Desc.__get__' method to raise 'AttributeError'.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

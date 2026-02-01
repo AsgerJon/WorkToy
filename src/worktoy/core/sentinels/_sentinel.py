@@ -5,7 +5,7 @@ metaclass, it allows sentinel objects to be instances of 'type' and thus
 classes.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -97,6 +97,14 @@ class _Sentinel(type):
     """
     from worktoy.waitaminute.meta import IllegalInstantiation
     raise IllegalInstantiation(cls)
+
+  def __hash__(cls, ) -> int:
+    mcls = type(cls)
+    mclsModule = getattr(mcls, '__module__')
+    clsModule = getattr(cls, '__module__')
+    mclsName = mcls.__name__
+    clsName = cls.__name__
+    return hash((mclsModule, mclsName, clsModule, clsName,))
 
   def __str__(cls) -> str:
     """

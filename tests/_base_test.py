@@ -18,18 +18,55 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Iterator
 
   IntSample: TypeAlias = Iterator[tuple[int, ...]]
+  TypicalExceptions: TypeAlias = Iterator[type[Exception]]
+  ExcType: TypeAlias = type[BaseException]
+
+#  So Python 3.14 saw 'assertIsSubclass' and 'assertNotIsSubclass' added to
+#  'unittest.TestCase', but since we support back to 3.7, but also up to
+#  3.14, we need the following 'try-except-else':
+
+try:
+  _ = TestCase.assertIsSubclass
+except AttributeError:  # pragma: no cover
+  class _Temp(TestCase):
+    def assertIsSubclass(self, cls: type, base: type, msg=None) -> None:
+      """Assert that 'subClass' is a subclass of 'superClass'."""
+      self.assertTrue(issubclass(cls, base))
+
+    def assertNotIsSubclass(self, cls: type, base: type, msg=None) -> None:
+      """Assert that 'subClass' is not a subclass of 'superClass'."""
+      self.assertFalse(issubclass(cls, base))
+else:  # version >= 3.14
+  _Temp = TestCase
 
 
-class BaseTest(TestCase):
-  """BaseTest provides a base class shared by the testing classes in the
+class BaseTest(_Temp):
+  """
+  BaseTest provides a base class shared by the testing classes in the
   tests package. It implements module unloading in the 'tearDownClass'
-  method and adds 'assertIsSubclass' (and negation)."""
+  method and adds 'assertIsNotInstance' and 'assertIsNotSubclass'.
+  """
 
   attrErrTrace = Field()
+  exceptions = Field()
 
   @attrErrTrace.GET
   def _getAttributeErrorTrace(self, ) -> str:
     return """object has no attribute"""
+
+  @exceptions.GET
+  def _getTypicalExceptions(self, ) -> TypicalExceptions:
+    yield from (
+      ValueError,
+      KeyError,
+      IndexError,
+      RuntimeError,
+      OSError,
+      PermissionError,
+      TypeError,
+      FileExistsError,
+      FileNotFoundError
+    )
 
   @staticmethod
   def generateRandomIntegers(*args) -> IntSample:
@@ -85,14 +122,11 @@ class BaseTest(TestCase):
     sys.modules.pop(cls.__module__, None)
     gc.collect()
 
-  def assertIsSubclass(self, subClass: type, superClass: type, ) -> None:
-    """Assert that 'subClass' is a subclass of 'superClass'."""
-    self.assertTrue(issubclass(subClass, superClass))
+  #  The recommended syntax prefers:
+  #  if a is not b: pass
+  #  over:
+  #  if not a is b: pass
+  #  Which 'unittest' disregards, so we add:
 
-  def assertIsNotSubclass(self, subClass: type, superClass: type, ) -> None:
-    """Assert that 'subClass' is not a subclass of 'superClass'."""
-    self.assertFalse(issubclass(subClass, superClass))
-
-  def assertNotIsSubclass(self, *args) -> None:
-    """Same as above"""
-    self.assertIsNotSubclass(*args)
+  assertIsNotSubclass = _Temp.assertNotIsSubclass
+  assertIsNotInstance = _Temp.assertNotIsInstance

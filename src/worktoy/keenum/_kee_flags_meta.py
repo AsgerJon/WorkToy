@@ -1,6 +1,6 @@
 """KeeFlagsMeta provides the metaclass for KeeFlags."""
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt, maybe
-
 from . import KeeFlag
 from . import KeeFlagsSpace as KFSpace
 

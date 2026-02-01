@@ -1,6 +1,6 @@
 """EZHook collects the field entries in EZData class bodies. """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -79,25 +79,25 @@ class EZSpaceHook(AbstractSpaceHook):
   def _getAutoNameFactoryDict(self, ) -> Factories:
     """Returns a dictionary of auto-named methods."""
     return {
-        '__init__'   : self.initFactory,
-        '__eq__'     : self.eqFactory,
-        '__hash__'   : self.hashFactory,
-        '__str__'    : self.strFactory,
-        '__repr__'   : self.reprFactory,
-        '__iter__'   : self.iterFactory,
-        '__len__'    : self.lenFactory,
-        '__getitem__': self.getItemFactory,
-        '__setitem__': self.setItemFactory,
-        '__delitem__': self.delItemFactory,
-        '__getattr__': self.getAttrFactory,
-        '__setattr__': self.setAttrFactory,
-        '__delattr__': self.delAttrFactory,
-        '__lt__'     : self.ltFactory,
-        '__le__'     : self.leFactory,
-        '__gt__'     : self.gtFactory,
-        '__ge__'     : self.geFactory,
-        'asTuple'    : self.asTupleFactory,
-        'asDict'     : self.asDictFactory,
+      '__init__': self.initFactory,
+      '__eq__': self.eqFactory,
+      '__hash__': self.hashFactory,
+      '__str__': self.strFactory,
+      '__repr__': self.reprFactory,
+      '__iter__': self.iterFactory,
+      '__len__': self.lenFactory,
+      '__getitem__': self.getItemFactory,
+      '__setitem__': self.setItemFactory,
+      '__delitem__': self.delItemFactory,
+      '__getattr__': self.getAttrFactory,
+      '__setattr__': self.setAttrFactory,
+      '__delattr__': self.delAttrFactory,
+      '__lt__': self.ltFactory,
+      '__le__': self.leFactory,
+      '__gt__': self.gtFactory,
+      '__ge__': self.geFactory,
+      'asTuple': self.asTupleFactory,
+      'asDict': self.asDictFactory,
     }
 
   def _getBadNames(self) -> list[str]:
