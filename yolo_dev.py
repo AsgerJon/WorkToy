@@ -1,6 +1,6 @@
 """The 'yolo' function receives any number of callables and runs them."""
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import unittest
@@ -112,26 +112,6 @@ def runTests(verbosity: int = None) -> int:
   runner = unittest.TextTestRunner(verbosity=0)
   print(runner.run(suite))
 
-  for item in os.listdir(testRoot):
-    break
-    os.chdir(testRoot)
-    if not item.startswith('test'):
-      continue
-    testPath = os.path.join(testRoot, item)
-    testPath = os.path.normpath(testPath)
-    print(testPath)
-    try:
-      suite = loader.discover(start_dir=item, )
-    except ImportError as importError:
-      print('Unable to import test module: %s' % testPath)
-      print(importError)
-      continue
-    runner = unittest.TextTestRunner(verbosity=2)
-    res = runner.run(suite)
-    if res.wasSuccessful():
-      results.append('Tests passed in: %s' % testPath)
-    else:
-      results.append('Tests failed in: %s' % testPath)
   for result in results:
     print(result)
   if res is None:
