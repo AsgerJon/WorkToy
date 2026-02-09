@@ -28,6 +28,7 @@ from . import mcls
 from . import keenum
 from . import ezdata
 from . import work_io
+from . import examples
 
 __all__ = [
   'utilities',
@@ -39,4 +40,5 @@ __all__ = [
   'keenum',
   'ezdata',
   'work_io',
+  'examples',
 ]

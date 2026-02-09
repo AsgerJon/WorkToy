@@ -3,8 +3,13 @@ with appropriate use of commas and 'and/or'. By default, the final two
 given words a separated by 'and', but this can be changed at keyword
 argument 'sep'."""
 #  AGPL-3.0 license
-#  Copyright (c) 2024-2025 Asger Jon Vistisen
+#  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+  pass
 
 
 def joinWords(*words: str, **kwargs) -> str:
