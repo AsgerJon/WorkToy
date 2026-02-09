@@ -27,7 +27,7 @@ class DispatchException(TypeError):
   this exception subclasses TypeError such that it can be caught by external
   error handlers. """
 
-  __slots__ = ('dispatch', 'args')
+  __slots__ = ('dispatch', 'args', 'excs')
 
   def __init__(self, dispatch: Dispatcher, args: Args, ) -> None:
     self.dispatch = dispatch

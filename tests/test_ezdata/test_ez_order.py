@@ -2,11 +2,12 @@
 TestEZOrder tests ordering of EZData classes.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from tests import WYD
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.ez import UnorderedEZException, EZDeleteException
 from . import EZTest
@@ -523,14 +524,11 @@ class TestEZOrder(EZTest):
   def test_coverage_gymnastics(self) -> None:
     """Really gotta reach for this one!"""
 
-    class Umbrella(Exception):
-      pass
-
     class Trololo:
       def __lt__(self, other: Any) -> bool:
-        raise Umbrella
+        raise WYD
 
-    with self.assertRaises(Umbrella):
+    with self.assertRaises(WYD):
       class Derp(EZData, order=True):
         trololo = Trololo()
 

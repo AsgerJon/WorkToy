@@ -3,11 +3,12 @@ TestField tests specific functionality of the 'Field' descriptor not
 covered by the contextual tests in 'DescTest'.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2025 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from tests import WYD
 from worktoy.core.sentinels import DELETED
 from worktoy.desc import Field
 from worktoy.utilities import maybe
@@ -27,12 +28,6 @@ class TestField(DescTest):
 
   def test_field(self) -> None:
     """Test the 'Field' descriptor functionality."""
-
-    class DeleteMeNot(Exception):
-      pass
-
-    class Secret(Exception):
-      pass
 
     class Foo:
       _x, _y, _z, _v = None, None, None, None
@@ -63,12 +58,12 @@ class TestField(DescTest):
 
       @z.DELETE
       def _delZ(self) -> None:
-        raise DeleteMeNot
+        raise WYD
 
       @v.GET
       def _getV(self) -> int:
         if self._v == 'raise':
-          raise Secret
+          raise WYD
         return maybe(self._v, 0)
 
       @v.SET
@@ -103,7 +98,7 @@ class TestField(DescTest):
     e = context.exception
     self.assertIsInstance(e.__cause__, AccessError)
 
-    with self.assertRaises(DeleteMeNot):
+    with self.assertRaises(WYD):
       del foo.z
 
     with self.assertRaises(ProtectedError) as context:
@@ -131,7 +126,7 @@ class TestField(DescTest):
       del foo.v
     e = context.exception
 
-    with self.assertRaises(Secret) as context:
+    with self.assertRaises(WYD) as context:
       foo.v = 'lol'
       setattr(foo, '_v', 'raise')
       del foo.v

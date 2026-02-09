@@ -11,8 +11,8 @@ from unittest import TestCase
 from random import randint, random
 from typing import TYPE_CHECKING
 
-from ..desc import Field
-from ..utilities import maybe
+from worktoy.desc import Field
+from worktoy.utilities import maybe
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Iterator

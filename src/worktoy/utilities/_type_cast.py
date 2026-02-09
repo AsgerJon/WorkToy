@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import ValidSlice
-
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
@@ -70,20 +68,8 @@ def typeCast(target: type, arg: Any) -> Any:
   the target type's constructor. If this raises any exception, a
   TypeCastException is raised from that exception.
   """
-  if target is slice:
-    if isinstance(arg, ValidSlice):
-      return arg
-    if isinstance(slice(arg), ValidSlice):
-      return slice(arg)
-    if isinstance(arg, (list, tuple)) and arg:
-      a, b, c, *_ = (*arg, None, None, None)
-      if isinstance(slice(a, b, c), ValidSlice):
-        return slice(a, b, c)
-    from worktoy.waitaminute.dispatch import TypeCastException
-    raise TypeCastException(target, arg)
   if isinstance(arg, target):
     return arg
-
   if target is type:
     from worktoy.waitaminute.dispatch import TypeCastException
     raise TypeCastException(target, arg)
