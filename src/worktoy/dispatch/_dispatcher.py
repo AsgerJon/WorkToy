@@ -12,7 +12,7 @@ from types import MethodType as Meth
 from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..utilities import maybe, typeCast, perm
+from ..utilities import maybe, typeCast, perm, ValidSlice
 from ..waitaminute import TypeException, VariableNotNone
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.dispatch import DispatchException

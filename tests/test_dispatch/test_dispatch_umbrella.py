@@ -3,14 +3,13 @@ TestDispatchUmbrella provides coverage gymnastics for the 'Dispatcher'
 class from the 'worktoy.dispatch' module.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from types import FunctionType as Func
 from types import MethodType as Meth
 from typing import TYPE_CHECKING
 
-from tests import WYD
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.dispatch import Dispatcher, TypeSig, overload
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
@@ -202,6 +201,9 @@ class TestDispatchUmbrella(DispatcherTest):
   def test_bad_finalizer(self) -> None:
     """Testing errors raised in finalizers"""
 
+    class FinalizeError(Exception):
+      pass
+
     class Foo:
       bar = Dispatcher()
 
@@ -233,7 +235,7 @@ class TestDispatchUmbrella(DispatcherTest):
       def bar(self, *args, **kwargs) -> None:
         """Finalizer method for the bar method."""
         if 'finalRaise' in args or 'raise' in args:
-          raise WYD
+          raise FinalizeError
         self.__inner_value__ = 'finalized: %s' % (self.__inner_value__,)
 
     foo = Foo()
@@ -249,7 +251,7 @@ class TestDispatchUmbrella(DispatcherTest):
     self.assertEqual(foo.bar('never', 'gonna', 'give', 'you', 'up'), None)
     self.assertIn('finalized', foo.__inner_value__)
 
-    with self.assertRaises(WYD):
+    with self.assertRaises(FinalizeError):
       foo.bar('finalRaise')
 
     with self.assertRaises(ValueError):
