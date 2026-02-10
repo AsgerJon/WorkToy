@@ -84,7 +84,7 @@ class AttriBox(Object):
     pvtName = self.getPrivateName()
     try:
       value = getattr(self.instance, pvtName)
-    except AttributeError as attributeError:
+    except AttributeError:
       pass
     else:
       return value
@@ -126,6 +126,7 @@ class AttriBox(Object):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  @classmethod
   def __class_getitem__(cls, fieldType: type) -> Self:
     """
     Allows the AttriBox to be used as a generic type with a specified
@@ -133,7 +134,7 @@ class AttriBox(Object):
     """
     self = object.__new__(cls)
     self.__field_type__ = fieldType
-    return self
+    return self  # noqa
 
   def __call__(self, *args: Any, **kwargs: Any) -> Any:
     """

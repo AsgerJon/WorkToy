@@ -87,16 +87,18 @@ class overload:  # NOQA
 
   def __new__(cls, *types, **kwargs) -> Decorator:
     """Create a decorators that sets the type signature for the function."""
-
+    
     if kwargs.get('_root', False):
       return super(overload, cls).__new__(cls)
 
-    def decorator(func: Method) -> overload:
+    def decorator(func: Method) -> Self:
+      sig = TypeSig(*types, )
+      sig.__allow_flex__ = False if kwargs.get('strict', False) else True
       if isinstance(func, cls):
-        func._extendLatest(TypeSig(*types, ))
+        func._extendLatest(sig)
         return func
       self = super(overload, cls).__new__(cls)
-      self._addSigFunc(TypeSig(*types, ), func)
+      self._addSigFunc(sig, func)
       return self
 
     return decorator
@@ -106,7 +108,10 @@ class overload:  # NOQA
 
   @classmethod
   def flex(cls, *types: type) -> Decorator:
-    """Create a decorator that sets the type signature for the function."""
+    """
+    Creates a decorator that registers the function with all permutations
+    of the given types.
+    """
 
     def decorator(func: Method) -> Self:
       self = cls(_root=True)

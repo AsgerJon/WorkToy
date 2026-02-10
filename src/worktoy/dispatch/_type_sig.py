@@ -26,6 +26,7 @@ class TypeSig:
 
   #  Private Variables
   __raw_types__ = None
+  __allow_flex__ = True
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

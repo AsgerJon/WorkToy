@@ -5,7 +5,7 @@ AbstractMetaclass provides the baseclass for custom metaclasses.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic
 
 from ..core import MetaType
 from ..core.sentinels import METACALL
@@ -296,6 +296,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     should also remove nothing from the 'bases' tuple.
     """
     bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
+    bases = (*[b for b in bases if b is not Generic],)
     return ASpace(mcls, name, bases, **kwargs)
 
   def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> Self:
@@ -325,7 +326,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     to be invoked only after the builtin '__build_class__' has finished
     with the class.
     """
-    pass
+    MetaType.__init__(cls, name, bases, space, **kwargs)
 
   def __call__(cls, *args, **kwargs) -> Any:
     if cls.__class_call__ is METACALL:

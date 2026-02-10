@@ -128,6 +128,8 @@ class Dispatcher(Object):
         #  SLOW
         for sig, func in sigFuncMap.items():
           castArgs = []
+          if not sig.__allow_flex__:
+            continue
           if len(argSig) != len(sig):
             continue
           for arg, type_ in zip(args, sig):
