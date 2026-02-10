@@ -122,11 +122,5 @@ class BaseTest(_Temp):
     sys.modules.pop(cls.__module__, None)
     gc.collect()
 
-  #  The recommended syntax prefers:
-  #  if a is not b: pass
-  #  over:
-  #  if not a is b: pass
-  #  Which 'unittest' disregards, so we add:
-
   assertIsNotSubclass = _Temp.assertNotIsSubclass
   assertIsNotInstance = _Temp.assertNotIsInstance

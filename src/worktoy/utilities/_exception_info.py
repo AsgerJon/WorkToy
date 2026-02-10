@@ -118,6 +118,9 @@ class ExceptionInfo:
         self.report = self._handleBaseException(excValue)
         return False  # BaseException must *always* propagate
     if excValue is None:
+      if self.__expected_exception__ is None:
+        self.report = self._handleWell()
+        return True
       self.report = self._handleNoException()
       return True
     if self.__expected_exception__ is None:
@@ -156,6 +159,10 @@ class ExceptionInfo:
     excType = type(baseExp).__name__
     info = infoSpec % (excType,)
     return textFmt(info)
+
+  @staticmethod
+  def _handleWell() -> str:
+    return """Exited without exception as expected!"""
 
   def _handleNoException(self) -> str:
     infoSpec = """Expected '%s', but no exception was raised!"""

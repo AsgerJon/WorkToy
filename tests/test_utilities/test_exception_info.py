@@ -202,3 +202,13 @@ class TestExceptionInfo(UtilitiesTest):
         self.assertIsNone(info.__expected_exception__)
         self.assertIs(info.actualExcType, excType)
         self.assertIs(info.actualException, exception)
+
+  def test_well(self) -> None:
+    """
+    Testing the case where no exception is expected or raised.
+    """
+    with ExceptionInfo() as info:
+      pass
+    self.assertIsNone(info.actualException)
+    self.assertIsNone(info.__expected_exception__)
+    self.assertIn('Exited without exception as expected', info.report)
