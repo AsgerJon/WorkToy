@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from ._kee_desc import Base, MRO, Members, IsRoot
 from ..core import Object
+from ..desc import Field
 from ..mcls import BaseMeta
 from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.keenum import KeeNameError, KeeIndexError
@@ -42,6 +43,21 @@ class KeeMeta(BaseMeta):
   base = Base()
   mroNum = MRO()
   members = Members()
+  valueType = Field()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @valueType.GET
+  def _getValueType(cls, ) -> type:
+    """Gets the value type of the enumeration. """
+    type_ = None
+    for member in cls.__num_members__:
+      valType = type(member.value)
+      if type_ is None:
+        type_ = valType
+    return type_
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

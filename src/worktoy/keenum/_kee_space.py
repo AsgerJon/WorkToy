@@ -101,3 +101,8 @@ class KeeSpace(BaseSpace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def postCompile(self, namespace: dict) -> dict:
+    namespace = BaseSpace.postCompile(self, namespace)
+    namespace['__member_type__'] = self.__member_type__
+    return namespace
