@@ -4,7 +4,7 @@ being a subclass of 'worktoy.core.Object'. This class achieves this by
 implementing '__set_name__'.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from worktoy.desc import Field
@@ -59,10 +59,6 @@ class BoxedFloat:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __set_name__(self, owner: type, name: str) -> None:
-    self.__field_name__ = name
-    self.__field_owner__ = owner
 
   def __int__(self, ) -> int:
     return int(self.value)

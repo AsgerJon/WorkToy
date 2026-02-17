@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from icecream import ic
+
 from ..mcls import AbstractNamespace as ASpace
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import textFmt, maybe, stringList
@@ -45,6 +47,8 @@ if TYPE_CHECKING:  # pragma: no cover
   __DELATTR__: TypeAlias = Callable[[EZData, str], Never]
   AS_TUPLE: TypeAlias = Callable[[EZData], tuple[Any, ...]]
   AS_DICT: TypeAlias = Callable[[EZData], dict[str, Any]]
+
+ic.configureOutput(includeContext=True)
 
 
 class EZSpaceHook(AbstractSpaceHook):
@@ -98,7 +102,7 @@ class EZSpaceHook(AbstractSpaceHook):
       '__ge__': self.geFactory,
       'asTuple': self.asTupleFactory,
       'asDict': self.asDictFactory,
-    }
+      }
 
   def _getBadNames(self) -> list[str]:
     """Returns a tuple of names that are reserved and should not be used."""
@@ -444,7 +448,6 @@ class EZSpaceHook(AbstractSpaceHook):
 
   @staticmethod
   def setItemFactory() -> __SETITEM__:
-
     def __setitem__(self, identifier: Any, value: Any) -> None:
       """
       Assigns value(s) to this object’s slots via integer index, slot name,

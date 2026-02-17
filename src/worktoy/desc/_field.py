@@ -55,7 +55,7 @@ class Field(Object):
       raise AccessError(self)
     return self.__get_key__
 
-  def _getSetterKeys(self, newValue: Any = None) -> tuple[str, ...]:
+  def _getSetterKeys(self, ) -> tuple[str, ...]:
     return (*[k for k in maybe(self.__set_keys__, ()) if k],)
 
   def _getDeleterKeys(self) -> tuple[str, ...]:
@@ -95,7 +95,7 @@ class Field(Object):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __instance_get__(self, *args, **kwargs) -> Any:
+  def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
     Retrieves the getter from the owner of instance and the registered
     name of getter function. Please note that while the instance received
@@ -105,32 +105,41 @@ class Field(Object):
     owner of the instance received.
     """
     getterKey = self._getGetterKey()
-    getterFunc = getattr(self.getContextInstance(), getterKey, )
-    return getterFunc(*args, **kwargs)
+    getterFunc = getattr(owner, getterKey)
+    return getterFunc(instance, **kwargs)
 
-  def __instance_set__(self, val: Any, *args, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
     All decorated setters are retrieved in the same fashion as the getter.
     """
-    setterKeys = self._getSetterKeys(val)
+    setterKeys = self._getSetterKeys()
+    owner = type(instance)
     if not setterKeys:
-      raise ReadOnlyError(self.instance, self, val, )
-    instance = self.getContextInstance()
-    setterFuncs = [getattr(instance, k) for k in setterKeys]
-    setterFuncs = [f for f in setterFuncs if callable(f)]
-    for setterFunc in setterFuncs:
-      setterFunc(val, *args, **kwargs)
+      raise ReadOnlyError(self.instance, self, value, )
+    for key in setterKeys:
+      setterFunc = getattr(owner, key, )
+      setterFunc(instance, value, )
 
-  def __instance_delete__(self, *args, **kwargs) -> None:
+  def __instance_delete__(
+      self,
+      instance: Any,
+      old: Any = None,
+      **kwargs,
+      ) -> None:
     """
     All decorated deleters are retrieved in the same fashion as the getter.
     """
     deleterKeys = self._getDeleterKeys()
+    owner = type(instance)
     if not deleterKeys:
-      oldVal = self.__instance_get__()
+      try:
+        oldVal = self.__instance_get__(instance, owner, **kwargs)
+      except AttributeError:
+        oldVal = None
       raise ProtectedError(self.instance, self, oldVal)
     for key in deleterKeys:
-      getattr(self.instance, key, )(**kwargs)
+      deleterFunc = getattr(owner, key, )
+      deleterFunc(instance, **kwargs)
 
   #  For linters who won't chill out
   if TYPE_CHECKING:  # pragma: no cover

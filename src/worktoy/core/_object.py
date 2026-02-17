@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from ..utilities import Directory, maybe, textFmt
 from ..waitaminute import TypeException, attributeErrorFactory
 from ..waitaminute.desc import AccessError
-from .sentinels import THIS, DESC, OWNER, DELETED
+from .sentinels import THIS, DESC, OWNER, DELETED, Sentinel
 from . import ContextInstance, MetaType, ContextOwner
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -55,7 +55,6 @@ class Object(metaclass=MetaType):
   Do not override `__get__`, `__set__`, or `__delete__` unless you are
   extending or altering the core behavior. Context, error handling, and
   attribute protection are managed by Object and its metaclass.
-
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -90,43 +89,43 @@ class Object(metaclass=MetaType):
     """Getter for the field name of the descriptor object"""
     return self.__field_name__
 
-  def getPosArgs(self, **kwargs) -> tuple[Any, ...]:
+  def getContextualSentinels(self, ) -> dict[Type[Sentinel], Any]:
+    """
+    Returns a dictionary mapping the sentinels 'THIS', 'OWNER', and 'DESC'
+    to their corresponding contextual values. Where contextual values are
+    not available, the sentinel is returned.
+    """
+    return {
+      THIS: maybe(self.__context_instance__, THIS),
+      OWNER: maybe(self.__context_owner__, OWNER),
+      DESC: self,
+      }
+
+  def filterSentinels(self, arg: Any) -> Any:
+    """
+    If 'arg' is one of the sentinels 'THIS', 'OWNER', or 'DESC',
+    it is replaced by the corresponding contextual value.
+    """
+    try:
+      out = self.getContextualSentinels().get(arg, arg)
+    except TypeError:
+      return arg
+    else:
+      return out
+
+  def getPosArgs(self, ) -> tuple[Any, ...]:
     """Getter for the positional arguments of the object."""
-    thisObj = maybe(kwargs.get('THIS', self.__context_instance__), THIS)
-    ownerObj = maybe(kwargs.get('OWNER', self.__context_owner__), OWNER)
-    descObj = maybe(kwargs.get('DESC', self), )
     out = []
-    for arg in self.__pos_args__:
-      if arg is THIS:
-        out.append(thisObj)
-        continue
-      if arg is OWNER:
-        out.append(ownerObj)
-        continue
-      if arg is DESC:
-        out.append(descObj)
-        continue
-      out.append(arg)
+    for arg in maybe(self.__pos_args__, ()):
+      out.append(self.filterSentinels(arg))
     return (*out,)
 
-  def getKeyArgs(self, **kwargs) -> dict[str, Any]:
+  def getKeyArgs(self, ) -> dict[str, Any]:
     """Getter for the keyword arguments of the object."""
-    thisObj = maybe(kwargs.get('THIS', self.__context_instance__), THIS)
-    ownerObj = maybe(kwargs.get('OWNER', self.__context_owner__), OWNER)
-    descObj = maybe(kwargs.get('DESC', self), )
     out = dict()
     for key, value in self.__key_args__.items():
-      if value is THIS:
-        out[key] = thisObj
-        continue
-      if value is OWNER:
-        out[key] = ownerObj
-        continue
-      if value is DESC:
-        out[key] = descObj
-        continue
-      out[key] = value
-    return {**out, }
+      out[key] = self.filterSentinels(value)
+    return out
 
   def getContextInstance(self) -> Any:
     """Returns the contextual instance or raises 'WithoutException'"""
@@ -176,14 +175,14 @@ class Object(metaclass=MetaType):
     self.__field_owner__ = owner
     self.__field_name__ = name
 
-  def __get__(self, instance: Any, owner: type) -> Any:
+  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
     Returns the root of the descriptor owning the hook.
     """
     if instance is None:
       return self
     with self.createContext(instance, owner) as context:
-      value = context.__instance_get__()
+      value = context.__instance_get__(instance, owner, **kwargs)
     return self._deletedGuard(instance, value)
 
   def __set__(self, instance: Any, newValue: Any, **kwargs) -> None:
@@ -193,21 +192,21 @@ class Object(metaclass=MetaType):
     value on that attribute. Since the 'setter' control flow
     """
     with self.createContext(instance, type(instance)) as context:
-      context.__instance_set__(newValue, **kwargs)
+      context.__instance_set__(instance, newValue, **kwargs)
 
   def __delete__(self, instance: Any, **kwargs) -> None:
     """
     Deletes the value of the descriptor in the instance.
     """
-    try:
-      with self.createContext(instance, type(instance)) as context:
-        oldVal = self._deletedGuard(instance, context.__instance_get__())
-        context.__instance_delete__(oldVal, **kwargs)
-    except AccessError as accessError:
-      ownerName = type(instance).__name__
-      fieldName = getattr(self, '__field_name__', 'Unknown')
-      attributeError = attributeErrorFactory(ownerName, fieldName)
-      raise attributeError from accessError
+    owner = type(instance)
+    with self.createContext(instance, type(instance)) as context:
+      try:
+        oldVal = context.__instance_get__(instance, owner, **kwargs)
+      except AttributeError:
+        oldVal = None
+      else:
+        oldVal = self._deletedGuard(instance, oldVal)
+      context.__instance_delete__(instance, oldVal, **kwargs)
 
   def __enter__(self, ) -> Self:
     """
@@ -232,7 +231,7 @@ class Object(metaclass=MetaType):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __instance_get__(self, *args, **kwargs) -> Any:
+  def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
     Instance-specific getter for this descriptor.
 
@@ -248,7 +247,7 @@ class Object(metaclass=MetaType):
     """
     return self
 
-  def __instance_set__(self, value: Any, *args, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
     Instance-specific setter for this descriptor.
 
@@ -260,9 +259,14 @@ class Object(metaclass=MetaType):
       self.instance._value = value
     """
     from ..waitaminute.desc import ReadOnlyError
-    raise ReadOnlyError(self.instance, self, value)
+    raise ReadOnlyError(instance, self, value)
 
-  def __instance_delete__(self, oldVal: Any, *args, **kwargs) -> None:
+  def __instance_delete__(
+      self,
+      instance: Any,
+      old: Any = None,
+      **kwargs,
+      ) -> None:
     """
     Instance-specific deleter for this descriptor.
 
@@ -275,7 +279,7 @@ class Object(metaclass=MetaType):
       self.instance._value = DELETED
     """
     from ..waitaminute.desc import ProtectedError
-    raise ProtectedError(self.instance, self, oldVal)
+    raise ProtectedError(instance, self, old)
 
   def createContext(self, instance: Any, owner: type, ) -> Self:
     """

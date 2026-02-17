@@ -25,13 +25,13 @@ auto-generates a member named 'NULL' with index 0.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing
 
 from ..desc import Field
 from ..utilities import textFmt, maybe
 from ..waitaminute import MissingVariable, TypeException
 
-if TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Tuple, Self, Iterator
   from ..keenum import KeeFlagsMeta
 
@@ -228,3 +228,15 @@ class KeeFlag:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @typing.overload
+  def __or__(self, other: Self) -> Self: ...
+
+  @typing.overload
+  def __and__(self, other: Self) -> Self: ...
+
+  @typing.overload
+  def __xor__(self, other: Self) -> Self: ...
+
+  @typing.overload
+  def __invert__(self) -> Self: ...

@@ -89,7 +89,7 @@ class TestNum(KeeTest):
       420.0,
       """Imma a KeeNum, trust me bro!""",
       type('Keeeeee', (), {}),
-    ]
+      ]
     for cls in self.exampleNums:
       for item in items:
         self.assertNotIsInstance(item, cls)
@@ -98,8 +98,8 @@ class TestNum(KeeTest):
   def test_is_not_subclasscheck(self) -> None:
     """Test that the WeekDay class is not a subclass of KeeNum."""
     items = [
-      int, float, str, type
-    ]
+      int, float, str, type,
+      ]
     for cls in self.exampleNums:
       for item in items:
         self.assertNotIsSubclass(item, cls)
@@ -111,7 +111,7 @@ class TestNum(KeeTest):
       69,
       420.0,
       """Imma a KeeNum, trust me bro!""",
-    ]
+      ]
     for cls in self.exampleNums:
       for item in items:
         with self.assertRaises(TypeError) as context:

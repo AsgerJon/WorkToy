@@ -98,10 +98,13 @@ class TestField(DescTest):
     self.assertIs(e.desc, Foo.w)
     self.assertEqual(str(e), repr(e))
 
-    with self.assertRaises(AttributeError) as context:
+    with self.assertRaises(ProtectedError) as context:
       del foo.w
     e = context.exception
-    self.assertIsInstance(e.__cause__, AccessError)
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo.w)
+    self.assertIsNone(e.oldVal)
+    self.assertEqual(str(e), repr(e))
 
     with self.assertRaises(DeleteMeNot):
       del foo.z
@@ -146,3 +149,44 @@ class TestField(DescTest):
     self.assertIs(e.desc, Foo.y)
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.newVal, 'imma write lol!', )
+
+  def test_bad_delete(self) -> None:
+    """Test that 'Field' raises 'AttributeError' when delete fails."""
+
+    class Foo69420:
+      __x_fallback__ = 0
+      __x_value__ = None
+      x = Field()
+
+      @x.GET
+      def _getX(self) -> int:
+        if self.__x_value__ is DELETED:
+          raise AttributeError('x')
+        return maybe(self.__x_value__, self.__x_fallback__)
+
+      @x.SET
+      def _setX(self, value) -> None:
+        self.__x_value__ = value
+
+      def __init__(self, *args) -> None:
+        self.x = (*args, self.__x_fallback__)[0]
+
+    foo = Foo69420()
+    with self.assertRaises(ProtectedError) as context:
+      del foo.x
+    e = context.exception
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo69420.x)
+    self.assertEqual(str(e), repr(e))
+    self.assertEqual(e.oldVal, 0)
+
+    setattr(foo, '__x_value__', DELETED)
+
+    #  Here, during the failing 'deletion', the 'oldVal' is set to 'None'
+    with self.assertRaises(ProtectedError) as context:
+      del foo.x
+    e = context.exception
+    self.assertIs(e.instance, foo)
+    self.assertIs(e.desc, Foo69420.x)
+    self.assertEqual(str(e), repr(e))
+    self.assertIsNone(e.oldVal)

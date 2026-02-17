@@ -59,6 +59,7 @@ class EZDesc(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, key: str, *args) -> None:
+    Object.__init__(self, key, *args)
     self.__keyword_argument__ = key
     type_, defVal, *_ = [*args, None, None]
     self.__value_type__ = type_
@@ -68,7 +69,7 @@ class EZDesc(Object):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __instance_get__(self, *args, **_) -> Any:
+  def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
     This method is called when the descriptor is accessed on an instance.
     It should return the value of the descriptor for that instance.

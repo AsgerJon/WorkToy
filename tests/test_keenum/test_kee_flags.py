@@ -2,7 +2,7 @@
 TestKeeFlags module tests the KeeFlags class functionality.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -328,3 +328,203 @@ class TestKeeFlags(KeeTest):
                 self.assertFalse(left == right)
             else:  # Not equal, even when indices match
               self.assertFalse(left == right)
+
+  def testOr(self, ) -> None:
+    """
+    Tests the '__or__' operator ('|'). A | B should return the member with
+    high flags that are high in either or both.
+    """
+
+    class EF(KeeFlags):  # ExampleFlags, but shortened
+      A = KeeFlag()
+      B = KeeFlag()
+      C = KeeFlag()
+      D = KeeFlag()
+      E = KeeFlag()
+
+    self.assertIs(EF.A | EF.B, EF.A_B)
+    self.assertIs(EF.A | EF.C, EF.A_C)
+    self.assertIs(EF.B | EF.C, EF.B_C)
+    self.assertIs(EF.A | EF.B | EF.C, EF.A_B_C)
+    self.assertIs(EF.A | EF.D, EF.A_D)
+    self.assertIs(EF.B | EF.D, EF.B_D)
+    self.assertIs(EF.C | EF.D, EF.C_D)
+    self.assertIs(EF.A | EF.E, EF.A_E)
+    self.assertIs(EF.B | EF.E, EF.B_E)
+    self.assertIs(EF.C | EF.E, EF.C_E)
+    self.assertIs(EF.D | EF.E, EF.D_E)
+    self.assertIs(EF.A | EF.B | EF.C | EF.D, EF.A_B_C_D)
+    self.assertIs(EF.A | EF.B | EF.C | EF.E, EF.A_B_C_E)
+    self.assertIs(EF.A | EF.B | EF.D | EF.E, EF.A_B_D_E)
+    self.assertIs(EF.A | EF.C | EF.D | EF.E, EF.A_C_D_E)
+    self.assertIs(EF.B | EF.C | EF.D | EF.E, EF.B_C_D_E)
+    self.assertIs(EF.A | EF.B | EF.C | EF.D | EF.E, EF.A_B_C_D_E)
+
+  def testAnd(self, ) -> None:
+    """
+    Tests the '__and__' operator ('&'). A & B should return the member with
+    high flags that are high in both.
+    """
+
+    class EF(KeeFlags):  # ExampleFlags, but shortened
+      A = KeeFlag()
+      B = KeeFlag()
+      C = KeeFlag()
+      D = KeeFlag()
+      E = KeeFlag()
+
+    self.assertIs(EF.A & EF.B, EF.NULL)
+    self.assertIs(EF.A & EF.C, EF.NULL)
+    self.assertIs(EF.B & EF.C, EF.NULL)
+    self.assertIs(EF.A & EF.B & EF.C, EF.NULL)
+    self.assertIs(EF.A & EF.D, EF.NULL)
+    self.assertIs(EF.B & EF.D, EF.NULL)
+    self.assertIs(EF.C & EF.D, EF.NULL)
+    self.assertIs(EF.A & EF.E, EF.NULL)
+
+    self.assertIs(EF.A_B & EF.A_B_C, EF.A_B)
+    self.assertIs(EF.A_B & EF.A_B_D, EF.A_B)
+    self.assertIs(EF.A_B & EF.A_B_E, EF.A_B)
+    self.assertIs(EF.A_B & EF.A_B_C_D, EF.A_B)
+    self.assertIs(EF.A_B & EF.A_B_C_E, EF.A_B)
+    self.assertIs(EF.A_B & EF.A_B_D_E, EF.A_B)
+    self.assertIs(EF.A_B & EF.A_C_D_E, EF.A)
+    self.assertIs(EF.A_B & EF.B_C_D_E, EF.B)
+    self.assertIs(EF.A_B & EF.A_B_C_D_E, EF.A_B)
+    self.assertIs(EF.A_C & EF.A_B_C, EF.A_C)
+    self.assertIs(EF.A_C & EF.A_C_D, EF.A_C)
+    self.assertIs(EF.A_C & EF.A_C_E, EF.A_C)
+    self.assertIs(EF.A_C & EF.A_B_C_D, EF.A_C)
+    self.assertIs(EF.A_C & EF.A_B_C_E, EF.A_C)
+    self.assertIs(EF.A_C & EF.A_C_D_E, EF.A_C)
+    self.assertIs(EF.A_C & EF.B_C_D_E, EF.C)
+    self.assertIs(EF.A_C & EF.A_B_C_D_E, EF.A_C)
+    self.assertIs(EF.B_C & EF.A_B_C, EF.B_C)
+    self.assertIs(EF.B_C & EF.B_C_D, EF.B_C)
+    self.assertIs(EF.B_C & EF.B_C_E, EF.B_C)
+    self.assertIs(EF.B_C & EF.A_B_C_D, EF.B_C)
+    self.assertIs(EF.B_C & EF.A_B_C_E, EF.B_C)
+    self.assertIs(EF.B_C & EF.A_C_D_E, EF.C)
+    self.assertIs(EF.B_C & EF.B_C_D_E, EF.B_C)
+    self.assertIs(EF.B_C & EF.A_B_C_D_E, EF.B_C)
+    self.assertIs(EF.A_B_C & EF.A_B_C_D, EF.A_B_C)
+    self.assertIs(EF.A_B_C & EF.A_B_C_E, EF.A_B_C)
+    self.assertIs(EF.A_B_C & EF.A_C_D_E, EF.A_C)
+    self.assertIs(EF.A_B_C & EF.B_C_D_E, EF.B_C)
+    self.assertIs(EF.A_B_C & EF.A_B_C_D_E, EF.A_B_C)
+    self.assertIs(EF.A_B_D & EF.A_B_C_D, EF.A_B_D)
+    self.assertIs(EF.A_B_D & EF.A_B_D_E, EF.A_B_D)
+    self.assertIs(EF.A_B_D & EF.A_C_D_E, EF.A_D)
+    self.assertIs(EF.A_B_D & EF.B_C_D_E, EF.B_D)
+    self.assertIs(EF.A_B_D & EF.A_B_C_D_E, EF.A_B_D)
+    self.assertIs(EF.A_C_D & EF.A_C_D_E, EF.A_C_D)
+    self.assertIs(EF.A_C_D & EF.B_C_D_E, EF.C_D)
+    self.assertIs(EF.A_C_D & EF.A_B_C_D_E, EF.A_C_D)
+    self.assertIs(EF.A_B_C_D & EF.A_B_C_D_E, EF.A_B_C_D)
+    self.assertIs(EF.A_B_C_D_E & EF.A_B_C_D_E, EF.A_B_C_D_E)
+
+  def testXor(self) -> None:
+    """
+    Tests the '__xor__' operator ('^'). A ^ B should return the member with
+    high flags that are high in either but not both.
+    """
+
+    class EF(KeeFlags):  # ExampleFlags, but shortened
+      A = KeeFlag()
+      B = KeeFlag()
+      C = KeeFlag()
+      D = KeeFlag()
+      E = KeeFlag()
+
+    self.assertIs(EF.A ^ EF.B, EF.A_B)
+    self.assertIs(EF.A ^ EF.C, EF.A_C)
+    self.assertIs(EF.B ^ EF.C, EF.B_C)
+    self.assertIs(EF.A ^ EF.B ^ EF.C, EF.A_B_C)
+    self.assertIs(EF.A ^ EF.D, EF.A_D)
+    self.assertIs(EF.B ^ EF.D, EF.B_D)
+    self.assertIs(EF.C ^ EF.D, EF.C_D)
+    self.assertIs(EF.A ^ EF.E, EF.A_E)
+    self.assertIs(EF.B ^ EF.E, EF.B_E)
+    self.assertIs(EF.C ^ EF.E, EF.C_E)
+    self.assertIs(EF.D ^ EF.E, EF.D_E)
+    self.assertIs(EF.A ^ EF.B ^ EF.C ^ EF.D, EF.A_B_C_D)
+    self.assertIs(EF.A ^ EF.B ^ EF.C ^ EF.E, EF.A_B_C_E)
+    self.assertIs(EF.A ^ EF.B ^ EF.D ^ EF.E, EF.A_B_D_E)
+    self.assertIs(EF.A ^ EF.C ^ EF.D ^ EF.E, EF.A_C_D_E)
+    self.assertIs(EF.B ^ EF.C ^ EF.D ^ EF.E, EF.B_C_D_E)
+
+  def testInvert(self) -> None:
+    """
+    Tests the '__invert__' operator ('~'). ~A should return the member with
+    high flags that are low in A.
+    """
+
+    class EF(KeeFlags):  # ExampleFlags, but shortened
+      A = KeeFlag()
+      B = KeeFlag()
+      C = KeeFlag()
+      D = KeeFlag()
+      E = KeeFlag()
+
+    self.assertIs(~EF.A, EF.B_C_D_E)
+    self.assertIs(~EF.B, EF.A_C_D_E)
+    self.assertIs(~EF.C, EF.A_B_D_E)
+    self.assertIs(~EF.D, EF.A_B_C_E)
+    self.assertIs(~EF.E, EF.A_B_C_D)
+    self.assertIs(~EF.A_B, EF.C_D_E)
+    self.assertIs(~EF.A_C, EF.B_D_E)
+    self.assertIs(~EF.A_D, EF.B_C_E)
+    self.assertIs(~EF.A_E, EF.B_C_D)
+    self.assertIs(~EF.B_C, EF.A_D_E)
+    self.assertIs(~EF.B_D, EF.A_C_E)
+    self.assertIs(~EF.B_E, EF.A_C_D)
+    self.assertIs(~EF.C_D, EF.A_B_E)
+    self.assertIs(~EF.C_E, EF.A_B_D)
+    self.assertIs(~EF.D_E, EF.A_B_C)
+    self.assertIs(~EF.A_B_C, EF.D_E)
+    self.assertIs(~EF.A_B_D, EF.C_E)
+    self.assertIs(~EF.A_C_D, EF.B_E)
+    self.assertIs(~EF.A_B_C_D, EF.E)
+    self.assertIs(~EF.A_B_C_E, EF.D)
+    self.assertIs(~EF.A_B_D_E, EF.C)
+    self.assertIs(~EF.A_C_D_E, EF.B)
+    self.assertIs(~EF.B_C_D_E, EF.A)
+    self.assertIs(~EF.A_B_C_D_E, EF.NULL)
+
+  def testBadOr(self) -> None:
+    """Tests that '|' with non-KeeFlags raises 'TypeError'."""
+    for cls in self.exampleFlags:
+      for flag in cls:
+        with self.assertRaises(TypeError) as context:
+          _ = flag | 69
+        e = context.exception
+        self.assertIn('unsupported operand', str(e))
+
+  def testBadAnd(self) -> None:
+    """Tests that '&' with non-KeeFlags raises 'TypeError'."""
+    for cls in self.exampleFlags:
+      for flag in cls:
+        with self.assertRaises(TypeError) as context:
+          _ = flag & 420
+        e = context.exception
+        self.assertIn('unsupported operand', str(e))
+
+  def testBadXor(self) -> None:
+    """Tests that '^' with non-KeeFlags raises 'TypeError'."""
+    for cls in self.exampleFlags:
+      for flag in cls:
+        with self.assertRaises(TypeError) as context:
+          _ = flag ^ 80085
+        e = context.exception
+        self.assertIn('unsupported operand', str(e))
+
+  def test_flags_descriptor(self) -> None:
+    """
+    Testing the 'flags' descriptor
+    """
+    for cls in self.exampleFlags:
+      for member in cls:
+        instanceFlags = member.flags
+        classFlags = cls.flags
+        for instanceFlag, classFlag in zip(instanceFlags, classFlags):
+          self.assertEqual(instanceFlag, classFlag)

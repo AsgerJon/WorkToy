@@ -44,11 +44,14 @@ class FixBox(AttriBox):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __instance_set__(self, value: Any, *args, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     oldValue = self._inspectValue()
     if oldValue is not None:
       raise WriteOnceError(self, oldValue, value)
-    AttriBox.__instance_set__(self, value, *args, **kwargs)
+    AttriBox.__instance_set__(self, instance, value, **kwargs)
 
-  def __instance_delete__(self, *args, **kwargs) -> None:
-    Object.__instance_delete__(self, *args, **kwargs)
+  def __instance_delete__(self,
+                          instance: Any,
+                          old: Any = None,
+                          **kwargs) -> None:
+    Object.__instance_delete__(self, instance, old, **kwargs)

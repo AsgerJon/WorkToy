@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-def typeCast(target: type, arg: Any) -> Any:
+def typeCast(target: type, arg: Any, **kwargs) -> Any:
   """
   Casts the given argument to the specified type, with the following
   special exceptions made for particular target types:
@@ -177,12 +177,15 @@ def typeCast(target: type, arg: Any) -> Any:
     raise TypeCastException(target, arg)
   if target is dict:
     try:
-      return {**arg}
+      return {**arg, }
     except Exception as exception:
       from worktoy.waitaminute.dispatch import TypeCastException
       raise TypeCastException(target, arg) from exception
-  try:
-    return target(arg)
-  except Exception as exception:
-    from worktoy.waitaminute.dispatch import TypeCastException
-    raise TypeCastException(target, arg) from exception
+  if kwargs.get('allowInstantiation', True):
+    try:
+      return target(arg)
+    except Exception as exception:
+      from worktoy.waitaminute.dispatch import TypeCastException
+      raise TypeCastException(target, arg) from exception
+  from worktoy.waitaminute.dispatch import TypeCastException
+  raise TypeCastException(target, arg)

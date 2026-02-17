@@ -4,6 +4,9 @@ by the 'worktoy.keenum' module."""
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._kee_box_type_error import KeeBoxTypeError
+from ._kee_box_value_error import KeeBoxValueError
+from ._kee_box_exception import KeeBoxException
 from ._kee_name_conflict import KeeNameConflict
 from ._kee_case_exception import KeeCaseException
 from ._kee_duplicate import KeeDuplicate
@@ -16,6 +19,9 @@ from ._kee_type_exception import KeeTypeException
 from ._kee_write_once_error import KeeWriteOnceError
 
 __all__ = [
+  'KeeBoxTypeError',
+  'KeeBoxValueError',
+  'KeeBoxException',
   'KeeNameConflict',
   'KeeCaseException',
   'KeeDuplicate',
@@ -26,4 +32,4 @@ __all__ = [
   'KeeValueError',
   'KeeTypeException',
   'KeeWriteOnceError',
-]
+  ]

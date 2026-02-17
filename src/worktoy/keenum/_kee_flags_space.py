@@ -91,14 +91,18 @@ class KeeFlagsSpace(BaseSpace):
         name,
         bases,
         _strictMRO=False,
-        **kw
-      )
+        **kw,
+        )
       self.__kee_flags__ = None
       cls = type(self)
       for base in bases:
-        baseSpace = getattr(base, '__namespace__', None)
-        for name, keeFlag in baseSpace.getKeeFlags().items():
-          self.addBaseFlag(name, keeFlag)
+        try:
+          flags = getattr(base, 'flags')
+        except AttributeError:
+          continue
+        else:
+          for flag in flags:
+            self.addBaseFlag(flag.__member_name__, flag)
       for space in self.getMRONamespaces():
         for name, sigFunc in getattr(space, '__overload_map__', ).items():
           self.__overload_map__[name] = dict()

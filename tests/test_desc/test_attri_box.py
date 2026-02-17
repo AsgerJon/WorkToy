@@ -15,7 +15,9 @@ from . import DescTest
 from .geometry import Circle, Point2D
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Type, TypeAlias, Union
+
+  ComplexBox: TypeAlias = Union[AttriBox, complex]
 
 eps = sys.float_info.epsilon
 
@@ -121,6 +123,41 @@ class TestAttriBox(DescTest):
     setattr(Bar.foo, '__context_instance__', bar)
     setattr(Bar.foo, '__context_owner__', Bar)
     with self.assertRaises(RecursionError):
-      Bar.foo.__instance_get__(_recursion=True)
+      Bar.foo.__instance_get__(Bar(), Bar, _recursion=True)
     with self.assertRaises(RecursionError):
-      Bar.foo.__instance_set__('baz', _recursion=True)
+      Bar.foo.__instance_set__(Bar(), 'baz', _recursion=True)
+
+    class Spam:
+      eggList = AttriBox[list](69, 420, 1337)
+      eggSet = AttriBox[set](69, 420, 1337)
+      eggFrozenset = AttriBox[frozenset](69, 420, 1337)
+      eggTuple = AttriBox[tuple](69, 420, 1337)
+
+    spam = Spam()
+    for egg, num in zip(spam.eggList, [69, 420, 1337]):
+      self.assertEqual(egg, num)
+    for egg, num in zip(spam.eggTuple, [69, 420, 1337]):
+      self.assertEqual(egg, num)
+
+    for num in [69, 420, 1337]:
+      self.assertIn(num, spam.eggSet)
+      self.assertIn(num, spam.eggFrozenset)
+
+    spam.eggTuple = 80085, 8008135, -8008135
+    for egg, num in zip(spam.eggTuple, [80085, 8008135, -8008135]):
+      self.assertEqual(egg, num)
+
+  def test_set_tuple(self) -> None:
+    """
+    Testing setting an 'AttriBox' to a tuple, where the field type needs
+    to have them unpacked.
+    """
+
+    class Foo:
+      bar: ComplexBox = AttriBox[complex]()
+
+    foo = Foo()
+
+    foo.bar = 69, 420
+    self.assertAlmostEqual(foo.bar.real, 69)
+    self.assertAlmostEqual(foo.bar.imag, 420)

@@ -45,20 +45,6 @@ class TestObjectUmbrella(CoreTest):
   fundamental object in the 'worktoy' library.
   """
 
-  def testSentinelResolution(self) -> None:
-    """
-    Test that BaseObject resolves sentinels correctly.
-    """
-    posArgs = Bar.foo1.getPosArgs(DESC=69, THIS=420, OWNER=1337)
-    self.assertIsInstance(posArgs, tuple)
-    for arg in posArgs:
-      self.assertIsInstance(arg, int)
-
-    keyArgs = Bar.foo2.getKeyArgs(DESC=69, THIS=420, OWNER=1337)
-    for key, value in keyArgs.items():
-      self.assertIsInstance(key, str)
-      self.assertIsInstance(value, int)
-
   def testWithoutException(self) -> None:
     """Tests WithoutException handling."""
     with self.assertRaises(WithoutException) as context:

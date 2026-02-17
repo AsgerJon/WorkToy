@@ -25,6 +25,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from icecream import ic
+
 from ..desc import Field, AttriBox
 from ..utilities import textFmt
 from ..waitaminute import VariableNotNone, MissingVariable, TypeException
@@ -34,6 +36,8 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type, TypeAlias
 
   KEENUM: TypeAlias = Type[object]
+
+ic.configureOutput(includeContext=True)
 
 
 class Kee(AttriBox):
@@ -71,7 +75,9 @@ class Kee(AttriBox):
     if self.__field_value__ is None:
       if kwargs.get('_recursion', False):
         raise RecursionError
-      self.__field_value__ = self._createFieldObject()
+      args = self.getPosArgs()
+      keyArgs = self.getKeyArgs()
+      self.__field_value__ = self._resolve(*args, **keyArgs)
       return self.getValue(_recursion=True)
     fieldType = self.getFieldType()
     if isinstance(self.__field_value__, fieldType):
@@ -144,6 +150,3 @@ class Kee(AttriBox):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Parent Methods   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def getContextInstance(self) -> Any:
-    return None

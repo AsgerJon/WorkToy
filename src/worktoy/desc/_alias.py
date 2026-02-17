@@ -31,9 +31,9 @@ class Alias(Object):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __get__(self, instance: Any, owner: type) -> Any:
+  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
     realDesc = getattr(type(instance), self.__real_name__, )
-    return realDesc.__get__(instance, owner)
+    return realDesc.__get__(instance, owner, )
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
@@ -60,4 +60,5 @@ class Alias(Object):
     """
     Initializes the Alias descriptor with the name of the real descriptor.
     """
+    Object.__init__(self, realName)
     self.__real_name__ = realName

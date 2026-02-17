@@ -11,6 +11,8 @@ from types import FunctionType as Func
 from types import MethodType as Meth
 from typing import TYPE_CHECKING
 
+from icecream import ic
+
 from ..core import Object
 from ..utilities import maybe, typeCast, perm, ValidSlice
 from ..waitaminute import TypeException, VariableNotNone

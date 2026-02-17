@@ -6,7 +6,11 @@ the KeeFlags class for testing and demonstration purposes.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._h_alignum import HAlignum
+from ._v_alignum import VAlignum
 from ._rgb import RGB
+from ._color_num import ColorNum
+from ._pen import Pen
 from ._flags_example import FlagsExample
 from ._subclass_example import SubclassExample
 from ._prime_valued import PrimeValued
@@ -23,7 +27,11 @@ from ._dato import Dato
 from ._brush import Brush
 
 __all__ = [
+  'HAlignum',
+  'VAlignum',
   'RGB',
+  'ColorNum',
+  'Pen',
   'FlagsExample',
   'SubclassExample',
   'PrimeValued',
@@ -42,4 +50,4 @@ __all__ = [
   'Month',
   'Dato',
   'Brush',
-]
+  ]

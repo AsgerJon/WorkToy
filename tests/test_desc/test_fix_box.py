@@ -267,6 +267,6 @@ class TestFixBox(DescTest):
     setattr(Bar.foo, '__context_instance__', bar)
     setattr(Bar.foo, '__context_owner__', Bar)
     with self.assertRaises(RecursionError):
-      Bar.foo.__instance_get__(_recursion=True)
+      Bar.foo.__instance_get__(bar, Bar, _recursion=True)
     with self.assertRaises(RecursionError):
-      Bar.foo.__instance_set__('baz', _recursion=True)
+      Bar.foo.__instance_set__(bar, 'baz', _recursion=True)

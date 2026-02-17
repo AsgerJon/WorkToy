@@ -60,7 +60,9 @@ from ..waitaminute import MissingVariable, TypeException
 from . import KeeFlag, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterator, Self
+  from typing import Any, Iterator, Self, Type, TypeAlias, Union
+
+  FlagsField: TypeAlias = Union[Field, tuple[KeeFlag]]
 
 
 class KeeFlags(metaclass=KeeFlagsMeta):
@@ -94,8 +96,9 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   index = Field()
 
   #  Virtual Variables
-  lows = Field()
-  highs = Field()
+  flags: FlagsField = Field()
+  lows: FlagsField = Field()
+  highs: FlagsField = Field()
   value = Field()
   name = Field()
   names = Field()
@@ -107,6 +110,33 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @flags.GET
+  def _getFlagsFromType(self, ) -> Any:
+    """
+    The 'KeeFlagsMeta' metaclass provides the helpful 'flags' descriptor
+    allowing inspection of all the flags available. The descriptor is then
+    available on the derived 'KeeFlags' classes, but *not* on the
+    instances themselves. For example:
+
+    class KeyboardModifier(KeeFlags):
+      ALT = KeeFlag()
+      SHIFT = KeeFlag()
+      CTRL = KeeFlag()
+      META = KeeFlag()
+
+    Then: 'KeyboardModifier.flags' is understood as:
+    KeeFlagsMeta.flags.__get__(KeyboardModifier, KeeFlagsMeta)
+
+    But instances of 'KeyboardModifier' are not able to access the
+    metaclass defined descriptor. Therefore, the 'KeeFlags' class must
+    explicitly mirror it. A potential future feature of 'worktoy' will
+    provide deep metaclass descriptors.
+    """
+    cls = type(self)
+    mcls = type(cls)
+    desc = getattr(mcls, 'flags')
+    return desc.__get__(cls, mcls)
 
   @value.GET
   def _getValue(self) -> Any:
@@ -184,6 +214,38 @@ class KeeFlags(metaclass=KeeFlagsMeta):
 
   def __hash__(self, ) -> int:
     return hash((hash(type(self)), *self.highs))
+
+  def __or__(self, other: Self) -> Self:
+    cls = type(self)
+    if not isinstance(other, cls):
+      return NotImplemented
+    highs = (*self.highs, *other.highs,)
+    names = frozenset((f.name for f in highs), )
+    return cls.memberDict[names]
+
+  def __and__(self, other: Self) -> Self:
+    cls = type(self)
+    if not isinstance(other, cls):
+      return NotImplemented
+    highs = (f for f in self.highs if f in other.highs)
+    names = frozenset((f.name for f in highs), )
+    return cls.memberDict[names]
+
+  def __xor__(self, other: Self) -> Self:
+    cls = type(self)
+    if not isinstance(other, cls):
+      return NotImplemented
+    ors = self | other
+    ands = self & other
+    highs = (f for f in ors.highs if f not in ands.highs)
+    names = frozenset((*(f.name for f in highs),), )
+    return cls.memberDict[names]
+
+  def __invert__(self, ) -> Self:
+    cls = type(self)
+    lows = self.lows
+    names = frozenset((f.name for f in lows), )
+    return cls.memberDict[names]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
