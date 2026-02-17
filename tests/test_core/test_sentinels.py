@@ -3,7 +3,7 @@ TestSentinels performs edge case focused testing of the 'Sentinel' classes
 provided by the 'worktoy.core.sentinels' module.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -29,8 +29,8 @@ class TestSentinels(CoreTest):
 
   def setUp(self) -> None:
     self.sentinels = [
-        THIS, OWNER, DESC, METACALL, WILDCARD, DELETED
-    ]
+      THIS, OWNER, DESC, METACALL, WILDCARD, DELETED,
+      ]
 
   def test_recursion(self, ) -> None:
     """

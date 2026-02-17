@@ -4,7 +4,7 @@ The 'TestBipartiteMatching' class provides unit tests for the
 bipartite matching algorithm.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,9 +23,9 @@ class TestBipartiteMatchingList(CoreTest):
 
   def testSimpleSuccess(self) -> None:
     slots = [
-        (1, 2),
-        (2, 3),
-    ]
+      (1, 2),
+      (2, 3),
+      ]
     result = bipartiteMatching(slots)
     self.assertEqual(len(result), 2)
     self.assertEqual(len(set(result)), 2)
@@ -34,19 +34,19 @@ class TestBipartiteMatchingList(CoreTest):
 
   def testExactMatch(self) -> None:
     slots = [
-        (0,),
-        (1,),
-        (2,),
-    ]
+      (0,),
+      (1,),
+      (2,),
+      ]
     result = bipartiteMatching(slots)
     self.assertEqual(result, [0, 1, 2])
 
   def testAmbiguousSuccess(self) -> None:
     slots = [
-        (1, 2, 3),
-        (1, 2, 3),
-        (1, 2, 3),
-    ]
+      (1, 2, 3),
+      (1, 2, 3),
+      (1, 2, 3),
+      ]
     result = bipartiteMatching(slots)
     self.assertEqual(len(result), 3)
     self.assertEqual(len(set(result)), 3)
@@ -55,9 +55,9 @@ class TestBipartiteMatchingList(CoreTest):
 
   def testFailure(self) -> None:
     slots = [
-        (1, 2),
-        (1, 2),
-        (1, 2),
-    ]
+      (1, 2),
+      (1, 2),
+      (1, 2),
+      ]
     with self.assertRaises(ValueError):
       bipartiteMatching(slots)

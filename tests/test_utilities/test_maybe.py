@@ -3,7 +3,7 @@ The 'TestMaybe' class provides unit tests for the 'worktoy.parse.maybe'
 function.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from random import shuffle, random
@@ -28,38 +28,38 @@ class TestMaybe(UtilitiesTest):
     Sets up a list of falsy objects on an instance variable 'falsies'.
     """
     self.falsies = [
-        False,
-        0,
-        0.0,
-        0j,
-        '',
-        [],
-        {},
-        set(),
-        frozenset(),
-    ]
+      False,
+      0,
+      0.0,
+      0j,
+      '',
+      [],
+      {},
+      set(),
+      frozenset(),
+      ]
     self.typeFalsies = {
-        bool     : False,
-        int      : 0,
-        float    : 0.0,
-        complex  : 0j,
-        str      : '',
-        list     : [],
-        dict     : {},
-        set      : set(),
-        frozenset: frozenset(),
-    }
+      bool: False,
+      int: 0,
+      float: 0.0,
+      complex: 0j,
+      str: '',
+      list: [],
+      dict: {},
+      set: set(),
+      frozenset: frozenset(),
+      }
     self.typeTruthies = {
-        bool     : True,
-        int      : 1,
-        float    : 0.1337,
-        complex  : 0.80085j,
-        str      : 'a',
-        list     : [1],
-        dict     : {'a': 1},
-        set      : {1},
-        frozenset: frozenset({1}),
-    }
+      bool: True,
+      int: 1,
+      float: 0.1337,
+      complex: 0.80085j,
+      str: 'a',
+      list: [1],
+      dict: {'a': 1},
+      set: {1},
+      frozenset: frozenset({1}),
+      }
 
   @staticmethod
   def weave(a: list, b: list) -> list:

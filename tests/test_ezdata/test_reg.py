@@ -3,7 +3,7 @@ TestReg tests the regularly defined EZData classes. That is, where slots
 are defined by setting class variables directly, without using type hints.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

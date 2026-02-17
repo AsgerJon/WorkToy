@@ -3,7 +3,7 @@ TestMoreSpace does some more testing of the AbstractNamespace class. This
 is because the 'unittest' module is not fit for purpose.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

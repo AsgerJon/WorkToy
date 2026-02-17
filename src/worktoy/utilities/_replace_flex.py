@@ -7,6 +7,7 @@ The 'replaceFlex' function provides a vastly superior alternative to the
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from . import maybe
 
 if TYPE_CHECKING:  # pragma: no cover

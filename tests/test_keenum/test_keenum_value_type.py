@@ -35,13 +35,13 @@ class TestKeeNumValueType(KeeTest):
       examples.WeekDay,
       examples.Compass,
       examples.Month,
-    )
+      )
     cls.exampleValueTypes = (
       examples.RGB,
       str,
       complex,
       str,
-    )
+      )
 
   def test_examples(self, ) -> None:
     """Tests the examples provided in the documentation."""

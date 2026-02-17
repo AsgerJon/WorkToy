@@ -41,8 +41,8 @@ class TestArithmetic(DescTest):
       ComplexMeta,
       ComplexMetaSub,
       Comflex,
-      ComflexMeta
-    ]
+      ComflexMeta,
+      ]
     self.posArgs = dict()
     n = 8  # Number during tests in CI/CD
     #  Reduces 'n' to 1 during development.

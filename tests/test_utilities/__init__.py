@@ -24,4 +24,4 @@ __all__ = [
   'DataArray',
   'FruitNinja',
   'UtilitiesTest',  # Base test class for the 'tests.test_utilities' module
-]
+  ]

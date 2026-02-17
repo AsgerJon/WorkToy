@@ -61,11 +61,11 @@ from typing import TYPE_CHECKING
 from . import KeeMeta, KeeFlagsMeta
 from ..desc import AttriBox
 from ..waitaminute import TypeException
-from ..waitaminute.keenum import KeeValueError, KeeBoxException, \
+from ..waitaminute.keenum import KeeBoxException, \
   KeeBoxValueError, KeeBoxTypeError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias, Self
+  from typing import Any, Self
 
 
 class KeeBox(AttriBox):

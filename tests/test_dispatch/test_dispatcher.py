@@ -3,7 +3,7 @@ TestDispatcher provides tests for the 'TypeSig' class from the
 'worktoy.dispatch' package.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from worktoy.dispatch import TypeSig, Dispatcher, overload
@@ -31,10 +31,10 @@ class TestDispatcher(DispatcherTest):
 
   def setUp(self, ) -> None:
     self.sigFunc = {
-        TypeSig(int, int): funcIntInt,
-        TypeSig(int)     : funcInt,
-        TypeSig(str)     : funcStr,
-    }
+      TypeSig(int, int): funcIntInt,
+      TypeSig(int): funcInt,
+      TypeSig(str): funcStr,
+      }
     self.sigIntInt = TypeSig(int, int)
     self.sigInt = TypeSig(int)
     self.sigStr = TypeSig(str)
@@ -82,9 +82,13 @@ class TestDispatcher(DispatcherTest):
     self.assertFalse(self.sigInt == 'breh')
     self.assertFalse(self.sigStr == 'breh')
 
-    longSig = TypeSig.fromArgs(*stringList("""
-    Never, gonna, give, you, up
-    """))
+    longSig = TypeSig.fromArgs(
+      *stringList(
+        """
+            Never, gonna, give, you, up
+            """,
+        ),
+      )
 
     self.assertFalse(self.sigIntInt == 'breh')
     self.assertFalse(self.sigInt == 'breh')

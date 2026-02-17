@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from worktoy.work_test import BaseTest
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  pass
 
 
 class ExampleTest(BaseTest):

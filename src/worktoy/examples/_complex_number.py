@@ -7,14 +7,13 @@ complex numbers.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.utilities.mathematics import atan2, cos, sin
+from typing import TYPE_CHECKING
 
+from worktoy.utilities.mathematics import atan2, cos, sin
 from worktoy.mcls import BaseObject
 from worktoy.desc import AttriBox, Field
 from worktoy.dispatch import overload
 from worktoy.core.sentinels import THIS
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
   from typing import Self  # For type hinting in the class methods

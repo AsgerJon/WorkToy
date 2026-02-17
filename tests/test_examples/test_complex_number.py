@@ -12,7 +12,7 @@ from worktoy.utilities.mathematics import pi
 from . import ExampleTest
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  pass
 
 
 class TestComplexNumber(ExampleTest):

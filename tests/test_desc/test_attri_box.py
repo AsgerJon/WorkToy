@@ -15,7 +15,7 @@ from . import DescTest
 from .geometry import Circle, Point2D
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Type, TypeAlias, Union
+  from typing import TypeAlias, Union
 
   ComplexBox: TypeAlias = Union[AttriBox, complex]
 

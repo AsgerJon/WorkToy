@@ -97,7 +97,7 @@ class NamespaceHook(AbstractSpaceHook):
       #  implementations of the dunder methods, such that derived
       #  may implement the methods to achieve behaviour otherwise
       #  requiring metaclass reimplementation.
-    ]
+      ]
 
   @classmethod
   def _getNearMisses(cls) -> list[NearMiss]:
@@ -109,7 +109,7 @@ class NamespaceHook(AbstractSpaceHook):
       ('__getitem__', '__get_item__'),
       ('__setitem__', '__set_item__'),
       ('__delitem__', '__del_item__'),
-    ]
+      ]
 
   @classmethod
   def _validateName(cls, name: str) -> bool:

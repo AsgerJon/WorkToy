@@ -75,8 +75,8 @@ class BaseSpace(AbstractNamespace):
       self,
       name: str,
       sig: TypeSig,
-      func: Callable
-  ) -> None:
+      func: Callable,
+      ) -> None:
     if name not in self.__overload_map__:
       self.__overload_map__[name] = dict()
     self.__overload_map__[name][sig] = func

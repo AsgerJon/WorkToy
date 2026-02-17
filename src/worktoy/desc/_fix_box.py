@@ -50,8 +50,10 @@ class FixBox(AttriBox):
       raise WriteOnceError(self, oldValue, value)
     AttriBox.__instance_set__(self, instance, value, **kwargs)
 
-  def __instance_delete__(self,
-                          instance: Any,
-                          old: Any = None,
-                          **kwargs) -> None:
+  def __instance_delete__(
+      self,
+      instance: Any,
+      old: Any = None,
+      **kwargs,
+      ) -> None:
     Object.__instance_delete__(self, instance, old, **kwargs)

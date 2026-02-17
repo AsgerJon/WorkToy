@@ -16,20 +16,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from icecream import ic
-
 from tests.test_keenum import KeeTest
 from tests.test_keenum.examples import Ugedag, Dag, _MetaDag  # noqa
 from worktoy.keenum import Kee, KeeNum
-from worktoy.utilities import ExceptionInfo
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.waitaminute import MissingVariable
 from worktoy.waitaminute.keenum import KeeNameConflict, KeeDuplicate
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
-
-ic.configureOutput(includeContext=True)
 
 
 class TestKee(KeeTest):

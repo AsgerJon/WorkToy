@@ -4,15 +4,15 @@ including a function type signature. It is used to test the overload
 mechanism in the dispatch module.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import Function
 from worktoy.desc import Field
 from worktoy.mcls import BaseObject
 from worktoy.dispatch import overload
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

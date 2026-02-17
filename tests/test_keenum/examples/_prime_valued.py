@@ -5,7 +5,7 @@ value of each member is then the product of the primes associated with
 the flags that are HIGH for that member.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from worktoy.dispatch import overload

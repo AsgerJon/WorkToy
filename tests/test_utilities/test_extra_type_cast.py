@@ -3,7 +3,7 @@ TestExtraTypeCast provides more unittests for the typeCast function,
 which is used to cast values to specific types.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from . import UtilitiesTest
@@ -128,8 +128,10 @@ class TypeCastTestCase(UtilitiesTest):
 
   def testFrozensetCast(self):
     """Casts to frozenset. Accepts frozenset, list, tuple, set, dict."""
-    self.assertEqual(typeCast(frozenset, frozenset([1, 2])),
-                     frozenset([1, 2]))
+    self.assertEqual(
+      typeCast(frozenset, frozenset([1, 2])),
+      frozenset([1, 2]),
+      )
     self.assertEqual(typeCast(frozenset, [1, 2]), frozenset([1, 2]))
     self.assertEqual(typeCast(frozenset, (1, 2)), frozenset([1, 2]))
     self.assertEqual(typeCast(frozenset, {1, 2}), frozenset([1, 2]))

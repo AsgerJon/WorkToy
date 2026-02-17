@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from icecream import ic
-
 from . import Field
 from ..core import Object
 from ..core.sentinels import DELETED
@@ -19,8 +17,6 @@ from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
-
-ic.configureOutput(includeContext=True)
 
 
 class AttriBox(Object):

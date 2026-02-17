@@ -34,4 +34,4 @@ ___all__ = [
   'PathSyntaxException',
   'SubclassException',
   'MissingVariable',
-]
+  ]

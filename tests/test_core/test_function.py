@@ -2,13 +2,12 @@
 TestFunction tests the 'Function' sentinel object.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from worktoy.core.sentinels import Function
 from worktoy.core.sentinels._function import _MetaFunction
 from worktoy.waitaminute.meta import IllegalInstantiation
-
 from . import CoreTest, FuncLoad
 
 
@@ -24,17 +23,17 @@ class TestFunction(CoreTest):
       """If you just put 'pass', it is not considered covered lmao"""
 
     self.funcExamples = [
-        func, lambda: None,
-        self.tearDownClass,
-        type(self).tearDownClass,
-        self.setUp,
-        type(self).setUp,
-        print,
-    ]
+      func, lambda: None,
+      self.tearDownClass,
+      type(self).tearDownClass,
+      self.setUp,
+      type(self).setUp,
+      print,
+      ]
     self.funcTypes = [type(func) for func in self.funcExamples]
     self.notFuncExamples = [
-        69, 420, 'ur mom', None, True, [1337, ], (80085,), type,
-    ]
+      69, 420, 'ur mom', None, True, [1337, ], (80085,), type,
+      ]
     self.notFuncTypes = [type(notFunc) for notFunc in self.notFuncExamples]
 
   def testExistence(self, ) -> None:

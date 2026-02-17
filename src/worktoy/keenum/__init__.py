@@ -28,4 +28,4 @@ __all__ = [
   'KeeFlagsMeta',
   'KeeFlags',
   'KeeBox',
-]
+  ]

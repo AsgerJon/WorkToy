@@ -5,14 +5,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from icecream import ic
-
 from worktoy.ezdata import EZData
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self
-
-ic.configureOutput(includeContext=True)
+  pass
 
 
 class RGB(EZData, frozen=True, order=True):

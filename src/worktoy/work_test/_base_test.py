@@ -65,8 +65,8 @@ class BaseTest(_Temp):
       PermissionError,
       TypeError,
       FileExistsError,
-      FileNotFoundError
-    )
+      FileNotFoundError,
+      )
 
   @staticmethod
   def generateRandomIntegers(*args) -> IntSample:
