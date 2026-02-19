@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.keenum import KeeNum, Kee
+from worktoy.keenum import KeeMeta, KeeNum, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Self, Any
 
 
 class HAlignum(KeeNum):

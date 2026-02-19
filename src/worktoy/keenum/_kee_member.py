@@ -25,6 +25,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from icecream import ic
+
 from ..desc import Field, AttriBox
 from ..utilities import textFmt
 from ..waitaminute import VariableNotNone, MissingVariable, TypeException
@@ -34,6 +36,8 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type, TypeAlias
 
   KEENUM: TypeAlias = Type[object]
+
+ic.configureOutput(includeContext=True)
 
 
 class Kee(AttriBox):

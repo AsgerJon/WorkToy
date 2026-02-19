@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe, textFmt
 from ..waitaminute import TypeException, attributeErrorFactory
+from ..waitaminute.desc import AccessError
 from .sentinels import THIS, DESC, OWNER, DELETED, Sentinel
 from . import ContextInstance, MetaType, ContextOwner
 

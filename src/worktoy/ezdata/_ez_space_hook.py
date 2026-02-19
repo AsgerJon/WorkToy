@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from icecream import ic
+
 from ..mcls import AbstractNamespace as ASpace
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import textFmt, maybe, stringList
@@ -26,25 +28,27 @@ if TYPE_CHECKING:  # pragma: no cover
   Dunder: TypeAlias = Callable[[Any], Any]
   Factory: TypeAlias = Callable[[], Dunder]
   Factories: TypeAlias = dict[str, Factory]
-  INIT: TypeAlias = Callable[[EZData], None]
-  LT: TypeAlias = Callable[[EZData, EZData], bool]
-  LE: TypeAlias = Callable[[EZData, EZData], bool]
-  GT: TypeAlias = Callable[[EZData, EZData], bool]
-  GE: TypeAlias = Callable[[EZData, EZData], bool]
-  EQ: TypeAlias = Callable[[EZData, EZData], bool]
-  HASH: TypeAlias = Callable[[EZData], int]
-  STR: TypeAlias = Callable[[EZData], str]
-  REPR: TypeAlias = Callable[[EZData], str]
-  ITER: TypeAlias = Callable[[EZData], Iterator]
-  LEN: TypeAlias = Callable[[EZData], int]
-  GETITEM: TypeAlias = Callable[[EZData, str], Any]
-  SETITEM: TypeAlias = Callable[[EZData, str, Any], None]
-  DELITEM: TypeAlias = Callable[[EZData, str], Never]
-  GETATTR: TypeAlias = Callable[[EZData, str], Any]
-  SETATTR: TypeAlias = Callable[[EZData, str, Any], None]
-  DELATTR: TypeAlias = Callable[[EZData, str], Never]
+  __INIT__: TypeAlias = Callable[[EZData], None]
+  __LT__: TypeAlias = Callable[[EZData, EZData], bool]
+  __LE__: TypeAlias = Callable[[EZData, EZData], bool]
+  __GT__: TypeAlias = Callable[[EZData, EZData], bool]
+  __GE__: TypeAlias = Callable[[EZData, EZData], bool]
+  __EQ__: TypeAlias = Callable[[EZData, EZData], bool]
+  __HASH__: TypeAlias = Callable[[EZData], int]
+  __STR__: TypeAlias = Callable[[EZData], str]
+  __REPR__: TypeAlias = Callable[[EZData], str]
+  __ITER__: TypeAlias = Callable[[EZData], Iterator]
+  __LEN__: TypeAlias = Callable[[EZData], int]
+  __GETITEM__: TypeAlias = Callable[[EZData, str], Any]
+  __SETITEM__: TypeAlias = Callable[[EZData, str, Any], None]
+  __DELITEM__: TypeAlias = Callable[[EZData, str], Never]
+  __GETATTR__: TypeAlias = Callable[[EZData, str], Any]
+  __SETATTR__: TypeAlias = Callable[[EZData, str, Any], None]
+  __DELATTR__: TypeAlias = Callable[[EZData, str], Never]
   AS_TUPLE: TypeAlias = Callable[[EZData], tuple[Any, ...]]
   AS_DICT: TypeAlias = Callable[[EZData], dict[str, Any]]
+
+ic.configureOutput(includeContext=True)
 
 
 class EZSpaceHook(AbstractSpaceHook):
@@ -118,7 +122,7 @@ class EZSpaceHook(AbstractSpaceHook):
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def addSlot(self, ezSlot: EZSlot, ) -> None:
+  def addSlot(self, ezSlot: EZSlot, **kwargs) -> None:
     """Adds a slot entry"""
     existing = self._getAddedSlots()
     if ezSlot in existing:
@@ -155,24 +159,24 @@ class EZSpaceHook(AbstractSpaceHook):
     compiledSpace['__slots__'] = [ez.name for ez in ezSlots]
     return compiledSpace
 
-  def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
+  def setItemPhase(self, key: str, value: Any, oldValue: Any, ) -> bool:
     """
     Creates a slot entry for the given key and value, when value is not a
     callable, a descriptor or a special reserved name.
     """
     if key in self._getBadNames():
-      if not hasattr(val, '__is_root__'):
+      if not hasattr(value, '__is_root__'):
         raise ReservedName(key)
       return True  # Ignores @_root decorated methods
     if key in self.reservedNames:
       return False  # Already handled by ReservedNameHook
-    if callable(val):
+    if callable(value):
       return False
-    if hasattr(val, '__get__'):
+    if hasattr(value, '__get__'):
       return False
     ezSlot = EZSlot(key)
-    ezSlot.__type_value__ = type(val)
-    ezSlot.__default_value__ = val
+    ezSlot.__type_value__ = type(value)
+    ezSlot.__default_value__ = value
     self.addSlot(ezSlot)
     return True
 
@@ -185,7 +189,7 @@ class EZSpaceHook(AbstractSpaceHook):
   #  Method factories
   # /¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨\ #
   @staticmethod
-  def initFactory() -> INIT:
+  def initFactory() -> __INIT__:
     """
     Creates the '__init__' method for the EZData class.
     """
@@ -226,7 +230,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __init__
 
   @classmethod
-  def ltFactory(cls, ) -> LT:
+  def ltFactory(cls, ) -> __LT__:
     """Creates the '__lt__' method for the EZData class. """
 
     def __lt__(self, other: Self) -> bool:
@@ -246,7 +250,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __lt__
 
   @classmethod
-  def leFactory(cls, ) -> LE:
+  def leFactory(cls, ) -> __LE__:
     """Creates the '__le__' method for the EZData class. """
 
     def __le__(self, other: Self) -> bool:  # NOQA
@@ -266,7 +270,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __le__
 
   @classmethod
-  def gtFactory(cls, ) -> GT:
+  def gtFactory(cls, ) -> __GT__:
     """Creates the '__gt__' method for the EZData class."""
 
     def __gt__(self, other: Self) -> bool:
@@ -286,7 +290,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __gt__
 
   @classmethod
-  def geFactory(cls, ) -> GE:
+  def geFactory(cls, ) -> __GE__:
     """Creates the '__ge__' method for the EZData class. """
 
     def __ge__(self, other: Self) -> bool:
@@ -306,7 +310,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __ge__
 
   @staticmethod
-  def eqFactory() -> EQ:
+  def eqFactory() -> __EQ__:
     """
     Creates the '__eq__' method for the EZData class.
     """
@@ -326,7 +330,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __eq__
 
   @staticmethod
-  def hashFactory() -> HASH:
+  def hashFactory() -> __HASH__:
     """Creates the '__hash__' method for the EZData class."""
 
     def __hash__(self) -> int:
@@ -343,7 +347,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __hash__
 
   @staticmethod
-  def strFactory() -> STR:
+  def strFactory() -> __STR__:
     """The strFactory method is called when the class is created."""
 
     def __str__(self) -> str:
@@ -358,7 +362,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __str__
 
   @staticmethod
-  def reprFactory() -> REPR:
+  def reprFactory(*ezSlots) -> __REPR__:
     """The reprFactory method is called when the class is created."""
 
     def __repr__(self) -> str:
@@ -383,7 +387,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __repr__
 
   @staticmethod
-  def iterFactory() -> ITER:
+  def iterFactory() -> __ITER__:
     """The iterFactory method is called when the class is created."""
 
     def __iter__(self, ) -> Iterator:
@@ -395,7 +399,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __iter__
 
   @staticmethod
-  def lenFactory() -> LEN:
+  def lenFactory() -> __LEN__:
     """The lenFactory method is called when the class is created."""
 
     def __len__(self) -> int:
@@ -406,7 +410,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __len__
 
   @staticmethod
-  def getItemFactory() -> GETITEM:
+  def getItemFactory() -> __GETITEM__:
     """The getItemFactory method is called when the class is created."""
 
     def __getitem__(self, identifier: str) -> Any:
@@ -443,7 +447,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __getitem__
 
   @staticmethod
-  def setItemFactory() -> SETITEM:
+  def setItemFactory() -> __SETITEM__:
     def __setitem__(self, identifier: Any, value: Any) -> None:
       """
       Assigns value(s) to this object’s slots via integer index, slot name,
@@ -500,14 +504,14 @@ class EZSpaceHook(AbstractSpaceHook):
         for (slot, val) in zip(sliceSlots, value):
           self.__setitem__(slot, val)
         else:
-          return None
+          return
       raise TypeException('key', identifier, str, int, slice)
 
     setattr(__setitem__, '__auto_generated__', True)
     return __setitem__
 
   @staticmethod
-  def delItemFactory() -> DELITEM:
+  def delItemFactory() -> __DELITEM__:
     """Creates '__delitem__' method that always raise TypeError"""
 
     def __delitem__(self, key: Any) -> Never:
@@ -521,7 +525,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __delitem__
 
   @staticmethod
-  def getAttrFactory() -> GETATTR:
+  def getAttrFactory() -> __GETATTR__:
     """The getAttrFactory method is called when the class is created."""
 
     def __getattr__(self, key: str) -> Any:
@@ -533,6 +537,8 @@ class EZSpaceHook(AbstractSpaceHook):
 
       if key not in self.__slots__:  # Raises
         raise attributeErrorFactory(self, key)
+      value = None
+      exception = None
       slot = [s for s in self.__slot_objects__ if s.name == key][0]
       value = getattr(slot, 'defaultValue')
       setattr(self, key, value)
@@ -542,7 +548,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __getattr__
 
   @staticmethod
-  def setAttrFactory() -> SETATTR:
+  def setAttrFactory() -> __SETATTR__:
     """The setAttrFactory method is called when the class is created."""
 
     def __setattr__(self, key: str, value: Any) -> None:
@@ -551,7 +557,7 @@ class EZSpaceHook(AbstractSpaceHook):
         raise attributeErrorFactory(self, key)
       if type(self).isFrozen:
         try:
-          _ = object.__getattribute__(self, key, )
+          oldValue = object.__getattribute__(self, key, )
         except AttributeError:
           return object.__setattr__(self, key, value)
         else:
@@ -565,7 +571,7 @@ class EZSpaceHook(AbstractSpaceHook):
     return __setattr__
 
   @staticmethod
-  def delAttrFactory() -> DELATTR:
+  def delAttrFactory() -> __DELATTR__:
     """The delAttrFactory method is called when the class is created."""
 
     def __delattr__(self, key: str) -> Never:
