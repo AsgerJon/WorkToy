@@ -76,7 +76,7 @@ class TestSlicedLoad(BaseTest):
       Never,
       'gonna',
       lambda run: 'around' and 'desert you',
-    ]
+      ]
     for badType in badTypes:
       with self.assertRaises(DispatchException) as context:
         _ = self.fruitNinja[badType]
@@ -106,7 +106,7 @@ class TestSlicedLoad(BaseTest):
       """never gonna make you cry""",
       """never gonna say goodbye""",
       """never gonna tell a lie and hurt you""",
-    )
+      )
     data = DataArray(*lines, )
     for line, item in zip(lines, data):
       self.assertEqual(line, item)

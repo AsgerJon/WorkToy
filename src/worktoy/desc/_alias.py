@@ -31,26 +31,30 @@ class Alias(Object):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def __set_name__(self, owner: Type[Object], name: str) -> None:
+    try:
+      realObject = getattr(owner, self.__real_name__)
+    except AttributeError:
+      #  If the real object does not exist, '__get__' will forward at
+      #  runtime.
+      pass
+    else:
+      #  Effectively makes the alias point to the real object, effectively
+      #  removing 'self' from 'owner'.
+      setattr(owner, name, realObject)
+    Object.__set_name__(self, owner, name)
+
   def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    realDesc = getattr(type(instance), self.__real_name__, )
-    return realDesc.__get__(instance, owner, )
+    realObject = getattr(owner, self.__real_name__)
+    return realObject.__get__(instance, owner, )
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> None:
-    """
-    Sets the value of the aliased descriptor.
-    """
-    realDesc = getattr(type(instance), self.__real_name__, )
-    return realDesc.__set__(instance, value, **kwargs)
+    realObject = getattr(type(instance), self.__real_name__)
+    return realObject.__set__(instance, value)
 
   def __delete__(self, instance: Any, **kwargs) -> None:
-    """
-    Deletes the value of the aliased descriptor.
-    """
-    realDesc = getattr(type(instance), self.__real_name__, )
-    return realDesc.__delete__(instance, **kwargs)
-
-  def __set_name__(self, owner: Type[Object], name: str) -> None:
-    Object.__set_name__(self, owner, name)
+    realObject = getattr(type(instance), self.__real_name__)
+    return realObject.__delete__(instance)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

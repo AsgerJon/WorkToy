@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..core import Object
+from . import BaseDescriptor
 from ..utilities import maybe
 from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
   CallMeMaybe: TypeAlias = Callable[..., Any]
 
 
-class Field(Object):
+class Field(BaseDescriptor):
   """
   Flexible descriptor requiring accessor methods to be decorated. Please
   note that the instance of 'Field' can decorate only methods appearing

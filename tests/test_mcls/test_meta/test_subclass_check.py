@@ -7,7 +7,7 @@ class could for example implement the classmethod
 subclasses of itself.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

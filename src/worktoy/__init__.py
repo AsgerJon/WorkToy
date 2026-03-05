@@ -25,10 +25,11 @@ from . import core
 from . import desc
 from . import dispatch
 from . import mcls
+from . import lorem_ipsum
 from . import keenum
 from . import ezdata
 from . import work_io
-from . import examples
+from . import work_test
 
 __all__ = [
   'utilities',
@@ -37,8 +38,9 @@ __all__ = [
   'desc',
   'dispatch',
   'mcls',
+  'lorem_ipsum',
   'keenum',
   'ezdata',
   'work_io',
-  'examples',
-]
+  'work_test',
+  ]

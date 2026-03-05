@@ -6,18 +6,15 @@ for boxing up enumerations.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from math import pi, e
 from typing import TYPE_CHECKING
 
 from worktoy.desc import AttriBox
-from worktoy.dispatch import overload
 from worktoy.ezdata import EZMeta, EZData
 from worktoy.mcls import BaseObject
-from worktoy.utilities import maybe, ExceptionInfo
-from worktoy.utilities.mathematics import pi
-from worktoy.utilities.mathematics import e as exp1
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.dispatch import DispatchException
-from worktoy.waitaminute.keenum import KeeValueError, KeeBoxException, \
+from worktoy.waitaminute.keenum import KeeBoxException, \
   KeeBoxValueError, KeeBoxTypeError
 from . import KeeTest
 from .examples import Pen, RGB, ColorNum
@@ -25,7 +22,9 @@ from worktoy.keenum import KeeBox, KeeNum, KeeMeta, KeeFlag, KeeFlags, \
   KeeFlagsMeta, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  pass
+
+exp1 = float(e)
 
 
 class TestKeeBox(KeeTest):

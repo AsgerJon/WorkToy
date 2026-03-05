@@ -37,8 +37,8 @@ class TestKeeFlagsMeta(KeeTest):
       flags=Field,
       memberList=Field,
       memberDict=Field,
-      valueType=Field
-    )
+      valueType=Field,
+      )
     for key, value in metaAttributes.items():
       self.assertTrue(hasattr(KeeFlagsMeta, key))
       self.assertIsInstance(getattr(KeeFlagsMeta, key), value)

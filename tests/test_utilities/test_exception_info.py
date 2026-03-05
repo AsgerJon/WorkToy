@@ -47,6 +47,7 @@ class TestExceptionInfo(UtilitiesTest):
     for excType in self.exceptions:
       with ExceptionInfo(excType) as info:
         pass
+      self.assertFalse(info)
       self.assertIsNone(info.actualException)
       self.assertIs(info.expectedExcType, excType)
       infoStr = """<%s expected='%s' actual='%s'>"""
@@ -90,6 +91,7 @@ class TestExceptionInfo(UtilitiesTest):
         with ExceptionInfo(excType) as info:
           raise excType("Test exception")
       finally:
+        self.assertTrue(info)
         self.assertIsInstance(info.actualException, excType)
         self.assertIs(info.expectedExcType, excType)
         strSpec = """<%s expected='%s' actual='%s'>"""

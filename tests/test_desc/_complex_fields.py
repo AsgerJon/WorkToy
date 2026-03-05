@@ -3,17 +3,23 @@ ComplexFields provides a complex number implementation for testing
 'Field' descriptor class from the 'worktoy.desc' module.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from cmath import exp, log
+from math import atan2
 from typing import TYPE_CHECKING
 
+from worktoy.core.sentinels import DELETED
 from worktoy.desc import Field
+from worktoy.keenum import AccessNum
 from worktoy.utilities import maybe
-from worktoy.utilities.mathematics import atan2, exp, log
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, Iterator
+  from typing import Any, Self, Iterator, TypeAlias
+
+  AccessReg: TypeAlias = tuple[str, AccessNum, Any]
+  AccessRegs: TypeAlias = tuple[AccessReg, ...]
 
 
 class ComplexFields:
@@ -23,6 +29,10 @@ class ComplexFields:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+  __access_registry__ = None
+  __abs_cache__ = None
 
   #  Fallback Variables
   __fallback_real__ = 0.0
@@ -44,6 +54,10 @@ class ComplexFields:
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  @ABS.preGet
+  def _preGetABS(self) -> None:
+    self.__abs_cache__ = (self.RE ** 2 + self.IM ** 2) ** 0.5
+
   @RE.GET
   def _getReal(self) -> float:
     return maybe(self.__real_part__, self.__fallback_real__)
@@ -54,7 +68,7 @@ class ComplexFields:
 
   @ABS.GET
   def _getABS(self) -> float:
-    return (self.RE ** 2 + self.IM ** 2) ** 0.5
+    return self.__abs_cache__
 
   @ARG.GET
   def _getARG(self) -> float:
@@ -62,9 +76,46 @@ class ComplexFields:
       return atan2(self.IM, self.RE)
     raise ZeroDivisionError
 
+  def getAccessRegistry(self) -> AccessRegs:
+    return maybe(self.__access_registry__, ())
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def _registerAccess(self, key: str, op: AccessNum, value: Any) -> None:
+    existing = self.getAccessRegistry()
+    entry = (key, op, value)
+    self.__access_registry__ = (*existing, entry)
+
+  @RE.onGet
+  def _registerREonGet(self, value: float) -> None:
+    self._registerAccess('RE', AccessNum.GET, value)
+
+  @RE.onSet
+  def _registerREonSet(self, value: float) -> None:
+    self._registerAccess('RE', AccessNum.SET, value)
+
+  @RE.onDelete
+  def _registerREonDelete(self) -> None:
+    self._registerAccess('RE', AccessNum.DELETE, None)
+
+  @IM.onGet
+  def _registerIMonGet(self, value: float) -> None:
+    self._registerAccess('IM', AccessNum.GET, value)
+
+  @IM.onSet
+  def _registerIMonSet(self, value: float) -> None:
+    self._registerAccess('IM', AccessNum.SET, value)
+
+  @IM.preDelete
+  @RE.preDelete
+  def _noop(self) -> None:
+    pass
+
+  @IM.onDelete
+  def _registerIMonDelete(self) -> None:
+    self._registerAccess('IM', AccessNum.DELETE, None)
 
   @RE.SET
   def _setReal(self, value: float) -> None:
@@ -73,6 +124,18 @@ class ComplexFields:
   @IM.SET
   def _setImag(self, value: float) -> None:
     self.__imag_part__ = float(value)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DELETERS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @RE.DELETE
+  def _deleteReal(self) -> None:
+    self.__real_part__ = DELETED
+
+  @IM.DELETE
+  def _deleteImag(self) -> None:
+    self.__imag_part__ = DELETED
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -113,7 +176,7 @@ class ComplexFields:
       return other
     try:
       other = cls(other)
-    except (ValueError, TypeError) as exception:
+    except (ValueError, TypeError):
       return NotImplemented
     else:
       return other
@@ -189,3 +252,4 @@ class ComplexFields:
       self.RE, self.IM = arg.real, arg.imag
     else:
       self.RE, self.IM, *_ = args
+    self._noop()

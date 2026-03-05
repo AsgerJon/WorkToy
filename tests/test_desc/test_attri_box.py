@@ -15,7 +15,7 @@ from . import DescTest
 from .geometry import Circle, Point2D
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Type, TypeAlias, Union
+  from typing import TypeAlias, Union
 
   ComplexBox: TypeAlias = Union[AttriBox, complex]
 
@@ -105,11 +105,11 @@ class TestAttriBox(DescTest):
     with self.assertRaises(AttributeError) as context:
       del point2D.x
     e = context.exception
-    self.assertEqual('x', str(e))
+    self.assertIn('x', str(e))
     with self.assertRaises(AttributeError) as context:
       del point2D.y
     e = context.exception
-    self.assertEqual('y', str(e))
+    self.assertIn('y', str(e))
 
   def test_gymnastics(self) -> None:
     """

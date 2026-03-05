@@ -11,7 +11,7 @@ from . import RGB
 from worktoy.keenum import KeeNum, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Any
+  pass
 
 
 class ColorNum(KeeNum):

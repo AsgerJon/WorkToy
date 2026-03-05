@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import ValidSlice, typeCast, ExceptionInfo
+from worktoy.utilities import ValidSlice, typeCast
 from worktoy.waitaminute.dispatch import TypeCastException
 from . import UtilitiesTest, Freddy, TrollSlice, EvilSlice, DataArray
 
@@ -24,19 +24,19 @@ class TestValidSlice(UtilitiesTest):
       Freddy()[::-1],
       Freddy()[1:10:2],
       Freddy()[0:5],
-    )
+      )
     self.badSlices = (
       slice(1.5, 10, 2),
       slice(0, '5'),
       slice([1, 2, 3]),
       slice(None, None, 'step'),
-    )
+      )
     self.nonSlices = (
       """imma slice, trust me bro!""",
       42,
       [1, 2, 3],
       {'start': 1, 'stop': 10, 'step': 2},
-    )
+      )
     self.trollSlices = (*(Freddy()[(TrollSlice())] for _ in range(7)),)
     self.evilSlices = (*(Freddy()[(EvilSlice())] for _ in range(7)),)
 
@@ -111,7 +111,7 @@ class TestValidSlice(UtilitiesTest):
       """never gonna make you cry""",
       """never gonna say goodbye""",
       """never gonna tell a lie and hurt you""",
-    )
+      )
     data = DataArray(*lines, )
     self.assertEqual(data[-4], data[2])
     with self.assertRaises(IndexError):

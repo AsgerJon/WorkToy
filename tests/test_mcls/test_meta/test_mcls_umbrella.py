@@ -3,7 +3,7 @@ TestMetaUmbrella provides some coverage gymnastics for the
 'AbstractMetaclass' from the 'worktoy.mcls' module.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 from worktoy.core import MetaType
 from worktoy.core._meta_type import _Space
 from worktoy.mcls import (BaseObject, BaseSpace, BaseMeta,
-                          AbstractNamespace, \
-                          AbstractMetaclass)
+  AbstractNamespace, \
+  AbstractMetaclass)
 from .. import MCLSTest
 
 if TYPE_CHECKING:  # pragma: no cover

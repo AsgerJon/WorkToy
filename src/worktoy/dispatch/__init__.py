@@ -9,11 +9,10 @@ from __future__ import annotations
 
 from ._type_sig import TypeSig
 from ._dispatcher import Dispatcher
-from ._overload import overload, overload
+from ._overload import overload
 
 __all__ = [
   'TypeSig',
   'Dispatcher',
   'overload',
-  'overload',
-]
+  ]

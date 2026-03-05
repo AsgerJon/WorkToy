@@ -33,4 +33,4 @@ class EZTest(BaseTest):
       Mid2,
       Mid3,
       SubClass,
-    ]
+      ]

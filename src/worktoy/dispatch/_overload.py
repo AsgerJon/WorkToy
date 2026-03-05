@@ -87,7 +87,7 @@ class overload:  # NOQA
 
   def __new__(cls, *types, **kwargs) -> Decorator:
     """Create a decorators that sets the type signature for the function."""
-    
+
     if kwargs.get('_root', False):
       return super(overload, cls).__new__(cls)
 

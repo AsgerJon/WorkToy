@@ -3,13 +3,13 @@ TestComplex tests the overloading functionality as represented by the
 'ComplexNumber' class.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from math import sin, cos
 from typing import TYPE_CHECKING
 
 from worktoy.utilities import stringList
-from worktoy.utilities.mathematics import sin, cos
 from . import DispatcherTest, ComplexNumber, ComplexSubclass, ComplexMeta
 
 if TYPE_CHECKING:  # pragma: no cover

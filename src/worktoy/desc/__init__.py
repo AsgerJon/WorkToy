@@ -12,14 +12,16 @@ descriptor-context.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._base_descriptor import BaseDescriptor
 from ._alias import Alias
 from ._field import Field
 from ._attri_box import AttriBox
 from ._fix_box import FixBox
 
 __all__ = [
+  'BaseDescriptor',
   'Alias',
   'Field',
   'AttriBox',
   'FixBox',
-]
+  ]

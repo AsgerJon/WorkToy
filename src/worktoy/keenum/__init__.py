@@ -16,11 +16,13 @@ from ._kee_flags_space import KeeFlagsSpace
 from ._kee_flags_meta import KeeFlagsMeta
 from ._kee_flags import KeeFlags
 from ._kee_box import KeeBox
+from ._access_num import AccessNum
 
 __all__ = [
   'Kee',
   'KeeFlag',
   'KeeSpaceHook',
+  'KeeFlagsHook',
   'KeeSpace',
   'KeeMeta',
   'KeeNum',
@@ -28,4 +30,5 @@ __all__ = [
   'KeeFlagsMeta',
   'KeeFlags',
   'KeeBox',
-]
+  'AccessNum',
+  ]

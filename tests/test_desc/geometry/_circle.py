@@ -6,6 +6,7 @@ Circle encapsulates the collection of points equidistant from a point
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from math import pi
 from random import random
 from typing import TYPE_CHECKING
 import sys
@@ -13,7 +14,6 @@ import sys
 from worktoy.desc import AttriBox, Field
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
-from worktoy.utilities.mathematics import pi
 from . import Point2D
 
 if TYPE_CHECKING:  # pragma: no cover

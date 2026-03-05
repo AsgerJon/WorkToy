@@ -6,6 +6,8 @@ ComplexFix provides a complex number implementation for testing the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from cmath import log, exp
+from math import atan2
 from random import random
 from typing import TYPE_CHECKING
 
@@ -13,7 +15,6 @@ from worktoy.desc import FixBox, Field
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
 from worktoy.utilities import stringList
-from worktoy.utilities.mathematics import atan2, exp, log
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Iterator

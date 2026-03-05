@@ -1,7 +1,138 @@
 # Changelog
 
-Beginning with version 0.99.98, the changelog will be maintained in this
-file.
+# [0.99.126] Additions
+
+**2026 February 20**
+
+## Descriptor Protocol Enhancements
+
+### Background
+
+Python provides the descriptor protocol allowing customization of the
+attribute access operations. These operations are set, get and delete,
+each customizable by implementing the following methods respectively:
+
+- ```__get__```
+- ```__set__```
+- ```__delete__```
+
+The ```Object``` class provides a general implementation of those methods,
+which defers to the following instance specific methods suitable for
+overriding by subclasses:
+
+- ```__instance_get__```
+- ```__instance_set__```
+- ```__instance_delete__```
+
+A get operation where ```instance is None``` does *not* defer to
+```__instance_get__```, but instead returns the descriptor itself. This
+behaviour is consistent with how accessing a method through an instance
+returns a bound method, while accessing through the class returns the
+plain function object.
+
+The ```Object``` implements access methods by deferring to the instance
+specific methods. With the introduction of the new hooks, the ```Object```
+now runs the pre-hook, the instance specific access method and then the
+on-hook.
+
+Additionally, the set operations can now be cancelled during this context
+manager block by raising ```SkipSet```. This is the first of a new family
+of custom exceptions described below. In short, ```SkipSet``` can be
+raised during the ```hookPreSet``` hook to cancel the set operation. This
+prevents both ```__instance_set__``` and the ```hookOnSet``` during that
+set operation.
+
+### Control Flow Exceptions
+
+Python provides a few special exceptions raised to signal events to the
+control flow such as ```StopIteration```, ```StopAsyncIteration``` and
+```GeneratorExit```. The new ```ControlFlow``` class provides a base for
+a family of custom exceptions used to augment the control flow as
+implemented by the ```Object``` implementation of the descriptor protocol.
+
+This introduction includes only the ```SkipSet``` signal. The envisioned
+use-case is to stop set operations where the new value is the same as the
+existing value.
+
+### Access Hooks
+
+Before and after each access operation a hook allows customization of the
+control flow. The hooks are given below along with their signatures and a
+use-case example.
+
+#### hookPreGet
+
+```python
+def hookPreGet(self, instance: Any, ) -> None: ...
+```
+
+Trigger lazy instantiation.
+
+#### hookOnGet
+
+```python
+def hookOnGet(self, instance: Any, value: Any) -> None: ...
+```
+
+Validate value or type and raise appropriate exceptions where appropriate.
+
+#### hookPreSet
+
+```python
+def hookPreSet(self, instance: Any, value: Any) -> None: ...
+```
+
+Detect redundant set operations where new and existing values are the
+same. This should be done by raising ```SkipSet``` as described above.
+
+#### hookOnSet
+
+```python
+def hookOnSet(self, instance: Any, value: Any) -> None: ...
+```
+
+Please note, that ```SkipSet``` also prevents this hook from running.
+Thus, this hook running guarantees that a new value has been set. This
+allows the triggering of updates to dependent attributes.
+
+#### hookPreDelete
+
+```python
+def hookPreDelete(self, instance: Any) -> None: ...
+```
+
+If a particular attribute cannot be allowed to be deleted, but where the
+actual deletion procedure is expensive or otherwise disadvantageous, this
+hook allows an even earlier raising of preventative exceptions.
+
+#### hookOnDelete
+
+```python
+def hookOnDelete(self, instance: Any) -> None: ...
+```
+
+This has the same motivation as ```hookOnSet```.
+
+### Reference Implementation
+
+The ```Object``` class has been updated to include the above hooks, but
+does not implement any actual functionality in them. The
+```BaseDescriptor``` subclass of ```Object``` does. For each hook, the
+following decorators allows class bodies to specify methods to be hooked.
+Any number of methods can be hooked to the same place in the control flow.
+(The naming of the decorators replace 'hook' with the '@' symbol).
+
+- ```@preGet```
+- ```@onGet```
+- ```@preSet```
+- ```@onSet```
+- ```@preDelete```
+- ```@onDelete```
+
+The two descriptor ```AttriBox``` and ```Field``` provided by
+```worktoy.desc``` now subclass ```BaseDescriptor``` instead of subclassing
+```Object```. This supports the effort of exposing advanced features
+through simple syntax.
 
 ## [0.99.98] - 2025 July 14
 
@@ -48,15 +179,15 @@ if __name__ == "__main__":
   print('_' * 40)
   print("""Support of use for KeeFlags as dict keys:""")
   permissions = {
-      FileAccess.READ        : 'sure!',
-      FileAccess.WRITE       : 'go ahead!',
-      FileAccess.EXECUTE     : 'be careful!',
-      FileAccess.DELETE      : 'no!',
-      FileAccess.NULL        : '... nothing! you lose, good day sir!',
-      FileAccess.READ_WRITE  : 'sure, go ahead!',
-      FileAccess.READ_EXECUTE: 'sure, but be careful!',
-      FileAccess.ALL         : 'yolo!'
-  }
+    FileAccess.READ        : 'sure!',
+    FileAccess.WRITE       : 'go ahead!',
+    FileAccess.EXECUTE     : 'be careful!',
+    FileAccess.DELETE      : 'no!',
+    FileAccess.NULL        : '... nothing! you lose, good day sir!',
+    FileAccess.READ_WRITE  : 'sure, go ahead!',
+    FileAccess.READ_EXECUTE: 'sure, but be careful!',
+    FileAccess.ALL         : 'yolo!'
+    }
   for key, value in permissions.items():
     print("""%s: %s""" % (key, value))
   print('¨' * 40)

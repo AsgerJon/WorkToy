@@ -8,13 +8,14 @@ customization of the metaclass, in particular customization of the
 namespace object.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from cmath import exp, log
+from math import atan2
 from typing import TYPE_CHECKING
 
 from worktoy.dispatch import overload
-from worktoy.utilities.mathematics import atan2, exp, log
 from worktoy.mcls import BaseMeta
 from worktoy.core.sentinels import THIS
 from worktoy.desc import AttriBox, Field

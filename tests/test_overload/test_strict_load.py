@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from worktoy.mcls import BaseObject
 from worktoy.dispatch import overload
-from worktoy.utilities import ExceptionInfo
 from worktoy.waitaminute.dispatch import DispatchException
 from . import OverloadTest
 

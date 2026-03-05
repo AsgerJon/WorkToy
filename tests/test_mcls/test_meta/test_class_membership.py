@@ -3,7 +3,7 @@ TestClassMembership tests the __class_len__, __class_bool__ and
 __class_contains__ methods.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -148,6 +148,9 @@ class ExceptionInfo:
     info = infoSpec % (clsName, self.expectedName)
     return textFmt(info)
 
+  def __bool__(self, ) -> bool:
+    return True if self.actualException else False
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

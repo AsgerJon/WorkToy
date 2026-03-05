@@ -3,19 +3,35 @@ ComplexBox provides a complex number implementation using the 'AttriBox'
 descriptor for real and imaginary parts.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from cmath import log, exp
+from math import atan2
 from typing import TYPE_CHECKING
+import sys
 
-from worktoy.desc import AttriBox, Field
-from worktoy.utilities.mathematics import atan2, log, exp
+from worktoy.desc import AttriBox, Field, Alias
+from worktoy.waitaminute.control_flow import SkipSet
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Iterator
 
+eps = sys.float_info.epsilon
 
-class ComplexBox:
+
+class _DeferredAlias:
+  """
+  This class has two 'alias' attributes, 'REAL' and 'IMAG' pointing to
+  'RE' and 'IM' respectively. Since it does not implement 'RE' and 'IM',
+  the '__set_name__' method of 'Alias' will defer to '__get__'.
+  """
+
+  REAL = Alias('RE')
+  IMAG = Alias('IM')
+
+
+class ComplexBox(_DeferredAlias):
   """ComplexBox provides a complex number implementation using the 'AttriBox'
   descriptor for real and imaginary parts.
   """
@@ -24,13 +40,16 @@ class ComplexBox:
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Public Variables
-  RE = AttriBox[float](0.0)
-  IM = AttriBox[float](0.0)
+  #  Private Variables
+  __abs_value__ = None
 
   #  Virtual Variables
   ABS = Field()
   ARG = Field()
+
+  #  Public Variables
+  RE = AttriBox[float](0.0)
+  IM = AttriBox[float](0.0)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -161,3 +180,21 @@ class ComplexBox:
       self.RE, self.IM = arg.real, arg.imag
     else:
       self.RE, self.IM, *_ = args
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @RE.preSet
+  def _preSetRE(self, value: float, ) -> None:
+    loss = abs(value - self.RE)
+    scale = max(abs(value), abs(self.RE), 1)
+    if loss < eps * scale:
+      raise SkipSet
+
+  @IM.preSet
+  def _preSetIM(self, value: float, ) -> None:
+    loss = abs(value - self.IM)
+    scale = max(abs(value), abs(self.IM), 1)
+    if loss < eps * scale:
+      raise SkipSet

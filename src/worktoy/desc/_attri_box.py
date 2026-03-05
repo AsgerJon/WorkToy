@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from icecream import ic
-
-from . import Field
+from . import Field, BaseDescriptor
 from ..core import Object
 from ..core.sentinels import DELETED
 from ..utilities import typeCast
@@ -20,10 +18,8 @@ from ..waitaminute.dispatch import TypeCastException
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self
 
-ic.configureOutput(includeContext=True)
 
-
-class AttriBox(Object):
+class AttriBox(BaseDescriptor):
   """
   AttriBox implements a lazily instantiated and strongly typed descriptor
   class.
@@ -205,10 +201,3 @@ class AttriBox(Object):
     """
     Object.__init__(self, *args, **kwargs)
     return self
-
-  def __delete__(self, instance: Any, **kwargs) -> None:
-    try:
-      Object.__delete__(self, instance, **kwargs)
-    except AttributeError as attributeError:
-      fieldName = self.getFieldName()
-      raise AttributeError(fieldName) from attributeError

@@ -5,8 +5,8 @@ module."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from worktoy.work_test import BaseTest
 
+from worktoy.work_test import BaseTest
 from .examples import FlagsExample, SubclassExample
 from .examples import FileAccess, KeyboardModifier
 from .examples import RootRGB, MoreRGB, EvenMoreRGB, RGBNum, Month, WeekDay
@@ -25,7 +25,7 @@ class KeeTest(BaseTest):
       FileAccess,
       KeyboardModifier,
       SubclassExample,
-    ]
+      ]
     self.exampleNums = [
-      RootRGB, MoreRGB, EvenMoreRGB, RGBNum, Month, WeekDay
-    ]
+      RootRGB, MoreRGB, EvenMoreRGB, RGBNum, Month, WeekDay,
+      ]

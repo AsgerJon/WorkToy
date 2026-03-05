@@ -2,7 +2,7 @@
 TestEZHash test that immutable EZData classes allow for hashing
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -99,15 +99,15 @@ class TestEZHash(EZTest):
     instances as keys. """
 
     farve = {
-        RGB(255, 0, 0): 'Rød',
-        RGB(0, 255, 0): 'Grøn',
-        RGB(0, 0, 255): 'Blå',
-    }
+      RGB(255, 0, 0): 'Rød',
+      RGB(0, 255, 0): 'Grøn',
+      RGB(0, 0, 255): 'Blå',
+      }
     color = {
-        RGB(255, 0, 0): 'Rouge',
-        RGB(0, 255, 0): 'Vert',
-        RGB(0, 0, 255): 'Bleu',
-    }
+      RGB(255, 0, 0): 'Rouge',
+      RGB(0, 255, 0): 'Vert',
+      RGB(0, 0, 255): 'Bleu',
+      }
 
     keys = [RGB(255, 0, 0), RGB(0, 255, 0), RGB(0, 0, 255)]
     #  Despite being different instances, the keys should have same hash
@@ -211,10 +211,10 @@ class TestEZHash(EZTest):
 
     with self.assertRaises(UnfrozenHashException) as context:
       _ = {
-          BadRGB(255, 0, 0): 'Rot',
-          BadRGB(0, 255, 0): 'Grün',
-          BadRGB(0, 0, 255): 'Blau',
-      }
+        BadRGB(255, 0, 0): 'Rot',
+        BadRGB(0, 255, 0): 'Grün',
+        BadRGB(0, 0, 255): 'Blau',
+        }
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.className, 'BadRGB')

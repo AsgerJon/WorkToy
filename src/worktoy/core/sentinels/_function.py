@@ -69,7 +69,7 @@ class _MetaFunction(type):
       type(Bar().baz),
       type(Bar().qux),
       type(Bar().quux),
-    ]
+      ]
 
   @classmethod
   def _getFuncTypes(mcls, **kwargs) -> list[type]:

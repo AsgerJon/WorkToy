@@ -1,59 +1,49 @@
 # Security Policy
 
-## Supported Versions
-
-As this project is in a pre-release state, we are not currently offering
-official support for any versions. However, we welcome contributions and
-reports on security issues.
-
 ## Reporting a Vulnerability
 
-Anyone finding bugs or security vulnerabilities is invited and encouraged
-to submit an [issue](https://github.com/AsgerJon/WorkToy/issues). Include
-as much information as possible, including steps to reproduce the issue,
-potential impact, and any suggestions for solutions.
+If you believe you have identified a security vulnerability in
+*worktoy*, **do not open a public issue**.
 
-For security vulnerabilities that require immediate attention, please also
-email [asgerjon2@gmail.com](mailto:asgerjon2@gmail.com). In your report,
-prioritize speed and detail; you may disregard the normal guidelines for
-reporting issues at your discretion.
+Instead, please report it privately using one of the following methods:
 
-### Immediate Escalation for Critical Vulnerabilities
+1. **GitHub Private Vulnerability Reporting (preferred)**
+   Navigate to the [
+   *Security*](https://github.com/AsgerJon/WorkToy/security "Security overview")
+   tab and click "Report a vulnerability".
 
-If you do not receive a response promptly or you believe the issue 
-requires more urgent attention, please contact:
+2. **Email (fallback)**  
+   asgerjon2@gmail.com
 
-- **CERT/CC (Computer Emergency Response Team/Coordination Center)** or
-  your local equivalent. These organizations are equipped to handle severe
-  security issues with the necessary urgency and confidentiality.
+If you suspect active exploitation, please indicate this clearly in your
+report.
 
-We encourage responsible disclosure within a timeframe that you deem
-reasonable under the circumstances. We appreciate your efforts in
-reporting issues responsibly and will do our best to acknowledge your
-contributions.
+The following information is especially helpful:
 
-## Prohibited Features
-The following features are *banned* completely without exception:
-- `exec`
-- `eval`
-- `__import__`
-- `os.exec*`
+- Affected version(s)
+- Description
+- Steps to reproduce
+- Potential impact
+- Suggested remedy
 
-Any contribution containing any of the above will be rejected out of hand.
-These are not safe for production code, development code, testing code
-or any code.
+We may request additional information.
 
-When importing `os` it must be imported canonically.
-Examples of allowed usage
-```python
-import os
-import os  # Comment is allowed, but that nothing else
-```
-Examples of disallowed usage:
-```python
-from os import system as print
-from os import _exit as open
-from os import popen as borrowChecker  # No we will not rewrite!
-from os import fork as panic
-from os import *  # Right to jail, right away!
-```
+---
+
+## Response Process
+
+- Reports will be acknowledged within 72 hours.
+- All reports are treated as confidential.
+- We follow coordinated disclosure practices.
+- Public disclosure should be avoided until a fix has been
+  developed and released.
+
+---
+
+## Disclosure and Fixes
+
+When a vulnerability is confirmed:
+
+- A GitHub Security Advisory will be published.
+- If appropriate, a CVE identifier may be requested and included.
+- Security-related fixes will be clearly identified in release notes.

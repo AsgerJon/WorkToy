@@ -18,4 +18,4 @@ ___all__ = [
   'UnfrozenHashException',
   'FrozenEZException',
   'EZDeleteException',
-]
+  ]

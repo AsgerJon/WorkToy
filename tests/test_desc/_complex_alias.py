@@ -7,13 +7,13 @@ subclasses 'ComplexBox', which uses the 'AttriBox' descriptor for its
 real and imaginary parts.
 """
 #  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+#  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from cmath import log, exp
 from typing import TYPE_CHECKING
 
 from worktoy.desc import Alias
-from worktoy.utilities.mathematics import exp, log
 from . import ComplexBox
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -37,6 +37,29 @@ class ComplexAlias(ComplexBox):
   #  Virtual Variables
   x = Alias('RE')
   y = Alias('IM')
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def conj(self, ) -> Self:
+    cls = type(self)
+    return cls(self.x, -self.y)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init__(self, *args, **kwargs) -> None:
+    if len(args) == 1:
+      arg = complex(args[0])
+      self.x, self.y = arg.real, arg.imag
+    else:
+      self.x, self.y, *_ = args
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __bool__(self, ) -> bool:
     return True if self.ABS > 1e-16 else False
@@ -67,16 +90,15 @@ class ComplexAlias(ComplexBox):
   def __hash__(self, ) -> int:
     return hash((*self,))
 
-  def cast(self, other: Any) -> Self:
-    cls = type(self)
+  @classmethod
+  def cast(cls, other: Any) -> Self:
     if isinstance(other, cls):
       return other
-    try:
-      other = cls(other)
-    except (ValueError, TypeError) as exception:
-      return NotImplemented
-    else:
-      return other
+    if isinstance(other, (int, float)):
+      return cls(float(other), .0)
+    if isinstance(other, complex):
+      return cls(other)
+    return NotImplemented
 
   def __eq__(self, other: Any) -> bool:
     other = self.cast(other)
@@ -140,12 +162,5 @@ class ComplexAlias(ComplexBox):
     return self.ABS
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __init__(self, *args, **kwargs) -> None:
-    if len(args) == 1:
-      arg = complex(args[0])
-      self.x, self.y = arg.real, arg.imag
-    else:
-      self.x, self.y, *_ = args

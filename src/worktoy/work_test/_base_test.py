@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 from random import randint, random
+from math import log, exp
 from typing import TYPE_CHECKING
 
 from ..desc import Field
@@ -65,8 +66,8 @@ class BaseTest(_Temp):
       PermissionError,
       TypeError,
       FileExistsError,
-      FileNotFoundError
-    )
+      FileNotFoundError,
+      )
 
   @staticmethod
   def generateRandomIntegers(*args) -> IntSample:

@@ -8,7 +8,7 @@ class. Rather than having the color as an 'AttriBox' with 'valueType' of
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import shuffle, randint
+from random import randint
 from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import THIS
@@ -19,7 +19,7 @@ from worktoy.mcls import BaseObject
 from . import ColorNum
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Any, Iterator
+  from typing import Self, Iterator
 
 
 class Pen(BaseObject):

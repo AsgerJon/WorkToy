@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..dispatch import TypeSig
-from ..utilities import maybe
+from ..utilities import maybe, textFmt
 from . import AbstractNamespace
 from .space_hooks import LoadSpaceHook
 
@@ -39,6 +39,8 @@ class BaseSpace(AbstractNamespace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
+  __classmethod_map__ = dict()
+  __static_map__ = dict()
   __overload_map__ = dict()
   __fallback_map__ = dict()
   __finalizer_map__ = dict()
@@ -75,8 +77,8 @@ class BaseSpace(AbstractNamespace):
       self,
       name: str,
       sig: TypeSig,
-      func: Callable
-  ) -> None:
+      func: Callable,
+      ) -> None:
     if name not in self.__overload_map__:
       self.__overload_map__[name] = dict()
     self.__overload_map__[name][sig] = func

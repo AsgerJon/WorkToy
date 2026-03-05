@@ -60,7 +60,7 @@ from ..waitaminute import MissingVariable, TypeException
 from . import KeeFlag, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterator, Self, Type, TypeAlias, Union
+  from typing import Any, Iterator, Self, TypeAlias, Union
 
   FlagsField: TypeAlias = Union[Field, tuple[KeeFlag]]
 

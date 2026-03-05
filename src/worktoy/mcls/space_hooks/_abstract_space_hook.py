@@ -12,12 +12,14 @@ from . import SpaceDesc
 from ...core import Object
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeAlias, Type
+  from typing import Any, Callable, TypeAlias, Type, Union, Optional
   from .. import AbstractNamespace as ASpace
 
   AccessorHook = Callable[[ASpace, str, Any], Any]
   CompileHook = Callable[[ASpace, dict], dict]
   Space: TypeAlias = Type[ASpace]
+  Desc: TypeAlias = Union[ASpace, SpaceDesc]
+  MaybeSpace: TypeAlias = Optional[ASpace]
   Meta: TypeAlias = Type[type]
   from . import AbstractSpaceHook
   from .. import AbstractNamespace
@@ -114,10 +116,10 @@ class AbstractSpaceHook(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private variables
-  __space_object__ = None  # The owning namespace instance
+  __space_object__: MaybeSpace = None  # The owning namespace instance
 
   #  Public variables
-  space = SpaceDesc()  # The namespace instance this hook is bound to
+  space: Desc = SpaceDesc()  # The namespace instance this hook is bound to
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

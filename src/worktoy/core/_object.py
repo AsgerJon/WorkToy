@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe, textFmt
 from ..waitaminute import TypeException, attributeErrorFactory
-from ..waitaminute.desc import AccessError
 from .sentinels import THIS, DESC, OWNER, DELETED, Sentinel
 from . import ContextInstance, MetaType, ContextOwner
+from ..waitaminute.control_flow import SkipSet
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Optional, Type, TypeAlias
@@ -96,9 +96,9 @@ class Object(metaclass=MetaType):
     not available, the sentinel is returned.
     """
     return {
-      THIS: maybe(self.__context_instance__, THIS),
+      THIS : maybe(self.__context_instance__, THIS),
       OWNER: maybe(self.__context_owner__, OWNER),
-      DESC: self,
+      DESC : self,
       }
 
   def filterSentinels(self, arg: Any) -> Any:
@@ -182,8 +182,11 @@ class Object(metaclass=MetaType):
     if instance is None:
       return self
     with self.createContext(instance, owner) as context:
+      self.hookPreGet(instance, **kwargs)
       value = context.__instance_get__(instance, owner, **kwargs)
-    return self._deletedGuard(instance, value)
+      value = self._deletedGuard(instance, value)
+      self.hookOnGet(instance, value, **kwargs)
+    return value
 
   def __set__(self, instance: Any, newValue: Any, **kwargs) -> None:
     """
@@ -192,21 +195,29 @@ class Object(metaclass=MetaType):
     value on that attribute. Since the 'setter' control flow
     """
     with self.createContext(instance, type(instance)) as context:
-      context.__instance_set__(instance, newValue, **kwargs)
+      try:
+        self.hookPreSet(instance, newValue, **kwargs)
+      except SkipSet:
+        pass
+      else:
+        context.__instance_set__(instance, newValue, **kwargs)
+        self.hookOnSet(instance, newValue, **kwargs)
 
   def __delete__(self, instance: Any, **kwargs) -> None:
     """
     Deletes the value of the descriptor in the instance.
     """
     owner = type(instance)
-    with self.createContext(instance, type(instance)) as context:
+    with self.createContext(instance, owner) as context:
       try:
         oldVal = context.__instance_get__(instance, owner, **kwargs)
       except AttributeError:
         oldVal = None
       else:
         oldVal = self._deletedGuard(instance, oldVal)
+      self.hookPreDelete(instance, **kwargs)
       context.__instance_delete__(instance, oldVal, **kwargs)
+      self.hookOnDelete(instance, **kwargs)
 
   def __enter__(self, ) -> Self:
     """
@@ -317,6 +328,87 @@ class Object(metaclass=MetaType):
     fieldName = self.__field_name__
     pattern = re.compile(r'(?<!^)(?=[A-Z])')
     return '__%s__' % pattern.sub('_', fieldName).lower()
+
+  def hookPreGet(self, instance, **kwargs) -> None:
+    """
+    A hook called at the beginning of a get operation, but before running
+    the '__instance_get__'
+    """
+
+  def hookOnGet(self, instance: Any, value: Any, **kwargs, ) -> None:
+    """
+    A hook that is called after the value is retrieved from the instance.
+    The given value is the value about to be returned by '__get__'. This
+    method *cannot* replace this value. If mutable, the value may be
+    modified in place. This hook is *not* notified, if instance is 'None'.
+
+    Parameters
+    ----------
+    instance: The instance the descriptor is bound to.
+    value: The value about to be returned by '__get__'.
+
+    Returns
+    -------
+    None
+    """
+
+  def hookPreSet(self, instance: Any, value: Any, **kwargs, ) -> None:
+    """
+    A hook that is called *before* the value is set on the instance. The
+    given value is the value just set by '__set__'.
+
+    Parameters
+    ----------
+    instance: The instance the descriptor is bound to.
+    value: The value just set by '__set__'.
+
+    Returns
+    -------
+    None
+    """
+
+  def hookOnSet(self, instance: Any, value: Any, **kwargs, ) -> None:
+    """
+    A hook that is called *after* the value is set on the instance. The
+    given value is the value just set by '__set__'.
+
+    Parameters
+    ----------
+    instance: The instance the descriptor is bound to.
+    value: The value just set by '__set__'.
+
+    Returns
+    -------
+    None
+    """
+
+  def hookPreDelete(self, instance: Any, **kwargs, ) -> None:
+    """
+    A hook that is called *before* the value is deleted on the instance. The
+    given value is the value just deleted by '__delete__'.
+
+    Parameters
+    ----------
+    instance: The instance the descriptor is bound to.
+
+    Returns
+    -------
+    None
+    """
+
+  def hookOnDelete(self, instance: Any, **kwargs, ) -> None:
+    """
+    A hook that is called *after* the value is deleted on the instance. The
+    given value is the value just deleted by '__delete__'.
+
+    Parameters
+    ----------
+    instance: The instance the descriptor is bound to.
+
+    Returns
+    -------
+    None
+    """
 
   @classmethod
   def parseKwargs(cls, *args, **kwargs) -> tuple[Any, dict]:

@@ -117,3 +117,12 @@ def runTests(verbosity: int = None) -> int:
   if res is None:
     return -1
   return 0
+
+
+def runTest(testCase: type, verbosity: int = 0) -> int:
+  """Runs a single TestCase subclass"""
+  loader = unittest.TestLoader()
+  suite = loader.loadTestsFromTestCase(testCase)
+  runner = unittest.TextTestRunner(verbosity=verbosity)
+  result = runner.run(suite)
+  return 0 if result.wasSuccessful() else 1

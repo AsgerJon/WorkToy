@@ -37,7 +37,7 @@ class ReservedNames(Object):
     '__qualname__',
     '__firstlineno__',
     '__static_attributes__',
-  ]
+    ]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

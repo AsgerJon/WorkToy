@@ -12,6 +12,7 @@ from ._access_error import AccessError
 from ._protected_error import ProtectedError
 from ._read_only_error import ReadOnlyError
 from ._without_exception import WithoutException
+from ._write_once_error import WriteOnceError
 
 __all__ = [
   'DescriptorException',
@@ -19,4 +20,5 @@ __all__ = [
   'ReadOnlyError',
   'ProtectedError',
   'WithoutException',
-]
+  'WriteOnceError',
+  ]

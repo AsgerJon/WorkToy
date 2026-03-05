@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.core import Object
 from worktoy.desc import AttriBox
-from worktoy.waitaminute import WriteOnceError
+from worktoy.waitaminute.desc import WriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -50,8 +50,10 @@ class FixBox(AttriBox):
       raise WriteOnceError(self, oldValue, value)
     AttriBox.__instance_set__(self, instance, value, **kwargs)
 
-  def __instance_delete__(self,
-                          instance: Any,
-                          old: Any = None,
-                          **kwargs) -> None:
+  def __instance_delete__(
+      self,
+      instance: Any,
+      old: Any = None,
+      **kwargs,
+      ) -> None:
     Object.__instance_delete__(self, instance, old, **kwargs)

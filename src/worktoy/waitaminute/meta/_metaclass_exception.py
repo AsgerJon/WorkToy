@@ -84,8 +84,8 @@ class MetaclassException(TypeError):
       self.meta.__name__,
       self.badBase.__name__,
       self.badMeta.__name__,
-      self.meta.__name__
-    ]
+      self.meta.__name__,
+      ]
 
     info = infoSpec % (*names,)
     return textFmt(info)

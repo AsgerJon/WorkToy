@@ -56,7 +56,7 @@ class AbstractNamespace(dict):
   __owner_hooks_list_name__ = '__hook_objects__'
 
   #  Private Variables
-  __meta_class__ = None
+  __metaclass__ = None
   __class_name__ = None
   __base_classes__ = None
   __class_mro__ = None
@@ -115,7 +115,7 @@ class AbstractNamespace(dict):
     """
     pvtName = cls.getHookListName()
     out = []
-    for base in cls.__mro__:
+    for base in cls.mro():
       if issubclass(base, dict):
         hooks = getattr(base, pvtName, [])
         for hook in hooks:
@@ -126,7 +126,7 @@ class AbstractNamespace(dict):
 
   def getMetaclass(self, ) -> type:
     """Returns the metaclass."""
-    return self.__meta_class__
+    return self.__metaclass__
 
   def getClassName(self, ) -> str:
     """Returns the name of the class."""
@@ -189,7 +189,7 @@ class AbstractNamespace(dict):
     allows inconsistent MROs. In such cases, it is the responsibility of
     the caller to ensure consistency by alternative means.
     """
-    self.__meta_class__ = mcls
+    self.__metaclass__ = mcls
     self.__class_name__ = name
     self.__base_classes__ = [*bases, ]
     self.__key_args__ = kwargs or {}

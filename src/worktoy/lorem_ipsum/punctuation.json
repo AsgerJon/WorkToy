@@ -1,0 +1,27 @@
+[
+  {
+    "name": "comma",
+    "symbol": ",",
+    "frequency": 0.01
+  },
+  {
+    "name": "semicolon",
+    "symbol": ";",
+    "frequency": 0.005
+  },
+  {
+    "name": "colon",
+    "symbol": ":",
+    "frequency": 0.005
+  },
+  {
+    "name": "exclamation mark",
+    "symbol": "!",
+    "frequency": 0.002
+  },
+  {
+    "name": "question mark",
+    "symbol": "?",
+    "frequency": 0.002
+  }
+]

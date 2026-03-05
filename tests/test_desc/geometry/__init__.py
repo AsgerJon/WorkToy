@@ -16,4 +16,4 @@ __all__ = [
   'Point2DFix',
   'Circle',
   'CircleFix',
-]
+  ]

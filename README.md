@@ -8,10 +8,7 @@ The **worktoy** provides utilities for Python development focused on
 reducing boilerplate code, type-safety and readability. Each release is
 tested thoroughly on each supported Python version from 3.7* to 3.14.
 
-Note: *Not an endorsement. If your open source project requires Python 3.7,
-it's time to update. There are plenty of people willing to help you. If
-your project is not open source, you are advised to read AGPL-3.0 on your
-way out.
+*Maybe it is time to consider updating if you are still using Python 3.7.
 
 # Table of Contents
 
@@ -30,280 +27,254 @@ Install with pip:
 pip install worktoy
 ```
 
-When version 1.0 drops, nightly builds will be available by including the
-`--pre` flag:
+# Python Is Easy. Too Easy!
 
-```bash
-pip install --pre worktoy
-```
+What enables effortless prototyping does not guarantee the scalable
+structure serious applications demand.
 
-# Introduction
+Introducing worktoy.
 
-Python should be easy. Easy to write, but also easy to read. **worktoy**
-helps you write Python code that is as easy to read as it is to write.
+A structural layer for Python that adds deliberate constraints without
+sacrificing ergonomics. It brings the architectural discipline of
+statically typed languages to dynamic Python.
 
-# Features
+Build the GUI. Build the logic. Build the architecture.
+All in Python.
 
-Use `AttriBox` to create one-line type-safe attributes or `Field` to
-customize attribute access. Instead of parsing `*args` and
-`**kwargs`, use `overload` to provide type specific implementations of
-the same function.
-
-# Usage
-
-Below is an example implementation of a complex number using **worktoy**.
-Please refer to the docstrings for more information on the individual
-components.
+## 'Trust-Me-Bro'-Typing
 
 ```python
-"""
-ComplexNumber provides a class representation of the complex number
-using features found in the 'worktoy' library. Briefly, a complex number
-has a real and imaginary part both of which represented here as instances
-of 'AttriBox'. The class inherits from the 'BaseObject' class allowing it
-to overload functions based on types.
-"""
-#  AGPL-3.0 license
-#  Copyright (c) 2025 Asger Jon Vistisen
+class Point:
+  def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+    self.x = x
+    self.y = y
+```
+
+The above code is perfectly valid Python, it even includes types. Or does
+it? Those `float` annotations are not there at runtime. Basically, it is
+'trust-me-bro'-typing. Point('breh', None) will happily create a `Point`
+object.
+
+Instead:
+
+```python
+class Point:
+  x = AttriBox[float](0.0)
+  y = AttriBox[float](0.0)
+
+  def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+    self.x = x
+    self.y = y
+```
+
+When ```AttriBox``` says `float` it enforces `float` at runtime.
+Attributes are declared explicitly at the class level. Despite this,
+flexibility remains, for example:
+
+```python
+point = Point(69, '420')  # int, str
+point.x == 69.0
+point.y == 420.0
+```
+
+When types do not match, `AttriBox` attempts casting before raising an
+error. Same ergonomics. Stronger guarantees.
+
+## The Python Parsing Situation Is Crazy
+
+Python is not always easy though. Consider the `Point` implementation
+under discussion. Suppose we wanted a flexible constructor. One that
+supports instantiation on:
+
+- a pair of `float` objects
+- a complex number
+- another `Point` object
+
+That is possible in Python, for example:
+
+```python
+
+class Point:
+
+  def __init__(self, *args, ) -> None:
+    if len(args) == 2:
+      self.x = float(args[0])
+      self.y = float(args[1])
+    elif len(args) == 1:
+      if isinstance(args[0], complex):
+        self.x = args[0].real
+        self.y = args[0].imag
+      elif isinstance(args[0], type(self)):
+        self.x = args[0].x
+        self.y = args[0].y
+    else:
+      raise TypeError('Invalid arguments')
+```
+
+Conditional branches. Growing complexity. Manuel parsing. Long gone are
+those happy days of effortless coding.
+
+But it does not have to be like this. Introducing `@overload`:
+
+```python
 from __future__ import annotations
 
-import sys
-from math import atan2, cos, sin  # Provides necessary math functions
+from typing import Self
 
 from worktoy.mcls import BaseObject
-from worktoy.desc import AttriBox, Field
-from worktoy.dispatch import overload
 from worktoy.core.sentinels import THIS
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-  from typing import Self  # For type hinting in the class methods
+from worktoy.dispatch import overload
+from worktoy.desc import AttriBox
 
 
-class ComplexNumber(BaseObject):
-  """
-  Function overloading requires customization of the 'type' object
-  itself. 'worktoy' provides 'BaseObject' which is derived from the
-  'BaseMeta' class which implements the necessary methods for
-  overloading.
-  """
+class Point(BaseObject):
+  x = AttriBox[float](0.0)
+  y = AttriBox[float](0.0)
 
-  REAL = AttriBox[float](0.0)  # Yes, really. AttriBox[TYPE](DEFAULT)
-  IMAG = AttriBox[float](0.0)  # But linters may indicate warnings
+  @overload(float, float)
+  def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+    self.x = x
+    self.y = y
 
-  ABS = Field()  # Field is quite similar to property
-  ARG = Field()  # Requiring accessor methods to be explicitly decorated.
+  @overload(complex)
+  def __init__(self, z: complex) -> None:
+    self.x = z.real
+    self.y = z.imag
 
-  #  Constructor methods
-
-  @overload(float, float)  # Instantiating from two floats
-  @overload(float, int)
-  @overload(int, float)
-  @overload(int, int)
-  def __init__(self, realPart: float, imagPart: float) -> None:
-    """
-    This constructor is overloaded with any combination of int and float.
-    Since the overload decorator returns the function object without
-    changes, as many overloads as needed can be added.
-    """
-    self.REAL = float(realPart)
-    self.IMAG = float(imagPart)
-
-  @overload(complex)  # Instantiating from a complex number instead
-  def __init__(self, complexNumber: complex) -> None:
-    """
-    To instantiate from a complex number, a different function
-    implementation is necessary.
-    """
-    self.REAL = complexNumber.real
-    self.IMAG = complexNumber.imag
-
-  @overload(THIS)  # THIS?
+  @overload(THIS)  # THIS is a special token type-hinting to the class itself
   def __init__(self, other: Self) -> None:
-    """
-    But what if you wanted to instantiate the class from another instance
-    of the class? The moment this function object is created, the owning
-    class itself does not actually exist yet. 'worktoy' provides the
-    special token object 'THIS' to indicate the class yet to be created.
-    """
-    self.REAL = other.REAL
-    self.IMAG = other.IMAG
+    self.x = other.x
+    self.y = other.y
+```
 
-  @overload()  # No arguments
-  def __init__(self, **kwargs) -> None:
-    """
-    This constructor is called when no positional arguments are given. The
-    positional arguments determine which constructor is called. The above
-    constructors do not support keyword arguments, but this one does.
-    """
-    if 'real' in kwargs:
-      self.REAL = kwargs['real']
-    if 'imag' in kwargs:
-      self.IMAG = kwargs['imag']
+Each new signature requires one new overloaded function. No more painful
+parsing of `*args`. All of this just works. Actually.
 
-  #  Virtual accessor methods
-  @ABS.GET
-  def _getAbs(self) -> float:
-    """
-    The @ABS.GET decorator specifies that this method is the getter
-    for the ABS property. When the ABS property is accessed through an
-    instance of the class, this method is called.
-    """
-    return abs(self)  # Yes, we implement __abs__ further down
+## "Show Don't Tell" Is for Stories, not for Code!
 
-  @ABS.SET
-  def _setAbs(self, value: float) -> None:
-    """
-    But how does one 'set' a virtual attribute? Well, however one
-    wants! In this case, we scale the number to the new absolute value.
-    """
-    if not self:  # Yes, __bool__ is implemented further down
-      raise ZeroDivisionError
-    scale = value / abs(self)
-    self.REAL *= scale
-    self.IMAG *= scale
+When reading code, you look for declarations.
+For where symbols are defined. For where meaning begins.
 
-  @ARG.GET
-  def _getArg(self) -> float:
-    """
-    The ARG property is the argument of the complex number. The @ARG.GET
-    decorator specifies this method as getter.
-    """
-    return atan2(self.IMAG, self.REAL)  # With math.atan2
+In storytelling, subtle declaration is art. In *Clair Obscur: Expedition 33*,
+the horror of the *Gomache* unfolds gradually until Sophie disappears in
+Gustave's arms. The imperative subtlety grants the story its emotional
+impact.
 
-  @ARG.SET
-  def _setArg(self, value: float) -> None:
-    """
-    The @ARG.SET decorator specifies this method as setter for the ARG
-    property. The argument is set by rotating the complex number to the
-    new angle.
-    """
-    if not self:
-      raise ZeroDivisionError
-    self.REAL = self.ABS * cos(value)
-    self.IMAG = self.ABS * sin(value)
+In code, the declaration **is** the point! In matters of code, I want
+declarations. I don’t want foreshadowing. I don’t want subtlety. I don’t
+want subversion of expectations. I want declarations.
 
-  #  Bonus dunder methods as promised
+Anyway, what were we talking about?
+Right — figure out what point.r is from the code below:
 
-  def __abs__(self, ) -> float:
-    """
-    The __abs__ method is called when the built-in abs() function is
-    called on an instance of the class. It returns the absolute value
-    of the complex number.
-    """
-    return (self.REAL ** 2 + self.IMAG ** 2) ** 0.5
-
-  def __bool__(self, ) -> bool:
-    """
-    The __bool__ method is called when the built-in bool() function is
-    called on an instance of the class. It returns True if the complex
-    number is not zero, and False otherwise.
-    """
-    return True if self.REAL ** 2 + self.IMAG ** 2 > 1e-12 else False
-
-  def __complex__(self, ) -> complex:
-    """
-    The __complex__ method is called when the built-in complex() function
-    is called on an instance of the class. It returns the complex number
-    as a complex object.
-    """
-    return self.REAL + self.IMAG * 1j
-
-  def __str__(self, ) -> str:
-    """
-    This returns a human-readable string representation of the complex
-    number.
-    """
-    return """%.3f + %.3fJ""" % (self.REAL, self.IMAG)  # Yes, 'J'
-
-  def __repr__(self, ) -> str:
-    """
-    The string returned by this method should ideally be a valid Python
-    expression that recreates the 'self' object when passed to 'eval()'.
-    """
-    clsName = type(self).__name__  # Get the class name
-    x, y = self.REAL, self.IMAG  # Get the real and imaginary parts
-    return """%s(%s, %s)""" % (clsName, x, y)
-
-  #  Further dunder methods are left as an exercise to the try-hard readers.
-
-
-def main(*args) -> int:
-  """In the following, we will test the class. """
-  # Let's create a few complex numbers
-  z1 = ComplexNumber(69, 420)  # two ints
-  z2 = ComplexNumber(0.1337, 80085)  # a float and an int
-  z3 = ComplexNumber(z1)  # another complex number
-  z4 = ComplexNumber(69 + 420 * 1j)  # a complex number
-  z5 = ComplexNumber(real=1337, imag=420)  # from keyword arguments
-  z0 = ComplexNumber()  # no arguments
-  Z = [z0, z1, z2, z3, z4, z5]  # list of complex numbers
-  print("""Testing ComplexNumber""")
-  for i, z in enumerate(Z):
-    if i:
-      print(' --- ')
-    print('ComplexNumber: z%d = %s' % (i, repr(z)))
-    try:
-      if (z.ABS - abs(complex(z))) ** 2 > 1e-10:
-        raise ValueError('ABS should be equal to abs(complex(z)')
-      if (z.REAL - complex(z).real) ** 2 > 1e-10:
-        raise ValueError('REAL should be equal to complex(z).real')
-      if (z.IMAG - complex(z).imag) ** 2 > 1e-10:
-        raise ValueError('IMAG should be equal to complex(z).imag')
-
-    except ValueError as valueError:
-      print('oh oh!', valueError)
-      break  # Better stop and do some debugging!
+```python
+class Point:
+  def __init__(self, *args, ) -> None:
+    if len(args) == 2:
+      self.x = float(args[0])
+      self.y = float(args[1])
+    elif len(args) == 1:
+      if isinstance(args[0], complex):
+        self.x = args[0].real
+        self.y = args[0].imag
+      elif isinstance(args[0], type(self)):
+        self.x = args[0].x
+        self.y = args[0].y
     else:
-      print('Nice, no error!')
-    finally:
-      print('That was: %s' % z)
-  else:
-    print('\nNice, no errors!')
-    return 0
-  print('Derp!')
-  return 1
+      raise TypeError('Invalid arguments')
 
-
-if __name__ == '__main__':
-  sys.exit(main(*sys.argv))
-
-
+  @property
+  def r(self) -> float:
+    return (self.x ** 2 + self.y ** 2) ** 0.5
 ```
 
-Running the above code will produce the following output:
+Great, you found it. Well, you found what it does, and you inferred it.
+This is *imperative* declaration. In Python, this is fine. It is much
+worse in other languages. Anyway, here is the alternative provided by *
+*worktoy**: `Field`.
 
-```console
+```python
+class Point(BaseObject):
+  x = AttriBox[float](0.0)
+  y = AttriBox[float](0.0)
 
-Testing ComplexNumber
-ComplexNumber: z0 = ComplexNumber(0.0, 0.0)
-Nice, no error!
-That was: 0.000 + 0.000J
- --- 
-ComplexNumber: z1 = ComplexNumber(69.0, 420.0)
-Nice, no error!
-That was: 69.000 + 420.000J
- --- 
-ComplexNumber: z2 = ComplexNumber(0.1337, 80085.0)
-Nice, no error!
-That was: 0.134 + 80085.000J
- --- 
-ComplexNumber: z3 = ComplexNumber(69.0, 420.0)
-Nice, no error!
-That was: 69.000 + 420.000J
- --- 
-ComplexNumber: z4 = ComplexNumber(69.0, 420.0)
-Nice, no error!
-That was: 69.000 + 420.000J
- --- 
-ComplexNumber: z5 = ComplexNumber(1337.0, 420.0)
-Nice, no error!
-That was: 1337.000 + 420.000J
+  r = Field()  # Straight up declaration! 
 
-Nice, no errors!
+  @overload(float, float)
+  def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+    self.x = x
+    self.y = y
+
+  @overload(complex)
+  def __init__(self, z: complex) -> None:
+    self.x = z.real
+    self.y = z.imag
+
+  @overload(THIS)  # THIS is a special token type-hinting to the class itself
+  def __init__(self, other: Self) -> None:
+    self.x = other.x
+    self.y = other.y
+
+  @r.GET  # Straight up declaration of something called 'GET'.
+  def _getR(self) -> float:
+    return (self.x ** 2 + self.y ** 2) ** 0.5
 ```
 
-The above code illustrates the use of the most important features of
-**worktoy**. For more details, the docstrings of the individual
-components should be consulted.
+The `r` attribute is declared first. Next, the `@r.GET` declares that the
+method implementing the get operation comes next. The structure is
+visible separately from the behaviour.
+
+## Static Discipline
+
+In plain Python, attributes assigned in `__init__` are closer to
+dictionary entries than declared structure.
+
+```python
+class Point:
+  def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+    self.x = x
+    self.y = y
+```
+
+Inspecting the class reveals nothing about x or y. They do not exist at the
+class level. They are created at runtime on the instance. Two common
+remedies are `__slots__` and annotations:
+
+```python
+class Point:
+  __slots__ = ('x', 'y')
+
+  def __init__(self, *args) -> None: ...
+```
+
+or
+
+```python
+class Point:
+  x: float
+  y: float
+
+  def __init__(self, *args, ) -> None: ...  # Implementation as before
+```
+
+Both improve clarity. But in both cases `Point.x` and `Point.y` will raise
+`AttributeError`. The presence of `x` and `y` becomes visible only after
+instantiation. At this point, they are just attributes of the instance, not
+of the class. Setting during `__init__` makes no difference compared to
+setting them anywhere else. Structure remains implicit.
+
+With **worktoy** attributes are an essential part of the class structure
+on par with methods.
+
+```python
+class Point(BaseObject):
+  x = AttriBox[float](0.0)
+  y = AttriBox[float](0.0)
+
+  #  Implementation as before
+```
+
+Now `x` and `y` are declared at the class level, making them visible,
+inspectable and enforced. They are more than just keys in an instance
+dictionary. They are structural elements of the class. In plain Python,
+instances define structure. Here, the class does.
