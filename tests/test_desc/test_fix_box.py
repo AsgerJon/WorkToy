@@ -83,7 +83,13 @@ class TestFixBox(DescTest):
       self.assertAlmostEqual(circle.area, pi * circle.radius ** 2)
       self.assertFalse('breh' in circle)
     unitCircle = CircleFix(Point2DFix(0, 0, ), 1)
-    for args in self.randFloatTuples(420, 2, 0, 4 / pi):
+
+    self.randomFloat.colCount = 2
+    self.randomFloat.rowCount = 420
+    self.randomFloat.gauss = True
+    self.randomFloat.mean = 0
+    self.randomFloat.variance = 1
+    for args in self.randomFloat._getTable():
       point = Point2DFix(*args)
       if abs(point) < 1:
         self.assertIn(point, unitCircle)

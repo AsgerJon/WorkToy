@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.work_test.samples import FloatSample
 from . import DescTest, ComplexAlias
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,9 +21,15 @@ class TestAlias(DescTest):
   covered by the contextual tests in 'DescTest'.
   """
 
+  randomFloat = FloatSample(minVal=-69, maxVal=420, rowCount=32, colCount=2)
+
   def setUp(self, ) -> None:
     super().setUp()
-    self.sampleArgs = self.randFloatTuples(32, 2, -69, 420)
+    self.randomFloat.minVal = -69
+    self.randomFloat.maxVal = 420
+    self.randomFloat.rowCount = 32
+    self.randomFloat.colCount = 2
+    self.sampleArgs = self.randomFloat._getTable()
 
   def assertAlmostEqual(self, *args, **kwargs) -> None:
     left, right, *rest = args

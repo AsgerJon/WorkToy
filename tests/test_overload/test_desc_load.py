@@ -7,19 +7,33 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.work_test.samples import IntSample
 from worktoy.dispatch import TypeSig, overload
 from . import DescLoad, OverloadTest
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias
 
-  IntSample: TypeAlias = list[tuple[int, ...]]
-
 
 class TestDescLoad(OverloadTest):
   """
   TestDescLoad tests the 'DescLoad' scenario overloading scenario.
   """
+
+  randomInteger = IntSample(255)
+
+  @classmethod
+  def setUpClass(cls) -> None:
+    """Sets up the test class."""
+    super().setUpClass()
+
+  def setUp(self) -> None:
+    """Sets up the test case."""
+    super().setUp()
+    self.randomInteger.colCount = 3
+    self.randomInteger.minVal = 0
+    self.randomInteger.maxVal = 255
+    self.randomInteger.rowCount = 10
 
   def test_good_init(self) -> Self:
     """Tests the initialization of the TestDescLoad class."""
@@ -29,7 +43,10 @@ class TestDescLoad(OverloadTest):
     self.assertEqual(descSample, thisSample)
     self.assertIn('()', descSample.loaded)
 
-    for sample in self.generateRandomIntegers(1, 255, 0, 256):
+    self.randomInteger.colCount = 1
+    self.randomInteger.minVal = 69
+    self.randomInteger.maxVal = 420
+    for sample in self.randomInteger._getTable():
       x, = sample
       descSample = DescLoad(x)
       thisSample = DescLoad(descSample)
@@ -37,7 +54,8 @@ class TestDescLoad(OverloadTest):
       self.assertEqual(x, descSample.x)
       self.assertIn('(int)', descSample.loaded)
 
-    for sample in self.generateRandomIntegers(2, 255, 0, 256):
+    self.randomInteger.colCount = 2
+    for sample in self.randomInteger._getTable():
       x, y = sample
       descSample = DescLoad(x, y)
       thisSample = DescLoad(descSample)
@@ -46,7 +64,8 @@ class TestDescLoad(OverloadTest):
       self.assertEqual(y, descSample.y)
       self.assertIn('(int, int)', descSample.loaded)
 
-    for sample in self.generateRandomIntegers(3, 255, 0, 256):
+    self.randomInteger.colCount = 3
+    for sample in self.randomInteger._getTable():
       x, y, z = sample
       descSample = DescLoad(x, y, z)
       thisSample = DescLoad(descSample)
@@ -56,7 +75,8 @@ class TestDescLoad(OverloadTest):
       self.assertEqual(z, descSample.z)
       self.assertIn('(int, int, int)', descSample.loaded)
 
-    for sample in self.generateRandomIntegers(4, 255, 0, 256):
+    self.randomInteger.colCount = 4
+    for sample in self.randomInteger._getTable():
       x, y, z, u = sample
       descSample = DescLoad(x, y, z, u)
       thisSample = DescLoad(descSample)
@@ -67,7 +87,8 @@ class TestDescLoad(OverloadTest):
       self.assertEqual(u, descSample.u)
       self.assertIn('(int, int, int, int)', descSample.loaded)
 
-    for sample in self.generateRandomIntegers(5, 255, 0, 256):
+    self.randomInteger.colCount = 5
+    for sample in self.randomInteger._getTable():
       x, y, z, u, v = sample
       descSample = DescLoad(x, y, z, u, v)
       thisSample = DescLoad(descSample)
@@ -79,7 +100,8 @@ class TestDescLoad(OverloadTest):
       self.assertEqual(v, descSample.v)
       self.assertIn('(int, int, int, int, int)', descSample.loaded)
 
-    for sample in self.generateRandomIntegers(6, 255, 0, 256):
+    self.randomInteger.colCount = 6
+    for sample in self.randomInteger._getTable():
       x, y, z, u, v, w = sample
       descSample = DescLoad(x, y, z, u, v, w)
       thisSample = DescLoad(descSample)

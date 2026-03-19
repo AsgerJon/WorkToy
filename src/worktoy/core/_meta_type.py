@@ -13,8 +13,8 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type, TypeAlias, Union, Self
 
   Bases: TypeAlias = tuple[type, ...]
-  Namespace: TypeAlias = dict[str, Any]
-  NamespaceClass: TypeAlias = Union[Self, Type[Namespace]]
+  Space: TypeAlias = dict[str, Any]
+  NamespaceClass: TypeAlias = Union[Self, Type[Space]]
 
   Meta: TypeAlias = Type[type]
   MetaMeta: TypeAlias = Type[Meta]
@@ -63,7 +63,7 @@ class MetaType(type):
   namespaceClass = _Space()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __str__(cls, ) -> str:

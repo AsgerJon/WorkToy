@@ -238,6 +238,9 @@ class Object(metaclass=MetaType):
     finally:
       self.exitContext()
 
+  # def __init_subclass__(cls, **kwargs) -> None:
+  #   pass
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

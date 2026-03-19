@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
-from worktoy.desc import Field, AttriBox
+from worktoy.desc import Field
 from worktoy.utilities import textFmt
-from . import StochasticWord, Sentence, BaseGenerator
+from . import Sentence, BaseGenerator
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias, Union, Optional, Iterator
@@ -62,10 +62,10 @@ class Paragraph(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @sentenceCount.GET
-  def _getSentenceCount(self, **kwargs) -> int:
+  def _getSentenceCount(self, ) -> int:
     return int(round(self.charCount / self.__sentence_mean__))
 
-  def _buildSentencesLengths(self, **kwargs) -> None:
+  def _buildSentencesLengths(self, ) -> None:
     mean, var = self.__sentence_mean__, self.__sentence_var__
     lengths = [self.logNormal(mean, var) for _ in range(self.sentenceCount)]
     factor = self.charCount / sum(lengths)
@@ -84,7 +84,7 @@ class Paragraph(BaseGenerator):
     if self.__sentences_lengths__ is None:
       if kwargs.get('_recursion', False):
         raise RecursionError
-      self._buildSentencesLengths(_recursion=True)
+      self._buildSentencesLengths()
       return self._getSentenceLengths(_recursion=True)
     return self.__sentences_lengths__
 
@@ -107,10 +107,18 @@ class Paragraph(BaseGenerator):
     return self.__sentences_array__
 
   def clear(self) -> None:
+    """
+    This method clears the current contents of the 'Paragraph' instance,
+    allowing for the generation of random collection of words.
+    """
     self.__sentences_lengths__ = None
     self.__sentences_array__ = None
 
   def reset(self, ) -> None:
+    """
+    This method clears the current contents and creates a new random
+    collection of words for the 'Paragraph' instance.
+    """
     self.clear()
     self._buildSentencesLengths()
     self._buildSentencesArray()

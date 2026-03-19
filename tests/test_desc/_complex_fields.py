@@ -77,6 +77,11 @@ class ComplexFields:
     raise ZeroDivisionError
 
   def getAccessRegistry(self) -> AccessRegs:
+    """
+    Getter-function for the access registry, which is a tuple of tuples
+    containing the key, access type, and value of each access to the
+    fields.
+    """
     return maybe(self.__access_registry__, ())
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -170,7 +175,7 @@ class ComplexFields:
   def __hash__(self, ) -> int:
     return hash((*self,))
 
-  def cast(self, other: Any) -> Self:
+  def _resolveOther(self, other: Any) -> Self:
     cls = type(self)
     if isinstance(other, cls):
       return other
@@ -182,13 +187,13 @@ class ComplexFields:
       return other
 
   def __eq__(self, other: Any) -> bool:
-    other = self.cast(other)
+    other = self._resolveOther(other)
     if other is NotImplemented:
       return NotImplemented
     return True if (self - other).ABS < 1e-16 else False
 
   def __add__(self, other: Any) -> Self:
-    other = self.cast(other)
+    other = self._resolveOther(other)
     if other is NotImplemented:
       return NotImplemented
     cls = type(self)
@@ -200,13 +205,13 @@ class ComplexFields:
     return cls(-self.RE, -self.IM)
 
   def __sub__(self, other: Any) -> Self:
-    other = self.cast(other)
+    other = self._resolveOther(other)
     if other is NotImplemented:
       return NotImplemented
     return self + (-other)
 
   def __mul__(self, other: Any) -> Self:
-    other = self.cast(other)
+    other = self._resolveOther(other)
     if other is NotImplemented:
       return NotImplemented
     cls = type(self)
@@ -221,7 +226,7 @@ class ComplexFields:
     return cls(self.RE / self.ABS ** 2, -self.IM / self.ABS ** 2)
 
   def __truediv__(self, other: Any) -> Self:
-    other = self.cast(other)
+    other = self._resolveOther(other)
     if other is NotImplemented:
       return NotImplemented
     if not other:
@@ -231,7 +236,7 @@ class ComplexFields:
     return self * (~other)
 
   def __pow__(self, other: Any) -> Self:
-    other = self.cast(other)
+    other = self._resolveOther(other)
     if other is NotImplemented:
       return NotImplemented
     cls = type(self)

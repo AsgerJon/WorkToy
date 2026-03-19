@@ -66,6 +66,10 @@ ClassBodyTemplate = """
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  PUBLIC METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
     Method decorators in class bodies are certain to encounter function
     objects rather than bound methods, but this applies only to the
     immediately applied decorator. Decorators applied to already decorated

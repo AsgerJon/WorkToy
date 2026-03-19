@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from random import randint
 
 from worktoy.lorem_ipsum import Sentence
+from worktoy.work_test.samples import IntSample
 
 from . import LoremIpsumTest
 
@@ -26,20 +27,21 @@ class TestSentence(LoremIpsumTest):
   'worktoy.examples.lorem_ipsum' package.
   """
 
+  randomInteger = IntSample(69, 420)
+
   def setUp(self) -> None:
+    """
+    Sets the 'charCount' of the 'randomLorem'.
+    """
     super().setUp()
-    self.sentence = Sentence()
-    self.sentence.reset()
-    self.minLen = 60
-    self.maxLen = 150
+    self.randomLorem.charCount = 69
 
   def test_lengths(self, ) -> None:
     """
     Testing that the 'Clause' correctly realizes clauses.
     """
-    lengths = sorted([randint(self.minLen, self.maxLen) for _ in range(16)])
-    self.assertEqual(len(self.sentence), Sentence.__fallback_count__)
-    for length in lengths:
+    self.randomInteger.rowCount = 10
+    for length in self.randomInteger.row:
       sentence = Sentence(length)
       self.assertIsInstance(sentence, Sentence)
       self.assertEqual(len(sentence), length)
@@ -48,7 +50,7 @@ class TestSentence(LoremIpsumTest):
     """
     Testing iteration of 'Sentence'.
     """
-    sentence = Sentence(self.sentence)
+    sentence = Sentence()
     sentence.reset()
     sentenceRepr = repr(sentence)
     for clause in sentence:
@@ -69,12 +71,18 @@ class TestSentence(LoremIpsumTest):
     sentence = Sentence(sentence)
     self.assertIsNone(sentence.__clause_lengths__)
     self.assertIsNone(sentence.__clause_array__)
+    sentence.reset()
+    self.assertIsNotNone(sentence.__clause_lengths__)
+    self.assertIsNotNone(sentence.__clause_array__)
+    sentence = Sentence(sentence)
+    self.assertIsNotNone(sentence.__clause_lengths__)
+    self.assertIsNotNone(sentence.__clause_array__)
 
   def test_recursion_guard(self, ) -> None:
     """
     Testing the 'RecursionError' guards.
     """
-    sentence = Sentence(self.sentence)
+    sentence = Sentence(Sentence())
     sentence.clear()
     with self.assertRaises(RecursionError):
       _ = sentence._getClausesArray(_recursion=True)

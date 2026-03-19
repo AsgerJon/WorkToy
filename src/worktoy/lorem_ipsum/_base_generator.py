@@ -36,6 +36,10 @@ class BaseGenerator(BaseObject):
 
   @staticmethod
   def logNormal(mean: float, var: float) -> float:
+    """
+    This method generates a random number from a log-normal distribution
+    with the given mean and variance.
+    """
     innerVar = log(1 + var / mean ** 2)
     innerMean = log(mean) - innerVar / 2
     return exp(gauss(innerMean, sqrt(innerVar)))
@@ -127,10 +131,10 @@ class BaseGenerator(BaseObject):
 
   @classmethod
   def first(cls, *args, **kwargs) -> Self:
+    """
+    This class method constructs an instance guaranteed to begin with the
+    words 'Lorem ipsum'.
+    """
     self = cls(*args, **kwargs)
     self.__is_first__ = True
     return self
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.core.sentinels import DELETED
 from worktoy.desc import AttriBox, Field
 from worktoy.utilities import argsCount, takesKwargs, maybe
 from worktoy.waitaminute.control_flow import ControlFlow
@@ -24,12 +25,18 @@ class _SkipDelete(ControlFlow):
 
 
 class HamBox(AttriBox):
+  """
+  Subclass of 'AttriBox' implementing deletions.
+  """
 
   def __delete__(self, instance: Any, **kwargs) -> None:
     try:
-      AttriBox.__delete__(self, instance, **kwargs)
+      self.hookPreDelete(instance, **kwargs)
     except _SkipDelete:
       pass
+    else:
+      self.__instance_delete__(instance, **kwargs)
+      self.hookOnDelete(instance, **kwargs)
 
 
 class Meta(type):

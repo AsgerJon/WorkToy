@@ -9,7 +9,7 @@ from __future__ import annotations
 from random import randint
 from typing import TYPE_CHECKING
 
-from tests.test_examples.test_lorem_ipsum import LoremIpsumTest
+from tests.test_lorem_ipsum import LoremIpsumTest
 from worktoy.lorem_ipsum import Clause
 
 if TYPE_CHECKING:  # pragma: no cover

@@ -106,10 +106,16 @@ class Sentence(BaseGenerator):
     return self.__clause_array__
 
   def clear(self) -> None:
+    """
+    Clears the cached contents of the instance.
+    """
     self.__clause_lengths__ = None
     self.__clause_array__ = None
 
   def reset(self, ) -> None:
+    """
+    Clears and regenerates the contents of the instance.
+    """
     self.clear()
     self._buildClauseLengths()
     self._buildClausesArray()

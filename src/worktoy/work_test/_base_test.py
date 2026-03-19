@@ -7,20 +7,35 @@ the 'tearDownClass' method and adds 'assertIsSubclass' (and negation).
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import os
+import sys
+import gc
+from tempfile import gettempdir
 from unittest import TestCase
-from random import randint, random
-from math import log, exp
 from typing import TYPE_CHECKING
 
-from ..desc import Field
+from .samples import FloatSample, IntSample
+from .samples import SymbolicSample, WordSample, LoremSample
+from ..desc import Field, SymbolicName
+from ..lorem_ipsum import StochasticWord, Sentence
 from ..utilities import maybe
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Iterator
+  from typing import TypeAlias, Iterator, Optional, Union
 
-  IntSample: TypeAlias = Iterator[tuple[int, ...]]
+  MaybeStr: TypeAlias = Optional[str]
+  StrField: TypeAlias = Union[str, Field]
+
+  StrTuple: TypeAlias = tuple[str, ...]
+  MaybeStrTuple: TypeAlias = Optional[StrTuple]
+  StrTupleField: TypeAlias = Union[StrTuple, Field]
+
+  IntTuple: TypeAlias = tuple[int, ...]
+  IntTuples: TypeAlias = tuple[IntTuple, ...]
+
   TypicalExceptions: TypeAlias = Iterator[type[Exception]]
   ExcType: TypeAlias = type[BaseException]
+  SymbolicNames: TypeAlias = tuple[SymbolicName, ...]
 
 #  So Python 3.14 saw 'assertIsSubclass' and 'assertNotIsSubclass' added to
 #  'unittest.TestCase', but since we support back to 3.7, but also up to
@@ -48,8 +63,36 @@ class BaseTest(_Temp):
   method and adds 'assertIsNotInstance' and 'assertIsNotSubclass'.
   """
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+  __min_keys__: StrTuple = 'minVal', 'min', 'minimum', 'min_value', 'minval'
+  __max_keys__: StrTuple = 'maxVal', 'max', 'maximum', 'max_value', 'maxval'
+  __key_groups__: dict[str, StrTuple] = dict(
+    minVal=__min_keys__,
+    maxVal=__max_keys__,
+    )
+
+  #  Fallback Variables
+
+  #  Private Variables
+
+  #  Public Variables
+  randomInteger = IntSample()
+  randomFloat = FloatSample()
+  randomSymbolicName = SymbolicSample()
+  randomWord = WordSample()
+  randomLorem = LoremSample()
+
+  #  Virtual Variables
   attrErrTrace = Field()
   exceptions = Field()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @attrErrTrace.GET
   def _getAttributeErrorTrace(self, ) -> str:
@@ -69,57 +112,46 @@ class BaseTest(_Temp):
       FileNotFoundError,
       )
 
-  @staticmethod
-  def generateRandomIntegers(*args) -> IntSample:
+  @classmethod
+  def _getTempDir(cls, ) -> str:
     """
-    Generates a list of tuples containing random integers.
-    Arguments:
-      args = (n, N, a, b)
-        n: Number of tuples to generate. Default is 1.
-        N: Number of integers in each tuple. Default is 1.
-        a: Minimum integer value (inclusive). Default is 0.
-        b: Maximum integer value (exclusive). Default is 256.
-      if a > b, then a and b are swapped.
-    Returns:
-      A list of 'N' tuples, each containing 'n' random integers in
-      range [a, b).
+    This method returns the directory dedicated to temporary files for
+    this class. By default, it defers to the directory suggested by
+    'tempfile.gettempdir()' which is cross-platform aware.
     """
-    n, N, a, b, *_ = [*args, None, None, None, None]
-    n, N, a, b = maybe(n, 1), maybe(N, 1), maybe(a, 0), maybe(b, 256),
-    a, b = (a, b) if a < b else (b, a)
-    for _ in range(N):
-      yield tuple(randint(a, b - 1) for _ in range(n))
+    return gettempdir()
 
-  @staticmethod
-  def randFloat(*args) -> float:
-    a, b, *_ = (*args, 0.0, 1.0)
-    minVal, maxVal = min(a, b), max(a, b)
-    return random() * (maxVal - minVal) + minVal
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @classmethod
-  def randFloats(cls, N: int = None, *args) -> Iterator[float]:
-    for _ in range(maybe(N, 1)):
-      yield cls.randFloat(*args)
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DELETERS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def randFloatTuple(cls, N: int = None, *args) -> tuple[float, ...]:
-    return (*cls.randFloats(N, *args),)
-
-  @classmethod
-  def randFloatTuples(cls, *args) -> Iterator[tuple[float, ...]]:
-    n, N, a, b, *_ = (*args, None, None, None, None)
-    n, N = maybe(n, 1), maybe(N, 1)
-    a, b = maybe(a, 0.0), maybe(b, 1.0)
-    minVal, maxVal = min(a, b), max(a, b)
-    for _ in range(n):
-      yield cls.randFloatTuple(N, minVal, maxVal)
+  def setUpClass(cls) -> None:
+    """
+    After the super call, this method creates the stochastic word
+    generator to the class.
+    """
+    super().setUpClass()
+    cls.stochWord = StochasticWord()
+    cls.loremSentence = Sentence()
 
   @classmethod
   def tearDownClass(cls) -> None:
-    """Remove the test class from sys.modules and run the garbage
-    collector."""
-    import sys
-    import gc
+    """
+    This method deletes temporary files used by this class. It unloads the
+    module and runs the garbage collector to ensure that all references to
+    the module are removed to prevent metaclass leakage trolling in
+    particular.
+    """
+    super().tearDownClass()
     sys.modules.pop(cls.__module__, None)
     gc.collect()
 

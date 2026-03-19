@@ -13,12 +13,22 @@ from typing import TYPE_CHECKING
 
 from . import BaseDescriptor
 from ..utilities import maybe
+from ..waitaminute import TypeException
 from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeAlias
+  from typing import TypeAlias, Any, Callable, TypeAlias, Union, Optional
+  from typing import Self
+
+  MaybeStr: TypeAlias = Optional[str]
+
+  StrTuple: TypeAlias = tuple[str, ...]
+  MaybeStrTuple: TypeAlias = Optional[StrTuple]
+  StrTupleField: TypeAlias = Union[Self, StrTuple]
 
   CallMeMaybe: TypeAlias = Callable[..., Any]
+  MaybeBool: TypeAlias = Optional[bool]
+  MaybeSelf: TypeAlias = Optional[Self]
 
 
 class Field(BaseDescriptor):
@@ -42,6 +52,8 @@ class Field(BaseDescriptor):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
+  __prototype_object__: MaybeSelf = None
+  # -- Accessor Keys
   __get_key__ = None
   __set_keys__ = None
   __delete_keys__ = None
@@ -92,7 +104,7 @@ class Field(BaseDescriptor):
     return callMeMaybe
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
@@ -141,28 +153,28 @@ class Field(BaseDescriptor):
       deleterFunc = getattr(owner, key, )
       deleterFunc(instance, **kwargs)
 
-  #  For linters who won't chill out
-  if TYPE_CHECKING:  # pragma: no cover
-    __add__: CallMeMaybe
-    __sub__: CallMeMaybe
-    __mul__: CallMeMaybe
-    __truediv__: CallMeMaybe
-    __floordiv__: CallMeMaybe
-    __mod__: CallMeMaybe
-    __divmod__: CallMeMaybe
-    __pow__: CallMeMaybe
-    __lshift__: CallMeMaybe
-    __rshift__: CallMeMaybe
-    __and__: CallMeMaybe
-    __xor__: CallMeMaybe
-    __or__: CallMeMaybe
-    __lt__: CallMeMaybe
-    __le__: CallMeMaybe
-    __eq__: CallMeMaybe
-    __ne__: CallMeMaybe
-    __gt__: CallMeMaybe
-    __ge__: CallMeMaybe
-    __hash__: CallMeMaybe
-    __bool__: CallMeMaybe
-    __str__: CallMeMaybe
-    __repr__: CallMeMaybe
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init__(self, other: Self = None) -> None:
+    BaseDescriptor.__init__(self, other)
+    if isinstance(other, Field):
+      self.__prototype_object__ = other
+      self.__get_key__ = other.__get_key__
+      keyGroups = (
+        '__pre_get_keys__',
+        '__on_get_keys__',
+        '__pre_set_keys__',
+        '__on_set_keys__',
+        '__pre_delete_keys__',
+        '__on_delete_keys__',
+        '__set_keys__',
+        '__delete_keys__',
+        )
+      for keyGroup in keyGroups:
+        otherValue = getattr(other, keyGroup)
+        if otherValue is not None:
+          setattr(self, keyGroup, (*otherValue,))
+    elif other is not None:
+      raise TypeException('other', other, type(self))

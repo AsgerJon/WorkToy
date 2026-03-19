@@ -17,6 +17,7 @@ from ._alias import Alias
 from ._field import Field
 from ._attri_box import AttriBox
 from ._fix_box import FixBox
+from ._symbolic_name import SymbolicName
 
 __all__ = [
   'BaseDescriptor',
@@ -24,4 +25,5 @@ __all__ = [
   'Field',
   'AttriBox',
   'FixBox',
+  'SymbolicName',
   ]

@@ -11,8 +11,9 @@ from typing import TYPE_CHECKING
 from worktoy.core.sentinels import DELETED
 from worktoy.desc import Field
 from worktoy.utilities import maybe
-from worktoy.waitaminute.desc import ProtectedError, ReadOnlyError, \
-  AccessError
+from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.desc import (ProtectedError, ReadOnlyError,
+  AccessError)
 from . import DescTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -190,3 +191,16 @@ class TestField(DescTest):
     self.assertIs(e.desc, Foo69420.x)
     self.assertEqual(str(e), repr(e))
     self.assertIsNone(e.oldVal)
+
+  def test_init_bad(self, ) -> None:
+    """
+    This method tests the error raised when constructing a 'Field' with an
+    unsupported argument. Only 'None' and 'Field' are supported.
+    """
+    with self.assertRaises(TypeException) as context:
+      _ = Field(69)
+    e = context.exception
+    self.assertEqual(e.varName, 'other')
+    self.assertEqual(e.actualObject, 69)
+    self.assertIs(e.actualType, int)
+    self.assertIn(Field, e.expectedTypes)
