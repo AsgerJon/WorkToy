@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._sample_test import SampleTest
+from . import SampleTest
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Callable, Never

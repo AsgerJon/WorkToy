@@ -9,14 +9,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..core.sentinels import THIS
-from ..utilities import textFmt, maybe
+from ..utilities import maybe
 from ..desc import Field, AttriBox
 from ..dispatch import overload
-from . import InlineText, InlineBase
 from ..waitaminute.desc import ProtectedError
+from . import InlineBase
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union, Optional, Any, Self, Iterator
+  from typing import TypeAlias, Union, Optional, Self
 
   MaybeStr: TypeAlias = Optional[str]
   StrField: TypeAlias = Union[str, Field]
@@ -66,12 +66,12 @@ class InlineLink(InlineBase):
 
   def getText(self, ) -> str:
     if str.startswith(self.url, 'http'):
-      infoSpec = """[%s](%s "%s")"""
       infoSpec = """<a href="%s" title="%s">%s</a>"""
+      infoSpec = """[%s](%s "%s")"""
     else:
+      infoSpec = """<a href="%s" title="%s">%s</a>"""
       infoSpec = """[%s](#%s "%s")"""
-      infoSpec = """<a href="#%s" title="%s">%s</a>"""
-    return infoSpec % (self.url, self.toolTip, self.linkText)
+    return infoSpec % (self.linkText, self.url, self.toolTip,)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
