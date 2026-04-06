@@ -156,10 +156,12 @@ parsing of `*args`. All of this just works. Actually.
 When reading code, you look for declarations.
 For where symbols are defined. For where meaning begins.
 
-In storytelling, subtle declaration is art. In *Clair Obscur: Expedition 33*,
-the horror of the *Gomache* unfolds gradually until Sophie disappears in
-Gustave's arms. The imperative subtlety grants the story its emotional
-impact.
+Narrative storytelling is different. The method by which information is
+conveyed is itself part of the the artistic expression. The way
+information is revealed is frequently as important as the information
+itself. In *Clair Obscur: Expedition 33*, the horror of the *Gomache*
+unfolds gradually until Sophie disappears in Gustave's arms. The
+imperative subtlety grants the story its emotional impact.
 
 In code, the declaration **is** the point! In matters of code, I want
 declarations. I don’t want foreshadowing. I don’t want subtlety. I don’t
@@ -191,8 +193,8 @@ class Point:
 
 Great, you found it. Well, you found what it does, and you inferred it.
 This is *imperative* declaration. In Python, this is fine. It is much
-worse in other languages. Anyway, here is the alternative provided by *
-*worktoy**: `Field`.
+worse in other languages. Anyway, here is the alternative provided by
+**worktoy**: `Field`.
 
 ```python
 class Point(BaseObject):
