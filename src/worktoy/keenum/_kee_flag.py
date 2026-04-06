@@ -26,12 +26,13 @@ auto-generates a member named 'NULL' with index 0.
 from __future__ import annotations
 
 import typing
+from typing import TYPE_CHECKING
 
 from ..desc import Field
 from ..utilities import textFmt, maybe
 from ..waitaminute import MissingVariable, TypeException
 
-if typing.TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Tuple, Self, Iterator
   from ..keenum import KeeFlagsMeta
 
@@ -229,14 +230,15 @@ class KeeFlag:
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @typing.overload
-  def __or__(self, other: Self) -> Self: ...
+  if TYPE_CHECKING:  # pragma: no cover
+    @typing.overload
+    def __or__(self, other: Self) -> Self: ...
 
-  @typing.overload
-  def __and__(self, other: Self) -> Self: ...
+    @typing.overload
+    def __and__(self, other: Self) -> Self: ...
 
-  @typing.overload
-  def __xor__(self, other: Self) -> Self: ...
+    @typing.overload
+    def __xor__(self, other: Self) -> Self: ...
 
-  @typing.overload
-  def __invert__(self) -> Self: ...
+    @typing.overload
+    def __invert__(self) -> Self: ...

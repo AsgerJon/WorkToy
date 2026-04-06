@@ -65,8 +65,20 @@ class BaseTest(_Temp):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
-  __min_keys__: StrTuple = 'minVal', 'min', 'minimum', 'min_value', 'minval'
-  __max_keys__: StrTuple = 'maxVal', 'max', 'maximum', 'max_value', 'maxval'
+  __min_keys__: StrTuple = (
+    'minVal',
+    'min',
+    'minimum',
+    'min_value',
+    'minval',
+    )
+  __max_keys__: StrTuple = (
+    'maxVal',
+    'max',
+    'maximum',
+    'max_value',
+    'maxval',
+    )
   __key_groups__: dict[str, StrTuple] = dict(
     minVal=__min_keys__,
     maxVal=__max_keys__,
