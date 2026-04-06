@@ -36,5 +36,5 @@ class TestSubclassException(WaitAMinuteTest):
       raise SubclassException(int, tuple)
     e = context.exception
     self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.expected, tuple)
-    self.assertEqual(e.cls, int)
+    self.assertEqual(e.baseClass, tuple)
+    self.assertEqual(e.subClass, int)

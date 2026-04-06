@@ -6,8 +6,8 @@ The 'tests.test_work_test' module provides tests for the
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._sample_test import SampleTest
+from ._sampler_test import SamplerTest
 
 __all__ = [
-  'SampleTest',
+  'SamplerTest',
   ]

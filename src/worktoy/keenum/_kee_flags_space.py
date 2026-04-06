@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..mcls import BaseSpace, AbstractNamespace
+from ..mcls import BaseSpace
 from ..utilities import maybe
 from ..waitaminute.keenum import KeeFlagDuplicate
 from . import KeeFlag, KeeFlagsHook
@@ -82,19 +82,8 @@ class KeeFlagsSpace(BaseSpace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, mcls: KFMType, name: str, bases: Bases, **kw) -> None:
-    if name == 'KeeFlags':
-      BaseSpace.__init__(self, mcls, name, bases, **kw)
-    else:
-      AbstractNamespace.__init__(
-        self,
-        mcls,
-        name,
-        bases,
-        _strictMRO=False,
-        **kw,
-        )
-      self.__kee_flags__ = None
-      cls = type(self)
+    BaseSpace.__init__(self, mcls, name, bases, **kw)
+    if name != 'KeeFlags':
       for base in bases:
         try:
           flags = getattr(base, 'flags')
@@ -103,19 +92,6 @@ class KeeFlagsSpace(BaseSpace):
         else:
           for flag in flags:
             self.addBaseFlag(flag.__member_name__, flag)
-      for space in self.getMRONamespaces():
-        for name, sigFunc in getattr(space, '__overload_map__', ).items():
-          self.__overload_map__[name] = dict()
-          for sig, func in sigFunc.items():
-            self.__overload_map__[name][sig] = func
-        for name, func in getattr(space, '__fallback_map__', ).items():
-          existing = maybe(self.__fallback_map__, dict())
-          existing[name] = func
-          self.__fallback_map__ = existing
-        for name, func in getattr(space, '__finalizer_map__', ).items():
-          existing = maybe(self.__finalizer_map__, dict())
-          existing[name] = func
-          self.__finalizer_map__ = existing
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

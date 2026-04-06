@@ -60,5 +60,36 @@ class TestMissingVariable(WaitAMinuteTest):
     e = context.exception
     self.assertIs(e.instance, foo)
     self.assertEqual(e.varName, 'bar')
-    self.assertIs(e.type_, object)
+    self.assertIn(object, e.expectedTypes)
+    self.assertEqual(str(e), repr(e))
+
+  def test_no_types(self, ) -> None:
+    """
+    Testing functionality of 'MissingVariable' when not receiving expected
+    types.
+    """
+
+    with self.assertRaises(MissingVariable) as context:
+      raise MissingVariable(self, 'varName', )
+    e = context.exception
+    self.assertIs(e.instance, self)
+    self.assertEqual(e.varName, 'varName')
+    self.assertEqual(e.expectedTypes, ())
+    self.assertEqual(str(e), repr(e))
+
+  def test_multiple_types(self) -> None:
+    """
+    Testing functionality of 'MissingVariable' when receiving multiple
+    expected
+    types.
+    """
+
+    with self.assertRaises(MissingVariable) as context:
+      raise MissingVariable(self, 'varName', int, str, list)
+    e = context.exception
+    self.assertIs(e.instance, self)
+    self.assertEqual(e.varName, 'varName')
+    self.assertIn(int, e.expectedTypes)
+    self.assertIn(str, e.expectedTypes)
+    self.assertIn(list, e.expectedTypes)
     self.assertEqual(str(e), repr(e))

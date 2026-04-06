@@ -73,7 +73,7 @@ class TestKee(KeeTest):
     e = context.exception
     self.assertEqual(e.varName, '__num_index__')
     self.assertIs(e.instance, kee)
-    self.assertIs(e.type_, int)
+    self.assertIn(int, e.expectedTypes, )
 
     setattr(kee, '__num_index__', 'sixty-nine')
     with self.assertRaises(TypeException) as context:
@@ -242,7 +242,7 @@ class TestKee(KeeTest):
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.varName, '__name_str__')
     self.assertIs(e.instance, breh)
-    self.assertIs(e.type_, str)
+    self.assertIn(str, e.expectedTypes, )
     setattr(breh, '__name_str__', 69)
     with self.assertRaises(TypeException) as context:
       _ = breh.name

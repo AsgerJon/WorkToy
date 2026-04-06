@@ -8,11 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from random import randint
-
 from worktoy.lorem_ipsum import Sentence
-from worktoy.work_test.samples import IntSample
-
+from worktoy.work_test.samplers import IntSampler
 from . import LoremIpsumTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -27,7 +24,7 @@ class TestSentence(LoremIpsumTest):
   'worktoy.examples.lorem_ipsum' package.
   """
 
-  randomInteger = IntSample(69, 420)
+  randomInteger = IntSampler(69, 420)
 
   def setUp(self) -> None:
     """

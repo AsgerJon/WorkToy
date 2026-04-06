@@ -8,12 +8,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..dispatch import TypeSig
-from ..utilities import maybe, textFmt
+from ..utilities import maybe
 from . import AbstractNamespace
 from .space_hooks import LoadSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Callable, Any
+  from typing import TypeAlias, Callable, Any, Self
 
   SigFunc: TypeAlias = dict[TypeSig, Callable[..., Any]]
   OverloadMap: TypeAlias = dict[str, SigFunc]
@@ -41,9 +41,9 @@ class BaseSpace(AbstractNamespace):
   #  Private Variables
   __classmethod_map__ = dict()
   __static_map__ = dict()
-  __overload_map__ = dict()
-  __fallback_map__ = dict()
-  __finalizer_map__ = dict()
+  __overload_map__ = None
+  __fallback_map__ = None
+  __finalizer_map__ = None
 
   #  Public Variables
   loadSpaceHook = LoadSpaceHook()
@@ -54,62 +54,125 @@ class BaseSpace(AbstractNamespace):
 
   def __init__(self, mcls: type, name: str, bases: Bases, **kw) -> None:
     AbstractNamespace.__init__(self, mcls, name, bases, **kw)
-    self.__overload_map__ = dict()
-    for space in self.getMRONamespaces():
-      for name, sigFunc in getattr(space, '__overload_map__', ).items():
-        self.__overload_map__[name] = dict()
-        for sig, func in sigFunc.items():
-          self.__overload_map__[name][sig] = func
-      for name, func in getattr(space, '__fallback_map__', ).items():
-        existing = maybe(self.__fallback_map__, dict())
-        existing[name] = func
-        self.__fallback_map__ = existing
-      for name, func in getattr(space, '__finalizer_map__', ).items():
-        existing = maybe(self.__finalizer_map__, dict())
-        existing[name] = func
-        self.__finalizer_map__ = existing
+    for base in bases:
+      try:
+        space: Self = getattr(base, '__namespace__')
+      except AttributeError:
+        continue
+      else:
+        try:
+          overloadMap: OverloadMap = space.getOverloads()
+        except AttributeError:
+          continue
+        else:
+          for overloadName, sigFuncMap in {**overloadMap, }.items():
+            for sig, func in {**sigFuncMap, }.items():
+              self.addOverload(overloadName, sig, func)
+          fallbackMap: dict[str, Callable] = space.getFallbacks()
+          for fallbackName, func in {**fallbackMap, }.items():
+            self.addFallback(fallbackName, func)
+          finalizerMap: dict[str, Callable] = space.getFinalizers()
+          for finalizerName, func in {**finalizerMap, }.items():
+            self.addFinalizer(finalizerName, func)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def addOverload(
-      self,
-      name: str,
-      sig: TypeSig,
-      func: Callable,
-      ) -> None:
-    if name not in self.__overload_map__:
-      self.__overload_map__[name] = dict()
-    self.__overload_map__[name][sig] = func
+  def addOverload(self, name: str, sig: TypeSig, func: Callable, ) -> None:
+    """
+    This method sets the mapping between the given type signature and
+    function object to the overloaded name.
+
+    Parameters
+    ----------
+    name: str
+      The name of the overloaded function.
+    sig: TypeSig
+      The type signature for the overload.
+    func: Callable
+      The function object to be dispatched when given arguments matching
+      the given type signature.
+    """
+    existing = self.getOverloads()
+    if name not in existing:
+      existing[name] = dict()
+    existing[name][sig] = func
+    self.__overload_map__ = {**existing, }
 
   def getOverloads(self, ) -> OverloadMap:
+    """
+    This method returns dictionary mapping names of overloaded function to
+    the dictionary mapping type signature to function object assigned to
+    the overload at the given name.
+
+    Returns
+    -------
+    OverloadMap: TypeAlias = dict[str, dict[TypeSig, Callable]]
+      Mapping from overloaded name to its mapping from type signature to
+      function object.
+    """
     return maybe(self.__overload_map__, {})
 
-  def addFallback(self, key: str, func: Callable) -> None:
+  def addFallback(self, name: str, func: Callable) -> None:
     """
-    Set a fallback function for the given key in the overload map.
+    Sets the fallback function for the overloaded name to the given
+    function object. These fallbacks are dispatched by the overload
+    system when no other assigned overload matches the type signature of
+    given arguments.
+
+    Parameters
+    ----------
+    name: str
+      The name of the overloaded function for which to set the fallback.
+    func: Callable
+      The function object to be dispatched when given arguments that do
+      not match any of the type signatures assigned to the overload at the
+      given name.
     """
-    existing = maybe(self.__fallback_map__, dict())
-    existing[key] = func
-    self.__fallback_map__ = existing
+    existing = self.getFallbacks()
+    existing[name] = func
+    self.__fallback_map__ = {**existing, }
 
   def getFallbacks(self) -> dict[str, Callable]:
     """
-    Get the fallback functions for the overloads.
+    This method returns the mappings from overloaded names to assigned
+    fallback functions.
+
+    Returns
+    -------
+    dict[str, Callable]
+      Mapping from overloaded name to its assigned fallback function.
     """
     return maybe(self.__fallback_map__, dict())
 
-  def addFinalizer(self, key: str, func: Callable) -> None:
+  def addFinalizer(self, name: str, func: Callable) -> None:
     """
-    Add a finalize function for the given key in the overload map.
+    Sets the finalizer function for the overloaded name to the given
+    function object. Finalizer functions are dispatched by the overload
+    system as a final step by the overload system. Please note that these
+    finalizers run even when the overloaded system encountered an error.
+
+    Parameters
+    ----------
+    name: str
+      The name of the overloaded function for which to set the finalizer.
+    func: Callable
+      The function object to be dispatched as a final step by the overload
+      system when dispatching the overload at the given name.
     """
-    existing = maybe(self.__finalizer_map__, dict())
-    existing[key] = func
-    self.__finalizer_map__ = existing
+    existing = self.getFinalizers()
+    existing[name] = func
+    self.__finalizer_map__ = {**existing, }
 
   def getFinalizers(self, ) -> dict[str, Callable]:
     """
-    Get the finalize functions for the overloads.
+    This method returns the mappings from overloaded names to assigned
+    finalizer functions.
+
+    Returns
+    -------
+    dict[str, Callable]
+      Mapping from overloaded name to its assigned finalizer function.
     """
     return maybe(self.__finalizer_map__, dict())

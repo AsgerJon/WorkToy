@@ -99,7 +99,7 @@ class Dispatcher(Object):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __get__(self, instance: Any, owner: type) -> Any:
+  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
     Descriptor protocol method to return a decorator that can be used to
     register functions with specific type signatures.
@@ -179,6 +179,35 @@ class Dispatcher(Object):
     self.__field_name__ = name
     self.__field_owner__ = owner
     self.swapAllTHIS(owner)
+
+  def __str__(self, ) -> str:
+    """
+    String representation of the 'Dispatcher' object. It assumes the
+    '__set_name__' method has already run. This is because the
+    'Dispatcher' objects are created during the 'compile' phase of the
+    namespace object, which is invoked by the '__new__' method on the
+    metaclass. When '__new__' returns, the '__build_class__' notifies the
+    '__set_name__' methods of all objects in the class namespace that
+    implements it.
+    """
+    infoSpec = """<%s %s at %s>"""
+    fieldName = maybe(self.__field_name__, '')
+    owner = maybe(self.__field_owner__, )
+    if owner is None:
+      ownerName = ''
+    else:
+      ownerName = owner.__name__
+    if fieldName or ownerName:
+      name = '%s.%s' % (ownerName, fieldName,)
+    else:
+      name = ''
+    clsName: str = type(self).__name__
+    info = infoSpec % (clsName, name, str(hex(id(self))),)
+    while '  ' in info:
+      info = info.replace('  ', ' ')
+    return info
+
+  __repr__ = __str__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

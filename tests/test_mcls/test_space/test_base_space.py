@@ -18,6 +18,11 @@ if TYPE_CHECKING:  # pragma: no cover
 class GrandParent(BaseObject):
   """Subclasses 'BaseObject', but is otherwise empty. """
 
+  @overload.fallback
+  def bar(self, *args) -> Any:
+    """Fallback method for 'bar'."""
+    return 'GrandParent.fallback'
+
 
 class Parent(GrandParent):
   __bar_int__ = 'Parent.overload(int)'
@@ -64,3 +69,4 @@ class TestBaseSpace(MCLSTest):
     self.assertEqual(child.bar('foo'), child.__bar_str__)
     self.assertEqual(child.bar(69, 420), child.__bar_int_int__)
     self.assertEqual(Parent.__bar_str__, Child.__bar_str__)
+    self.assertEqual(child.bar(child, 'breh'), 'GrandParent.fallback')

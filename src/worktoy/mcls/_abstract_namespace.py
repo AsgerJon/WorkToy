@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator, Union, Self
   from .space_hooks import AbstractSpaceHook
 
-  Bases: TypeAlias = tuple[type, ...]
+  Bases: TypeAlias = tuple[Self, ...]
   Hooks: TypeAlias = list[AbstractSpaceHook]
   MROSpace: TypeAlias = dict[str, list[Any]]
   TypeName: TypeAlias = Union[str, type]
@@ -95,8 +95,8 @@ class AbstractNamespace(dict):
   @classmethod
   def getHookListName(cls, ) -> str:
     """Getter-function for the name of the hook list. """
-    if TYPE_CHECKING:  # pragma: no cover
-      assert isinstance(cls, dict)
+    # if TYPE_CHECKING:  # pragma: no cover
+    #   assert isinstance(cls, dict)
     return cls.__owner_hooks_list_name__
 
   def getHooks(self, owner: type = None) -> Iterator[AbstractSpaceHook]:
@@ -152,13 +152,6 @@ class AbstractNamespace(dict):
         existing = out.get(key, [])
         out[key] = [*existing, val]
     return out
-
-  def getMRONamespaces(self) -> list[Self]:
-    """Returns for each class in the MRO the instance of
-    AbstractNamespace, or subclass of it, used to create it. Nothing is
-    returned for classes not derive from 'AbstractMetaclass' or subclass. """
-    mroClasses = [b for b in self.getMRO() if hasattr(b, '__namespace__')]
-    return [getattr(b, '__namespace__', None) for b in mroClasses]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -8,12 +8,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..desc import Field
 from . import AbstractMetaclass
 from . import BaseSpace as BSpace
 from . import Types
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self
+  from typing import Self, TypeAlias, Union
+
+  StrField: TypeAlias = Union[str, Field]
 
 
 class BaseMeta(AbstractMetaclass):
@@ -37,6 +40,24 @@ class BaseMeta(AbstractMetaclass):
       class MyClass(metaclass=BaseMeta):
         ...
   """
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+
+  #  Fallback Variables
+
+  #  Private Variables
+
+  #  Public Variables
+
+  #  Virtual Variables
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Types, **kwargs) -> BSpace:

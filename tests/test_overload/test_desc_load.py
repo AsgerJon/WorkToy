@@ -7,12 +7,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.work_test.samples import IntSample
+from worktoy.work_test.samplers import IntSampler
 from worktoy.dispatch import TypeSig, overload
 from . import DescLoad, OverloadTest
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias
+  from typing import Self
 
 
 class TestDescLoad(OverloadTest):
@@ -20,7 +20,7 @@ class TestDescLoad(OverloadTest):
   TestDescLoad tests the 'DescLoad' scenario overloading scenario.
   """
 
-  randomInteger = IntSample(255)
+  randomInteger = IntSampler(255)
 
   @classmethod
   def setUpClass(cls) -> None:

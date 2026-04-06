@@ -7,18 +7,15 @@ the 'tearDownClass' method and adds 'assertIsSubclass' (and negation).
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import os
 import sys
 import gc
-from tempfile import gettempdir
 from unittest import TestCase
 from typing import TYPE_CHECKING
 
-from .samples import FloatSample, IntSample
-from .samples import SymbolicSample, WordSample, LoremSample
+from .samplers import FloatSampler, IntSampler, GaussianSampler
+from .samplers import SymbolicSampler, WordSampler, LoremSampler
 from ..desc import Field, SymbolicName
 from ..lorem_ipsum import StochasticWord, Sentence
-from ..utilities import maybe
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Iterator, Optional, Union
@@ -80,11 +77,12 @@ class BaseTest(_Temp):
   #  Private Variables
 
   #  Public Variables
-  randomInteger = IntSample()
-  randomFloat = FloatSample()
-  randomSymbolicName = SymbolicSample()
-  randomWord = WordSample()
-  randomLorem = LoremSample()
+  randomInteger = IntSampler()
+  randomFloat = FloatSampler()
+  randomGaussian = GaussianSampler()
+  randomSymbolicName = SymbolicSampler()
+  randomWord = WordSampler()
+  randomLorem = LoremSampler()
 
   #  Virtual Variables
   attrErrTrace = Field()
@@ -111,23 +109,6 @@ class BaseTest(_Temp):
       FileExistsError,
       FileNotFoundError,
       )
-
-  @classmethod
-  def _getTempDir(cls, ) -> str:
-    """
-    This method returns the directory dedicated to temporary files for
-    this class. By default, it defers to the directory suggested by
-    'tempfile.gettempdir()' which is cross-platform aware.
-    """
-    return gettempdir()
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DELETERS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #

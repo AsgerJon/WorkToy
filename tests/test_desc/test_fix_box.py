@@ -5,7 +5,6 @@ TestFixBox provides unit tests specifically for the `FixBox` descriptor.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from cmath import log, exp
 from math import pi
 from typing import TYPE_CHECKING
 
@@ -84,12 +83,12 @@ class TestFixBox(DescTest):
       self.assertFalse('breh' in circle)
     unitCircle = CircleFix(Point2DFix(0, 0, ), 1)
 
-    self.randomFloat.colCount = 2
-    self.randomFloat.rowCount = 420
-    self.randomFloat.gauss = True
-    self.randomFloat.mean = 0
-    self.randomFloat.variance = 1
-    for args in self.randomFloat._getTable():
+    self.randomGaussian.colCount = 2
+    self.randomGaussian.rowCount = 420
+    self.randomGaussian.gauss = True
+    self.randomGaussian.mean = 0
+    self.randomGaussian.variance = 1
+    for args in self.randomGaussian._getTable():
       point = Point2DFix(*args)
       if abs(point) < 1:
         self.assertIn(point, unitCircle)

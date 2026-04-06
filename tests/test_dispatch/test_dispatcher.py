@@ -6,9 +6,19 @@ TestDispatcher provides tests for the 'TypeSig' class from the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from worktoy.core.sentinels import THIS
+from worktoy.mcls import BaseObject
+from worktoy.desc import AttriBox
 from worktoy.dispatch import TypeSig, Dispatcher, overload
 from worktoy.utilities import stringList, textFmt
 from . import DispatcherTest
+
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import TypeAlias, Union, Self, Iterator
+
+  FloatBox: TypeAlias = Union[AttriBox, float]
 
 
 def funcIntInt(x: int, y: int) -> int:
@@ -21,6 +31,82 @@ def funcInt(x: int) -> int:
 
 def funcStr(x: str) -> str:
   return x
+
+
+class ComplexCartesian(BaseObject):
+  """
+  Base for complex number implementations
+  """
+
+  realPart: FloatBox = AttriBox[float](0.)
+  imagPart: FloatBox = AttriBox[float](0.)
+
+  def __iter__(self, ) -> Iterator[float]:
+    yield self.realPart
+    yield self.imagPart
+
+  @overload(float, float)
+  def __init__(self, real: float, imag: float) -> None:
+    self.realPart = real
+    self.imagPart = imag
+
+  @overload(THIS)
+  def __init__(self, other: Self) -> None:
+    self.__init__(*other, )
+
+  @overload(complex)
+  def __init__(self, other: complex) -> None:
+    self.__init__(other.real, other.imag)
+
+  @overload(float)
+  def __init__(self, realPart: float) -> None:
+    self.__init__(realPart, 0.)
+
+  @overload()
+  def __init__(self, ) -> None:
+    self.__init__(0., 0.)
+
+  def __str__(self) -> str:
+    if abs(self.realPart) < 1e-12 and abs(self.imagPart) < 1e-12:
+      return '0'
+    if abs(self.realPart) < 1e-12:
+      if abs(self.imagPart - 1.) < 1e-12:
+        return 'J'
+      if abs(self.imagPart + 1.) < 1e-12:
+        return '-J'
+      return '%.2fJ' % self.imagPart
+    if abs(self.imagPart) < 1e-12:
+      return '%.2f' % self.realPart
+    if self.imagPart > 0:
+      return '%.2f + %.2fJ' % (self.realPart, self.imagPart)
+    return '%.2f - %.2fJ' % (self.realPart, -self.imagPart)
+
+  def __repr__(self, ) -> str:
+    infoSpec = """%s(%.3f, %.3f)"""
+    clsName = type(self).__name__
+    return infoSpec % (clsName, self.realPart, self.imagPart)
+
+
+class Complex(ComplexCartesian):
+  """
+  Complex subclasses 'ComplexCartesian' and provides a more specific
+  implementation of complex numbers. It remains identical to
+  'ComplexCartesian' in terms of functionality, but serves as a more
+  semantically meaningful class.
+  """
+
+  @overload(complex, complex)
+  def __init__(self, z0: complex, z1: complex) -> None:
+    self.__init__(z1 - z0)
+
+  def __complex__(self, ) -> complex:
+    return self.realPart + self.imagPart * 1j
+
+  def __abs__(self, ) -> float:
+    return (self.realPart ** 2 + self.imagPart ** 2) ** 0.5
+
+  def __bool__(self, ) -> bool:
+    return True if abs(self) > 1e-12 else False
 
 
 class TestDispatcher(DispatcherTest):
@@ -147,3 +233,61 @@ class TestDispatcher(DispatcherTest):
 
     with self.assertRaises(TypeError):
       _ = load(69, 420)  # NOQA, it's okay pycharm, 'unreachable' i kno.
+
+  def test_str_repr(self, ) -> None:
+    """
+    This method tests the '__str__' and '__repr__' methods on the
+    'Dispatcher' class. Both names map to the same method.
+    """
+    self.assertIs(Dispatcher.__str__, Dispatcher.__repr__)
+    z = Complex(69, 420)
+    dispatcher = Dispatcher()
+    actualStr = str(dispatcher)
+
+  def test_complex(self, ) -> None:
+    """
+    Testing the 'Complex' class
+    """
+
+    z0 = Complex()
+    z1 = Complex(z0)
+    z2 = Complex(complex(69, 420))
+    z3 = Complex(1337.)
+    z4 = Complex(69, 420)
+    z5 = Complex(69 + 420j, 1000000 + 1000000j)
+
+    self.assertAlmostEqual(z0.realPart, 0.)
+    self.assertAlmostEqual(z0.imagPart, 0.)
+    self.assertAlmostEqual(z1.realPart, 0.)
+    self.assertAlmostEqual(z1.imagPart, 0.)
+    self.assertAlmostEqual(z2.realPart, 69.)
+    self.assertAlmostEqual(z2.imagPart, 420.)
+    self.assertAlmostEqual(z3.realPart, 1337.)
+    self.assertAlmostEqual(z3.imagPart, 0.)
+    self.assertAlmostEqual(z4.realPart, 69.)
+    self.assertAlmostEqual(z4.imagPart, 420.)
+    self.assertAlmostEqual(z5.realPart, 1000000 - 69.)
+    self.assertAlmostEqual(z5.imagPart, 1000000 - 420.)
+
+    self.assertIn('Complex', repr(z0))
+
+    self.assertAlmostEqual(abs(Complex(3, 4)), 5.)
+    self.assertTrue(Complex(3, 4))
+    self.assertFalse(Complex())
+
+    self.assertEqual(str(Complex()), '0')
+    self.assertEqual(str(Complex(69)), '69.00')
+    self.assertEqual(str(Complex(0, 420)), '420.00J')
+    self.assertEqual(str(Complex(69, 420)), '69.00 + 420.00J')
+    self.assertEqual(str(Complex(69, -420)), '69.00 - 420.00J')
+    self.assertEqual(str(Complex(-69, -420)), '-69.00 - 420.00J')
+
+    self.assertEqual(str(Complex(0, 1)), 'J')
+    self.assertEqual(str(Complex(0, -1)), '-J')
+
+    self.randomFloat.rowCount = 16
+    self.randomFloat.colCount = 2
+    for x, y in self.randomFloat.table:
+      z0 = x + y * 1j
+      z1 = complex(Complex(z0))
+      self.assertEqual(z0, z1)

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.work_test.samples import FloatSample
 from . import DescTest, ComplexAlias
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,8 +19,6 @@ class TestAlias(DescTest):
   TestAlias tests specific functionality of the 'Alias' descriptor not
   covered by the contextual tests in 'DescTest'.
   """
-
-  randomFloat = FloatSample(minVal=-69, maxVal=420, rowCount=32, colCount=2)
 
   def setUp(self, ) -> None:
     super().setUp()

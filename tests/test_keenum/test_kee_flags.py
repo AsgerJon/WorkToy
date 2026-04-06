@@ -153,28 +153,28 @@ class TestKeeFlags(KeeTest):
     e = context.exception
     self.assertIs(e.instance, orphanFlag)
     self.assertEqual(e.varName, '__field_name__')
-    self.assertIs(e.type_, str)
+    self.assertIn(str, e.expectedTypes, )
 
     with self.assertRaises(MissingVariable) as context:
       _ = orphanFlag.fieldOwner
     e = context.exception
     self.assertIs(e.instance, orphanFlag)
     self.assertEqual(e.varName, '__field_owner__')
-    self.assertIs(e.type_, KeeFlagsMeta)
+    self.assertIn(KeeFlagsMeta, e.expectedTypes, )
 
     with self.assertRaises(MissingVariable) as context:
       _ = orphanFlag.index
     e = context.exception
     self.assertIs(e.instance, orphanFlag)
     self.assertEqual(e.varName, '__member_index__')
-    self.assertIs(e.type_, int)
+    self.assertIn(int, e.expectedTypes, )
 
     with self.assertRaises(MissingVariable) as context:
       _ = orphanFlag.name
     e = context.exception
     self.assertIs(e.instance, orphanFlag)
     self.assertEqual(e.varName, '__member_name__')
-    self.assertIs(e.type_, str)
+    self.assertIn(str, e.expectedTypes, )
 
   def testBadlyTypedFlags(self, ) -> None:
     """Tests that badly typed flags raise 'TypeException'."""
@@ -235,7 +235,7 @@ class TestKeeFlags(KeeTest):
     e = context.exception
     self.assertIs(e.instance, tom, )
     self.assertEqual(e.varName, '__member_index__')
-    self.assertIs(e.type_, int)
+    self.assertIn(int, e.expectedTypes, )
 
     setattr(tom, '__member_index__', """I'm an integer, trust me bro!""")
 

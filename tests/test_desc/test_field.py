@@ -12,12 +12,82 @@ from worktoy.core.sentinels import DELETED
 from worktoy.desc import Field
 from worktoy.utilities import maybe
 from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.control_flow import SkipSet
 from worktoy.waitaminute.desc import (ProtectedError, ReadOnlyError,
   AccessError)
 from . import DescTest
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import TypeAlias, Union, Optional
+
+  MaybeFloat: TypeAlias = Optional[float]
+  FloatField: TypeAlias = Union[float, Field]
+
+
+class ParentPoint:
+  """
+  This implementation of the plane point is later subclassed to test
+  instantiation of 'Field' descriptors with other 'Field' descriptors as
+  argument.
+  """
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+
+  #  Fallback Variables
+  __fallback_x__: float = 0
+  __fallback_y__: float = 0
+
+  #  Private Variables
+  __x_value__: MaybeFloat = None
+  __y_value__: MaybeFloat = None
+
+  #  Public Variables
+  x: FloatField = Field()
+  y: FloatField = Field()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def _createX(self, ) -> None:
+    self.__x_value__ = self.__fallback_x__
+
+  def _createY(self, ) -> None:
+    self.__y_value__ = self.__fallback_y__
+
+  @x.GET
+  def _getX(self, **kwargs) -> float:
+    if self.__x_value__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      self._createX()
+      return self._getX(_recursion=True)
+    return self.__x_value__
+
+  @y.GET
+  def _getY(self, **kwargs) -> float:
+    if self.__y_value__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      self._createY()
+      return self._getY(_recursion=True)
+    return self.__y_value__
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @x.SET
+  def _setX(self, value: float) -> None:
+    self.__x_value__ = value
+
+  @y.SET
+  def _setY(self, value: float) -> None:
+    self.__y_value__ = value
 
 
 class TestField(DescTest):
@@ -204,3 +274,84 @@ class TestField(DescTest):
     self.assertEqual(e.actualObject, 69)
     self.assertIs(e.actualType, int)
     self.assertIn(Field, e.expectedTypes)
+
+  def test_init(self, ) -> None:
+    """
+    This method tests the construction of 'Field' instances with valid
+    arguments.
+    """
+
+    class ChildPoint(ParentPoint):
+      x = Field(ParentPoint.x)
+      y = Field(ParentPoint.y)
+
+      @x.preSet
+      def _preSetX(self, value: float) -> None:
+        cls = type(self)
+        fieldObject = getattr(cls, 'x')
+        if not isinstance(value, (int, float)):
+          raise TypeException('value', value, float)
+        getKey = object.__getattribute__(fieldObject, '__get_key__')
+        getterFunc = getattr(cls, getKey)
+        try:
+          existing = getterFunc(self, _recursion=True)
+        except RecursionError:
+          return
+        else:
+          if abs(existing - value) < 1e-16:
+            raise SkipSet
+
+      @y.preSet
+      def _preSetY(self, value: float) -> None:
+        cls = type(self)
+        fieldObject = getattr(cls, 'y')
+        if not isinstance(value, (int, float)):
+          raise TypeException('value', value, float)
+        getKey = object.__getattribute__(fieldObject, '__get_key__')
+        getterFunc = getattr(cls, getKey)
+        try:
+          existing = getterFunc(self, _recursion=True)
+        except RecursionError:
+          return
+        else:
+          if abs(existing - value) < 1e-16:
+            raise SkipSet
+
+    childPoint = ChildPoint()
+    parentPoint = ParentPoint()
+    expectedX = ChildPoint.__fallback_x__
+    expectedY = ChildPoint.__fallback_y__
+    self.assertEqual(parentPoint.x, expectedX)
+    self.assertEqual(parentPoint.y, expectedY)
+    with self.assertRaises(TypeException) as context:
+      childPoint.x = 'sixty-nine'  # type: ignore[assignment]
+    e = context.exception
+    self.assertEqual(e.varName, 'value')
+    self.assertEqual(e.actualObject, 'sixty-nine')
+    self.assertIs(e.actualType, str)
+    self.assertIn(float, e.expectedTypes)
+    with self.assertRaises(TypeException) as context:
+      childPoint.y = 'four-twenty'  # type: ignore[assignment]
+    e = context.exception
+    self.assertEqual(e.varName, 'value')
+    self.assertEqual(e.actualObject, 'four-twenty')
+    self.assertIs(e.actualType, str)
+    self.assertIn(float, e.expectedTypes)
+
+    #  The following two should be skipped by the 'SkipSet' raised in
+    #  their 'preSet' hooks.
+    childPoint.x = expectedX
+    childPoint.y = expectedY
+    self.assertEqual(childPoint.x, expectedX)
+    self.assertEqual(childPoint.y, expectedY)
+    #  Do it again to cover 'SkipSet' handling.
+    childPoint.x = expectedX
+    childPoint.y = expectedY
+    self.assertEqual(childPoint.x, expectedX)
+    self.assertEqual(childPoint.y, expectedY)
+    #  And again, to set an actually different value, which should not be
+    #  skipped.
+    childPoint.x = expectedX + 1
+    childPoint.y = expectedY + 1
+    self.assertEqual(childPoint.x, expectedX + 1)
+    self.assertEqual(childPoint.y, expectedY + 1)

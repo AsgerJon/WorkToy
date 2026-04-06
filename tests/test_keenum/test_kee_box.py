@@ -13,6 +13,7 @@ from worktoy.desc import AttriBox
 from worktoy.ezdata import EZMeta, EZData
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.control_flow import SkipSet
 from worktoy.waitaminute.dispatch import DispatchException
 from worktoy.waitaminute.keenum import KeeBoxException, \
   KeeBoxValueError, KeeBoxTypeError
@@ -22,7 +23,7 @@ from worktoy.keenum import KeeBox, KeeNum, KeeMeta, KeeFlag, KeeFlags, \
   KeeFlagsMeta, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Type
 
 exp1 = float(e)
 
@@ -307,3 +308,47 @@ class TestKeeBox(KeeTest):
     self.assertIs(e.box, Bad.bar)
     self.assertEqual(e.args, ('never', 'gonna', 'give', 'you', 'up'))
     self.assertEqual(repr(e), str(e))
+
+  def test_skip_set(self, ) -> None:
+    """
+    Testing the situation where '__set__' is called with '_recursion=True'
+    in the kwargs, which should cause it to skip trying to resolve the
+    value and just set it directly.
+    """
+
+    class Foo:
+      __redundant_exception__ = None
+
+      bar = KeeBox[ColorNum]('red')
+
+      def __init__(self, redundantException: Type[Exception] = None):
+        self.__redundant_exception__ = redundantException
+
+      def _getRedundantException(self, ) -> Type[Exception]:
+        return self.__redundant_exception__
+
+      @bar.preSet
+      def _preSetBar(self, value, **kwargs):
+        cls = type(self)
+        desc = getattr(cls, 'bar')
+        try:
+          currentValue = desc.__get__(self, cls, _recursion=True)
+        except RecursionError:
+          pass
+        else:
+          if value == currentValue:
+            raise self._getRedundantException()
+
+    foo = Foo(SkipSet)
+    self.assertIs(foo.bar, ColorNum.RED)
+    foo.bar = ColorNum.RED  # Triggers SkipSet
+    foo.bar = ColorNum.CYAN
+    self.assertIs(foo.bar, ColorNum.CYAN)
+
+    class Skibidy(Exception):  # noqa
+      pass
+
+    bad = Foo(Skibidy)
+    with self.assertRaises(Skibidy):
+      bad.bar = ColorNum.RED
+      bad.bar = ColorNum.RED

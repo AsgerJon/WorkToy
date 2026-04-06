@@ -8,14 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import maybe, ExceptionInfo
 from worktoy.desc import SymbolicName
 from worktoy.waitaminute import TypeException, MissingVariable
-
 from . import UtilitiesTest
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union, Optional, Iterator
+  pass
 
 
 class TestSymbolicName(UtilitiesTest):
@@ -151,6 +149,7 @@ class TestSymbolicName(UtilitiesTest):
     self.assertEqual(symbolicName.pascal, 'NeverGonnaGiveYouUp')
     self.assertEqual(symbolicName.kebab, 'never-gonna-give-you-up')
     self.assertEqual(symbolicName.camel, 'neverGonnaGiveYouUp')
+    self.assertEqual(symbolicName.screamingSnake, 'NEVER_GONNA_GIVE_YOU_UP')
 
   def test_edge_cases(self, ) -> None:
     """
@@ -164,6 +163,7 @@ class TestSymbolicName(UtilitiesTest):
     self.assertEqual(emptySymbolicName.pascal, '')
     self.assertEqual(emptySymbolicName.kebab, '')
     self.assertEqual(emptySymbolicName.camel, '')
+    self.assertEqual(emptySymbolicName.screamingSnake, '')
 
     singleWord = 'hello'
     singleWordSymbolicName = SymbolicName(singleWord, )
@@ -173,6 +173,7 @@ class TestSymbolicName(UtilitiesTest):
     self.assertEqual(singleWordSymbolicName.pascal, 'Hello')
     self.assertEqual(singleWordSymbolicName.kebab, 'hello')
     self.assertEqual(singleWordSymbolicName.camel, 'hello')
+    self.assertEqual(singleWordSymbolicName.screamingSnake, 'HELLO')
 
   def test_missing_variable(self) -> None:
     """
@@ -186,4 +187,4 @@ class TestSymbolicName(UtilitiesTest):
     e = context.exception
     self.assertIs(e.instance, symbolicName)
     self.assertEqual(e.varName, 'words')
-    self.assertIs(e.type_, tuple)
+    self.assertIn(tuple, e.expectedTypes)

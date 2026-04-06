@@ -11,6 +11,8 @@ The package consists of thr following modules:
 - desc: Descriptor protocol utilities.
 - dispatch: Function and method dispatching used by overload system.
 - mcls: Custom metaclass implementations.
+- lorem_ipsum: Lorem ipsum text generation utilities.
+- markwork: Markdown rendering utilities.
 - keenum: Enumeration utilities.
 - ezdata: Dataclass implementation.
 - work_io: Input/output utilities for file and directory management.
@@ -26,7 +28,6 @@ from . import desc
 from . import dispatch
 from . import mcls
 from . import lorem_ipsum
-from . import markwork
 from . import keenum
 from . import ezdata
 from . import work_io
@@ -40,7 +41,6 @@ __all__ = [
   'dispatch',
   'mcls',
   'lorem_ipsum',
-  'markwork',
   'keenum',
   'ezdata',
   'work_io',

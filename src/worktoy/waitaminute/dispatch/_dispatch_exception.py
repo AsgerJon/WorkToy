@@ -52,13 +52,21 @@ class DispatchException(TypeError):
     """
     Return a string representation of the DispatchException.
     """
-    infoSpec = """Dispatcher object: '%s' failed to dispatch arguments: 
-    <br><tab>%s<br><tab>matching type signature: '%s'<br>"""
+    infoSpec = """Dispatcher object: <br><tab><tab>%s <br><tab>failed to 
+    dispatch arguments: 
+    <br><tab><tab>%s<br><tab>matching type signature: <br><tab><tab> 
+    '%s'<br>
+    The 'Dispatcher' object supports the following type signatures:
+    <br><tab><tab>%s<br>
+    """
     dispStr = str(self.dispatch)
-    argsStr = ', '.join(str(arg) for arg in self.args)
+    args = (*('<%s %s>' % (type(a).__name__, repr(a)) for a in self.args),)
+    argsStr = '<br><tab><tab>'.join(str(arg) for arg in args)
+    signatures = (*(sig for sig, _ in self.dispatch.__sig_funcs__),)
+    sigStr = '<br><tab><tab>'.join(str(sig) for sig in signatures)
     from ...dispatch import TypeSig
     typeStr = str(TypeSig.fromArgs(*self.args))
-    info = infoSpec % (dispStr, argsStr, typeStr)
+    info = infoSpec % (dispStr, argsStr, typeStr, sigStr)
     return textFmt(info, )
 
   __repr__ = __str__
