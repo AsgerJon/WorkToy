@@ -83,48 +83,12 @@ class StochasticWord(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #
-  # def _resolveDataDir(self, **kwargs) -> None:
-  #   envDir = os.getenv(self.__data_env_var__, )
-  #   if envDir is not None:
-  #     self.__data_dir__ = str(envDir)
-  #   else:
-  #     self.__data_dir__ = str(os.path.dirname(__file__))
-  #   validateExistingDirectory(self.__data_dir__)
-  #
-  # @dataDir.GET
-  # def _getDataDir(self, **kwargs) -> str:
-  #   if self.__data_dir__ is None:
-  #     if kwargs.get('_recursion', False):
-  #       raise RecursionError
-  #     self._resolveDataDir()
-  #     return self._getDataDir(_recursion=True, )
-  #   return self.__data_dir__
 
   def _buildWeightedWords(self, ) -> None:
     weightedWords: list[WeightedWord] = []
     for category, weight in self.__category_weights__:
       for word in category:
         weightedWords.append((word, weight))
-      # filePath = os.path.join(self.dataDir, file)
-      # f = None
-      # try:
-      #   f = open(filePath, 'r')
-      # except Exception as exception:
-      #   raise exception
-      # else:
-      #   lines = f.readlines()
-      #   for line in lines:
-      #     line = line.strip()
-      #     if line:
-      #       weighted: WeightedWord = (line, weight)
-      #       weightedWords.append(weighted)
-      # finally:
-      #   try:
-      #     f.close()
-      #   except AttributeError:
-      #     pass
-
     self.__weighted_words__ = (*weightedWords,)
 
   @weightedWords.GET
