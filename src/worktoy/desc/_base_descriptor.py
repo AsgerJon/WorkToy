@@ -6,7 +6,6 @@ access notification callbacks.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from inspect import signature
 from typing import TYPE_CHECKING
 
 from worktoy.core import Object

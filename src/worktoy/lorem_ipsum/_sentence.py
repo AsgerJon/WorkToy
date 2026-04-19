@@ -12,7 +12,6 @@ from worktoy.utilities import textFmt
 from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
 from worktoy.desc import Field, AttriBox
-
 from . import StochasticWord, BaseGenerator, Clause
 
 if TYPE_CHECKING:  # pragma: no cover

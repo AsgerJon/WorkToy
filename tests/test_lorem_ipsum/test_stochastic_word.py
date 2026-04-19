@@ -99,8 +99,6 @@ class TestStochasticWord(LoremIpsumTest):
     setattr(self.stochasticWord, '__min_len__', None)
     setattr(self.stochasticWord, '__max_len__', None)
     setattr(self.stochasticWord, '__by_lengths__', None)
-    with self.assertRaises(RecursionError):
-      _ = self.stochasticWord._getDataDir(_recursion=True)
 
     with self.assertRaises(RecursionError):
       _ = self.stochasticWord._getWeightedWords(_recursion=True)
@@ -128,38 +126,14 @@ class TestStochasticWord(LoremIpsumTest):
     """
     Testing bad files in a 'StochasticWord' subclass.
     """
+    word = StochasticWord()
+    self.assertIsNone(os.getenv(getattr(StochasticWord, '__data_env_var__')))
     here = os.path.abspath(os.path.dirname(__file__))
     os.environ['WORKTOY_DATA_DIR'] = here
 
     class Derp(StochasticWord):
-      __weighted_files__: WeightedFiles = (
+      __category_weights__: WeightedFiles = (
         ('breh.txt', 69.), ('lmao.txt', 420.),
         )
 
-    derp = Derp()
-    self.assertIsInstance(derp.dataDir, str)
-    self.assertTrue(os.path.isdir(derp.dataDir))
-    with self.assertRaises(FileNotFoundError):
-      _ = derp.weightedWords
-
-  def test_local_file(self, ) -> None:
-    """
-    Testing subclass using 'names.txt' in the same directory as the test
-    file.
-    """
-    here = os.path.abspath(os.path.dirname(__file__))
-
-    class Nice(StochasticWord):
-      __data_dir__: str = here
-      __weighted_files__: WeightedFiles = (
-        ('names.txt', 1 / 8),
-        ('words.txt', 7 / 8),
-        )
-
-    nice = Nice()
-    self.assertIsInstance(nice.realize(), str)
-    self.assertIsInstance(nice.dataDir, str)
-    self.assertTrue(os.path.isdir(nice.dataDir))
-    expectedPath = os.path.normpath(here)
-    actualPath = os.path.normpath(nice.dataDir)
-    self.assertEqual(expectedPath, actualPath)
+    self.assertIsNotNone(os.getenv(getattr(Derp, '__data_env_var__')))

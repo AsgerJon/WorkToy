@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from worktoy.mcls import BaseObject
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Type, Union
+  pass
 
 
 class BaseContract(BaseObject):

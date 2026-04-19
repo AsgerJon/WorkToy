@@ -7,12 +7,10 @@ of words as a stochastic variable.
 from __future__ import annotations
 
 import random
-import os
 from typing import TYPE_CHECKING
 
-from . import BaseGenerator
+from . import BaseGenerator, COMMON_WORDS, UNCOMMON_WORDS, RARE_WORDS
 from worktoy.desc import Field
-from worktoy.work_io import validateExistingDirectory
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Union, Optional
@@ -59,10 +57,10 @@ class StochasticWord(BaseGenerator):
   #  Class Variables
   __data_env_var__: str = 'WORKTOY_DATA_DIR'
   __data_dir__: MaybeStr = None
-  __weighted_files__: WeightedFiles = (
-    ('common.txt', 0.8),
-    ('uncommon.txt', 0.15),
-    ('rare.txt', 0.05),
+  __category_weights__: WeightedFiles = (
+    (COMMON_WORDS, 0.8),
+    (UNCOMMON_WORDS, 0.15),
+    (RARE_WORDS, 0.05),
     )
   #  Fallback Variables
 
@@ -73,7 +71,6 @@ class StochasticWord(BaseGenerator):
   __max_len__: MaybeInt = None
 
   #  Public Variables
-  dataDir: strField = Field()
   weightedWords: WeightedField = Field()
   byLengths: LengthsField = Field()
   minLen: intField = Field()
@@ -86,45 +83,48 @@ class StochasticWord(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def _resolveDataDir(self, **kwargs) -> None:
-    envDir = os.getenv(self.__data_env_var__, )
-    if envDir is not None:
-      self.__data_dir__ = str(envDir)
-    else:
-      self.__data_dir__ = str(os.path.dirname(__file__))
-    validateExistingDirectory(self.__data_dir__)
-
-  @dataDir.GET
-  def _getDataDir(self, **kwargs) -> str:
-    if self.__data_dir__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._resolveDataDir()
-      return self._getDataDir(_recursion=True, )
-    return self.__data_dir__
+  #
+  # def _resolveDataDir(self, **kwargs) -> None:
+  #   envDir = os.getenv(self.__data_env_var__, )
+  #   if envDir is not None:
+  #     self.__data_dir__ = str(envDir)
+  #   else:
+  #     self.__data_dir__ = str(os.path.dirname(__file__))
+  #   validateExistingDirectory(self.__data_dir__)
+  #
+  # @dataDir.GET
+  # def _getDataDir(self, **kwargs) -> str:
+  #   if self.__data_dir__ is None:
+  #     if kwargs.get('_recursion', False):
+  #       raise RecursionError
+  #     self._resolveDataDir()
+  #     return self._getDataDir(_recursion=True, )
+  #   return self.__data_dir__
 
   def _buildWeightedWords(self, ) -> None:
     weightedWords: list[WeightedWord] = []
-    for file, weight in self.__weighted_files__:
-      filePath = os.path.join(self.dataDir, file)
-      f = None
-      try:
-        f = open(filePath, 'r')
-      except Exception as exception:
-        raise exception
-      else:
-        lines = f.readlines()
-        for line in lines:
-          line = line.strip()
-          if line:
-            weighted: WeightedWord = (line, weight)
-            weightedWords.append(weighted)
-      finally:
-        try:
-          f.close()
-        except AttributeError:
-          pass
+    for category, weight in self.__category_weights__:
+      for word in category:
+        weightedWords.append((word, weight))
+      # filePath = os.path.join(self.dataDir, file)
+      # f = None
+      # try:
+      #   f = open(filePath, 'r')
+      # except Exception as exception:
+      #   raise exception
+      # else:
+      #   lines = f.readlines()
+      #   for line in lines:
+      #     line = line.strip()
+      #     if line:
+      #       weighted: WeightedWord = (line, weight)
+      #       weightedWords.append(weighted)
+      # finally:
+      #   try:
+      #     f.close()
+      #   except AttributeError:
+      #     pass
+
     self.__weighted_words__ = (*weightedWords,)
 
   @weightedWords.GET

@@ -5,14 +5,14 @@ Clause subclasses 'BaseGenerator' and implements word sequences.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import gauss, randint
+from random import gauss
 from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
 from worktoy.desc import Field, AttriBox
 from . import StochasticWord, BaseGenerator
-from worktoy.utilities import textFmt, maybe
+from worktoy.utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Union, Optional, Self, Iterator

@@ -8,7 +8,6 @@ includes a '**' parameter.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
 from inspect import signature, Parameter
 
 if TYPE_CHECKING:  # pragma: no cover
