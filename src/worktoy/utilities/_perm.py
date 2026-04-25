@@ -55,13 +55,16 @@ def _permutationsIndices(*items: Any) -> _PermutationsIndices:
 
 
 def _intPerm(n: int) -> Iterator[Indices]:
-  if not n:
-    yield ()
-  for j in range(n):
-    recursive = _intPerm(n - 1)
-    for r in recursive:
-      shifted = (*(k if i < j else k + 1 for i, k in enumerate(r)),)
-      yield (j, *shifted)
+  def _go(src: tuple[int, ...]) -> Iterator[Indices]:
+    if not src:
+      yield ()
+      return
+    for j, t in enumerate(src):
+      sub = (*src[:j], *src[j + 1:])
+      for recursive in _go(sub):
+        yield (t, *recursive)
+
+  yield from _go((*range(n),))
 
 
 def perm(*items: Any) -> Permutations:
@@ -83,7 +86,16 @@ def perm(*items: Any) -> Permutations:
   permutation : tuple of Any
       A permutation of `items`, of length `len(items)`.
   """
-  return (*_permutationsIndices(*items),)
+  allIndices = _intPerm(len(items))
+  out = []
+  seen = []
+  for indices in allIndices:
+    permutation = (*(items[i] for i in indices),)
+    if permutation in seen:
+      continue
+    seen.append(permutation)
+    out.append(permutation)
+  return (*out,)
 
 
 def permTraced(*items: Any) -> IndexedPermutations:
@@ -93,7 +105,7 @@ def permTraced(*items: Any) -> IndexedPermutations:
   double-counted: the number of yielded permutations equals the multinomial
   coefficient `N! / (k_1! * k_2! * ... * k_n!)` where `k_i` is the
   multiplicity of the `i`-th distinct value. The accompanying index tuple
-  disambiguates which original position contributed each slot, even when
+  will disambiguate which original position contributed each slot, even when
   element values coincide.
 
   Parameters
@@ -122,4 +134,13 @@ def permTraced(*items: Any) -> IndexedPermutations:
    (('A', 'B', 'A'), (0, 2, 1)),
    (('B', 'A', 'A'), (2, 0, 1))]
   """
-  return (*_permutationsIndices(*items),)
+  allIndices = _intPerm(len(items))
+  out = []
+  seen = []
+  for indices in allIndices:
+    permutation = (*(items[i] for i in indices),)
+    if permutation in seen:
+      continue
+    seen.append(permutation)
+    out.append((permutation, indices))
+  return (*out,)

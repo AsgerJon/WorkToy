@@ -14,10 +14,13 @@ from types import WrapperDescriptorType, MethodWrapperType
 from types import MethodDescriptorType, ClassMethodDescriptorType
 from types import LambdaType, BuiltinMethodType
 
+from pyperclip import copy
+
 from profile_tests import profileTests
 from tests.test_utilities.test_perm_indexed import TestPermIndexed
 from worktoy.desc import Field
 from worktoy.utilities import perm, permTraced
+from worktoy.utilities._perm import _intPerm
 from yolo_dev import yolo, runTests, runTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -107,8 +110,18 @@ def tester03() -> int:
   Testing the _intPerm method.
   """
 
+  lines = []
+
+  for n in [3, 4, 5]:
+    for line in _intPerm(n):
+      lines.append(str(line))
+
+  copy(str.join('\n', lines))
+
+  return 0
+
 
 if __name__ == '__main__':
-  # yolo(tester02)
-  runTest(TestPermIndexed)
-  # yolo(runTests, tester00)
+  # yolo(tester03)
+  # runTest(TestPermIndexed)
+  yolo(runTests, tester00)

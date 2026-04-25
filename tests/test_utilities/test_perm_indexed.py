@@ -58,5 +58,4 @@ class TestPermIndexed(UtilitiesTest):
     This method verifies that the 'permIndexed' finds the expected number
     of permutations.
     """
-
-    permIndicis = (*permTraced('A', 'A', 'B'),)
+    
