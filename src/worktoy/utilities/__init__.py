@@ -12,7 +12,7 @@ from ._args_count import argsCount
 from ._takes_kwargs import takesKwargs
 from ._bipartite_matching import bipartiteMatching
 from ._unpack import unpack
-from ._perm import perm
+from ._perm import permTraced, perm
 from ._slice_len import sliceLen
 from ._maybe import maybe
 from ._text_fmt import textFmt
@@ -37,6 +37,7 @@ __all__ = [
   'bipartiteMatching',
   'unpack',
   'perm',
+  'permTraced',
   'sliceLen',
   'maybe',
   'textFmt',
