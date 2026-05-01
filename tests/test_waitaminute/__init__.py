@@ -10,4 +10,4 @@ from ._waitaminute_test import WaitAMinuteTest
 
 __all__ = [
   'WaitAMinuteTest',  # Base test class for the 'test_waitaminute' module
-  ]
+]

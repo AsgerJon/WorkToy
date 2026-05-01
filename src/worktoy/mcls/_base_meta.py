@@ -14,7 +14,7 @@ from . import BaseSpace as BSpace
 from . import Types
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias, Union
+  from typing import TypeAlias, Union
 
   StrField: TypeAlias = Union[str, Field]
 

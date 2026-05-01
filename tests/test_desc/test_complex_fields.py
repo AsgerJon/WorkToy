@@ -87,7 +87,7 @@ class TestComplexFields(DescTest):
       ('IM', AccessNum.GET, 1337),
       ('RE', AccessNum.DELETE, None),
       ('IM', AccessNum.DELETE, None),
-      )
+    )
     for (key, op, value), (expKey, expOp, expValue) in zip(regs, exp, ):
       self.assertIs(op, expOp)
       self.assertEqual(key, expKey)

@@ -14,7 +14,7 @@ from worktoy.utilities import maybe
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.control_flow import SkipSet
 from worktoy.waitaminute.desc import (ProtectedError, ReadOnlyError,
-  AccessError)
+                                      AccessError)
 from . import DescTest
 
 if TYPE_CHECKING:  # pragma: no cover

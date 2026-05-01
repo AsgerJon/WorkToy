@@ -15,7 +15,6 @@ functions, classmethod/staticmethod descriptors, classes, plain data).
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import unittest
 from typing import TYPE_CHECKING
 
 from tests.test_mcls.test_hooks import SpaceHookTest

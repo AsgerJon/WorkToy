@@ -38,15 +38,15 @@ class IntSampler(BaseSampler):
   __key_groups__: dict[str, tuple[str, ...]] = dict(
     minVal=__min_keys__,
     maxVal=__max_keys__,
-    )
+  )
   __key_types__: dict[str, type] = dict(
     minVal=int,
     maxVal=int,
-    )
+  )
   __key_defaults__: dict[str, Union[int, float]] = dict(
     minVal=0,
     maxVal=255,
-    )
+  )
 
   #  Fallback Variables
   __fallback_min__: int = 0

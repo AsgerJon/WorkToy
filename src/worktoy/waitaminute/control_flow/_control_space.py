@@ -32,7 +32,7 @@ class ControlSpace(dict):
     '__repr__',
     '__namespace__',
     '__static_attributes__',
-    )
+  )
 
   __is_root__ = None
   __metaclass__: Meta = None

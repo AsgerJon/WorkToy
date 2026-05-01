@@ -134,6 +134,6 @@ class TestStochasticWord(LoremIpsumTest):
     class Derp(StochasticWord):
       __category_weights__: WeightedFiles = (
         ('breh.txt', 69.), ('lmao.txt', 420.),
-        )
+      )
 
     self.assertIsNotNone(os.getenv(getattr(Derp, '__data_env_var__')))

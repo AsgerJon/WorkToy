@@ -29,11 +29,11 @@ class TestFunction(CoreTest):
       self.setUp,
       type(self).setUp,
       print,
-      ]
+    ]
     self.funcTypes = [type(func) for func in self.funcExamples]
     self.notFuncExamples = [
       69, 420, 'ur mom', None, True, [1337, ], (80085,), type,
-      ]
+    ]
     self.notFuncTypes = [type(notFunc) for notFunc in self.notFuncExamples]
 
   def testExistence(self, ) -> None:

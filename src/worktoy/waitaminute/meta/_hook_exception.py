@@ -37,7 +37,7 @@ class HookException(Exception):
     'itemKey',
     'errorValue',
     'hookFunction',
-    )
+  )
 
   def __init__(
       self,
@@ -46,7 +46,7 @@ class HookException(Exception):
       key: str,
       val: object,
       hook: AbstractSpaceHook,
-      ) -> None:
+  ) -> None:
     self.initialException = exception
     self.namespaceObject = namespace
     self.itemKey = key
@@ -64,7 +64,7 @@ class HookException(Exception):
     info = spec % (
       self.namespaceObject, self.itemKey, self.errorValue,
       self.hookFunction, self.initialException,
-      )
+    )
     return textFmt(info)
 
   __repr__ = __str__

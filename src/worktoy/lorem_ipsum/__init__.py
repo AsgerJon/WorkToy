@@ -22,4 +22,4 @@ __all__ = [
   'Clause',
   'Sentence',
   'Paragraph',
-  ]
+]

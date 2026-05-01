@@ -9,4 +9,4 @@ from ._mcls_test import MCLSTest
 
 __all__ = [
   'MCLSTest',  # Base test class for the 'tests.test_mcls' module
-  ]
+]

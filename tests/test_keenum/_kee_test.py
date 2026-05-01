@@ -25,7 +25,7 @@ class KeeTest(BaseTest):
       FileAccess,
       KeyboardModifier,
       SubclassExample,
-      ]
+    ]
     self.exampleNums = [
       RootRGB, MoreRGB, EvenMoreRGB, RGBNum, Month, WeekDay,
-      ]
+    ]

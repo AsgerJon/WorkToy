@@ -221,7 +221,7 @@ class FidGen(BaseObject):
     return stringList(
       """json, txt, csv, xml, html, pdf, doc, csv, py, 
       mkv, mp4, mp3, wav, jpg, png, gif, zip, tar, gz, bz2""",
-      )
+    )
 
   @classmethod
   def _findFileExtension(cls, *args) -> ArgRes:

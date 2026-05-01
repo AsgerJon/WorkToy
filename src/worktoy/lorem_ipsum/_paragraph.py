@@ -77,7 +77,7 @@ class Paragraph(BaseGenerator):
       target,
       minV,
       maxV,
-      )
+    )
 
   @sentenceLengths.GET
   def _getSentenceLengths(self, **kwargs) -> IntList:

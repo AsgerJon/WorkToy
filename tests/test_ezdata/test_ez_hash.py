@@ -102,12 +102,12 @@ class TestEZHash(EZTest):
       RGB(255, 0, 0): 'Rød',
       RGB(0, 255, 0): 'Grøn',
       RGB(0, 0, 255): 'Blå',
-      }
+    }
     color = {
       RGB(255, 0, 0): 'Rouge',
       RGB(0, 255, 0): 'Vert',
       RGB(0, 0, 255): 'Bleu',
-      }
+    }
 
     keys = [RGB(255, 0, 0), RGB(0, 255, 0), RGB(0, 0, 255)]
     #  Despite being different instances, the keys should have same hash
@@ -214,7 +214,7 @@ class TestEZHash(EZTest):
         BadRGB(255, 0, 0): 'Rot',
         BadRGB(0, 255, 0): 'Grün',
         BadRGB(0, 0, 255): 'Blau',
-        }
+      }
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.className, 'BadRGB')

@@ -9,7 +9,6 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeNum, Kee, KeeMeta
-from worktoy.utilities import ExceptionInfo
 from worktoy.waitaminute import VariableNotNone, TypeException
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
 from worktoy.waitaminute.keenum import KeeResolveError, KeeDuplicate

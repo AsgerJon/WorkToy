@@ -10,7 +10,6 @@ import os
 from random import random
 from typing import TYPE_CHECKING
 
-from worktoy.dispatch import TypeSig
 from . import DescTest
 from tests.test_dispatch import Comflex, ComflexMeta
 

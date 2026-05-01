@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import argsCount, textFmt
-
+from worktoy.utilities import argsCount
 from . import UtilitiesTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -32,7 +31,7 @@ class Foo:
       self: Any = 'self',
       arg1: Any = 'arg1',
       arg2: Any = 'arg2',
-      ) -> Any:
+  ) -> Any:
     return (self, arg1, arg2)
 
 
@@ -50,7 +49,7 @@ class TestArgsCount(UtilitiesTest):
       self.foo.boundOnly,
       self.foo.oneArg,
       self.foo.twoArgs,
-      )
+    )
 
   def test_dev_null(self) -> None:
     self.assertTrue(True)

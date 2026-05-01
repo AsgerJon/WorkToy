@@ -61,7 +61,7 @@ class StochasticWord(BaseGenerator):
     (COMMON_WORDS, 0.8),
     (UNCOMMON_WORDS, 0.15),
     (RARE_WORDS, 0.05),
-    )
+  )
   #  Fallback Variables
 
   #  Private Variables

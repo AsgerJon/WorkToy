@@ -120,7 +120,7 @@ class TestDispatcher(DispatcherTest):
       TypeSig(int, int): funcIntInt,
       TypeSig(int)     : funcInt,
       TypeSig(str)     : funcStr,
-      }
+    }
     self.sigIntInt = TypeSig(int, int)
     self.sigInt = TypeSig(int)
     self.sigStr = TypeSig(str)
@@ -173,8 +173,8 @@ class TestDispatcher(DispatcherTest):
         """
             Never, gonna, give, you, up
             """,
-        ),
-      )
+      ),
+    )
 
     self.assertFalse(self.sigIntInt == 'breh')
     self.assertFalse(self.sigInt == 'breh')

@@ -10,4 +10,4 @@ from ._sampler_test import SamplerTest
 
 __all__ = [
   'SamplerTest',
-  ]
+]

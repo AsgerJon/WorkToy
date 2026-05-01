@@ -7,11 +7,9 @@ TestParagraph tests the 'Paragraph' class from the
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
 from random import randint
 
 from worktoy.lorem_ipsum import Paragraph
-
 from . import LoremIpsumTest
 
 if TYPE_CHECKING:  # pragma: no cover

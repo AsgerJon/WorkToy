@@ -131,7 +131,7 @@ class TypeCastTestCase(UtilitiesTest):
     self.assertEqual(
       typeCast(frozenset, frozenset([1, 2])),
       frozenset([1, 2]),
-      )
+    )
     self.assertEqual(typeCast(frozenset, [1, 2]), frozenset([1, 2]))
     self.assertEqual(typeCast(frozenset, (1, 2)), frozenset([1, 2]))
     self.assertEqual(typeCast(frozenset, {1, 2}), frozenset([1, 2]))

@@ -7,7 +7,7 @@ it by implementing the '__call__' method.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 from types import FunctionType as Func
 from collections.abc import Callable
 

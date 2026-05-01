@@ -22,4 +22,4 @@ __all__ = [
   'SymbolicSampler',
   'WordSampler',
   'LoremSampler',
-  ]
+]

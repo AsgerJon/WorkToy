@@ -11,7 +11,7 @@ from ...waitaminute.meta import ReservedName
 from . import AbstractSpaceHook, ReservedNames, SpaceDesc
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, TypeAlias, Union
+  from typing import Any, TypeAlias
   from .. import AbstractNamespace
 
   Names: TypeAlias = tuple[str, ...]

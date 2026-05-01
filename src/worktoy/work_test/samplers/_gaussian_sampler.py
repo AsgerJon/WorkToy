@@ -51,19 +51,19 @@ class GaussianSampler(BaseSampler):
     'stdDevValue',
     'std_dev_value',
     'stdDeviationValue',
-    )
+  )
   __key_groups__: dict[str, tuple[str, ...]] = dict(
     mean=__mean_keys__,
     stdDev=__std_dev_keys__,
-    )
+  )
   __key_types__: dict[str, type] = dict(
     mean=float,
     stdDev=float,
-    )
+  )
   __key_defaults__: dict[str, float] = dict(
     mean=__fallback_mean__,
     stdDev=__fallback_std_dev__,
-    )
+  )
 
   #  Private Variables
   __mean_value__: MaybeFloat = None

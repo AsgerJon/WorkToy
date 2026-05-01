@@ -8,8 +8,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from collections.abc import Callable
 
-from icecream import ic
-
 from ..core import Object
 from ..desc import Field
 from ..mcls import BaseMeta

@@ -12,7 +12,6 @@ from worktoy.waitaminute.meta import ReservedName
 from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
 from worktoy.mcls.space_hooks import ReservedNames
-from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias

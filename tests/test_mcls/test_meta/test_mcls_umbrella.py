@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 from worktoy.core import MetaType
 from worktoy.core._meta_type import _Space
 from worktoy.mcls import (BaseObject, BaseSpace, BaseMeta,
-  AbstractNamespace, \
-  AbstractMetaclass)
+                          AbstractNamespace, \
+                          AbstractMetaclass)
 from .. import MCLSTest
 
 if TYPE_CHECKING:  # pragma: no cover

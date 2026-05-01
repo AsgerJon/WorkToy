@@ -37,7 +37,7 @@ class TestMaybe(UtilitiesTest):
       {},
       set(),
       frozenset(),
-      ]
+    ]
     self.typeFalsies = {
       bool     : False,
       int      : 0,
@@ -48,7 +48,7 @@ class TestMaybe(UtilitiesTest):
       dict     : {},
       set      : set(),
       frozenset: frozenset(),
-      }
+    }
     self.typeTruthies = {
       bool     : True,
       int      : 1,
@@ -59,7 +59,7 @@ class TestMaybe(UtilitiesTest):
       dict     : {'a': 1},
       set      : {1},
       frozenset: frozenset({1}),
-      }
+    }
 
   @staticmethod
   def weave(a: list, b: list) -> list:

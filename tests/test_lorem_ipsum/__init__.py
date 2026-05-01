@@ -10,4 +10,4 @@ from ._lorem_ipsum_test import LoremIpsumTest
 
 __all__ = [
   'LoremIpsumTest',
-  ]
+]

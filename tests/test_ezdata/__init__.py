@@ -17,4 +17,4 @@ __all__ = [
   'Mid3',
   'SubClass',
   'EZTest',
-  ]
+]

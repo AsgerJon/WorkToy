@@ -11,8 +11,6 @@ from ...utilities import textFmt
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
-  from ...core import Object
-
 
 class WriteOnceError(TypeError):
   """WriteOnceError is a custom error class raised to indicate that a

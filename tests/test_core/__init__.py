@@ -11,4 +11,4 @@ from ._core_test import CoreTest
 __all__ = [
   'FuncLoad',
   'CoreTest',
-  ]
+]

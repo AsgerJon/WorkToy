@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from collections.abc import Callable
+
 from worktoy.keenum import KeeNum, Kee, KeeMeta
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.keenum import KeeTypeException, KeeResolveError

@@ -44,7 +44,7 @@ class TestIntSampler(SamplerTest):
       (69,),
       (),
       (),
-      )
+    )
     kwargsTuple = (
       dict(),
       dict(lmao=True),
@@ -52,7 +52,7 @@ class TestIntSampler(SamplerTest):
       dict(maxVal=420),
       dict(minVal=42, maxVal=69),
       dict(),
-      )
+    )
     for args, kwargs in zip(argsTuple, kwargsTuple):
       sampler = IntSampler(*args, **kwargs)
       samples = self.rollSampler(sampler)

@@ -98,7 +98,7 @@ class EZSpaceHook(AbstractSpaceHook):
       '__ge__'     : self.geFactory,
       'asTuple'    : self.asTupleFactory,
       'asDict'     : self.asDictFactory,
-      }
+    }
 
   def _getBadNames(self) -> list[str]:
     """Returns a tuple of names that are reserved and should not be used."""

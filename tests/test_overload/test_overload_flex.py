@@ -10,8 +10,6 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from icecream import ic
-
 from tests.test_overload import OverloadTest
 from tests.test_utilities import Diagnostic, \
   DiagnosticSpace, \

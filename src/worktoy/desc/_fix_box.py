@@ -55,5 +55,5 @@ class FixBox(AttriBox):
       instance: Any,
       old: Any = None,
       **kwargs,
-      ) -> None:
+  ) -> None:
     Object.__instance_delete__(self, instance, old, **kwargs)

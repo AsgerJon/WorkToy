@@ -25,7 +25,7 @@ class TestBipartiteMatchingList(CoreTest):
     slots = [
       (1, 2),
       (2, 3),
-      ]
+    ]
     result = bipartiteMatching(slots)
     self.assertEqual(len(result), 2)
     self.assertEqual(len(set(result)), 2)
@@ -37,7 +37,7 @@ class TestBipartiteMatchingList(CoreTest):
       (0,),
       (1,),
       (2,),
-      ]
+    ]
     result = bipartiteMatching(slots)
     self.assertEqual(result, [0, 1, 2])
 
@@ -46,7 +46,7 @@ class TestBipartiteMatchingList(CoreTest):
       (1, 2, 3),
       (1, 2, 3),
       (1, 2, 3),
-      ]
+    ]
     result = bipartiteMatching(slots)
     self.assertEqual(len(result), 3)
     self.assertEqual(len(set(result)), 3)
@@ -58,6 +58,6 @@ class TestBipartiteMatchingList(CoreTest):
       (1, 2),
       (1, 2),
       (1, 2),
-      ]
+    ]
     with self.assertRaises(ValueError):
       bipartiteMatching(slots)

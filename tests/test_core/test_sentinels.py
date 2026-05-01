@@ -30,7 +30,7 @@ class TestSentinels(CoreTest):
   def setUp(self) -> None:
     self.sentinels = [
       THIS, OWNER, DESC, METACALL, WILDCARD, DELETED,
-      ]
+    ]
 
   def test_recursion(self, ) -> None:
     """

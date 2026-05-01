@@ -9,11 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.core.sentinels import DELETED
 from worktoy.desc import AttriBox, Field
-from worktoy.utilities import argsCount, takesKwargs, maybe
+from worktoy.utilities import maybe
 from worktoy.waitaminute.control_flow import ControlFlow
-
 from . import DescTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -198,7 +196,7 @@ class TestFlexibleArgs(DescTest):
       Foo._noArgsOnSet,
       Foo._noArgsPreDelete,
       Foo._noArgsOnDelete,
-      )
+    )
     self.oneArg = (
       Foo._oneArgPreGet,
       Foo._oneArgOnGet,
@@ -206,7 +204,7 @@ class TestFlexibleArgs(DescTest):
       Foo._oneArgOnSet,
       Foo._oneArgPreDelete,
       Foo._oneArgOnDelete,
-      )
+    )
     self.twoArgs = (
       Foo._twoArgsPreGet,
       Foo._twoArgsOnGet,
@@ -214,7 +212,7 @@ class TestFlexibleArgs(DescTest):
       Foo._twoArgsOnSet,
       Foo._twoArgsPreDelete,
       Foo._twoArgsOnDelete,
-      )
+    )
 
   def test_dev_null(self, ) -> None:
     self.assertTrue(True)

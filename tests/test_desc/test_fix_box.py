@@ -31,7 +31,7 @@ class TestFixBox(DescTest):
     points = [
       Point2DFix(69., 420.),
       Point2DFix(),
-      ]
+    ]
     points.extend(Point2DFix.rands(69, -0.1337, 80085))
     point = Point2DFix(points.pop())
     points.append(point)
@@ -63,7 +63,7 @@ class TestFixBox(DescTest):
       CircleFix(point),
       CircleFix(point.x, point.y),
       CircleFix(1337.),
-      ]
+    ]
     expectedStrSpec = """<%s: (x-%s) ** 2 + (y-%s) ** 2 = %s ** 2>"""
     expectedReprSpec = """%s(%s, %s)"""
     circles.extend(CircleFix.rands(69, -0.1337, 80085))
@@ -99,7 +99,7 @@ class TestFixBox(DescTest):
       ComplexFix(1337 + 80085j),
       ComplexFix(),
       ComplexFix(real=1337, imag=80085),
-      ]
+    ]
     complexNumbers.extend(ComplexFix.rands(69, -0.1337, 80085))
     for complexNumber in complexNumbers:
       self.assertIsInstance(complexNumber.RE, float)

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from random import randint
 from typing import TYPE_CHECKING
-from worktoy.lorem_ipsum import BaseGenerator
 
+from worktoy.lorem_ipsum import BaseGenerator
 from . import LoremIpsumTest
 
 if TYPE_CHECKING:  # pragma: no cover

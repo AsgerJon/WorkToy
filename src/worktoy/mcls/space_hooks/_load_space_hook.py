@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from ...dispatch import overload, Dispatcher
 from . import AbstractSpaceHook, SpaceDesc
-from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type, TypeAlias

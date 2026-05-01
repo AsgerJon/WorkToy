@@ -23,7 +23,7 @@ enumeration.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING, TypeVar
 
 from ..desc import Field, AttriBox
 from ..utilities import textFmt

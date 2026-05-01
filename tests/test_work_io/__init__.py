@@ -8,4 +8,4 @@ from ._work_io_test import WorkIOTest
 
 __all__ = [
   'WorkIOTest',
-  ]
+]

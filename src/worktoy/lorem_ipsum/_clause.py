@@ -89,7 +89,7 @@ class Clause(BaseGenerator):
       minVal,
       maxVal,
       minIndex,
-      )
+    )
 
   @wordsLengths.GET
   def _getWordsLengths(self, **kwargs) -> IntList:
