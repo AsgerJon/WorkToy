@@ -106,6 +106,7 @@ class TestClassResolve(KeeTest):
     self.assertIs(Polar.OUI, Polar(True))
     self.assertIs(Polar.NO, Polar(False))
     self.assertIs(Polar.__class_resolve__(object()), NotImplemented)
+    self.assertIs(Polar.__class_resolve__(69 + 420j), NotImplemented)
 
     with self.assertRaises(KeeResolveError) as context:
       _ = Polar(69 + 420j)
