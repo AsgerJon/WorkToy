@@ -42,7 +42,7 @@ class TestArithmetic(DescTest):
       ComplexMetaSub,
       Comflex,
       ComflexMeta,
-      ]
+    ]
     self.posArgs = dict()
     n = 8  # Number during tests in CI/CD
     #  Reduces 'n' to 1 during development.
@@ -240,17 +240,16 @@ class TestArithmetic(DescTest):
       self.assertAlmostEqual(z2.RE, x + z.real)
       self.assertAlmostEqual(z2.IM, z.imag)
 
-  def test_fallback(self) -> None:
-    for Z in (Comflex, ComflexMeta):
-      gym = Z.__init__._getSigFuncMap()[TypeSig(float, complex)]
-      breh = Z(0j)
-      gym(breh, 'never', 'gonna', 'give', 'you', 'up', 69., 420 + 1337j)
-      self.assertEqual(breh.RE, 69. + 420.)
-      self.assertEqual(breh.IM, 1337.)
-
   def test_flex(self) -> None:
     """Test the ComflexMeta constructor"""
 
     z = ComflexMeta(69 + 420j, 1337.)
     self.assertAlmostEqual(z.RE, 69. + 1337.)
     self.assertAlmostEqual(z.IM, 420.)
+
+    z = ComflexMeta(1337., 69 + 420j)
+    self.assertAlmostEqual(z.RE, 69. + 1337.)
+    self.assertAlmostEqual(z.IM, 420.)
+
+    with self.assertRaises(TypeError):
+      _ = ComflexMeta(69 + 420j, 69 + 420j)

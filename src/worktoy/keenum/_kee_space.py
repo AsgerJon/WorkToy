@@ -1,5 +1,5 @@
 """
-KeeSpace provides the namespace class used by the 'worktoy.keenum' module.
+KeeSpace provides the namespace class used by the 'worktoy.num' module.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class KeeSpace(BaseSpace):
-  """KeeSpace provides the namespace class used by the 'worktoy.keenum'
+  """KeeSpace provides the namespace class used by the 'worktoy.num'
   module. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -73,8 +73,6 @@ class KeeSpace(BaseSpace):
   def __init__(self, mcls: type, name: str, bases: Bases, **kwargs) -> None:
     self.__enumeration_members__ = dict()
     super().__init__(mcls, name, bases, **kwargs)
-    cls = type(self)
-
     for base in bases:
       try:
         space = getattr(base, '__namespace__')

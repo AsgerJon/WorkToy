@@ -10,7 +10,9 @@ import time
 from math import log
 from typing import Callable
 
-from worktoy.utilities import stringList
+sys.dont_write_bytecode = True
+
+from worktoy.utilities import stringList  # noqa: E402
 
 
 def _yolo(*args: Callable) -> None:

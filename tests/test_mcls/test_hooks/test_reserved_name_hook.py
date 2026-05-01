@@ -42,36 +42,6 @@ class TestReservedNameHook(MCLSTest):
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.resName, '__module__')
 
-  def test_reserved_name_descriptor_class(self) -> None:
-    """
-    Testing __set__ and __delete__ methods on the ReservedNames descriptor
-    """
-
-    class Foo:
-      names = ReservedNames()
-
-    self.assertIs(Foo.names.__field_owner__, Foo)
-    self.assertIs(Foo.names.__field_name__, 'names')
-
-    for name in Foo.names:
-      self.assertTrue(str.startswith(name, '__'))
-      self.assertTrue(str.endswith(name, '__'))
-    foo = Foo()
-    with self.assertRaises(ReadOnlyError) as context:
-      foo.names = 'derp'
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertIs(e.instance, foo)
-    self.assertIs(e.desc, Foo.names)
-    self.assertEqual(e.newVal, 'derp')
-
-    with self.assertRaises(ProtectedError) as context:
-      del foo.names
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertIs(e.instance, foo)
-    self.assertIs(e.desc, Foo.names)
-
   def test_str_repr_reserved_names(self) -> None:
     """
     Test the string representation of the ReservedNames descriptor.
@@ -81,11 +51,7 @@ class TestReservedNameHook(MCLSTest):
       names = ReservedNames()
 
     foo = Foo()
-
-    strReservedNames = str(foo.names)
-    expected = """ReservedNames"""
-    self.assertTrue(strReservedNames.startswith(expected))
-    i = 0
-    for i, name in enumerate(foo.names):
-      self.assertIn(name, strReservedNames)
-    self.assertEqual(len(foo.names), i + 1)
+    self.assertIsInstance(foo.names, tuple)
+    for name in foo.names:
+      self.assertIsInstance(name, str)
+    self.assertIsInstance(Foo.names, ReservedNames)

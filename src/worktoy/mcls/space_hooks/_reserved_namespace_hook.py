@@ -8,10 +8,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...waitaminute.meta import ReservedName
-from . import AbstractSpaceHook, ReservedNames
+from . import AbstractSpaceHook, ReservedNames, SpaceDesc
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Self, TypeAlias, Union
+  from .. import AbstractNamespace
+
+  Names: TypeAlias = tuple[str, ...]
 
 
 class ReservedNamespaceHook(AbstractSpaceHook):
@@ -50,14 +53,15 @@ class ReservedNamespaceHook(AbstractSpaceHook):
   class Space(AbstractNamespace):  # Must inherit from AbstractNamespace
     #  Custom namespace class inheriting from AbstractNamespace
     reservedNameHook = ReservedNameHook()  # Register the hook
-"""
+  """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Public variables
-  reservedNames = ReservedNames()
+  space: SpaceDesc[AbstractNamespace] = SpaceDesc()
+  reservedNames: ReservedNames = ReservedNames()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -68,7 +72,6 @@ class ReservedNamespaceHook(AbstractSpaceHook):
     The setItemHook method is called when an item is set in the
     namespace.
     """
-    if key in self.reservedNames:
-      if key in self.space:
-        raise ReservedName(key)
+    if key in self.reservedNames and key in self.space:
+      raise ReservedName(key)
     return False

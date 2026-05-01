@@ -9,23 +9,30 @@ that the owning class is derived from 'BaseMeta' or a subclass of
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from types import FunctionType
 from typing import TYPE_CHECKING
 
-from ..utilities import maybe, perm
+from ..utilities import maybe, textFmt
+from ..utilities.combinatorics import Arrangements
 from ..waitaminute import attributeErrorFactory
-from . import TypeSig
+from . import TypeSig, PermuterMethod
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Self, Iterator, Never
 
   Method: TypeAlias = Callable[..., Any]
-  Decorator: TypeAlias = Callable[[Method], Self]
+  Decorator: TypeAlias = Callable[[Method], Any]
+  Order: TypeAlias = tuple[int, ...]
 
 
 class overload:  # NOQA
   """
   Entry collected by LoadSpaceHook
   """
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  STATIC METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -109,14 +116,25 @@ class overload:  # NOQA
   @classmethod
   def flex(cls, *types: type) -> Decorator:
     """
-    Creates a decorator that registers the function with all permutations
-    of the given types.
+    Creates a decorator that registers the function under every
+    arrangement of the given canonical type signature.
+
+    At dispatch time, the user supplies arguments in some arrangement of
+    the canonical order. Each registered 'PermuterMethod' carries the
+    'Arrangement' that produced its signature; the dispatcher uses
+    'arrangement.restoreFrom(*args)' to permute the user's args back
+    into canonical order before forwarding to 'func'.
     """
 
     def decorator(func: Method) -> Self:
       self = cls(_root=True)
-      for p in perm(*types, ):
-        self._addSigFunc(TypeSig(*p, ), func)
+      for arrangement in Arrangements(*types):
+        sig = TypeSig(*arrangement.values)
+        sig.__allow_flex__ = False
+        if TYPE_CHECKING:  # pragma: no cover
+          assert isinstance(func, FunctionType)
+        load = PermuterMethod(func, arrangement)
+        self._addSigFunc(sig, load)
       return self
 
     return decorator
@@ -163,3 +181,17 @@ class overload:  # NOQA
   if TYPE_CHECKING:  # pragma: no cover
     def __call__(self, func: Method) -> Never:
       """Linter friendly explicitly disabled call method. """
+
+  def __str__(self, ) -> str:
+    latestFunc = self._getLatestFunc()
+    infoSpec = """overload of function: '%s', supporting type signatures: 
+    <br><tab>%s"""
+    sigLines = []
+    for sig, _ in self._getSigFuncDict().items():
+      sigLines.append(str(sig))
+    sigStr = '<br><tab>'.join(sigLines)
+    name = latestFunc.__name__
+    info = infoSpec % (name, sigStr)
+    return textFmt(info)
+
+  __repr__ = __str__

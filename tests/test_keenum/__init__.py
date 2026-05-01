@@ -1,5 +1,5 @@
 """
-The 'tests.test_keenum' package provides tests for the 'worktoy.keenum'
+The 'tests.test_keenum' package provides tests for the 'worktoy.num'
 module.
 """
 #  AGPL-3.0 license
@@ -12,4 +12,4 @@ from . import examples
 __all__ = [
   'KeeTest',
   'examples',
-  ]
+]

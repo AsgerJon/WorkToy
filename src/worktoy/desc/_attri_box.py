@@ -6,7 +6,7 @@ class.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from . import Field, BaseDescriptor
 from ..core import Object
@@ -16,10 +16,12 @@ from ..waitaminute import TypeException
 from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any, Self, Union
+
+T = TypeVar('T')
 
 
-class AttriBox(BaseDescriptor):
+class AttriBox(BaseDescriptor[T]):
   """
   AttriBox implements a lazily instantiated and strongly typed descriptor
   class.
@@ -172,7 +174,7 @@ class AttriBox(BaseDescriptor):
       instance: Any,
       old: Any = None,
       **kwargs,
-      ) -> None:
+  ) -> None:
     """
     Deletes the value of the field for the given instance. If the value is
     not set, it does nothing.
@@ -185,11 +187,13 @@ class AttriBox(BaseDescriptor):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def __class_getitem__(cls, fieldType: type) -> Self:
+  def __class_getitem__(cls, fieldType: Union[type, TypeVar]) -> Self:
     """
     Allows the AttriBox to be used as a generic type with a specified
     field type.
     """
+    if isinstance(fieldType, TypeVar):
+      return super().__class_getitem__(fieldType)  # noqa
     self = object.__new__(cls)
     self.__field_type__ = fieldType
     return self  # noqa

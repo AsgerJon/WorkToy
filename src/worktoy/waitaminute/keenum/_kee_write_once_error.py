@@ -30,10 +30,10 @@ class KeeWriteOnceError(AttributeError):
   enumeration members appear strictly write-once.
   """
 
-  __slots__ = ('keenum', 'member', 'attribute')
+  __slots__ = ('keeNum', 'member', 'attribute')
 
   def __init__(self, member: Any, attribute: str) -> None:
-    self.keenum = type(member)
+    self.keeNum = type(member)
     self.member = member
     self.attribute = attribute
 
@@ -41,7 +41,7 @@ class KeeWriteOnceError(AttributeError):
     infoSpec = """Attempt to modify attribute '%s' of member '%s' in '%s'!"""
     key = self.attribute
     num = str(self.member)
-    kee = self.keenum.__name__
+    kee = self.keeNum.__name__
     info = infoSpec % (key, num, kee)
     from ...utilities import textFmt
     return textFmt(info)

@@ -6,19 +6,30 @@ exposing it to the namespace object.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload, Generic, TypeVar
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Union, Self
+
+  from . import AbstractSpaceHook as Hook
+
+NamespaceT = TypeVar('NamespaceT')
 
 
-class SpaceDesc:
+class SpaceDesc(Generic[NamespaceT]):
   """
   SpaceDesc provides a descriptor class for 'AbstractSpaceHook' objects,
   exposing it to the namespace object.
   """
 
-  def __get__(self, instance: Any, owner: type) -> Any:
+  # @formatter:off
+  @overload
+  def __get__(self, instance: None, owner: type) -> Self: ...
+  @overload
+  def __get__(self, instance: Hook, owner: type) -> NamespaceT: ...
+  # @formatter:on
+
+  def __get__(self, instance: Any, owner: type) -> Union[Self, NamespaceT]:
     """Returns the space hook of the 'AbstractSpaceHook' instance."""
     if instance is None:
       return self

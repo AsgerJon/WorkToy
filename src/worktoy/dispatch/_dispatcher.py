@@ -12,17 +12,19 @@ from types import MethodType as Meth
 from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..utilities import maybe, typeCast, perm
+from ..utilities import maybe, typeCast, textFmt
+from ..utilities.combinatorics import Arrangements
 from ..waitaminute import TypeException, VariableNotNone
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.dispatch import DispatchException
-from . import TypeSig
+from . import TypeSig, PermuterMethod
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, Never, TypeAlias, Optional, Self
+  from . import Dispatcher
 
   Method: TypeAlias = Callable[[Any, ...], Any]
-  Decorator: TypeAlias = Callable[[Method], Self]
+  Decorator: TypeAlias = Callable[[Method], Dispatcher]
   SigFuncList: TypeAlias = list[tuple[TypeSig, Method]]
   SigFuncMap: TypeAlias = dict[TypeSig, Method]
 
@@ -99,7 +101,7 @@ class Dispatcher(Object):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
+  def __get__(self, instance: Any, owner: type, **kw) -> Any:
     """
     Descriptor protocol method to return a decorator that can be used to
     register functions with specific type signatures.
@@ -181,31 +183,18 @@ class Dispatcher(Object):
     self.swapAllTHIS(owner)
 
   def __str__(self, ) -> str:
-    """
-    String representation of the 'Dispatcher' object. It assumes the
-    '__set_name__' method has already run. This is because the
-    'Dispatcher' objects are created during the 'compile' phase of the
-    namespace object, which is invoked by the '__new__' method on the
-    metaclass. When '__new__' returns, the '__build_class__' notifies the
-    '__set_name__' methods of all objects in the class namespace that
-    implements it.
-    """
-    infoSpec = """<%s %s at %s>"""
-    fieldName = maybe(self.__field_name__, '')
-    owner = maybe(self.__field_owner__, )
+    owner = self.getFieldOwner()
     if owner is None:
-      ownerName = ''
-    else:
-      ownerName = owner.__name__
-    if fieldName or ownerName:
-      name = '%s.%s' % (ownerName, fieldName,)
-    else:
-      name = ''
-    clsName: str = type(self).__name__
-    info = infoSpec % (clsName, name, str(hex(id(self))),)
-    while '  ' in info:
-      info = info.replace('  ', ' ')
-    return info
+      return '<%s object at %s>' % (type(self).__name__, hex(id(self)),)
+    infoSpec = """Dispatcher at '%s.%s' for 'TypeSig' objects:<br><tab>%s"""
+    ownerName = self.getFieldOwner().__name__
+    fieldName = self.getFieldName()
+    sigLines = []
+    for sig, _ in self._getSigFuncList():
+      sigLines.append(str(sig))
+    sigStr = '<br><tab>'.join(sigLines)
+    info = infoSpec % (ownerName, fieldName, sigStr)
+    return textFmt(info)
 
   __repr__ = __str__
 
@@ -251,8 +240,13 @@ class Dispatcher(Object):
     """
 
     def decorator(func: Method) -> Self:
-      for p in perm(*types, ):
-        self.addSigFunc(TypeSig(*p), func)
+      for arrangement in Arrangements(*types):
+        sig = TypeSig(*arrangement.values)
+        sig.__allow_flex__ = False
+        if TYPE_CHECKING:  # pragma: no cover
+          assert isinstance(func, Func)
+        load = PermuterMethod(func, arrangement)
+        self.addSigFunc(sig, load)
       return self
 
     return decorator

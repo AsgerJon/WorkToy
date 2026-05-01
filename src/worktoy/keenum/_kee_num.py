@@ -5,7 +5,7 @@ KeeNum provides the shared baseclass for KeeNum enumerating classes.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from ..core import Object
 from ..desc import Field
@@ -14,7 +14,7 @@ from ..waitaminute.keenum import KeeWriteOnceError
 from . import KeeMeta, Kee
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Never
+  from typing import Any, Never, Self
 
 
 class KeeNum(Object, metaclass=KeeMeta, ):
@@ -67,6 +67,13 @@ class KeeNum(Object, metaclass=KeeMeta, ):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  # @formatter:off
+  @overload
+  def __init__(self, identifier: Any) -> None: ...
+  @overload
+  def __init__(self, member: Kee) -> None: ...
+  # @formatter:on
+
   def __init__(self, member: Kee) -> None:
     object.__setattr__(self, '__frozen_state__', False)
     self.__field_kee__ = member
@@ -80,7 +87,7 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     """Set an attribute of the member."""
     if object.__getattribute__(self, '__frozen_state__'):
       raise KeeWriteOnceError(self, name)
-    return object.__setattr__(self, name, value)
+    object.__setattr__(self, name, value)
 
   def __set_name__(self, owner: type, name: str) -> None:
     """This reimplementation of '__set_name__' is necessary to prevent the
@@ -88,7 +95,7 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     enumeration defined in its namespace. """
     pass
 
-  def __get__(self, instance: Any, owner: type) -> KeeNum:
+  def __get__(self, instance: Any, owner: type, **kw) -> KeeNum:
     """Implementation of '__get__' is necessary for the same reason as
     '__set_name__'. """
     return self
@@ -133,3 +140,8 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     return info
 
   __repr__ = __str__
+
+  if TYPE_CHECKING:  # pragma: no cover
+    # @formatter:off
+    def __call__(self, identifier: Any) -> Self: ...
+    # @formatter:on

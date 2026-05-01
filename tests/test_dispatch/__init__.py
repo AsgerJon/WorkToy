@@ -14,7 +14,7 @@ from ._complex_meta_sub import ComplexMetaSub, SusComplex
 from ._comflex import Comflex
 from ._comflex_meta import ComflexMeta
 
-__all__ = [
+__all__ = (
   'DispatcherTest',
   'PlanePoint',
   'SpacePoint',
@@ -25,4 +25,4 @@ __all__ = [
   'SusComplex',
   'Comflex',
   'ComflexMeta',
-  ]
+)

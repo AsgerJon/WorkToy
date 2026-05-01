@@ -9,13 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...dispatch import overload, Dispatcher
-from . import AbstractSpaceHook
+from . import AbstractSpaceHook, SpaceDesc
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias, Union
+  from typing import Any, Type, TypeAlias
 
-  from .. import BaseSpace as BSpace
-  from . import SpaceDesc
+  from .. import BaseSpace
 
   Meta: TypeAlias = Type[type]
 
@@ -26,7 +26,16 @@ class LoadSpaceHook(AbstractSpaceHook):
   and creates an entry in the namespace.
   """
 
-  space: Union[BSpace, SpaceDesc]
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Public Variables
+  space: SpaceDesc[BaseSpace] = SpaceDesc()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     if not isinstance(val, overload):

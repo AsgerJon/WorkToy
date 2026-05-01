@@ -1,5 +1,5 @@
 """
-The 'worktoy.keenum' module provides the enumerating KeeNum class.
+The 'worktoy.num' module provides the enumerating KeeNum class.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -18,7 +18,7 @@ from ._kee_flags import KeeFlags
 from ._kee_box import KeeBox
 from ._access_num import AccessNum
 
-__all__ = [
+__all__ = (
   'Kee',
   'KeeFlag',
   'KeeSpaceHook',
@@ -31,4 +31,4 @@ __all__ = [
   'KeeFlags',
   'KeeBox',
   'AccessNum',
-  ]
+)

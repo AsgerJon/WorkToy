@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.utilities.combinatorics import Arrangements
 from worktoy.waitaminute.keenum import KeeFlagDuplicate
 from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsMeta, KeeNum
 from worktoy.desc import Field
-from worktoy.utilities import perm
 from .examples import SubclassExample, FlagsExample, MouseButton, PrimeValued
 from . import KeeTest
 
@@ -38,7 +38,7 @@ class TestKeeFlagsMeta(KeeTest):
       memberList=Field,
       memberDict=Field,
       valueType=Field,
-      )
+    )
     for key, value in metaAttributes.items():
       self.assertTrue(hasattr(KeeFlagsMeta, key))
       self.assertIsInstance(getattr(KeeFlagsMeta, key), value)
@@ -52,10 +52,10 @@ class TestKeeFlagsMeta(KeeTest):
     """Tests that '__contains__' correctly identifies members."""
 
     for cls in self.exampleFlags:
-      for i, p in enumerate(perm(*cls.flags, )):
-        key = frozenset((p.name for p in p))
-        index = sum(1 << f.index for f in p)
-        name = '_'.join(f.name for f in p) or 'NULL'
+      for i, arrangement in enumerate(Arrangements(*cls.flags, )):
+        key = frozenset((p.name for p in arrangement.values))
+        index = sum(1 << f.index for f in arrangement.values)
+        name = '_'.join(f.name for f in arrangement.values) or 'NULL'
         self.assertIn(key, cls)
         self.assertIn(index, cls)
         self.assertIn(name, cls)

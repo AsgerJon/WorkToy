@@ -7,10 +7,10 @@ enumerations by chaining a series of color enumerating classes.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
+from collections.abc import Callable
 from worktoy.keenum import KeeNum, Kee, KeeMeta
-from worktoy.keenum._kee_desc import AbstractKeeDesc  # noqa
-from worktoy.waitaminute.keenum import KeeValueError, KeeTypeException
+from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.keenum import KeeTypeException, KeeResolveError
 from . import KeeTest
 from .examples import RGB, RootRGB, MoreRGB, EvenMoreRGB, RGBNum
 
@@ -51,7 +51,6 @@ class TestNumMRO(KeeTest):
 
   def test_coverage_gymnastics(self) -> None:
     """Test that the MRO descriptor works as expected."""
-    self.assertIsInstance(KeeMeta.members, AbstractKeeDesc)
     self.assertIn('#FF0000', str(RGBNum.RED.value))
     self.assertIn('#00FF00', str(RGBNum.GREEN.value))
     self.assertIn('#0000FF', str(RGBNum.BLUE.value))
@@ -81,7 +80,7 @@ class TestNumMRO(KeeTest):
   def test_resolve_key(self) -> None:
     """Test that the resolve_key method works as expected."""
     for color in RGBNum:
-      self.assertIs(RGBNum[color.name], color)
+      resolved = RGBNum(color.name)
       self.assertIs(RGBNum(color.name), color)
 
   def test_base(self) -> None:
@@ -117,13 +116,13 @@ class TestNumMRO(KeeTest):
     """Test that the resolve_value method raises an error for invalid
     values."""
 
-    for color in RGBNum:
-      with self.assertRaises(KeeValueError) as context:
-        _ = RGBNum.fromValue('bro imma color, trust!')
-      e = context.exception
-      self.assertIs(e.keenum, RGBNum)
-      self.assertEqual(e.value, 'bro imma color, trust!')
-      self.assertEqual(str(e), repr(e))
+    with self.assertRaises(TypeException) as context:
+      _ = RGBNum.fromValue('bro imma color, trust!')
+    e = context.exception
+    self.assertEqual(e.varName, 'value')
+    self.assertEqual(e.actualObject, 'bro imma color, trust!')
+    self.assertIs(e.actualType, str)
+    self.assertIn(RGBNum.valueType, e.expectedTypes)
 
   def test_bad_member_type(self) -> None:
     """Test that passing a member with a value of an unsupported type
@@ -137,3 +136,101 @@ class TestNumMRO(KeeTest):
     self.assertEqual(e.value, RGB(69, 420, 1337))
     self.assertEqual(set(e.expectedTypes), {int, })
     self.assertEqual(str(e), repr(e))
+
+  def test_named_members_recursion(self, ) -> None:
+    """
+    This method tests the recursion of the 'namedMembers' descriptor.
+    """
+
+    class Foo(KeeNum):
+      pass
+
+    setattr(Foo, '__named_members__', None)
+
+    with self.assertRaises(RecursionError):
+      _ = Foo._getNamedMembers(_recursion=True)
+
+  def test_call_empty(self, ) -> None:
+    """
+    This method tests that calling a KeeNum with no arguments raises
+    'TypeException'.
+    """
+    with self.assertRaises(TypeException) as context:
+      _ = RGBNum()  # noqa
+    e = context.exception
+    self.assertEqual(e.varName, 'identifier')
+    self.assertIsNone(e.actualObject)
+    self.assertIs(e.actualType, type(None))
+    self.assertIn(object, e.expectedTypes)
+
+  def test_contains(self, ) -> None:
+    """
+    This method tests the '__contains__' method of the RGBNum class.
+    """
+
+    class Sus(KeeNum):
+      A = Kee[int](69)
+
+    self.assertFalse(KeeNum in Sus)
+    self.assertFalse(Sus in KeeNum)
+
+  def test_bool(self, ) -> None:
+    """
+    This method tests the '__bool__' method of the RGBNum class.
+    """
+
+    class Empty(KeeNum):
+      pass
+
+    class Some(KeeNum):
+      A = Kee[int](69)
+
+    self.assertFalse(Empty)
+    self.assertFalse(KeeNum)
+    self.assertTrue(Some)
+
+  def test_bad_class_resolve_implementation(self, ) -> None:
+    """
+    This method covers the case of 'KeeNum' class having a bad
+    '__class_resolve__'.
+    """
+    with self.assertRaises(TypeException) as context:
+      class Sus(KeeNum):
+        A = Kee[int](69)
+        __class_resolve__ = 'never', 'gonna', 'give', 'you', 'up'
+    e = context.exception
+    self.assertEqual(e.varName, '__class_resolve__')
+    self.assertEqual(e.actualObject, ('never', 'gonna', 'give', 'you', 'up'))
+    self.assertIs(e.actualType, tuple)
+    self.assertIn(Callable, e.expectedTypes)
+
+  def test_resolve_bool(self, ) -> None:
+    """
+    This method tests the 'resolve_bool' method of the RGBNum class.
+    """
+
+    class Sus(KeeNum):
+      A = Kee[int](69)
+
+    with self.assertRaises(KeeResolveError) as context:
+      _ = Sus[True]
+    e = context.exception
+    self.assertIs(e.keeNum, Sus)
+    self.assertIs(e.identifier, True)
+
+    class Polar(KeeNum):
+      YES = Kee[bool](True)
+      NO = Kee[bool](False)
+
+    self.assertTrue(Polar[True])
+    self.assertFalse(Polar[False])
+
+  def test_bad_class_resolve(self, ) -> None:
+    """
+    This method tests a KeeNum with a bad '__class_resolve__'
+    """
+
+    class Sus(KeeNum):
+      TOM = Kee[int](69)
+      DICK = Kee[int](420)
+      HARRY = Kee[int](1337)

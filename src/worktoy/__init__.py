@@ -13,7 +13,7 @@ The package consists of thr following modules:
 - mcls: Custom metaclass implementations.
 - lorem_ipsum: Lorem ipsum text generation utilities.
 - markwork: Markdown rendering utilities.
-- keenum: Enumeration utilities.
+- num: Enumeration utilities.
 - ezdata: Dataclass implementation.
 - work_io: Input/output utilities for file and directory management.
 """
@@ -45,4 +45,4 @@ __all__ = [
   'ezdata',
   'work_io',
   'work_test',
-  ]
+]

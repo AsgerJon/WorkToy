@@ -9,29 +9,29 @@ method and the descriptor uses the overridden method instead.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from . import BaseDescriptor
 from ..utilities import maybe
 from ..waitaminute import TypeException
 from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 
+T = TypeVar('T')
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Any, Callable, TypeAlias, Union, Optional
+  from typing import TypeAlias, Any, Callable, TypeAlias, Optional
   from typing import Self
 
   MaybeStr: TypeAlias = Optional[str]
 
   StrTuple: TypeAlias = tuple[str, ...]
   MaybeStrTuple: TypeAlias = Optional[StrTuple]
-  StrTupleField: TypeAlias = Union[Self, StrTuple]
 
   CallMeMaybe: TypeAlias = Callable[..., Any]
   MaybeBool: TypeAlias = Optional[bool]
-  MaybeSelf: TypeAlias = Optional[Self]
 
 
-class Field(BaseDescriptor):
+class Field(BaseDescriptor[T]):
   """
   Flexible descriptor requiring accessor methods to be decorated. Please
   note that the instance of 'Field' can decorate only methods appearing
@@ -52,7 +52,8 @@ class Field(BaseDescriptor):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __prototype_object__: MaybeSelf = None
+  __prototype_object__: Optional[Self] = None
+
   # -- Accessor Keys
   __get_key__ = None
   __set_keys__ = None
@@ -137,7 +138,7 @@ class Field(BaseDescriptor):
       instance: Any,
       old: Any = None,
       **kwargs,
-      ) -> None:
+  ) -> None:
     """
     All decorated deleters are retrieved in the same fashion as the getter.
     """
@@ -171,10 +172,23 @@ class Field(BaseDescriptor):
         '__on_delete_keys__',
         '__set_keys__',
         '__delete_keys__',
-        )
+      )
       for keyGroup in keyGroups:
         otherValue = getattr(other, keyGroup)
         if otherValue is not None:
           setattr(self, keyGroup, (*otherValue,))
     elif other is not None:
       raise TypeException('other', other, type(self))
+
+  if TYPE_CHECKING:  # pragma: no cover
+    from typing import overload, Union
+
+    # @formatter:off
+    @overload
+    def __get__(self, instance: None, owner: type, **kw) -> Self: ...
+    @overload
+    def __get__(self, instance: Any, owner: type, **kw) -> T: ...
+    # @formatter:on
+
+    def __get__(self, instance: Any, owner: type, **kw) -> Union[Self, T]:
+      BaseDescriptor.__get__(self, instance, owner, **kw)

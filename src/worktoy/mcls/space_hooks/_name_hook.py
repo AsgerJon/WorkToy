@@ -9,10 +9,11 @@ from typing import TYPE_CHECKING
 
 from ...core.sentinels import METACALL
 from ...waitaminute.meta import QuestionableSyntax, DelException
-from . import AbstractSpaceHook
+from . import AbstractSpaceHook, SpaceDesc
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias
+  from .. import AbstractNamespace
 
   NearMiss: TypeAlias = tuple[str, str]
 
@@ -56,6 +57,17 @@ class NamespaceHook(AbstractSpaceHook):
     nameHook = NameHook()  # Register the hook
 """
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Public Variables
+  space: SpaceDesc[AbstractNamespace] = SpaceDesc()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
   @classmethod
   def _getClassDunders(cls) -> list[str]:
     """
@@ -97,7 +109,7 @@ class NamespaceHook(AbstractSpaceHook):
       #  implementations of the dunder methods, such that derived
       #  may implement the methods to achieve behaviour otherwise
       #  requiring metaclass reimplementation.
-      ]
+    ]
 
   @classmethod
   def _getNearMisses(cls) -> list[NearMiss]:
@@ -109,7 +121,7 @@ class NamespaceHook(AbstractSpaceHook):
       ('__getitem__', '__get_item__'),
       ('__setitem__', '__set_item__'),
       ('__delitem__', '__del_item__'),
-      ]
+    ]
 
   @classmethod
   def _validateName(cls, name: str) -> bool:
@@ -130,6 +142,10 @@ class NamespaceHook(AbstractSpaceHook):
     if 'trustMeBro' in self.space.getKwargs():
       return True
     return False
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
@@ -154,7 +170,7 @@ class NamespaceHook(AbstractSpaceHook):
     for name in dunderNames:
       try:
         _ = self.space.deepGetItem(name)
-      except KeyError as keyError:
+      except KeyError:
         compiledSpace[name] = METACALL
         continue
       else:

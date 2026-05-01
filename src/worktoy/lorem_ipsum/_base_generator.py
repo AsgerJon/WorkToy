@@ -52,7 +52,7 @@ class BaseGenerator(BaseObject):
       maxVal: int,
       minIndex: int = None,
       maxIndex: int = None,
-      ) -> list[int]:
+  ) -> list[int]:
     """
     Adjusts the sum of the integers in the given list randomly
     incrementing or decrementing the integers until the sum of the
@@ -101,8 +101,8 @@ class BaseGenerator(BaseObject):
   __is_first__: MaybeBool = None
 
   #  Public Variables
-  charCount: IntBox = AttriBox[int](40)
-  isFirst: BoolField = Field()
+  charCount = AttriBox[int](40)
+  isFirst: Field[bool] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -175,7 +175,7 @@ class Comflex:
     for arg in args:
       if isinstance(arg, complex):
         z = arg
-      elif isinstance(arg, float):
+      else:
         x = arg
     self.RE = x + z.real
     self.IM = z.imag

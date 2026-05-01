@@ -26,7 +26,7 @@ class BaseMeta(AbstractMetaclass):
   implementation.
 
   ## Purpose
-
+6
   This metaclass does not introduce any behavior of its own beyond
   enabling namespace hooks defined in `BaseSpace`, such as `OverloadHook`,
   `PreClassHook`, `NameHook`, and `ReservedNameHook`.
@@ -65,5 +65,5 @@ class BaseMeta(AbstractMetaclass):
     bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return BSpace(mcls, name, bases, **kwargs)
 
-  def __new__(mcls, *args, **kwargs) -> Self:
+  def __new__(mcls, *args, **kwargs) -> BaseMeta:
     return super().__new__(mcls, *args, **kwargs)

@@ -9,7 +9,7 @@ from __future__ import annotations
 from ._dispatch_exception import DispatchException
 from ._type_cast_exception import TypeCastException
 
-___all__ = [
+___all__ = (
   'DispatchException',
   'TypeCastException',
-  ]
+)

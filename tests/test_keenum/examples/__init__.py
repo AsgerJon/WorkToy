@@ -25,6 +25,7 @@ from ._compass import Compass
 from ._month import Month
 from ._dato import Dato
 from ._brush import Brush
+from ._http_status import HTTPStatus
 
 __all__ = [
   'HAlignum',
@@ -50,4 +51,5 @@ __all__ = [
   'Month',
   'Dato',
   'Brush',
-  ]
+  'HTTPStatus',
+]

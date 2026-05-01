@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from ..utilities import textFmt, resolveMRO
 from ..waitaminute.meta import HookException, DuplicateHook
-from .space_hooks import NamespaceHook, ReservedNamespaceHook
+from .space_hooks import NamespaceHook, ReservedNamespaceHook, FlexCallHook
 from . import Base
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -53,7 +53,7 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
-  __owner_hooks_list_name__ = '__hook_objects__'
+  __owner_hooks_list_name__: str = '__hook_objects__'
 
   #  Private Variables
   __metaclass__ = None
@@ -71,6 +71,7 @@ class AbstractNamespace(dict):
   #  Public Variables
   reservedNameHook = ReservedNamespaceHook()
   nameHook = NamespaceHook()
+  flexCallHook = FlexCallHook()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -96,7 +97,7 @@ class AbstractNamespace(dict):
   def getHookListName(cls, ) -> str:
     """Getter-function for the name of the hook list. """
     # if TYPE_CHECKING:  # pragma: no cover
-    #   assert isinstance(cls, dict)
+    #   assert isinstance(keeNum, dict)
     return cls.__owner_hooks_list_name__
 
   def getHooks(self, owner: type = None) -> Iterator[AbstractSpaceHook]:

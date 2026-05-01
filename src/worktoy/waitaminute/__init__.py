@@ -23,7 +23,7 @@ ___all__ = [
   'desc',
   'meta',
   'dispatch',
-  'keenum',
+  'num',
   'ez',
   'attributeErrorFactory',
   'TypeException',
@@ -32,4 +32,4 @@ ___all__ = [
   'PathSyntaxException',
   'SubclassException',
   'MissingVariable',
-  ]
+]

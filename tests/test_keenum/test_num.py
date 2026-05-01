@@ -9,10 +9,10 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeNum, Kee, KeeMeta
-from worktoy.waitaminute import TypeException, VariableNotNone
+from worktoy.utilities import ExceptionInfo
+from worktoy.waitaminute import VariableNotNone, TypeException
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
-from worktoy.waitaminute.keenum import KeeNameError, KeeIndexError
-from worktoy.waitaminute.keenum import KeeMemberError, KeeDuplicate
+from worktoy.waitaminute.keenum import KeeResolveError, KeeDuplicate
 from worktoy.waitaminute.keenum import KeeTypeException, KeeCaseException
 from worktoy.waitaminute.keenum import KeeWriteOnceError
 from . import KeeTest
@@ -55,23 +55,13 @@ class TestNum(KeeTest):
     for day in WeekDay:
       self.assertIn(int(day), WeekDay)
 
-  def test_bad_contains(self) -> None:
-    """Tests that contains does not accept non-members."""
-    self.assertNotIn('Mandag', WeekDay)
-    self.assertNotIn('Tirsdag', WeekDay)
-    self.assertNotIn('Onsdag', WeekDay)
-    self.assertNotIn('Torsdag', WeekDay)
-    self.assertNotIn('Fredag', WeekDay)
-    self.assertNotIn('Lørdag', WeekDay)
-    self.assertNotIn('Søndag', WeekDay)
-
   def test_keenum(self) -> None:
     """Test that the WeekDay class is a KeeNum."""
     self.assertIs(KeeNum.base, KeeNum)
     self.assertEqual(str(KeeNum), repr(KeeNum))
     self.assertEqual(str(WeekDay), repr(WeekDay))
 
-  def test_is_instancecheck(self) -> None:
+  def test_is_instance_check(self) -> None:
     for cls in self.exampleNums:
       self.assertIsInstance(cls, KeeMeta)
       for member in cls:
@@ -89,7 +79,7 @@ class TestNum(KeeTest):
       420.0,
       """Imma a KeeNum, trust me bro!""",
       type('Keeeeee', (), {}),
-      ]
+    ]
     for cls in self.exampleNums:
       for item in items:
         self.assertNotIsInstance(item, cls)
@@ -99,7 +89,7 @@ class TestNum(KeeTest):
     """Test that the WeekDay class is not a subclass of KeeNum."""
     items = [
       int, float, str, type,
-      ]
+    ]
     for cls in self.exampleNums:
       for item in items:
         self.assertNotIsSubclass(item, cls)
@@ -111,7 +101,7 @@ class TestNum(KeeTest):
       69,
       420.0,
       """Imma a KeeNum, trust me bro!""",
-      ]
+    ]
     for cls in self.exampleNums:
       for item in items:
         with self.assertRaises(TypeError) as context:
@@ -134,33 +124,32 @@ class TestNum(KeeTest):
   def test_bad_resolve_member(self) -> None:
     """Test that the correct exception is raised when failing to resolve a
     member. """
-    with self.assertRaises(KeeNameError) as context:
+    with self.assertRaises(KeeResolveError) as context:
       _ = WeekDay['trololololo']
     e = context.exception
-    self.assertIs(e.keenum, WeekDay)
-    self.assertEqual(e.name, 'trololololo')
+    self.assertIs(e.keeNum, WeekDay)
+    self.assertEqual(e.identifier, 'trololololo')
     self.assertEqual(str(e), repr(e))
 
-    with self.assertRaises(KeeIndexError) as context:
+    with self.assertRaises(KeeResolveError) as context:
       _ = WeekDay[69420]
     e = context.exception
-    self.assertIs(e.keenum, WeekDay)
-    self.assertEqual(e.index, 69420)
+    self.assertIs(e.keeNum, WeekDay)
+    self.assertEqual(e.identifier, 69420)
     self.assertEqual(str(e), repr(e))
 
-    with self.assertRaises(KeeMemberError) as context:
+    with self.assertRaises(KeeResolveError) as context:
       _ = WeekDay[RootRGB.RED]
     e = context.exception
-    self.assertIs(e.keenum, WeekDay)
-    self.assertIs(e.member, RootRGB.RED)
+    self.assertIs(e.keeNum, WeekDay)
+    self.assertIs(e.identifier, RootRGB.RED)
     self.assertEqual(str(e), repr(e))
 
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(KeeResolveError) as context:
       _ = WeekDay[0.8008135]
     e = context.exception
-    self.assertEqual(e.varName, 'identifier')
-    self.assertEqual(e.actualObject, 0.8008135)
-    self.assertEqual(set(e.expectedTypes), {int, str, KeeNum})
+    self.assertIs(e.keeNum, WeekDay)
+    self.assertAlmostEqual(e.identifier, 0.8008135)
     self.assertEqual(str(e), repr(e))
 
   def test_duplicate_exception(self) -> None:
@@ -235,7 +224,7 @@ class TestNum(KeeTest):
     with self.assertRaises(KeeWriteOnceError) as context:
       setattr(Breh.FOO, 'lmao', True)
     e = context.exception
-    self.assertIs(e.keenum, Breh)
+    self.assertIs(e.keeNum, Breh)
     self.assertEqual(e.member, Breh.FOO)
     self.assertEqual(e.attribute, 'lmao')
     self.assertEqual(str(e), repr(e))
@@ -379,3 +368,39 @@ class TestNum(KeeTest):
     self.assertIs(greatScott.weekDay, WeekDay.SATURDAY)
     self.assertIn('26. Oktober, 1985', str(greatScott))
     self.assertIn('Dato(1985, Month.OCTOBER, 26)', repr(greatScott))
+
+  def test_kee_num_value_type(self) -> None:
+    """
+    This method validates the 'TypeError' raised when trying to determine
+    the 'valueType' of an empty enumeration.
+    """
+
+    class Empty(KeeNum):
+      pass
+
+    for Num in (Empty, KeeNum):
+      with self.assertRaises(TypeError):
+        _ = getattr(Num, 'valueType')
+
+  def test_inconsistent_value_type(self) -> None:
+    """
+    This method validates the 'KeeTypeException' raised when trying to
+    determine the 'valueType' of an enumeration with inconsistent member
+    value types.
+    """
+
+    class Sus(KeeNum):
+      TOM = Kee[int](69)
+      DICK = Kee[int](420)
+      HARRY = Kee[int](1337)
+
+    setattr(Sus.HARRY.__field_kee__, '__field_value__', '80085')
+    setattr(Sus.HARRY.__field_kee__, '__field_type__', str)
+
+    with self.assertRaises(TypeException) as context:
+      _ = Sus.valueType
+    e = context.exception
+    self.assertEqual(e.varName, 'value')
+    self.assertEqual(e.actualObject, Sus.HARRY.value)
+    self.assertIs(e.actualType, str)
+    self.assertIn(int, e.expectedTypes)

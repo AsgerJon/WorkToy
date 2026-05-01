@@ -23,7 +23,7 @@ enumeration.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, Generic
 
 from ..desc import Field, AttriBox
 from ..utilities import textFmt
@@ -35,8 +35,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
   KEENUM: TypeAlias = Type[object]
 
+T = TypeVar('T')
 
-class Kee(AttriBox):
+
+class Kee(AttriBox[T]):
   """KeeMember encapsulates a member of an enumeration. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

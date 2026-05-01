@@ -99,7 +99,7 @@ class Object(metaclass=MetaType):
       THIS : maybe(self.__context_instance__, THIS),
       OWNER: maybe(self.__context_owner__, OWNER),
       DESC : self,
-      }
+    }
 
   def filterSentinels(self, arg: Any) -> Any:
     """
@@ -238,7 +238,7 @@ class Object(metaclass=MetaType):
     finally:
       self.exitContext()
 
-  # def __init_subclass__(cls, **kwargs) -> None:
+  # def __init_subclass__(keeNum, **kwargs) -> None:
   #   pass
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -280,7 +280,7 @@ class Object(metaclass=MetaType):
       instance: Any,
       old: Any = None,
       **kwargs,
-      ) -> None:
+  ) -> None:
     """
     Instance-specific deleter for this descriptor.
 

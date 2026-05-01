@@ -150,62 +150,62 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   The following hooks relate to common class-level operations:
 
-  - __class_call__(cls, *args, **kwargs) -> Any
+  - __class_call__(keeNum, *args, **kwargs) -> Any
     Called when the class object is called like a function. Overrides the
     default behavior of constructing instances. Can be used to implement
     singletons, factories, registries, etc.
 
-  - __class_instancecheck__(cls, obj: Any) -> bool
-    Called during isinstance(obj, cls). Controls how instance membership
+  - __class_instancecheck__(keeNum, obj: Any) -> bool
+    Called during isinstance(obj, keeNum). Controls how instance membership
     is determined. Supersedes metaclass-level __instancecheck__.
 
-  - __class_subclasscheck__(cls, sub: type) -> bool
-    Called during issubclass(sub, cls). Controls dynamic subclass logic.
+  - __class_subclasscheck__(keeNum, sub: type) -> bool
+    Called during issubclass(sub, keeNum). Controls dynamic subclass logic.
     Allows behavior similar to abstract base classes or trait systems.
 
   #  The following hooks allow classes to define how they are printed
 
-  - __class_str__(cls) -> str
-    Called when str(cls) is invoked. Provides human-readable string form
+  - __class_str__(keeNum) -> str
+    Called when str(keeNum) is invoked. Provides human-readable string form
     for dynamically generated or aliased classes.
 
-  - __class_repr__(cls) -> str
-    Called when repr(cls) is invoked. Allows classes to override their
+  - __class_repr__(keeNum) -> str
+    Called when repr(keeNum) is invoked. Allows classes to override their
     debug representation.
 
   #  The following hooks relate to class-level iteration
 
-  - __class_iter__(cls) -> Iterator
-    Called when iter(cls) is invoked. Makes the class object iterable.
+  - __class_iter__(keeNum) -> Iterator
+    Called when iter(keeNum) is invoked. Makes the class object iterable.
     Useful for registry-style classes, enums, and similar patterns.
 
-  - __class_next__(cls) -> Any
-    Called when next(cls) is invoked. Meaningful only if the class itself
+  - __class_next__(keeNum) -> Any
+    Called when next(keeNum) is invoked. Meaningful only if the class itself
     is its own iterator as returned by __class_iter__.
 
-  - __class_bool__(cls) -> bool
-    Called when bool(cls) is invoked. Allows classes to define their truth
+  - __class_bool__(keeNum) -> bool
+    Called when bool(keeNum) is invoked. Allows classes to define their truth
     value. By default, every class is 'truthy'.
 
-  - __class_contains__(cls, item: Any) -> bool
+  - __class_contains__(keeNum, item: Any) -> bool
     Allows classes to define membership checks on the class level. By
     default, this checks if the item is an instance of the class itself.
 
-  - __class_len__(cls) -> int
-    Called when len(cls) is invoked.
+  - __class_len__(keeNum) -> int
+    Called when len(keeNum) is invoked.
 
-  - __class_hash__(cls) -> int
-    Called when hash(cls) is invoked. Allows classes to define their own
+  - __class_hash__(keeNum) -> int
+    Called when hash(keeNum) is invoked. Allows classes to define their own
     hash value. Defaults to:
-    mcls = type(cls)  # The metaclass of the class
-    baseNames = [b.__name__ for b in cls.__bases__]
-    return hash((cls.__name__, *baseNames, mcls.__name__))
+    mcls = type(keeNum)  # The metaclass of the class
+    baseNames = [b.__name__ for b in keeNum.__bases__]
+    return hash((keeNum.__name__, *baseNames, mcls.__name__))
     #  PLEASE NOTE: The 'overload' protocol provided by the 'worktoy'
     library expects this exact hash value. Reimplementing the hash value
     will make the dispatching of overloads unable to 'fast' recognize the
     class.
 
-  - __class_eq__(cls, other: Any) -> bool
+  - __class_eq__(keeNum, other: Any) -> bool
     Called to allow classes to equal each other. Please note that this
     inclusion is for completeness more than anything else. The '__eq__' in
     this metaclass does look for '__class_eq__' on the class, but falls
@@ -217,8 +217,8 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   The following hooks allows dictionary-like access to the class.
 
-  - __class_getitem__(cls, item: Any) -> Any
-    Called when cls[item] is invoked. Please note that this is already
+  - __class_getitem__(keeNum, item: Any) -> Any
+    Called when keeNum[item] is invoked. Please note that this is already
     implemented in Python 3.7+ as a standard class method. It is listed
     here only for completeness. This means that this metaclass does not
     need to implement '__getitem__' to look for the '__class_getitem__' on
@@ -226,11 +226,11 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     ever be invoked if Foo['bar'] is invoked on a class Foo that does not
     implement '__class_getitem__'.
 
-  - __class_setitem__(cls, item: Any, value: Any) -> None
-    Called when cls[item] = value is invoked. 
+  - __class_setitem__(keeNum, item: Any, value: Any) -> None
+    Called when keeNum[item] = value is invoked.
     
-  - __class_delitem__(cls, item: Any) -> None
-    Called when del cls[item] is invoked.
+  - __class_delitem__(keeNum, item: Any) -> None
+    Called when del keeNum[item] is invoked.
 
     - Class Attribute Hooks -
 
@@ -257,10 +257,10 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   class references within the scope of the active metaclass, sometimes
   routing calls to the wrong metaclass entirely.
 
-  - __class_get__(cls, instance: Any, owner: type) -> Any
-  - __class_set__(cls, instance: Any, value: Any) -> None
-  - __class_delete__(cls, instance: Any) -> None
-  - __class_set_name__(cls, owner: type, name: str) -> None
+  - __class_get__(keeNum, instance: Any, owner: type) -> Any
+  - __class_set__(keeNum, instance: Any, value: Any) -> None
+  - __class_delete__(keeNum, instance: Any) -> None
+  - __class_set_name__(keeNum, owner: type, name: str) -> None
 
   Finally, the following hooks are logically meaningless:
 
@@ -416,14 +416,14 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls.__class_hash__()
 
   #  DO NOT REMOVE THE FOLLOWING COMMENTED OUT METHODS
-  # def __eq__(cls, other: Any) -> bool:
+  # def __eq__(keeNum, other: Any) -> bool:
   #   """This method is disabled because of highly undefined behaviour!"""
   #
-  #  def __ne__(cls, other: Any) -> bool:
+  #  def __ne__(keeNum, other: Any) -> bool:
   #    """See above"""
   #
   #  DO NOT REMOVE THIS COMMENTED OUT METHOD  (not related to above)
-  # def __getitem__(cls, item: Any) -> Any:
+  # def __getitem__(keeNum, item: Any) -> Any:
   #   """
   #   This method is intentionally commented out — not removed — to ensure
   #   discoverability and traceability.

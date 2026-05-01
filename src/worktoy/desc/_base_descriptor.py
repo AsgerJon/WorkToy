@@ -6,13 +6,15 @@ access notification callbacks.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, Generic, overload
 
 from worktoy.core import Object
 from worktoy.utilities import maybe, argsCount, takesKwargs
 
+T = TypeVar('T', )
+
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeAlias
+  from typing import Any, Callable, TypeAlias, Self, Union
 
   from . import BaseDescriptor
 
@@ -23,7 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
   DeleteCallback: TypeAlias = Callable[[BaseDescriptor, ], None]
 
 
-class BaseDescriptor(Object):
+class BaseDescriptor(Object, Generic[T]):
   """
   BaseDescriptor subclasses 'Object' and provides decorators for setting
   access notification callbacks. Each decorator may be applied to as many
@@ -244,3 +246,18 @@ class BaseDescriptor(Object):
         callback(*args, **kwargs)
       else:
         callback(*args)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  # @formatter:off
+  @overload
+  def __get__(self, instance: None, owner: type, **kwargs) -> Self: ...
+
+  @overload
+  def __get__(self, instance: Any, owner: type, **kwargs) -> T: ...
+
+  def __get__(self, instance: Any, owner: type, **kwargs) -> Union[Self, T]:
+    return super().__get__(instance, owner, **kwargs)
+  # @formatter:on

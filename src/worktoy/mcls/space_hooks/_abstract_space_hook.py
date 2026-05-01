@@ -21,10 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Desc: TypeAlias = Union[ASpace, SpaceDesc]
   MaybeSpace: TypeAlias = Optional[ASpace]
   Meta: TypeAlias = Type[type]
-  from . import AbstractSpaceHook
   from .. import AbstractNamespace
-
-  assert isinstance(AbstractSpaceHook.space, AbstractNamespace)
 
 
 class AbstractSpaceHook(Object):
@@ -87,7 +84,7 @@ class AbstractSpaceHook(Object):
     Called immediately before the finalized namespace is handed off to the
     metaclass. Can be used for final transformations or validation.
 
-  - `newClassPhase(self, cls) -> Meta`
+  - `newClassPhase(self, keeNum) -> Meta`
     Called after the metaclass has created
     the new class object, but before returning it.
 
@@ -116,10 +113,10 @@ class AbstractSpaceHook(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private variables
-  __space_object__: MaybeSpace = None  # The owning namespace instance
+  __space_object__: Optional[AbstractNamespace] = None
 
   #  Public variables
-  space: Desc = SpaceDesc()  # The namespace instance this hook is bound to
+  space: SpaceDesc[AbstractNamespace] = SpaceDesc()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

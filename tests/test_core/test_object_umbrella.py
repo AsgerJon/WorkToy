@@ -129,7 +129,7 @@ class TestObjectUmbrella(CoreTest):
     self.assertEqual(breh, 0)
     lol, kwargs = foo.parseKwargs(**kwargs)
     with self.assertRaises(TypeException) as context:
-      lol, kwargs = foo.parseKwargs('b', str, set, **kwargs)
+      _ = foo.parseKwargs('b', str, set, **kwargs)
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.varName, 'b')
@@ -138,7 +138,33 @@ class TestObjectUmbrella(CoreTest):
     self.assertEqual(e.expectedTypes, (str, set))
 
     lol, kwargs = foo.parseKwargs('breh', complex, **dict())
+    self.assertIsNone(lol)
+    self.assertIsInstance(kwargs, dict)
     lol, kwargs = foo.parseKwargs('breh', complex, float, **dict())
+    self.assertIsNone(lol)
+    self.assertIsInstance(kwargs, dict)
     lol, kwargs = foo.parseKwargs('breh', complex, int, **dict())
+    self.assertIsNone(lol)
+    self.assertIsInstance(kwargs, dict)
     lol, kwargs = foo.parseKwargs('breh', float, int, **dict())
+    self.assertIsNone(lol)
+    self.assertIsInstance(kwargs, dict)
     lol, kwargs = foo.parseKwargs('breh', float, **dict())
+    self.assertIsNone(lol)
+    self.assertIsInstance(kwargs, dict)
+
+  def test_fallback_set(self) -> None:
+    """Tests the fallback __setattr__ of Object."""
+
+    class Ham(Object):
+      sus = Object()
+
+    ham = Ham()
+
+    with self.assertRaises(ReadOnlyError) as context:
+      ham.sus = 69
+    e = context.exception
+    self.assertEqual(str(e), repr(e))
+    self.assertIs(e.instance, ham)
+    self.assertIs(e.desc, Ham.sus)
+    self.assertEqual(e.newVal, 69)

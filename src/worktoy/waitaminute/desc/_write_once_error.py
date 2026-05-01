@@ -20,7 +20,7 @@ class WriteOnceError(TypeError):
 
   __slots__ = ('desc', 'oldValue', 'newValue')
 
-  def __init__(self, desc: Object, oldVal: Any, newVal: Any) -> None:
+  def __init__(self, desc: object, oldVal: Any, newVal: Any) -> None:
     self.desc = desc
     self.oldValue = oldVal
     self.newValue = newVal

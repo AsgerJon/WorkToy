@@ -7,6 +7,7 @@ the 'tearDownClass' method and adds 'assertIsSubclass' (and negation).
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import os
 import sys
 import gc
 from unittest import TestCase
@@ -16,6 +17,7 @@ from .samplers import FloatSampler, IntSampler, GaussianSampler
 from .samplers import SymbolicSampler, WordSampler, LoremSampler
 from ..desc import Field, SymbolicName
 from ..lorem_ipsum import StochasticWord, Sentence
+from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Iterator, Optional, Union
@@ -53,7 +55,7 @@ else:  # version >= 3.14
   _Temp = TestCase
 
 
-class BaseTest(_Temp):
+class BaseTest(TestCase if TYPE_CHECKING else _Temp):
   """
   BaseTest provides a base class shared by the testing classes in the
   tests package. It implements module unloading in the 'tearDownClass'
@@ -65,24 +67,27 @@ class BaseTest(_Temp):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
+  __fallback_line_length__: int = 48
+  __fallback_new_line__: str = os.linesep
+
   __min_keys__: StrTuple = (
     'minVal',
     'min',
     'minimum',
     'min_value',
     'minval',
-    )
+  )
   __max_keys__: StrTuple = (
     'maxVal',
     'max',
     'maximum',
     'max_value',
     'maxval',
-    )
+  )
   __key_groups__: dict[str, StrTuple] = dict(
     minVal=__min_keys__,
     maxVal=__max_keys__,
-    )
+  )
 
   #  Fallback Variables
 
@@ -120,7 +125,7 @@ class BaseTest(_Temp):
       TypeError,
       FileExistsError,
       FileNotFoundError,
-      )
+    )
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -150,3 +155,30 @@ class BaseTest(_Temp):
 
   assertIsNotSubclass = _Temp.assertNotIsSubclass
   assertIsNotInstance = _Temp.assertNotIsInstance
+
+  @classmethod
+  def argReport(cls, *args, **kwargs) -> str:
+    """
+    This method creates a string report of the given arguments. It is used
+    in the test cases to provide informative error messages when the test
+    fails. The report includes the type and a truncated string representation
+    of each argument. If the string representation of an argument is longer
+    than 48 characters, it is truncated to 45 characters followed by an
+    ellipsis.
+    """
+    lineLength: int = kwargs.get('chars', cls.__fallback_line_length__)
+    newLine: str = kwargs.get('newLine', cls.__fallback_new_line__)
+    argTypes = (*(type(arg).__name__ for arg in args),)
+    argStr = (*(arg if isinstance(arg, str) else str(arg) for arg in args),)
+    argSpec = """<%s: %s>"""
+    argInfo = []
+    for type_, info in zip(argTypes, argStr):
+      argInfo.append(argSpec % (type_, info))
+    argLines = []
+    for line in argInfo:
+      if len(line) < lineLength:
+        argLines.append(line)
+      else:
+        argLines.append('%s...' % line[:lineLength - 3])
+    argStr = '<br><tab>'.join(argLines)
+    return textFmt(argStr, newLineSymbol=newLine)

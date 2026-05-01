@@ -80,11 +80,10 @@ class TypeSig:
 
   def __str__(self) -> str:
     """Returns a string representation of the type signature."""
-    infoSpec = """%s object with %d types: %s"""
+    infoSpec = """<%s: %s>"""
     typeStr = '[%s]' % ', '.join(str(t) for t in self)
-    n = len(self)
     clsName = type(self).__name__
-    return textFmt(infoSpec % (clsName, n, typeStr))
+    return textFmt(infoSpec % (clsName, typeStr))
 
   def __repr__(self) -> str:
     """Returns code that would recreate the type signature."""
