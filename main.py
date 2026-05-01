@@ -14,7 +14,12 @@ from types import WrapperDescriptorType, MethodWrapperType
 from types import MethodDescriptorType, ClassMethodDescriptorType
 from types import LambdaType, BuiltinMethodType
 
-from pyperclip import copy
+try:
+  from pyperclip import copy
+except ImportError:
+
+  def copy(text: str) -> None:
+    pass
 
 from profile_tests import profileTests
 from tests.test_mcls.test_hooks.test_flex_call_hook import TestFlexCallHook

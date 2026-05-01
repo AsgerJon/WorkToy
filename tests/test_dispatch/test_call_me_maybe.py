@@ -160,10 +160,21 @@ class TestCallMeMaybe(DispatcherTest):
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_set_name_raises(self) -> None:
-    """Using CallMeMaybe as a class attribute must raise at class
+    """
+    Using CallMeMaybe as a class attribute must raise at class
     creation. CallMeMaybe is deliberately not a descriptor; subclasses
-    that need descriptor behavior must override __set_name__."""
-    with self.assertRaises(TypeError):
+    that need descriptor behavior must override __set_name__.
+
+    Notes about the error type:
+    Please note the ambiguity in the error type. The 'worktoy' library
+    supports Python 3.7, in which any exception raised inside
+    '__set_name__' is wrapped and propagated as a 'RuntimeError' (with
+    the original exception attached as '__context__'). From Python 3.8
+    onward, the original exception propagates unchanged. Tests that
+    exercise '__set_name__' failure paths therefore accept both the
+    expected exception type and 'RuntimeError'.
+    """
+    with self.assertRaises((TypeError, RuntimeError)):
       class _Owner:  # noqa
         bound = CallMeMaybe(_one_arg)
 

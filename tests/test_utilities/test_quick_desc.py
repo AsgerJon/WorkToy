@@ -89,8 +89,17 @@ class TestQuickDesc(UtilitiesTest):
   def test_set_name_rejects_collision(self) -> None:
     """A descriptor bound to the same name as its private key would
     recurse onto itself when accessed via getattr; class creation
-    must fail before the class object escapes."""
-    with self.assertRaises(ValueError):
+    must fail before the class object escapes.
+
+    Please note the ambiguity in the error type. The 'worktoy' library
+    supports Python 3.7. In this version, the recently implemented
+    '__set_name__' introduced in 3.6, would raise a 'RuntimeError' if
+    any exception occurred during the execution of a '__set_name__'. The
+    code under testing does indeed raise 'ValueError', which is what
+    propagates in Python 3.8 and later. But in 3.7, this propagates as a
+    'RuntimeError'.
+    """
+    with self.assertRaises((ValueError, RuntimeError)):
       class _Bad:  # noqa
         foo = QuickDesc('foo')
 
