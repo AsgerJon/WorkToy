@@ -210,7 +210,7 @@ class TestFlexCall(DispatcherTest):
     """__wrapped__ is the breadcrumb back to the original; used by
     inspect.unwrap and various debuggers."""
     wrapped = flexCall(_binary)
-    self.assertIs(wrapped.__wrapped__, _binary)
+    self.assertIs(getattr(wrapped, '__wrapped__'), _binary)
 
   def test_sets_flex_marker(self) -> None:
     """The idempotency sentinel must be set, otherwise re-wrap
