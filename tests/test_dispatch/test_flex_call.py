@@ -9,6 +9,8 @@ from __future__ import annotations
 from types import FunctionType
 from typing import TYPE_CHECKING
 
+# noinspection PyUnresolvedReferences
+from worktoy.dispatch import flexCall, isFlex
 from . import DispatcherTest
 from worktoy.waitaminute import TypeException
 
@@ -25,10 +27,10 @@ if TYPE_CHECKING:  # pragma: no cover
     __wrapped__: Callable
     def __call__(self, *args) -> Any: ...
     def __init__(self, func: Callable) -> None: print(func)
-
+  class isFlex:  # noqa
+    def __call__(self, func: Any) -> bool: ...
+    def __init__(self, func: Any) -> None: print(func)
   # @formatter:on
-else:
-  from worktoy.dispatch import flexCall
 
 
 #  ____________________________________________________________________
@@ -99,6 +101,8 @@ class TestFlexCall(DispatcherTest):
     self.assertEqual(_varargs(1, 2, 3), (1, 2, 3))
     self.assertEqual(_annotated(42, 'string'), (42, 'string'))
     self.assertEqual(_looksLikeDunder(1, 2), (1, 2))
+    self.assertIsInstance(isFlex, FunctionType)
+    self.assertIsInstance(flexCall, FunctionType)
 
   #  ================================================================
   #  |
@@ -112,7 +116,9 @@ class TestFlexCall(DispatcherTest):
   def test_wraps_normal_function(self) -> None:
     """A standard FunctionType produces a new wrapper distinct
     from the original."""
+    self.assertFalse(isFlex(_binary))
     wrapped = flexCall(_binary)
+    self.assertTrue(isFlex(wrapped))
     self.assertIsNot(wrapped, _binary)
 
   def test_wrapper_is_function_type(self) -> None:

@@ -24,8 +24,8 @@ from __future__ import annotations
 from . import utilities
 from . import waitaminute
 from . import core
-from . import desc
 from . import dispatch
+from . import desc
 from . import mcls
 from . import lorem_ipsum
 from . import keenum

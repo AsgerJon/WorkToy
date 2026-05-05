@@ -7,7 +7,7 @@ which facilitates mapping from type signatures to function objects.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._flex_call import flexCall
+from ._flex_call import flexCall, isFlex
 from ._call_me_maybe import CallMeMaybe
 from ._permuter import Permuter
 from ._permuter_method import PermuterMethod
@@ -17,6 +17,7 @@ from ._overload import overload
 
 __all__ = (
   'flexCall',
+  'isFlex',
   'CallMeMaybe',
   'Permuter',
   'PermuterMethod',

@@ -7,22 +7,18 @@ access notification callbacks.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic, overload
+from types import FunctionType as Func
 
-from worktoy.core import Object
-from worktoy.utilities import maybe, argsCount, takesKwargs
+from ..utilities import maybe
+from ..core import Object
+from ..dispatch import flexCall
 
 T = TypeVar('T', )
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeAlias, Self, Union
-
-  from . import BaseDescriptor
+  from typing import Any, TypeAlias, Self, Union, Optional
 
   Keys: TypeAlias = tuple[str, ...]
-
-  GetCallback: TypeAlias = Callable[[BaseDescriptor, Any], None]
-  SetCallback: TypeAlias = Callable[[BaseDescriptor, Any], None]
-  DeleteCallback: TypeAlias = Callable[[BaseDescriptor, ], None]
 
 
 class BaseDescriptor(Object, Generic[T]):
@@ -33,7 +29,7 @@ class BaseDescriptor(Object, Generic[T]):
   particular instance is accessed, the callbacks are retrieved from the
   'type(...)' of that instance.
 
-  The following examples illustrates an exhaustively decorated descriptor
+  The following example illustrates an exhaustively decorated descriptor
   in a class body:
 
   class Foo:
@@ -41,42 +37,45 @@ class BaseDescriptor(Object, Generic[T]):
     bar = BaseDescriptor()
 
     @bar.preGet
-    def _preGetBar(self, returnValue: Any ) -> None:
+    def _preGetBar(self, returnValue: Any) -> None:
       # Triggered at the beginning of 'self.bar'. This allows early
       # detection of bad values or types.
       pass
 
     @bar.onGet
-    def _onGetBar(self, returnValue: Any ) -> None:
-      # Triggered when self.bar is accessed. 'self' is the instance passed
-      # to '__get__' and 'returnValue' is the return value.
+    def _onGetBar(self, returnValue: Any) -> None:
+      # Triggered when self.bar is accessed. 'self' is the instance
+      # passed to '__get__' and 'returnValue' is the return value.
       pass
 
     @bar.preSet
     def _preSetBar(self, value: Any) -> None:
-      # Triggered at the beginning of 'self.bar = value'. This allows
-      # early detection of bad values or types. The 'value' argument is
-      # what will be attempted set.
+      # Triggered at the beginning of 'self.bar = value'. The 'value'
+      # argument is what will be attempted set.
       pass
 
     @bar.onSet
-    def  _onSetBar(self, value: Any) -> None:
+    def _onSetBar(self, value: Any) -> None:
       # Triggered *after* 'self.bar = value' has been executed. This
-      # allows potential side effects to have been triggered before the
-      # callback.
+      # allows potential side effects to have been triggered before
+      # the callback.
       pass
 
     @bar.preDelete
-    def _onDeleteBar(self) -> None:
-      # Triggered at the beginning of 'del self.bar'. This allows early
-      # detection of bad values or types. The 'value' argument is what will
-      # be attempted set.
+    def _preDeleteBar(self) -> None:
+      # Triggered at the beginning of 'del self.bar'.
       pass
 
     @bar.onDelete
     def _onDeleteBar(self) -> None:
-      # Triggered *after* 'del self.bar' has been executed. This allows
-      # potential side effects to have been triggered before the callback.
+      # Triggered *after* 'del self.bar' has been executed.
+      pass
+
+    @bar.setName
+    def _setNameBar(self, owner: type, name: str) -> None:
+      # Triggered when the descriptor is assigned to a class body.
+      # NOTE: 'self' here is the BaseDescriptor itself, not a class
+      # instance, because no instance exists at __set_name__ time.
       pass
 
   Please note, that 'BaseDescriptor' does not implement any particular
@@ -96,7 +95,6 @@ class BaseDescriptor(Object, Generic[T]):
   Care should be taken when implementing the native accessor methods:
   '__get__', '__set__' and '__delete__', as these are responsible for
   notifying the hooks on the 'Object' class.
-
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -108,12 +106,13 @@ class BaseDescriptor(Object, Generic[T]):
   #  Fallback Variables
 
   #  Private Variables
-  __pre_get_keys__ = None
-  __on_get_keys__ = None
-  __pre_set_keys__ = None
-  __on_set_keys__ = None
-  __pre_delete_keys__ = None
-  __on_delete_keys__ = None
+  __pre_get_keys__: Optional[tuple[str, ...]] = None
+  __on_get_keys__: Optional[tuple[str, ...]] = None
+  __pre_set_keys__: Optional[tuple[str, ...]] = None
+  __on_set_keys__: Optional[tuple[str, ...]] = None
+  __pre_delete_keys__: Optional[tuple[str, ...]] = None
+  __on_delete_keys__: Optional[tuple[str, ...]] = None
+  __set_name_keys__: Optional[tuple[str, ...]] = None
 
   #  Public Variables
 
@@ -143,109 +142,87 @@ class BaseDescriptor(Object, Generic[T]):
   def _getOnDeleteKeys(self) -> tuple[str, ...]:
     return maybe(self.__on_delete_keys__, ())
 
+  def _getSetNameKeys(self) -> tuple[str, ...]:
+    return maybe(self.__set_name_keys__, ())
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def preGet(self, callback: GetCallback) -> GetCallback:
+  def preGet(self, callback: Func) -> Func:
     existing = self._getPreGetKeys()
     self.__pre_get_keys__ = (*existing, callback.__name__)
     return callback
 
-  def onGet(self, callback: GetCallback) -> GetCallback:
+  def onGet(self, callback: Func) -> Func:
     existing = self._getOnGetKeys()
     self.__on_get_keys__ = (*existing, callback.__name__)
     return callback
 
-  def preSet(self, callback: SetCallback) -> SetCallback:
+  def preSet(self, callback: Func) -> Func:
     existing = self._getPreSetKeys()
     self.__pre_set_keys__ = (*existing, callback.__name__)
     return callback
 
-  def onSet(self, callback: SetCallback) -> SetCallback:
+  def onSet(self, callback: Func) -> Func:
     existing = self._getOnSetKeys()
     self.__on_set_keys__ = (*existing, callback.__name__)
     return callback
 
-  def preDelete(self, callback: DeleteCallback) -> DeleteCallback:
+  def preDelete(self, callback: Func) -> Func:
     existing = self._getPreDeleteKeys()
     self.__pre_delete_keys__ = (*existing, callback.__name__)
     return callback
 
-  def onDelete(self, callback: DeleteCallback) -> DeleteCallback:
+  def onDelete(self, callback: Func) -> Func:
     existing = self._getOnDeleteKeys()
     self.__on_delete_keys__ = (*existing, callback.__name__)
     return callback
+
+  def setName(self, callback: Func) -> Func:
+    existing = self._getSetNameKeys()
+    self.__set_name_keys__ = (*existing, callback.__name__)
+    return flexCall(callback)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def hookPreGet(self, instance: Any, **kwargs, ) -> None:
+  def hookPreGet(self, instance: Any, **kwargs) -> None:
     owner = type(instance)
     for key in self._getPreGetKeys():
-      callback = getattr(owner, key)
-      args = (instance,)[:min(1, argsCount(callback))]
-      kwargsFlag = takesKwargs(callback)
-      if kwargsFlag:
-        callback(*args, **kwargs)
-      else:
-        callback(*args)
+      flexCall(getattr(owner, key))(instance, **kwargs)
 
-  def hookOnGet(self, instance: Any, value: Any, **kwargs, ) -> None:
+  def hookOnGet(self, instance: Any, value: Any, **kwargs) -> None:
     owner = type(instance)
     for key in self._getOnGetKeys():
-      callback = getattr(owner, key)
-      args = (instance, value)[:min(2, argsCount(callback))]
-      kwargsFlag = takesKwargs(callback)
-      if kwargsFlag:
-        callback(*args, **kwargs)
-      else:
-        callback(*args)
+      flexCall(getattr(owner, key))(instance, value, **kwargs)
 
-  def hookPreSet(self, instance: Any, value: Any, **kwargs, ) -> None:
+  def hookPreSet(self, instance: Any, value: Any, **kwargs) -> None:
     owner = type(instance)
     for key in self._getPreSetKeys():
-      callback = getattr(owner, key)
-      args = (instance, value)[:min(2, argsCount(callback))]
-      kwargsFlag = takesKwargs(callback)
-      if kwargsFlag:
-        callback(*args, **kwargs)
-      else:
-        callback(*args)
+      flexCall(getattr(owner, key))(instance, value, **kwargs)
 
-  def hookOnSet(self, instance: Any, value: Any, **kwargs, ) -> None:
+  def hookOnSet(self, instance: Any, value: Any, **kwargs) -> None:
     owner = type(instance)
     for key in self._getOnSetKeys():
-      callback = getattr(owner, key)
-      args = (instance, value)[:min(2, argsCount(callback))]
-      kwargsFlag = takesKwargs(callback)
-      if kwargsFlag:
-        callback(*args, **kwargs)
-      else:
-        callback(*args)
+      flexCall(getattr(owner, key))(instance, value, **kwargs)
 
-  def hookPreDelete(self, instance: Any, **kwargs, ) -> None:
+  def hookPreDelete(self, instance: Any, **kwargs) -> None:
     owner = type(instance)
     for key in self._getPreDeleteKeys():
-      callback = getattr(owner, key)
-      args = (instance,)[:min(1, argsCount(callback))]
-      kwargsFlag = takesKwargs(callback)
-      if kwargsFlag:
-        callback(*args, **kwargs)
-      else:
-        callback(*args)
+      flexCall(getattr(owner, key))(instance, **kwargs)
 
-  def hookOnDelete(self, instance: Any, **kwargs, ) -> None:
+  def hookOnDelete(self, instance: Any, **kwargs) -> None:
     owner = type(instance)
     for key in self._getOnDeleteKeys():
+      flexCall(getattr(owner, key))(instance, **kwargs)
+
+  def hookSetName(self, owner: type, name: str, **kwargs) -> None:
+    for key in self._getSetNameKeys():
       callback = getattr(owner, key)
-      args = (instance,)[:min(1, argsCount(callback))]
-      kwargsFlag = takesKwargs(callback)
-      if kwargsFlag:
-        callback(*args, **kwargs)
-      else:
-        callback(*args)
+      callback = getattr(callback, '__func__', callback)
+      callback(owner, self, **kwargs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

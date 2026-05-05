@@ -171,9 +171,10 @@ class Object(metaclass=MetaType):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __set_name__(self, owner: type, name: str) -> None:
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
     self.__field_owner__ = owner
     self.__field_name__ = name
+    self.hookSetName(owner, name, **kwargs)
 
   def __get__(self, instance: Any, owner: type, ) -> Any:
     """
@@ -411,6 +412,22 @@ class Object(metaclass=MetaType):
     Returns
     -------
     None
+    """
+
+  def hookSetName(self, owner: type, name: str, **kwargs) -> None:
+    """
+    A hook that is called when the descriptor is assigned to a class. The
+    given 'owner' is the class the descriptor is assigned to, and 'name'
+    is the name of the attribute the descriptor is assigned to.
+
+    Parameters
+    ----------
+
+    owner: type
+      The class the descriptor is assigned to.
+
+    name: str
+      The name of the attribute the descriptor is assigned to.
     """
 
   @classmethod

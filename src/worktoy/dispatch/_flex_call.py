@@ -11,14 +11,26 @@ from __future__ import annotations
 from types import FunctionType
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import joinWords, textFmt
-from worktoy.waitaminute import TypeException
+from ..utilities import joinWords, textFmt
+from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 _CO_VARARGS: int = 0x04  # CPython compile flag
 _FLEX_MARKER: str = '__flex_wrapped__'  # idempotency sentinel
+
+
+def isFlex(func: FunctionType) -> bool:
+  """
+  This method determines if a function is already 'flexed'.
+  """
+  try:
+    _ = getattr(func, _FLEX_MARKER)
+  except AttributeError:
+    return False
+  else:
+    return True
 
 
 def flexCall(func: FunctionType) -> FunctionType:
