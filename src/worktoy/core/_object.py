@@ -175,17 +175,17 @@ class Object(metaclass=MetaType):
     self.__field_owner__ = owner
     self.__field_name__ = name
 
-  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
+  def __get__(self, instance: Any, owner: type, ) -> Any:
     """
     Returns the root of the descriptor owning the hook.
     """
     if instance is None:
       return self
     with self.createContext(instance, owner) as context:
-      self.hookPreGet(instance, **kwargs)
-      value = context.__instance_get__(instance, owner, **kwargs)
+      self.hookPreGet(instance, )
+      value = context.__instance_get__(instance, owner)
       value = self._deletedGuard(instance, value)
-      self.hookOnGet(instance, value, **kwargs)
+      self.hookOnGet(instance, value, )
     return value
 
   def __set__(self, instance: Any, newValue: Any, **kwargs) -> None:

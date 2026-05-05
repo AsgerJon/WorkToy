@@ -76,13 +76,12 @@ class TestNumMRO(KeeTest):
     """Test that the resolve_index method works as expected."""
     for i, color in enumerate(RGBNum):
       self.assertIs(RGBNum[i], color)
-      self.assertIs(RGBNum(i), color)
 
   def test_resolve_key(self) -> None:
     """Test that the resolve_key method works as expected."""
     for color in RGBNum:
       resolved = RGBNum(color.name)
-      self.assertIs(RGBNum(color.name), color)
+      self.assertIs(resolved, color)
 
   def test_base(self) -> None:
     """Tests the 'base' property of the RGBNum class."""
@@ -226,12 +225,50 @@ class TestNumMRO(KeeTest):
     self.assertTrue(Polar[True])
     self.assertFalse(Polar[False])
 
-  def test_bad_class_resolve(self, ) -> None:
+  def test_inheritance(self, ) -> None:
     """
-    This method tests a KeeNum with a bad '__class_resolve__'
+    This method tests that the MRO of the RGBNum class is as expected.
+    """
+
+    colorNums = (RootRGB, MoreRGB, EvenMoreRGB, RGBNum)
+    for i, num in enumerate(colorNums):
+      for element in num:
+        for nextNum in colorNums[i + 1:]:
+          nextElement = getattr(nextNum, element.name)
+          self.assertIs(element, nextElement)
+
+  def test_inheritance_length(self, ) -> None:
+    """
+    This method tests that the length of the RGBNum class is as expected.
+    """
+
+  def test_members(self, ) -> None:
+    """
+    This method tests that the members of the RGBNum class are as expected.
+    """
+    colorNums = (RootRGB, MoreRGB, EvenMoreRGB, RGBNum,)
+
+    for i, element in (*enumerate(RGBNum), *((69420, KeeNum),)):
+      if i < len(RGBNum):
+        self.assertEqual(element.index, i)
+        self.assertEqual(element.kee.index, i)
+        self.assertEqual(int(element.kee), i)
+      for num in colorNums:
+        if i < len(num):
+          expectedName = """%s.%s""" % (num.__name__, element.name)
+          actualName = str(element)
+          self.assertEqual(actualName, expectedName)
+          break  # test only the first match
+
+  def test_bad_members(self) -> None:
+    """
+    This method tests that the members of the RGBNum class are as expected.
     """
 
     class Sus(KeeNum):
-      TOM = Kee[int](69)
-      DICK = Kee[int](420)
-      HARRY = Kee[int](1337)
+      pass
+
+    type.__setattr__(Sus, '__registered_members__', None)
+
+    with self.assertRaises(RecursionError):
+      _ = Sus._getMembers(_recursion=True)

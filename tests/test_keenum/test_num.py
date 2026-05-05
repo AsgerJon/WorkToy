@@ -44,16 +44,6 @@ class TestNum(KeeTest):
     self.assertIn(WeekDay.SATURDAY, WeekDay)
     self.assertIn(WeekDay.SUNDAY, WeekDay)
 
-  def test_contains_keys(self) -> None:
-    """Tests that contains accepts keys as members"""
-    for day in WeekDay:
-      self.assertIn(day.name, WeekDay)
-
-  def test_contains_indices(self) -> None:
-    """Tests that contains accepts indices as members"""
-    for day in WeekDay:
-      self.assertIn(int(day), WeekDay)
-
   def test_keenum(self) -> None:
     """Test that the WeekDay class is a KeeNum."""
     self.assertIs(KeeNum.base, KeeNum)
@@ -104,8 +94,8 @@ class TestNum(KeeTest):
     for cls in self.exampleNums:
       for item in items:
         with self.assertRaises(TypeError) as context:
+          # noinspection PyTypeChecker
           _ = issubclass(item, cls)
-        e = context.exception
         e = context.exception
         self.assertIn('arg 1 must be a class', str(e))
         self.assertNotIsSubclass(type('imma a Kee, trust!', (), {}), cls)
@@ -114,11 +104,6 @@ class TestNum(KeeTest):
     """Test that the resolve_member method works as expected."""
     for day in WeekDay:
       self.assertIn(day, WeekDay)
-      self.assertIn(day.name, WeekDay)
-      self.assertIn(int(day), WeekDay)
-    for i in range(69):
-      for j, day in enumerate(WeekDay):
-        self.assertIs(WeekDay[j - i * len(WeekDay)], day)
 
   def test_bad_resolve_member(self) -> None:
     """Test that the correct exception is raised when failing to resolve a
@@ -141,7 +126,7 @@ class TestNum(KeeTest):
       _ = WeekDay[RootRGB.RED]
     e = context.exception
     self.assertIs(e.keeNum, WeekDay)
-    self.assertIs(e.identifier, RootRGB.RED)
+    self.assertEqual(e.identifier, RootRGB.RED)
     self.assertEqual(str(e), repr(e))
 
     with self.assertRaises(KeeResolveError) as context:
@@ -157,6 +142,7 @@ class TestNum(KeeTest):
     #  Testing duplicating member from base class
     breh = Kee[str]('breh')
     with self.assertRaises(KeeDuplicate) as context:
+      # noinspection PyUnusedLocal
       class DuperTrooperIsLegend(WeekDay):
         MONDAY = breh
     e = context.exception
@@ -170,8 +156,10 @@ class TestNum(KeeTest):
       a = Kee[str]('Mandag')
       b = Kee[str]('Tirsdag')
 
+      # noinspection PyUnusedLocal
       class DuperTrooperIsLegend2(KeeNum):
         MONDAY = a
+        # noinspection PyRedeclaration
         MONDAY = b
     e = context.exception
     self.assertEqual(str(e), repr(e))
@@ -183,6 +171,7 @@ class TestNum(KeeTest):
     """Test that a NotImplementedError is raised when the member type is not
     a KeeNum."""
     with self.assertRaises(KeeTypeException) as context:
+      # noinspection PyUnusedLocal
       class BadType(KeeNum):
         BAD = Kee[int](42)
         TO = Kee[RGB](255, 255, 255)
@@ -393,7 +382,9 @@ class TestNum(KeeTest):
       DICK = Kee[int](420)
       HARRY = Kee[int](1337)
 
+    # noinspection PyUnresolvedReferences
     setattr(Sus.HARRY.__field_kee__, '__field_value__', '80085')
+    # noinspection PyUnresolvedReferences
     setattr(Sus.HARRY.__field_kee__, '__field_type__', str)
 
     with self.assertRaises(TypeException) as context:

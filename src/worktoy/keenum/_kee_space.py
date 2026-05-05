@@ -74,27 +74,23 @@ class KeeSpace(BaseSpace):
     self.__enumeration_members__ = dict()
     super().__init__(mcls, name, bases, **kwargs)
     for base in bases:
+      space: dict = getattr(base, '__namespace__', dict())
       try:
-        space = getattr(base, '__namespace__')
+        memberType = getattr(space, '__member_type__')
       except AttributeError:
         continue
       else:
-        try:
-          memberType = space.__member_type__
-        except AttributeError:
-          continue
-        else:
-          self.__member_type__ = memberType
-        try:
-          members = getattr(space, '__enumeration_members__')
-        except AttributeError:
-          continue
-        else:
-          for i, (key, val) in enumerate(members.items()):
-            if key in self.__enumeration_members__:
-              oldMember = self.__enumeration_members__[key]
-              raise KeeDuplicate(key, oldMember, val)
-            self.addNum(key, val)
+        self.__member_type__ = memberType
+      try:
+        members = getattr(space, '__enumeration_members__')
+      except AttributeError:
+        continue
+      else:
+        for i, (key, val) in enumerate(members.items()):
+          if key in self.__enumeration_members__:
+            oldMember = self.__enumeration_members__[key]
+            raise KeeDuplicate(key, oldMember, val)
+          self.addNum(key, val)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

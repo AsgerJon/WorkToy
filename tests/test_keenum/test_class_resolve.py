@@ -77,9 +77,9 @@ class TestClassResolve(KeeTest):
       def __class_resolve__(cls, identifier: Any) -> Any:
         return NotImplemented
 
-    self.assertIs(Sus.A, Sus(0))
-    self.assertIs(Sus.B, Sus(1))
-    self.assertIs(Sus.C, Sus(2))
+    self.assertIs(Sus.A, Sus[0])
+    self.assertIs(Sus.B, Sus[1])
+    self.assertIs(Sus.C, Sus[2])
 
     with self.assertRaises(KeeResolveError) as context:
       _ = Sus(69 + 420j)

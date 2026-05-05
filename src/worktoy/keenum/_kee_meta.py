@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from collections.abc import Callable
 
-from ..core import Object
+from ..core.sentinels import UN_HASHABLE
 from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt
@@ -18,12 +18,10 @@ from . import KeeSpace as KSpace
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator, Optional
-  from typing import List, TypeVar
 
   from . import KeeNum
 
   Bases: TypeAlias = tuple[type, ...]
-  T = TypeVar('T', bound='KeeNum')
 
 
 class KeeMeta(BaseMeta):
@@ -43,43 +41,122 @@ class KeeMeta(BaseMeta):
   __class_resolve__: Callable[[Any], Any]
 
   #  Private Variables
+  __name_space__: Optional[KSpace] = None
+  __base_class__: Optional[KeeMeta] = None
   __allow_instantiation__: bool = False
   __custom_resolve__: Optional[bool] = None
-  __num_members__: Optional[List[KeeNum]] = None
+  __registered_members__: Optional[tuple[Any, ...]] = None
   __named_members__: Optional[dict[str, Any]] = None
+  __kee_num__: Optional[KeeMeta] = None
+
+  space: KSpace = Field()
+  base: KeeMeta = Field()
+  mroNum: tuple[KeeMeta, ...] = Field()
+  members: tuple[Any, ...] = Field()
+  valueType: type = Field()
+  namedMembers: dict[str, KeeMeta] = Field()
+  valuedMembers: dict[Any, KeeMeta] = Field()
 
   #  Virtual Variables
-  base: Field[type] = Field()
-  mroNum: Field[List[type]] = Field()
-  members: Field[List[KeeNum]] = Field()
-  valueType: Field[type] = Field()
-  namedMembers: Field[dict[str, Any]] = Field()
+  if TYPE_CHECKING:  # pragma: no cover
+    #  Type-checker view: plain attributes, no descriptor protocol.
+    #  PyCharm cannot resolve metaclass-level descriptors through
+    #  '__get__', so we lie about the types at check time. Runtime
+    #  uses the 'else' branch below where the descriptors are real.
+    space: KSpace
+    base: KeeMeta
+    mroNum: tuple[KeeMeta, ...]
+    members: tuple[KeeMeta, ...]
+    valueType: type
+    namedMembers: dict[str, KeeMeta]
+    valuedMembers: dict[Any, KeeMeta]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @base.GET
-  def _getBase(cls, ) -> type:
+  def _createSpace(cls) -> None:
+    if isinstance(cls.__namespace__, KSpace):
+      cls.__name_space__ = cls.__namespace__
+    else:
+      raise TypeException('__namespace__', cls.__namespace__, KSpace)
+
+  # noinspection PyUnresolvedReferences
+  @space.GET  # PyCharm, wyd?
+  def _getSpace(cls, **kwargs) -> KSpace:
+    """Returns the namespace of 'keeNum'."""
+    if cls.__name_space__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      cls._createSpace()
+      return cls._getSpace(_recursion=True, )
+    return cls.__name_space__
+
+  def _createBase(cls, ) -> None:
+    if cls.__name__ == 'KeeNum':
+      cls.__base_class__ = cls
+    else:
+      mcls = type(cls)
+      bases = [b for b in cls.space.__base_classes__ if isinstance(b, mcls)]
+      if len(bases) != 1:
+        if bases:
+          infoSpec = """Enumerating classes derived from '%s', may not have 
+          multiple bases, but received %d:<br>%s"""
+          mclsName = mcls.__name__
+          bases = cls.space.__base_classes__
+          baseStr = '<tab><br>'.join(b.__name__ for b in bases)
+          info = infoSpec % (mclsName, len(bases), baseStr)
+        else:
+          infoSpec = """Enumerating classes derived from '%s', must have 
+          exactly one base, but received none!"""
+          info = infoSpec % (mcls.__name__,)
+        raise ValueError(textFmt(info))
+      base = bases[0]
+      cls.__base_class__ = cls if base.__name__ == 'KeeNum' else base
+
+  # noinspection PyUnresolvedReferences
+  @base.GET  # PyCharm, wyd?
+  def _getBase(cls, **kwargs) -> KeeMeta:
     """Returns the nearest non-Object base of 'keeNum'."""
-    for b in cls.__bases__:
-      if b is not Object:
-        return b
-    return cls
+    if cls.__base_class__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      cls._createBase()
+      return cls._getBase(_recursion=True, )
+    return cls.__base_class__
 
-  @mroNum.GET
-  def _getMroNum(cls, ) -> List[type]:
+  # noinspection PyUnresolvedReferences
+  @mroNum.GET  # PyCharm, wyd?
+  def _getMroNum(cls, ) -> tuple[KeeMeta, ...]:
     """Returns the MRO of 'keeNum' filtered to KeeNum classes."""
-    mcls = type(cls)
-    baseMro = [b for b in cls.__mro__ if isinstance(b, mcls)]
-    return [b for b in baseMro if b is not cls]
+    return () if cls.base is cls else (cls.base, *cls.base.mroNum,)
 
-  @members.GET
-  def _getMembers(cls, ) -> List[KeeNum]:
+  def _createMembers(cls, ) -> None:
+    type.__setattr__(cls, '__allow_instantiation__', True)
+    registry = []
+    for key, kee in cls.space.__enumeration_members__.items():
+      try:
+        member = getattr(cls.base, key, )
+      except AttributeError:
+        member = cls(kee, )
+      setattr(cls, key, member)
+      registry.append(member)
+    cls.__registered_members__ = (*registry,)
+    type.__setattr__(cls, '__allow_instantiation__', False)
+
+  # noinspection PyUnresolvedReferences
+  @members.GET  # PyCharm, wyd?
+  def _getMembers(cls, **kwargs) -> tuple[Any, ...]:
     """Returns the registered enumeration members of 'keeNum'."""
-    return [*cls.__num_members__]
+    if cls.__registered_members__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      cls.__registered_members__ = ()
+      return cls._getMembers(_recursion=True, )
+    return cls.__registered_members__
 
-  @valueType.GET
+  # noinspection PyUnresolvedReferences
+  @valueType.GET  # PyCharm, wyd?
   def _getValueType(cls, ) -> type:
     """Returns the value type of the enumeration."""
     type_ = None
@@ -108,7 +185,8 @@ class KeeMeta(BaseMeta):
       cache[member.name.lower()] = member
     cls.__named_members__ = cache
 
-  @namedMembers.GET
+  # noinspection PyUnresolvedReferences
+  @namedMembers.GET  # PyCharm, wyd?
   def _getNamedMembers(cls, **kwargs) -> dict[str, Any]:
     if cls.__named_members__ is None:
       if kwargs.get('_recursion', False):
@@ -117,13 +195,87 @@ class KeeMeta(BaseMeta):
       return cls._getNamedMembers(_recursion=True, )
     return cls.__named_members__
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  def _createValuedMembers(cls) -> None:
+    """
+    Creator function for the '__valued_members__' cache.
+    """
+    cache = {}
+    for member in cls:
+      try:
+        _ = hash(member.value)
+        key = member.value
+      except TypeError:
+        break
+      else:
+        if key in cache:
+          continue
+        cache[key] = member
+    else:
+      cls.__valued_members__ = cache
+      return
+    cls.__valued_members__ = UN_HASHABLE
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # noinspection PyUnresolvedReferences
+  @valuedMembers.GET  # PyCharm, wyd?
+  def _getValuedMembers(cls, **kwargs) -> dict[Any, Any]:
+    if cls.__valued_members__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      cls._createValuedMembers()
+      return cls._getValuedMembers(_recursion=True, )
+    return cls.__valued_members__
+
+  @classmethod
+  def _resolveKeeNum(mcls, ) -> None:
+    """
+    Constructs KeeNum, the universal root of KeeMeta hierarchies.
+
+    Called eagerly at module load by the 'KeeNum = KeeMeta.getKeeNum()'
+    line at the bottom of this file. KeeNum cannot be declared as a
+    normal 'class KeeNum(_KeeBase, metaclass=KeeMeta)' statement because
+    it has to skip invariants the rest of the system assumes (no KeeNum
+    ancestor, no members). The '_root=True' flag exists for exactly
+    this one path and should not be passed elsewhere.
+    """
+    from . import _KeeBase
+
+    numSpace = KSpace(mcls, 'KeeNum', (_KeeBase,))
+    numSpace['__root_class__'] = True
+    mcls.__kee_num__ = mcls('KeeNum', (_KeeBase,), numSpace, _root=True)
+
+  @classmethod
+  def getKeeNum(mcls, **kwargs) -> KeeMeta:
+    """Returns the 'KeeMeta' metaclass."""
+    if mcls.__kee_num__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      mcls._resolveKeeNum()
+      return mcls.getKeeNum(_recursion=True, )
+    return mcls.__kee_num__
+
+  def _validateClassResolve(cls) -> None:
+    """
+    Detects '__class_resolve__' on the class and validates it.
+
+    Raises
+    ------
+    TypeException
+      If '__class_resolve__' is defined but not callable.
+    """
+    classResolve = None
+    for num in cls, cls.base:
+      try:
+        classResolve = getattr(num, '__class_resolve__')
+      except AttributeError:
+        continue
+      else:
+        break
+    else:
+      cls.__custom_resolve__ = False
+      return
+    if not callable(classResolve):
+      raise TypeException('__class_resolve__', classResolve, Callable)
+    cls.__custom_resolve__ = True
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -140,7 +292,7 @@ class KeeMeta(BaseMeta):
     bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return KSpace(mcls, name, bases, **kw)
 
-  def __call__(cls: type[T], *args: Any, **kwargs: Any) -> T:
+  def __call__(cls: KeeMeta, *args: Any, **kwargs: Any) -> KeeMeta:
     """
     Resolves a member, or instantiates one during class creation.
     """
@@ -150,36 +302,45 @@ class KeeMeta(BaseMeta):
       raise TypeException('identifier', None, object)
     return cls._resolveMember(args[0])
 
-  def __getitem__(cls: type[T], identifier: Any) -> T:
+  def __getitem__(cls, identifier: Any) -> Any:
     """Gets a member of the enumeration by identifier."""
+    if isinstance(identifier, int):
+      if identifier is not True and identifier is not False:
+        try:
+          member = cls.members[identifier]
+        except IndexError:
+          pass
+        else:
+          return member
     return cls._resolveMember(identifier)
 
-  def __getattr__(cls: type[T], name: str) -> T:
+  def __getattr__(cls, name: str) -> Any:
     """Gets a member of the enumeration by name."""
-    value = cls._resolveByName(name)
-    if value is NotImplemented:
+    mcls = type(cls)
+    for num in cls, cls.base:
+      value = mcls._resolveFromName(num, name)
+      if value is NotImplemented:
+        continue
+      break
+    else:
       return type.__getattribute__(cls, name)
     return value
 
-  def __iter__(cls: type[T]) -> Iterator[T]:
+  def __iter__(cls) -> Iterator[Any]:
     """Iterates over the members of the enumeration."""
-    if TYPE_CHECKING:  # pragma: no cover
-      assert cls.__num_members__ is not None
-    yield from cls.__num_members__
+    yield from cls.members
 
   def __len__(cls) -> int:
     """Returns the number of members in the enumeration."""
-    return sum(1 for _ in cls)
+    return len(cls.members)
 
   def __contains__(cls, identifier: Any) -> bool:
     """Checks if the enumeration contains a matching member."""
     if not cls:
       return False
-    try:
-      _ = cls._resolveMember(identifier)
-    except KeeResolveError:
-      return False
-    return True
+    if isinstance(identifier, cls):
+      return True
+    return False
 
   def __instancecheck__(cls, instance: Any) -> bool:
     """Checks if 'instance' is a member of the enumeration."""
@@ -201,9 +362,7 @@ class KeeMeta(BaseMeta):
   def __str__(cls) -> str:
     """Returns a string representation of the enumeration."""
     infoSpec = """<KeeNum '%s': %d members>"""
-    if TYPE_CHECKING:  # pragma: no cover
-      assert isinstance(cls.__num_members__, list)
-    return infoSpec % (cls.__name__, len(cls.__num_members__))
+    return infoSpec % (cls.__name__, len(cls))
 
   __repr__ = __str__
 
@@ -215,64 +374,95 @@ class KeeMeta(BaseMeta):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(cls, name: str, bases: Bases, space: KSpace, **_) -> None:
-    cls.__num_members__ = []
+  def __new__(mcls, name: str, bases: Bases, space: KSpace, **kw) -> KeeMeta:
+    """Creates the 'KeeMeta' class."""
+    if '_root' in kw:
+      del kw['_root']
+    #  noinspection PyTypeChecker
+    return super().__new__(mcls, name, bases, space, **kw)
+
+  def __init__(cls, name: str, *__, **_) -> None:
     cls.__class_name__ = name
-    if [b for b in bases if b is not Object]:
-      cls.__allow_instantiation__ = True
-      cls._installCustomResolve()
-      enumMembers = space.__enumeration_members__
-      for i, (key, kee) in enumerate(enumMembers.items()):
-        for base in bases:
-          try:
-            self = getattr(base, key, )
-          except AttributeError:
-            continue
-          else:
-            break
-        else:
-          self = cls(kee, )
-        setattr(cls, key, self)
-        if TYPE_CHECKING:  # pragma: no cover
-          assert isinstance(cls.__num_members__, list)
-        cls.__num_members__.append(self)
-      cls.__allow_instantiation__ = False
-      cls._createNamedMembers()
+    cls._createSpace()
+    cls._createBase()
+    cls._createMembers()
+    cls._createNamedMembers()
+    cls._createValuedMembers()
+    cls._validateClassResolve()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _installCustomResolve(cls) -> None:
+  def _resolveFromName(cls, identifier: str) -> Any:
     """
-    Detects '__class_resolve__' on the class and validates it.
+    This method resolves a member by name (case-insensitive).
 
-    Raises
-    ------
-    TypeException
-      If '__class_resolve__' is defined but not callable.
+    Parameters
+    ----------
+    identifier : str
+      The string identifier to resolve.
+
+    Returns
+    -------
+    Any
+      The resolved member, or 'NotImplemented' if resolution fails.
     """
-    classResolve = getattr(cls, '__class_resolve__', None)
-    if classResolve is None:
-      cls.__custom_resolve__ = False
-      return
-    if not callable(classResolve):
-      raise TypeException(
-        '__class_resolve__', classResolve, Callable
-      )
-    cls.__custom_resolve__ = True
+    try:
+      member = cls.namedMembers[identifier.lower()]
+    except KeyError:
+      return NotImplemented
+    else:
+      return member
 
-  def _resolveMember(cls: type[T], identifier: Any) -> T:
+  def _resolveFromValue(cls, identifier: Any) -> Any:
+    """
+    Returns the first member whose 'value' equals 'identifier' or returns
+    'NotImplemented'.
+
+    Parameters
+    ----------
+    identifier : Any
+      The value identifier to resolve.
+
+    Returns
+    -------
+    KeeNum
+      The resolved member, or 'NotImplemented' if resolution fails.
+    """
+    if cls.valueType is int:
+      if identifier is True or identifier is False:
+        return NotImplemented
+    if cls.valuedMembers is UN_HASHABLE:
+      for member in cls:
+        if member.value == identifier:
+          return member
+      return NotImplemented
+    try:
+      member = cls.valuedMembers[identifier]
+    except KeyError:
+      return NotImplemented
+    else:
+      return member
+
+  def _resolveMember(cls, identifier: Any) -> Any:
     """
     Top-level dispatch for resolving a member from an identifier.
 
     Order
     -----
-    1. If 'identifier' is already a member of 'keeNum', return it.
-    2. If 'identifier' is True or False, route to the bool guard.
-    3. If 'identifier' is a 'str', route to the str chain.
-    4. If 'identifier' is an 'int', route to the int chain.
-    5. Otherwise, route to the generic 'other' chain.
+    1. If 'identifier' is already a member, return it.
+    2. If 'identifier' is a string: (case-insensitive) name resolution.
+    3. If the class has a custom resolver, use it.
+    4. If 'identifier' is of the 'valueType', resolve by value.
+    5. If all else fails, raise 'KeeResolveError'.
+
+    Raises
+    ------
+    KeeResolveError
+      If resolution fails at all levels, a 'KeeResolveError' is raised
+      containing the 'KeeNum' class and the identifier that failed to
+      resolve.
 
     Parameters
     ----------
@@ -287,217 +477,50 @@ class KeeMeta(BaseMeta):
     if isinstance(identifier, cls):
       return identifier
     if isinstance(identifier, str):
-      resolved = cls._resolveStrChain(identifier)
-      if resolved is NotImplemented:
-        raise KeeResolveError(cls, identifier)
-    elif identifier is True or identifier is False:
-      resolved = cls._resolveBoolChain(identifier)
-      if resolved is NotImplemented:
-        raise KeeResolveError(cls, identifier)
-    elif isinstance(identifier, int):
-      resolved = cls._resolveIntChain(identifier)
-      if resolved is NotImplemented:
-        raise KeeResolveError(cls, identifier)
-    elif isinstance(identifier, cls.valueType):
-      resolved = cls._resolveByValue(identifier)
-      if resolved is NotImplemented:
-        raise KeeResolveError(cls, identifier)
-    else:
-      if cls.__custom_resolve__:
-        resolved = cls.__class_resolve__(identifier)
-        if resolved is not NotImplemented:
-          return resolved
-      raise KeeResolveError(cls, identifier)
-    return resolved
-
-  def _resolveStrChain(cls, identifier: str) -> Any:
-    """
-    This method attempts to resolve a 'str' identifier in the following
-    order of priority:
-    1. By name (case-insensitive)
-    2. By custom resolver ('__class_resolve__')
-    3. By value (only if 'valueType' is 'str')
-
-    Parameters
-    ----------
-    identifier : str
-      The string identifier to resolve.
-
-    Returns
-    -------
-    Any
-      The resolved member, or 'NotImplemented' if resolution fails.
-    """
-    resolvers: tuple[Callable[[Any], Any], ...] = (
-      cls._resolveByName,
-      cls._resolveCustom,
-      cls._resolveByValue,
-    )
-    for resolver in resolvers:
-      result = resolver(identifier)
-      if result is not NotImplemented:
-        return result
-    return NotImplemented
-
-  def _resolveBoolChain(cls, identifier: bool) -> Any:
-    """
-    This method attempts to resolve a 'bool' identifier in the following
-    order of priority:
-    1. By custom resolver ('__class_resolve__')
-    2. By value (only if 'valueType' is 'bool')
-
-    Parameters
-    ----------
-    identifier : bool
-      The boolean identifier to resolve.
-
-    Returns
-    -------
-    Any
-      The resolved member, or 'NotImplemented' if resolution fails.
-    """
-    resolved = cls._resolveCustom(identifier)
-    if resolved is not NotImplemented:
-      return resolved
-    for member in cls:
-      if member.value ^ identifier:
-        continue
-      return member
-    return NotImplemented
-
-  def _resolveIntChain(cls, identifier: int) -> Any:
-    """
-    This method attempts to resolve an 'int' identifier in the following
-    order of priority:
-    1. By custom resolver ('__class_resolve__')
-    2. By index (if 'identifier' is a valid index)
-    3. By value (only if 'valueType' is 'int')
-
-    Please note, that an enumeration using 'valueType' of 'int' are
-    strongly encouraged to provide a solid custom resolver implementation.
-    Otherwise, if a member has a value lower than the number of elements,
-    it the element at that index is returned rather than the element
-    having the value equal to the identifier. The member resolution
-    machinery here provides no protection against this situation.
-
-    Parameters
-    ----------
-    identifier : int
-      The integer identifier to resolve.
-
-    Returns
-    -------
-    Any
-      The resolved member, or 'NotImplemented' if resolution fails.
-    """
-    resolvers = []
+      resolved = cls._resolveFromName(identifier)
+      if resolved is not NotImplemented:
+        return resolved
     if cls.__custom_resolve__:
-      resolvers.append(cls._resolveCustom)
-    resolvers.append(cls._resolveByIndex)
-    if cls.valueType is int:
-      resolvers.append(cls._resolveByValue)
-    for resolver in resolvers:
-      result = resolver(identifier)
-      if result is not NotImplemented:
-        return result
-    return NotImplemented
+      resolved = cls.__class_resolve__(identifier)
+      if resolved is not NotImplemented:
+        return resolved
+    if isinstance(identifier, cls.valueType):
+      resolved = cls._resolveFromValue(identifier)
+      if resolved is not NotImplemented:
+        return resolved
+    raise KeeResolveError(cls, identifier)
 
-  def _resolveByIndex(cls, identifier: int) -> Any:
-    """
-    Resolves an 'int' identifier by index, if valid.
-
-    Parameters
-    ----------
-    identifier : int
-      The integer identifier to resolve.
-
-    Returns
-    -------
-    Any
-      The resolved member, or 'NotImplemented' if 'identifier' is not a valid
-      index.
-    """
-    if identifier < 0:
-      return cls._resolveByIndex(len(cls) + identifier)
-    if identifier < len(cls):
-      return cls.__num_members__[identifier]
-    return NotImplemented
-
-  def _resolveByName(cls, identifier: str) -> Any:
-    """
-    Resolves a 'str' identifier by name (case-insensitive).
-
-    Parameters
-    ----------
-    identifier : str
-      The string identifier to resolve.
-
-    Returns
-    -------
-    Any
-      The resolved member or 'NotImplemented' if no member has a matching
-      name.
-    """
-    key = identifier.lower()
-    try:
-      value = cls.namedMembers[key]
-    except KeyError:
-      return NotImplemented
-    else:
-      return value
-
-  def _resolveCustom(cls, identifier: Any) -> Any:
-    """
-    Invokes '__class_resolve__' if defined.
-
-    Returns 'NotImplemented' if no resolver is registered or if the
-    resolver declines, either by returning 'NotImplemented' or by
-    raising 'KeeResolveError'. Any other exception propagates.
-
-    Parameters
-    ----------
-    identifier : Any
-      The identifier passed to the custom resolver.
-
-    Returns
-    -------
-    Any
-      The resolver result, or 'NotImplemented' on decline.
-    """
-    if cls.__custom_resolve__:
-      return cls.__class_resolve__(identifier)
-    return NotImplemented
-
-  def _resolveByValue(cls, identifier: Any) -> Any:
-    """
-    Resolves an identifier by value, if 'valueType' matches.
-
-    Parameters
-    ----------
-    identifier : Any
-      The identifier to resolve.
-
-    Returns
-    -------
-    Any
-      The resolved member, or 'NotImplemented' if 'valueType' does not match
-      or if no member has a matching value.
-    """
-    for member in cls:
-      if member.value == identifier:
-        return member
-    return NotImplemented
-
-  def fromValue(cls: type[T], value: Any) -> T:
+  def fromValue(cls, value: Any) -> Any:
     """
     Resolves a member by value.
 
-    Returns the lowest-indexed member whose 'value' equals the
-    argument.
+    Returns the lowest-indexed member whose 'value' equals the argument.
     """
     if not isinstance(value, cls.valueType):
       raise TypeException('value', value, cls.valueType)
-    resolved = cls._resolveByValue(value)
+    resolved = cls._resolveFromValue(value)
     if resolved is NotImplemented:
       raise KeeResolveError(cls, value)
     return resolved
+
+  class __Errata__:  # noqa: N801
+    """
+    This is to PyCharm's typing what samizdat was to the USSR.
+
+    See: https://www.britannica.com/technology/samizdat
+
+    We grant you a seat on the 'if TYPE_CHECKING' block, but we do not
+    grant you rank of "type hint".
+    """
+    base: Field[KeeMeta]
+    space: Field[KSpace]
+    mroNum: Field[tuple[KeeMeta, ...]]
+    members: Field[tuple[KeeNum, ...]]  # noqa
+    valueType: Field[type]
+    namedMembers: Field[dict[str, KeeNum]]  # noqa
+    valuedMembers: Field[dict[Any, KeeNum]]  # noqa
+
+
+KeeNum: KeeMeta = KeeMeta.getKeeNum()  # noqa
+
+__all__ = ('KeeMeta', 'KeeNum',)

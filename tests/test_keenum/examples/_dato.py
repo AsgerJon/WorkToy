@@ -39,11 +39,11 @@ class Dato(BaseObject):
   #  Public Variables
 
   #  Virtual Variables
-  datetimeDate = Field()
-  year = Field()
-  month = Field()
-  day = Field()
-  weekDay = Field()
+  datetimeDate: Field[date] = Field()
+  year: Field[int] = Field()
+  month: Field[Month] = Field()
+  day: Field[int] = Field()
+  weekDay: Field[WeekDay] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -59,7 +59,7 @@ class Dato(BaseObject):
 
   @month.GET
   def _getMonth(self) -> Month:
-    return Month(self.datetimeDate.month - 1)
+    return Month[self.datetimeDate.month - 1]
 
   @day.GET
   def _getDay(self) -> int:

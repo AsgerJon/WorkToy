@@ -5,19 +5,27 @@ KeeNum provides the shared baseclass for KeeNum enumerating classes.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, overload, TypeVar
 
 from ..core import Object
 from ..desc import Field
+from ..waitaminute import MissingVariable
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.keenum import KeeWriteOnceError
-from . import KeeMeta, Kee
+from . import Kee
+
+T = TypeVar('T')
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Never, Self
+  from typing import Any, Never, Self, Optional, TypeAlias
+
+  MaybeInt: TypeAlias = Optional[int]
+  MaybeStr: TypeAlias = Optional[str]
+  MaybeKee: TypeAlias = Optional[Kee]
+  MaybeBool: TypeAlias = Optional[bool]
 
 
-class KeeNum(Object, metaclass=KeeMeta, ):
+class _KeeBase(Object, ):
   """
   KeeNum is the base class for all enumerating classes in the KeeNum
   framework. It provides a common interface and functionality for
@@ -28,19 +36,18 @@ class KeeNum(Object, metaclass=KeeMeta, ):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __field_index__ = None
-  __field_value__ = None
-  __frozen_state__ = None
-  __field_kee__ = None  # The 'Kee' object of this member.
+  __field_value__: Optional[Any] = None
+  __frozen_state__: MaybeBool = None
+  __field_kee__: MaybeKee = None  # The 'Kee' object of this member.
 
   #  Public Variables
-  index = Field()
-  value = Field()
-  valueType = Field()
-  kee = Field()
+  index: Field[int] = Field()
+  value: Field[Any] = Field()
+  valueType: Field[type] = Field()
+  kee: Field[Kee] = Field()
 
   #  Virtual Variables
-  name = Field()
+  name: Field[str] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -48,6 +55,8 @@ class KeeNum(Object, metaclass=KeeMeta, ):
 
   @kee.GET
   def _getKee(self) -> Kee:
+    if self.__field_kee__ is None:
+      raise MissingVariable(self, '__field_kee__', Kee)
     return self.__field_kee__
 
   @name.GET
@@ -62,6 +71,11 @@ class KeeNum(Object, metaclass=KeeMeta, ):
   def _getValue(self) -> Any:
     """Return the value of the member."""
     return self.kee.getValue()
+
+  @valueType.GET
+  def _getValueType(self) -> type:
+    """Return the type of the value of the member."""
+    return self.kee.getFieldType()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -123,9 +137,14 @@ class KeeNum(Object, metaclass=KeeMeta, ):
 
   __index__ = __int__
 
-  def __hash__(self) -> int:
-    """Return the hash of the member."""
-    return hash((type(self), self.index))
+  def __hash__(self) -> Optional[int]:
+    try:
+      _ = hash((self.value,))
+    except TypeError:
+      return
+    else:
+      base = str.join('::', (type(self).__name__, self.name,))
+      return int.from_bytes(base.encode(), 'big')
 
   def __eq__(self, other: Any) -> bool:
     if type(self) is not type(other):
@@ -133,7 +152,6 @@ class KeeNum(Object, metaclass=KeeMeta, ):
     return True if self is other else False
 
   def __str__(self) -> str:
-    """Return the name of the member."""
     infoSpec = """%s.%s"""
     clsName = type(self).__name__
     info = infoSpec % (clsName, self.name)

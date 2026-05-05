@@ -179,16 +179,3 @@ class Field(BaseDescriptor[T]):
           setattr(self, keyGroup, (*otherValue,))
     elif other is not None:
       raise TypeException('other', other, type(self))
-
-  if TYPE_CHECKING:  # pragma: no cover
-    from typing import overload, Union
-
-    # @formatter:off
-    @overload
-    def __get__(self, instance: None, owner: type, **kw) -> Self: ...
-    @overload
-    def __get__(self, instance: Any, owner: type, **kw) -> T: ...
-    # @formatter:on
-
-    def __get__(self, instance: Any, owner: type, **kw) -> Union[Self, T]:
-      BaseDescriptor.__get__(self, instance, owner, **kw)

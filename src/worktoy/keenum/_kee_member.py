@@ -57,9 +57,9 @@ class Kee(AttriBox[T]):
   __num_name__ = None
 
   #  Public Variables
-  name = Field()
-  index = Field()
-  value = Field()
+  name: Field[str] = Field()
+  index: Field[int] = Field()
+  value: Field[T] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

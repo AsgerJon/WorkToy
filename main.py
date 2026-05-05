@@ -22,11 +22,9 @@ except ImportError:
     pass
 
 from profile_tests import profileTests
-from tests.test_mcls.test_hooks.test_flex_call_hook import TestFlexCallHook
-from tests.test_overload.test_overload_flex import TestOverloadFlex
 from worktoy.desc import Field
 from worktoy.utilities import ExceptionInfo, textFmt, wordWrap
-from yolo_dev import yolo, runTests, runTest
+from yolo_dev import runTests, runTest, yolo
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Union, Optional, Callable
@@ -70,6 +68,7 @@ def tester00() -> int:
   Hello World!
   """
   stuff = [os, sys, 'Hello world!', profileTests, runTest, runTests, copy]
+  list.extend(stuff, (yolo,))
   for item in stuff:
     line = str(item)
     if len(line) > 64:
@@ -167,7 +166,8 @@ def tester03() -> int:
         lines.append("""While expecting a '@classmethod':""")
       elif callable(value):
         lines.append(
-          """While not expecting a '@classmethod' or '@staticmethod':""")
+          """While not expecting a '@classmethod' or '@staticmethod':"""
+        )
       else:
         return
       infoSpec = """<tab>key: '%s': type: '%s'"""
@@ -228,7 +228,64 @@ def tester03() -> int:
   return 0
 
 
+def tester04() -> int:
+  """
+  Testing property trolling
+  """
+
+  class F:
+    def __get__(self, instance, owner):
+      if instance is None:
+        return self
+      return 69
+
+  class A(type):
+    f = F()
+
+  class B(metaclass=A):
+    pass
+
+  print("""A.f: """)
+  print("""B.f: %s""" % B.f)
+  return 0
+
+
+def tester05() -> int:
+  """
+  lower casingt
+  """
+
+  from pyperclip import copy
+
+  planets = (
+    'MERCURY',
+    'VENUS',
+    'EARTH',
+    'MARS',
+    'JUPITER',
+    'SATURN',
+    'URANUS',
+    'NEPTUNE',
+  )
+  planetStr = str.join('<br>', (str.lower(p) for p in planets))
+  copy(textFmt(planetStr))
+  return 0
+
+
+def tester06() -> int:
+  """
+  testing list.__eq__
+  """
+
+  tom = [69, ]
+  dick = [69, ]
+
+  with ExceptionInfo(Exception) as info:
+    res = 'True' if tom == dick else 'False'
+  print(info if info else res)
+  return 0
+
+
 if __name__ == '__main__':
-  # yolo(tester03)
-  # runTest(TestOverloadFlex)
+  # yolo(tester06)
   yolo(runTests, tester00)

@@ -262,10 +262,12 @@ class TestArrangements(CombinatoricsTest):
   def test_no_two_arrangements_share_a_values_tuple(self) -> None:
     """The dedup contract: every cached arrangement has a unique
     values tuple, regardless of repeats in the ground items."""
-    cases = [('A', 'B', 'C', 'D'),
-             ('A', 'A', 'B', 'C'),
-             ('A', 'A', 'B', 'B'),
-             ('X',) * 4]
+    cases = [
+      ('A', 'B', 'C', 'D'),
+      ('A', 'A', 'B', 'C'),
+      ('A', 'A', 'B', 'B'),
+      ('X',) * 4
+    ]
     for items in cases:
       with self.subTest(items=items):
         a = Arrangements(*items)
@@ -297,9 +299,11 @@ class TestArrangements(CombinatoricsTest):
     a = Arrangements([1], [1], [2])
     produced = [x.values for x in a]
     self.assertEqual(len(produced), 3)
-    for expected in [([1], [1], [2]),
-                     ([1], [2], [1]),
-                     ([2], [1], [1])]:
+    for expected in [
+      ([1], [1], [2]),
+      ([1], [2], [1]),
+      ([2], [1], [1])
+    ]:
       self.assertIn(expected, produced)
 
   #  ________________________________________________________________

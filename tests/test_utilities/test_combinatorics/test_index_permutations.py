@@ -39,8 +39,10 @@ class TestIndexPermutations(CombinatoricsTest):
 
   def test_three_exact_matches_docstring(self) -> None:
     """Mirrors the example from the function's docstring."""
-    expected = [(0, 1, 2), (0, 2, 1), (1, 0, 2),
-                (1, 2, 0), (2, 0, 1), (2, 1, 0)]
+    expected = [
+      (0, 1, 2), (0, 2, 1), (1, 0, 2),
+      (1, 2, 0), (2, 0, 1), (2, 1, 0)
+    ]
     self.assertEqual(list(indexPermutations(3)), expected)
 
   #  ________________________________________________________________

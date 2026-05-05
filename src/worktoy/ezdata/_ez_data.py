@@ -55,6 +55,10 @@ class EZData(BaseObject, metaclass=EZMeta):
   def __getitem__(self, *_) -> None:
     """See documentation for __init__ above."""
 
+  @_root
+  def __call__(self, *_) -> None:
+    """See documentation for __init__ above."""
+
   @classmethod
   def __class_len__(cls, ) -> int:
     """Return the number of class variables."""

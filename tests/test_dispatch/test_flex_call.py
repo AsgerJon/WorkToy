@@ -28,7 +28,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
   # @formatter:on
 else:
-  from worktoy.dispatch import flexCall
+  pass
 
 
 #  ____________________________________________________________________

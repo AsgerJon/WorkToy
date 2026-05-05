@@ -25,7 +25,7 @@ Contents:
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._sentinel import Sentinel
+from ._sentinel import Sentinel, _Sentinel
 from ._place_holder import PLACE_HOLDER
 from ._deleted import DELETED
 from ._owner import OWNER
@@ -34,6 +34,7 @@ from ._desc import DESC
 from ._wild_card import WILDCARD
 from ._meta_call import METACALL
 from ._fallback import FALLBACK
+from ._un_hashable import UN_HASHABLE
 from ._function import Function
 
 __all__ = [
@@ -46,5 +47,6 @@ __all__ = [
   'WILDCARD',
   'METACALL',
   'FALLBACK',
+  'UN_HASHABLE',
   'Function',
 ]

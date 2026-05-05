@@ -61,16 +61,16 @@ class BaseSampler(BaseObject, ABC):
   __row_count__: MaybeInt = None
 
   #  Public Variables
-  valueType: TypeField = Field()
+  valueType: Field[type] = Field()
   # --#  Settings
-  colCount: IntField = Field()
-  rowCount: IntField = Field()
+  colCount: Field[int] = Field()
+  rowCount: Field[int] = Field()
 
   #  Virtual Variables
   # --#  Samples
-  item: ItemField = Field()
-  row: RowField = Field()
-  table: TableField = Field()
+  item: Field[Any] = Field()
+  row: Field[tuple[Any, ...]] = Field()
+  table: Field[tuple[tuple[Any, ...], ...]] = Field()
 
   #  Aliases
   width = Alias('colCount')
@@ -214,7 +214,7 @@ class BaseSampler(BaseObject, ABC):
     """
     out = []
     while len(out) < self.rowCount:
-      out.append(self._getRow(*args, **kwargs))
+      out.append(self._getRow())
     return (*out,)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

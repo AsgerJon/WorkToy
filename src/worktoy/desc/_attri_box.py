@@ -12,11 +12,11 @@ from . import Field, BaseDescriptor
 from ..core import Object
 from ..core.sentinels import DELETED
 from ..utilities import typeCast
-from ..waitaminute import TypeException
+from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, Union
+  from typing import Any, Self, Union, Optional
 
 T = TypeVar('T')
 
@@ -32,10 +32,10 @@ class AttriBox(BaseDescriptor[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __field_type__ = None  # The type of the objects stored in the box.
+  __field_type__: Optional[type] = None
 
   #  Public Variables
-  fieldType = Field()
+  fieldType: Field[type] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -43,13 +43,15 @@ class AttriBox(BaseDescriptor[T]):
 
   @fieldType.GET
   def getFieldType(self) -> type:
+    if self.__field_type__ is None:
+      raise MissingVariable(self, '__field_type__', type)
     return self.__field_type__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _resolve(self, *args, **kwargs) -> Self:
+  def _resolve(self, *args, **kwargs) -> T:
     """
     Creates a new instance of the field type from the given arguments.
     Please note, that this method does *not* retrieve arguments from
@@ -104,15 +106,19 @@ class AttriBox(BaseDescriptor[T]):
     keyword arguments, the 'tuple' is not unpacked.
     """
     fieldType = self.getFieldType()
-    try:
-      if fieldType in (list, set, frozenset, dict, tuple):
-        fieldObject = fieldType(args)
-      else:
-        fieldObject = fieldType(*args, **kwargs)
-    except (TypeError, ValueError) as exception:
-      name = 'value'
-      raise TypeException(name, args[0], fieldType) from exception
-
+    fieldObject = None
+    if len(args) == 1:
+      if isinstance(args[0], fieldType):
+        fieldObject = args[0]
+    if fieldObject is None:
+      try:
+        if fieldType in (list, set, frozenset, dict, tuple):
+          fieldObject = fieldType(args)
+        else:
+          fieldObject = fieldType(*args, **kwargs)
+      except (TypeError, ValueError) as exception:
+        name = 'value'
+        raise TypeException(name, args[0], fieldType) from exception
     try:
       setattr(fieldObject, '__field_name__', self.getFieldName())
       setattr(fieldObject, '__field_owner__', self.getFieldOwner())

@@ -121,4 +121,3 @@ class Sentinel(metaclass=_Sentinel):
   module. It prevents instantiation and ensures that only one instance of
   each sentinel exists.
   """
-  pass

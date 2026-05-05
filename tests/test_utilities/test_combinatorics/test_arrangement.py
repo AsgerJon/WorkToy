@@ -241,8 +241,10 @@ class TestArrangement(TestCase):
 
   def test_round_trip_apply_then_restore(self) -> None:
     """For every forward, restoreFrom(*applyTo(*v)) == v."""
-    forwards = [(0, 1, 2), (1, 0, 2), (2, 1, 0),  # involutions
-                (1, 2, 0), (2, 0, 1)]  # 3-cycles
+    forwards = [
+      (0, 1, 2), (1, 0, 2), (2, 1, 0),  # involutions
+      (1, 2, 0), (2, 0, 1)
+    ]  # 3-cycles
     for forward in forwards:
       with self.subTest(forward=forward):
         a = Arrangement(('A', 'B', 'C'), forward)
@@ -252,8 +254,10 @@ class TestArrangement(TestCase):
         )
 
   def test_round_trip_restore_then_apply(self) -> None:
-    forwards = [(0, 1, 2), (1, 0, 2), (2, 1, 0),
-                (1, 2, 0), (2, 0, 1)]
+    forwards = [
+      (0, 1, 2), (1, 0, 2), (2, 1, 0),
+      (1, 2, 0), (2, 0, 1)
+    ]
     for forward in forwards:
       with self.subTest(forward=forward):
         a = Arrangement(('A', 'B', 'C'), forward)

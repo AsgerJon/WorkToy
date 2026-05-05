@@ -57,8 +57,8 @@ class IntSampler(BaseSampler):
   __max_value__: MaybeInt = None
 
   #  Public Variables
-  minVal: IntField = Field()
-  maxVal: IntField = Field()
+  minVal: Field[int] = Field()
+  maxVal: Field[int] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -101,7 +101,8 @@ class IntSampler(BaseSampler):
         raise TypeException('minVal', minVal, int) from typeCastException
       else:
         return self._setMinVal(casted)
-    return setattr(self, '__min_value__', minVal)
+    setattr(self, '__min_value__', minVal)
+    return None
 
   @maxVal.SET
   def _setMaxVal(self, value: int) -> None:
@@ -112,7 +113,8 @@ class IntSampler(BaseSampler):
         raise TypeException('maxVal', value, int) from typeCastException
       else:
         return self._setMaxVal(casted)
-    return setattr(self, '__max_value__', value)
+    setattr(self, '__max_value__', value)
+    return None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

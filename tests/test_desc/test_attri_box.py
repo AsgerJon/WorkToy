@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import sys
 
 from worktoy.desc import AttriBox
-from worktoy.waitaminute import TypeException
+from worktoy.waitaminute import TypeException, MissingVariable
 from . import DescTest
 from .geometry import Circle, Point2D
 
@@ -161,3 +161,16 @@ class TestAttriBox(DescTest):
     foo.bar = 69, 420
     self.assertAlmostEqual(foo.bar.real, 69)
     self.assertAlmostEqual(foo.bar.imag, 420)
+
+  def test_bad_field_type(self) -> None:
+    """
+    Testing exception when missing __field_type__.
+    """
+
+    susBox = AttriBox()
+    with self.assertRaises(MissingVariable) as context:
+      _ = susBox.fieldType
+    e = context.exception
+    self.assertIs(e.instance, susBox)
+    self.assertEqual(e.varName, '__field_type__')
+    self.assertIn(type, e.expectedTypes)

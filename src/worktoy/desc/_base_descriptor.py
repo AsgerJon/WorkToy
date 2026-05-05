@@ -252,12 +252,12 @@ class BaseDescriptor(Object, Generic[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # @formatter:off
-  @overload
-  def __get__(self, instance: None, owner: type, **kwargs) -> Self: ...
+  if TYPE_CHECKING:  # pragma: no cover
+    @overload
+    def __get__(self, instance: None, owner: type) -> Self: ...
+    @overload
+    def __get__(self, instance: Any, owner: type) -> T: ...
 
-  @overload
-  def __get__(self, instance: Any, owner: type, **kwargs) -> T: ...
-
-  def __get__(self, instance: Any, owner: type, **kwargs) -> Union[Self, T]:
-    return super().__get__(instance, owner, **kwargs)
+    def __get__(self, instance: Any, owner: type) -> Union[Self, T]:
+      return super().__get__(instance, owner)
   # @formatter:on

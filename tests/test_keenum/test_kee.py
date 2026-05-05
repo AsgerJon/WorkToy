@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from tests.test_keenum import KeeTest
-from tests.test_keenum.examples import Ugedag, Dag, _MetaDag  # noqa
 from worktoy.keenum import Kee, KeeNum
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.waitaminute import MissingVariable
@@ -39,29 +38,6 @@ class TestKee(KeeTest):
   This class uses a custom class as the value type for the purpose of
   testing the lazy instantiation.
   """
-
-  def tearDown(self) -> None:
-    """
-    Cleaning up after each test method.
-    """
-    super().tearDown()
-    Dag.resetRegistry()
-
-  def test_init(self, ) -> None:
-    """
-    Testing 'Ugedag' as a valid enumeration.
-    """
-    self.assertFalse((*(_ for _ in Dag),))
-    for i, dag in enumerate(Ugedag):
-      self.assertEqual(i, int(Dag))
-      self.assertIn(dag.name, Ugedag)
-      self.assertIsInstance(dag.value, Dag)
-      self.assertEqual(i, dag.index)
-    i = 0
-    for i, _ in enumerate(Dag):
-      pass
-    else:
-      self.assertTrue(i)
 
   def test_index_bad_get(self) -> None:
     """
@@ -135,13 +111,6 @@ class TestKee(KeeTest):
     self.assertIs(e.actualType, int)
     self.assertIn(str, e.expectedTypes)
 
-  def test_good_int(self, ) -> None:
-    """
-    Testing that 'int' conversion works as expected.
-    """
-    for i, dag in enumerate(Ugedag):
-      self.assertEqual(i, int(dag.kee))
-
   def test_kee_name_conflict(self) -> None:
     """
     Tests behaviour where a 'member' stored under one name has its
@@ -210,48 +179,20 @@ class TestKee(KeeTest):
     e = context.exception
     self.assertEqual(e.name, 'X')
 
-  def test_dag_example(self) -> None:
+  def test_missing_kee(self) -> None:
     """
-    Coverage gymnastics for the 'Dag' example used in 'Ugedag'.
+    Tests the exception raised when '__field_kee__ is None'.
     """
-    with self.assertRaises(RecursionError):
-      _ = Dag.getInstanceRegistry(_recursion=True)
-    setattr(Dag, '__instance_registry__', 'sixty-nine')
-    with self.assertRaises(TypeException):
-      _ = Dag.getInstanceRegistry()
-    setattr(Dag, '__instance_registry__', (69, 420, 1337, 80085))
-    with self.assertRaises(TypeException):
-      _ = Dag.getInstanceRegistry()
-    Dag.resetRegistry()
-    dag = Dag('Badedag')
-    self.assertEqual(dag.name, 'Badedag')
-    self.assertIn(dag, Dag)
-    self.assertEqual(len(Dag), 1)
-    Dag.registerInstance(dag)
-    self.assertEqual(len(Dag), 1)
-    self.assertNotIn(object(), Dag)
-    self.assertEqual("""<Dag: name='Badedag'>""", str(dag))
-    self.assertEqual(repr(dag), """Dag('Badedag')""")
-    dage = {dag, }
-    self.assertIn(dag, dage)
-    self.assertEqual(hash(dag), hash(('Dag', 'Badedag',)))
-    breh = Dag()
-    with self.assertRaises(MissingVariable) as context:
-      _ = breh.name
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.varName, '__name_str__')
-    self.assertIs(e.instance, breh)
-    self.assertIn(str, e.expectedTypes, )
-    setattr(breh, '__name_str__', 69)
-    with self.assertRaises(TypeException) as context:
-      _ = breh.name
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.varName, '__name_str__')
-    self.assertIs(e.actualObject, getattr(breh, '__name_str__'))
-    self.assertIs(e.actualType, int)
-    self.assertIn(str, e.expectedTypes)
 
-    class Foo(metaclass=_MetaDag):
-      pass
+    class Num(KeeNum):
+      A = Kee[int](69)
+
+    self.assertIs(Num.A.valueType, int)
+
+    object.__setattr__(Num.A, '__field_kee__', None)
+    with self.assertRaises(MissingVariable) as context:
+      _ = Num.A.kee
+    e = context.exception
+    self.assertIs(e.instance, Num.A)
+    self.assertEqual(e.varName, '__field_kee__')
+    self.assertIn(Kee, e.expectedTypes)

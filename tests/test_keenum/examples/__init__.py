@@ -19,13 +19,18 @@ from ._keyboard_modifier import KeyboardModifier
 from ._mouse_button import MouseButton
 from ._rgb_num import RootRGB, MoreRGB, EvenMoreRGB, RGBNum
 from ._week_day import WeekDay
-from ._dag import _MetaDag, Dag
-from ._ugedag import Ugedag
 from ._compass import Compass
 from ._month import Month
 from ._dato import Dato
 from ._brush import Brush
 from ._http_status import HTTPStatus
+from ._chess_piece_num import ChessPieceNum
+from ._noble_gas_num import NobleGasNum
+from ._network_port_num import NetworkPortNum
+from ._prime_num import PrimeNum
+from ._currency_num import CurrencyNum, CurrencyData
+from ._planet_num import PlanetNum, PlanetData
+from ._element_num import ElementNum, ElementData
 
 __all__ = [
   'HAlignum',
@@ -44,12 +49,19 @@ __all__ = [
   'EvenMoreRGB',
   'RGBNum',
   'WeekDay',
-  '_MetaDag',
-  'Dag',
-  'Ugedag',
   'Compass',
   'Month',
   'Dato',
   'Brush',
   'HTTPStatus',
+  'ChessPieceNum',
+  'NobleGasNum',
+  'NetworkPortNum',
+  'PrimeNum',
+  'CurrencyNum',
+  'CurrencyData',
+  'PlanetNum',
+  'PlanetData',
+  'ElementNum',
+  'ElementData',
 ]

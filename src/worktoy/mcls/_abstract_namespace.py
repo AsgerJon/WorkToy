@@ -146,7 +146,14 @@ class AbstractNamespace(dict):
     'dict' object with each value being a list of all values provided. """
     mroClasses = [b for b in self.getMRO() if hasattr(b, '__namespace__')]
     mroSpaces = [getattr(b, '__namespace__', ) for b in mroClasses]
-    compiledSpaces = [getattr(s, '__compiled_space__') for s in mroSpaces]
+    compiledSpaces = []
+    for space in mroSpaces:
+      try:
+        compiledSpace = getattr(space, '__compiled_space__')
+      except AttributeError:
+        continue
+      else:
+        compiledSpaces.append(compiledSpace)
     out = dict()
     for compiledSpace in compiledSpaces:
       for key, val in compiledSpace.items():
