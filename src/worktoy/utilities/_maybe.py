@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar, overload
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Union, Optional
+  pass
 
 T = TypeVar('T')
 

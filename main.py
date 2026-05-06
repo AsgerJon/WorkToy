@@ -7,15 +7,12 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from types import FunctionType, MethodType, BuiltinFunctionType
 from types import ModuleType, MemberDescriptorType
 from types import WrapperDescriptorType, MethodWrapperType
 from types import MethodDescriptorType, ClassMethodDescriptorType
 from types import LambdaType, BuiltinMethodType
-
-from tests.test_keenum.test_kee_meta_sub_class import TestKeeMetaSubClass
-from worktoy.lorem_ipsum import Paragraph
 
 try:
   from pyperclip import copy
@@ -26,7 +23,6 @@ except ImportError:
 
 from profile_tests import profileTests
 from worktoy.desc import Field
-from worktoy.utilities import ExceptionInfo, textFmt, wordWrap
 from yolo_dev import runTests, runTest, yolo
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -82,5 +78,4 @@ def tester00() -> int:
 
 
 if __name__ == '__main__':
-  # runTest(TestKeeMetaSubClass)
   yolo(runTests, tester00)

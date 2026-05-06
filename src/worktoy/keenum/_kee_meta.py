@@ -18,7 +18,7 @@ from ..waitaminute.keenum import KeeResolveError
 from . import KeeSpace as KSpace
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Iterator, Optional, Self
+  from typing import Any, TypeAlias, Iterator, Optional
 
   from . import KeeNum
 
@@ -148,7 +148,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     else:
       mcls = type(cls)
       bases = [b for b in cls.space.__base_classes__ if isinstance(b, mcls)]
-      from icecream import ic
       # ic(cls.space.__base_classes__, cls, mcls)
       if len(bases) != 1:
         if bases:

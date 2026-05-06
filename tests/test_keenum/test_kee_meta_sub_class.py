@@ -9,14 +9,13 @@ subclassing. Becaues of the unconventional creation of 'KeeNum' in
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest import TestCase
 
 from tests.test_keenum import KeeTest
 from worktoy.keenum import KeeMeta, KeeNum, Kee, KeeMetaMeta
 from worktoy.mcls import BaseMeta
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self
+  pass
 
 
 class KeeMetaSub(KeeMeta):
