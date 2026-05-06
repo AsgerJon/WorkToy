@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from collections.abc import Callable
 
+from ..core import MetaType
 from ..core.sentinels import UN_HASHABLE
 from ..desc import Field
 from ..mcls import BaseMeta
@@ -17,14 +18,61 @@ from ..waitaminute.keenum import KeeResolveError
 from . import KeeSpace as KSpace
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Iterator, Optional
+  from typing import Any, TypeAlias, Iterator, Optional, Self
 
   from . import KeeNum
 
   Bases: TypeAlias = tuple[type, ...]
 
 
-class KeeMeta(BaseMeta):
+class KeeMetaMeta(MetaType):
+  """
+  This is the meta-metaclass of the 'worktoy.keenum' package. It allows
+  derived metaclasses to access their dedicated derived root class through
+  the descriptor protocol. For the recommended 'KeeMeta' metaclass,
+  the value retrieved from 'KeeMeta.keeNum' is identical to the 'KeeNum'
+  class. When deriving a new class from a subclass of 'KeeMeta', set as
+  base class of the new class the 'keeNum' attribute of the custom
+  metaclass.
+  For example, suppose 'FontMeta' was a subclass of 'KeeMeta' and
+  'FontFamilyNum' was an enumerating class derived from 'FontMeta',
+  the following would be the recommended syntax:
+
+  class FontMeta(KeeMeta):
+    pass
+
+  class FontFamilyNum(FontMeta.keeNum):
+    ARIAL = Kee[int](1)
+    TIMES_NEW_ROMAN = Kee[int](2)
+    CALIBRI = Kee[int](3)
+    ... etc.
+
+  The '__init_subclass__' implementation of 'KeeMeta' removes 'KeeNum'
+  from being retrievable from the private attribute '__kee_num__'. Thus,
+  calls to the getter function for 'keeNum' on subclasses of 'KeeMeta'
+  will trigger the creation of a new 'KeeNum'-like class for that metaclass.
+  """
+
+  __kee_num__: Optional[KeeMeta] = None
+  keeNum: Field[KeeMeta] = Field()
+
+  @keeNum.GET
+  def _getKeeNum(mcls, **kwargs) -> KeeMeta:  # noqa
+    from . import _KeeBase
+    if mcls.__kee_num__ is None:
+      if kwargs.get('_recursion', False):
+        raise RecursionError
+      num = """%sNum""" % (mcls.__name__,)
+      name = 'KeeNum' if mcls.__name__ == 'KeeMeta' else num
+      numSpace = KSpace(mcls, name, (_KeeBase,), _root=True)
+      numSpace['__root_class__'] = True
+      num = mcls.__new__(mcls, name, (_KeeBase,), numSpace, _root=True)
+      mcls.__kee_num__ = num
+      return mcls._getKeeNum(_recursion=True, )
+    return mcls.__kee_num__
+
+
+class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   """
   KeeMeta provides the metaclass for the 'worktoy.num' module.
   """
@@ -47,6 +95,7 @@ class KeeMeta(BaseMeta):
   __custom_resolve__: Optional[bool] = None
   __registered_members__: Optional[tuple[Any, ...]] = None
   __named_members__: Optional[dict[str, Any]] = None
+  __valued_members__: Optional[dict[Any, Any]] = None
   __kee_num__: Optional[KeeMeta] = None
 
   space: KSpace = Field()
@@ -70,6 +119,7 @@ class KeeMeta(BaseMeta):
     valueType: type
     namedMembers: dict[str, KeeMeta]
     valuedMembers: dict[Any, KeeMeta]
+    keeNum: KeeMeta
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -98,6 +148,8 @@ class KeeMeta(BaseMeta):
     else:
       mcls = type(cls)
       bases = [b for b in cls.space.__base_classes__ if isinstance(b, mcls)]
+      from icecream import ic
+      # ic(cls.space.__base_classes__, cls, mcls)
       if len(bases) != 1:
         if bases:
           infoSpec = """Enumerating classes derived from '%s', may not have 
@@ -225,34 +277,6 @@ class KeeMeta(BaseMeta):
       return cls._getValuedMembers(_recursion=True, )
     return cls.__valued_members__
 
-  @classmethod
-  def _resolveKeeNum(mcls, ) -> None:
-    """
-    Constructs KeeNum, the universal root of KeeMeta hierarchies.
-
-    Called eagerly at module load by the 'KeeNum = KeeMeta.getKeeNum()'
-    line at the bottom of this file. KeeNum cannot be declared as a
-    normal 'class KeeNum(_KeeBase, metaclass=KeeMeta)' statement because
-    it has to skip invariants the rest of the system assumes (no KeeNum
-    ancestor, no members). The '_root=True' flag exists for exactly
-    this one path and should not be passed elsewhere.
-    """
-    from . import _KeeBase
-
-    numSpace = KSpace(mcls, 'KeeNum', (_KeeBase,))
-    numSpace['__root_class__'] = True
-    mcls.__kee_num__ = mcls('KeeNum', (_KeeBase,), numSpace, _root=True)
-
-  @classmethod
-  def getKeeNum(mcls, **kwargs) -> KeeMeta:
-    """Returns the 'KeeMeta' metaclass."""
-    if mcls.__kee_num__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      mcls._resolveKeeNum()
-      return mcls.getKeeNum(_recursion=True, )
-    return mcls.__kee_num__
-
   def _validateClassResolve(cls) -> None:
     """
     Detects '__class_resolve__' on the class and validates it.
@@ -317,7 +341,10 @@ class KeeMeta(BaseMeta):
   def __getattr__(cls, name: str) -> Any:
     """Gets a member of the enumeration by name."""
     mcls = type(cls)
-    for num in cls, cls.base:
+    bases: list[KeeMeta] = [cls, ]
+    if cls.__base_class__ is not None:
+      bases.append(cls.__base_class__)
+    for num in bases:
       value = mcls._resolveFromName(num, name)
       if value is NotImplemented:
         continue
@@ -369,6 +396,10 @@ class KeeMeta(BaseMeta):
   def __bool__(cls, ) -> bool:
     """KeeNum classes are always truthy."""
     return True if cls.members else False
+
+  @classmethod
+  def __init_subclass__(mcls, **kwargs) -> None:
+    setattr(mcls, '__kee_num__', None)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -519,8 +550,9 @@ class KeeMeta(BaseMeta):
     valueType: Field[type]
     namedMembers: Field[dict[str, KeeNum]]  # noqa
     valuedMembers: Field[dict[Any, KeeNum]]  # noqa
+    keeNum: KeeMeta
 
 
-KeeNum: KeeMeta = KeeMeta.getKeeNum()  # noqa
+KeeNum = KeeMeta.keeNum  # noqa
 
-__all__ = ('KeeMeta', 'KeeNum',)
+__all__ = ('KeeMetaMeta', 'KeeMeta', 'KeeNum',)

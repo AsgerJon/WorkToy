@@ -156,14 +156,3 @@ class TestKeeMeta(KeeTest):
     for color in RGBNum:
       fromName = namedColors[color.name.lower()]
       self.assertIs(color, fromName)
-
-  def test_missing_kee_num(self) -> None:
-    """
-    This method tests the situation where 'KeeMeta' is missing the
-    'KeeNum' core class created immediately after itself.
-    """
-
-    type.__setattr__(KeeMeta, '__kee_num__', None)
-
-    with self.assertRaises(RecursionError):
-      _ = KeeMeta.getKeeNum(_recursion=True)
