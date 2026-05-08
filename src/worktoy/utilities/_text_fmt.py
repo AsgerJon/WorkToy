@@ -1,8 +1,11 @@
-"""
-The 'textFmt' function provides quick formatting of text. This is
-motivated by the fact that Python strings spanning multiple lines contains
-the linebreaks verbatim, which is almost never desired.
-"""
+"""Whitespace-collapsing formatter for multi-line string literals.
+
+The ``textFmt`` function exists because Python multi-line string
+literals preserve every newline and indent verbatim, which is
+almost never what an error message or report wants. ``textFmt``
+collapses runs of whitespace into single spaces, with explicit
+``<br>`` and ``<tab>`` tokens for the few places real line breaks
+or indentation are needed."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -15,47 +18,41 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def textFmt(*args: Any, **kwargs: Any) -> str:
-  """
-  Formats a multi-line string by replacing all continuous whitespace,
-  including new lines, with a single space. Additionally, intended line
-  breaks and indentations may be specified using '<br>' and '<tab>'
-  respectively as indicating tokens.
+  """Collapse whitespace and honor explicit ``<br>``/``<tab>`` tokens.
 
-  Args:
-    *args: Any number of 'str' objects to be concatenated and formatted.
-    Please note that any 'arg' not an instance of 'str' will be replaced
-    with 'str(arg)'.
-  Kwargs: Additional formatting options:
-      - 'newLineToken': Use a different token to indicate line breaks,
-      defaults to '<br>'.
-      - 'tabToken': Use a different token to indicate indentation,
-      defaults to '<tab>'.
-      - 'newLineSymbol': Symbol in the returned string indicating new
-      line. By default, the value at 'os.linesep' is used. On linux,
-      this value is '\n' and on Windows it is '\r\n'.
-      - 'indentSymbol': Symbol in the returned string indicating one level
-      of indentation, defaults to two spaces.
+  Joins ``args`` with single spaces, replaces any run of
+  whitespace (including embedded newlines from triple-quoted
+  literals) with a single space, then expands ``<br>`` to a
+  newline and ``<tab>`` to one indentation step.
 
-  Usage:
-    from __future__ import annotations
+  Parameters
+  ----------
+  *args : Any
+      Strings to format. Non-string arguments are converted via
+      ``str(arg)``.
+  **kwargs
+      newLineToken : str, optional
+          Token marking a desired line break. Defaults to
+          ``'<br>'``.
+      tabToken : str, optional
+          Token marking a desired indent. Defaults to ``'<tab>'``.
+      newLineSymbol : str, optional
+          Replacement for ``newLineToken`` in the output. Defaults
+          to ``os.linesep``.
+      indentSymbol : str, optional
+          Replacement for ``tabToken`` in the output. Defaults to
+          two spaces.
 
-    import sys
+  Returns
+  -------
+  str
+      The formatted string. Empty if no non-empty arguments were
+      provided.
 
-    def main(*args) -> int:
-      #  Example script
-      exampleText = \"\"\"This is the first line,
-      but we are still here! <br>But now we are on the second line!
-      still here! <br><tab>Third line is even indented!\"\"\"
-      formattedText = textFmt(exampleText)
-      print(formattedText)
-
-    if __name__ == '__main__':
-      sys.exit(main(*sys.argv[1:]))
-
-    output:
-   |  This is the first line, but we are still here!
-   |  But now we are on the second line!
-   |    Third line is even indented!
+  Examples
+  --------
+  >>> textFmt('first line, <br>second line', '<tab>indented')
+  'first line,\\nsecond line\\n  indented'
   """
   if not args:
     return ''

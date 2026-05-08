@@ -547,9 +547,31 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     valueType: Field[type]
     namedMembers: Field[dict[str, KeeNum]]  # noqa
     valuedMembers: Field[dict[Any, KeeNum]]  # noqa
-    keeNum: KeeMeta
+    keeNum: KeeNum
 
 
-KeeNum = KeeMeta.keeNum  # noqa
+# @formatter:off
+if TYPE_CHECKING:  # pragma: no cover
+  from . import _KeeBase
+  class KeeNum(_KeeBase, metaclass = KeeMeta):  # noqa
+    """
+    This is to PyCharm's typing what samizdat was to the USSR.
+
+    See: https://www.britannica.com/technology/samizdat
+
+    We grant you a seat on the 'if TYPE_CHECKING' block, but we do not
+    grant you rank of "type hint".
+    """
+    def __call__(self: Any, *args, **kwargs) -> Any: ...
+    def fromValue(self: Any, *args, **kwargs) -> Any: ...
+    def __getattr__(self: Any, *args, **kwargs) -> Any: ...
+    def __iter__(self: Any,) -> Any: ...
+    def __len__(self: Any,) -> int: ...
+    def __contains__(self: Any, *args, **kwargs) -> bool: ...
+    def __instancecheck__(self: Any, *args, **kwargs) -> bool: ...
+    def __subclasscheck__(self: Any, *args, **kwargs) -> bool: ...
+# @formatter:on
+else:
+  KeeNum = KeeMeta.keeNum  # noqa
 
 __all__ = ('KeeMetaMeta', 'KeeMeta', 'KeeNum',)

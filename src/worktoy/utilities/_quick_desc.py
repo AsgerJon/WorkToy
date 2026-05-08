@@ -1,6 +1,8 @@
-"""
-QuickDesc provides a basic implementation of the descriptor protocol.
-"""
+"""Lightweight read-only descriptor for internal use.
+
+``QuickDesc`` is the minimal descriptor used inside ``worktoy`` to
+expose private slot values as public attributes without dragging
+in the full ``worktoy.desc`` machinery."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -16,18 +18,25 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class QuickDesc(Generic[T]):
-  """
-  QuickDesc provides a basic implementation of the descriptor protocol.
+  """Read-only descriptor exposing a named private slot.
 
-  Please note that QuickDesc is used internally by 'worktoy' to avoid
-  certain boilerplate code. Those developing projects using 'worktoy' are
-  encouraged to direct their attention to the 'worktoy.desc' package,
-  which provides much more powerful and flexible descriptor
-  implementations. In particular:
-  - 'AttriBox' providing lazily-initialized, read-write attributes with
-  strict type enforcement.
-  - 'Field' providing descriptors with decorators specifying accessor
-  functions.
+  Constructed with the name of a private attribute (typically
+  dunder-prefixed), ``QuickDesc`` reads that attribute on access
+  and refuses writes and deletions. This is enough for the
+  descriptor needs internal to the foundation packages.
+
+  ``QuickDesc`` is intentionally minimal. Project authors using
+  ``worktoy`` should prefer the descriptors in ``worktoy.desc``:
+  ``AttriBox`` for type-enforced read-write attributes, and
+  ``Field`` for descriptors with explicit accessor decorators.
+
+  Examples
+  --------
+  >>> class Box:
+  ...   __value__ = 42
+  ...   value = QuickDesc('__value__')
+  >>> Box().value
+  42
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -65,14 +74,14 @@ class QuickDesc(Generic[T]):
   def __set__(self, instance: Any, value: Any) -> None:
     cls = type(instance).__name__
     name = self.__field_name__ or '<unbound>'
-    infoSpec = """Cannot set attribute '%s' on '%s' object — 
+    infoSpec = """Cannot set attribute '%s' on '%s' object:
     QuickDesc is read-only."""
     raise AttributeError(textFmt(infoSpec % (name, cls)))
 
   def __delete__(self, instance: Any) -> None:
     cls = type(instance).__name__
     name = self.__field_name__ or '<unbound>'
-    infoSpec = """Cannot delete attribute '%s' on '%s' object — 
+    infoSpec = """Cannot delete attribute '%s' on '%s' object:
     QuickDesc is read-only."""
     raise AttributeError(textFmt(infoSpec % (name, cls)))
 

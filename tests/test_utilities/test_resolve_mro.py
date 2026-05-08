@@ -74,4 +74,4 @@ class TestResolveMRO(UtilitiesTest):
       pass
 
     with self.assertRaises(RecursionError):
-      resolveMRO(B, C, _start=1337)
+      resolveMRO(B, C, _initialIterationCount=1337)

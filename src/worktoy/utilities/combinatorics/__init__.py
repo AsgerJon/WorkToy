@@ -1,9 +1,9 @@
-"""
-The 'worktoy.utilities.combinatorics' package provides combinatorial
-utilities for the 'worktoy' library, including functions for generating
-permutations and combinations of elements, as well as related tools for
-working with combinatorial structures.
-"""
+"""Combinatorial utilities for ``worktoy``.
+
+Provides ``indexPermutations`` for raw index-tuple permutations,
+``Arrangement`` for a single permutation paired with its inverse,
+and ``Arrangements`` for the deduplicated set of all permutations
+of a ground tuple."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations

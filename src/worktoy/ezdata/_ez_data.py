@@ -1,79 +1,70 @@
-"""
-EZData leverages the 'worktoy' library to provide a dataclass.
-"""
+"""The user-facing EZData base class.
+
+Subclasses declare data fields as class-body attributes; the
+EZMeta metaclass installs the standard dunder methods at
+class-creation time, so authors do not write __init__, __eq__,
+__repr__, etc. by hand."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import EZMeta
 from ..mcls import BaseObject
+from ._ez_meta import EZMeta
+from ._trust import trust
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Callable, Iterator
-
-
-def _root(callMeMaybe: Callable) -> Callable:
-  """
-  _root is a decorator that ensures the decorated function is called
-  with the root class of EZData.
-  """
-
-  setattr(callMeMaybe, '__is_root__', True)
-  return callMeMaybe
+  from typing import Any, Iterator
 
 
 class EZData(BaseObject, metaclass=EZMeta):
-  """
-  EZData is a dataclass that provides a simple way to define data
-  structures with validation and serialization capabilities.
+  """Auto-generating dataclass base.
+
+  Field declarations are class-body attributes, with optional
+  type annotations and default values. EZMeta installs init,
+  equality, repr, str, iter, len, item access, attribute access,
+  hash (when frozen), and ordering operators (when order=True).
+
+  Class keyword arguments
+  -----------------------
+  frozen : bool, default False
+      When True, post-construction writes raise FrozenEZException
+      and instances become hashable.
+  order : bool, default False
+      When True, the comparison operators compare fields
+      lexicographically. Defaults that do not support '<' raise
+      UnorderedEZException at class creation.
+  kw_only : bool, default False
+      Reserved tag; not yet enforced.
+
+  Example
+  -------
+  class Point(EZData):
+    x: int = 0
+    y: int = 0
+
+  Point(3, 4) == Point(x=3, y=4)  # True
   """
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  __slot_objects__ = ()
 
-  @_root
+  @trust
   def __init__(self, *args, **kwargs) -> None:
-    """This is just here for type checking purposes. The EZMeta control
-    flow removes it with the auto-generated __init__ method."""
+    """Replaced by EZMeta; signature is generated per class."""
 
-  @_root
-  def __iter__(self, ) -> Iterator:
-    """See documentation for __init__ above."""
+  @trust
+  def __iter__(self) -> Iterator:
+    """Replaced by EZMeta; yields field values."""
 
-  @_root
-  def __len__(self, ) -> int:
-    """See documentation for __init__ above."""
+  @trust
+  def __len__(self) -> int:
+    """Replaced by EZMeta; returns the number of fields."""
 
-  @_root
-  def __setitem__(self, *_) -> None:
-    """See documentation for __init__ above."""
+  @trust
+  def __getitem__(self, key: Any) -> Any:
+    """Replaced by EZMeta."""
 
-  @_root
-  def __getitem__(self, *_) -> None:
-    """See documentation for __init__ above."""
-
-  @_root
-  def __call__(self, *_) -> None:
-    """See documentation for __init__ above."""
-
-  @classmethod
-  def __class_len__(cls, ) -> int:
-    """Return the number of class variables."""
-    return len(getattr(cls, '__slots__', ()))
-
-  @classmethod
-  def __class_iter__(cls, ) -> Iterator[str]:
-    """Iterate over the class variables."""
-    yield from getattr(cls, '__slots__', ())
-
-  @classmethod
-  def __class_contains__(cls, item: str) -> bool:
-    """Check if the class contains the given item."""
-    return item in getattr(cls, '__slots__', ())
-
-  def __set_name__(self, owner: type, name: str) -> None:
-    """Removes 'Object.__set_name__' which would set attributes on the
-    instance. """
+  @trust
+  def __setitem__(self, key: Any, value: Any) -> None:
+    """Replaced by EZMeta."""

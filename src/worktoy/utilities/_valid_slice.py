@@ -1,7 +1,9 @@
-"""
-ValidSlice is a special un-instantiable class that recognizes only valid
-slice objects.
-"""
+"""Validator type for well-formed ``slice`` objects.
+
+``ValidSlice`` is an un-instantiable class whose ``isinstance``
+check returns ``True`` only for ``slice`` objects whose ``start``,
+``stop``, and ``step`` are ``None``, ``int``, or values supporting
+``__index__``."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -15,6 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class _MetaSlice(type):
+  """Metaclass implementing ``ValidSlice``'s isinstance hook."""
 
   def __instancecheck__(self, instance: Any) -> bool:
     if not isinstance(instance, slice):
@@ -56,25 +59,27 @@ class _MetaSlice(type):
 
 
 class ValidSlice(metaclass=_MetaSlice):
-  """
-  ValidSlice is a special un-instantiable class that recognizes only valid
-  slice objects. Passing keyword arguments to the slice constructor does
-  raise:
-    'TypeError: slice() takes no keyword arguments'.
-  Furthermore, passing no arguments at all likewise raises:
-    'slice expected at least 1 argument, got 0'.
-  Finally, passing arbitrary positional arguments raises:
-    'slice indices must be integers or None or have an __index__ method'
-  Or do they? Contrary to every other type and every reasonable expectation
-  any *bonus pater familias* might have, slice objects waits until usage
-  before raising the above exception. ValidSlice provides a special type,
-  that recognizes slice objects as instances of itself, provided they are
-  not malformed.
+  """Un-instantiable validator for ``slice`` objects.
 
-  For example:
-  isinstance(slice('imma slice, trust me bro!'), ValidSlice) -> False
-  isinstance(slice(0, 10, 'step'), ValidSlice) -> False
-  isinstance(slice(1), ValidSlice) -> True
-  isinstance(slice(None, None, None), ValidSlice) -> True
+  The built-in ``slice`` constructor accepts arbitrary positional
+  arguments and only complains at usage time, when CPython tries to
+  call ``__index__`` on each component. ``ValidSlice`` short-circuits
+  that lazy check: ``isinstance(s, ValidSlice)`` is ``True`` iff
+  every component of ``s`` is ``None``, an ``int``, or an object
+  whose type defines ``__index__``.
+
+  Instantiating ``ValidSlice`` raises ``TypeError``; the class is a
+  pure type-level predicate.
+
+  Examples
+  --------
+  >>> isinstance(slice('not a slice'), ValidSlice)
+  False
+  >>> isinstance(slice(0, 10, 'step'), ValidSlice)
+  False
+  >>> isinstance(slice(1), ValidSlice)
+  True
+  >>> isinstance(slice(None, None, None), ValidSlice)
+  True
   """
   pass

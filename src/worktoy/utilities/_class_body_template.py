@@ -1,7 +1,10 @@
-"""
-The ClassBodyTemplate provides a string template for the body of a class
-body.
-"""
+"""Reference scaffolding for ``worktoy`` class bodies.
+
+Exports ``ClassBodyTemplate``, a string holding the canonical
+section-banner layout used throughout the library, and
+``SomeClass``, a parallel empty class with the same banners. Both
+exist as copy-paste references to keep new class files visually
+consistent."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -72,10 +75,8 @@ ClassBodyTemplate = """
 """
 
 
-class SomeClass:
-  """
-  This class provides a template for classes in the 'worktoy' library.
-  """
+class _SomeClass:
+  """Empty reference class with the canonical section banners."""
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  STATIC METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #

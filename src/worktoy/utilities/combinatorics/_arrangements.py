@@ -1,12 +1,8 @@
-"""
-Arrangements encapsulates the set of all arrangements of a ground tuple of
-'items'.
+"""All unique arrangements of a ground tuple of items.
 
-Iterating yields 'Arrangement' instances. The set is deduplicated by
-arranged-value equality, so repeated items in the ground tuple
-collapse: 'Arrangements("A", "A", "B")' yields three arrangements,
-not six.
-"""
+``Arrangements`` enumerates the distinct permutations of the
+supplied items. Repeated items collapse: ``Arrangements('A', 'A',
+'B')`` yields three arrangements, not six."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -31,13 +27,17 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class Arrangements(Generic[ItemTypeT]):
-  """
-  All unique arrangements of a ground tuple of items.
+  """All unique arrangements of a ground tuple of items.
 
-  Iterating yields 'Arrangement' instances. The set is deduplicated by
-  arranged-value equality, so repeated items in the ground tuple
-  collapse: 'Arrangements("A", "A", "B")' yields three arrangements,
-  not six.
+  Iterating yields ``Arrangement`` instances. The set is
+  deduplicated by arranged-value equality, so repeated items in the
+  ground tuple collapse: ``Arrangements('A', 'A', 'B')`` yields
+  three arrangements, not six.
+
+  Examples
+  --------
+  >>> list(a.values for a in Arrangements('A', 'A', 'B'))
+  [('A', 'A', 'B'), ('A', 'B', 'A'), ('B', 'A', 'A')]
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

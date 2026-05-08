@@ -1,8 +1,9 @@
-"""
-The 'bipartiteMatching' function solves the bipartite matching problem by
-recursive backtracking with forward checking returns the first encountered
-valid mapping.
-"""
+"""Bipartite matching by backtracking with forward checking.
+
+The ``bipartiteMatching`` function takes a list of candidate-index
+tuples (one per slot) and returns the first assignment that maps
+each slot to a distinct index, using minimum-remaining-values
+selection to prune the search."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -17,11 +18,33 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def bipartiteMatching(slots: list[tuple[int, ...]]) -> list[int]:
-  """
-  Recursive backtracking with forward checking. Given a list of tuples
-  of candidate indices, one per slot, finds an assignment of one unique
-  index to each slot, with no repeats. Returns list of assigned indices,
-  or raises ValueError if no solution exists.
+  """Solve bipartite matching by recursive backtracking.
+
+  At each step, the slot with the fewest remaining candidates is
+  expanded first (MRV heuristic); each chosen value is removed
+  from every other slot's candidate set before recursing.
+
+  Parameters
+  ----------
+  slots : list of tuple of int
+      ``slots[i]`` lists the indices that may be assigned to
+      slot ``i``.
+
+  Returns
+  -------
+  list of int
+      Assigned index per slot, in the original slot order. Each
+      returned index is unique across the list.
+
+  Raises
+  ------
+  ValueError
+      If no consistent assignment exists.
+
+  Examples
+  --------
+  >>> bipartiteMatching([(0, 1), (0,), (1, 2)])
+  [1, 0, 2]
   """
   # Base case: success
   if not slots:

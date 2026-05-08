@@ -1,25 +1,13 @@
-"""EZSpace provides the namespace for the EZData class. """
+"""``EZSpace`` is the namespace class used by ``EZMeta``."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from . import EZSpaceHook
 from ..mcls import BaseSpace
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
+from ._ez_space_hook import EZSpaceHook
 
 
 class EZSpace(BaseSpace):
-  """
-  EZSpace provides the namespace for the EZData class.
-  """
+  """Namespace for ``EZData`` classes; carries the ``EZSpaceHook``."""
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Public Variables
   ezHook = EZSpaceHook()

@@ -1,8 +1,7 @@
-"""
-The 'indexPermutations' function generates all possible permutations of
-non-negative integers up to a specified length, returning them as tuples.
-Each tuple represents a unique ordering of the integers.
-"""
+"""Generator of integer-index permutations.
+
+The ``indexPermutations`` function yields every permutation of
+``(0, 1, ..., n - 1)`` as a tuple, in lexicographic order."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -16,10 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def indexPermutations(n: int) -> Iterator[Indices]:
-  """
-  The 'indexPermutations' function generates all possible permutations of
-  non-negative integers up to a specified length, returning them as tuples.
-  Each tuple represents a unique ordering of the integers.
+  """Yield every permutation of ``(0, 1, ..., n - 1)``.
 
   Parameters
   ----------

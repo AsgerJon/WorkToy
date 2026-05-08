@@ -1,10 +1,9 @@
-"""
-The 'stringList' takes a string and returns a list of strings containing
-substrings separated by a separator (default: ', ').
+"""Split strings into a cleaned list of substrings.
 
-Keyword argument 'sep' specifies the separator(s) to use. More than one
-separator may be specified by passing a non-empty iterable of strings.
-"""
+The ``stringList`` function splits each input string by one or
+more separators (default ``', '``), strips whitespace from each
+piece, and discards empty results. Multiple separators may be
+applied in sequence by passing a list or tuple."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -16,12 +15,36 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def stringList(*args: str, **kwargs) -> list[str]:
-  """
-  Splits input strings using all provided separators in sequence.
+  """Split strings into a stripped, non-empty list of pieces.
 
-  Keyword-only argument 'sep' may be a string or list of strings. Each
-  separator is applied in turn, so that later separators act on results
-  of earlier splits.
+  Parameters
+  ----------
+  *args : str
+      Strings to split.
+  **kwargs
+      separator : str or list of str or tuple of str, optional
+          Separator(s) used to split. If a single string, that
+          separator is applied directly. If a list or tuple, each
+          element is applied in turn, with later separators
+          splitting the results of earlier ones. Defaults to
+          ``', '``.
+
+  Returns
+  -------
+  list of str
+      Stripped, non-empty pieces in original order.
+
+  Raises
+  ------
+  TypeException
+      If ``separator`` is not a ``str``, ``list``, or ``tuple``.
+
+  Examples
+  --------
+  >>> stringList('a, b, c')
+  ['a', 'b', 'c']
+  >>> stringList('a;b,c', separator=[',', ';'])
+  ['a', 'b', 'c']
   """
   sep = kwargs.get('separator', ', ')
   if isinstance(sep, str):

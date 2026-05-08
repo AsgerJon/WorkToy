@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from worktoy.utilities import ExceptionInfo
-from worktoy.utilities._exception_info import _Exc, _ExcObject, _ExcName
 from . import UtilitiesTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -145,16 +144,6 @@ class TestExceptionInfo(UtilitiesTest):
           self.assertEqual(str(info), expStr)
           self.assertEqual(repr(info), expRepr)
 
-  def test_descriptor_objects(self, ) -> None:
-    """
-    Testing the descriptor objects on the ExceptionInfo class.
-    """
-    self.assertIsInstance(ExceptionInfo.expectedExcType, _Exc)
-    self.assertIsInstance(ExceptionInfo.actualExcType, _Exc)
-    self.assertIsInstance(ExceptionInfo.actualException, _ExcObject)
-    self.assertIsInstance(ExceptionInfo.expectedName, _ExcName)
-    self.assertIsInstance(ExceptionInfo.actualName, _ExcName)
-
   def test_no_expections(self, ) -> None:
     """
     Testing ExceptionInfo on no exceptions.
@@ -177,19 +166,6 @@ class TestExceptionInfo(UtilitiesTest):
           pass
         self.assertIsInstance(exception, excType)
         self.assertIs(info.expectedExcType, excType)
-
-  def test_exception_type_gymnastics(self, ) -> None:
-    """
-    Testing the descriptor gymnastics of ExceptionInfo.
-    """
-
-    info = ExceptionInfo()
-    susExc = """I'm an error, trust me bro!"""
-    setattr(info, '__expected_exception__', susExc)
-    self.assertEqual(info.expectedExcType, 'No Exception')
-    setattr(info, '__actual_exception__', susExc)
-    self.assertEqual(info.actualExcType, 'No Exception')
-    self.assertIsNone(info.actualException)
 
   def test_unexpected_exception(self, ) -> None:
     """
@@ -214,3 +190,12 @@ class TestExceptionInfo(UtilitiesTest):
     self.assertIsNone(info.actualException)
     self.assertIsNone(info.__expected_exception__)
     self.assertIn('Exited without exception as expected', info.report)
+
+  def test_invalid_expected_raises_typeerror(self) -> None:
+    """
+    Passing a value that is neither a BaseException subclass nor
+    instance must raise TypeError.
+    """
+    for bad in (42, 'string', object()):
+      with self.assertRaises(TypeError):
+        ExceptionInfo(bad)

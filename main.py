@@ -7,12 +7,14 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from types import FunctionType, MethodType, BuiltinFunctionType
 from types import ModuleType, MemberDescriptorType
 from types import WrapperDescriptorType, MethodWrapperType
 from types import MethodDescriptorType, ClassMethodDescriptorType
 from types import LambdaType, BuiltinMethodType
+
+from worktoy.utilities.combinatorics import Arrangements
 
 try:
   from pyperclip import copy
@@ -75,6 +77,23 @@ def tester00() -> int:
     print("""|  %64s  |""" % line)
   else:
     return 0
+
+
+def tester01() -> int:
+  """
+  Peaking at recursion thing
+  """
+
+  arrangements = Arrangements('Tom', 'Dick', 'Harry')
+
+  try:
+    peekHashable = arrangements.isHashable(_recursion=True)
+  except RecursionError:
+    peekHashable = None
+
+  print(peekHashable)
+
+  return 0
 
 
 if __name__ == '__main__':

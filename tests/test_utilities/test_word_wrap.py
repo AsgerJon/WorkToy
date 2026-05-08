@@ -88,3 +88,10 @@ class TestWordWrap(UtilitiesTest):
           wrapped = wordWrap(i, textFmt(*wordBag))
           for word in wordBag:
             self.assertIn(word, wrapped)
+
+  def test_explicit_newline_token_breaks_line(self) -> None:
+    """A literal '<br>' token forces a line break regardless of width."""
+    result = wordWrap(50, 'first half <br> second half')
+    lines = result.split('\n')
+    self.assertEqual(lines[0], 'first half')
+    self.assertEqual(lines[1], 'second half')

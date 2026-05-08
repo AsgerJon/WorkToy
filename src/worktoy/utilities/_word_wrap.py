@@ -1,35 +1,92 @@
-"""
-The 'worktoy.wordWrap' function receives an integer defining character
-width and any number of strings. The function then returns a list of
-strings containing the words from the strings received such that each
-entry in the list does not exceed the character width. """
+"""Word-wrap text to a fixed character width.
+
+The ``wordWrap`` function reflows the supplied text fragments so
+each output line stays within ``width`` characters, joining words
+with single spaces and respecting an explicit line-break token
+(default ``<br>``)."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Any, List
 
 
-def wordWrap(width: int, *textLines, **kwargs) -> str:
-  """The wordwrap function wraps the input text to a specified width."""
-  newLine = kwargs.get('newLine', '<br>').strip().lower()
+def _typeException(name: str, value: Any, *types: type) -> Exception:
+  """Build a ``TypeException``.
+
+  The import is deferred so ``utilities`` does not pull in
+  ``waitaminute`` at module load time.
+  """
+  from ..waitaminute import TypeException
+  return TypeException(name, value, *types)
+
+
+def wordWrap(width: int, *textLines: str, **kwargs) -> str:
+  """Wrap input strings to a maximum line width.
+
+  Every fragment in ``textLines`` is tokenized on whitespace and
+  reflowed. A line is closed (and a new one started) when
+
+  - the next word equals the line-break token (the token itself
+    is discarded), or
+  - appending the next word would push the current line past
+    ``width``.
+
+  Words longer than ``width`` are placed on their own line; no
+  attempt is made to break them.
+
+  Parameters
+  ----------
+  width : int
+      Maximum number of characters per output line.
+  *textLines : str
+      Text fragments to wrap. Each must be a ``str``.
+  **kwargs
+      newLine : str, optional
+          Token forcing a line break, matched
+          case-insensitively. Defaults to ``'<br>'``.
+
+  Returns
+  -------
+  str
+      The wrapped text, joined by ``os.linesep``.
+
+  Raises
+  ------
+  TypeException
+      If ``width`` is not an ``int`` or any fragment is not a
+      ``str``.
+
+  Examples
+  --------
+  >>> wordWrap(12, 'lorem ipsum dolor sit amet')
+  'lorem ipsum\\ndolor sit\\namet'
+  >>> wordWrap(20, 'first half <br> second half')
+  'first half\\nsecond half'
+  """
   if not isinstance(width, int):
-    from ..waitaminute import TypeException
-    raise TypeException('width', width, int)
-  words = []
-  for line in textLines:
-    if not isinstance(line, str):
-      from ..waitaminute import TypeException
-      raise TypeException('line', line, str)
-    words.extend(line.split())
-  lines = []
-  line = []
-  while words:
-    word = words.pop(0)
-    if word.lower() == newLine or len(' '.join([*line, word])) > width:
-      lines.append(' '.join(line))
-      line = []
-    line.append(word)
-  else:
-    lines.append(' '.join(line))
-  return str.join(os.linesep, lines)
+    raise _typeException('width', width, int)
+  newLine = kwargs.get('newLine', '<br>').strip().lower()
+  words: List[str] = []
+  for fragment in textLines:
+    if not isinstance(fragment, str):
+      raise _typeException('line', fragment, str)
+    words.extend(fragment.split())
+  lines: List[str] = []
+  current: List[str] = []
+  for word in words:
+    if word.lower() == newLine:
+      lines.append(' '.join(current))
+      current = []
+      continue
+    if current and len(' '.join([*current, word])) > width:
+      lines.append(' '.join(current))
+      current = [word]
+      continue
+    current.append(word)
+  lines.append(' '.join(current))
+  return os.linesep.join(lines)

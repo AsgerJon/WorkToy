@@ -1,7 +1,8 @@
-"""
-The 'unpack' function squeezes a tuple of arguments until no array like
-member remains.
-"""
+"""Recursive flattener for varargs.
+
+The ``unpack`` function expands every iterable in the positional
+arguments (other than ``str`` / ``bytes``) until none remain,
+producing a flat tuple."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -14,31 +15,42 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def unpack(*args: Any, **kwargs) -> tuple[Any, ...]:
-  """
-  Recursively unpacks iterables from positional arguments.
+  """Flatten nested iterables in positional arguments.
 
-  This function traverses the given positional arguments and flattens
-  any array-like values (iterables), except for str and bytes, which
-  are treated as atomic.
+  Iterables are expanded recursively; ``str`` and ``bytes`` are
+  treated as atomic and never split into their characters/bytes.
 
-  Supported keyword arguments:
+  Parameters
+  ----------
+  *args : Any
+      The values to unpack.
+  **kwargs
+      shallow : bool, optional
+          If ``True``, only the top level is expanded; nested
+          iterables are left intact. Defaults to ``False``.
+      strict : bool, optional
+          If ``True`` (default), raises when no iterable was found
+          among ``args``. If ``False``, the arguments are returned
+          unchanged in that case.
 
-  - shallow (bool, default False):
-    If True, only unpacks the first level of nested iterables.
+  Returns
+  -------
+  tuple
+      The flattened tuple.
 
-  - strict (bool, default True):
-    If True, raises ValueError if no iterable argument was found.
-    If False, returns arguments unchanged if no iterable is found.
+  Raises
+  ------
+  UnpackException
+      If ``strict`` is ``True`` and no iterable was supplied.
 
-  Args:
-    *args: Positional arguments to unpack.
-    **kwargs: Optional 'shallow' and 'strict' flags.
-
-  Returns:
-    tuple[Any, ...]: A flattened tuple of arguments.
-
-  Raises:
-    ValueError: If strict is True and no iterable was found.
+  Examples
+  --------
+  >>> unpack([1, 2], (3, [4, 5]))
+  (1, 2, 3, 4, 5)
+  >>> unpack([1, [2, 3]], shallow=True)
+  (1, [2, 3])
+  >>> unpack('abc', [1, 2])
+  ('abc', 1, 2)
   """
   if not args:
     if kwargs.get('strict', True):

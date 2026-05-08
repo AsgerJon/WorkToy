@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+#
+# AGPL-3.0 license
+# Copyright (c) 2026 Asger Jon Vistisen
+#
+
+# claude-safe: run claude inside a bubblewrap sandbox.
+#
+# What is visible to claude inside the sandbox:
+#   read-only:  /usr, /etc, /opt (system binaries, certs)
+#   read-write: the directory you launched from
+#   read-write: ~/.claude (claude's own state and auth)
+#   read-write: ~/.npm-global (where the claude CLI lives
+#               if installed via npm; harmless if absent)
+#
+# What is NOT visible to claude:
+#   the rest of $HOME, including .ssh, .gnupg, dotfiles,
+#   sibling project directories, Documents, Downloads,
+#   shell history, browser data, anything else under /home
+#
+# Network: full network access (claude needs the API).
+#
+# Usage: cd into a project, then run `claude-safe`.
+
+set -euo pipefail
+
+# Re-exec inside a fresh Alacritty window using a Claude-specific
+# config so plain Enter inserts a newline and Ctrl+Enter submits.
+# Skip if already inside the spawned instance.
+TOML="$HOME/.config/alacritty/claude.toml"
+if [ -z "${CLAUDE_SAFE_INNER:-}" ] && [ -f "$TOML" ]; then
+  SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+  exec env CLAUDE_SAFE_INNER=1 alacritty \
+    --config-file "$TOML" -e "$SELF" "$@"
+fi
+
+PROJECT="$(pwd)"
+USER_HOME="$HOME"
+NPM_BIN="${NPM_BIN:-$USER_HOME/.npm-global}"
+
+CLAUDE=$(command -v claude) || {
+  echo "claude not found in PATH" >&2
+  exit 1
+}
+
+EXTRA=()
+[ -d "$NPM_BIN" ] && EXTRA+=( --bind "$NPM_BIN" "$NPM_BIN" )
+[ -f "$USER_HOME/.claude.json" ] && EXTRA+=(
+  --bind "$USER_HOME/.claude.json" "$USER_HOME/.claude.json"
+)
+bwrap \
+  --ro-bind /usr /usr \
+  --ro-bind /etc /etc \
+  --ro-bind /opt /opt \
+  --symlink usr/lib /lib \
+  --symlink usr/lib64 /lib64 \
+  --symlink usr/bin /bin \
+  --symlink usr/sbin /sbin \
+  --proc /proc \
+  --dev /dev \
+  --tmpfs /tmp \
+  --tmpfs "$USER_HOME" \
+  --bind "$PROJECT" "$PROJECT" \
+  --bind "$USER_HOME/.claude" "$USER_HOME/.claude" \
+  "${EXTRA[@]}" \
+  --setenv HOME "$USER_HOME" \
+  --setenv USER "$(id -un)" \
+  --share-net \
+  --new-session \
+  --die-with-parent \
+  --chdir "$PROJECT" \
+  -- "$CLAUDE" "$@"
