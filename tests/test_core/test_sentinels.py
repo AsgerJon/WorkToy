@@ -9,12 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from . import CoreTest
-from worktoy.core.sentinels import DESC, \
-  THIS, \
-  OWNER, \
-  METACALL, \
-  WILDCARD, \
-  UN_HASHABLE
+from worktoy.core.sentinels import DESC, THIS, OWNER, METACALL, WILDCARD
 from worktoy.core.sentinels import DELETED
 from worktoy.core.sentinels._sentinel import _Sentinel  # NOQA
 
@@ -54,12 +49,3 @@ class TestSentinels(CoreTest):
     for sentinel in self.sentinels:
       self.assertEqual(str(sentinel), repr(sentinel))
       self.assertIsInstance(sentinel, _Sentinel)
-
-  def test_un_hashable(self) -> None:
-    """
-    This method tests the 'UN_HASHABLE' sentinel from the
-    'worktoy.core.sentinels._un_hashable' module.
-    """
-
-    with self.assertRaises(TypeError):
-      _ = UN_HASHABLE['breh']

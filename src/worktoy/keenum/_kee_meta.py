@@ -5,11 +5,10 @@ KeeMeta provides the metaclass for the 'worktoy.num' module.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, Any
 from collections.abc import Callable
 
 from ..core import MetaType
-from ..core.sentinels import UN_HASHABLE
 from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt
@@ -18,11 +17,13 @@ from ..waitaminute.keenum import KeeResolveError
 from . import KeeSpace as KSpace
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Iterator, Optional
+  from typing import TypeAlias, Iterator, Optional
 
   from . import KeeNum
 
   Bases: TypeAlias = tuple[type, ...]
+
+T = TypeVar('T')
 
 
 class KeeMetaMeta(MetaType):
@@ -53,11 +54,11 @@ class KeeMetaMeta(MetaType):
   will trigger the creation of a new 'KeeNum'-like class for that metaclass.
   """
 
-  __kee_num__: Optional[KeeMeta] = None
+  __kee_num__: Any = None
   keeNum: Field[KeeMeta] = Field()
 
   @keeNum.GET
-  def _getKeeNum(mcls, **kwargs) -> KeeMeta:  # noqa
+  def _getKeeNum(mcls, **kwargs) -> KeeMeta:  # noqa N805
     from . import _KeeBase
     if mcls.__kee_num__ is None:
       if kwargs.get('_recursion', False):
@@ -66,6 +67,7 @@ class KeeMetaMeta(MetaType):
       name = 'KeeNum' if mcls.__name__ == 'KeeMeta' else num
       numSpace = KSpace(mcls, name, (_KeeBase,), _root=True)
       numSpace['__root_class__'] = True
+      # noinspection PyTypeChecker
       num = mcls.__new__(mcls, name, (_KeeBase,), numSpace, _root=True)
       mcls.__kee_num__ = num
       return mcls._getKeeNum(_recursion=True, )
@@ -76,10 +78,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   """
   KeeMeta provides the metaclass for the 'worktoy.num' module.
   """
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  STATIC METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -104,7 +102,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   members: tuple[Any, ...] = Field()
   valueType: type = Field()
   namedMembers: dict[str, KeeMeta] = Field()
-  valuedMembers: dict[Any, KeeMeta] = Field()
+  valuedMembers: dict[Any, Any] = Field()
 
   #  Virtual Variables
   if TYPE_CHECKING:  # pragma: no cover
@@ -264,7 +262,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     else:
       cls.__valued_members__ = cache
       return
-    cls.__valued_members__ = UN_HASHABLE
+    cls.__valued_members__ = dict(__unhashable__=member.value, )
 
   # noinspection PyUnresolvedReferences
   @valuedMembers.GET  # PyCharm, wyd?
@@ -315,7 +313,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return KSpace(mcls, name, bases, **kw)
 
-  def __call__(cls: KeeMeta, *args: Any, **kwargs: Any) -> KeeMeta:
+  def __call__(cls: KeeMeta, *args: Any, **kwargs: Any) -> T:
     """
     Resolves a member, or instantiates one during class creation.
     """
@@ -404,7 +402,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __new__(mcls, name: str, bases: Bases, space: KSpace, **kw) -> KeeMeta:
+  def __new__(mcls, name: str, bases: Bases, space: KSpace, **kw) -> T:
     """Creates the 'KeeMeta' class."""
     if '_root' in kw:
       del kw['_root']
@@ -463,7 +461,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     if cls.valueType is int:
       if identifier is True or identifier is False:
         return NotImplemented
-    if cls.valuedMembers is UN_HASHABLE:
+    if '__unhashable__' in cls.valuedMembers:
       for member in cls:
         if member.value == identifier:
           return member
