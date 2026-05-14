@@ -1,0 +1,2560 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Collection of Utilities">
+      
+      
+        <meta name="author" content="Asger Jon Vistisen">
+      
+      
+        <link rel="canonical" href="https://worktoy.readthedocs.io/0.99.136/api/mcls/">
+      
+      
+        <link rel="prev" href="../desc/">
+      
+      
+        <link rel="next" href="../lorem_ipsum/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>mcls - worktoy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mcls" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="worktoy" class="md-header__button md-logo" aria-label="worktoy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            worktoy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              mcls
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/AsgerJon/WorkToy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AsgerJon/WorkToy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../utilities/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="worktoy" class="md-nav__button md-logo" aria-label="worktoy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    worktoy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/AsgerJon/WorkToy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AsgerJon/WorkToy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../waitaminute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    waitaminute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dispatch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dispatch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../desc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    desc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mcls
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mcls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.mcls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="mcls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AbstractNamespace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AbstractNamespace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getBases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getBases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.deepGetItem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deepGetItem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getHookListName" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getHookListName
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getHooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getHooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.classGetHooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        classGetHooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getMetaclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getMetaclass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getClassName" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getClassName
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getKwargs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getKwargs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getMRO" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getMRO
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.getMROSpace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getMROSpace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.addHook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        addHook
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.preCompile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        preCompile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.compile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractNamespace.postCompile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postCompile
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractMetaclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AbstractMetaclass
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="AbstractMetaclass">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractMetaclass--the-following-hooks-allow-classes-to-define-how-they-are-printed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The following hooks allow classes to define how they are printed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractMetaclass--the-following-hooks-relate-to-class-level-iteration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The following hooks relate to class-level iteration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractMetaclass.getNamespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getNamespace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.AbstractMetaclass.getNamespaceClass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getNamespaceClass
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseSpace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaseSpace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BaseSpace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseSpace.addOverload" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        addOverload
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseSpace.getOverloads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getOverloads
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseSpace.addFallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        addFallback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseSpace.getFallbacks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getFallbacks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseSpace.addFinalizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        addFinalizer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseSpace.getFinalizers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getFinalizers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseMeta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaseMeta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.mcls.BaseObject" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaseObject
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lorem_ipsum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lorem_ipsum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../keenum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    keenum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ezdata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ezdata
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_io/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    work_io
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    work_test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mcls">mcls<a class="headerlink" href="#mcls" title="Permanent link">&para;</a></h1>
+<p>The metaclass framework. <code>AbstractMetaclass</code>, <code>AbstractNamespace</code>,
+<code>BaseMeta</code>, <code>BaseSpace</code>, and <code>BaseObject</code> (the common base class
+users inherit from to get overload + AttriBox support).</p>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="worktoy.mcls" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">mcls</span>
+
+
+<a href="#worktoy.mcls" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>The 'worktoy.mcls' module provides the base custom metaclass and
+namespace uses across the 'worktoy' library. The pattern used is for the
+namespace class to implement a method called 'compile' which decides the
+actual namespace to be used in the class creation based on the code found
+during execution of the class body.</p>
+<p>The metaclass instantiates the namespace class and returns the created
+namespace object from the '<strong>prepare</strong>' method. Upon completion of the
+class body execution this namespace object is passed back to the metaclass
+in the '<strong>new</strong>' method. The namespace object is required to implement a
+method called 'compile' which returns an instance of 'dict'. Next the
+metaclass validates the 'dict' object and finally passes it to the
+'<strong>new</strong>' method on type. Before returning the created class,
+the metaclass checks each baseclass for the presence of a method called
+'<strong>subclasshook</strong>'. If it exists, the method is called with the created
+class object allowing the baseclass to modify or even reject the class.
+Finally, the metaclass returns the created class object.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.mcls.AbstractNamespace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">AbstractNamespace</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AbstractNamespace</span><span class="p">(</span><span class="n">mcls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="n">Base</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="dict">dict</span></code></p>
+
+
+
+        <p>AbstractNamespace defines the custom execution environment used by
+AbstractMetaclass during class construction. It provides a controlled
+and extensible context for evaluating class bodies, enabling advanced
+metaprogramming behavior.</p>
+<p>The core feature of AbstractNamespace is its support for modular
+hook-based behavior. Hooks are instances of subclasses of AbstractHook,
+declared directly within the body of the namespace class. Upon
+declaration, each hook registers itself with the namespace via the
+descriptor protocol.</p>
+<p>These hooks allow interception and transformation of key events during
+class construction, including symbol access, assignment, and final
+namespace compilation. For details on available hook methods and their
+intended usage, refer to the AbstractHook documentation.</p>
+<p>This design allows complex functionality, such as decorator-based
+overload resolution and placeholder replacement, to be cleanly
+separated into reusable components. By defining a namespace subclass
+with the desired combination of hooks, users can tailor the behavior of
+class construction without modifying the core metaclass logic.</p>
+
+        <p>Please note that setting the '_strictMRO' keyword argument to 'False'
+allows inconsistent MROs. In such cases, it is the responsibility of
+the caller to ensure consistency by alternative means.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getBases" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getBases</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.getBases" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getBases</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Bases</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the base classes of the class under creation.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.deepGetItem" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">deepGetItem</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.deepGetItem" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">deepGetItem</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Looks up the given key in the self. If not found, then each base class
+is searched.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getHookListName" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getHookListName</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.mcls.AbstractNamespace.getHookListName" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getHookListName</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Getter-function for the name of the hook list.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getHooks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getHooks</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.getHooks" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getHooks</span><span class="p">(</span><span class="n">owner</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">AbstractSpaceHook</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Getter-function for the AbstractHook classes.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.classGetHooks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">classGetHooks</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.mcls.AbstractNamespace.classGetHooks" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">classGetHooks</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Hooks</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the hooks registered on this class or baseclasses.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getMetaclass" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getMetaclass</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.getMetaclass" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getMetaclass</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">type</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the metaclass.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getClassName" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getClassName</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.getClassName" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getClassName</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the name of the class.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getKwargs" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getKwargs</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.getKwargs" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getKwargs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the keyword arguments passed to the class.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getMRO" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getMRO</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.getMRO" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getMRO</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the method resolution order of the class.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.getMROSpace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getMROSpace</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.getMROSpace" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getMROSpace</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MROSpace</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Combines the namespaces of all bases in the MRO into a single
+'dict' object with each value being a list of all values provided.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.addHook" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">addHook</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.mcls.AbstractNamespace.addHook" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">addHook</span><span class="p">(</span><span class="n">hook</span><span class="p">:</span> <span class="n">AbstractSpaceHook</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Adds a hook to the list of hooks.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.preCompile" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">preCompile</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.preCompile" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">preCompile</span><span class="p">(</span><span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The return value from this method is passed to the compile method.
+Subclasses can implement this method to provide special objects at
+particular names in the namespace. By default, an empty dictionary is
+returned.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.compile" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compile</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.compile" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compile</span><span class="p">(</span><span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>This method is responsible for building the final namespace object.
+Subclasses may reimplement preCompile or postCompile as needed,
+but must not reimplement this method.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractNamespace.postCompile" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">postCompile</span>
+
+
+<a href="#worktoy.mcls.AbstractNamespace.postCompile" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">postCompile</span><span class="p">(</span><span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The object returned from this method is passed to the <strong>new</strong>
+method in the owning metaclass. By default, this method returns dict
+object created by the compile method after performing certain
+validations. Subclasses can implement this method to provide further
+processing of the compiled object.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.mcls.AbstractMetaclass" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">AbstractMetaclass</span>
+
+
+<a href="#worktoy.mcls.AbstractMetaclass" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AbstractMetaclass</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="n">Base</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="n">AbstractNamespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="MetaType (worktoy.core.MetaType)" href="../core/#worktoy.core.MetaType">MetaType</a></code></p>
+
+
+
+        <p>Abstract base for custom metaclasses that separates concerns between
+class construction and class behavior.</p>
+<p>This design delegates the initial class namespace to a custom object
+returned by '<strong>prepare</strong>', while keeping class semantics within the
+metaclass itself.</p>
+<p>The namespace object may define a method called 'compile()', which
+should return the finalized dictionary to be passed to 'type.<strong>new</strong>'.</p>
+<p>This separation enables:
+- Customizing how the class body is assembled without affecting the
+  resulting class behavior.
+- Modifying what it means to be a class, independently of how the
+  class body is constructed.</p>
+<ul>
+<li>CUSTOM NAMESPACE COMPILATION -</li>
+</ul>
+<p>This module also provides an 'AbstractNamespace' class intended to be
+used with '<strong>prepare</strong>'. It defines a 'compile()' method and an
+'<strong>init</strong>()' signature compatible with the arguments passed to
+'<strong>prepare</strong>'.</p>
+<p>from . import AbstractNamespace as ASpace  # For brevity</p>
+<p>Specifically, '<strong>prepare</strong>' is defined as:
+  def <strong>prepare</strong>(mcls, name: str, bases: Base, **kwargs) -&gt; ASpace</p>
+<p>And 'ASpace' ('AbstractNamespace') implements:
+  def <strong>init</strong>(self, mcls: type, name: str, bases: Base, **kwargs)</p>
+<p>This allows the namespace object to be instantiated with full context
+about the class being defined, while remaining isolated from the
+behavior of the resulting class itself. For more information about the
+class body execution flow, see the 'AbstractNamespace' class
+documentation.</p>
+<ul>
+<li>CUSTOM CLASS CREATION -</li>
+</ul>
+<p>After assembly and compilation of the namespace, the metaclass itself
+takes responsibility for validating and finalizing the class.</p>
+<p>This includes a pass over the namespace via the '_validateNamespace'
+static method. It performs checks for common mistakes such as typos
+in special method names—for example:
+  - '<strong>set_item</strong>' instead of '<strong>setitem</strong>'
+  - '<strong>get_attr</strong>' instead of '<strong>getattr</strong>'
+  - '<strong>setname</strong>' instead of '<strong>set_name</strong>'</p>
+<p>If any such names are found, a 'QuestionableSyntax' error is raised
+to prompt correction.</p>
+<ul>
+<li>'<strong>del</strong>' or '<strong>delete</strong>' ? -
+The descriptor protocol allows classes to define what happens when an
+attribute is deleted from an instance. This is handled by the '<strong>delete</strong>'
+method. It is much less common than '<strong>get</strong>' and '<strong>set</strong>', which govern
+attribute access and assignment, respectively.</li>
+</ul>
+<p>Because of the naming similarity to '<strong>del</strong>'—a special method for object
+finalization—it's easy to accidentally implement '<strong>del</strong>' when one meant
+'<strong>delete</strong>'.</p>
+<p>Bugs caused by incorrect use of <code>__del__</code>—especially when accidentally
+used instead of <code>__delete__</code>—are notoriously difficult to trace. Since
+<code>__del__</code> is called only when the object is garbage collected (which may
+be delayed or never happen), the consequences of the mistake are often
+deferred until long after the original action that should have triggered
+cleanup. This makes it extremely hard to correlate the broken behavior
+with its source. Worse still, because <code>__del__</code> doesn’t raise errors if
+used in the wrong context, failures are often silent, leading to
+inconsistent state, memory leaks, or subtle bugs in object lifecycles that
+resist even thorough debugging.</p>
+<p>For the above reasons, the 'worktoy' library will raise 'SyntaxError'
+whenever '<strong>del</strong>' is found in the namespace. If an implementation of
+'<strong>del</strong>' is actually intended, the class creation must be invoked
+with the keyword argument 'trustMeBro=True'.</p>
+<ul>
+<li>Standard Methods -
+While not implemented in this metaclass, the following pattern allows
+sub-metaclasses to implement automatically generated methods in certain
+cases. The 'worktoy.ezdata.EZMeta' dataclass implementation exemplifies
+this pattern. Derived classes can define properties directly in the
+class body, and 'EZMeta' will automatically generate the necessary
+methods, such as '<strong>init</strong>', allowing for instantiation with either
+positional, keyword or even mixed arguments.</li>
+</ul>
+<p>The sub-metaclass would implement factories as static methods:</p>
+<p>from types import FunctionType as Func</p>
+<p>Bases: TypeAlias = tuple[type, ...]
+Space: TypeAlias = dict[str, Any]</p>
+<p>@staticmethod
+def <strong>init_factory</strong>(name: str, bases: Bases, space: Space, **kw) -&gt; Func</p>
+<p>@staticmethod
+def <strong>new_factory</strong>(name: str, bases: Bases, space: Space, **kw) -&gt; Func</p>
+<p>@staticmethod
+def <strong>str_factory</strong>(name: str, bases: Bases, space: Space, **kw) -&gt; Func</p>
+<p>Finally, the sub-metaclass would have to implement:</p>
+<p>@staticmethod
+def autoGenMethods(name: str, bases: Bases, space: Space, **kw) -&gt; Space:
+  This method would be invoked after the namespace has been validated
+  and before the class is created. It would return a modified namespace
+  with the necessary methods added.</p>
+<ul>
+<li>
+<p>Notifying Baseclasses -
+Having validated the namespace, the metaclass falls back to type.<strong>new</strong>
+and returns the newly created class. Finally, this class arrives in the
+'<strong>init</strong>' method where the metaclass notifies any baseclass that
+implements the '<strong>subclasshook</strong>' method of the class creation. This
+marks the end of the class creation process.</p>
+</li>
+<li>
+<p>CUSTOM CLASS BEHAVIOR -</p>
+</li>
+</ul>
+<p>Once a class has been created by the metaclass system, it may define
+its own runtime behavior by implementing special methods prefixed with
+<code>__class_</code>. These allow the class object itself to participate directly
+in common operations such as being called, iterated, or printed.</p>
+<p>These methods resemble <code>__class_getitem__</code> from standard Python but are
+more general. Each of them overrides a specific class-level behavior.</p>
+<p>The following hooks relate to common class-level operations:</p>
+<ul>
+<li>
+<p><strong>class_call</strong>(keeNum, <em>args, </em>*kwargs) -&gt; Any
+  Called when the class object is called like a function. Overrides the
+  default behavior of constructing instances. Can be used to implement
+  singletons, factories, registries, etc.</p>
+</li>
+<li>
+<p><strong>class_instancecheck</strong>(keeNum, obj: Any) -&gt; bool
+  Called during isinstance(obj, keeNum). Controls how instance membership
+  is determined. Supersedes metaclass-level <strong>instancecheck</strong>.</p>
+</li>
+<li>
+<p><strong>class_subclasscheck</strong>(keeNum, sub: type) -&gt; bool
+  Called during issubclass(sub, keeNum). Controls dynamic subclass logic.
+  Allows behavior similar to abstract base classes or trait systems.</p>
+</li>
+</ul>
+<h4 id="worktoy.mcls.AbstractMetaclass--the-following-hooks-allow-classes-to-define-how-they-are-printed">The following hooks allow classes to define how they are printed<a class="headerlink" href="#worktoy.mcls.AbstractMetaclass--the-following-hooks-allow-classes-to-define-how-they-are-printed" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p><strong>class_str</strong>(keeNum) -&gt; str
+  Called when str(keeNum) is invoked. Provides human-readable string form
+  for dynamically generated or aliased classes.</p>
+</li>
+<li>
+<p><strong>class_repr</strong>(keeNum) -&gt; str
+  Called when repr(keeNum) is invoked. Allows classes to override their
+  debug representation.</p>
+</li>
+</ul>
+<h4 id="worktoy.mcls.AbstractMetaclass--the-following-hooks-relate-to-class-level-iteration">The following hooks relate to class-level iteration<a class="headerlink" href="#worktoy.mcls.AbstractMetaclass--the-following-hooks-relate-to-class-level-iteration" title="Permanent link">&para;</a></h4>
+<ul>
+<li>
+<p><strong>class_iter</strong>(keeNum) -&gt; Iterator
+  Called when iter(keeNum) is invoked. Makes the class object iterable.
+  Useful for registry-style classes, enums, and similar patterns.</p>
+</li>
+<li>
+<p><strong>class_next</strong>(keeNum) -&gt; Any
+  Called when next(keeNum) is invoked. Meaningful only if the class itself
+  is its own iterator as returned by <strong>class_iter</strong>.</p>
+</li>
+<li>
+<p><strong>class_bool</strong>(keeNum) -&gt; bool
+  Called when bool(keeNum) is invoked. Allows classes to define their truth
+  value. By default, every class is 'truthy'.</p>
+</li>
+<li>
+<p><strong>class_contains</strong>(keeNum, item: Any) -&gt; bool
+  Allows classes to define membership checks on the class level. By
+  default, this checks if the item is an instance of the class itself.</p>
+</li>
+<li>
+<p><strong>class_len</strong>(keeNum) -&gt; int
+  Called when len(keeNum) is invoked.</p>
+</li>
+<li>
+<p><strong>class_hash</strong>(keeNum) -&gt; int
+  Called when hash(keeNum) is invoked. Allows classes to define their own
+  hash value. Defaults to:
+  mcls = type(keeNum)  # The metaclass of the class
+  baseNames = [b.<strong>name</strong> for b in keeNum.<strong>bases</strong>]
+  return hash((keeNum.<strong>name</strong>, *baseNames, mcls.<strong>name</strong>))
+  #  PLEASE NOTE: The 'overload' protocol provided by the 'worktoy'
+  library expects this exact hash value. Reimplementing the hash value
+  will make the dispatching of overloads unable to 'fast' recognize the
+  class.</p>
+</li>
+<li>
+<p><strong>class_eq</strong>(keeNum, other: Any) -&gt; bool
+  Called to allow classes to equal each other. Please note that this
+  inclusion is for completeness more than anything else. The '<strong>eq</strong>' in
+  this metaclass does look for '<strong>class_eq</strong>' on the class, but falls
+  back to <strong>class_hash</strong>.</p>
+</li>
+<li>
+<p><strong>class_init</strong>(...)
+  Allows classes to define custom initialization logic that runs after
+  the class body has executed.</p>
+</li>
+</ul>
+<p>The following hooks allows dictionary-like access to the class.</p>
+<ul>
+<li>
+<p><strong>class_getitem</strong>(keeNum, item: Any) -&gt; Any
+  Called when keeNum[item] is invoked. Please note that this is already
+  implemented in Python 3.7+ as a standard class method. It is listed
+  here only for completeness. This means that this metaclass does not
+  need to implement '<strong>getitem</strong>' to look for the '<strong>class_getitem</strong>' on
+  the class itself. In fact, the <strong>getitem</strong> on the metaclass would only
+  ever be invoked if Foo['bar'] is invoked on a class Foo that does not
+  implement '<strong>class_getitem</strong>'.</p>
+</li>
+<li>
+<p><strong>class_setitem</strong>(keeNum, item: Any, value: Any) -&gt; None
+  Called when keeNum[item] = value is invoked.</p>
+</li>
+<li>
+<p><strong>class_delitem</strong>(keeNum, item: Any) -&gt; None
+  Called when del keeNum[item] is invoked.</p>
+</li>
+<li>
+<p>Class Attribute Hooks -</p>
+</li>
+<li>
+<p><strong>class_getattr</strong>(name: str, exception: Exception) -&gt; Any
+  If a non-existing attribute is attempted accessed on a class object,
+  the '<strong>getattr</strong>' method on the metaclass is invoked. This method
+  allows the class itself to handle this case. It is strongly advised
+  that this method, and '<strong>getattr</strong>' in general, raises an
+  AttributeError unless the key passed to it has a valid and sensible
+  meaning in the context.</p>
+</li>
+</ul>
+<p>The following hooks allow classes to define custom behavior for
+attribute assignment and deletion at the class level.</p>
+<ul>
+<li><strong>class_setattr</strong>(name: str, value: Any) -&gt; None</li>
+<li><strong>class_delattr</strong>(name: str) -&gt; None</li>
+</ul>
+<p>The following hooks would be relevant only for nested classes that
+implement the descriptor protocol. These class-level descriptor hooks
+remain unimplemented due to unresolved hazards in Python's class
+construction behavior. In particular, referencing other class objects
+while a metaclass is "awake" (i.e., inside its <strong>prepare</strong>, <strong>new</strong>,
+or <strong>init</strong>) can lead to context leakage. Python may interpret unrelated
+class references within the scope of the active metaclass, sometimes
+routing calls to the wrong metaclass entirely.</p>
+<ul>
+<li><strong>class_get</strong>(keeNum, instance: Any, owner: type) -&gt; Any</li>
+<li><strong>class_set</strong>(keeNum, instance: Any, value: Any) -&gt; None</li>
+<li><strong>class_delete</strong>(keeNum, instance: Any) -&gt; None</li>
+<li><strong>class_set_name</strong>(keeNum, owner: type, name: str) -&gt; None</li>
+</ul>
+<p>Finally, the following hooks are logically meaningless:</p>
+<ul>
+<li>
+<p><strong>class_new</strong>(...)
+  This method would be entirely meaningless as it refers to a hook that
+  runs before the class is created.</p>
+</li>
+<li>
+<p><strong>class_del</strong>(...)
+  This remains unimplemented for the same reason as why the namespace
+  validator described above raises a SyntaxError when it encounters
+  '<strong>del</strong>' in the namespace.</p>
+</li>
+<li>
+<p><strong>class_getattribute</strong>(...)
+  [REDACTED: Cognito Hazard]</p>
+</li>
+</ul>
+
+        <p>Finalize the class. Runs 'type.<strong>init</strong>' first so the class is
+fully built (including '<strong>set_name</strong>' and '<strong>init_subclass</strong>'),
+then invokes the optional '<strong>class_init</strong>' hook and the subclass
+notification.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractMetaclass.getNamespace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getNamespace</span>
+
+
+<a href="#worktoy.mcls.AbstractMetaclass.getNamespace" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getNamespace</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ASpace</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the namespace object for the class.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.AbstractMetaclass.getNamespaceClass" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getNamespaceClass</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.mcls.AbstractMetaclass.getNamespaceClass" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getNamespaceClass</span><span class="p">(</span><span class="n">mcls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the namespace class for the class.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.mcls.BaseSpace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">BaseSpace</span>
+
+
+<a href="#worktoy.mcls.BaseSpace" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">BaseSpace</span><span class="p">(</span><span class="n">mcls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="n">Bases</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="AbstractNamespace (worktoy.mcls.AbstractNamespace)" href="#worktoy.mcls.AbstractNamespace">AbstractNamespace</a></code></p>
+
+
+
+        <p>BaseSpace is the namespace used by BaseMeta. It enables function
+overloading and related features via hook registration.</p>
+<p>Classes defined using this namespace support method overloading through
+hooks installed automatically in the class body. These hooks handle
+overload collection, dispatch construction, and support for 'THIS' as a
+placeholder during class creation.</p>
+<p>The overload mechanism and other behavior are defined in
+<code>worktoy.mcls.hooks</code>. This namespace is returned from BaseMeta.<strong>prepare</strong>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.BaseSpace.addOverload" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">addOverload</span>
+
+
+<a href="#worktoy.mcls.BaseSpace.addOverload" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">addOverload</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">TypeSig</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>This method sets the mapping between the given type signature and
+function object to the overloaded name.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the overloaded function.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>sig</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="TypeSig (worktoy.dispatch.TypeSig)" href="../dispatch/#worktoy.dispatch.TypeSig">TypeSig</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The type signature for the overload.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>func</code>
+            </td>
+            <td>
+                  <code><span title="typing.Callable">Callable</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The function object to be dispatched when given arguments matching
+the given type signature.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.BaseSpace.getOverloads" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getOverloads</span>
+
+
+<a href="#worktoy.mcls.BaseSpace.getOverloads" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getOverloads</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">OverloadMap</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>This method returns dictionary mapping names of overloaded function to
+the dictionary mapping type signature to function object assigned to
+the overload at the given name.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>OverloadMap</code></td>            <td>
+                  <code>TypeAlias = dict[str, dict[TypeSig, Callable]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping from overloaded name to its mapping from type signature to
+function object.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.BaseSpace.addFallback" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">addFallback</span>
+
+
+<a href="#worktoy.mcls.BaseSpace.addFallback" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">addFallback</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Sets the fallback function for the overloaded name to the given
+function object. These fallbacks are dispatched by the overload
+system when no other assigned overload matches the type signature of
+given arguments.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the overloaded function for which to set the fallback.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>func</code>
+            </td>
+            <td>
+                  <code><span title="typing.Callable">Callable</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The function object to be dispatched when given arguments that do
+not match any of the type signatures assigned to the overload at the
+given name.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.BaseSpace.getFallbacks" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getFallbacks</span>
+
+
+<a href="#worktoy.mcls.BaseSpace.getFallbacks" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getFallbacks</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>This method returns the mappings from overloaded names to assigned
+fallback functions.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Callable">Callable</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping from overloaded name to its assigned fallback function.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.BaseSpace.addFinalizer" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">addFinalizer</span>
+
+
+<a href="#worktoy.mcls.BaseSpace.addFinalizer" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">addFinalizer</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Sets the finalizer function for the overloaded name to the given
+function object. Finalizer functions are dispatched by the overload
+system as a final step by the overload system. Please note that these
+finalizers run even when the overloaded system encountered an error.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the overloaded function for which to set the finalizer.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>func</code>
+            </td>
+            <td>
+                  <code><span title="typing.Callable">Callable</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The function object to be dispatched as a final step by the overload
+system when dispatching the overload at the given name.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.mcls.BaseSpace.getFinalizers" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getFinalizers</span>
+
+
+<a href="#worktoy.mcls.BaseSpace.getFinalizers" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getFinalizers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>This method returns the mappings from overloaded names to assigned
+finalizer functions.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Callable">Callable</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping from overloaded name to its assigned finalizer function.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.mcls.BaseMeta" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">BaseMeta</span>
+
+
+<a href="#worktoy.mcls.BaseMeta" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">BaseMeta</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="n">Base</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="n">AbstractNamespace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="AbstractMetaclass (worktoy.mcls.AbstractMetaclass)" href="#worktoy.mcls.AbstractMetaclass">AbstractMetaclass</a></code></p>
+
+
+
+        <p>BaseMeta is a simple extension of AbstractMetaclass that overrides
+  the default class body namespace with <code>BaseSpace</code>, a custom namespace
+  implementation.</p>
+<p>## Purpose
+6
+  This metaclass does not introduce any behavior of its own beyond
+  enabling namespace hooks defined in <code>BaseSpace</code>, such as <code>OverloadHook</code>,
+  <code>PreClassHook</code>, <code>NameHook</code>, and <code>ReservedNameHook</code>.</p>
+<p>It serves as a ready-to-use entry point for classes that require
+  hook-driven behavior during class construction without writing a custom
+  metaclass.</p>
+<p>## Example</p>
+<div class="highlight"><pre><span></span><code>  class MyClass(metaclass=BaseMeta):
+    ...
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.mcls.BaseObject" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">BaseObject</span>
+
+
+<a href="#worktoy.mcls.BaseObject" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">BaseObject</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="Object (worktoy.core.Object)" href="../core/#worktoy.core.Object">Object</a></code></p>
+
+
+
+        <p>BaseObject combines the core functionality of Object with the
+hook-based metaclass behavior of BaseMeta.</p>
+<p>From Object, it inherits robust constructor handling, controlled
+descriptor mutation, and context-aware access to instance and owner
+information. From BaseMeta, it gains support for function overloading
+and other hook-based class construction features via BaseSpace.</p>
+<p>Subclass this when you want both: sane, safe object semantics and
+overload-aware metaclass support.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "toc.integrate", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
