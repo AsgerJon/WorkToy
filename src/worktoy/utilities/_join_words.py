@@ -1,8 +1,8 @@
 """Join words into a human-readable list string.
 
-The ``joinWords`` function combines a sequence of strings into a
+The 'joinWords' function combines a sequence of strings into a
 single phrase using commas and a final separator. By default the
-final two items are joined with ``and``; pass ``sep='or'`` (or any
+final two items are joined with 'and'; pass 'sep='or'' (or any
 other connector) to change the trailing separator."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
@@ -10,27 +10,35 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from . import unpack
+
 if TYPE_CHECKING:  # pragma: no cover
   pass
 
 
-def joinWords(*words: str, **kwargs) -> str:
+def joinWords(*words, **kwargs) -> str:
   """Join words with commas and a trailing separator.
+
+  Iterable arguments (other than 'str' and 'bytes') are flattened
+  recursively via 'unpack' before joining, so any mix of plain
+  words, lists, and tuples is accepted in source order.
 
   Parameters
   ----------
-  *words : str
-      The words to join. Passing a single ``list`` or ``tuple``
-      is treated as if its elements had been passed as varargs.
+  *words
+      The words to join. Any 'list' or 'tuple' among the arguments
+      is flattened into the surrounding sequence; nesting is
+      collapsed all the way down. 'str' and 'bytes' are treated as
+      atomic.
   **kwargs
       sep : str, optional
-          Connector before the final word. Defaults to
-          ``'and'``; pass ``'or'`` for disjunctive lists.
+          Connector before the final word. Defaults to 'and'; pass
+          'or' for disjunctive lists.
 
   Returns
   -------
   str
-      The joined phrase, or ``''`` for an empty input.
+      The joined phrase, or '' for an empty input.
 
   Examples
   --------
@@ -40,14 +48,16 @@ def joinWords(*words: str, **kwargs) -> str:
   'red, green and blue'
   >>> joinWords('tea', 'coffee', sep='or')
   'tea or coffee'
+  >>> joinWords('Tom', ['Dick', 'Harry'])
+  'Tom, Dick and Harry'
   """
+  sep = kwargs.get('sep', 'and')
+  words = unpack(*words, strict=False)
   if not words:
     return ''
-  sep = kwargs.get('sep', 'and')
   if len(words) == 1:
-    if isinstance(words[0], (list, tuple)):
-      return joinWords(*words[0])
     return str(words[0])
   if len(words) == 2:
     return '%s %s %s' % (words[0], sep, words[1])
-  return joinWords(', '.join(words[:-1]), words[-1])
+  head = ', '.join(str(w) for w in words[:-1])
+  return '%s %s %s' % (head, sep, words[-1])

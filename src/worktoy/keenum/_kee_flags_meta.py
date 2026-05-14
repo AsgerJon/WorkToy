@@ -92,7 +92,6 @@ class KeeFlagsMeta(BaseMeta):
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kw) -> KFSpace:
     """Replaces the KeeSpace with KeeFlagsSpace"""
-    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return KFSpace(mcls, name, bases, **kw)
 
   def __new__(mcls, name: str, bases: Bases, space: KFSpace, **kw) -> Self:

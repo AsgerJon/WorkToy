@@ -1,9 +1,9 @@
-"""Validator type for well-formed ``slice`` objects.
+"""Validator type for well-formed 'slice' objects.
 
-``ValidSlice`` is an un-instantiable class whose ``isinstance``
-check returns ``True`` only for ``slice`` objects whose ``start``,
-``stop``, and ``step`` are ``None``, ``int``, or values supporting
-``__index__``."""
+'ValidSlice' is an un-instantiable class whose 'isinstance'
+check returns 'True' only for 'slice' objects whose 'start',
+'stop', and 'step' are 'None', 'int', or values supporting
+'__index__'."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class _MetaSlice(type):
-  """Metaclass implementing ``ValidSlice``'s isinstance hook."""
+  """Metaclass implementing 'ValidSlice''s isinstance hook."""
 
   def __instancecheck__(self, instance: Any) -> bool:
     if not isinstance(instance, slice):
@@ -59,16 +59,16 @@ class _MetaSlice(type):
 
 
 class ValidSlice(metaclass=_MetaSlice):
-  """Un-instantiable validator for ``slice`` objects.
+  """Un-instantiable validator for 'slice' objects.
 
-  The built-in ``slice`` constructor accepts arbitrary positional
+  The built-in 'slice' constructor accepts arbitrary positional
   arguments and only complains at usage time, when CPython tries to
-  call ``__index__`` on each component. ``ValidSlice`` short-circuits
-  that lazy check: ``isinstance(s, ValidSlice)`` is ``True`` iff
-  every component of ``s`` is ``None``, an ``int``, or an object
-  whose type defines ``__index__``.
+  call '__index__' on each component. 'ValidSlice' short-circuits
+  that lazy check: 'isinstance(s, ValidSlice)' is 'True' iff
+  every component of 's' is 'None', an 'int', or an object
+  whose type defines '__index__'.
 
-  Instantiating ``ValidSlice`` raises ``TypeError``; the class is a
+  Instantiating 'ValidSlice' raises 'TypeError'; the class is a
   pure type-level predicate.
 
   Examples

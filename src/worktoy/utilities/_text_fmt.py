@@ -1,10 +1,10 @@
 """Whitespace-collapsing formatter for multi-line string literals.
 
-The ``textFmt`` function exists because Python multi-line string
+The 'textFmt' function exists because Python multi-line string
 literals preserve every newline and indent verbatim, which is
-almost never what an error message or report wants. ``textFmt``
+almost never what an error message or report wants. 'textFmt'
 collapses runs of whitespace into single spaces, with explicit
-``<br>`` and ``<tab>`` tokens for the few places real line breaks
+'<br>' and '<tab>' tokens for the few places real line breaks
 or indentation are needed."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -18,29 +18,28 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def textFmt(*args: Any, **kwargs: Any) -> str:
-  """Collapse whitespace and honor explicit ``<br>``/``<tab>`` tokens.
+  """Collapse whitespace and honor explicit '<br>'/'<tab>' tokens.
 
-  Joins ``args`` with single spaces, replaces any run of
+  Joins 'args' with single spaces, replaces any run of
   whitespace (including embedded newlines from triple-quoted
-  literals) with a single space, then expands ``<br>`` to a
-  newline and ``<tab>`` to one indentation step.
+  literals) with a single space, then expands '<br>' to a
+  newline and '<tab>' to one indentation step.
 
   Parameters
   ----------
   *args : Any
       Strings to format. Non-string arguments are converted via
-      ``str(arg)``.
+      'str(arg)'.
   **kwargs
       newLineToken : str, optional
-          Token marking a desired line break. Defaults to
-          ``'<br>'``.
+          Token marking a desired line break. Defaults to '<br>'.
       tabToken : str, optional
-          Token marking a desired indent. Defaults to ``'<tab>'``.
+          Token marking a desired indent. Defaults to '<tab>'.
       newLineSymbol : str, optional
-          Replacement for ``newLineToken`` in the output. Defaults
-          to ``os.linesep``.
+          Replacement for 'newLineToken' in the output. Defaults
+          to 'os.linesep'.
       indentSymbol : str, optional
-          Replacement for ``tabToken`` in the output. Defaults to
+          Replacement for 'tabToken' in the output. Defaults to
           two spaces.
 
   Returns
@@ -63,9 +62,8 @@ def textFmt(*args: Any, **kwargs: Any) -> str:
         words.append(arg)
     else:
       words.append(str(arg))
-  else:
-    if not words:
-      return ''
+  if not words:
+    return ''
   #  Specify tokens and symbols
   nLIn = kwargs.get('newLineToken', '<br>')
   tabIn = kwargs.get('tabToken', '<tab>')

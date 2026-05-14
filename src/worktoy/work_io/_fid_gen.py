@@ -8,7 +8,7 @@ import os
 from typing import TYPE_CHECKING
 
 from ..dispatch import overload
-from ..desc import Field
+from ..desc import Field, SymbolicName
 from ..mcls import BaseObject
 from ..utilities import maybe, stringList
 from ..waitaminute import TypeException
@@ -60,21 +60,31 @@ class FidGen(BaseObject):
     """
     return maybe(self.__generated_names__, [])
 
+  @staticmethod
+  def _toWords(name: str) -> tuple:
+    """
+    Split a name into component words by uppercase boundaries and by
+    explicit separators ('_', '-'). Used to feed 'SymbolicName' so the
+    same FidGen accepts PascalCase, camelCase, snake_case, kebab-case
+    or already-split lowercase names without producing collisions like
+    'foo__bar' from 'foo_bar'.
+    """
+    chars = []
+    for i, char in enumerate(name):
+      if char in '_-':
+        chars.append(' ')
+        continue
+      if i and char.isupper():
+        chars.append(' ')
+      chars.append(char)
+    return tuple(''.join(chars).split())
+
   def _createFileSpec(self) -> None:
     """
     Creator-function for the file specification.
     """
     baseName = maybe(self.__base_name__, type(self).__name__, )
-    chars = []
-    for i, char in enumerate(baseName):
-      if char.upper() == char:
-        if i:
-          chars.append('_%s' % char.lower())
-          continue
-        chars.append(char.lower())
-        continue
-      chars.append(char)
-    snakeName = ''.join(chars)
+    snakeName = SymbolicName(*self._toWords(baseName)).snake
     spec = """%s%%03d.%s""" % (snakeName, self.fileExtension)
     self.__file_spec__ = spec
 
@@ -159,7 +169,7 @@ class FidGen(BaseObject):
     argDir, posArgs = self._findDirectory(*posArgs)
     argExt, posArgs = self._findFileExtension(*posArgs)
     for arg in posArgs:
-      self.baseName = arg
+      self.__base_name__ = arg
     if argDir is not None:
       self.fileDirectory = argDir
     if argExt is not None:
@@ -176,8 +186,12 @@ class FidGen(BaseObject):
     name, kwargs = self.parseKwargs(str, *nameKeys, **kwargs)
     ext, kwargs = self.parseKwargs(str, *extKeys, **kwargs)
     dir_, kwargs = self.parseKwargs(str, *dirKeys, **kwargs)
-    if all([i is not None for i in [name, ext, dir_]]):
-      self.__init__(name, ext, dir_, )
+    if name is not None:
+      self.__base_name__ = name
+    if ext is not None:
+      self.fileExtension = ext
+    if dir_ is not None:
+      self.fileDirectory = dir_
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

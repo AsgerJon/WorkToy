@@ -1,7 +1,7 @@
 """Generator of integer-index permutations.
 
-The ``indexPermutations`` function yields every permutation of
-``(0, 1, ..., n - 1)`` as a tuple, in lexicographic order."""
+The 'indexPermutations' function yields every permutation of
+'(0, 1, ..., n - 1)' as a tuple, in lexicographic order."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def indexPermutations(n: int) -> Iterator[Indices]:
-  """Yield every permutation of ``(0, 1, ..., n - 1)``.
+  """Yield every permutation of '(0, 1, ..., n - 1)'.
 
   Parameters
   ----------

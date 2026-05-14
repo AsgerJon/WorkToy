@@ -1,6 +1,6 @@
 """Strict type-casting helper.
 
-The ``typeCast`` function converts a value to a target type using
+The 'typeCast' function converts a value to a target type using
 hand-written rules for the built-in numeric, string, and container
 types so that lossy or surprising coercions raise instead of
 silently succeeding. For other targets, the target's constructor
@@ -20,10 +20,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def _exc(target: type, arg: Any) -> Exception:
-  """Build a ``TypeCastException``.
+  """Build a 'TypeCastException'.
 
-  The import is deferred so ``utilities`` does not pull in
-  ``waitaminute`` at module load time.
+  The import is deferred so 'utilities' does not pull in
+  'waitaminute' at module load time.
   """
   from worktoy.waitaminute.dispatch import TypeCastException
   return TypeCastException(target, arg)
@@ -112,8 +112,8 @@ _CONTAINERS: Tuple[type, ...] = (list, tuple, set, frozenset)
 def _castContainer(target: type, arg: Any) -> Any:
   """Convert between built-in containers.
 
-  The early ``isinstance(arg, target)`` check in ``typeCast``
-  guarantees ``arg`` is not already the target type by the time
+  The early 'isinstance(arg, target)' check in 'typeCast'
+  guarantees 'arg' is not already the target type by the time
   this runs.
   """
   if isinstance(arg, _CONTAINERS):
@@ -134,35 +134,35 @@ _SCALAR_HANDLERS: Dict[type, Callable[[Any], Any]] = {
 
 
 def typeCast(target: type, arg: Any, **kwargs) -> Any:
-  """Cast ``arg`` to ``target``, raising on lossy conversions.
+  """Cast 'arg' to 'target', raising on lossy conversions.
 
-  When ``arg`` is already an instance of ``target``, it is
-  returned unchanged (except for ``slice``, which is always
-  re-validated through ``ValidSlice``). Otherwise the per-type
-  rules below apply; any failure raises ``TypeCastException``.
+  When 'arg' is already an instance of 'target', it is
+  returned unchanged (except for 'slice', which is always
+  re-validated through 'ValidSlice'). Otherwise the per-type
+  rules below apply; any failure raises 'TypeCastException'.
 
   Per-target rules
   ----------------
-  - ``slice`` : accepts a ``slice``, a single index, or a
-    ``list`` / ``tuple`` of up to three values that yield a valid
-    slice. Validated via ``ValidSlice``.
-  - ``str`` : accepts ``bytes`` / ``bytearray`` (UTF-8 decoded);
+  - 'slice' : accepts a 'slice', a single index, or a
+    'list' / 'tuple' of up to three values that yield a valid
+    slice. Validated via 'ValidSlice'.
+  - 'str' : accepts 'bytes' / 'bytearray' (UTF-8 decoded);
     arbitrary objects are *not* stringified.
-  - ``bool`` : accepts only values equal to ``0``, ``1``,
-    ``True``, ``False`` (note: ``1.0`` compares equal to ``1``).
-  - ``int`` : accepts ``float`` if ``is_integer``, real-valued
-    integer ``complex``, parseable ``str``.
-  - ``float`` : accepts ``int``, real-valued ``complex``,
-    parseable ``str``.
-  - ``complex`` : accepts ``int``, ``float``, parseable ``str``.
-  - ``list`` / ``tuple`` / ``set`` / ``frozenset`` : accept any
-    other built-in container; ``dict`` is converted via its
-    ``(key, value)`` pairs.
-  - ``dict`` : accepts anything that splats with ``{**arg}``.
-  - ``type`` : only succeeds if ``arg`` is already a class.
+  - 'bool' : accepts only values equal to '0', '1',
+    'True', 'False' (note: '1.0' compares equal to '1').
+  - 'int' : accepts 'float' if 'is_integer', real-valued
+    integer 'complex', parseable 'str'.
+  - 'float' : accepts 'int', real-valued 'complex',
+    parseable 'str'.
+  - 'complex' : accepts 'int', 'float', parseable 'str'.
+  - 'list' / 'tuple' / 'set' / 'frozenset' : accept any
+    other built-in container; 'dict' is converted via its
+    '(key, value)' pairs.
+  - 'dict' : accepts anything that splats with '{**arg}'.
+  - 'type' : only succeeds if 'arg' is already a class.
   - any other target : the target's constructor is called on
-    ``arg``. Suppress this fallback with
-    ``allowInstantiation=False``.
+    'arg'. Suppress this fallback with
+    'allowInstantiation=False'.
 
   Parameters
   ----------
@@ -172,13 +172,13 @@ def typeCast(target: type, arg: Any, **kwargs) -> Any:
       The value to cast.
   **kwargs
       allowInstantiation : bool, optional
-          Whether to fall back to ``target(arg)`` for non-special
-          targets. Defaults to ``True``.
+          Whether to fall back to 'target(arg)' for non-special
+          targets. Defaults to 'True'.
 
   Returns
   -------
   Any
-      ``arg`` cast to ``target``.
+      'arg' cast to 'target'.
 
   Raises
   ------

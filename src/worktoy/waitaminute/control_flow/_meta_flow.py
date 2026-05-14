@@ -40,7 +40,6 @@ class MetaFlow(type):
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> dict:
-    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     space = ControlSpace(mcls, name, bases, **kwargs)
     strFunc = mcls._strFactory()
     dict.__setitem__(space, '__str__', strFunc)

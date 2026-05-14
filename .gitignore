@@ -166,7 +166,6 @@ _scratcher.py
 /notes/
 /statetest.py
 /_sampleclass.py
-/docs/
 sym.md
 
 /main_tester_class01.py
@@ -185,3 +184,6 @@ sym.md
 /results.html
 /results.prof
 /.claude/
+
+# MkDocs build output
+/site/

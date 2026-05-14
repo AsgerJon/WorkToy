@@ -62,7 +62,6 @@ class BaseMeta(AbstractMetaclass):
   @classmethod
   def __prepare__(mcls, name: str, bases: Types, **kwargs) -> BSpace:
     """Prepare the class namespace."""
-    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return BSpace(mcls, name, bases, **kwargs)
 
   def __new__(mcls, *args, **kwargs) -> BaseMeta:

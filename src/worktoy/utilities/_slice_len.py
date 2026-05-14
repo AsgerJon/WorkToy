@@ -1,6 +1,6 @@
 """Compute the length of a slice applied to a sequence.
 
-The ``sliceLen`` function takes a ``slice`` object and the length of
+The 'sliceLen' function takes a 'slice' object and the length of
 a sequence, and returns the number of elements that would result
 from applying the slice to such a sequence."""
 #  AGPL-3.0 license
@@ -31,7 +31,7 @@ def sliceLen(sliceObj: slice, length: int) -> int:
   Raises
   ------
   ValueError
-      If ``sliceObj.step`` is zero.
+      If 'sliceObj.step' is zero.
 
   Examples
   --------

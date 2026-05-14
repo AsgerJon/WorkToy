@@ -1,16 +1,16 @@
 """A single permutation of a ground tuple of items.
 
-``Arrangement`` carries both the ``forward`` index recipe (which
+'Arrangement' carries both the 'forward' index recipe (which
 produces the permuted order) and its inverse, exposing them via
-``applyTo`` / ``restoreFrom`` to make the call direction explicit
-at every site."""
+'applyTo' / 'restoreFrom' to make the call direction explicit at
+every site."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic
 
-from .. import QuickDesc
+from .. import QuickDesc, textFmt
 
 T = TypeVar('T')
 ItemTypeT = TypeVar('ItemTypeT')
@@ -30,20 +30,20 @@ class Arrangement(Generic[ItemTypeT]):
   """A single permutation of a ground tuple of items.
 
   Holds two index recipes that are inverses of each other as
-  permutations of ``range(len(items))``:
+  permutations of 'range(len(items))':
 
-  - ``forward[k]`` is the position in ``items`` that contributes
-    slot ``k`` of the arranged values. Satisfies
-    ``self.values[k] is self.items[self.forward[k]]``.
-  - ``inverse[k]`` is the slot in the arranged values where
-    ``items[k]`` has been placed. Satisfies
-    ``self.values[self.inverse[k]] is self.items[k]``.
+  - 'forward[k]' is the position in 'items' that contributes slot
+    'k' of the arranged values. Satisfies
+    'self.values[k] is self.items[self.forward[k]]'.
+  - 'inverse[k]' is the slot in the arranged values where
+    'items[k]' has been placed. Satisfies
+    'self.values[self.inverse[k]] is self.items[k]'.
 
-  These are not interchangeable. Prefer ``applyTo`` and
-  ``restoreFrom`` over reaching for the recipes directly; the
-  method names commit to the call direction and rule out the bug
-  class where ``forward`` is used where ``inverse`` is needed (or
-  vice versa), which fails silently on every involution and only
+  These are not interchangeable. Prefer 'applyTo' and
+  'restoreFrom' over reaching for the recipes directly; the method
+  names commit to the call direction and rule out the bug class
+  where 'forward' is used where 'inverse' is needed (or vice
+  versa), which fails silently on every involution and only
   surfaces on 3-cycles and longer.
   """
 
@@ -71,7 +71,8 @@ class Arrangement(Generic[ItemTypeT]):
     if len(forward) != len(items):
       infoSpec = """'forward' recipe of length '%d' does not match 
       'items' tuple of length '%d'"""
-      raise ValueError(infoSpec % (len(forward), len(items)))
+      info = infoSpec % (len(forward), len(items))
+      raise ValueError(textFmt(info))
     self.__ground_items__ = items
     self.__forward_indices__ = forward
     self.__current_order__ = (*(items[i] for i in forward),)
@@ -118,59 +119,61 @@ class Arrangement(Generic[ItemTypeT]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def applyTo(self, *values: Any) -> Values:
-    """Permute ``values`` into this arrangement's order.
+    """Permute 'values' into this arrangement's order.
 
     Given a parallel tuple supplied in the same order as
-    ``self.items``, return the corresponding tuple in the same
-    order as ``self.values``. Inverse of ``restoreFrom``.
+    'self.items', return the corresponding tuple in the same order
+    as 'self.values'. Inverse of 'restoreFrom'.
 
     Parameters
     ----------
     *values : Any
-        One value per ground item, supplied in ``self.items`` order.
+        One value per ground item, supplied in 'self.items' order.
 
     Returns
     -------
     tuple
-        The values reordered to match ``self.values``.
+        The values reordered to match 'self.values'.
 
     Raises
     ------
     ValueError
-        If ``len(values)`` does not match the arity of the
+        If 'len(values)' does not match the length of the
         arrangement.
     """
     if len(values) != len(self):
-      infoSpec = """'applyTo' received '%d' values but arrangement has 
-      arity '%d'"""
-      raise ValueError(infoSpec % (len(values), len(self)))
+      infoSpec = """'applyTo' received '%d' values but arrangement has
+      length '%d'"""
+      info = infoSpec % (len(values), len(self))
+      raise ValueError(textFmt(info))
     return (*(values[i] for i in self.forward),)
 
   def restoreFrom(self, *values: Any) -> Values:
-    """Permute ``values`` back to canonical order.
+    """Permute 'values' back to canonical order.
 
     Given a parallel tuple supplied in the same order as
-    ``self.values``, return the corresponding tuple in the same
-    order as ``self.items``. Inverse of ``applyTo``.
+    'self.values', return the corresponding tuple in the same
+    order as 'self.items'. Inverse of 'applyTo'.
 
     Parameters
     ----------
     *values : Any
-        One value per arranged slot, in ``self.values`` order.
+        One value per arranged slot, in 'self.values' order.
 
     Returns
     -------
     tuple
-        The values reordered to match ``self.items``.
+        The values reordered to match 'self.items'.
 
     Raises
     ------
     ValueError
-        If ``len(values)`` does not match the arity of the
+        If 'len(values)' does not match the length of the
         arrangement.
     """
     if len(values) != len(self):
-      infoSpec = """'restoreFrom' received '%d' values but arrangement 
-      has arity '%d'"""
-      raise ValueError(infoSpec % (len(values), len(self)))
+      infoSpec = """'restoreFrom' received '%d' values but arrangement
+      has length '%d'"""
+      info = infoSpec % (len(values), len(self))
+      raise ValueError(textFmt(info))
     return (*(values[i] for i in self.inverse),)

@@ -5,7 +5,9 @@ module."""
 from __future__ import annotations
 
 from ._work_io_test import WorkIOTest
+from ._player_score import PlayerScore
 
 __all__ = [
   'WorkIOTest',
+  'PlayerScore',
 ]

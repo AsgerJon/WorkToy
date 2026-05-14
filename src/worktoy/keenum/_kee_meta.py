@@ -310,7 +310,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       **kw: Any,
   ) -> KSpace:
     """Prepares the namespace for the class."""
-    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     return KSpace(mcls, name, bases, **kw)
 
   def __call__(cls: KeeMeta, *args: Any, **kwargs: Any) -> T:

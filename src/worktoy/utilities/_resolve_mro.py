@@ -1,14 +1,14 @@
 """C3 linearization preview without constructing a class.
 
-The ``resolveMRO`` function returns the C3 linearization of the
+The 'resolveMRO' function returns the C3 linearization of the
 given base classes, in the same order CPython would compute when
 constructing a class with those bases. The result is the
 linearization of the *bases*, not of the hypothetical class
-itself: for ``class Foo(*bases): pass``,
-``resolveMRO(*bases) == Foo.mro()[1:]``.
+itself: for 'class Foo(*bases): pass',
+'resolveMRO(*bases) == Foo.mro()[1:]'.
 
 Useful for previewing the MRO from inside metaclass machinery,
-where actually constructing ``type('_', bases, {})`` would
+where actually constructing 'type('_', bases, {})' would
 re-enter the metaclass and recurse."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -18,14 +18,14 @@ from . import joinWords, textFmt
 
 
 def resolveMRO(*bases: type, **kwargs) -> list[type]:
-  """Return the C3 linearization of ``bases``.
+  """Return the C3 linearization of 'bases'.
 
   Implements canonical C3: the merge operates on the
-  linearizations ``L[Bi]`` of each base plus an auxiliary
-  ``[B1, ..., Bn]`` list that pins the bases' relative order.
+  linearizations 'L[Bi]' of each base plus an auxiliary
+  '[B1, ..., Bn]' list that pins the bases' relative order.
   The hypothetical most-derived class is *not* included in the
-  result; for ``class Foo(*bases): pass``,
-  ``resolveMRO(*bases) == Foo.mro()[1:]``.
+  result; for 'class Foo(*bases): pass',
+  'resolveMRO(*bases) == Foo.mro()[1:]'.
 
   Parameters
   ----------
@@ -42,7 +42,7 @@ def resolveMRO(*bases: type, **kwargs) -> list[type]:
   -------
   list of type
       The linearized MRO of the bases. For zero bases, an empty
-      list. For one base, that base's own ``__mro__`` as a list
+      list. For one base, that base's own '__mro__' as a list
       (which already starts with the base itself).
 
   Raises
@@ -51,7 +51,7 @@ def resolveMRO(*bases: type, **kwargs) -> list[type]:
       If the bases admit no consistent linearization.
   RecursionError
       If the iteration counter exceeds the upper bound. Only
-      reachable when ``_initialIterationCount`` is set close to
+      reachable when '_initialIterationCount' is set close to
       or above the total length of the input lists.
 
   Examples

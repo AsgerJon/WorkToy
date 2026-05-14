@@ -1,6 +1,6 @@
 """Bipartite matching by backtracking with forward checking.
 
-The ``bipartiteMatching`` function takes a list of candidate-index
+The 'bipartiteMatching' function takes a list of candidate-index
 tuples (one per slot) and returns the first assignment that maps
 each slot to a distinct index, using minimum-remaining-values
 selection to prune the search."""
@@ -27,8 +27,8 @@ def bipartiteMatching(slots: list[tuple[int, ...]]) -> list[int]:
   Parameters
   ----------
   slots : list of tuple of int
-      ``slots[i]`` lists the indices that may be assigned to
-      slot ``i``.
+      'slots[i]' lists the indices that may be assigned to
+      slot 'i'.
 
   Returns
   -------

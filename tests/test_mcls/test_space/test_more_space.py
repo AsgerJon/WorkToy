@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .. import MCLSTest
+from worktoy.core import Object
 from worktoy.mcls import BaseMeta, AbstractNamespace
 from worktoy.utilities import stringList
 
@@ -31,7 +32,7 @@ class HookedMeta(BaseMeta):
     return BaseMeta.__new__(mcls, name, bases, space, **kw)
 
 
-class TrustedClass(trustMeBro=True, metaclass=HookedMeta):
+class TrustedClass(Object, trustMeBro=True, metaclass=HookedMeta):
   """
   TrustedClass is a class that is used to test the AbstractNamespace class.
   It is a simple class that has a metaclass that adds some hooks to the
@@ -39,7 +40,7 @@ class TrustedClass(trustMeBro=True, metaclass=HookedMeta):
   """
 
 
-class SusClass(metaclass=HookedMeta):  # No trustMeBro=True
+class SusClass(Object, metaclass=HookedMeta):  # No trustMeBro=True
   """
   SusClass is a class that is used to test the AbstractNamespace class.
   It is a simple class that has a metaclass that adds some hooks to the

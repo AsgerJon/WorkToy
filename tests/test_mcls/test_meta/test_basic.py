@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .. import MCLSTest
+from worktoy.core import Object
 from worktoy.mcls import AbstractMetaclass, BaseMeta
 from worktoy.utilities import maybe
 from worktoy.waitaminute.meta import QuestionableSyntax, DelException
@@ -302,7 +303,7 @@ class TestBasicMeta(MCLSTest):
     Test that the metaclass supports deletion.
     """
 
-    class DeleteMe(trustMeBro=True, metaclass=BaseMeta):
+    class DeleteMe(Object, trustMeBro=True, metaclass=BaseMeta):
       """
       DeleteMe is a class that implements __del__.
       """

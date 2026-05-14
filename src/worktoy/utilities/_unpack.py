@@ -1,7 +1,7 @@
 """Recursive flattener for varargs.
 
-The ``unpack`` function expands every iterable in the positional
-arguments (other than ``str`` / ``bytes``) until none remain,
+The 'unpack' function expands every iterable in the positional
+arguments (other than 'str' / 'bytes') until none remain,
 producing a flat tuple."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -17,8 +17,8 @@ if TYPE_CHECKING:  # pragma: no cover
 def unpack(*args: Any, **kwargs) -> tuple[Any, ...]:
   """Flatten nested iterables in positional arguments.
 
-  Iterables are expanded recursively; ``str`` and ``bytes`` are
-  treated as atomic and never split into their characters/bytes.
+  Iterables are expanded recursively; 'str' and 'bytes' are treated
+  as atomic and never split into their characters/bytes.
 
   Parameters
   ----------
@@ -26,12 +26,14 @@ def unpack(*args: Any, **kwargs) -> tuple[Any, ...]:
       The values to unpack.
   **kwargs
       shallow : bool, optional
-          If ``True``, only the top level is expanded; nested
-          iterables are left intact. Defaults to ``False``.
+          If True, only the top level is expanded; nested iterables
+          are left intact. Defaults to False.
       strict : bool, optional
-          If ``True`` (default), raises when no iterable was found
-          among ``args``. If ``False``, the arguments are returned
-          unchanged in that case.
+          If True (default), raises when no iterable was supplied;
+          this covers both an empty call and a call where no
+          argument is iterable. If False, the input is passed
+          through: an empty call returns '()' and non-iterable
+          arguments are returned in a tuple as-is.
 
   Returns
   -------
@@ -41,7 +43,7 @@ def unpack(*args: Any, **kwargs) -> tuple[Any, ...]:
   Raises
   ------
   UnpackException
-      If ``strict`` is ``True`` and no iterable was supplied.
+      If 'strict' is True and no iterable was supplied.
 
   Examples
   --------

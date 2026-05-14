@@ -45,3 +45,68 @@ class TestJoinWords(UtilitiesTest):
     complexWord = 69 + 420j
     for word in [intWord, floatWord, complexWord]:
       self.assertEqual(str(word), joinWords(word))
+
+  def test_sep_two(self) -> None:
+    """The two-word path honors a custom 'sep' connector."""
+    self.assertEqual(joinWords('tea', 'coffee', sep='or'),
+                     'tea or coffee')
+
+  def test_sep_many(self) -> None:
+    """A custom 'sep' must apply to the final connector when more
+    than two words are supplied."""
+    sample = 'Tom', 'Dick', 'Harry'
+    expected = 'Tom, Dick or Harry'
+    self.assertEqual(joinWords(*sample, sep='or'), expected)
+
+  def test_sep_list(self) -> None:
+    """A custom 'sep' must survive the single-argument list/tuple
+    unwrapping path."""
+    sampleTuple = 'Tom', 'Dick', 'Harry'
+    sampleList = [*sampleTuple, ]
+    expected = 'Tom, Dick or Harry'
+    self.assertEqual(joinWords(sampleTuple, sep='or'), expected)
+    self.assertEqual(joinWords(sampleList, sep='or'), expected)
+
+  def test_sep_pair_in_list(self) -> None:
+    """A two-element list with custom 'sep' must not regress to the
+    default 'and' connector."""
+    self.assertEqual(joinWords(['tea', 'coffee'], sep='or'),
+                     'tea or coffee')
+
+  def test_mixed_trailing_list(self) -> None:
+    """A plain arg followed by a list must flatten, not stringify
+    the list as a Python repr."""
+    self.assertEqual(joinWords('Tom', ['Dick', 'Harry']),
+                     'Tom, Dick and Harry')
+
+  def test_mixed_leading_list(self) -> None:
+    """A list followed by plain args must flatten in source order."""
+    self.assertEqual(joinWords(['Tom', 'Dick'], 'Harry'),
+                     'Tom, Dick and Harry')
+
+  def test_mixed_two_lists(self) -> None:
+    """Multiple iterable args must all flatten into the result."""
+    self.assertEqual(joinWords(['Tom', 'Dick'], ['Harry']),
+                     'Tom, Dick and Harry')
+
+  def test_mixed_with_tuples(self) -> None:
+    """Tuples interleaved with plain args flatten like lists do."""
+    self.assertEqual(joinWords(('Tom',), 'Dick', ('Harry',)),
+                     'Tom, Dick and Harry')
+
+  def test_nested_iterables(self) -> None:
+    """A list nested inside another list must flatten through
+    every level."""
+    self.assertEqual(joinWords([['Tom', 'Dick'], 'Harry']),
+                     'Tom, Dick and Harry')
+
+  def test_mixed_with_sep(self) -> None:
+    """Mixed flat / iterable args still honor a custom 'sep'."""
+    self.assertEqual(joinWords('Tom', ['Dick', 'Harry'], sep='or'),
+                     'Tom, Dick or Harry')
+
+  def test_str_inside_mixed_stays_atomic(self) -> None:
+    """Strings inside a mixed call must not be split character by
+    character even though str is iterable."""
+    self.assertEqual(joinWords(['abc', 'def'], 'ghi'),
+                     'abc, def and ghi')

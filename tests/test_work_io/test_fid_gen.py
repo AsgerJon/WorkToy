@@ -179,10 +179,11 @@ class TestFidGen(WorkIOTest):
       fidStr3 = FidGen('breh', '*.txt', here_, lmao=True)
       fidKwarg3 = FidGen(name='breh', )
 
-    self.assertEqual(Foo.fid0.nextName, Foo.fidKwarg3.nextName)
+    self.assertIn('breh', Foo.fidKwarg3.nextName)
     self.assertIn('breh', Foo.fidStr.nextName)
     self.assertEqual(Foo.fidStr2.fileExtension, 'txt')
     self.assertEqual(Foo.fidStr3.fileDirectory, here_)
+    self.assertIn('fid_gen', Foo.fid0.nextName)
 
   def test_find(self) -> None:
     """
@@ -201,3 +202,22 @@ class TestFidGen(WorkIOTest):
     """
     foo, bar = FidGen._findFileExtension('breh', 69, 420, 'mp4')
     self.assertEqual(foo, 'mp4')
+
+  def test_separator_in_name(self) -> None:
+    """
+    Names containing '_' or '-' route through '_toWords' separator
+    branch. The output snake-case name must not double-up separators.
+    """
+    fidSnake = FidGen('foo_bar')
+    self.assertIn('foo_bar', fidSnake.nextName)
+    fidKebab = FidGen('foo-bar')
+    self.assertIn('foo_bar', fidKebab.nextName)
+
+  def test_positional_pair_without_kwargs(self) -> None:
+    """
+    The (str, str) overload body has False arms for both
+    'if argExt is not None:' and 'if kwargs:'. Two non-special
+    strings with no kwargs hits both.
+    """
+    fidPair = FidGen('alpha', 'beta')
+    self.assertIn('beta', fidPair.nextName)

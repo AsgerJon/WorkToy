@@ -1,8 +1,8 @@
 """Count the positional parameters of a callable.
 
-The ``argsCount`` function inspects a callable and returns how
-many of its parameters can be passed positionally. ``*args``,
-``**kwargs``, and keyword-only parameters are not counted."""
+The 'argsCount' function inspects a callable and returns how
+many of its parameters can be passed positionally. '*args',
+'**kwargs', and keyword-only parameters are not counted."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -15,12 +15,12 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def argsCount(func: Callable) -> int:
-  """Return the count of positional parameters of ``func``.
+  """Return the count of positional parameters of 'func'.
 
-  Bound methods are unwrapped via ``__func__`` so that ``self``
+  Bound methods are unwrapped via '__func__' so that 'self'
   is included in the count. Parameters of kind
-  ``POSITIONAL_ONLY`` and ``POSITIONAL_OR_KEYWORD`` are counted;
-  ``*args``, ``**kwargs``, and ``KEYWORD_ONLY`` parameters are
+  'POSITIONAL_ONLY' and 'POSITIONAL_OR_KEYWORD' are counted;
+  '*args', '**kwargs', and 'KEYWORD_ONLY' parameters are
   ignored.
 
   Parameters

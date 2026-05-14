@@ -39,6 +39,7 @@ class TestControlFlow(WaitAMinuteTest):
     e = context.exception
     self.assertEqual(e.badKey, '__reduce__')
     self.assertIsInstance(e.space, ControlSpace)
+    self.assertEqual(str(e), repr(e))
 
   def test_not_on_exception(self, ) -> None:
     """
@@ -54,6 +55,7 @@ class TestControlFlow(WaitAMinuteTest):
     e = context.exception
     self.assertEqual(e.badKey, 'breh')
     self.assertIsInstance(e.space, ControlSpace)
+    self.assertEqual(str(e), repr(e))
 
   def test_duplicate_root_flow(self) -> None:
     """

@@ -1,8 +1,8 @@
 """Lightweight read-only descriptor for internal use.
 
-``QuickDesc`` is the minimal descriptor used inside ``worktoy`` to
+'QuickDesc' is the minimal descriptor used inside 'worktoy' to
 expose private slot values as public attributes without dragging
-in the full ``worktoy.desc`` machinery."""
+in the full 'worktoy.desc' machinery."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -21,14 +21,14 @@ class QuickDesc(Generic[T]):
   """Read-only descriptor exposing a named private slot.
 
   Constructed with the name of a private attribute (typically
-  dunder-prefixed), ``QuickDesc`` reads that attribute on access
+  dunder-prefixed), 'QuickDesc' reads that attribute on access
   and refuses writes and deletions. This is enough for the
   descriptor needs internal to the foundation packages.
 
-  ``QuickDesc`` is intentionally minimal. Project authors using
-  ``worktoy`` should prefer the descriptors in ``worktoy.desc``:
-  ``AttriBox`` for type-enforced read-write attributes, and
-  ``Field`` for descriptors with explicit accessor decorators.
+  'QuickDesc' is intentionally minimal. Project authors using
+  'worktoy' should prefer the descriptors in 'worktoy.desc':
+  'AttriBox' for type-enforced read-write attributes, and
+  'Field' for descriptors with explicit accessor decorators.
 
   Examples
   --------

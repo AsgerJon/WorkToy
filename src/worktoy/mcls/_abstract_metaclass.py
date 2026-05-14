@@ -295,7 +295,6 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     Also, this method removes nothing from the 'bases' tuple. Subclasses
     should also remove nothing from the 'bases' tuple.
     """
-    bases = (*[b for b in bases if b.__name__ != '_InitSub'],)
     bases = (*[b for b in bases if b is not Generic],)
     return ASpace(mcls, name, bases, **kwargs)
 
@@ -314,19 +313,14 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
-    """
-    This method is invoked before the class returns from the
-    '__build_class__'. While this is the intended place to initialize,
-    it is unclear exactly what is available at this point. And since the
-    parent implementation ('type.__init__') is a no-op, introducing
-    functionality here has resulted in undefined behavior.
-
-    The recommendation is to leave this method as a no-op and then
-    implement the convenient '__post_init__' method, which is guaranteed
-    to be invoked only after the builtin '__build_class__' has finished
-    with the class.
-    """
+    """Finalize the class. Runs 'type.__init__' first so the class is
+    fully built (including '__set_name__' and '__init_subclass__'),
+    then invokes the optional '__class_init__' hook and the subclass
+    notification."""
     MetaType.__init__(cls, name, bases, space, **kwargs)
+    if cls.__class_init__ is not METACALL:
+      cls.__class_init__(name, bases, space, **kwargs)
+    cls._notifySubclassHook(cls, *bases)
 
   def __call__(cls, *args, **kwargs) -> Any:
     if cls.__class_call__ is METACALL:
@@ -490,9 +484,3 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     """Get the namespace class for the class."""
     return type(mcls.__prepare__('_', ()))
 
-  def __post_init__(cls, name: str, bases: Base, spc: ASpace, **kw) -> None:
-    """This method is invoked after the __build_class__ has finished with
-    this class. It is here any '__class_init__' methods are invoked. """
-    if cls.__class_init__ is not METACALL:
-      cls.__class_init__(name, bases, spc, **kw)
-    cls._notifySubclassHook(cls, *bases)

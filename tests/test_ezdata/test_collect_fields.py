@@ -54,7 +54,7 @@ class TestCollectFields(EZTest):
 
     self.assertFalse(fn())
 
-    compiled = {'x': 5, 'fn': fn, '__init__': lambda self: None}
+    compiled = {'x': 5, 'fn': fn, '__init__': lambda s: None}
     fields = collectFields(compiled, (), {}, 'C')
     names = [f.name for f in fields]
     self.assertEqual(names, ['x'])

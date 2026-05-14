@@ -1,7 +1,7 @@
 """Split strings into a cleaned list of substrings.
 
-The ``stringList`` function splits each input string by one or
-more separators (default ``', '``), strips whitespace from each
+The 'stringList' function splits each input string by one or
+more separators (default ', '), strips whitespace from each
 piece, and discards empty results. Multiple separators may be
 applied in sequence by passing a list or tuple."""
 #  AGPL-3.0 license
@@ -27,7 +27,7 @@ def stringList(*args: str, **kwargs) -> list[str]:
           separator is applied directly. If a list or tuple, each
           element is applied in turn, with later separators
           splitting the results of earlier ones. Defaults to
-          ``', '``.
+          ', '.
 
   Returns
   -------
@@ -37,7 +37,7 @@ def stringList(*args: str, **kwargs) -> list[str]:
   Raises
   ------
   TypeException
-      If ``separator`` is not a ``str``, ``list``, or ``tuple``.
+      If 'separator' is not a 'str', 'list', or 'tuple'.
 
   Examples
   --------

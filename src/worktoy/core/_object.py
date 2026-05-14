@@ -239,8 +239,11 @@ class Object(metaclass=MetaType):
     finally:
       self.exitContext()
 
-  # def __init_subclass__(keeNum, **kwargs) -> None:
-  #   pass
+  def __init_subclass__(cls, **kwargs) -> None:
+    """Accept arbitrary class kwargs so worktoy metaclass machinery
+    can forward them to space hooks without 'object.__init_subclass__'
+    rejecting them."""
+    super().__init_subclass__()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

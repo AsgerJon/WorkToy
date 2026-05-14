@@ -1,10 +1,12 @@
-"""Reference scaffolding for ``worktoy`` class bodies.
+"""Personal scaffolding the author copy-pastes from.
 
-Exports ``ClassBodyTemplate``, a string holding the canonical
-section-banner layout used throughout the library, and
-``SomeClass``, a parallel empty class with the same banners. Both
-exist as copy-paste references to keep new class files visually
-consistent."""
+Holds the section-banner layout used throughout 'worktoy', in two
+forms. 'ClassBodyTemplate' is a plain string of just the banners;
+'_SomeClass' is a parallel empty class with the same banners in
+place. Neither is part of the public API in any meaningful sense;
+they live here because the author writes new class files by
+copy-pasting one or the other and prefers to keep that scaffolding
+visible inside the package rather than in a scratch file."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations

@@ -1,9 +1,9 @@
 """Word-wrap text to a fixed character width.
 
-The ``wordWrap`` function reflows the supplied text fragments so
-each output line stays within ``width`` characters, joining words
+The 'wordWrap' function reflows the supplied text fragments so
+each output line stays within 'width' characters, joining words
 with single spaces and respecting an explicit line-break token
-(default ``<br>``)."""
+(default '<br>')."""
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -16,10 +16,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def _typeException(name: str, value: Any, *types: type) -> Exception:
-  """Build a ``TypeException``.
+  """Build a 'TypeException'.
 
-  The import is deferred so ``utilities`` does not pull in
-  ``waitaminute`` at module load time.
+  The import is deferred so 'utilities' does not pull in
+  'waitaminute' at module load time.
   """
   from ..waitaminute import TypeException
   return TypeException(name, value, *types)
@@ -28,15 +28,15 @@ def _typeException(name: str, value: Any, *types: type) -> Exception:
 def wordWrap(width: int, *textLines: str, **kwargs) -> str:
   """Wrap input strings to a maximum line width.
 
-  Every fragment in ``textLines`` is tokenized on whitespace and
+  Every fragment in 'textLines' is tokenized on whitespace and
   reflowed. A line is closed (and a new one started) when
 
   - the next word equals the line-break token (the token itself
     is discarded), or
   - appending the next word would push the current line past
-    ``width``.
+    'width'.
 
-  Words longer than ``width`` are placed on their own line; no
+  Words longer than 'width' are placed on their own line; no
   attempt is made to break them.
 
   Parameters
@@ -44,22 +44,22 @@ def wordWrap(width: int, *textLines: str, **kwargs) -> str:
   width : int
       Maximum number of characters per output line.
   *textLines : str
-      Text fragments to wrap. Each must be a ``str``.
+      Text fragments to wrap. Each must be a 'str'.
   **kwargs
       newLine : str, optional
           Token forcing a line break, matched
-          case-insensitively. Defaults to ``'<br>'``.
+          case-insensitively. Defaults to '<br>'.
 
   Returns
   -------
   str
-      The wrapped text, joined by ``os.linesep``.
+      The wrapped text, joined by 'os.linesep'.
 
   Raises
   ------
   TypeException
-      If ``width`` is not an ``int`` or any fragment is not a
-      ``str``.
+      If 'width' is not an 'int' or any fragment is not a
+      'str'.
 
   Examples
   --------

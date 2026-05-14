@@ -13,10 +13,12 @@ import gc
 from unittest import TestCase
 from typing import TYPE_CHECKING
 
+from . import SubTest
 from .samplers import FloatSampler, IntSampler, GaussianSampler
 from .samplers import SymbolicSampler, WordSampler, LoremSampler
 from ..desc import Field, SymbolicName
 from ..lorem_ipsum import StochasticWord, Sentence
+from ..mcls import BaseMeta
 from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -55,7 +57,7 @@ else:  # version >= 3.14
   _Temp = TestCase
 
 
-class BaseTest(TestCase if TYPE_CHECKING else _Temp):
+class BaseTest(_Temp, metaclass=BaseMeta):
   """
   BaseTest provides a base class shared by the testing classes in the
   tests package. It implements module unloading in the 'tearDownClass'
@@ -100,6 +102,7 @@ class BaseTest(TestCase if TYPE_CHECKING else _Temp):
   randomSymbolicName = SymbolicSampler()
   randomWord = WordSampler()
   randomLorem = LoremSampler()
+  subTest = SubTest()
 
   #  Virtual Variables
   attrErrTrace = Field()
@@ -144,10 +147,23 @@ class BaseTest(TestCase if TYPE_CHECKING else _Temp):
   @classmethod
   def tearDownClass(cls) -> None:
     """
-    This method deletes temporary files used by this class. It unloads the
-    module and runs the garbage collector to ensure that all references to
-    the module are removed to prevent metaclass leakage trolling in
-    particular.
+    Unloads the test module and runs the garbage collector to evict
+    the class object before the next test class is built.
+
+    This is here because 'unittest' pins every test class it discovers
+    for the entire run via 'TestLoader' and 'TestResult', and that
+    pinning causes real, observable metaclass context leakage between
+    otherwise-independent test classes. Run TestA and TestB in
+    isolation: both pass. Run them in sequence: TestB inherits stale
+    descriptor state, mismatched owners, or cached registry entries
+    that 'unittest' has refused to release. Popping the module from
+    sys.modules and forcing a GC pass drops the refcount on the
+    outgoing class so its metaclass finalizers actually fire before
+    the next class's body executes. The bug only exists in the
+    intersection of two innocent tests, which is why this looks
+    paranoid until you have spent a weekend debugging it.
+
+    Blame: 'unittest'. The metaclass machinery is fine.
     """
     super().tearDownClass()
     sys.modules.pop(cls.__module__, None)
@@ -182,3 +198,24 @@ class BaseTest(TestCase if TYPE_CHECKING else _Temp):
         argLines.append('%s...' % line[:lineLength - 3])
     argStr = '<br><tab>'.join(argLines)
     return textFmt(argStr, newLineSymbol=newLine)
+
+  def tearDown(self, ) -> None:
+    """
+    After the super call, peek at any sub test recorded on this
+    instance via the 'subTest' descriptor and raise if it has any
+    fails or errors.
+    """
+    super().tearDown()
+    cls = type(self)
+    try:
+      sub = cls.subTest.__get__(self, cls, _recursion=True)
+    except RecursionError:
+      return
+    if not (sub.fails or sub.errors):
+      return
+    lines = []
+    for fail in sub.fails:
+      lines.append('FAIL: %s' % fail)
+    for error in sub.errors:
+      lines.append('ERROR: %r' % error)
+    self.fail(str.join('\n', lines))

@@ -1,5 +1,5 @@
 # CLAUDE.md
-
+claude --resume be0b13a9-e1fb-40a1-9cfe-5e29351b9dfb
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project
@@ -13,6 +13,27 @@ infrastructure on top of stock Python. It targets Python 3.7 through
 Source layout: `src/worktoy/` (pyproject is `setuptools` based, but
 `pytest.ini` sets `pythonpath = src`, so tests import `worktoy`
 directly without `pip install -e .`).
+
+## "Learn worktoy"
+
+If the user says "learn worktoy" (or any close variant), read every
+`.py` file under `src/worktoy/` and `tests/` end-to-end via the Read
+tool, sequentially, in full. No Explore agent, no grep, no
+summarizing, no skimming. Yes the whole thing. Yes it is roughly
+390k tokens. Yes that is the point. The user has already weighed
+the cost and wants the entire package resident in context for
+cross-cutting work; do not second-guess it or offer a "lighter"
+alternative.
+
+## "Skim worktoy"
+
+If the user says "skim worktoy" (or any close variant), read every
+`__init__.py` under `src/worktoy/` end-to-end via the Read tool, in
+full. That gives the public API surface for each subpackage at low
+token cost (roughly 5-10k tokens). Do not read implementation
+bodies; drill into specific modules on demand when a follow-up
+question requires them. This is the orientation tier; "learn
+worktoy" is the cross-cutting tier.
 
 ## Common commands
 

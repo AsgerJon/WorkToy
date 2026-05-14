@@ -6,11 +6,11 @@ The 'worktoy.work_test' package provides a subclass of 'unittest.TestCase'.
 from __future__ import annotations
 
 from . import samplers
+from ._sub_test import SubTest
 from ._base_test import BaseTest
-from ._base_contract import BaseContract
 
 __all__ = [
   'samplers',
+  'SubTest',
   'BaseTest',
-  'BaseContract',
 ]

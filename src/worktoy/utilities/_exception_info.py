@@ -1,10 +1,10 @@
 """Context manager for capturing and inspecting exceptions.
 
-``ExceptionInfo`` is intended for testing-framework debugging
+'ExceptionInfo' is intended for testing-framework debugging
 where an expected exception either fails to raise or raises but
-as an unexpected ``Exception`` subclass. The captured exception,
+as an unexpected 'Exception' subclass. The captured exception,
 its type, and a human-readable report are exposed as attributes
-after the ``with`` block exits."""
+after the 'with' block exits."""
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -27,26 +27,26 @@ class ExceptionInfo:
   Wrap a block of code that is expected to raise. The expected
   exception class is passed to the constructor; on exit, the
   raised exception (if any) is recorded and a human-readable
-  ``report`` string is produced for each possible outcome:
+  'report' string is produced for each possible outcome:
   clean exit, missing exception, exact match, subclass match, or
   wrong type.
 
-  ``BaseException`` subclasses that are not ``Exception``
-  subclasses (e.g. ``KeyboardInterrupt``) always propagate.
+  'BaseException' subclasses that are not 'Exception'
+  subclasses (e.g. 'KeyboardInterrupt') always propagate.
 
   Attributes
   ----------
   expectedExcType : type or None
-      The expected exception class, or ``None`` if none was
+      The expected exception class, or 'None' if none was
       requested.
   actualException : BaseException or None
       The raised exception instance, if any.
   actualExcType : type or None
       The class of the raised exception.
   expectedName : str
-      Name of the expected exception class, or ``'No Exception'``.
+      Name of the expected exception class, or 'No Exception'.
   actualName : str
-      Name of the raised exception class, or ``'No Exception'``.
+      Name of the raised exception class, or 'No Exception'.
   report : str
       Human-readable summary of what happened in the block.
   """

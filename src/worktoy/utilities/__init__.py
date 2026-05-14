@@ -1,14 +1,14 @@
-"""Leaf-level utilities used across ``worktoy``.
+"""Leaf-level utilities used across 'worktoy'.
 
 This package collects small, standalone helpers with no
-``worktoy`` dependencies: text formatting (``textFmt``,
-``stringList``, ``joinWords``, ``wordWrap``), iterable handling
-(``unpack``, ``maybe``), slicing (``sliceLen``, ``ValidSlice``),
-type/MRO helpers (``typeCast``, ``resolveMRO``), descriptor
-support (``QuickDesc``), filesystem (``Directory``), exception
-inspection (``ExceptionInfo``), the ``combinatorics`` subpackage,
-and a handful of orphans (``argsCount``, ``bipartiteMatching``,
-``replaceFlex``, ``ClassBodyTemplate``)."""
+'worktoy' dependencies: text formatting ('textFmt',
+'stringList', 'joinWords', 'wordWrap'), iterable handling
+('unpack', 'maybe'), slicing ('sliceLen', 'ValidSlice'),
+type/MRO helpers ('typeCast', 'resolveMRO'), descriptor
+support ('QuickDesc'), filesystem ('Directory'), exception
+inspection ('ExceptionInfo'), the 'combinatorics' subpackage,
+and a handful of orphans ('argsCount', 'bipartiteMatching',
+'replaceFlex', 'ClassBodyTemplate')."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
