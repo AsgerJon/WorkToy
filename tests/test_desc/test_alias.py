@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.waitaminute import MissingVariable
 from . import DescTest, ComplexAlias
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -86,15 +87,17 @@ class TestAlias(DescTest):
       del z1.x
       del z1.y
       for attr in ('x', 'y', 'RE', 'IM', 'REAL', 'IMAG'):
-        with self.assertRaises(AttributeError) as info:
+        with self.assertRaises(MissingVariable) as context:
           _ = getattr(z1, attr)
-        self.assertIn('has no attribute', str(info.exception))
+        e = context.exception
+        self.assertIs(e.instance, z1)
       del z2.REAL
       del z2.IMAG
       for attr in ('x', 'y', 'RE', 'IM', 'REAL', 'IMAG'):
-        with self.assertRaises(AttributeError) as info:
+        with self.assertRaises(MissingVariable) as context:
           _ = getattr(z2, attr)
-        self.assertIn('has no attribute', str(info.exception))
+        e = context.exception
+        self.assertIs(e.instance, z2)
 
   def test_identity(self, ) -> None:
     """

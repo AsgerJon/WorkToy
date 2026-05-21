@@ -1,22 +1,23 @@
 """
-KeeMember encapsulates a member of an enumeration.
+Kee is the descriptor that declares a member of a KeeNum enumeration.
 
-Defining properties: (independent properties)
-  - name: The name of the member. This is the name by which the member
-  appears in the class body of the enumeration. It is the name passed to
-  the '__set_name__' method. These must be unique with enumerations and
-  must be uppercase. The case requirement is more than convention,
-  it is enforced. When an enumeration class body contains key, value pairs
-  with the key not in uppercase, it is understood to mean that the value
-  does not represent a member of the enumeration.
-  - value: The value of the member. Uniquely, this value is not required
-  to be unique across members of the same enumeration.
-  - index: The index of the member. This index specifies how many members
-  are before this member in the enumeration.
+Each 'Kee' instance placed in the class body of a KeeNum subclass
+contributes one member, with the following defining properties:
 
-KeeMember may be used directly or may be further subclassed. The KeeNum
-classes are created by the KeeMeta class which define the class behaviour
-post creation, and KeeMember define how members are included in the
+  - name: The name of the member, taken from the class-body
+    assignment via '__set_name__'. Names must be unique within an
+    enumeration and must be uppercase. The uppercase requirement is
+    enforced (not merely convention). Class-body entries whose key is
+    not uppercase are treated as ordinary class attributes rather than
+    enumeration members.
+  - value: The value of the member. Values are not required to be
+    unique across members of the same enumeration.
+  - index: The position of the member, equal to the number of members
+    declared before it.
+
+'Kee' may be used directly or further subclassed. KeeNum classes are
+created by the KeeMeta metaclass, which defines class-level behavior;
+'Kee' defines how individual members are admitted into the
 enumeration.
 """
 #  AGPL-3.0 license
@@ -31,7 +32,7 @@ from ..waitaminute import VariableNotNone, MissingVariable, TypeException
 from ..waitaminute.keenum import KeeCaseException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias
+  from typing import Any, Type, TypeAlias, Self
 
   KEENUM: TypeAlias = Type[object]
 
@@ -39,17 +40,17 @@ T = TypeVar('T')
 
 
 class Kee(AttriBox[T]):
-  """KeeMember encapsulates a member of an enumeration. """
+  """Kee is the descriptor that declares a member of a KeeNum
+  enumeration. See the module docstring for the rules governing
+  member name, value, and index."""
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Class Variables
-  __context_instance__ = None
-  __context_owner__ = None
-
-  #  Fallback Variables
+  #  Annotations
+  valueType: Field[Type[T]]
+  kee: Field[Type[Self]]
 
   #  Private Variables
   __field_value__ = None
@@ -144,7 +145,3 @@ class Kee(AttriBox[T]):
     return textFmt(info)
 
   __repr__ = __str__
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Parent Methods   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

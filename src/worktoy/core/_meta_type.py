@@ -10,39 +10,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias, Union, Self
+  from typing import Any, TypeAlias
 
   Bases: TypeAlias = tuple[type, ...]
   Space: TypeAlias = dict[str, Any]
-  NamespaceClass: TypeAlias = Union[Self, Type[Space]]
-
-  Meta: TypeAlias = Type[type]
-  MetaMeta: TypeAlias = Type[Meta]
-
-
-class _Space:
-  """
-  Private descriptor class providing the namespace for the namespace
-  object class used by the metaclass.
-  """
-
-  __field_name__ = None
-  __field_owner__ = None
-
-  def __get__(self, mcls: type, mmcls: type, ) -> Any:
-    if mcls is None:
-      if mmcls is self.__field_owner__:
-        return self
-      return self.__get__(mmcls, mmcls)
-    testSpace = mcls.__prepare__('test', (), )
-    return type(testSpace)
-
-  def __set_name__(self, owner: type, name: str) -> None:
-    """
-    Sets the name of the descriptor in the owner class.
-    """
-    self.__field_name__ = name
-    self.__field_owner__ = owner
 
 
 class MetaType(type):
@@ -51,16 +22,6 @@ class MetaType(type):
   metaclasses used across the library both derive from and base on this
   class. This is necessary to prevent metaclass conflicts.
   """
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Private Variables
-  __namespace_class__ = None
-
-  #  Virtual Variables
-  namespaceClass = _Space()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -80,7 +41,7 @@ class MetaType(type):
     """
     if '__namespace__' not in space:
       space['__namespace__'] = space
-    validatedSpace: dict = mmcls._fromErrata(space)
+    validatedSpace = mmcls._mergeErrata(space)
     return super().__new__(mmcls, name, bases, validatedSpace, **kw)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -88,17 +49,18 @@ class MetaType(type):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @staticmethod
-  def _fromErrata(space: Space) -> dict[str, Any]:
-    notations = space.get('__annotations__', dict())
-    for key, value in space.items():
-      if isinstance(value, type):
-        if value.__name__ == '__Errata__':
-          samizdat = getattr(value, '__annotations__', dict())
-          break
-    else:
+  def _mergeErrata(space: Space) -> Space:
+    """If the class body declared a nested '__Errata__' class, merge its
+    annotations into the outer class's '__annotations__' and remove the
+    nested class from the namespace.
+
+    See 'keenum._kee_meta.KeeMeta.__Errata__' for the canonical use:
+    declaring phantom annotations a type-checker can see without putting
+    them in the real class body."""
+    errata = space.pop('__Errata__', None)
+    if errata is None:
       return space
-    for name, truth in samizdat.items():
-      notations[name] = truth
+    notations = space.get('__annotations__', dict())
+    notations.update(getattr(errata, '__annotations__', dict()))
     space['__annotations__'] = notations
-    del space[key]
     return space

@@ -1,5 +1,5 @@
 """
-LoremIpsumTest tests the 'worktoy.examples.lorem_ipsum' package.
+LoremIpsumTest tests the 'worktoy.lorem_ipsum' package.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -15,7 +15,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class LoremIpsumTest(BaseTest):
   """
-  LoremIpsumTest provides tests for the 'worktoy.examples.lorem_ipsum'
-  package.
+  LoremIpsumTest provides tests for the 'worktoy.lorem_ipsum' package.
   """
   pass

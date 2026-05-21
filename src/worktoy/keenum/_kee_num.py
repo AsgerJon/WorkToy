@@ -27,9 +27,31 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class _KeeBase(Object, ):
   """
-  KeeNum is the base class for all enumerating classes in the KeeNum
-  framework. It provides a common interface and functionality for
-  enumerating members."""
+  Base class for all enumerating classes in the KeeNum framework.
+
+  Equality is identity: 'MyEnum.A == MyEnum.A' is True; comparison to
+  a member of a different KeeNum subclass returns NotImplemented (and
+  '==' therefore yields False).
+
+  Hashability tracks the member's value. The hash is computed from
+  the member's qualified name (so distinct members within a class get
+  distinct hashes), but '__hash__' first calls 'hash(self.value)' as
+  a gate:
+
+    - If the value is hashable, the member is hashable and can be
+      used as a dict key, in a set, etc.
+    - If the value is unhashable (a list, dict, mutable instance,
+      etc.), the member is *also* unhashable. Calling 'hash(member)'
+      raises 'TypeError', and the member cannot be used as a dict
+      key or set element. This is intentional: it keeps the
+      member-side hash semantics consistent with the value-side
+      hash semantics that user code might rely on.
+
+  Members declared with unhashable values still work everywhere
+  hashability is not required: iteration, attribute access, name and
+  index resolution, equality, '__str__', and '__repr__' all behave
+  normally. Only hash-keyed containers refuse them.
+  """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -122,29 +144,20 @@ class _KeeBase(Object, ):
     """Ensures 'ProtectedError' is raised instead of 'KeeWriteOnceError'."""
     raise ProtectedError(instance, self, self)
 
-  def __bool__(self, ) -> bool:
-    """
-    Members named 'NULL' are always falsy. Other members reflect the
-    truthiness of their value.
-    """
-    if self.name.lower() == 'null':
-      return False
-    return True if self.value else False
-
   def __int__(self) -> int:
     """Return the index of the member."""
     return self.index
 
   __index__ = __int__
 
-  def __hash__(self) -> Optional[int]:
-    try:
-      _ = hash((self.value,))
-    except TypeError:
-      return
-    else:
-      base = str.join('::', (type(self).__name__, self.name,))
-      return int.from_bytes(base.encode(), 'big')
+  def __hash__(self) -> int:
+    """Hash by name, but only when 'value' is itself hashable. Members
+    with unhashable values are themselves unhashable, so that any
+    hashed lookup on the member side remains consistent with hashed
+    lookup on the value side."""
+    hash(self.value)
+    base = str.join('::', (type(self).__name__, self.name,))
+    return int.from_bytes(base.encode(), 'big')
 
   def __eq__(self, other: Any) -> bool:
     if type(self) is not type(other):

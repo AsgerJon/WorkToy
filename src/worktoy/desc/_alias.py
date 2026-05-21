@@ -16,8 +16,31 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Alias(Object):
   """
-  Alias provides a descriptor allowing renaming of a descriptor, typically
-  one inherited from a parent.
+  Alias is a descriptor that re-exposes another attribute under a
+  second name, typically one inherited from a parent class.
+
+  Usage:
+
+  >>> class Parent(BaseObject):
+  ...   value = AttriBox[int](0)
+  >>> class Child(Parent):
+  ...   v = Alias('value')   # 'child.v' now reads/writes 'child.value'
+
+  Resolution strategy
+  -------------------
+  When the class body finishes and '__set_name__' fires, 'Alias'
+  checks whether the target name ('value' in the example) already
+  resolves on the owning class. If so, it short-circuits the
+  descriptor protocol by writing the target object directly into
+  the owning class under the alias name, effectively removing
+  itself from the class. Subsequent attribute access on the alias
+  goes straight to the real descriptor with no extra indirection.
+
+  If the target name is not yet visible on the class at
+  '__set_name__' time (e.g. the parent hasn't been built yet, or
+  the name is contributed later), 'Alias' stays in place and
+  forwards each '__get__' / '__set__' / '__delete__' to the real
+  descriptor at runtime via 'getattr(owner, self.__real_name__)'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

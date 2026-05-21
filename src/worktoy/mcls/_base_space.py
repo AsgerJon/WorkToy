@@ -17,6 +17,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
   SigFunc: TypeAlias = dict[TypeSig, Callable[..., Any]]
   OverloadMap: TypeAlias = dict[str, SigFunc]
+  VariadicList: TypeAlias = list[tuple[TypeSig, Callable[..., Any]]]
+  VariadicMap: TypeAlias = dict[str, VariadicList]
   Bases: TypeAlias = tuple[type, ...]
 
 
@@ -42,6 +44,7 @@ class BaseSpace(AbstractNamespace):
   __classmethod_map__ = dict()
   __static_map__ = dict()
   __overload_map__ = None
+  __variadic_overload_map__ = None
   __fallback_map__ = None
   __finalizer_map__ = None
 
@@ -68,6 +71,10 @@ class BaseSpace(AbstractNamespace):
           for overloadName, sigFuncMap in {**overloadMap, }.items():
             for sig, func in {**sigFuncMap, }.items():
               self.addOverload(overloadName, sig, func)
+          variadicMap: VariadicMap = space.getVariadics()
+          for variadicName, variadicList in {**variadicMap, }.items():
+            for sig, func in [*variadicList, ]:
+              self.addVariadic(variadicName, sig, func)
           fallbackMap: dict[str, Callable] = space.getFallbacks()
           for fallbackName, func in {**fallbackMap, }.items():
             self.addFallback(fallbackName, func)
@@ -113,6 +120,24 @@ class BaseSpace(AbstractNamespace):
       function object.
     """
     return maybe(self.__overload_map__, {})
+
+  def addVariadic(self, name: str, sig: TypeSig, func: Callable) -> None:
+    """Register a variadic '(TypeSig, func)' pair under 'name'. The
+    'TypeSig' must carry a trailing 'ARGS' sentinel as its last raw
+    type. Stored in a list rather than a dict because 'ARGS'
+    instances are not hashable and the dispatcher matches variadic
+    sigs by structural iteration, not by hash lookup."""
+    existing = self.getVariadics()
+    if name not in existing:
+      existing[name] = []
+    existing[name] = [*existing[name], (sig, func,)]
+    self.__variadic_overload_map__ = {**existing, }
+
+  def getVariadics(self, ) -> VariadicMap:
+    """Mapping from overloaded name to its list of variadic
+    '(TypeSig, func)' pairs. Returns an empty dict when no variadic
+    overloads have been registered."""
+    return maybe(self.__variadic_overload_map__, {})
 
   def addFallback(self, name: str, func: Callable) -> None:
     """

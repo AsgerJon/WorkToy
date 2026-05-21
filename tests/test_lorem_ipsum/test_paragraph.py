@@ -88,3 +88,11 @@ class TestParagraph(LoremIpsumTest):
     paragraphStr = str(paragraph)
     for sentence in paragraph:
       self.assertIn(str(sentence), paragraphStr)
+
+  def test_realize(self) -> None:
+    """
+    This method tests that 'realize' matches '__str__'.
+    """
+    expectedText = str(self.paragraph)
+    actualText = self.paragraph.realize()
+    self.assertEqual(expectedText, actualText)

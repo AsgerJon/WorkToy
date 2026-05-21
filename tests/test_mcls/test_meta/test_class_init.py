@@ -13,7 +13,7 @@ from .. import MCLSTest
 
 class Init(BaseObject, metaclass=AbstractMetaclass):
   """
-  Init class that implements __class_init__.
+  INIT class that implements __class_init__.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

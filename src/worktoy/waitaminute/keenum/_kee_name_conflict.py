@@ -26,7 +26,7 @@ class KeeNameConflict(ValueError):
   oldName: str
   newName: str
 
-  __slots__ = ('__kee_object__', '__existing_name__', '__new_name__',)
+  __slots__ = ('member', 'oldName', 'newName')
 
   def __init__(self, kee: Kee, oldName: str, newName: str) -> None:
     """Initialize the KeeNameConflict object."""
@@ -36,10 +36,11 @@ class KeeNameConflict(ValueError):
     ValueError.__init__(self, )
 
   def __str__(self, ) -> str:
-    infoSpec = """Name conflict for Kee member object '%s': existing name 
-    '%s' versus new name '%s'!"""
+    infoSpec = """Name conflict for Kee member object '%s': existing
+    name '%s' versus new name '%s'!"""
     keeName = getattr(self.member, '__name__', 'Unknown')
     info = infoSpec % (keeName, self.oldName, self.newName,)
-    return info
+    from ...utilities import textFmt
+    return textFmt(info)
 
   __repr__ = __str__

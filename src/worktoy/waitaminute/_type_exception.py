@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ..utilities import textFmt, joinWords
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Any
 
 
 class TypeException(TypeError):
@@ -23,7 +23,7 @@ class TypeException(TypeError):
 
   __slots__ = ('varName', 'actualObject', 'actualType', 'expectedTypes',)
 
-  def __init__(self, name: str, obj: object, *types) -> None:
+  def __init__(self, name: str, obj: Any, *types) -> None:
     """Initialize the TypeException with the name of the variable, the
     received object, and the expected types."""
     TypeError.__init__(self, )

@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.ezdata import EZMeta
-from worktoy.waitaminute.ez import EZMultipleInheritance
 from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
 
@@ -143,22 +141,3 @@ class TestClassBool(MCLSTest):
     self.assertEqual(VintageIteratorFalse.__class_next__(), 'lol')
     with self.assertRaises(StopIteration):
       VintageIteratorFalse.__class_next__()
-
-  def test_nuthing(self) -> None:
-    """Test of nothing, nothing at all!"""
-
-    class Foo:
-      __slots__ = ('Tom', 'Dick', 'Harry')
-
-    class Bar:
-      __slots__ = ('never', 'gonna', 'give', 'you', 'up')
-
-    with self.assertRaises(EZMultipleInheritance) as context:
-      class Breh(Foo, Bar, metaclass=EZMeta):
-        pass
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-
-    with self.assertRaises(TypeError):
-      class Yikes(Foo, Bar):
-        pass

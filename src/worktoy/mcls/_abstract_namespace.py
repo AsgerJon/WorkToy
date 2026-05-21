@@ -96,8 +96,6 @@ class AbstractNamespace(dict):
   @classmethod
   def getHookListName(cls, ) -> str:
     """Getter-function for the name of the hook list. """
-    # if TYPE_CHECKING:  # pragma: no cover
-    #   assert isinstance(keeNum, dict)
     return cls.__owner_hooks_list_name__
 
   def getHooks(self, owner: type = None) -> Iterator[AbstractSpaceHook]:
@@ -194,6 +192,8 @@ class AbstractNamespace(dict):
     self.__class_name__ = name
     self.__base_classes__ = [*bases, ]
     self.__key_args__ = kwargs or {}
+    baseNames = tuple(b.__name__ for b in bases)
+    self.__hash_value__ = hash((name, *baseNames, mcls.__name__))
     try:
       self.__class_mro__ = resolveMRO(*bases, )
     except TypeError as typeError:
@@ -231,9 +231,6 @@ class AbstractNamespace(dict):
 
   def __setitem__(self, key: str, val: Any, **kwargs) -> None:
     """Sets the value of the key."""
-    # if key == '__module__':
-    #   globScope = {**vars(sys.modules[val]), }
-    #   object.__setattr__(self, '__global_scope__', globScope)
     try:
       oldVal = dict.__getitem__(self, key)
     except KeyError:
@@ -263,7 +260,6 @@ class AbstractNamespace(dict):
     clsName = self.getClassName()
     mclsName = self.getMetaclass().__name__
     baseNames = '%s' % ', '.join([base.__name__ for base in bases])
-    mclsName = self.getMetaclass().__name__
     args = """%s, '%s', (%s)""" % (mclsName, clsName, baseNames)
     kwargs = [(k, v) for (k, v) in self.getKwargs().items()]
     kwargStr = ', '.join(['%s=%s' % (k, str(v)) for (k, v) in kwargs])

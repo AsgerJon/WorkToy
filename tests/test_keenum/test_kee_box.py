@@ -10,7 +10,6 @@ from math import pi, e
 from typing import TYPE_CHECKING
 
 from worktoy.desc import AttriBox
-from worktoy.ezdata import EZMeta, EZData
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.control_flow import SkipSet
@@ -57,8 +56,6 @@ class TestKeeBox(KeeTest):
     self.assertIsInstance(Pen.color, KeeBox)
     self.assertIsInstance(Pen.color.fieldType, KeeMeta)
     self.assertIsSubclass(Pen.color.fieldType, KeeNum)
-    self.assertIsInstance(Pen.color.fieldType.valueType, EZMeta)
-    self.assertIsSubclass(Pen.color.fieldType.valueType, EZData)
     self.assertIsInstance(Pen.width, AttriBox)
     self.assertIsInstance(Pen.width.fieldType, type)
     self.assertIs(Pen.width.fieldType, int)
@@ -71,7 +68,7 @@ class TestKeeBox(KeeTest):
     with self.assertRaises(DispatchException) as context:
       _ = Pen('never', 'gonna', 'give', 'you', 'up')
     e = context.exception
-    self.assertIs(e.dispatch, Pen.__init__)
+    self.assertIs(e.dispatch, Pen.__dict__['__init__'])
     self.assertEqual(e.args, ('never', 'gonna', 'give', 'you', 'up'))
 
   def test_good_set(self, ) -> None:
@@ -108,8 +105,6 @@ class TestKeeBox(KeeTest):
     self.assertIsInstance(SprayCan.indexColor, KeeBox)
     self.assertIsInstance(SprayCan.indexColor.fieldType, KeeMeta)
     self.assertIsSubclass(SprayCan.indexColor.fieldType, KeeNum)
-    self.assertIsInstance(SprayCan.indexColor.fieldType.valueType, EZMeta)
-    self.assertIsSubclass(SprayCan.indexColor.fieldType.valueType, EZData)
 
     sprayCan = SprayCan()
     self.assertIs(sprayCan.indexColor, ColorNum.RED)
@@ -172,7 +167,7 @@ class TestKeeBox(KeeTest):
 
     bar = Bar()
     with self.assertRaises(RecursionError):
-      Bar.foo.__get__(bar, Bar, _recursion=True)
+      Bar.foo.__instance_get__(bar, Bar, _recursion=True)
 
   def test_box_of_flags(self, ) -> None:
     """
@@ -312,7 +307,7 @@ class TestKeeBox(KeeTest):
   def test_skip_set(self, ) -> None:
     """
     Testing the situation where '__set__' is called with '_recursion=True'
-    in the kwargs, which should cause it to skip trying to resolve the
+    in the kw, which should cause it to skip trying to resolve the
     value and just set it directly.
     """
 
@@ -332,7 +327,7 @@ class TestKeeBox(KeeTest):
         cls = type(self)
         desc = getattr(cls, 'bar')
         try:
-          currentValue = desc.__get__(self, cls, _recursion=True)
+          currentValue = desc.__instance_get__(self, cls, _recursion=True)
         except RecursionError:
           pass
         else:

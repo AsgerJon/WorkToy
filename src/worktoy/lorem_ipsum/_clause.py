@@ -5,7 +5,6 @@ Clause subclasses 'BaseGenerator' and implements word sequences.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import gauss
 from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import THIS
@@ -15,13 +14,7 @@ from . import StochasticWord, BaseGenerator
 from worktoy.utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union, Optional, Self, Iterator
-
-  MaybeBool: TypeAlias = Optional[bool]
-
-  BoolField: TypeAlias = Union[bool, Field]
-  IntField: TypeAlias = Union[int, Field]
-  StrField: TypeAlias = Union[str, Field]
+  from typing import TypeAlias, Optional, Self, Iterator
 
   IntList: TypeAlias = list[int]
   StrList: TypeAlias = list[str]
@@ -29,10 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
   MaybeIntList: TypeAlias = Optional[IntList]
   MaybeStrList: TypeAlias = Optional[StrList]
 
-  IntListField: TypeAlias = Union[IntList, Field]
-  StrListField: TypeAlias = Union[StrList, Field]
-
-  StochWordBox: TypeAlias = Union[StochasticWord, AttriBox]
+  Words: TypeAlias = tuple[str, ...]
 
 
 class Clause(BaseGenerator):
@@ -45,6 +35,10 @@ class Clause(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
+  #  When a Clause is constructed via 'Clause.first(...)', these words
+  #  are pinned to the leading positions and their character lengths
+  #  override the sampled lengths at those indices.
+  __lead_in__: Words = ('Lorem', 'ipsum')
   __length_var__: int = 15
 
   #  Fallback Variables
@@ -55,12 +49,12 @@ class Clause(BaseGenerator):
   __words_array__: MaybeStrList = None
 
   #  Public Variables
-  stochWord: StochWordBox = AttriBox[StochasticWord]()
-  wordsLengths: IntListField = Field()
-  wordsArray: StrListField = Field()
+  stochWord: AttriBox[StochasticWord] = AttriBox[StochasticWord]()
+  wordsLengths: Field[IntList] = Field()
+  wordsArray: Field[StrList] = Field()
 
   #  Virtual Variables
-  wordCount: IntField = Field()
+  wordCount: Field[int] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -71,18 +65,22 @@ class Clause(BaseGenerator):
     return int(round(self.charCount / self.stochWord.meanLen))
 
   def _buildWordsLengths(self, ) -> None:
+    """Sample a log-normal word-length sequence summing to 'charCount'
+    and cache it. When 'isFirst' is set, the leading slots are pinned
+    to the character lengths of '__lead_in__' so 'Lorem ipsum' (or
+    whatever the subclass configures) fits exactly."""
     mean, var = self.stochWord.meanLen, self.stochWord.varianceLen
     minVal, maxVal = self.stochWord.minLen, self.stochWord.maxLen
-    lengths = [gauss(mean, var ** 0.5) for _ in range(self.wordCount)]
+    lengths = [self.logNormal(mean, var) for _ in range(self.wordCount)]
     factor = self.charCount / sum(lengths)
     lengths = [int(round(length * factor)) for length in lengths]
     lengths = [max([minVal, l]) for l in lengths]
     lengths = [min([maxVal, l]) for l in lengths]
-    if self.isFirst:
-      lengths[0] = 5
-      lengths[1] = 5
+    leadIn = self.__lead_in__ if self.isFirst else ()
+    for i, word in enumerate(leadIn):
+      lengths[i] = len(word)
     targetSum = self.charCount - self.wordCount + 1
-    minIndex = 2 if self.isFirst else 0
+    minIndex = len(leadIn)
     self.__words_lengths__ = self.scaleSum(
       lengths,
       targetSum,
@@ -101,10 +99,14 @@ class Clause(BaseGenerator):
     return self.__words_lengths__
 
   def _buildWordsArray(self, ) -> None:
+    """Realize each cached length into a concrete word and cache the
+    resulting word list. The leading slots are taken from
+    '__lead_in__' when 'isFirst' is set."""
+    leadIn = self.__lead_in__ if self.isFirst else ()
     words = []
     for i, length in enumerate(self.wordsLengths):
-      if i < 2 and self.isFirst:
-        words.append(('Lorem', 'ipsum')[i])
+      if i < len(leadIn):
+        words.append(leadIn[i])
         continue
       words.append(self.stochWord.realizeLength(length))
     self.__words_array__ = [*words, ]
@@ -118,15 +120,6 @@ class Clause(BaseGenerator):
       return self._getWordsArray(_recursion=True)
     return self.__words_array__
 
-  def clear(self, ) -> None:
-    self.__words_lengths__ = None
-    self.__words_array__ = None
-
-  def reset(self, ) -> None:
-    self.clear()
-    self._buildWordsLengths()
-    self._buildWordsArray()
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -138,6 +131,35 @@ class Clause(BaseGenerator):
       self.__words_lengths__ = [*other.__words_lengths__, ]
     if other.__words_array__ is not None:
       self.__words_array__ = [*other.__words_array__, ]
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def clear(self, ) -> None:
+    """Drop the cached length and word arrays."""
+    self.__words_lengths__ = None
+    self.__words_array__ = None
+
+  def reset(self, ) -> None:
+    """Clear and regenerate the cached length and word arrays."""
+    self.clear()
+    self._buildWordsLengths()
+    self._buildWordsArray()
+
+  def capitalizeLead(self) -> None:
+    """Capitalize the first word of this clause in place."""
+    words = self.wordsArray
+    words[0] = str.capitalize(words[0])
+
+  def terminate(self, punctuation: str) -> None:
+    """Append the given punctuation to the last word of this clause."""
+    words = self.wordsArray
+    words[-1] = """%s%s""" % (words[-1], punctuation)
+
+  def realize(self) -> str:
+    """Return the realized text for this clause."""
+    return str(self)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

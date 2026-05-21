@@ -105,16 +105,11 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   subTest = SubTest()
 
   #  Virtual Variables
-  attrErrTrace = Field()
   exceptions = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @attrErrTrace.GET
-  def _getAttributeErrorTrace(self, ) -> str:
-    return """object has no attribute"""
 
   @exceptions.GET
   def _getTypicalExceptions(self, ) -> TypicalExceptions:

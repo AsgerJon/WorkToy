@@ -1,5 +1,5 @@
 """
-KeeMeta provides the metaclass for the 'worktoy.num' module.
+KeeMeta provides the metaclass for the 'worktoy.keenum' module.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -67,6 +67,7 @@ class KeeMetaMeta(MetaType):
       name = 'KeeNum' if mcls.__name__ == 'KeeMeta' else num
       numSpace = KSpace(mcls, name, (_KeeBase,), _root=True)
       numSpace['__root_class__'] = True
+      numSpace['__doc__'] = _KeeBase.__doc__
       # noinspection PyTypeChecker
       num = mcls.__new__(mcls, name, (_KeeBase,), numSpace, _root=True)
       mcls.__kee_num__ = num
@@ -76,7 +77,50 @@ class KeeMetaMeta(MetaType):
 
 class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   """
-  KeeMeta provides the metaclass for the 'worktoy.num' module.
+  KeeMeta is the metaclass driving every KeeNum-style enumeration in
+  'worktoy.keenum'. It pairs with KeeSpace (the class-body namespace)
+  to turn 'Kee' descriptors in the class body into a frozen sequence
+  of typed members.
+
+  Class construction
+  ------------------
+  During '__new__', the namespace collected by KeeSpaceHook is handed
+  off in '__init__', which then runs the lazy creators
+  ('_createSpace', '_createBase', '_createMembers',
+  '_createNamedMembers', '_createValuedMembers',
+  '_validateClassResolve'). Each populates a private slot consulted
+  by a public Field with a '_recursion=True' guard to detect
+  population failure. After this, '__allow_instantiation__' is False
+  and direct construction routes through '_resolveMember' instead.
+
+  Member resolution
+  -----------------
+  'cls(identifier)' and 'cls[identifier]' both call '_resolveMember',
+  which tries in order:
+
+    1. identity (if identifier is already a member, return it)
+    2. case-insensitive name lookup
+    3. a class-defined '__class_resolve__' hook (if present)
+    4. value lookup via 'valueType' / 'fromValue'
+
+  Failure at all four raises 'KeeResolveError'. Subclasses may
+  declare '__class_resolve__' to intercept resolution before the
+  value-based fallback.
+
+  Iteration, length, and membership
+  ---------------------------------
+  Instances of KeeMeta are iterable ('for member in MyEnum'),
+  length-typed ('len(MyEnum)'), and act as their own membership
+  domain ('x in MyEnum' is True iff x is one of the members).
+  'isinstance(x, MyEnum)' is True when 'x' equals any member or
+  belongs to a subclass.
+
+  Subclassing through KeeMetaMeta
+  -------------------------------
+  Subclassing KeeMeta to extend behavior requires using the
+  'metaclass.keeNum' attribute (provided by KeeMetaMeta) as the base
+  for the actual enumeration class. See KeeMetaMeta's docstring for
+  the recommended pattern.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -96,13 +140,13 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   __valued_members__: Optional[dict[Any, Any]] = None
   __kee_num__: Optional[KeeMeta] = None
 
-  space: KSpace = Field()
-  base: KeeMeta = Field()
-  mroNum: tuple[KeeMeta, ...] = Field()
-  members: tuple[Any, ...] = Field()
-  valueType: type = Field()
-  namedMembers: dict[str, KeeMeta] = Field()
-  valuedMembers: dict[Any, Any] = Field()
+  space: Field[KSpace] = Field()
+  base: Field[KeeMeta] = Field()
+  mroNum: Field[tuple[KeeMeta, ...]] = Field()
+  members: Field[tuple[Any, ...]] = Field()
+  valueType: Field[type] = Field()
+  namedMembers: Field[dict[str, KeeMeta]] = Field()
+  valuedMembers: Field[dict[Any, Any]] = Field()
 
   #  Virtual Variables
   if TYPE_CHECKING:  # pragma: no cover
@@ -276,22 +320,17 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
   def _validateClassResolve(cls) -> None:
     """
-    Detects '__class_resolve__' on the class and validates it.
+    Detects '__class_resolve__' anywhere in the class hierarchy and
+    validates it. Sets 'cls.__custom_resolve__' to True when a
+    callable hook is found, False otherwise.
 
     Raises
     ------
     TypeException
       If '__class_resolve__' is defined but not callable.
     """
-    classResolve = None
-    for num in cls, cls.base:
-      try:
-        classResolve = getattr(num, '__class_resolve__')
-      except AttributeError:
-        continue
-      else:
-        break
-    else:
+    classResolve = getattr(cls, '__class_resolve__', None)
+    if classResolve is None:
       cls.__custom_resolve__ = False
       return
     if not callable(classResolve):

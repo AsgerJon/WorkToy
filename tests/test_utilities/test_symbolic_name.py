@@ -150,6 +150,7 @@ class TestSymbolicName(UtilitiesTest):
     self.assertEqual(symbolicName.kebab, 'never-gonna-give-you-up')
     self.assertEqual(symbolicName.camel, 'neverGonnaGiveYouUp')
     self.assertEqual(symbolicName.screamingSnake, 'NEVER_GONNA_GIVE_YOU_UP')
+    self.assertEqual(symbolicName.screamingKebab, 'NEVER-GONNA-GIVE-YOU-UP')
 
   def test_edge_cases(self, ) -> None:
     """
@@ -164,6 +165,7 @@ class TestSymbolicName(UtilitiesTest):
     self.assertEqual(emptySymbolicName.kebab, '')
     self.assertEqual(emptySymbolicName.camel, '')
     self.assertEqual(emptySymbolicName.screamingSnake, '')
+    self.assertEqual(emptySymbolicName.screamingKebab, '')
 
     singleWord = 'hello'
     singleWordSymbolicName = SymbolicName(singleWord, )
@@ -174,6 +176,7 @@ class TestSymbolicName(UtilitiesTest):
     self.assertEqual(singleWordSymbolicName.kebab, 'hello')
     self.assertEqual(singleWordSymbolicName.camel, 'hello')
     self.assertEqual(singleWordSymbolicName.screamingSnake, 'HELLO')
+    self.assertEqual(singleWordSymbolicName.screamingKebab, 'HELLO')
 
   def test_missing_variable(self) -> None:
     """

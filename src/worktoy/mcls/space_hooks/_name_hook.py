@@ -1,5 +1,5 @@
 """
-NameHook filters named used in the namespace system.
+NamespaceHook filters names used in the namespace system.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -20,42 +20,41 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class NamespaceHook(AbstractSpaceHook):
   """
-  NameHook intercepts names added to the namespace and filters out
-  "near-miss" identifiers that resemble critical Python dunder methods.
+  NamespaceHook intercepts names added to the namespace and filters out
+  near-miss identifiers that resemble critical Python dunder methods.
   These mistakes often go unnoticed, leading to subtle bugs or broken
   protocol support.
 
-  This hook raises a QuestionableSyntax exception when such names are
+  This hook raises a 'QuestionableSyntax' exception when such names are
   detected during assignment in the namespace.
 
-  ## Purpose
-
+  Purpose
+  -------
   Many magic methods in Python have specific names that must be spelled
   exactly. If a user misspells one by inserting or omitting underscores,
   the name is silently ignored by Python and treated as an ordinary
-  attribute — sometimes shadowing a builtin or behaving unexpectedly.
+  attribute, sometimes shadowing a builtin or behaving unexpectedly.
 
-  ## Near-miss Examples
-  ___________________________________________________________________________
-  | Intended Name  | Mistyped Name | Notes                                 |
-  |----------------|---------------|---------------------------------------|
-  | `__set_name__` | `__setname__` | Misses descriptor registration        |
-  | `__getitem__`  | `__get_item__`| Breaks item access in dict-like APIs  |
-  | `__setitem__`  | `__set_item__`| Same as above                         |
-  | `__delitem__`  | `__del_item__`| Silent failure of delete protocol     |
-  | `__delete__`   | `__del__`     | High risk: __del__ ties to GC hooks   |
-  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-  These errors can be especially difficult to diagnose, as they usually
-  do not raise any errors directly — instead, they silently fail to
-  participate in expected behaviors or override builtin methods.
+  Near-miss examples
+  ------------------
+  Intended name    Mistyped name    Notes
+  '__set_name__'   '__setname__'    Misses descriptor registration
+  '__getitem__'    '__get_item__'   Breaks item access in dict-like APIs
+  '__setitem__'    '__set_item__'   Same as above
+  '__delitem__'    '__del_item__'   Silent failure of delete protocol
+  '__delete__'     '__del__'        High risk: '__del__' ties to GC hooks
 
-  ## Usage
-  To use NameHook, simply declare it in your namespace class:
+  These errors are difficult to diagnose because they usually do not
+  raise any errors directly. Instead, they silently fail to participate
+  in expected behaviors or override builtin methods.
 
-  class Space(AbstractNamespace):  # Must inherit from AbstractNamespace
-    #  Custom namespace class inheriting from AbstractNamespace
-    nameHook = NameHook()  # Register the hook
-"""
+  Usage
+  -----
+  To use 'NamespaceHook', declare it in your namespace class:
+
+      class Space(AbstractNamespace):
+        nameHook = NamespaceHook()
+  """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

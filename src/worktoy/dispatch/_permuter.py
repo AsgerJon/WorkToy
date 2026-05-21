@@ -92,39 +92,39 @@ class Permuter(CallMeMaybe):
 
   def __init__(self, *args) -> None:
     if len(args) > 2:
-      infoSpec = """'%s' constructor accepts at most two positional 
+      infoSpec = """'%s' constructor accepts at most two positional
       arguments, but received '%d':<br><tab>%s"""
       clsName: str = type(self).__name__
       argStr: str = '<br><tab>'.join(str(arg) for arg in args)
       n: int = len(args)
-      info: str = textFmt(infoSpec, clsName, n, argStr)
-      raise ValueError(info)
+      info: str = infoSpec % (clsName, n, argStr)
+      raise ValueError(textFmt(info))
     _func, _arrangement = None, None
     for arg in args:
       if isinstance(arg, Arrangement):
         if _arrangement is None:
           _arrangement = arg
         else:
-          infoSpec = """'%s' constructor expects at most one 
-          'Arrangement' object, but received: 
+          infoSpec = """'%s' constructor expects at most one
+          'Arrangement' object, but received:
           <br><tab>%s<br><tab>%s"""
           clsName: str = type(self).__name__
           arrStr: str = str(_arrangement)
           argStr: str = str(arg)
-          info: str = textFmt(infoSpec, clsName, arrStr, argStr)
-          raise ValueError(info)
+          info: str = infoSpec % (clsName, arrStr, argStr)
+          raise ValueError(textFmt(info))
       elif isinstance(arg, Func):
         if _func is None:
           _func = arg
         else:
-          infoSpec = """'%s' constructor expects at most one 
-          'FunctionType' object, but received: 
+          infoSpec = """'%s' constructor expects at most one
+          'FunctionType' object, but received:
           <br><tab>%s<br><tab>%s"""
           clsName: str = type(self).__name__
           funcStr: str = str(_func)
           argStr: str = str(arg)
-          info: str = textFmt(infoSpec, clsName, funcStr, argStr)
-          raise ValueError(info)
+          info: str = infoSpec % (clsName, funcStr, argStr)
+          raise ValueError(textFmt(info))
       else:
         raise TypeException('arg', arg, Arrangement, Func)
     super().__init__(_func)
@@ -132,10 +132,12 @@ class Permuter(CallMeMaybe):
       self.setArrangement(_arrangement)
 
   @classmethod
-  def newArrangement(cls, self: Self, arrangement: Arrangement) -> Self:
-    """Construct a new Permuter wrapping the same function but with a
-    different 'Arrangement'."""
-    return cls(self.__wrapped__, arrangement)
+  def newArrangement(
+      cls, original: Self, arrangement: Arrangement,
+  ) -> Self:
+    """Construct a new 'Permuter' wrapping the same function as
+    'original' but with a different 'Arrangement'."""
+    return cls(original.__wrapped__, arrangement)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

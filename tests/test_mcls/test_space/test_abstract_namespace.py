@@ -103,19 +103,19 @@ class TestAbstractNamespace(MCLSTest):
     """
 
     class X:
-      """Leaf base X."""
+      """Leaf base x."""
       pass
 
     class Y:
-      """Leaf base Y."""
+      """Leaf base y."""
       pass
 
     class A(X, Y):
-      """Demands X before Y."""
+      """Demands x before y."""
       pass
 
     class B(Y, X):
-      """Demands Y before X."""
+      """Demands y before x."""
       pass
 
     with self.assertRaises(TypeError) as context:

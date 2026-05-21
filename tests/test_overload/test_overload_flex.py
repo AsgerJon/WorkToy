@@ -217,7 +217,9 @@ class TestOverloadFlex(OverloadTest):
     self.assertIsNone(diagnostics.method('69', 420))
     self.assertIsNone(diagnostics.method(1337, '80085'))
 
-    dispatchSignatures = str.split(str(Diagnostic.method), os.linesep)[1:]
+    dispatchSignatures = str.split(
+      str(Diagnostic.__dict__['method']), os.linesep,
+    )[1:]
     self.assertTrue(Diagnostic.testing)
     self.assertTrue(Diagnostic.__namespace__['testing'])
     for diagnostic in Diagnostic.overloadDiagnostics:

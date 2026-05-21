@@ -51,3 +51,16 @@ class TestKeeFlag(KeeTest):
               rightActual = KeeFlag.__eq__(right, left, _debug=True)
               self.assertIs(leftActual, expected)
               self.assertIs(rightActual, expected)
+
+  def testNonKeeFlagComparison(self, ) -> None:
+    """
+    Comparing a 'KeeFlag' to a non-'KeeFlag' object returns
+    'NotImplemented' from '__eq__' (which Python then translates to
+    'False' for the '==' operator). Exercises the 'isinstance' guard
+    that prevents 'AttributeError' on '__field_owner__' access.
+    """
+    flag = next(iter(self.exampleFlags[0].flags))
+    foreigners = (42, None, 'foo', 3.14, (), [], {}, object())
+    for foreigner in foreigners:
+      self.assertIs(KeeFlag.__eq__(flag, foreigner), NotImplemented)
+      self.assertFalse(flag == foreigner)

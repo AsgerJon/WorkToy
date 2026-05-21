@@ -29,15 +29,15 @@ class KeeTypeException(TypeError):
 
   def __str__(self) -> str:
     """Return the string representation of the KeeTypeException object."""
-    infoSpec = """KeeNum member '%s' has value '%s' of type '%s', but 
+    infoSpec = """KeeNum member '%s' has value '%s' of type '%s', but
     expected type to be: '%s'!"""
     name = self.name
     typeNames = [t.__name__ for t in self.expectedTypes]
-    from ...utilities import joinWords
+    from ...utilities import joinWords, textFmt
     typeStr = joinWords(*["""'%s'""" % name for name in typeNames], )
     value = str(self.value)
     valueType = type(self.value).__name__
     info = infoSpec % (name, value, valueType, typeStr)
-    return info
+    return textFmt(info)
 
   __repr__ = __str__

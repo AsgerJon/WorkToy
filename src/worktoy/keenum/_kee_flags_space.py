@@ -1,5 +1,5 @@
 """
-KeeFlagsSpace subclasses KeeSpace from the worktoy.num package
+KeeFlagsSpace subclasses KeeSpace from the worktoy.keenum package
 providing the namespace object required for KeeFlags.
 """
 #  AGPL-3.0 license
@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeFlagsSpace(BaseSpace):
   """
-  KeeFlagsSpace subclasses KeeSpace from the worktoy.num package
+  KeeFlagsSpace subclasses KeeSpace from the worktoy.keenum package
   providing the namespace object required for KeeFlags.
   """
 

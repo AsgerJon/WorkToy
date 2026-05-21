@@ -31,6 +31,7 @@ class TestSentence(LoremIpsumTest):
     Sets the 'charCount' of the 'randomLorem'.
     """
     super().setUp()
+    self.sentence = Sentence()
     self.randomLorem.charCount = 69
 
   def test_lengths(self, ) -> None:
@@ -85,3 +86,11 @@ class TestSentence(LoremIpsumTest):
       _ = sentence._getClausesArray(_recursion=True)
     with self.assertRaises(RecursionError):
       _ = sentence._getClauseLengths(_recursion=True)
+
+  def test_realize(self) -> None:
+    """
+    This method tests that 'realize' matches '__str__'.
+    """
+    expectedText = str(self.sentence)
+    actualText = self.sentence.realize()
+    self.assertEqual(expectedText, actualText)

@@ -71,6 +71,16 @@ class TestObjectUmbrella(CoreTest):
     e = context.exception
     self.assertEqual(str(e), repr(e))
 
+  def testExitContextWithoutCreate(self) -> None:
+    """Popping the context stack when it is empty must raise
+    'WithoutException', since that indicates an unpaired
+    'createContext' / 'exitContext' call."""
+    obj = Object()
+    with self.assertRaises(WithoutException) as context:
+      obj.exitContext()
+    e = context.exception
+    self.assertIs(e.desc, obj)
+
   def testGoodContext(self) -> None:
     """Tests context manager"""
     bar = Bar()
@@ -88,21 +98,6 @@ class TestObjectUmbrella(CoreTest):
   def testClassContextInstance(self) -> None:
     """Tests class context manager with instance"""
     self.assertIsInstance(Object.instance, ContextInstance)
-
-  def testCorruptedContext(self, ) -> None:
-    """Tests the exception raised during corrupted context. """
-    obj = Object()
-    setattr(obj, '__context_owner__', 69)
-    with self.assertRaises(RuntimeError) as context:
-      _ = obj.hasContext()
-    e = context.exception
-    self.assertIn('69', str(e))
-    obj2 = Object()
-    setattr(obj2, '__context_instance__', 420)
-    with self.assertRaises(RuntimeError) as context:
-      _ = obj2.hasContext()
-    e = context.exception
-    self.assertIn('420', str(e))
 
   def testObjectDirectory(self) -> None:
     """Tests that Object has a directory."""

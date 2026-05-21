@@ -25,8 +25,8 @@ class TestDescriptorOverloadBasic(DispatcherTest):
   def test_exists(self, ) -> None:
     """Tests that the class exists."""
     self.assertTrue(hasattr(PlanePoint, '__init__'))
-    self.assertIsInstance(PlanePoint.__init__, Dispatcher)
-    for key, val in PlanePoint.__init__.__sig_funcs__:
+    self.assertIsInstance(PlanePoint.__dict__['__init__'], Dispatcher)
+    for key, val in PlanePoint.__dict__['__init__'].__sig_funcs__:
       self.assertIsInstance(key, TypeSig)
       self.assertTrue(callable(val))
 
@@ -71,28 +71,28 @@ class TestDescriptorOverloadBasic(DispatcherTest):
     with self.assertRaises(DispatchException) as context:
       PlanePoint('imma number, trust!')
     e = context.exception
-    self.assertIs(e.dispatch, PlanePoint.__init__)
+    self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
     self.assertEqual(e.args, ('imma number, trust!',))
     self.assertEqual(str(e), repr(e))
     #  Test with a list
     with self.assertRaises(DispatchException) as context:
       PlanePoint([0.1337, 0.80085])
     e = context.exception
-    self.assertIs(e.dispatch, PlanePoint.__init__)
+    self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
     self.assertEqual(e.args, ([0.1337, 0.80085],))
     self.assertEqual(str(e), repr(e))
     #  Test with a dict
     with self.assertRaises(DispatchException) as context:
       PlanePoint({'x': 0.1337, 'y': 0.80085})
     e = context.exception
-    self.assertIs(e.dispatch, PlanePoint.__init__)
+    self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
     self.assertEqual(e.args, ({'x': 0.1337, 'y': 0.80085},))
     self.assertEqual(str(e), repr(e))
     #  Test with a tuple
     with self.assertRaises(DispatchException) as context:
       PlanePoint((0.1337, 0.80085))
     e = context.exception
-    self.assertIs(e.dispatch, PlanePoint.__init__)
+    self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
     self.assertEqual(e.args, ((0.1337, 0.80085),))
     self.assertEqual(str(e), repr(e))
 

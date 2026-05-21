@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Generic
 from ..core import MetaType
 from ..core.sentinels import METACALL
 from ..utilities import maybe
-from ..waitaminute import attributeErrorFactory
+from ..waitaminute import MissingVariable
 from . import Base
 from . import AbstractNamespace as ASpace
 
@@ -25,256 +25,111 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   This design delegates the initial class namespace to a custom object
   returned by '__prepare__', while keeping class semantics within the
-  metaclass itself.
+  metaclass itself. The namespace object may define a method called
+  'compile()', which should return the finalized dictionary to be passed
+  to 'type.__new__'.
 
-  The namespace object may define a method called 'compile()', which
-  should return the finalized dictionary to be passed to 'type.__new__'.
-
-  This separation enables:
-  - Customizing how the class body is assembled without affecting the
-    resulting class behavior.
-  - Modifying what it means to be a class, independently of how the
-    class body is constructed.
-
-  - CUSTOM NAMESPACE COMPILATION -
-
+  Custom namespace compilation
+  ----------------------------
   This module also provides an 'AbstractNamespace' class intended to be
   used with '__prepare__'. It defines a 'compile()' method and an
   '__init__()' signature compatible with the arguments passed to
-  '__prepare__'.
+  '__prepare__'. Specifically:
 
-  from . import AbstractNamespace as ASpace  # For brevity
+      def __prepare__(mcls, name: str, bases: Base, **kw) -> ASpace
 
-  Specifically, '__prepare__' is defined as:
-    def __prepare__(mcls, name: str, bases: Base, **kwargs) -> ASpace
+  and 'AbstractNamespace' implements:
 
-  And 'ASpace' ('AbstractNamespace') implements:
-    def __init__(self, mcls: type, name: str, bases: Base, **kwargs)
+      def __init__(self, mcls: type, name: str, bases: Base, **kw)
 
   This allows the namespace object to be instantiated with full context
   about the class being defined, while remaining isolated from the
-  behavior of the resulting class itself. For more information about the
-  class body execution flow, see the 'AbstractNamespace' class
-  documentation.
+  behavior of the resulting class itself.
 
-  - CUSTOM CLASS CREATION -
+  Validation hooks
+  ----------------
+  Validation of the namespace is delegated to space hooks rather than
+  performed by the metaclass itself. The 'NamespaceHook' raises
+  'QuestionableSyntax' on near-miss dunder names such as
+  '__set_item__' (intended '__setitem__') or '__setname__' (intended
+  '__set_name__'), and raises 'DelException' on plain '__del__'.
+  Pass 'trustMeBro=True' as a class keyword if a real '__del__'
+  implementation is genuinely needed.
 
-  After assembly and compilation of the namespace, the metaclass itself
-  takes responsibility for validating and finalizing the class.
-
-  This includes a pass over the namespace via the '_validateNamespace'
-  static method. It performs checks for common mistakes such as typos
-  in special method names—for example:
-    - '__set_item__' instead of '__setitem__'
-    - '__get_attr__' instead of '__getattr__'
-    - '__setname__' instead of '__set_name__'
-
-  If any such names are found, a 'QuestionableSyntax' error is raised
-  to prompt correction.
-
-    -  '__del__' or '__delete__' ? -
-  The descriptor protocol allows classes to define what happens when an
-  attribute is deleted from an instance. This is handled by the '__delete__'
-  method. It is much less common than '__get__' and '__set__', which govern
-  attribute access and assignment, respectively.
-
-  Because of the naming similarity to '__del__'—a special method for object
-  finalization—it's easy to accidentally implement '__del__' when one meant
-  '__delete__'.
-
-  Bugs caused by incorrect use of `__del__`—especially when accidentally
-  used instead of `__delete__`—are notoriously difficult to trace. Since
-  `__del__` is called only when the object is garbage collected (which may
-  be delayed or never happen), the consequences of the mistake are often
-  deferred until long after the original action that should have triggered
-  cleanup. This makes it extremely hard to correlate the broken behavior
-  with its source. Worse still, because `__del__` doesn’t raise errors if
-  used in the wrong context, failures are often silent, leading to
-  inconsistent state, memory leaks, or subtle bugs in object lifecycles that
-  resist even thorough debugging.
-
-  For the above reasons, the 'worktoy' library will raise 'SyntaxError'
-  whenever '__del__' is found in the namespace. If an implementation of
-  '__del__' is actually intended, the class creation must be invoked
-  with the keyword argument 'trustMeBro=True'.
-
-    - Standard Methods -
-  While not implemented in this metaclass, the following pattern allows
-  sub-metaclasses to implement automatically generated methods in certain
-  cases. The 'worktoy.ezdata.EZMeta' dataclass implementation exemplifies
-  this pattern. Derived classes can define properties directly in the
-  class body, and 'EZMeta' will automatically generate the necessary
-  methods, such as '__init__', allowing for instantiation with either
-  positional, keyword or even mixed arguments.
-
-  The sub-metaclass would implement factories as static methods:
-
-  from types import FunctionType as Func
-
-  Bases: TypeAlias = tuple[type, ...]
-  Space: TypeAlias = dict[str, Any]
-
-  @staticmethod
-  def __init_factory__(name: str, bases: Bases, space: Space, **kw) -> Func
-
-  @staticmethod
-  def __new_factory__(name: str, bases: Bases, space: Space, **kw) -> Func
-
-  @staticmethod
-  def __str_factory__(name: str, bases: Bases, space: Space, **kw) -> Func
-
-  Finally, the sub-metaclass would have to implement:
-
-  @staticmethod
-  def autoGenMethods(name: str, bases: Bases, space: Space, **kw) -> Space:
-    This method would be invoked after the namespace has been validated
-    and before the class is created. It would return a modified namespace
-    with the necessary methods added.
-
-    - Notifying Baseclasses -
-  Having validated the namespace, the metaclass falls back to type.__new__
-  and returns the newly created class. Finally, this class arrives in the
-  '__init__' method where the metaclass notifies any baseclass that
-  implements the '__subclasshook__' method of the class creation. This
-  marks the end of the class creation process.
-
-  - CUSTOM CLASS BEHAVIOR -
-
+  Class-level behavior hooks
+  --------------------------
   Once a class has been created by the metaclass system, it may define
   its own runtime behavior by implementing special methods prefixed with
-  `__class_`. These allow the class object itself to participate directly
-  in common operations such as being called, iterated, or printed.
+  '__class_'. These resemble '__class_getitem__' from standard Python
+  but are more general. The metaclass dispatches the corresponding
+  builtin operation to the class-level hook when present, falling back
+  to the default 'type' behavior otherwise. Hooks are detected by
+  comparison against the 'METACALL' sentinel.
 
-  These methods resemble `__class_getitem__` from standard Python but are
-  more general. Each of them overrides a specific class-level behavior.
+  Supported class-level hooks:
 
-  The following hooks relate to common class-level operations:
+  - '__class_call__(cls, *args, **kw) -> Any'
+    Called when the class is invoked. Overrides instance construction.
+  - '__class_instancecheck__(cls, obj) -> bool'
+    Called during 'isinstance(obj, cls)'.
+  - '__class_subclasscheck__(cls, sub) -> bool'
+    Called during 'issubclass(sub, cls)'.
+  - '__class_str__(cls) -> str'
+    Called when 'str(cls)' is invoked.
+  - '__class_repr__(cls) -> str'
+    Called when 'repr(cls)' is invoked.
+  - '__class_iter__(cls) -> Iterator'
+    Called when 'iter(cls)' is invoked.
+  - '__class_next__(cls) -> Any'
+    Called when 'next(cls)' is invoked.
+  - '__class_bool__(cls) -> bool'
+    Called when 'bool(cls)' is invoked. If absent, falls back to
+    '__class_len__' or '__class_iter__'.
+  - '__class_contains__(cls, item) -> bool'
+    Called for membership checks. Falls back to iteration if absent.
+  - '__class_len__(cls) -> int'
+    Called when 'len(cls)' is invoked.
+  - '__class_hash__(cls) -> int'
+    Called when 'hash(cls)' is invoked. The default implementation is:
 
-  - __class_call__(keeNum, *args, **kwargs) -> Any
-    Called when the class object is called like a function. Overrides the
-    default behavior of constructing instances. Can be used to implement
-    singletons, factories, registries, etc.
+        baseNames = [b.__name__ for b in cls.__bases__]
+        metaName = type(cls).__name__
+        return hash((cls.__name__, *baseNames, metaName))
 
-  - __class_instancecheck__(keeNum, obj: Any) -> bool
-    Called during isinstance(obj, keeNum). Controls how instance membership
-    is determined. Supersedes metaclass-level __instancecheck__.
+    Note: the 'overload' protocol in worktoy.dispatch expects this
+    exact default. Overriding '__class_hash__' prevents the dispatcher
+    from fast-path recognizing the class.
+  - '__class_init__(cls, name, bases, space, **kw) -> None'
+    Invoked after the class body has been fully executed.
+  - '__class_setitem__(cls, item, value) -> None'
+    Called when 'cls[item] = value' is invoked.
+  - '__class_delitem__(cls, item) -> None'
+    Called when 'del cls[item]' is invoked.
+  - '__class_getattr__(cls, name) -> Any'
+    Called when an undefined attribute is accessed on the class.
+  - '__class_setattr__(cls, name, value) -> None'
+  - '__class_delattr__(cls, name) -> None'
 
-  - __class_subclasscheck__(keeNum, sub: type) -> bool
-    Called during issubclass(sub, keeNum). Controls dynamic subclass logic.
-    Allows behavior similar to abstract base classes or trait systems.
+  Note on '__class_getitem__': as of Python 3.7+ the interpreter handles
+  '__class_getitem__' on the class directly, so the metaclass does not
+  need a '__getitem__' to route to it. Subscripting a class without
+  '__class_getitem__' falls through to the metaclass '__getitem__'.
 
-  #  The following hooks allow classes to define how they are printed
-
-  - __class_str__(keeNum) -> str
-    Called when str(keeNum) is invoked. Provides human-readable string form
-    for dynamically generated or aliased classes.
-
-  - __class_repr__(keeNum) -> str
-    Called when repr(keeNum) is invoked. Allows classes to override their
-    debug representation.
-
-  #  The following hooks relate to class-level iteration
-
-  - __class_iter__(keeNum) -> Iterator
-    Called when iter(keeNum) is invoked. Makes the class object iterable.
-    Useful for registry-style classes, enums, and similar patterns.
-
-  - __class_next__(keeNum) -> Any
-    Called when next(keeNum) is invoked. Meaningful only if the class itself
-    is its own iterator as returned by __class_iter__.
-
-  - __class_bool__(keeNum) -> bool
-    Called when bool(keeNum) is invoked. Allows classes to define their truth
-    value. By default, every class is 'truthy'.
-
-  - __class_contains__(keeNum, item: Any) -> bool
-    Allows classes to define membership checks on the class level. By
-    default, this checks if the item is an instance of the class itself.
-
-  - __class_len__(keeNum) -> int
-    Called when len(keeNum) is invoked.
-
-  - __class_hash__(keeNum) -> int
-    Called when hash(keeNum) is invoked. Allows classes to define their own
-    hash value. Defaults to:
-    mcls = type(keeNum)  # The metaclass of the class
-    baseNames = [b.__name__ for b in keeNum.__bases__]
-    return hash((keeNum.__name__, *baseNames, mcls.__name__))
-    #  PLEASE NOTE: The 'overload' protocol provided by the 'worktoy'
-    library expects this exact hash value. Reimplementing the hash value
-    will make the dispatching of overloads unable to 'fast' recognize the
-    class.
-
-  - __class_eq__(keeNum, other: Any) -> bool
-    Called to allow classes to equal each other. Please note that this
-    inclusion is for completeness more than anything else. The '__eq__' in
-    this metaclass does look for '__class_eq__' on the class, but falls
-    back to __class_hash__.
-
-  - __class_init__(...)
-    Allows classes to define custom initialization logic that runs after
-    the class body has executed.
-
-  The following hooks allows dictionary-like access to the class.
-
-  - __class_getitem__(keeNum, item: Any) -> Any
-    Called when keeNum[item] is invoked. Please note that this is already
-    implemented in Python 3.7+ as a standard class method. It is listed
-    here only for completeness. This means that this metaclass does not
-    need to implement '__getitem__' to look for the '__class_getitem__' on
-    the class itself. In fact, the __getitem__ on the metaclass would only
-    ever be invoked if Foo['bar'] is invoked on a class Foo that does not
-    implement '__class_getitem__'.
-
-  - __class_setitem__(keeNum, item: Any, value: Any) -> None
-    Called when keeNum[item] = value is invoked.
-    
-  - __class_delitem__(keeNum, item: Any) -> None
-    Called when del keeNum[item] is invoked.
-
-    - Class Attribute Hooks -
-
-  - __class_getattr__(name: str, exception: Exception) -> Any
-    If a non-existing attribute is attempted accessed on a class object,
-    the '__getattr__' method on the metaclass is invoked. This method
-    allows the class itself to handle this case. It is strongly advised
-    that this method, and '__getattr__' in general, raises an
-    AttributeError unless the key passed to it has a valid and sensible
-    meaning in the context.
-
-  The following hooks allow classes to define custom behavior for
-  attribute assignment and deletion at the class level.
-
-  - __class_setattr__(name: str, value: Any) -> None
-  - __class_delattr__(name: str) -> None
-
-  The following hooks would be relevant only for nested classes that
-  implement the descriptor protocol. These class-level descriptor hooks
-  remain unimplemented due to unresolved hazards in Python's class
-  construction behavior. In particular, referencing other class objects
-  while a metaclass is "awake" (i.e., inside its __prepare__, __new__,
-  or __init__) can lead to context leakage. Python may interpret unrelated
-  class references within the scope of the active metaclass, sometimes
-  routing calls to the wrong metaclass entirely.
-
-  - __class_get__(keeNum, instance: Any, owner: type) -> Any
-  - __class_set__(keeNum, instance: Any, value: Any) -> None
-  - __class_delete__(keeNum, instance: Any) -> None
-  - __class_set_name__(keeNum, owner: type, name: str) -> None
-
-  Finally, the following hooks are logically meaningless:
-
-  - __class_new__(...)
-    This method would be entirely meaningless as it refers to a hook that
-    runs before the class is created.
-
-  - __class_del__(...)
-    This remains unimplemented for the same reason as why the namespace
-    validator described above raises a SyntaxError when it encounters
-    '__del__' in the namespace.
-
-  - __class_getattribute__(...)
-    [REDACTED: Cognito Hazard]
+  Unimplemented or intentionally rejected hooks
+  ---------------------------------------------
+  - '__class_eq__' and '__class_ne__' exhibit poorly defined behavior
+    when classes participate in equality outside of identity. Not
+    implemented.
+  - '__class_get__', '__class_set__', '__class_delete__',
+    '__class_set_name__' are not implemented. Referencing other class
+    objects while a metaclass is awake (inside '__prepare__', '__new__',
+    or '__init__') can leak context: Python may route calls to the
+    wrong metaclass entirely.
+  - '__class_new__' would refer to a hook running before the class
+    exists, which is meaningless.
+  - '__class_del__' is rejected for the same reasons '__del__' is
+    rejected on instances.
+  - '__class_getattribute__' is not implemented (cognito hazard).
   """
 
   __abstract_metaclass__ = True
@@ -299,7 +154,6 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return ASpace(mcls, name, bases, **kwargs)
 
   def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> Self:
-    """The __new__ method is invoked to create the class."""
     if hasattr(space, 'compile'):
       namespace = space.compile()
     else:
@@ -449,7 +303,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     bring the 'dot' operator into an implementation here, it is recursion
     time!"""
     if cls.__class_getattr__ is METACALL:
-      raise attributeErrorFactory(cls, name)
+      raise MissingVariable(cls, name)
     return cls.__class_getattr__(name, )
 
   def __setattr__(cls, name: str, value: Any) -> None:
@@ -471,8 +325,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     """The _notifySubclassHook method is invoked to notify each baseclass
     of the created class of the class creation."""
     for base in bases:
-      hook = getattr(base, '__subclasshook__', None)
-      hook(cls)
+      base.__subclasshook__(cls)
     return cls
 
   def getNamespace(cls) -> ASpace:
@@ -483,4 +336,3 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   def getNamespaceClass(mcls) -> type:
     """Get the namespace class for the class."""
     return type(mcls.__prepare__('_', ()))
-

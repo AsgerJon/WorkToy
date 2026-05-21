@@ -8,23 +8,13 @@ it by implementing the '__call__' method.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
-from types import FunctionType as Func
 from collections.abc import Callable
 
 from ..utilities import textFmt, QuickDesc
 from ..waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional, Union, Any, Self, Type
-  from . import CallMeMaybe
-
-  MaybeBool: TypeAlias = Optional[bool]
-  MaybeStr: TypeAlias = Optional[str]
-  MaybeType: TypeAlias = Optional[type]
-  MaybeFunc: TypeAlias = Optional[Func]
-  MaybeFuncTuple: TypeAlias = Optional[tuple[Func,]]
-  CallType: TypeAlias = Type[CallMeMaybe]
-  FuncTuple: TypeAlias = tuple[Func,]
+  from typing import Optional, Union, Any, Self
 
 T = TypeVar('T')
 
@@ -37,9 +27,9 @@ class _Wrapped(QuickDesc, Generic[T]):
       raise MissingVariable(self, '__private_key__', str)
     if not isinstance(self.__private_key__, str):
       raise TypeException('__private_key__', self.__private_key__, str)
-    funcTuple = getattr(instance, str(self.__private_key__))
+    funcTuple = getattr(instance, self.__private_key__)
     if funcTuple is None:
-      raise MissingVariable(instance, str(self.__private_key__), tuple)
+      raise MissingVariable(instance, self.__private_key__, tuple)
     if isinstance(funcTuple, tuple):
       return funcTuple[0]
     raise TypeException('funcTuple', funcTuple, tuple)
@@ -124,7 +114,7 @@ class CallMeMaybe:
   def __init__(self, func: Callable = None) -> None:
     if func is not None:
       if not callable(func):
-        raise TypeException('func', func, Func)
+        raise TypeException('func', func, Callable)
       self.setFunction(func)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

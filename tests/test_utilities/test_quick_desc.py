@@ -149,7 +149,7 @@ class TestQuickDesc(UtilitiesTest):
 
   def test_set_raises_attribute_error(self) -> None:
     """Defining __set__ promotes QuickDesc to a data descriptor;
-    'inst.value = X' is intercepted and raises rather than silently
+    'inst.value = x' is intercepted and raises rather than silently
     shadowing the descriptor with an instance attribute."""
     inst = _Demo()
     with self.assertRaises(AttributeError):

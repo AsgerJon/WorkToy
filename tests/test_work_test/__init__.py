@@ -7,7 +7,9 @@ The 'tests.test_work_test' module provides tests for the
 from __future__ import annotations
 
 from ._sampler_test import SamplerTest
+from ._simple_complex import SimpleComplex
 
 __all__ = [
   'SamplerTest',
+  'SimpleComplex',
 ]

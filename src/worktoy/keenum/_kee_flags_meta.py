@@ -39,10 +39,10 @@ class KeeFlagsMeta(BaseMeta):
   __allow_instantiation__ = None
 
   #  Public Variables
-  flags = Field()
-  memberList = Field()
-  memberDict = Field()
-  valueType = Field()
+  flags: Field[list[KeeFlag]] = Field()
+  memberList: Field[list[KeeFlags]] = Field()
+  memberDict: Field[dict[frozenset[str], KeeFlags]] = Field()
+  valueType: Field[type] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -64,10 +64,6 @@ class KeeFlagsMeta(BaseMeta):
   @memberDict.GET
   def _getMemberDict(cls) -> dict[str, KeeFlags]:
     return cls.__member_dict__
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

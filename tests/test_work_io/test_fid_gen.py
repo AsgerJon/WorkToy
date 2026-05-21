@@ -216,8 +216,8 @@ class TestFidGen(WorkIOTest):
   def test_positional_pair_without_kwargs(self) -> None:
     """
     The (str, str) overload body has False arms for both
-    'if argExt is not None:' and 'if kwargs:'. Two non-special
-    strings with no kwargs hits both.
+    'if argExt is not None:' and 'if kw:'. Two non-special
+    strings with no kw hits both.
     """
     fidPair = FidGen('alpha', 'beta')
     self.assertIn('beta', fidPair.nextName)

@@ -16,12 +16,9 @@ from worktoy.desc import AttriBox, Field
 from worktoy.mcls import BaseObject
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union, Optional, Self
+  from typing import TypeAlias, Optional, Self
 
   MaybeBool: TypeAlias = Optional[bool]
-
-  BoolField: TypeAlias = Union[bool, Field]
-  IntBox: TypeAlias = Union[int, AttriBox]
 
 
 class BaseGenerator(BaseObject):
@@ -122,6 +119,10 @@ class BaseGenerator(BaseObject):
 
   @overload()
   def __init__(self, **kwargs) -> None:
+    #  Subclasses declare a class-level '__fallback_count__' to act as
+    #  the no-argument default 'charCount'. When absent (as on
+    #  'StochasticWord'), the AttriBox default on 'charCount' takes
+    #  over and no further initialization is needed.
     try:
       count = getattr(type(self), '__fallback_count__')
     except AttributeError:

@@ -92,18 +92,31 @@ class TestPermuter(DispatcherTest):
 
   def test_init_rejects_too_many_args(self) -> None:
     a = _arr(('A', 'B'), (0, 1))
-    with self.assertRaises(ValueError):
+    with self.assertRaises(ValueError) as context:
       Permuter(_identity, a, _two_args)
+    msg = str(context.exception)
+    self.assertIn('Permuter', msg)
+    self.assertIn('3', msg)
+    self.assertNotIn('%s', msg)
+    self.assertNotIn('%d', msg)
 
   def test_init_rejects_duplicate_arrangement(self) -> None:
     a1 = _arr(('A', 'B'), (0, 1))
     a2 = _arr(('A', 'B'), (1, 0))
-    with self.assertRaises(ValueError):
+    with self.assertRaises(ValueError) as context:
       Permuter(a1, a2)
+    msg = str(context.exception)
+    self.assertIn('Permuter', msg)
+    self.assertIn('Arrangement', msg)
+    self.assertNotIn('%s', msg)
 
   def test_init_rejects_duplicate_func(self) -> None:
-    with self.assertRaises(ValueError):
+    with self.assertRaises(ValueError) as context:
       Permuter(_identity, _two_args)
+    msg = str(context.exception)
+    self.assertIn('Permuter', msg)
+    self.assertIn('FunctionType', msg)
+    self.assertNotIn('%s', msg)
 
   def test_init_rejects_unknown_type(self) -> None:
     with self.assertRaises(TypeException):
@@ -177,7 +190,7 @@ class TestPermuter(DispatcherTest):
     self.assertEqual(p('c', 'a', 'b'), ('a', 'b', 'c'))
 
   def test_invoke_two_arg_swap(self) -> None:
-    a = _arr(('X', 'Y'), (1, 0))
+    a = _arr(('x', 'y'), (1, 0))
     p = Permuter(_two_args, a)
     self.assertEqual(p('y', 'x'), ('x', 'y'))
 
@@ -196,7 +209,7 @@ class TestPermuter(DispatcherTest):
     self.assertEqual(p('b', 'c', 'a'), ('a', 'b', 'c'))
 
   def test_invoke_passes_kwargs_through_unmodified(self) -> None:
-    """Arrangement only touches positional args; kwargs pass through."""
+    """Arrangement only touches positional args; kw pass through."""
 
     def f(a, b, *, k) -> tuple[Any, Any, Any]:
       return a, b, k

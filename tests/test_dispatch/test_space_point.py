@@ -33,6 +33,6 @@ class TestSpacePoint(DispatcherTest):
 
   def test_dispatcher(self, ) -> None:
     """Test the dispatcher functionality of the 'SpacePoint' class."""
-    d = SpacePoint.__init__.__sig_funcs__
+    d = SpacePoint.__dict__['__init__'].__sig_funcs__
     s = SpacePoint(1, 2, 3)
     s2 = SpacePoint(s)

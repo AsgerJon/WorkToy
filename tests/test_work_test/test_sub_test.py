@@ -60,14 +60,14 @@ class TestSubTest(BaseTest):
   def test_call_pushes_kwargs(self) -> None:
     """Keyword args are rendered as 'k=v' pairs in the label."""
     sub = SubTest()
-    with sub(target='X'):
-      self.assertEqual(sub.current, 'target=X')
+    with sub(target='x'):
+      self.assertEqual(sub.current, 'target=x')
 
   def test_call_mixes_args_and_kwargs(self) -> None:
     """Positional and keyword args both appear in the label."""
     sub = SubTest()
-    with sub('foo', target='X'):
-      self.assertEqual(sub.current, 'foo, target=X')
+    with sub('foo', target='x'):
+      self.assertEqual(sub.current, 'foo, target=x')
 
   def test_call_with_no_args(self) -> None:
     """Empty call produces an empty label string."""

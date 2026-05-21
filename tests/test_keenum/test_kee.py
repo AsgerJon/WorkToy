@@ -125,7 +125,7 @@ class TestKee(KeeTest):
       E = Kee[int](5)
 
     with self.assertRaises(KeeNameConflict) as context:
-      class L(ABCD):
+      class L(ABCD):  # noqa: F841
         F = ABCD.A.kee  # Is present but at different name
     e = context.exception
     self.assertEqual(str(e), repr(e))
@@ -171,7 +171,7 @@ class TestKee(KeeTest):
       X = Kee[int](1)
 
     with self.assertRaises(KeeDuplicate) as context:
-      class C(A, B):
+      class C(A, B):  # noqa: F841
         """
         If it just says 'pass', then sometimes when the class fails to
         create, the 'pass' line will not be considered covered.

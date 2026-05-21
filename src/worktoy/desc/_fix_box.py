@@ -25,35 +25,24 @@ class FixBox(AttriBox):
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def _inspectValue(self, ) -> Any:
-    """
-    Retrieves the value without invoking side effects.
-    """
-    pvtName = self.getPrivateName()
-    try:
-      value = object.__getattribute__(self.instance, pvtName)
-    except AttributeError:
-      return None
-    else:
-      return value
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
-    oldValue = self._inspectValue()
-    if oldValue is not None:
+    """Set the value once; subsequent assignments raise
+    'WriteOnceError'. Uses 'AttributeError' (not 'is None') to
+    detect the unset state, so that an explicit assignment of
+    'None' still counts as a write."""
+    pvtName = self.getPrivateName()
+    try:
+      oldValue = object.__getattribute__(instance, pvtName)
+    except AttributeError:
+      pass
+    else:
       raise WriteOnceError(self, oldValue, value)
     AttriBox.__instance_set__(self, instance, value, **kwargs)
 
-  def __instance_delete__(
-      self,
-      instance: Any,
-      old: Any = None,
-      **kwargs,
-  ) -> None:
-    Object.__instance_delete__(self, instance, old, **kwargs)
+  def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
+    """Deletion is disabled on 'FixBox'. Falls through to
+    'Object.__instance_delete__', which raises 'ProtectedError'."""
+    Object.__instance_delete__(self, instance, *_, **kwargs)

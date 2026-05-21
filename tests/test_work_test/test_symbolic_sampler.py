@@ -28,10 +28,10 @@ class TestSymbolicSampler(SamplerTest):
     class:
 
     @overload(int)
-    def __init__(self, wordCount: int, **kwargs) -> None:
+    def __init__(self, wordCount: int, **kw) -> None:
 
     @overload()
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kw) -> None:
     """
 
     intSampler = SymbolicSampler(4)

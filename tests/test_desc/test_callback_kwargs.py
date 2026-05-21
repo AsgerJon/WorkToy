@@ -1,6 +1,6 @@
 """
-TestCallbackKwargs tests that the 'BaseDescriptor' correctly passes kwargs
-on to decorated callbacks that expect them by inclusion of '**kwargs'.
+TestCallbackKwargs tests that the 'BaseDescriptor' correctly passes kw
+on to decorated callbacks that expect them by inclusion of '**kw'.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen

@@ -7,9 +7,11 @@ specifically related to the overload control flow.
 from __future__ import annotations
 
 from ._dispatch_exception import DispatchException
+from ._duplicate_signature import DuplicateSignature
 from ._type_cast_exception import TypeCastException
 
-___all__ = (
+__all__ = [
   'DispatchException',
+  'DuplicateSignature',
   'TypeCastException',
-)
+]

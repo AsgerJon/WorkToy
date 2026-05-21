@@ -1,5 +1,5 @@
 """
-The 'worktoy.utilities.lorem_ipsum' package provides a simple way to generate
+The 'worktoy.lorem_ipsum' package provides a simple way to generate
 lorem ipsum text for testing and placeholder content.
 """
 #  AGPL-3.0 license

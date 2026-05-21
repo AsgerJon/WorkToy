@@ -64,4 +64,4 @@ class TestStrictLoad(OverloadTest):
     with self.assertRaises(DispatchException) as context:
       okBro = OkBro('1337')
     e = context.exception
-    self.assertIs(e.dispatch, OkBro.__init__)
+    self.assertIs(e.dispatch, OkBro.__dict__['__init__'])

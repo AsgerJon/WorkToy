@@ -298,7 +298,7 @@ class TestFlexCall(DispatcherTest):
     self.assertIn('0', msg)  # received count
 
   #  ________________________________________________________________
-  #  Calling — kwargs passthrough
+  #  Calling — kw passthrough
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_call_passes_kwargs_through(self) -> None:
@@ -308,7 +308,7 @@ class TestFlexCall(DispatcherTest):
     )
 
   def test_call_kwargs_combined_with_truncation(self) -> None:
-    """Truncation of positional args does not affect kwargs."""
+    """Truncation of positional args does not affect kw."""
     self.assertEqual(
       flexCall(_kwOnlyTail)(1, 2, 3, 4, k='kw'), (1, 2, 'kw')  # noqa
     )

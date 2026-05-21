@@ -35,9 +35,9 @@ class MissingVariable(AttributeError):
   Examples
   --------
   >>>  from typing import TypeAlias, Optional, Callable, Any, Type, Union
+  >>>  from types import FunctionType as Func
   >>>  from worktoy.waitaminute import TypeException
   ...
-  >>>  Func: TypeAlias = Callable[..., Any]
   >>>  MaybeFunc: TypeAlias = Optional[Func]
   ...
   >>>  class Decorate:
@@ -49,10 +49,10 @@ class MissingVariable(AttributeError):
   ...          raise TypeException('func', func, Callable)
   ...        self.__wrapped__ = func
   ...
-  ...    def __call__(self, *args, **kwargs) -> Any:
+  ...    def __call__(self, *args, **kw) -> Any:
   ...      if self.__wrapped__ is None:
   ...        raise MissingVariable(self, '__wrapped__', Callable)
-  ...      return self.__wrapped__(*args, **kwargs)
+  ...      return self.__wrapped__(*args, **kw)
   ...
   >>>  try:
   ...    decorated = Decorate()

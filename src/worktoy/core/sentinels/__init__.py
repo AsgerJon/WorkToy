@@ -20,31 +20,27 @@ Contents:
   an instance of it.
   - DESC: Used by 'AttriBox' along with THIS and OWNER, specifying the
   present descriptor.
+  - METACALL: Marker used on a class to defer a given dunder hook to the
+  metaclass implementation.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._sentinel import Sentinel, _Sentinel
-from ._place_holder import PLACE_HOLDER
 from ._deleted import DELETED
 from ._owner import OWNER
 from ._this import THIS
 from ._desc import DESC
-from ._wild_card import WILDCARD
 from ._meta_call import METACALL
-from ._fallback import FALLBACK
-from ._function import Function
+from ._args import ARGS
 
 __all__ = [
   'Sentinel',
-  'PLACE_HOLDER',
   'DELETED',
   'OWNER',
   'THIS',
   'DESC',
-  'WILDCARD',
   'METACALL',
-  'FALLBACK',
-  'Function',
+  'ARGS',
 ]

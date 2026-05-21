@@ -8,23 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.ezdata import EZData
 from worktoy.keenum import KeeNum, KeeSpace, Kee, KeeMeta
 from worktoy.waitaminute import TypeException
 from . import KeeTest
-from .examples import WeekDay, RGBNum
+from .examples import WeekDay, RGBNum, Point3D
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
-
-
-class Point3D(EZData):
-  x = 0.
-  y = 0.
-  z = 0.
-
-  def __abs__(self, ) -> float:
-    return (self.x ** 2 + self.y ** 2 + self.z ** 2) ** 0.5
 
 
 class TestKeeMeta(KeeTest):

@@ -33,3 +33,9 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/AsgerJon/WorkToy"
 "Bug Tracker" = "https://github.com/AsgerJon/WorkToy/issues"
+[tool.coverage.run]
+omit = [
+    # Pre-PEP 634 fallback. Unreachable on 3.14 where coverage
+    # runs; exercised by unittest on <3.10.
+    "tests/test_ezdata/_match_args_legacy_helpers.py",
+]

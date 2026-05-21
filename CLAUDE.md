@@ -82,7 +82,8 @@ code is consistent with them — match it.
 - **One class per file.** Module files are named `_snake_case.py`
   and re-exported from the package `__init__.py`.
 - No em-dashes anywhere — code, comments, or docstrings.
-- Section banners stay in place even when the section is empty.
+- Section banners are omitted when the section is empty. Only emit a
+  banner if there is at least one method or attribute under it.
 - `TYPE_CHECKING` imports use `# pragma: no cover` and live behind
   `if TYPE_CHECKING:` to stay 3.7-compatible.
 
@@ -116,10 +117,8 @@ chain. Do not introduce backward edges.
   `flexCall`). This is what the README's overload examples use.
 - **`desc`** — descriptor protocol: `BaseDescriptor`, `Field`
   (declarative get/set with `@field.GET` / `@field.SET`),
-  `View` (read-only Field — only `@view.GET` is exposed; assigning
-  to a `View` falls through to `Object`'s default and raises
-  `ReadOnlyError`), `AttriBox` (runtime-typed attribute,
-  `AttriBox[T](default)`), `FixBox`, `Alias`, `SymbolicName`.
+  `AttriBox` (runtime-typed attribute, `AttriBox[T](default)`),
+  `FixBox` (write-once `AttriBox`), `Alias`, `SymbolicName`.
   Introduces the "descriptor-context" concept (see module
   docstring).
 - **`mcls`** — the metaclass framework. The pattern: a
@@ -129,16 +128,9 @@ chain. Do not introduce backward edges.
   Public exports: `AbstractMetaclass`, `AbstractNamespace`,
   `BaseMeta`, `BaseSpace`, `BaseObject`. `BaseObject` is the
   common base class users inherit from to get overload + AttriBox
-  support. Note: `mcls/_nuthin.py` monkey-patches
-  `builtins.__build_class__` deliberately — it provides the
-  `__post_init__` hook that `AbstractMetaclass` documents (Python
-  doesn't otherwise expose a "class fully built" hook for
-  metaclasses), translates cryptic CPython errors (`metaclass
-  conflict`, layout conflicts) to typed worktoy exceptions, and
-  injects a `_InitSub` base to absorb class kwargs that
-  `object.__init_subclass__` would reject. The flavor text is
-  gallows humor; the patch is load-bearing. Read its docstring
-  before touching it.
+  support. Validation (near-miss dunder names, '__del__' rejection)
+  and reserved-name protection are delegated to space hooks in
+  `mcls/space_hooks/`, not to the metaclass itself.
 - **`lorem_ipsum`** — text generation (`Paragraph`, `Sentence`,
   `Clause`, `StochasticWord`).
 - **`keenum`** — enum framework: `KeeNum` (recently reworked to

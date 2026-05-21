@@ -27,85 +27,79 @@ if TYPE_CHECKING:  # pragma: no cover
 class AbstractSpaceHook(Object):
   """
   AbstractSpaceHook is the abstract base class for defining hook objects
-  used in conjunction with AbstractNamespace. These hooks enable modular,
-  stage-specific interception during class body evaluation and namespace
-  compilation within the metaclass system.
+  used in conjunction with 'AbstractNamespace'. These hooks enable
+  modular, stage-specific interception during class body evaluation and
+  namespace compilation within the metaclass system.
 
-  ## Purpose
-
+  Purpose
+  -------
   Hooks allow custom behavior to be injected into the class construction
   pipeline without modifying the namespace or metaclass core logic. They
-  are used to observe and/or alter how names are accessed, assigned, or
-  compiled into the final class definition.
+  observe and alter how names are accessed, assigned, or compiled into
+  the final class definition.
 
-  ## Integration
-
-  To activate a hook, simply instantiate a subclass of AbstractSpaceHook
-  inside the body of a namespace class (i.e., a subclass of
-  AbstractNamespace). The descriptor protocol (`__set_name__`) ensures the
-  hook registers itself with the namespace automatically at definition time.
-
-  Example:
+  Integration
+  -----------
+  To activate a hook, instantiate a subclass of 'AbstractSpaceHook'
+  inside the body of a namespace class (a subclass of
+  'AbstractNamespace'). The descriptor protocol ('__set_name__') ensures
+  the hook registers itself with the namespace automatically at
+  definition time:
 
       class MyNamespace(AbstractNamespace):
-        overloadHook = OverloadPhase()
-        validationHook = ReservedNamePhase()
+        nameHook = NamespaceHook()
+        reservedNameHook = ReservedNamespaceHook()
 
-  ## Lifecycle Hook Methods
-
+  Lifecycle hook methods
+  ----------------------
   Subclasses may override any of the following methods to participate in
   different stages of the namespace lifecycle. All are optional.
 
-  - `setAnnotationPhase(self, key, value) -> bool`
-    Called when the namespace encounters an annotation. Please note that
-    with 'from __future__ import annotations' enabled, this method
-    may be called with a string naming an as yet unavailable type.
-    However, if the type annotated is available in the scope of the class
-    body, the resolved type is passed. For this reason, there is no point
-    in implementing such a resolver in a hook.
+  - 'preparePhase(self, space) -> None'
+    Called during '__init__' of the namespace object. This phase does
+    not allow changes to the namespace. Raise an exception to interrupt.
 
-    It is not possible to augment the annotations dictionary in this
-    phase. Thus, the return value is ignored. Raise an exception if
-    necessary.
+  - 'setAnnotationPhase(self, key, value) -> Any'
+    Called when the namespace encounters an annotation. With
+    'from __future__ import annotations' enabled, this method may be
+    called with a string naming an as-yet unavailable type. The return
+    value is ignored.
 
-  - `setItemPhase(self, key, value, oldValue) -> bool`
-    Called just before a name is set in the namespace.
-    Returning True blocks the default behavior.
+  - 'setItemPhase(self, key, value, oldValue) -> bool'
+    Called just before a name is set in the namespace. Returning True
+    blocks the default behavior.
 
-  - `getItemPhase(self, key, value) -> bool`
+  - 'getItemPhase(self, key, value) -> bool'
     Called just before a name is retrieved from the namespace.
-    Returning True blocks the default behavior.
 
-  - `preCompilePhase(self, compiled: dict) -> dict`
+  - 'preCompilePhase(self, compiled: dict) -> dict'
     Called after the class body finishes executing, but before the
     namespace is finalized. May transform or replace namespace contents.
 
-  - `postCompilePhase(self, compiled: dict) -> dict`
-    Called immediately before the finalized namespace is handed off to the
-    metaclass. Can be used for final transformations or validation.
+  - 'postCompilePhase(self, compiled: dict) -> dict'
+    Called immediately before the finalized namespace is handed off to
+    the metaclass. Used for final transformations or validation.
 
-  - `newClassPhase(self, keeNum) -> Meta`
-    Called after the metaclass has created
-    the new class object, but before returning it.
+  - 'newClassPhase(self, cls) -> type'
+    Called after the metaclass has created the new class object, but
+    before returning it.
 
-  ## Descriptor Behavior
+  Descriptor behavior
+  -------------------
+  'AbstractSpaceHook' implements the descriptor protocol. When accessed
+  via a namespace instance, the descriptor returns the hook with its
+  '__space_object__' attribute bound to that namespace. The 'space'
+  property exposes this binding so subclasses can introspect the active
+  namespace.
 
-  AbstractSpaceHook implements the descriptor protocol. When accessed via a
-  namespace class, it is bound with the following attributes:
-
-  - `self.space` refers to the active namespace instance.
-  - `self.spaceClass` refers to the namespace class itself.
-
-  These attributes can be used to introspect the environment the hook is
-  participating in.
-
-  ## Extension Notes
-
+  Extension notes
+  ---------------
   Subclasses are expected to override only the relevant hook methods.
   If none are overridden, the hook has no effect.
 
-  The `addPhase()` method of the namespace class is automatically invoked
-  during registration. Hook authors do not need to call it manually.
+  The 'addHook' method of the namespace class is automatically invoked
+  during registration via '__set_name__'. Hook authors do not need to
+  call it manually.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

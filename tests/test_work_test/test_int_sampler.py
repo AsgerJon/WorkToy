@@ -29,13 +29,13 @@ class TestIntSampler(SamplerTest):
 
 
     @overload(int, int, strict=True)
-    def __init__(self, minVal: int, maxVal: int, **kwargs) -> None: ...
+    def __init__(self, minVal: int, maxVal: int, **kw) -> None: ...
 
     @overload(int, strict=True)
-    def __init__(self, val: int, **kwargs) -> None: ...
+    def __init__(self, val: int, **kw) -> None: ...
 
     @overload()
-    def __init__(self, **kwargs) -> None: ...
+    def __init__(self, **kw) -> None: ...
     """
     argsTuple = (
       (69, 420),
@@ -74,7 +74,7 @@ class TestIntSampler(SamplerTest):
     with self.assertRaises(DispatchException) as context:
       _ = IntSampler(*args)  # noqa
     e = context.exception
-    self.assertIs(e.dispatch, IntSampler.__init__)
+    self.assertIs(e.dispatch, IntSampler.__dict__['__init__'])
     for expected, actual in zip(args, e.args):
       self.assertEqual(expected, actual)
 

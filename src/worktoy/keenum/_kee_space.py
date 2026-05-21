@@ -1,5 +1,6 @@
 """
-KeeSpace provides the namespace class used by the 'worktoy.num' module.
+KeeSpace provides the namespace class used by the 'worktoy.keenum'
+module.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -20,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class KeeSpace(BaseSpace):
-  """KeeSpace provides the namespace class used by the 'worktoy.num'
+  """KeeSpace provides the namespace class used by the 'worktoy.keenum'
   module. """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

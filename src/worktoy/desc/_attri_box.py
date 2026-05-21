@@ -59,7 +59,7 @@ class AttriBox(BaseDescriptor[T]):
     this method is used both when setting and getting.
 
     When '__instance_get__' is unable to retrieve a value from a given
-    instance. The 'args' and 'kwargs' passed to the constructor of the
+    instance. The 'args' and 'kw' passed to the constructor of the
     'AttriBox' are retrieved from the 'getPosArgs' and 'getKeyArgs'
     methods, and passed to this method.
 
@@ -118,7 +118,8 @@ class AttriBox(BaseDescriptor[T]):
           fieldObject = fieldType(*args, **kwargs)
       except (TypeError, ValueError) as exception:
         name = 'value'
-        raise TypeException(name, args[0], fieldType) from exception
+        badValue = args[0] if args else None
+        raise TypeException(name, badValue, fieldType) from exception
     try:
       setattr(fieldObject, '__field_name__', self.getFieldName())
       setattr(fieldObject, '__field_owner__', self.getFieldOwner())
@@ -175,15 +176,10 @@ class AttriBox(BaseDescriptor[T]):
     else:
       return self.__instance_set__(instance, cast, _recursion=True)
 
-  def __instance_delete__(
-      self,
-      instance: Any,
-      old: Any = None,
-      **kwargs,
-  ) -> None:
+  def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
     """
-    Deletes the value of the field for the given instance. If the value is
-    not set, it does nothing.
+    Deletes the value of the field for the given instance by storing
+    the 'DELETED' sentinel under the private attribute name.
     """
     pvtName = self.getPrivateName()
     setattr(instance, pvtName, DELETED)
@@ -205,9 +201,19 @@ class AttriBox(BaseDescriptor[T]):
     return self  # noqa
 
   def __call__(self, *args: Any, **kwargs: Any) -> Any:
-    """
-    Allows the AttriBox to be called like a function, returning a new
-    instance of the field type.
+    """Bind constructor arguments for deferred field construction.
+
+    The 'AttriBox[T](*args, **kw)' idiom is a two-step
+    decoration: '__class_getitem__' produces a fresh 'AttriBox'
+    parametrized with the field type 'T', and this '__call__'
+    captures the positional and keyword arguments that should be
+    forwarded to 'T(...)' when the field is first accessed on an
+    instance. The arguments are stashed via 'Object.__init__'
+    (which routes them through 'getPosArgs' / 'getKeyArgs'); the
+    field type is not instantiated here.
+
+    Returns 'self' so the call site can chain straight into a
+    class-body assignment, e.g. 'x = AttriBox[int](42)'.
     """
     Object.__init__(self, *args, **kwargs)
     return self

@@ -222,8 +222,8 @@ class TestNumMRO(KeeTest):
       YES = Kee[bool](True)
       NO = Kee[bool](False)
 
-    self.assertTrue(Polar[True])
-    self.assertFalse(Polar[False])
+    self.assertIs(Polar[True], Polar.YES)
+    self.assertIs(Polar[False], Polar.NO)
 
   def test_inheritance(self, ) -> None:
     """

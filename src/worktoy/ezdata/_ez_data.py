@@ -1,70 +1,80 @@
-"""The user-facing EZData base class.
-
-Subclasses declare data fields as class-body attributes; the
-EZMeta metaclass installs the standard dunder methods at
-class-creation time, so authors do not write __init__, __eq__,
-__repr__, etc. by hand."""
+"""
+EZData is the base class for worktoy dataclasses. Subclasses
+declare their fields in the class body as 'EZField[T](...)'
+instances; the EZHook namespace hook generates '__init__',
+'__iter__', '__eq__', '__delattr__', 'asDict', 'asTuple',
+'replace', '__match_args__', and the display dunders, plus
+conditional '__hash__'/'__setattr__' for frozen classes and the
+four ordering dunders for ordered classes.
+"""
 #  AGPL-3.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..mcls import BaseObject
-from ._ez_meta import EZMeta
-from ._trust import trust
+from . import EZMeta
+from ..core import Object
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterator
+  from typing import Any, Iterator, Self
 
 
-class EZData(BaseObject, metaclass=EZMeta):
-  """Auto-generating dataclass base.
+class EZData(Object, metaclass=EZMeta):
+  """
+  EZData is the base class users subclass to declare a worktoy
+  dataclass. Subclasses place their fields in the class body as
+  'EZField[T](...)' instances, optionally pass build-option
+  keywords ('frozen=True', 'ordered=True', 'kwOnly=True' or any
+  of their synonyms), and optionally define '__post_init__' for
+  validation or derived state.
 
-  Field declarations are class-body attributes, with optional
-  type annotations and default values. EZMeta installs init,
-  equality, repr, str, iter, len, item access, attribute access,
-  hash (when frozen), and ordering operators (when order=True).
-
-  Class keyword arguments
-  -----------------------
-  frozen : bool, default False
-      When True, post-construction writes raise FrozenEZException
-      and instances become hashable.
-  order : bool, default False
-      When True, the comparison operators compare fields
-      lexicographically. Defaults that do not support '<' raise
-      UnorderedEZException at class creation.
-  kw_only : bool, default False
-      Reserved tag; not yet enforced.
+  In return the class receives auto-generated '__init__',
+  '__iter__', '__eq__', '__delattr__', 'asDict', 'asTuple',
+  'replace', '__match_args__', and the display dunders. Frozen
+  classes additionally receive '__hash__' and a rejecting
+  '__setattr__'; ordered classes receive the four comparison
+  dunders. See 'EZHook.postCompilePhase' for the full
+  generation contract.
 
   Example
   -------
-  class Point(EZData):
-    x: int = 0
-    y: int = 0
+      class Point2D(EZData):
+        x = EZField[float](0.0)
+        y = EZField[float](0.0)
 
-  Point(3, 4) == Point(x=3, y=4)  # True
+      class Circle(EZData, frozen=True, kwOnly=True):
+        center = EZField[Point2D]()
+        radius = EZField[float](1.0)
   """
 
-  __slot_objects__ = ()
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @trust
-  def __init__(self, *args, **kwargs) -> None:
-    """Replaced by EZMeta; signature is generated per class."""
+  if TYPE_CHECKING:  # pragma: no cover
+    #  These stubs shadow the dunder methods 'EZHook' generates at
+    #  class creation. They exist only so type-checkers see accurate
+    #  signatures for 'EZData' instances; the factory-built methods in
+    #  '_ez_hook.py' hint to 'Any' because 'Self' is invalid there.
+    def __init__(self, *args, **kwargs) -> None: ...
 
-  @trust
-  def __iter__(self) -> Iterator:
-    """Replaced by EZMeta; yields field values."""
+    def __iter__(self) -> Iterator[Any]: ...
 
-  @trust
-  def __len__(self) -> int:
-    """Replaced by EZMeta; returns the number of fields."""
+    def __repr__(self) -> str: ...
 
-  @trust
-  def __getitem__(self, key: Any) -> Any:
-    """Replaced by EZMeta."""
+    def __eq__(self, other: Any) -> bool: ...
 
-  @trust
-  def __setitem__(self, key: Any, value: Any) -> None:
-    """Replaced by EZMeta."""
+    def __hash__(self) -> int: ...
+
+    def __lt__(self, other: Self) -> bool: ...
+
+    def __le__(self, other: Self) -> bool: ...
+
+    def __gt__(self, other: Self) -> bool: ...
+
+    def __ge__(self, other: Self) -> bool: ...
+
+    def __setattr__(self, key: str, value: Any) -> None: ...
+
+    def __delattr__(self, key: str) -> None: ...

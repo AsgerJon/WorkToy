@@ -1,10 +1,10 @@
 """
-KeeSpaceHook collects the KeeMember objects encountered in the class
-bodies of KeeNum classes. This happens during the 'setItemPhase'. To avoid
-context leakage, the members are collected in the owning namespace object.
-The namespace object is expected to implement a method called
-'addEnumeration' which 'KeeHook' calls to register the members. The
-'KeeHook' provides no further functionality than deciding what key,
+KeeSpaceHook collects the 'Kee' descriptors encountered in the class
+bodies of KeeNum classes. This happens during the 'setItemPhase'. To
+avoid context leakage, the members are collected in the owning
+namespace object. The namespace object is expected to implement an
+'addNum' method which KeeSpaceHook calls to register each Kee. The
+hook provides no further functionality than deciding which key,
 value pairs to collect as future members of the enumeration.
 """
 #  AGPL-3.0 license
@@ -26,13 +26,14 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeSpaceHook(AbstractSpaceHook):
   """
-  KeeSpaceHook collects the KeeMember objects encountered in the class
-  bodies of KeeNum classes. This happens during the 'setItemPhase'. To avoid
-  context leakage, the members are collected in the owning namespace object.
-  The namespace object is expected to implement a method called
-  'addEnumeration' which 'KeeHook' calls to register the members. The
-  'KeeSpaceHook' provides no further functionality than deciding what key,
-  value pairs to collect as future members of the enumeration.
+  KeeSpaceHook collects the 'Kee' descriptors encountered in the
+  class bodies of KeeNum classes. This happens during the
+  'setItemPhase'. To avoid context leakage, the members are collected
+  in the owning namespace object. The namespace object is expected to
+  implement an 'addNum' method which KeeSpaceHook calls to register
+  each Kee. The hook provides no further functionality than deciding
+  which key, value pairs to collect as future members of the
+  enumeration.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

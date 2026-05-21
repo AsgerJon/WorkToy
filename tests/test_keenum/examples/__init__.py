@@ -9,6 +9,7 @@ from __future__ import annotations
 from ._h_alignum import HAlignum
 from ._v_alignum import VAlignum
 from ._rgb import RGB
+from ._point_3d import Point3D
 from ._color_num import ColorNum
 from ._pen import Pen
 from ._flags_example import FlagsExample
@@ -36,6 +37,7 @@ __all__ = [
   'HAlignum',
   'VAlignum',
   'RGB',
+  'Point3D',
   'ColorNum',
   'Pen',
   'FlagsExample',

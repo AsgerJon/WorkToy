@@ -528,3 +528,16 @@ class TestKeeFlags(KeeTest):
         classFlags = cls.flags
         for instanceFlag, classFlag in zip(instanceFlags, classFlags):
           self.assertEqual(instanceFlag, classFlag)
+
+  def test_bool(self) -> None:
+    """
+    The NULL member (no flags HIGH, index 0) is falsy. Every other
+    member of a 'KeeFlags' class is truthy.
+    """
+    for cls in self.exampleFlags:
+      self.assertFalse(cls.NULL)
+      for member in cls:
+        if member is cls.NULL:
+          self.assertFalse(member)
+        else:
+          self.assertTrue(member)

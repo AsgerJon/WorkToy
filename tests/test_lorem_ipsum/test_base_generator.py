@@ -38,6 +38,12 @@ class TestBaseGenerator(LoremIpsumTest):
       self.assertIsInstance(generator, BaseGenerator)
       self.assertEqual(generator.charCount, count)
 
+    blank = BaseGenerator()
+    self.assertIsInstance(blank, BaseGenerator)
+    expectedCount = BaseGenerator.charCount.getPosArgs()[0]
+    actualCount = blank.charCount
+    self.assertEqual(expectedCount, actualCount)
+
   def roll_log_normal(self, mean: float, var: float) -> Result:
     """
     Roll a log-normal distribution with the given mean and variance.

@@ -7,12 +7,13 @@ class from the 'worktoy.dispatch' module.
 from __future__ import annotations
 
 from types import FunctionType as Func
-from types import MethodType as Meth
+from types import MethodType
 from typing import TYPE_CHECKING
 
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.dispatch import Dispatcher, TypeSig, overload
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
+from worktoy.waitaminute.dispatch import DuplicateSignature
 from . import DispatcherTest, ComplexNumber, PlanePoint
 from . import SusComplex, ComplexMetaSub, SpacePoint
 
@@ -31,11 +32,6 @@ class TestDispatchUmbrella(DispatcherTest):
     p = PlanePoint(0.123456789)
     self.assertEqual(p.x, 0.123456789)
     self.assertEqual(p.y, 0.0)
-
-  def test_hash_trolling(self) -> None:
-    """Test hash trolling"""
-    complexHash = TypeSig(complex)
-    floatHash = TypeSig(float)
 
   def test_sus(self) -> None:
     """Test sus"""
@@ -61,17 +57,48 @@ class TestDispatchUmbrella(DispatcherTest):
 
   def test_sig_func_map(self) -> None:
     """Test the sig func map"""
-    sigFuncDict = ComplexNumber.__init__._getSigFuncMap()
+    sigFuncDict = ComplexNumber.__dict__['__init__']._getSigFuncMap()
     self.assertIsInstance(sigFuncDict, dict)
+
+  def test_duplicate_signature(self) -> None:
+    """Registering a second function under a 'TypeSig' that is
+    already present must raise 'DuplicateSignature', carrying the
+    colliding signature, the existing function, and the rejected
+    duplicate."""
+    dispatcher = Dispatcher()
+    sig = TypeSig(int, str)
+
+    # noinspection PyUnusedLocal
+    def first(self_, x: int, s: str) -> None:
+      """first function"""
+
+    # noinspection PyUnusedLocal
+    def second(self_, x: int, s: str) -> None:
+      """second function"""
+
+    self.assertIsNone(first(object(), 69, 'lol'))
+    self.assertIsNone(second(object(), 69, 'lol'))
+
+    # noinspection PyTypeChecker
+    dispatcher.addSigFunc(sig, first)
+    with self.assertRaises(DuplicateSignature) as context:
+      # noinspection PyTypeChecker
+      dispatcher.addSigFunc(sig, second)
+    e = context.exception
+    self.assertEqual(e.sig, sig)
+    self.assertIs(e.existing, first)
+    self.assertIs(e.duplicate, second)
+    self.assertIn(str(sig), str(e))
 
   def test_callback_setter(self) -> None:
     """Test the callback setter"""
     dispatcher = Dispatcher()
     self.assertIsNone(dispatcher._getFallbackFunction())
     with self.assertRaises(TypeException) as context:
+      # noinspection PyTypeChecker
       dispatcher.setFallbackFunction('breh')
     e = context.exception
-    self.assertEqual(set(e.expectedTypes), {Func, Meth})
+    self.assertEqual(set(e.expectedTypes), {Func, MethodType})
     self.assertEqual(e.varName, '__fallback_func__')
     self.assertEqual(e.actualObject, 'breh')
     self.assertIs(e.actualType, str)
@@ -79,33 +106,39 @@ class TestDispatchUmbrella(DispatcherTest):
     def breh() -> None:
       """breh"""
 
+    # noinspection PyTypeChecker
     dispatcher.setFallbackFunction(breh)
+    # noinspection PyTypeChecker
     dispatcher.setFinalizerFunction(breh)
 
     with self.assertRaises(VariableNotNone) as context:
+      # noinspection PyTypeChecker
       dispatcher.setFallbackFunction(breh)
     e = context.exception
     self.assertEqual(e.name, '__fallback_func__')
     self.assertIs(e.value, breh)
 
     with self.assertRaises(VariableNotNone) as context:
+      # noinspection PyTypeChecker
       dispatcher.setFinalizerFunction(breh)
     e = context.exception
     self.assertEqual(e.name, '__finalizer_func__')
     self.assertIs(e.value, breh)
 
     with self.assertRaises(TypeException) as context:
+      # noinspection PyTypeChecker
       dispatcher.setFallbackFunction('breh')
     e = context.exception
-    self.assertEqual(set(e.expectedTypes), {Func, Meth})
+    self.assertEqual(set(e.expectedTypes), {Func, MethodType})
     self.assertEqual(e.varName, '__fallback_func__')
     self.assertEqual(e.actualObject, 'breh')
     self.assertIs(e.actualType, str)
 
     with self.assertRaises(TypeException) as context:
+      # noinspection PyTypeChecker
       dispatcher.setFinalizerFunction('breh')
     e = context.exception
-    self.assertEqual(set(e.expectedTypes), {Func, Meth})
+    self.assertEqual(set(e.expectedTypes), {Func, MethodType})
     self.assertEqual(e.varName, '__finalizer_func__')
     self.assertEqual(e.actualObject, 'breh')
     self.assertIs(e.actualType, str)
@@ -122,7 +155,71 @@ class TestDispatchUmbrella(DispatcherTest):
     with self.assertRaises(ProtectedError):
       del Foo().bar
 
-    Foo.bar.clone()
+    Foo.__dict__['bar'].clone()
+
+  def test_clone_copies_state(self) -> None:
+    """'Dispatcher.clone' must produce a 'Dispatcher' carrying the
+    same registered signatures, fallback, and finalizer as the
+    original. None of the per-class fields ('__field_name__',
+    '__field_owner__', '__compiled_func__') should leak into the
+    clone, since they only become meaningful once '__set_name__'
+    fires on the clone's owning class."""
+    original = Dispatcher()
+    sig = TypeSig(int)
+
+    def body(self_, x: int) -> None:
+      """body"""
+
+    def fallback(self_, *args, **kwargs) -> None:
+      """fallback"""
+
+    def finalizer(self_, *args, **kwargs) -> None:
+      """finalizer"""
+
+    # noinspection PyTypeChecker
+    original.addSigFunc(sig, body)
+    # noinspection PyTypeChecker
+    original.setFallbackFunction(fallback)
+    # noinspection PyTypeChecker
+    original.setFinalizerFunction(finalizer)
+
+    clone = original.clone()
+    self.assertIsNot(clone, original)
+    self.assertEqual(
+      clone._getSigFuncList(), original._getSigFuncList(),
+    )
+    self.assertIs(clone._getFallbackFunction(), fallback)
+    self.assertIs(clone._getFinalizerFunction(), finalizer)
+
+  def test_clone_independence(self) -> None:
+    """A 'Dispatcher' clone must be a genuine copy: subsequent
+    registrations on the clone may not bleed back into the
+    original, and vice versa. The clone also starts with an empty
+    compiled-function cache so that its first dispatch through
+    '_getCachedFunction' reflects its own state, not the
+    original's snapshot."""
+
+    def first(self_, x: int) -> None:
+      """first"""
+
+    def second(self_, x: int, y: int) -> None:
+      """second"""
+
+    original = Dispatcher()
+    # noinspection PyTypeChecker
+    original.addSigFunc(TypeSig(int), first)
+
+    clone = original.clone()
+    # noinspection PyTypeChecker
+    clone.addSigFunc(TypeSig(int, int), second)
+
+    originalSigs = [sig for sig, _ in original._getSigFuncList()]
+    cloneSigs = [sig for sig, _ in clone._getSigFuncList()]
+    self.assertEqual(originalSigs, [TypeSig(int)])
+    self.assertEqual(cloneSigs, [TypeSig(int), TypeSig(int, int)])
+
+    self.assertIsNone(original.__compiled_func__)
+    self.assertIsNone(clone.__compiled_func__)
 
   def test_no_finalize(self) -> None:
     class Foo:
@@ -156,7 +253,7 @@ class TestDispatchUmbrella(DispatcherTest):
 
   def test_fallback_get_attr(self) -> None:
     fb = overload.fallback(lambda *args, **kwargs: 'fallback')
-    with self.assertRaises(AttributeError) as context:
+    with self.assertRaises(AttributeError):
       _ = fb.im_an_attribute_trust_me_bro
 
   def test_finalize(self) -> None:
@@ -181,7 +278,7 @@ class TestDispatchUmbrella(DispatcherTest):
         self.__inner_value__ = '%s | %s' % (str(args, ), str(kwargs, ))
 
       @bar.finalize
-      def bar(self, *args, **kwargs) -> None:
+      def bar(self, *__, **_) -> None:
         """Finalizer method for the bar method."""
         self.__inner_value__ = 'finalized: %s' % (self.__inner_value__,)
 
@@ -232,7 +329,7 @@ class TestDispatchUmbrella(DispatcherTest):
         self.__inner_value__ = '%s | %s' % (str(args, ), str(kwargs, ))
 
       @bar.finalize
-      def bar(self, *args, **kwargs) -> None:
+      def bar(self, *args, **_) -> None:
         """Finalizer method for the bar method."""
         if 'finalRaise' in args or 'raise' in args:
           raise FinalizeError
@@ -254,5 +351,7 @@ class TestDispatchUmbrella(DispatcherTest):
     with self.assertRaises(FinalizeError):
       foo.bar('finalRaise')
 
-    with self.assertRaises(ValueError):
+    with self.assertRaises(FinalizeError) as context:
       foo.bar('raise')
+    e = context.exception
+    self.assertIsInstance(e.__cause__, ValueError)

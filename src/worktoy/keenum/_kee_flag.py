@@ -67,7 +67,7 @@ class KeeFlag:
     this value gets assigned by the metaclass machinery *before* the
     KeeFlags class is created.
   - 'args': Positional arguments passed to the constructor.
-  - 'kwargs': Keyword arguments passed to the constructor.
+  - 'kw': Keyword arguments passed to the constructor.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -80,10 +80,6 @@ class KeeFlag:
   highs: tuple
   names: tuple[str, ...]
 
-  #  Class Variables
-
-  #  Fallback Variables
-
   #  Private Variables
   __field_name__ = None
   __field_owner__ = None
@@ -93,15 +89,15 @@ class KeeFlag:
   __key_args__ = None
 
   #  Public Variables
-  fieldName = Field()
-  fieldOwner = Field()
-  index = Field()
-  name = Field()
-  args = Field()
-  kwargs = Field()
+  fieldName: Field[str] = Field()
+  fieldOwner: Field[type] = Field()
+  index: Field[int] = Field()
+  name: Field[str] = Field()
+  args: Field[tuple] = Field()
+  kwargs: Field[dict] = Field()
 
   #  Virtual Variables
-  valueType = Field()
+  valueType: Field[type] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -151,10 +147,6 @@ class KeeFlag:
     return maybe(self.__key_args__, {})
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -196,10 +188,9 @@ class KeeFlag:
     raise TypeError('KeeFlag is not iterable!')
 
   def __eq__(self, other: Self, **kwargs) -> bool:
-    cls = type(self)
-    selfOwner = self.__field_owner__
-    otherOwner = other.__field_owner__
-    if selfOwner != otherOwner:
+    if not isinstance(other, KeeFlag):
+      return NotImplemented
+    if self.__field_owner__ is not other.__field_owner__:
       return NotImplemented
     return True if self.index == other.index else False
 

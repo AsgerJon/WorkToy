@@ -5,22 +5,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.ezdata import EZData
+from worktoy.desc import AttriBox
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from typing import Iterator, Self
 
 
-class RGB(EZData, frozen=True, order=True):
+class RGB:
   """RGB provides an EZData class representation of the RGB color space."""
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  r = -1
-  g = -1
-  b = -1
+  r = AttriBox[int](0)
+  g = AttriBox[int](0)
+  b = AttriBox[int](0)
 
   def __str__(self) -> str:
     """Returns the hex representation of the RGB color."""
@@ -30,3 +30,27 @@ class RGB(EZData, frozen=True, order=True):
     """Returns what would create this RGB color if passed to 'eval'. """
     infoSpec = """%s(%d, %d, %d)"""
     return infoSpec % (type(self).__name__, self.r, self.g, self.b)
+
+  def __init__(self, *args) -> None:
+    keys = ('r', 'g', 'b')
+    for key, value in zip(keys, args):
+      setattr(self, key, int(value))
+
+  def __eq__(self, other: Self) -> bool:
+    """Returns 'True' if the RGB colors are the same."""
+    if self.r != other.r:
+      return False
+    if self.g != other.g:
+      return False
+    if self.b != other.b:
+      return False
+    return True
+
+  def __iter__(self, ) -> Iterator[int]:
+    """Returns an iterator over the RGB color components."""
+    yield self.r
+    yield self.g
+    yield self.b
+
+  def __hash__(self, ) -> int:
+    return hash((*self,))

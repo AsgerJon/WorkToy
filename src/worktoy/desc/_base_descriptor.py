@@ -32,33 +32,33 @@ class BaseDescriptor(Object, Generic[T]):
   The following example illustrates an exhaustively decorated descriptor
   in a class body:
 
-  class Foo:
+  class Foo(BaseObject):
 
     bar = BaseDescriptor()
 
     @bar.preGet
-    def _preGetBar(self, returnValue: Any) -> None:
-      # Triggered at the beginning of 'self.bar'. This allows early
-      # detection of bad values or types.
+    def _preGetBar(self) -> None:
+      # Triggered at the beginning of 'self.bar', before retrieval
+      # of the underlying value. 'self' is the instance whose
+      # attribute is being read.
       pass
 
     @bar.onGet
     def _onGetBar(self, returnValue: Any) -> None:
-      # Triggered when self.bar is accessed. 'self' is the instance
-      # passed to '__get__' and 'returnValue' is the return value.
+      # Triggered after 'self.bar' has produced 'returnValue', so
+      # subclasses can observe what is about to be returned.
       pass
 
     @bar.preSet
     def _preSetBar(self, value: Any) -> None:
-      # Triggered at the beginning of 'self.bar = value'. The 'value'
-      # argument is what will be attempted set.
+      # Triggered at the beginning of 'self.bar = value', before
+      # the assignment is applied. 'value' is the incoming value.
       pass
 
     @bar.onSet
     def _onSetBar(self, value: Any) -> None:
-      # Triggered *after* 'self.bar = value' has been executed. This
-      # allows potential side effects to have been triggered before
-      # the callback.
+      # Triggered after 'self.bar = value' has completed, with
+      # 'value' equal to the value that was stored.
       pass
 
     @bar.preDelete
@@ -68,14 +68,16 @@ class BaseDescriptor(Object, Generic[T]):
 
     @bar.onDelete
     def _onDeleteBar(self) -> None:
-      # Triggered *after* 'del self.bar' has been executed.
+      # Triggered after 'del self.bar' has completed.
       pass
 
+    @classmethod
     @bar.setName
-    def _setNameBar(self, owner: type, name: str) -> None:
+    def _setNameBar(cls: type, desc: BaseDescriptor) -> None:
       # Triggered when the descriptor is assigned to a class body.
-      # NOTE: 'self' here is the BaseDescriptor itself, not a class
-      # instance, because no instance exists at __set_name__ time.
+      # The callback must be a classmethod and receives the owning
+      # class 'cls' and the descriptor 'desc'. No instance exists
+      # at __set_name__ time, so there is no 'self'.
       pass
 
   Please note, that 'BaseDescriptor' does not implement any particular

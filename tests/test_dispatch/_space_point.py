@@ -31,7 +31,7 @@ class SpacePoint(PlanePoint):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Public Variables
-  __init__ = PlanePoint.__init__.clone()
+  __init__ = PlanePoint.__dict__['__init__'].clone()
   z = AttriBox[float](0.0)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -15,23 +15,20 @@ from worktoy.utilities import textFmt
 from . import Sentence, BaseGenerator
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias, Union, Optional, Iterator
+  from typing import Self, TypeAlias, Optional, Iterator
 
   MaybeBool: TypeAlias = Optional[bool]
-  IntField: TypeAlias = Union[int, Field]
   IntList: TypeAlias = list[int]
   MaybeIntList: TypeAlias = Optional[IntList]
-  IntListField: TypeAlias = Union[IntList, Field]
 
   SentenceList: TypeAlias = list[Sentence]
   MaybeSentenceList: TypeAlias = Optional[SentenceList]
-  SentenceListField: TypeAlias = Union[SentenceList, Field]
 
 
 class Paragraph(BaseGenerator):
   """
-  Paragraph subclasses 'BaseObject' and concatenates 'Sentence' objects
-  forming size specified paragraphs.
+  Paragraph subclasses 'BaseGenerator' and concatenates 'Sentence'
+  objects forming size specified paragraphs.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -46,16 +43,20 @@ class Paragraph(BaseGenerator):
   __fallback_count__: int = 800
 
   #  Private Variables
-  __is_first__: MaybeBool = True  # Paragraphs defaults to being 'first'.
+  #  Paragraphs default to 'isFirst=True' so the first sentence begins
+  #  with 'Lorem ipsum'. Clause and Sentence require an explicit
+  #  '.first(...)' constructor instead because they often appear
+  #  mid-document.
+  __is_first__: MaybeBool = True
   __sentences_lengths__: MaybeIntList = None
   __sentences_array__: MaybeSentenceList = None
 
   #  Public Variables
-  sentenceLengths: IntListField = Field()
-  sentenceArray: SentenceListField = Field()
+  sentenceLengths: Field[IntList] = Field()
+  sentenceArray: Field[SentenceList] = Field()
 
   #  Virtual Variables
-  sentenceCount: IntField = Field()
+  sentenceCount: Field[int] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -66,6 +67,8 @@ class Paragraph(BaseGenerator):
     return int(round(self.charCount / self.__sentence_mean__))
 
   def _buildSentencesLengths(self, ) -> None:
+    """Sample a log-normal sequence of sentence lengths summing to
+    'charCount' and cache it."""
     mean, var = self.__sentence_mean__, self.__sentence_var__
     lengths = [self.logNormal(mean, var) for _ in range(self.sentenceCount)]
     factor = self.charCount / sum(lengths)
@@ -89,6 +92,8 @@ class Paragraph(BaseGenerator):
     return self.__sentences_lengths__
 
   def _buildSentencesArray(self, ) -> None:
+    """Materialize a 'Sentence' for each cached length and cache the
+    resulting sentence list."""
     sentences: SentenceList = []
     for length in self.sentenceLengths:
       if not sentences and self.isFirst:
@@ -106,23 +111,6 @@ class Paragraph(BaseGenerator):
       return self._getSentenceArray(_recursion=True)
     return self.__sentences_array__
 
-  def clear(self) -> None:
-    """
-    This method clears the current contents of the 'Paragraph' instance,
-    allowing for the generation of random collection of words.
-    """
-    self.__sentences_lengths__ = None
-    self.__sentences_array__ = None
-
-  def reset(self, ) -> None:
-    """
-    This method clears the current contents and creates a new random
-    collection of words for the 'Paragraph' instance.
-    """
-    self.clear()
-    self._buildSentencesLengths()
-    self._buildSentencesArray()
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -134,6 +122,25 @@ class Paragraph(BaseGenerator):
       self.__sentences_lengths__ = [*other.__sentences_lengths__, ]
     if other.__sentences_array__ is not None:
       self.__sentences_array__ = [*other.__sentences_array__, ]
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def clear(self) -> None:
+    """Drop the cached sentence lengths and sentence array."""
+    self.__sentences_lengths__ = None
+    self.__sentences_array__ = None
+
+  def reset(self, ) -> None:
+    """Clear and regenerate the cached sentence lengths and array."""
+    self.clear()
+    self._buildSentencesLengths()
+    self._buildSentencesArray()
+
+  def realize(self) -> str:
+    """Return the realized text for this paragraph."""
+    return str(self)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

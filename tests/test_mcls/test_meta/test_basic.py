@@ -107,6 +107,7 @@ class TestBasicMeta(MCLSTest):
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.derpName, '__get_item__')
     self.assertEqual(e.realName, '__getitem__')
+    self.assertFalse(str(e).startswith('QuestionableSyntax'))
 
   def test_str_repr(self) -> None:
     """

@@ -94,23 +94,29 @@ class TestStochasticWord(LoremIpsumTest):
     Testing that the recursion guard of the 'StochasticWord' class works
     correctly.
     """
-    setattr(self.stochasticWord, '__data_dir__', None)
-    setattr(self.stochasticWord, '__weighted_words__', None)
-    setattr(self.stochasticWord, '__min_len__', None)
-    setattr(self.stochasticWord, '__max_len__', None)
-    setattr(self.stochasticWord, '__by_lengths__', None)
+
+    class SusWord(StochasticWord):
+      pass
+
+    type.__setattr__(SusWord, '__data_dir__', None)
+    type.__setattr__(SusWord, '__weighted_words__', None)
+    type.__setattr__(SusWord, '__min_len__', None)
+    type.__setattr__(SusWord, '__max_len__', None)
+    type.__setattr__(SusWord, '__by_lengths__', None)
+
+    sus = SusWord()
 
     with self.assertRaises(RecursionError):
-      _ = self.stochasticWord._getWeightedWords(_recursion=True)
+      _ = sus._getWeightedWords(_recursion=True)
 
     with self.assertRaises(RecursionError):
-      _ = self.stochasticWord._getMinLen(_recursion=True)
+      _ = sus._getMinLen(_recursion=True)
 
     with self.assertRaises(RecursionError):
-      _ = self.stochasticWord._getMaxLen(_recursion=True)
+      _ = sus._getMaxLen(_recursion=True)
 
     with self.assertRaises(RecursionError):
-      _ = self.stochasticWord._getByLengths(_recursion=True)
+      _ = sus._getByLengths(_recursion=True)
 
   def test_index_error_guard(self, ) -> None:
     """
@@ -121,19 +127,3 @@ class TestStochasticWord(LoremIpsumTest):
 
     with self.assertRaises(IndexError):
       _ = self.stochasticWord.realizeLength(420)
-
-  def test_bad_files(self) -> None:
-    """
-    Testing bad files in a 'StochasticWord' subclass.
-    """
-    word = StochasticWord()
-    self.assertIsNone(os.getenv(getattr(StochasticWord, '__data_env_var__')))
-    here = os.path.abspath(os.path.dirname(__file__))
-    os.environ['WORKTOY_DATA_DIR'] = here
-
-    class Derp(StochasticWord):
-      __category_weights__: WeightedFiles = (
-        ('breh.txt', 69.), ('lmao.txt', 420.),
-      )
-
-    self.assertIsNotNone(os.getenv(getattr(Derp, '__data_env_var__')))

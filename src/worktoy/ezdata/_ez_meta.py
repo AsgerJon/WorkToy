@@ -1,37 +1,284 @@
-"""'EZMeta' is the metaclass for 'EZData' and its subclasses."""
+"""
+EZMeta subclasses 'BaseMeta' from the 'worktoy.mcls' package and
+provides the metaclass for 'EZData' dataclasses. It hosts the
+class-level introspection accessors and the cross-class
+congruence check used by the generated '__eq__'.
+"""
 #  AGPL-3.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from ..mcls import Base, BaseMeta
-from ..waitaminute.ez import EZMultipleInheritance
-from ._ez_space import EZSpace
+from ..desc import Field
+from ..dispatch import TypeSig
+from ..mcls import BaseMeta
+from . import EZSpace, EZField
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, TypeAlias, Iterator
+
+  from . import EZMeta
+
+  AsTypeSig: TypeAlias = Callable[..., TypeSig]
+  Bases: TypeAlias = tuple[EZMeta, ...]
+
+#  For each dunder method 'EZHook' generates, the arguments whose
+#  placeholder 'Any' annotation is rewritten to the concrete class.
+#  The instance argument 'self' is always rewritten; the ordering
+#  dunders also rewrite 'other', since they meaningfully compare only
+#  against the same class. '__init__' is excluded: its
+#  '*args'/'**kwargs' signature carries no annotation worth
+#  correcting.
+_CLS_ARGS: dict[str, tuple[str, ...]] = {
+  '__iter__'   : ('self',),
+  '__repr__'   : ('self',),
+  '__eq__'     : ('self',),
+  '__hash__'   : ('self',),
+  '__setattr__': ('self',),
+  '__delattr__': ('self',),
+  '__lt__'     : ('self', 'other',),
+  '__le__'     : ('self', 'other',),
+  '__gt__'     : ('self', 'other',),
+  '__ge__'     : ('self', 'other',),
+}
+
+#  For each generated dunder, the arguments whose placeholder 'Any'
+#  annotation is rewritten to 'object', because they accept any value:
+#  '__eq__' compares against any object and returns 'NotImplemented'
+#  otherwise, while the frozen '__setattr__' raises before ever
+#  inspecting the assigned value.
+_OBJECT_ARGS: dict[str, tuple[str, ...]] = {
+  '__eq__'     : ('other',),
+  '__setattr__': ('value',),
+}
 
 
 class EZMeta(BaseMeta):
-  """Metaclass for 'EZData'; constructs an 'EZSpace' namespace."""
+  """
+  EZMeta is the metaclass behind 'EZData'. On top of the
+  construction protocol it inherits from 'BaseMeta', it hosts the
+  class-level introspection accessors ('fields', 'sig',
+  'isFrozen', 'isOrdered', 'kwOnly'), pins '__field_owner__' on
+  every field after class creation, and provides 'isCongruent'
+  for structural equality between EZData classes that declare
+  the same field-type signature.
+
+  Two classes are 'congruent' when their field-type tuples
+  compare equal under 'TypeSig.__eq__'. The generated '__eq__'
+  on EZData instances uses 'isCongruent' to admit cross-class
+  equality, so a 'FrozenComplex(EZComplex)' instance can
+  compare equal to its non-frozen parent's instances.
+
+  Attributes
+  ----------
+  fields : tuple[EZField, ...]
+    The EZField descriptors declared on the class, in
+    declaration order (own and inherited).
+  sig : TypeSig
+    The field-type signature used for congruence comparisons.
+  isFrozen : bool
+    Whether the class was declared with any of the 'frozen'
+    synonyms.
+  isOrdered : bool
+    Whether the class was declared with any of the 'ordered'
+    synonyms.
+  kwOnly : bool
+    Whether the class was declared with any of the 'kwOnly'
+    synonyms.
+  """
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Annotations
+  __is_frozen__: bool
+  __is_ordered__: bool
+  __kw_only__: bool
+
+  #  Public Variables
+  fields: Field[tuple[EZField, ...]] = Field()
+  sig: Field[TypeSig] = Field()
+  isFrozen: Field[bool] = Field()
+  isOrdered: Field[bool] = Field()
+  kwOnly: Field[bool] = Field()
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @fields.GET
+  def _getFields(cls, ) -> tuple[EZField, ...]:
+    """
+    Return the tuple of EZField descriptors declared on the
+    class, in declaration order. Drawn from the namespace's
+    merged own+inherited mapping so subclasses see the full
+    field surface.
+
+    Returns
+    -------
+    tuple[EZField, ...]
+      The EZFields declared on this class, in declaration order.
+    """
+    space: EZSpace = getattr(cls, '__namespace__')
+    fields: dict[str, EZField] = space.getFields()
+    return (*(field for _, field in fields.items()),)
+
+  @sig.GET
+  def _getSig(cls, ) -> TypeSig:
+    """
+    Return the field-type signature of the class as a 'TypeSig'.
+    Used by 'isCongruent' to decide whether two classes share
+    the same field structure and so admit cross-class equality.
+
+    Returns
+    -------
+    TypeSig
+      The ordered tuple of field types wrapped in a 'TypeSig'.
+    """
+    return TypeSig(*(f.fieldType for f in cls), )
+
+  @isFrozen.GET
+  def _getIsFrozen(cls, ) -> bool:
+    """
+    Return the resolved 'frozen' build-option flag set during
+    'EZHook.postCompilePhase'. Truthy when the class was
+    declared with any of the 'frozen', 'immutable', or
+    'hashable' synonyms.
+
+    Returns
+    -------
+    bool
+      True if the class is frozen.
+    """
+    return True if getattr(cls, '__is_frozen__') else False
+
+  @isOrdered.GET
+  def _getIsOrdered(cls, ) -> bool:
+    """
+    Return the resolved 'ordered' build-option flag set during
+    'EZHook.postCompilePhase'. Truthy when the class was
+    declared with any of the 'ordered', 'sortable', or
+    'comparable' synonyms.
+
+    Returns
+    -------
+    bool
+      True if the class supports ordering.
+    """
+    return True if getattr(cls, '__is_ordered__') else False
+
+  @kwOnly.GET
+  def _getKwOnly(cls, ) -> bool:
+    """
+    Return the resolved 'kwOnly' build-option flag set during
+    'EZHook.postCompilePhase'. Truthy when the class was
+    declared with any of the 'kwOnly', 'keywordOnly', or
+    'kw_only' synonyms; controls whether '__init__' accepts
+    positional arguments and whether '__match_args__' is the
+    full field tuple or empty.
+
+    Returns
+    -------
+    bool
+      True if the class is keyword-only.
+    """
+    return True if getattr(cls, '__kw_only__') else False
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __iter__(cls, ) -> Iterator[EZField]:
+    """
+    Iterating an 'EZData' class iterates its fields in declaration order.
+
+    Returns
+    -------
+    Iterator[EZField]
+      An iterator over the fields of this class, in declaration order.
+    """
+    yield from cls.fields
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def __prepare__(
-      mcls, name: str, bases: Base, **kwargs,
-  ) -> EZSpace:
-    """Build the 'EZSpace' namespace for the class body."""
-    return EZSpace(mcls, name, bases, **kwargs)
+  def __prepare__(mcls, name: str, bases: Bases, **kw) -> EZSpace:
+    """
+    Return the 'EZSpace' namespace object that collects the
+    class body. Python calls this before executing the class
+    body; the returned namespace stays in scope until the
+    metaclass's '__new__' compiles it.
 
-  def __new__(
-      mcls, name: str, bases: Base, space: EZSpace, **kwargs
-  ) -> Any:
-    """Translate CPython's layout-conflict 'TypeError' into the typed
-    'EZMultipleInheritance' so users see what actually went wrong."""
-    try:
-      return BaseMeta.__new__(mcls, name, bases, space, **kwargs)
-    except TypeError as typeError:
-      msg = str(typeError)
-      if 'multiple bases have instance lay-out conflict' in msg:
-        raise EZMultipleInheritance(name, *bases) from typeError
-      raise
+    Parameters
+    ----------
+    mcls : type
+      The metaclass building the class.
+    name : str
+      The name of the class under construction.
+    bases : Bases
+      Spells out to 'tuple[EZMeta, ...]'. The base classes
+      declared in the 'class Foo(...)' header.
+    **kw
+      Class keyword arguments forwarded to 'EZSpace'.
+
+    Returns
+    -------
+    EZSpace
+      A fresh namespace ready to receive the class body.
+    """
+    return EZSpace(mcls, name, bases, **kw)
+
+  def __init__(cls, name: str, bases: Bases, space: EZSpace, **kw) -> None:
+    """
+    Finalize the class object after Python has built it. Walks
+    every field on the class (own and inherited) and binds its
+    '__field_owner__' to this class, so later access through
+    'field.fieldOwner' returns the most-derived class that
+    declared or inherited the field.
+
+    Parameters
+    ----------
+    name : str
+      The name of the class.
+    bases : Bases
+      Spells out to 'tuple[EZMeta, ...]'. The base classes from
+      the 'class Foo(...)' declaration.
+    space : EZSpace
+      The compiled namespace produced by 'EZSpace.compile'.
+    **kw
+      The class keyword arguments captured at '__prepare__' time.
+    """
+    super().__init__(name, bases, space, **kw)
+    for field in cls.fields:
+      setattr(field, '__field_owner__', cls)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def isCongruent(cls, other: Any) -> bool:
+    """
+    Returns True if 'other' is an 'EZData' class congruent with this
+    one. Congruent classes declare the same fields, so an instance of
+    one may compare equal to an instance of the other.
+
+    Parameters
+    ----------
+    other : Any
+      The object tested for congruence with this class.
+
+    Returns
+    -------
+    bool
+      True if 'other' is an 'EZData' class whose field signature
+      equals that of this class.
+    """
+    mcls = type(cls)
+    if not isinstance(other, mcls):
+      return False
+    return True if cls.sig == other.sig else False

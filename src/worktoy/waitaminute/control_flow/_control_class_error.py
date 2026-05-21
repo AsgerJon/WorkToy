@@ -31,14 +31,16 @@ class ControlClassError(TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """When creating class '%s', a subclass of '%s', 
-    tried implementing attribute '%s'! Only '__str__' and '__repr__' are 
+    infoSpec = """When creating class '%s', a subclass of '%s', tried
+    implementing attribute '%s'! Only '__str__' and '__repr__' are
     allowed."""
     mcls: Meta = self.space.__metaclass__
     root = mcls.getRootClass()
     rootName = root.__name__
     clsName = self.space.__class_name__
     badKey = self.badKey
-    return infoSpec % (clsName, rootName, badKey)
+    info = infoSpec % (clsName, rootName, badKey)
+    from ...utilities import textFmt
+    return textFmt(info)
 
   __repr__ = __str__

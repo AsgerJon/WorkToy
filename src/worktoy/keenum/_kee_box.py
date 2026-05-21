@@ -61,7 +61,6 @@ from typing import TYPE_CHECKING
 from . import KeeMeta, KeeFlagsMeta
 from ..desc import AttriBox
 from ..waitaminute import TypeException
-from ..waitaminute.control_flow import SkipSet
 from ..waitaminute.keenum import KeeBoxException, \
   KeeBoxValueError, KeeBoxTypeError
 
@@ -76,30 +75,13 @@ class KeeBox(AttriBox):
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Class Variables
-
-  #  Fallback Variables
-
-  #  Private Variables
-
-  #  Public Variables
-
-  #  Virtual Variables
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    if instance is None:
-      return self
-    self.hookPreGet(instance, **kwargs)
+  def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     pvtName = self.getPrivateName()
     try:
-      value = getattr(instance, pvtName)
+      return getattr(instance, pvtName)
     except AttributeError as attributeError:
       if kwargs.get('_recursion', False):
         raise RecursionError from attributeError
@@ -107,27 +89,18 @@ class KeeBox(AttriBox):
         fieldObject = self._resolve()
       except Exception as exception:
         raise exception from attributeError
-      else:
-        setattr(instance, pvtName, fieldObject)
-        return self.__get__(instance, owner, _recursion=True)
-    else:
-      self.hookOnGet(instance, value, **kwargs)
-      return value
+      setattr(instance, pvtName, fieldObject)
+      return self.__instance_get__(instance, owner, _recursion=True)
 
-  def __set__(self, instance: Any, value: Any, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     pvtName = self.getPrivateName()
-    fieldNum = self.fieldType
-    try:
-      self.hookPreSet(instance, value, **kwargs)
-    except SkipSet:
-      pass
-    else:
-      if isinstance(value, fieldNum):
-        setattr(instance, pvtName, value)
-        return self.hookOnSet(instance, value, **kwargs)
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      return self.__set__(instance, self._resolve(value, ), _recursion=True)
+    if isinstance(value, self.fieldType):
+      return setattr(instance, pvtName, value)
+    if kwargs.get('_recursion', False):
+      raise RecursionError
+    return self.__instance_set__(
+      instance, self._resolve(value, ), _recursion=True
+    )
 
   def _resolve(self, *args, **kwargs) -> Any:
     fieldNum = self.fieldType
@@ -180,10 +153,6 @@ class KeeBox(AttriBox):
     return self.fieldType.memberDict[names]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -201,11 +170,3 @@ class KeeBox(AttriBox):
     if isinstance(fieldType, KeeMeta) or isinstance(fieldType, KeeFlagsMeta):
       return super().__class_getitem__(fieldType)
     raise TypeException('fieldType', fieldType, KeeMeta, KeeFlagsMeta)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

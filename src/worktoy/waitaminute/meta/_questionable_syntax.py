@@ -1,7 +1,8 @@
 """QuestionableSyntax is raised when a name is encountered that is likely
 a typo, such as '__set_item__' instead of '__setitem__' or '__setname__'
-instead of '__set_name__'.
-This is a"""
+instead of '__set_name__'. It subclasses 'SyntaxError' and is used to
+flag code that is likely incorrect even though Python itself would
+accept it."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -30,10 +31,9 @@ class QuestionableSyntax(SyntaxError):
 
   def __str__(self) -> str:
     """String representation of the QuestionableSyntax."""
-    spec = """%s! Received name '%s' which is similar enough to '%s' to be a 
-    likely typo. """
-    cls = type(self).__name__
-    info = spec % (cls, self.derpName, self.realName)
+    spec = """Received name '%s' which is similar enough to '%s' to be
+    a likely typo."""
+    info = spec % (self.derpName, self.realName)
     return textFmt(info)
 
   __repr__ = __str__

@@ -63,3 +63,11 @@ class TestClause(LoremIpsumTest):
       _ = clause._getWordsArray(_recursion=True)
     with self.assertRaises(RecursionError):
       _ = clause._getWordsLengths(_recursion=True)
+
+  def test_realize(self) -> None:
+    """
+    This method tests that 'realize' matches '__str__'.
+    """
+    expectedText = str(self.clause)
+    actualText = self.clause.realize()
+    self.assertEqual(expectedText, actualText)

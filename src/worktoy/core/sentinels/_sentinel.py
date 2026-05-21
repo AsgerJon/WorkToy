@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import maybe
+from ...waitaminute.meta import IllegalInstantiation
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Never
@@ -95,7 +96,6 @@ class _Sentinel(type):
     """
     Raises 'IllegalInstantiation'.
     """
-    from worktoy.waitaminute.meta import IllegalInstantiation
     raise IllegalInstantiation(cls)
 
   def __hash__(cls, ) -> int:

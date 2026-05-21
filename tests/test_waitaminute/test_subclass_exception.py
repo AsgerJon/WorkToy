@@ -38,3 +38,12 @@ class TestSubclassException(WaitAMinuteTest):
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.baseClass, tuple)
     self.assertEqual(e.subClass, int)
+
+  def test_message_names_actual_classes(self) -> None:
+    """The rendered message must mention the actual class names that
+    were passed in, not the names of their metaclasses."""
+    with self.assertRaises(SubclassException) as context:
+      raise SubclassException(int, tuple)
+    e = context.exception
+    self.assertIn("'int'", str(e))
+    self.assertIn("'tuple'", str(e))

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from . import CoreTest
-from worktoy.core.sentinels import DESC, THIS, OWNER, METACALL, WILDCARD
+from worktoy.core.sentinels import DESC, THIS, OWNER, METACALL
 from worktoy.core.sentinels import DELETED
 from worktoy.core.sentinels._sentinel import _Sentinel  # NOQA
 
@@ -29,7 +29,7 @@ class TestSentinels(CoreTest):
 
   def setUp(self) -> None:
     self.sentinels = [
-      THIS, OWNER, DESC, METACALL, WILDCARD, DELETED,
+      THIS, OWNER, DESC, METACALL, DELETED,
     ]
 
   def test_recursion(self, ) -> None:

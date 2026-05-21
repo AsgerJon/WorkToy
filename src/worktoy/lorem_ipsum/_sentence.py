@@ -11,29 +11,23 @@ from typing import TYPE_CHECKING
 from worktoy.utilities import textFmt
 from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
-from worktoy.desc import Field, AttriBox
-from . import StochasticWord, BaseGenerator, Clause
+from worktoy.desc import Field
+from . import BaseGenerator, Clause
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, TypeAlias, Union, Optional, Iterator
-
-  IntField: TypeAlias = Union[int, Field]
+  from typing import Self, TypeAlias, Optional, Iterator
 
   IntList: TypeAlias = list[int]
   MaybeIntList: TypeAlias = Optional[IntList]
-  IntListField: TypeAlias = Union[IntList, Field]
 
   ClausesList: TypeAlias = list[Clause]
   MaybeClausesList: TypeAlias = Optional[ClausesList]
-  ClausesField: TypeAlias = Union[ClausesList, Field]
-
-  StochWordBox: TypeAlias = Union[StochasticWord, AttriBox]
 
 
 class Sentence(BaseGenerator):
   """
-  Sentence subclasses 'BaseObject' and implements period separated sequences
-  of words.
+  Sentence subclasses 'BaseGenerator' and implements period separated
+  sequences of words.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -52,11 +46,11 @@ class Sentence(BaseGenerator):
   __clause_array__: MaybeClausesList = None
 
   #  Public Variables
-  clausesLengths: IntListField = Field()
-  clausesArray: ClausesField = Field()
+  clausesLengths: Field[IntList] = Field()
+  clausesArray: Field[ClausesList] = Field()
 
   #  Virtual Variables
-  clauseCount: IntField = Field()
+  clauseCount: Field[int] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -67,6 +61,8 @@ class Sentence(BaseGenerator):
     return int(round(self.charCount / self.__clause_mean__))
 
   def _buildClauseLengths(self, ) -> None:
+    """Sample a log-normal sequence of clause lengths summing to
+    'charCount' and cache it."""
     mean, var = self.__clause_mean__, self.__clause_var__
     lengths = [self.logNormal(mean, var) for _ in range(self.clauseCount)]
     factor = self.charCount / sum(lengths)
@@ -85,14 +81,16 @@ class Sentence(BaseGenerator):
     return self.__clause_lengths__
 
   def _buildClausesArray(self, ) -> None:
+    """Materialize a 'Clause' for each cached length, capitalize the
+    sentence's first word, and append a period to its last word."""
     clauses = []
     for length in self.clausesLengths:
       if not clauses and self.isFirst:
         clauses.append(Clause.first(length))
         continue
       clauses.append(Clause(length))
-    clauses[0].wordsArray[0] = str.capitalize(clauses[0].wordsArray[0])
-    clauses[-1].wordsArray[-1] = """%s.""" % clauses[-1].wordsArray[-1]
+    clauses[0].capitalizeLead()
+    clauses[-1].terminate('.')
     self.__clause_array__ = [*clauses, ]
 
   @clausesArray.GET
@@ -103,21 +101,6 @@ class Sentence(BaseGenerator):
       self._buildClausesArray()
       return self._getClausesArray(_recursion=True)
     return self.__clause_array__
-
-  def clear(self) -> None:
-    """
-    Clears the cached contents of the instance.
-    """
-    self.__clause_lengths__ = None
-    self.__clause_array__ = None
-
-  def reset(self, ) -> None:
-    """
-    Clears and regenerates the contents of the instance.
-    """
-    self.clear()
-    self._buildClauseLengths()
-    self._buildClausesArray()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -130,6 +113,25 @@ class Sentence(BaseGenerator):
       self.__clause_lengths__ = [*other.__clause_lengths__, ]
     if other.__clause_array__ is not None:
       self.__clause_array__ = [*other.__clause_array__, ]
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def clear(self) -> None:
+    """Drop the cached clause lengths and clause array."""
+    self.__clause_lengths__ = None
+    self.__clause_array__ = None
+
+  def reset(self, ) -> None:
+    """Clear and regenerate the cached clause lengths and clause array."""
+    self.clear()
+    self._buildClauseLengths()
+    self._buildClausesArray()
+
+  def realize(self) -> str:
+    """Return the realized text for this sentence."""
+    return str(self)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

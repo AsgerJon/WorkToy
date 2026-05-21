@@ -49,11 +49,6 @@ class TestBaseTest(BaseTest):
   #  Field getters  # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def test_attr_err_trace_returns_substring(self) -> None:
-    """'attrErrTrace' returns the substring used to recognise that
-    AttributeError messages refer to missing attributes."""
-    self.assertIn('attribute', self.attrErrTrace)
-
   def test_typical_exceptions_includes_common_types(self) -> None:
     """'exceptions' yields the common runtime exception types."""
     excs = list(self.exceptions)

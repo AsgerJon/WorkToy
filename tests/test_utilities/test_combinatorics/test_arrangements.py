@@ -142,12 +142,12 @@ class TestArrangements(CombinatoricsTest):
 
   def test_contains_arrangement_with_non_matching_values(self) -> None:
     a = Arrangements('A', 'B', 'C')
-    probe = Arrangement(('X', 'Y', 'Z'), (0, 1, 2))
+    probe = Arrangement(('x', 'y', 'Z'), (0, 1, 2))
     self.assertNotIn(probe, a)
 
   def test_contains_tuple_with_non_matching_values(self) -> None:
     a = Arrangements('A', 'B', 'C')
-    self.assertNotIn(('X', 'Y', 'Z'), a)
+    self.assertNotIn(('x', 'y', 'Z'), a)
 
   def test_contains_unrelated_type_is_false(self) -> None:
     """Unlike Arrangement.__eq__, __contains__ returns plain False
@@ -266,7 +266,7 @@ class TestArrangements(CombinatoricsTest):
       ('A', 'B', 'C', 'D'),
       ('A', 'A', 'B', 'C'),
       ('A', 'A', 'B', 'B'),
-      ('X',) * 4
+      ('x',) * 4
     ]
     for items in cases:
       with self.subTest(items=items):

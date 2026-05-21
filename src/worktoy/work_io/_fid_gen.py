@@ -177,7 +177,7 @@ class FidGen(BaseObject):
     if kwargs:
       self.__init__(**kwargs)
 
-  @overload()  # kwargs
+  @overload()  # kw
   def __init__(self, **kwargs) -> None:
     """Initialize the FidGen object."""
     nameKeys = stringList("""name, file, fileName, filename, file_name""")

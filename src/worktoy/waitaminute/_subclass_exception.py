@@ -62,8 +62,8 @@ class SubclassException(TypeError):
     Return a string representation of the SubclassException object.
     """
     infoSpec = """Expected class '%s' to be a subclass of '%s'!"""
-    clsName = type(self.subClass).__name__
-    baseName = type(self.baseClass).__name__
+    clsName = self.subClass.__name__
+    baseName = self.baseClass.__name__
     info = infoSpec % (clsName, baseName)
     return textFmt(info)
 

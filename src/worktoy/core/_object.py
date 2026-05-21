@@ -10,11 +10,13 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from ..utilities import Directory, maybe, textFmt
-from ..waitaminute import TypeException, attributeErrorFactory
+from ..utilities import Directory, maybe
+from ..waitaminute import TypeException, MissingVariable
+from ..waitaminute.desc import WithoutException, ReadOnlyError
+from ..waitaminute.desc import ProtectedError
+from ..waitaminute.control_flow import SkipSet
 from .sentinels import THIS, DESC, OWNER, DELETED, Sentinel
 from . import ContextInstance, MetaType, ContextOwner
-from ..waitaminute.control_flow import SkipSet
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Optional, Type, TypeAlias
@@ -26,35 +28,87 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class Object(metaclass=MetaType):
-  """
-  Fundamental base class for all objects in the 'worktoy' library.
+  """The fundamental base class for objects in the 'worktoy' library.
 
-  This class provides full-featured descriptor context management. When
-  subclassing, you need only implement `__instance_get__`,
-  `__instance_set__`, and `__instance_delete__`. The owning instance
-  is always made available as `self.instance` within these methods.
+  'Object' provides a contextually aware descriptor protocol so that
+  subclasses can implement descriptor behavior in three small hooks
+  ('__instance_get__', '__instance_set__', '__instance_delete__')
+  without having to thread the '(instance, owner)' pair through every
+  call. Inside those hooks the active instance is available as
+  'self.instance' and the owning class as 'self.owner'.
 
-  Deletion is handled by assigning the `DELETED` sentinel to the relevant
-  attribute or storage, so that a future call to `__instance_get__` will
-  return `DELETED`. The core machinery ensures this triggers an
-  AttributeError on access.
+  Subclassing contract
+  --------------------
+  Override one or more of:
 
-  Example implementation:
-    .. code-block:: python
+  - '__instance_get__(self, instance, owner, **kw)': define how
+    the descriptor reads. Defaults to returning 'self'.
+  - '__instance_set__(self, instance, value, **kw)': define how
+    the descriptor writes. Defaults to raising 'ReadOnlyError'.
+  - '__instance_delete__(self, instance, old, **kw)': define how
+    the descriptor deletes. Defaults to raising 'ProtectedError'.
 
-    def __instance_get__(self) -> Any:
-      return self.instance._value
+  Do not override '__get__', '__set__', or '__delete__'. Those are
+  the context-managing entry points and are expected to stay as
+  implemented here. They push a new '(instance, owner)' frame onto
+  the descriptor's context stack, dispatch to the corresponding
+  '__instance_*' hook, and pop the frame on the way out.
 
-    def __instance_set__(self, value: Any) -> None:
-      self.instance._value = value
+  Context machinery
+  -----------------
+  Each descriptor object holds a per-descriptor stack of
+  '(instance, owner)' pairs in '__call_chain__'. The stack is grown
+  by 'createContext(instance, owner)' and shrunk by 'exitContext()'.
+  'self.instance' and 'self.owner' read the top of that stack via
+  the 'ContextInstance' and 'ContextOwner' descriptors. The
+  'with self.createContext(...) as context:' idiom inside '__get__'
+  / '__set__' / '__delete__' guarantees the pop happens even if the
+  hook raises.
 
-    def __instance_delete__(self, oldVal: Any) -> None:
-      self.instance._value = DELETED  # Ensures next get raises
-      AttributeError
+  Re-entrant access to the same descriptor object is safe: an inner
+  call pushes a new frame, 'self.instance' inside that frame sees
+  the new instance, and when the inner call returns and pops, the
+  outer frame's instance is restored.
 
-  Do not override `__get__`, `__set__`, or `__delete__` unless you are
-  extending or altering the core behavior. Context, error handling, and
-  attribute protection are managed by Object and its metaclass.
+  Reading 'self.instance' or 'self.owner' outside any active
+  context raises 'WithoutException'. Calling 'exitContext' on an
+  empty stack raises 'WithoutException' as well, since that
+  indicates an unpaired 'createContext' / 'exitContext' call.
+
+  Public context API: 'createContext', 'exitContext', 'hasContext',
+  'getContextInstance', 'getContextOwner'.
+
+  Limitations
+  -----------
+  The context stack lives on the descriptor object, which is shared
+  across every owning instance of the class. Concurrent access is
+  therefore not safe:
+
+  - Multiple threads accessing the same field on different instances
+    will race on the stack.
+  - An 'await' inside a descriptor hook lets another coroutine
+    clobber the stack the same way.
+
+  'worktoy' descriptors are intended for single-threaded synchronous
+  code. If you need thread- or task-local safety, layer it on top.
+
+  Deletion semantics
+  ------------------
+  '__instance_delete__' signals deletion by assigning the 'DELETED'
+  sentinel to the storage that '__instance_get__' would read. The
+  next call to '__instance_get__' returns 'DELETED', which the
+  '__get__' wrapper translates into 'MissingVariable'. This avoids
+  threading a 'was-deleted' flag through every accessor.
+
+  Examples
+  --------
+  >>> class Counted(Object):
+  ...   def __instance_get__(self, instance: Any, owner: type, **kw) -> Any:
+  ...     return getattr(instance, '_count', 0)
+  ...   def __instance_set__(self, instance: Any, value: Any, **kw) -> None:
+  ...     instance._count = value
+  ...   def __instance_delete__(self, instance: Any, **kw) -> None:
+  ...     instance._count = DELETED
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -68,9 +122,7 @@ class Object(metaclass=MetaType):
   __field_name__ = None
   __pos_args__ = None
   __key_args__ = None
-  __context_instance__ = None
-  __context_owner__ = None
-  __call_chain__ = []
+  __call_chain__ = None
 
   #  Public Variables
   directory = Directory()
@@ -95,9 +147,13 @@ class Object(metaclass=MetaType):
     to their corresponding contextual values. Where contextual values are
     not available, the sentinel is returned.
     """
+    if self.__call_chain__:
+      instance, owner = self.__call_chain__[-1]
+    else:
+      instance, owner = None, None
     return {
-      THIS : maybe(self.__context_instance__, THIS),
-      OWNER: maybe(self.__context_owner__, OWNER),
+      THIS : maybe(instance, THIS),
+      OWNER: maybe(owner, OWNER),
       DESC : self,
     }
 
@@ -123,40 +179,28 @@ class Object(metaclass=MetaType):
   def getKeyArgs(self, ) -> dict[str, Any]:
     """Getter for the keyword arguments of the object."""
     out = dict()
-    for key, value in self.__key_args__.items():
+    for key, value in maybe(self.__key_args__, dict()).items():
       out[key] = self.filterSentinels(value)
     return out
 
   def getContextInstance(self) -> Any:
     """Returns the contextual instance or raises 'WithoutException'"""
     if self.hasContext():
-      return self.__context_instance__
-    from ..waitaminute.desc import WithoutException
+      return self.__call_chain__[-1][0]
     raise WithoutException(self)
 
   def getContextOwner(self) -> type:
     """Returns the contextual owner or raises 'WithoutException'"""
     if self.hasContext():
-      return self.__context_owner__
-    from ..waitaminute.desc import WithoutException
+      return self.__call_chain__[-1][1]
     raise WithoutException(self)
 
   def hasContext(self) -> bool:
     """
-    Returns True if the descriptor has a context, i.e. if it has been
-    created with 'createContext' and not exited with 'exitContext'.
+    Returns True if the descriptor has at least one active context,
+    i.e. 'createContext' has been called more times than 'exitContext'.
     """
-    own = self.__context_owner__
-    ins = self.__context_instance__
-    if (ins is None) ^ (own is None):
-      infoSpec = """Encountered inconsistent context state! The context 
-      owner and instance must both be 'None' or neither be 'None', 
-      but received instance: '%s' and owner: '%s'."""
-      info = infoSpec % (str(ins), str(own))
-      raise RuntimeError(textFmt(info, ))
-    if own is None:
-      return False
-    return True
+    return bool(self.__call_chain__)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -166,20 +210,27 @@ class Object(metaclass=MetaType):
     object.__init__(self)
     self.__pos_args__ = args
     self.__key_args__ = kwargs
+    self.__call_chain__ = []
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+    """Records the owning class and attribute name, then invokes
+    'hookSetName' so subclasses can react without overriding this
+    method."""
     self.__field_owner__ = owner
     self.__field_name__ = name
     self.hookSetName(owner, name, **kwargs)
 
   def __get__(self, instance: Any, owner: type, ) -> Any:
-    """
-    Returns the root of the descriptor owning the hook.
-    """
+    """When accessed through the class, returns this descriptor.
+    When accessed through an instance, pushes a context frame,
+    invokes 'hookPreGet' and '__instance_get__', translates a
+    'DELETED' result into 'MissingVariable', and finally invokes
+    'hookOnGet'. The context frame is popped on the way out
+    regardless of whether the hooks raise."""
     if instance is None:
       return self
     with self.createContext(instance, owner) as context:
@@ -190,11 +241,10 @@ class Object(metaclass=MetaType):
     return value
 
   def __set__(self, instance: Any, newValue: Any, **kwargs) -> None:
-    """
-    Sets the value of the descriptor in the instance. If accessing an
-    attribute would raise an exception, it should not prevent setting a
-    value on that attribute. Since the 'setter' control flow
-    """
+    """Pushes a context frame, invokes 'hookPreSet', and (unless the
+    hook raises 'SkipSet' to abort) calls '__instance_set__' followed
+    by 'hookOnSet'. The context frame is popped on the way out
+    regardless of whether the hooks raise."""
     with self.createContext(instance, type(instance)) as context:
       try:
         self.hookPreSet(instance, newValue, **kwargs)
@@ -205,9 +255,11 @@ class Object(metaclass=MetaType):
         self.hookOnSet(instance, newValue, **kwargs)
 
   def __delete__(self, instance: Any, **kwargs) -> None:
-    """
-    Deletes the value of the descriptor in the instance.
-    """
+    """Pushes a context frame, reads the prior value (or 'None' if
+    the attribute already raised), invokes 'hookPreDelete', calls
+    '__instance_delete__' with the old value, and finally invokes
+    'hookOnDelete'. Subclasses signal deletion by storing the
+    'DELETED' sentinel in their backing storage; see 'Object'."""
     owner = type(instance)
     with self.createContext(instance, owner) as context:
       try:
@@ -221,18 +273,17 @@ class Object(metaclass=MetaType):
       self.hookOnDelete(instance, **kwargs)
 
   def __enter__(self, ) -> Self:
-    """
-    Must be used with along with 'enterContext(instance, owner)'.
-    """
+    """Context-manager entry. Must be used together with a prior
+    'createContext(instance, owner)' call. Raises 'WithoutException'
+    if no context frame is active when entry happens."""
     if self.hasContext():
       return self
-    from ..waitaminute.desc import WithoutException
     raise WithoutException(self)
 
   def __exit__(self, _, exception: BaseException, __) -> None:
-    """
-    Must be used with along with 'exitContext'.
-    """
+    """Context-manager exit. Pops the active context frame via
+    'exitContext' and re-raises the exception (if any) propagated
+    out of the 'with' block."""
     try:
       if exception is not None:
         raise exception
@@ -240,7 +291,7 @@ class Object(metaclass=MetaType):
       self.exitContext()
 
   def __init_subclass__(cls, **kwargs) -> None:
-    """Accept arbitrary class kwargs so worktoy metaclass machinery
+    """Accept arbitrary class kw so worktoy metaclass machinery
     can forward them to space hooks without 'object.__init_subclass__'
     rejecting them."""
     super().__init_subclass__()
@@ -250,33 +301,25 @@ class Object(metaclass=MetaType):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    """
-    Instance-specific getter for this descriptor.
+    """Instance-specific getter for this descriptor.
 
-    When called, `self.instance` is the object this descriptor is bound to.
-    Subclasses should override this to define attribute retrieval logic.
-
-    Returns:
-      Any: The attribute value, or the DELETED sentinel if deleted.
-
-    Example:
-      .. code-block:: python
-      return self.instance._value
+    Inside this method, 'self.instance' resolves to the currently
+    active instance and 'self.owner' to the owning class. Subclasses
+    should override to define attribute retrieval logic. Return the
+    'DELETED' sentinel to signal that the attribute has been deleted;
+    the surrounding '__get__' wrapper will translate that into
+    'MissingVariable'. See 'Object' for a full example.
     """
     return self
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
-    """
-    Instance-specific setter for this descriptor.
+    """Instance-specific setter for this descriptor.
 
-    When called, `self.instance` is the object this descriptor is bound to.
-    Subclasses should override to define attribute assignment logic.
-
-    Example:
-      .. code-block:: python
-      self.instance._value = value
+    Inside this method, 'self.instance' resolves to the currently
+    active instance. Subclasses should override to define attribute
+    assignment logic. The default raises 'ReadOnlyError'. See
+    'Object' for a full example.
     """
-    from ..waitaminute.desc import ReadOnlyError
     raise ReadOnlyError(instance, self, value)
 
   def __instance_delete__(
@@ -285,53 +328,52 @@ class Object(metaclass=MetaType):
       old: Any = None,
       **kwargs,
   ) -> None:
-    """
-    Instance-specific deleter for this descriptor.
+    """Instance-specific deleter for this descriptor.
 
-    To signal deletion, assign the `DELETED` sentinel to your storage,
-    so that the next `__instance_get__` returns `DELETED`. This ensures
-    the core will raise AttributeError on further access.
-
-    Example:
-      .. code-block:: python
-      self.instance._value = DELETED
+    To signal deletion, assign the 'DELETED' sentinel to your storage
+    so the next '__instance_get__' returns 'DELETED'; the wrapper
+    will raise 'MissingVariable' on subsequent access. The default
+    raises 'ProtectedError'. See 'Object' for a full example.
     """
-    from ..waitaminute.desc import ProtectedError
     raise ProtectedError(instance, self, old)
 
   def createContext(self, instance: Any, owner: type, ) -> Self:
     """
-    Creates a context for the descriptor. The context is used to
-    store the instance and owner of the descriptor.
+    Pushes a new '(instance, owner)' pair onto the descriptor's
+    context stack and returns 'self' so the descriptor can be used as
+    a context manager. The stack makes the protocol safe under
+    re-entrant access to the same descriptor.
     """
-    self.__context_instance__ = instance
-    self.__context_owner__ = owner
+    if self.__call_chain__ is None:
+      self.__call_chain__ = []
+    self.__call_chain__.append((instance, owner))
     return self
 
   def exitContext(self) -> Self:
     """
-    Exits the context of the descriptor. The method restores the
-    descriptor to its previous state.
+    Pops the most recent '(instance, owner)' pair off the
+    descriptor's context stack, restoring the prior context (if any).
+    Raises 'WithoutException' if the stack is empty, since that
+    indicates an unpaired 'createContext' / 'exitContext' call.
     """
-    self.__context_instance__ = None
-    self.__context_owner__ = None
+    if not self.__call_chain__:
+      raise WithoutException(self)
+    self.__call_chain__.pop()
     return self
 
   def _deletedGuard(self, instance: Any, value: Any, ) -> Any:
-    """
-    A guard that raises an exception if the value is 'DELETED'. This is
-    used to prevent accessing deleted attributes.
-    """
+    """If 'value' is the 'DELETED' sentinel, raise 'MissingVariable'
+    so callers see the attribute as absent. Otherwise return 'value'
+    unchanged."""
     if value is DELETED:
-      attributeError = attributeErrorFactory(instance, self.__field_name__)
-      raise AttributeError(attributeError)
+      raise MissingVariable(instance, self.__field_name__)
     return value
 
   def getPrivateName(self, ) -> str:
-    """
-    Returns the name chain of the descriptor. This is used to access
-    the name of the descriptor in the context of the instance.
-    """
+    """Returns the dunder-style private name corresponding to this
+    descriptor's field name. 'camelCase' is converted to
+    'snake_case' and wrapped in double underscores. For example, a
+    descriptor named 'fooBar' returns '__foo_bar__'."""
     fieldName = self.__field_name__
     pattern = re.compile(r'(?<!^)(?=[A-Z])')
     return '__%s__' % pattern.sub('_', fieldName).lower()
@@ -391,30 +433,22 @@ class Object(metaclass=MetaType):
 
   def hookPreDelete(self, instance: Any, **kwargs, ) -> None:
     """
-    A hook that is called *before* the value is deleted on the instance. The
-    given value is the value just deleted by '__delete__'.
+    A hook that is called *before* the value is deleted from the
+    instance, prior to '__instance_delete__'.
 
     Parameters
     ----------
     instance: The instance the descriptor is bound to.
-
-    Returns
-    -------
-    None
     """
 
   def hookOnDelete(self, instance: Any, **kwargs, ) -> None:
     """
-    A hook that is called *after* the value is deleted on the instance. The
-    given value is the value just deleted by '__delete__'.
+    A hook that is called *after* the value is deleted from the
+    instance, once '__instance_delete__' has returned.
 
     Parameters
     ----------
     instance: The instance the descriptor is bound to.
-
-    Returns
-    -------
-    None
     """
 
   def hookSetName(self, owner: type, name: str, **kwargs) -> None:

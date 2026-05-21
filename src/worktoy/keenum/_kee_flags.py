@@ -44,9 +44,12 @@ are HIGH for the member, such as 'READ' and 'WRITE'.
   - Flexibility -
 Each enumeration of flags is generated automatically. This raises a
 question of naming. Is it 'FileAccess.READ_EXECUTE' or is it
-'FileAccess.EXECUTE_READ'? It follows the order of appearance in the class
-body. However, while
-
+'FileAccess.EXECUTE_READ'? It follows the order of appearance in the
+class body. However, while the canonical attribute name is built in
+declaration order, member resolution via 'KeeFlagsMeta.__getitem__'
+and 'KeeFlagsMeta.__getattr__' accepts any order: passing a string
+like 'EXECUTE_READ', a tuple/frozenset like ('READ', 'EXECUTE'), or a
+sequence of separate names all resolve to the same member.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -60,23 +63,41 @@ from ..waitaminute import MissingVariable, TypeException
 from . import KeeFlag, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterator, Self, TypeAlias, Union
-
-  FlagsField: TypeAlias = Union[Field, tuple[KeeFlag]]
+  from typing import Any, Iterator, Self
 
 
 class KeeFlags(metaclass=KeeFlagsMeta):
   """
-  KeeFlags is a metaclass that dynamically creates instances of KeeFlags
-  for each boolean valued entry. It allows for the creation of an
-  enumeration consisting of all possible combinations of boolean flags.
+  Base class for bitmask-flag enumerations. Each KeeFlags subclass
+  declares 'KeeFlag()' fields in its body, one per single-bit flag;
+  the metaclass then materializes every combination of those flags as
+  a concrete member at class-creation time.
 
-  Important Attributes:
-  - flags: A descriptor returning the flags of a particular enumeration
-  that are HIGH.
+  Cost (read before declaring a large enum)
+  -----------------------------------------
+  A KeeFlags class with N single-bit flags materializes 2 ** N
+  members eagerly during class definition:
+
+      N =  4   -> 16 members
+      N =  8   -> 256 members
+      N = 12   -> 4096 members
+      N = 16   -> 65,536 members
+      N = 20   -> 1,048,576 members
+
+  The cost is paid once, at import. For typical use (file
+  permissions, keyboard modifiers, etc.) where N <= 8, this is
+  negligible. For N up to 12, expect a small but real import-time
+  delay and memory footprint. For N >= 16, expect a noticeable
+  delay and several MB of memory just for the class. For N > 20 you
+  almost certainly want a plain 'int' bitmask with helper functions,
+  not a KeeFlags enum.
+
+  Important attributes
+  --------------------
+  - 'flags': descriptor returning the single-bit flags that are HIGH
+    for a particular member.
 
   Entries must be integer valued.
-
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -88,27 +109,29 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   __member_dict__: dict[frozenset[str], Self]
 
   #  Private Variables
+  #  '__field_owner__' and '__field_name__' are set on each instance
+  #  by 'KeeFlagsMeta.__new__' at class creation time. Declared here
+  #  with None defaults so fresh instances do not raise AttributeError
+  #  before the metaclass setattr runs.
+  __field_owner__ = None
+  __field_name__ = None
   __member_index__ = None
   __member_value__ = None
   __frozen_state__ = None
 
   #  Public Variables
-  index = Field()
+  index: Field[int] = Field()
 
   #  Virtual Variables
-  flags: FlagsField = Field()
-  lows: FlagsField = Field()
-  highs: FlagsField = Field()
-  value = Field()
-  name = Field()
-  names = Field()
+  flags: Field[list[KeeFlag]] = Field()
+  lows: Field[Iterator[KeeFlag]] = Field()
+  highs: Field[Iterator[KeeFlag]] = Field()
+  value: Field[Any] = Field()
+  name: Field[str] = Field()
+  names: Field[frozenset[str]] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @flags.GET
@@ -194,6 +217,12 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def __bool__(self) -> bool:
+    """The NULL member (no flags HIGH) is falsy. Any member with at
+    least one flag HIGH is truthy, mirroring the truthiness of the
+    underlying bitmask."""
+    return True if self.__member_index__ else False
+
   def __iter__(self) -> Iterator[Self]:
     yield from self.highs
 
@@ -208,9 +237,9 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   def __eq__(self, other: Any) -> bool:
     if not isinstance(type(other), KeeFlagsMeta):
       return NotImplemented
-    if self.__field_owner__ == other.__field_owner__:
-      return True if self.index == other.index else False
-    return False
+    if self.__field_owner__ is not other.__field_owner__:
+      return False
+    return True if self.index == other.index else False
 
   def __hash__(self, ) -> int:
     return hash((hash(type(self)), *self.highs))

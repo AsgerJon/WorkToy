@@ -32,7 +32,7 @@ class ComplexSubclass(ComplexNumber):
   #  Virtual Variables
 
   #  Overloaded Functions
-  __init__ = ComplexNumber.__init__.clone()
+  __init__ = ComplexNumber.__dict__['__init__'].clone()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

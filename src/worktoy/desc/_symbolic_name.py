@@ -18,8 +18,6 @@ if TYPE_CHECKING:  # pragma: no cover
   StrTuple: TypeAlias = tuple[str, ...]
   StrTupleStr: TypeAlias = Union[str, StrTuple]
   MaybeStrTuple: TypeAlias = Optional[StrTuple]
-  StrTupleField: TypeAlias = Union[StrTuple, Field]
-  StrField: TypeAlias = Union[str, Field]
 
 
 class SymbolicName(Object):
@@ -53,14 +51,15 @@ class SymbolicName(Object):
   __part_words__: MaybeStrTuple = None
 
   #  Public Variables
-  words: StrTupleField = Field()
+  words: Field[StrTuple] = Field()
 
   #  Virtual Variables
-  snake: StrField = Field()
-  pascal: StrField = Field()
-  camel: StrField = Field()
-  kebab: StrField = Field()
-  screamingSnake: StrField = Field()
+  snake: Field[str] = Field()
+  pascal: Field[str] = Field()
+  camel: Field[str] = Field()
+  kebab: Field[str] = Field()
+  screamingSnake: Field[str] = Field()
+  screamingKebab: Field[str] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -101,6 +100,10 @@ class SymbolicName(Object):
   def _getScreamingSnake(self, ) -> str:
     return str.upper(self.snake)
 
+  @screamingKebab.GET
+  def _getScreamingKebab(self, ) -> str:
+    return str.upper(self.kebab)
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -122,10 +125,11 @@ class SymbolicName(Object):
     yield from self.words
 
   def _resolveIndex(self, index: int) -> str:
+    words = (*self,)
     if index < 0:
-      return self[(index + len(self)) % len(self)]
-    if index < len(self):
-      return (*self,)[index]
+      index += len(words)
+    if 0 <= index < len(words):
+      return words[index]
     raise IndexError(index)
 
   def _resolveSlice(self, index: slice) -> tuple[str, ...]:

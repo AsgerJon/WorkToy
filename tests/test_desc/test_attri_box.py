@@ -83,14 +83,16 @@ class TestAttriBox(DescTest):
     self.assertEqual(point2D.y, 420)
     del point2D.x
     del point2D.y
-    with self.assertRaises(AttributeError) as context:
+    with self.assertRaises(MissingVariable) as context:
       _ = point2D.x
     e = context.exception
-    self.assertIn(self.attrErrTrace, str(e))
-    with self.assertRaises(AttributeError) as context:
+    self.assertIs(e.instance, point2D)
+    self.assertEqual(e.varName, 'x')
+    with self.assertRaises(MissingVariable) as context:
       _ = point2D.y
     e = context.exception
-    self.assertIn(self.attrErrTrace, str(e))
+    self.assertIs(e.instance, point2D)
+    self.assertEqual(e.varName, 'y')
 
   def test_bad_delete(self, ) -> None:
     """
@@ -102,14 +104,16 @@ class TestAttriBox(DescTest):
     self.assertEqual(point2D.y, 420)
     del point2D.x
     del point2D.y
-    with self.assertRaises(AttributeError) as context:
+    with self.assertRaises(MissingVariable) as context:
       del point2D.x
     e = context.exception
-    self.assertIn('x', str(e))
-    with self.assertRaises(AttributeError) as context:
+    self.assertIs(e.instance, point2D)
+    self.assertEqual(e.varName, 'x')
+    with self.assertRaises(MissingVariable) as context:
       del point2D.y
     e = context.exception
-    self.assertIn('y', str(e))
+    self.assertIs(e.instance, point2D)
+    self.assertEqual(e.varName, 'y')
 
   def test_gymnastics(self) -> None:
     """
@@ -120,12 +124,14 @@ class TestAttriBox(DescTest):
       foo = AttriBox[int]()
 
     bar = Bar()
-    setattr(Bar.foo, '__context_instance__', bar)
-    setattr(Bar.foo, '__context_owner__', Bar)
-    with self.assertRaises(RecursionError):
-      Bar.foo.__instance_get__(Bar(), Bar, _recursion=True)
-    with self.assertRaises(RecursionError):
-      Bar.foo.__instance_set__(Bar(), 'baz', _recursion=True)
+    Bar.foo.createContext(bar, Bar)
+    try:
+      with self.assertRaises(RecursionError):
+        Bar.foo.__instance_get__(Bar(), Bar, _recursion=True)
+      with self.assertRaises(RecursionError):
+        Bar.foo.__instance_set__(Bar(), 'baz', _recursion=True)
+    finally:
+      Bar.foo.exitContext()
 
     class Spam:
       eggList = AttriBox[list](69, 420, 1337)
@@ -154,11 +160,11 @@ class TestAttriBox(DescTest):
     """
 
     class Foo:
-      bar: ComplexBox = AttriBox[complex]()
+      bar = AttriBox[complex]()
 
     foo = Foo()
 
-    foo.bar = 69, 420
+    setattr(foo, 'bar', (69, 420))
     self.assertAlmostEqual(foo.bar.real, 69)
     self.assertAlmostEqual(foo.bar.imag, 420)
 

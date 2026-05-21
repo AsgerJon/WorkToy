@@ -1,5 +1,8 @@
 """
-The 'worktoy.num' module provides the enumerating KeeNum class.
+The 'worktoy.keenum' module provides the enumerating KeeNum class
+along with KeeFlags for bitmask-style flag enums, the Kee member
+descriptor, KeeFlag descriptor, KeeBox attribute wrapper, and the
+supporting metaclass and namespace machinery.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

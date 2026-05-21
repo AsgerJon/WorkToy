@@ -47,14 +47,21 @@ class LoadSpaceHook(AbstractSpaceHook):
       return True
     for sig, func in val:
       self.space.addOverload(key, sig, func)
+    for sig, func in val.getVariadics():
+      self.space.addVariadic(key, sig, func)
     return True
 
   def postCompilePhase(self, compiledSpace) -> dict:
     """Populates the namespace with the collected DescLoad instances. """
-    for name, sigFunc in self.space.getOverloads().items():
+    variadicMap = self.space.getVariadics()
+    names = set(self.space.getOverloads()) | set(variadicMap)
+    for name in names:
       dispatcher = Dispatcher()
+      sigFunc = self.space.getOverloads().get(name, {})
       for sig, func in sigFunc.items():
         dispatcher.addSigFunc(sig, func)
+      for sig, func in variadicMap.get(name, []):
+        dispatcher.addVariadicSigFunc(sig, func)
       fallback = self.space.getFallbacks().get(name, None)
       if fallback is not None:
         dispatcher.setFallbackFunction(fallback)

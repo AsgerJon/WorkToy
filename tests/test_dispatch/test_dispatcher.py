@@ -13,6 +13,7 @@ from worktoy.mcls import BaseObject
 from worktoy.desc import AttriBox
 from worktoy.dispatch import TypeSig, Dispatcher, overload
 from worktoy.utilities import stringList, textFmt
+from worktoy.waitaminute import MissingVariable
 from . import DispatcherTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -206,11 +207,11 @@ class TestDispatcher(DispatcherTest):
       foo = Dispatcher()
 
       @foo.fallback
-      def foo(self, *args, **kwargs):
+      def foo(self, *__, **_) -> str:
         return 'fallback'
 
     class Child(Parent):
-      foo = Parent.foo.clone()
+      foo = Parent.__dict__['foo'].clone()
 
       @foo.overload(int, int, int)
       def foo(self, x: int, y: int, z: int) -> str:
@@ -291,3 +292,39 @@ class TestDispatcher(DispatcherTest):
       z0 = x + y * 1j
       z1 = complex(Complex(z0))
       self.assertEqual(z0, z1)
+
+  def test_field_name_owner(self) -> None:
+    """
+    Testing the 'MissingVariable' exceptions raised by '_getFieldName' and
+    '_getFieldOwner'.
+    """
+    dispatcher = Dispatcher()
+    with self.assertRaises(MissingVariable) as context:
+      dispatcher._getFieldName()
+    e = context.exception
+    self.assertEqual(e.varName, '__field_name__')
+    self.assertIs(e.instance, dispatcher)
+    self.assertIn(str, e.expectedTypes)
+    with self.assertRaises(MissingVariable) as context:
+      dispatcher._getFieldOwner()
+    e = context.exception
+    self.assertEqual(e.varName, '__field_owner__')
+    self.assertIs(e.instance, dispatcher)
+    self.assertIn(type, e.expectedTypes)
+
+  def test_peek(self, ) -> None:
+    """
+    Testing the 'peeking' pattern.
+    """
+
+    class Foo:
+      bar = Dispatcher()
+
+    foo = Foo()
+    setattr(foo, '__field_name__', 'foo')
+
+    with self.assertRaises(RecursionError):
+      Foo.__dict__['bar'].__get__(foo, object, _recursion=True)
+
+    with self.assertRaises(RecursionError):
+      Foo.__dict__['bar']._getCachedFunction(_recursion=True)
