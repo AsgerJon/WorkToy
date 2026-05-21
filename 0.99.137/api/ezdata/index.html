@@ -1,0 +1,4130 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Collection of Utilities">
+      
+      
+        <meta name="author" content="Asger Jon Vistisen">
+      
+      
+        <link rel="canonical" href="https://worktoy.readthedocs.io/0.99.137/api/ezdata/">
+      
+      
+        <link rel="prev" href="../keenum/">
+      
+      
+        <link rel="next" href="../work_io/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>ezdata - worktoy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ezdata" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="worktoy" class="md-header__button md-logo" aria-label="worktoy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            worktoy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ezdata
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/AsgerJon/WorkToy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AsgerJon/WorkToy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../utilities/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="worktoy" class="md-nav__button md-logo" aria-label="worktoy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    worktoy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/AsgerJon/WorkToy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    AsgerJon/WorkToy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../waitaminute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    waitaminute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dispatch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dispatch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../desc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    desc
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mcls
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lorem_ipsum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lorem_ipsum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../keenum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    keenum
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ezdata
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ezdata
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.ezdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ezdata
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZField" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EZField
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="EZField">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZField.fromValue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fromValue
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZField.clone_" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        clone_
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZField.clone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        clone
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EZHook
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="EZHook">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.setItemPhase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        setItemPhase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.preCompilePhase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        preCompilePhase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.postCompilePhase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        postCompilePhase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.slotsFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        slotsFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.matchArgsFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        matchArgsFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.initFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        initFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.iterFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iterFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.asDictFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        asDictFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.asTupleFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        asTupleFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.replaceFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        replaceFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.fieldPairsFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fieldPairsFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.strFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        strFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.reprFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reprFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.eqFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        eqFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.hashFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hashFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.orderingFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orderingFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.badSetAttrFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        badSetAttrFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZHook.badDelAttrFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        badDelAttrFactory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZSpace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EZSpace
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="EZSpace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZSpace.getEZFields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getEZFields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZSpace.getBaseFields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getBaseFields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZSpace.getFields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        getFields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZSpace.registerEZField" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        registerEZField
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZSpace.registerBaseField" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        registerBaseField
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZMeta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EZMeta
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="EZMeta">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZMeta.isCongruent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        isCongruent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.ezdata.EZData" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EZData
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worktoy.ezdata.fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_io/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    work_io
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    work_test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ezdata">ezdata<a class="headerlink" href="#ezdata" title="Permanent link">&para;</a></h1>
+<p><code>EZData</code> dataclass, driven by its own metaclass <code>EZMeta</code> and the
+<code>EZSlot</code>/<code>EZDesc</code> descriptors.</p>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="worktoy.ezdata"></a>
+    <div class="doc doc-contents first">
+
+        <p>The 'worktoy.ezdata' package provides 'EZData', a dataclass-style
+base class with auto-generated construction, equality, iteration,
+hashing, ordering, and conversion methods, plus a '<strong>post_init</strong>'
+hook.</p>
+<p>Public surface:</p>
+<ul>
+<li>'EZData' : the base class users subclass to declare a dataclass.</li>
+<li>'EZField' : the per-field descriptor; spell as 'EZField<a href="...">T</a>'.</li>
+<li>'fields(obj)' : free function returning the EZField tuple for a
+  class or instance, mirroring 'dataclasses.fields'.</li>
+<li>'EZMeta', 'EZSpace', 'EZHook' : the metaclass, namespace, and
+  space hook that drive class construction. Exposed for users
+  building their own auto-generating bases against the same shape.</li>
+</ul>
+<p>See 'worktoy.waitaminute.ezdata' for the typed exceptions raised
+by the package.</p>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.ezdata.EZField" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">EZField</span>
+
+
+<a href="#worktoy.ezdata.EZField" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EZField</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseObject (worktoy.mcls.BaseObject)" href="../mcls/#worktoy.mcls.BaseObject">BaseObject</a></code>, <code><span title="typing.Generic">Generic</span>[<span title="worktoy.ezdata._ez_field.T">T</span>]</code></p>
+
+
+
+        <p>EZField is the per-field descriptor used by 'EZData' to declare
+typed attributes with default values. The canonical spelling is
+'EZField<a href="*args, **kwargs">T</a>', where the subscript sets the
+field type via '<strong>class_getitem</strong>' and the call binds the
+construction arguments. Default values are recipes, not cached
+objects: 'field.defaultValue' constructs a fresh
+'fieldType(<em>posArgs, </em>*keyArgs)' on every read, so mutable
+defaults are not shared between EZData instances.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.fieldOwner">fieldOwner</span></code></td>
+            <td>
+                  <code><span title="type">type</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The EZData subclass this field is bound to. Set by
+'EZMeta.<strong>init</strong>' after class creation.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.fieldName">fieldName</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The attribute name this field is bound to on its owner.
+Set by 'EZSpace.registerEZField' at class-body assignment.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.fieldType">fieldType</span></code></td>
+            <td>
+                  <code><span title="type">type</span>[<span title="worktoy.ezdata._ez_field.T">T</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The declared type of the values this field holds.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.posArgs">posArgs</span></code></td>
+            <td>
+                  <code><span title="tuple">tuple</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The positional arguments used when materializing a default.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.keyArgs">keyArgs</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The keyword arguments used when materializing a default.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.defaultValue">defaultValue</span></code></td>
+            <td>
+                  <code><span title="worktoy.ezdata._ez_field.T">T</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A fresh default value computed as
+'fieldType(<em>posArgs, </em>*keyArgs)'. Re-evaluated on every
+read so mutable defaults are not shared between instances.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.Construction shapes accepted">Construction shapes accepted</span></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.- 'EZField[T](value)'">- &#39;EZField[T](value)&#39;</span></code></td>
+            <td>
+                  <code>type &#39;T&#39;, default &#39;T(value)&#39;.</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.- 'EZField[T]()'">- &#39;EZField[T]()&#39;</span></code></td>
+            <td>
+                  <code>type &#39;T&#39;, default &#39;T()&#39;.</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.- 'EZField[T](*args, **kwargs)'">- &#39;EZField[T](*args, **kwargs)&#39;</span></code></td>
+            <td>
+                  <code>type &#39;T&#39;, default</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>'T(<em>args, </em>*kwargs)'.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.- 'EZField.fromValue(v)'">- &#39;EZField.fromValue(v)&#39;</span></code></td>
+            <td>
+                  <code>type &#39;type(v)&#39;, default &#39;type(v)(v)&#39;.</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Used internally by 'EZHook' to wrap bare class-body values.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.Shapes rejected at class-body time with 'IncompleteFieldException'">Shapes rejected at class-body time with &#39;IncompleteFieldException&#39;</span></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.- 'EZField(value)' (no type subscript)">- &#39;EZField(value)&#39; (no type subscript)</span></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZField.- 'EZField[T]' (no trailing parens)">- &#39;EZField[T]&#39; (no trailing parens)</span></code></td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code>class Point2D(EZData):
+  x = EZField[float](0.0)
+  y = EZField[float](0.0)
+
+class Bag(EZData):
+  items = EZField[list]()        # default to a fresh []
+  labels = EZField[dict]()       # default to a fresh {}
+
+class Person(EZData):
+  name = EZField[FullName](&#39;Doe&#39;, givenName=&#39;John&#39;)
+</code></pre></div>
+
+        <p>Store the positional and keyword arguments that will later be
+used to build the field's default value via 'fieldType(<em>args,
+</em>*kwargs)'. The field type itself is set separately, either
+by '<strong>class_getitem</strong>' (for the 'EZField<a href="...">T</a>' shape) or
+by 'fromValue' (for the bare-value class-body shape).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>*args</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Positional arguments to be forwarded to the field type
+constructor when materializing the default.</p>
+              </div>
+            </td>
+            <td>
+                  <code>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Keyword arguments to be forwarded to the field type
+constructor when materializing the default.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZField.fromValue" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fromValue</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZField.fromValue" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">fromValue</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Build an EZField from a bare class-body value, inferring the
+field type from 'type(value)' and using the value itself as
+the single positional construction argument. The bare-value
+path in 'EZHook.setItemPhase' takes this route to wrap
+expressions like 'name = "Anonymous"' inside the class body.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>value</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The seed value. Its type becomes the field type; the value
+itself becomes the default.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata._ez_field.EZField)" href="#worktoy.ezdata.EZField">EZField</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A new EZField carrying 'type(value)' as its field type and
+'(value,)' as its positional arguments.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZField.clone_" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">clone_</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZField.clone_" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">clone_</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EZField</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Build an independent EZField that mirrors the given one. The
+new field shares the same field type and the same
+construction arguments, but has its own '<strong>field_name</strong>' and
+'<strong>field_owner</strong>' slots (left unset and bound by the new
+owner class when registration runs). Used by
+'EZSpace.registerBaseField' to copy inherited fields into a
+subclass namespace without mutating the parent's field
+objects.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>self</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata._ez_field.EZField)" href="#worktoy.ezdata.EZField">EZField</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The field to clone.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata._ez_field.EZField)" href="#worktoy.ezdata.EZField">EZField</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A fresh EZField configured identically to 'self' for
+construction purposes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZField.clone" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">clone</span>
+
+
+<a href="#worktoy.ezdata.EZField.clone" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">clone</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">EZField</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Instance-shaped alias for 'clone_(self)'.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.ezdata.EZHook" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">EZHook</span>
+
+
+<a href="#worktoy.ezdata.EZHook" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EZHook</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="worktoy.mcls.space_hooks.AbstractSpaceHook">AbstractSpaceHook</span></code></p>
+
+
+
+        <p>EZHook is the namespace hook installed on every 'EZSpace'. It
+intercepts class-body assignments through 'setItemPhase' to
+capture EZField declarations, fail-fasts on incomplete fields
+via '_assertCompleteField', and synthesizes every generated
+method on the class through 'preCompilePhase' and
+'postCompilePhase'.</p>
+<p>Every code-generation factory lives on EZHook as a
+'@classmethod' rather than in separate per-method files. The
+factories that return user-overridable helpers ('<strong>repr</strong>',
+'<strong>str</strong>', '<strong>field_pairs</strong>', 'asDict', 'asTuple', 'replace')
+are wired in 'preCompilePhase' so a class-body method
+definition of the same name wins; the rest are wired
+unconditionally in 'postCompilePhase'.</p>
+<p>The three class-level synonym tuples ('<strong>frozen_keys</strong>',
+'<strong>ordered_keys</strong>', '<strong>kw_only_keys</strong>') hold the accepted
+spellings for the three build-option flags. A subclass of
+EZHook can extend these to accept additional spellings;
+'parseKwargs' (inherited from 'Object') picks the first
+spelling present in the class kwargs.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.setItemPhase" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">setItemPhase</span>
+
+
+<a href="#worktoy.ezdata.EZHook.setItemPhase" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">setItemPhase</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Intercept class-body assignments. An EZField value is routed
+to 'EZSpace.registerEZField' after passing
+'_assertCompleteField'; a function value falls through to the
+namespace untouched; any other value is wrapped through
+'EZField.fromValue' and registered. Reserved Python names
+(names starting and ending with double underscores that the
+interpreter populates automatically) are also passed through.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>key</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class-body attribute name.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>val</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The value being assigned to 'key' in the class body.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>old</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The previous value of 'key' if any, supplied by the
+namespace's '<strong>setitem</strong>' wrapper. Unused here.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>True when this hook has handled the assignment and the
+namespace should not perform the default 'dict.<strong>setitem</strong>';
+False when the assignment should fall through to the
+namespace.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="worktoy.waitaminute.ezdata.IncompleteFieldException">IncompleteFieldException</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the EZField at 'key' is missing its type or its
+construction arguments. Raised via '_assertCompleteField'
+before registration so the traceback points at the
+class-body line.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ReservedFieldError">ReservedFieldError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If an EZField is being registered at a reserved name such
+as 'asDict' or '<strong>post_init</strong>'. Raised by
+'EZSpace.registerEZField'.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="DuplicateError">DuplicateError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If an EZField with the same name has already been
+registered in this class body. Raised by
+'EZSpace.registerEZField'.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.preCompilePhase" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">preCompilePhase</span>
+
+
+<a href="#worktoy.ezdata.EZHook.preCompilePhase" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">preCompilePhase</span><span class="p">(</span><span class="n">compiledSpace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Install the dunder methods and conversion helpers that 'EZData'
+subclasses are allowed to overwrite ('<strong>repr</strong>', '<strong>str</strong>',
+'<strong>field_pairs</strong>', 'asDict', 'asTuple', 'replace'). Each entry
+is installed before the class body is merged in, so a
+class-body method definition with the same name wins. The
+reserved-name guard in 'EZSpace.registerEZField' prevents
+these names from being used as field names while still
+permitting method overrides.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>compiledSpace</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class namespace being assembled. Mutated in place.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>'compiledSpace' with the overridable helpers installed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.postCompilePhase" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">postCompilePhase</span>
+
+
+<a href="#worktoy.ezdata.EZHook.postCompilePhase" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">postCompilePhase</span><span class="p">(</span><span class="n">compiledSpace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Finalizes the compiled namespace for an 'EZData' subclass under
+construction. Runs after the class body has been merged into
+'compiledSpace', so any user-defined entries are already
+present and may be inspected or replaced. Field-shape
+validation has already happened in 'setItemPhase', so every
+field in '<strong>ez_fields</strong>' is guaranteed complete by the time
+this phase runs.</p>
+<p>The phase performs three jobs:</p>
+<ol>
+<li>
+<p>Records bookkeeping data on the class: '<strong>ez_fields</strong>'
+   (the ordered name-to-'EZField' mapping) and '<strong>key_args</strong>'
+   (the class keyword arguments captured at '<strong>prepare</strong>'
+   time).</p>
+</li>
+<li>
+<p>Resolves the three build-option flags ('<strong>is_frozen</strong>',
+   '<strong>is_ordered</strong>', '<strong>kw_only</strong>') from the class keyword
+   arguments via 'parseKwargs', accepting any of the synonyms
+   listed in the corresponding '<strong>*_keys</strong>' tuple. The first
+   synonym present in the kwargs wins; the resolved value is
+   truthy-coerced. Each flag defaults to 'False' when none
+   of its synonyms is present.</p>
+</li>
+<li>
+<p>Installs the auto-generated dunder methods. '<strong>slots</strong>',
+   '<strong>match_args</strong>', '<strong>init</strong>', '<strong>iter</strong>', '<strong>eq</strong>', and
+   '<strong>delattr</strong>' are installed unconditionally;
+   '<strong>match_args</strong>' is the empty tuple for keyword-only
+   classes, since those have no positional construction
+   shape and so no positional pattern can bind. '<strong>delattr</strong>'
+   always raises because the EZData contract guarantees every
+   declared field carries a value of the declared type;
+   deletion would break the guarantee. Frozen classes also
+   receive '<strong>hash</strong>' and '<strong>setattr</strong>'; non-frozen classes
+   get '<strong>hash</strong>' set to 'None' so the interpreter rejects
+   hashing. Ordered classes receive '<strong>lt</strong>', '<strong>le</strong>',
+   '<strong>gt</strong>', and '<strong>ge</strong>' through 'orderingFactory';
+   non-ordered classes get those four dunders set to 'None'.</p>
+</li>
+</ol>
+<p>The conversion helpers 'asDict', 'asTuple', and 'replace',
+plus the display dunders '<strong>repr</strong>'/'<strong>str</strong>' and the
+'<strong>field_pairs</strong>' helper, are installed in 'preCompilePhase'
+so a class body can replace them with method definitions of
+the same name. The reserved-name guard in
+'EZSpace.registerEZField' prevents the same names from being
+used as fields.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>compiledSpace</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class namespace assembled so far. Mutated in place.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>'compiledSpace', with the entries described above set.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.slotsFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">slotsFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.slotsFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">slotsFactory</span><span class="p">(</span><span class="n">ezFields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EZField</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the '<strong>slots</strong>' tuple for the 'EZData' subclass under
+construction. Returns the field names in declaration order,
+including any inherited from EZData base classes, so 'dir(cls)'
+and 'cls.<strong>slots</strong>' present the full field surface in one
+tuple without forcing the caller to walk the MRO.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>ezFields</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ordered name-to-'EZField' mapping for this class,
+assembled by 'EZSpace.getFields'.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="str">str</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>slots</strong>' tuple for the class under construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.matchArgsFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">matchArgsFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.matchArgsFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matchArgsFactory</span><span class="p">(</span><span class="n">ezFields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EZField</span><span class="p">],</span> <span class="n">isKwOnly</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the '<strong>match_args</strong>' tuple for the 'EZData' subclass
+under construction. Returns the field names in declaration
+order, or an empty tuple when the class is keyword-only and
+therefore not constructible by a positional pattern. Mirrors
+the behavior of 'dataclasses.dataclass' for the 'kw_only'
+flag: keyword-only fields are excluded from '<strong>match_args</strong>'
+so 'case Cls(a, b):' patterns do not bind against them.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>ezFields</code>
+            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ordered name-to-'EZField' mapping for this class.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>isKwOnly</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The resolved '<strong>kw_only</strong>' flag from the class keyword
+arguments.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="str">str</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>match_args</strong>' tuple. Empty when 'isKwOnly' is True.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.initFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">initFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.initFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">initFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">INIT</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>init</strong>' method for the 'EZData' subclass under
+construction. When 'kwOnly' is False, the returned '<strong>init</strong>'
+assigns positional arguments to the fields in declaration order,
+then assigns keyword arguments by name, overriding any positional
+value given for the same field. When 'kwOnly' is True, the
+'<strong>init</strong>' rejects positional arguments and every field is set by
+keyword. Either way, every field still left unset finally receives
+its default value.</p>
+<p>After every field has been populated, the generated '<strong>init</strong>'
+looks up '<strong>post_init</strong>' on 'type(self)' and calls it with
+'self' if it is defined. The lookup walks the MRO, so a
+subclass that does not define its own '<strong>post_init</strong>' still
+inherits the parent's. The hook is the supported customization
+point for validation, normalization, and derived state.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>INIT</code></td>            <td>
+                  <code>(self, *args, **kwargs) -&gt; None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>init</strong>' method for the 'EZData' subclass under construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.iterFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">iterFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.iterFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">iterFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ITER</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>iter</strong>' method for the 'EZData' subclass under
+construction. The returned '<strong>iter</strong>' yields the field values
+in declaration order, so 'tuple(instance)' produces the same
+sequence as 'instance.asTuple()' and 'list(instance)' yields
+each field value once.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>ITER</code></td>            <td>
+                  <code>(self) -&gt; Iterator</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Spells out to 'Callable[..., Iterator]'. The '<strong>iter</strong>'
+method for the 'EZData' subclass under construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.asDictFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">asDictFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.asDictFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">asDictFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the 'asDict' method for the 'EZData' subclass under
+construction. The returned method returns a dict mapping each
+field name to its current value, in declaration order. The
+dict is a fresh object on every call, so the caller may
+mutate it freely without affecting the instance.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., dict]: (self) -&gt; dict</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The 'asDict' method for the 'EZData' subclass under
+construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.asTupleFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">asTupleFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.asTupleFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">asTupleFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the 'asTuple' method for the 'EZData' subclass under
+construction. The returned method returns a tuple of the
+field values in declaration order. Equivalent to
+'tuple(instance)' but spelled as a method, mirroring 'asDict'
+and offering a named accessor for callers who prefer one.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., tuple]: (self) -&gt; tuple</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The 'asTuple' method for the 'EZData' subclass under
+construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.replaceFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">replaceFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.replaceFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">replaceFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the 'replace' method for the 'EZData' subclass under
+construction. The returned method returns a new instance of
+the same class with the named fields overridden by the
+keyword arguments and every other field copied from 'self'.
+Mirrors 'dataclasses.replace' and is the canonical way to
+derive a modified copy of a frozen instance.</p>
+<p>Unlike the generated '<strong>init</strong>' (which silently ignores
+kwargs not matching any field, to support orthogonal kwarg
+injection in multi-base classes), 'replace' raises
+'TypeError' on any keyword that is not the name of a
+declared field. The user's intent with 'replace' is always
+'modify this field', so an unrecognized name is a mistake
+rather than a deliberate forward.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., Any]: (self, **changes) -&gt; Self</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The 'replace' method for the 'EZData' subclass under
+construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.fieldPairsFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fieldPairsFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.fieldPairsFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">fieldPairsFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>field_pairs</strong>' method for the 'EZData' subclass
+under construction. The returned method returns a list of
+'name=value' strings, one per field, in declaration order. It
+is consumed by the generated '<strong>str</strong>' and '<strong>repr</strong>', so a
+subclass can customize field rendering by overriding
+'<strong>field_pairs</strong>' alone.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., list[str]]: (self) -&gt; list[str]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>field_pairs</strong>' method for the 'EZData' subclass under
+construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.strFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">strFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.strFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">strFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>str</strong>' method for the 'EZData' subclass under
+construction. The returned '<strong>str</strong>' renders the class name
+and each field as 'name=value' inside angle brackets, in
+declaration order. The 'name=value' rendering is delegated to
+'<strong>field_pairs</strong>' so subclasses can customize display by
+overriding that helper alone.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., str]: (self) -&gt; str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>str</strong>' method for the 'EZData' subclass under
+construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.reprFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">reprFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.reprFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">reprFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>repr</strong>' method for the 'EZData' subclass under
+construction. The returned '<strong>repr</strong>' produces a string that
+reconstructs an equal instance when passed to the class. For
+non-keyword-only classes it emits the field values as
+positional arguments ('Foo(3.0, 4.0)'); for keyword-only
+classes it emits 'name=value' pairs through '<strong>field_pairs</strong>'
+('Foo(x=3.0, y=4.0)'). Both forms match the call shape the
+class accepts.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., str]: (self) -&gt; str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>repr</strong>' method for the 'EZData' subclass under
+construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.eqFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">eqFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.eqFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">eqFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>eq</strong>' method for the 'EZData' subclass under
+construction. The returned '<strong>eq</strong>' yields 'NotImplemented' when
+'other' is not an 'EZData' instance, 'False' when it is one but
+not congruent, and otherwise compares the fields value by value.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., bool]: (self, other) -&gt; bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>eq</strong>' method for the 'EZData' subclass under construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.hashFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">hashFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.hashFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">hashFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>hash</strong>' method for the 'EZData' subclass under
+construction. The returned '<strong>hash</strong>' hashes the tuple of
+field values in declaration order, so two equal instances of
+a frozen class have equal hashes. Only installed on frozen
+classes; non-frozen classes set '<strong>hash</strong>' to 'None' so the
+interpreter rejects 'hash(instance)'.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., int]: (self) -&gt; int</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>hash</strong>' method for the frozen 'EZData' subclass
+under construction.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.orderingFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">orderingFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.orderingFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">orderingFactory</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates an ordering dunder method for the 'EZData' subclass under
+construction. The returned function compares the tuple of field
+values against another instance of the same class using the
+supplied binary operator.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>op</code>
+            </td>
+            <td>
+                  <code><span title="collections.abc.Callable">Callable</span>[..., <span title="bool">bool</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A binary operator from the standard 'operator' module, such as
+'operator.lt', 'operator.le', 'operator.gt', or 'operator.ge'.
+It is applied to the field-value tuples of 'self' and 'other'.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>Callable[..., bool]: (self, other) -&gt; bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The ordering dunder method for the 'EZData' subclass under
+construction. Its '<strong>name</strong>' is set to '<strong><op></strong>' so that
+tracebacks and introspection report the operator name.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.badSetAttrFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">badSetAttrFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.badSetAttrFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">badSetAttrFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">INIT</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>setattr</strong>' method for a frozen 'EZData' subclass.
+The returned '<strong>setattr</strong>' raises 'AttributeError' on every
+assignment, so instances are immutable once constructed. The
+generated '<strong>init</strong>' populates the fields through
+'object.<strong>setattr</strong>' and is therefore unaffected.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>INIT</code></td>            <td>
+                  <code>(self, key, value) -&gt; None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>setattr</strong>' method for the frozen 'EZData' subclass.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZHook.badDelAttrFactory" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">badDelAttrFactory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#worktoy.ezdata.EZHook.badDelAttrFactory" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">badDelAttrFactory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">INIT</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Creates the '<strong>delattr</strong>' method installed on every 'EZData'
+subclass, frozen or not. The returned '<strong>delattr</strong>' raises
+'AttributeError' on every deletion, since the EZData contract
+is 'every declared field always holds a value of the declared
+type'; deleting a field would leave the instance in a state
+that violates the type guarantee.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>INIT</code></td>            <td>
+                  <code>(self, key) -&gt; None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The '<strong>delattr</strong>' method for the 'EZData' subclass.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.ezdata.EZSpace" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">EZSpace</span>
+
+
+<a href="#worktoy.ezdata.EZSpace" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EZSpace</span><span class="p">(</span><span class="n">mcls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="n">Bases</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseSpace (worktoy.mcls.BaseSpace)" href="../mcls/#worktoy.mcls.BaseSpace">BaseSpace</a></code></p>
+
+
+
+        <p>EZSpace is the namespace returned by 'EZMeta.<strong>prepare</strong>'. It
+collects the class body, separates own fields from inherited
+fields (cloned from parent EZData classes), and guards the
+reserved names that the generated method protocol claims for
+'asDict', 'asTuple', 'replace', '<strong>post_init</strong>', and the
+display dunders.</p>
+<p>Subclasses of EZSpace can extend '<strong>reserved_ez_names</strong>' to
+reserve additional names; the guard in 'registerEZField'
+consults that tuple unmodified.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZSpace.ezHook">ezHook</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="EZHook (worktoy.ezdata.EZHook)" href="#worktoy.ezdata.EZHook">EZHook</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The space hook that drives EZField interception and code
+generation for the class under construction.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZSpace.__reserved_ez_names__">__reserved_ez_names__</span></code></td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<span title="str">str</span>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Names claimed by the generated method protocol that may not
+be used as EZField names. Method overrides at these names
+are still allowed; only EZField declarations are rejected.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+        <p>Build the namespace for an 'EZData' subclass under
+construction. After 'BaseSpace.<strong>init</strong>' sets up the standard
+namespace machinery, this constructor walks the parent
+classes in reverse MRO order, collects any fields they
+declared through their own 'EZSpace' namespaces, and
+registers each one as an inherited base field. Walking in
+reverse means later-MRO ancestors win on same-named entries,
+matching Python's normal attribute-resolution behavior.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>mcls</code>
+            </td>
+            <td>
+                  <code><span title="type">type</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The metaclass building the class (always 'EZMeta' or a
+subclass).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the class under construction.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bases</code>
+            </td>
+            <td>
+                  <code><span title="worktoy.ezdata._ez_space.Bases">Bases</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Spells out to 'tuple[EZMeta, ...]'. The base classes
+passed in the 'class Foo(...)' declaration.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kw</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Class keyword arguments, including the 'frozen', 'ordered',
+and 'kwOnly' build-option synonyms consumed later by
+'EZHook.postCompilePhase'.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZSpace.getEZFields" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getEZFields</span>
+
+
+<a href="#worktoy.ezdata.EZSpace.getEZFields" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getEZFields</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EZField</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the mapping of own (non-inherited) field names to
+'EZField' instances, in declaration order. Empty when no own
+fields have been registered yet.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The own-field mapping, in declaration order.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZSpace.getBaseFields" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getBaseFields</span>
+
+
+<a href="#worktoy.ezdata.EZSpace.getBaseFields" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getBaseFields</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EZField</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the mapping of inherited field names to their cloned
+'EZField' instances, populated during '<strong>init</strong>' by walking
+the parent classes. Each entry is a clone of the parent's
+field, so subsequent owner binding on the subclass does not
+mutate the parent's namespace.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The inherited-field mapping, in MRO-respecting order.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZSpace.getFields" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">getFields</span>
+
+
+<a href="#worktoy.ezdata.EZSpace.getFields" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">getFields</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EZField</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the merged mapping of base fields followed by own
+fields, in declaration order. Own-field entries overwrite
+same-named inherited entries, so a subclass redeclaring a
+parent's field wins. The result is what 'EZHook' compiles
+into '<strong>ez_fields</strong>', '<strong>slots</strong>', and '<strong>match_args</strong>'.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The merged base + own mapping, in declaration order.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZSpace.registerEZField" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">registerEZField</span>
+
+
+<a href="#worktoy.ezdata.EZSpace.registerEZField" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">registerEZField</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="n">EZField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Bind an own field at the given attribute name. Called from
+'EZHook.setItemPhase' when the class body assigns either an
+'EZField' instance or a bare value that gets wrapped through
+'EZField.fromValue'. Stores 'field' in '<strong>ez_fields</strong>' and
+sets its '<strong>field_name</strong>' for later introspection.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>key</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The attribute name the field is being bound to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>field</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The EZField instance to register as an own field.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="worktoy.waitaminute.ezdata.ReservedFieldError">ReservedFieldError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If 'key' is one of the names reserved by the generated
+method protocol ('asDict', 'asTuple', 'replace',
+'<strong>post_init</strong>', '<strong>repr</strong>', '<strong>str</strong>', '<strong>field_pairs</strong>').</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="worktoy.waitaminute.ezdata.DuplicateError">DuplicateError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If 'key' has already been registered as an own field on
+this namespace; a single class body may not assign the
+same name twice.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZSpace.registerBaseField" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">registerBaseField</span>
+
+
+<a href="#worktoy.ezdata.EZSpace.registerBaseField" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">registerBaseField</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="n">EZField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Bind an inherited field at the given attribute name. Called
+from this namespace's '<strong>init</strong>' while walking the parent
+classes. The parent's 'EZField' is cloned so any later owner
+binding on the subclass leaves the parent's namespace
+untouched. Same-named entries from earlier-MRO bases are
+silently overwritten by later-MRO ones, mirroring Python's
+normal attribute-resolution rules for inherited classes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>key</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The attribute name the inherited field is being bound to.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>field</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The parent's EZField to clone and register on this
+namespace.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.ezdata.EZMeta" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">EZMeta</span>
+
+
+<a href="#worktoy.ezdata.EZMeta" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EZMeta</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="n">Bases</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="n">EZSpace</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="BaseMeta (worktoy.mcls.BaseMeta)" href="../mcls/#worktoy.mcls.BaseMeta">BaseMeta</a></code></p>
+
+
+
+        <p>EZMeta is the metaclass behind 'EZData'. On top of the
+construction protocol it inherits from 'BaseMeta', it hosts the
+class-level introspection accessors ('fields', 'sig',
+'isFrozen', 'isOrdered', 'kwOnly'), pins '<strong>field_owner</strong>' on
+every field after class creation, and provides 'isCongruent'
+for structural equality between EZData classes that declare
+the same field-type signature.</p>
+<p>Two classes are 'congruent' when their field-type tuples
+compare equal under 'TypeSig.<strong>eq</strong>'. The generated '<strong>eq</strong>'
+on EZData instances uses 'isCongruent' to admit cross-class
+equality, so a 'FrozenComplex(EZComplex)' instance can
+compare equal to its non-frozen parent's instances.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZMeta.fields">fields</span></code></td>
+            <td>
+                  <code><span title="tuple">tuple</span>[<a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata.EZField)" href="#worktoy.ezdata.EZField">EZField</a>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The EZField descriptors declared on the class, in
+declaration order (own and inherited).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZMeta.sig">sig</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="TypeSig (worktoy.dispatch.TypeSig)" href="../dispatch/#worktoy.dispatch.TypeSig">TypeSig</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The field-type signature used for congruence comparisons.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZMeta.isFrozen">isFrozen</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the class was declared with any of the 'frozen'
+synonyms.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZMeta.isOrdered">isOrdered</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the class was declared with any of the 'ordered'
+synonyms.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="worktoy.ezdata.EZMeta.kwOnly">kwOnly</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the class was declared with any of the 'kwOnly'
+synonyms.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+        <p>Finalize the class object after Python has built it. Walks
+every field on the class (own and inherited) and binds its
+'<strong>field_owner</strong>' to this class, so later access through
+'field.fieldOwner' returns the most-derived class that
+declared or inherited the field.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The name of the class.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>bases</code>
+            </td>
+            <td>
+                  <code><span title="worktoy.ezdata._ez_meta.Bases">Bases</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Spells out to 'tuple[EZMeta, ...]'. The base classes from
+the 'class Foo(...)' declaration.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>space</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="EZSpace (worktoy.ezdata.EZSpace)" href="#worktoy.ezdata.EZSpace">EZSpace</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The compiled namespace produced by 'EZSpace.compile'.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kw</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The class keyword arguments captured at '<strong>prepare</strong>' time.</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="worktoy.ezdata.EZMeta.isCongruent" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">isCongruent</span>
+
+
+<a href="#worktoy.ezdata.EZMeta.isCongruent" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">isCongruent</span><span class="p">(</span><span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns True if 'other' is an 'EZData' class congruent with this
+one. Congruent classes declare the same fields, so an instance of
+one may compare equal to an instance of the other.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>other</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The object tested for congruence with this class.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>True if 'other' is an 'EZData' class whose field signature
+equals that of this class.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="worktoy.ezdata.EZData" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">EZData</span>
+
+
+<a href="#worktoy.ezdata.EZData" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EZData</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="Object (worktoy.core.Object)" href="../core/#worktoy.core.Object">Object</a></code></p>
+
+
+
+        <p>EZData is the base class users subclass to declare a worktoy
+dataclass. Subclasses place their fields in the class body as
+'EZField<a href="...">T</a>' instances, optionally pass build-option
+keywords ('frozen=True', 'ordered=True', 'kwOnly=True' or any
+of their synonyms), and optionally define '<strong>post_init</strong>' for
+validation or derived state.</p>
+<p>In return the class receives auto-generated '<strong>init</strong>',
+'<strong>iter</strong>', '<strong>eq</strong>', '<strong>delattr</strong>', 'asDict', 'asTuple',
+'replace', '<strong>match_args</strong>', and the display dunders. Frozen
+classes additionally receive '<strong>hash</strong>' and a rejecting
+'<strong>setattr</strong>'; ordered classes receive the four comparison
+dunders. See 'EZHook.postCompilePhase' for the full
+generation contract.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code>class Point2D(EZData):
+  x = EZField[float](0.0)
+  y = EZField[float](0.0)
+
+class Circle(EZData, frozen=True, kwOnly=True):
+  center = EZField[Point2D]()
+  radius = EZField[float](1.0)
+</code></pre></div>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="worktoy.ezdata.fields" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">fields</span>
+
+
+<a href="#worktoy.ezdata.fields" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">fields</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the tuple of 'EZField' descriptors declared on an
+'EZData' class, in declaration order. Accepts either the
+class itself or an instance of it. Raises 'TypeError' when
+passed anything else.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>obj</code>
+            </td>
+            <td>
+                  <code><span title="typing.Any">Any</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>An 'EZData' subclass or an instance of one.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="tuple">tuple</span>[<a class="autorefs autorefs-internal" title="EZField (worktoy.ezdata._ez_field.EZField)" href="#worktoy.ezdata.EZField">EZField</a>, ...]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The fields declared on the class, in declaration order.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="TypeError">TypeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If 'obj' is neither an 'EZData' class nor an instance of one.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "toc.integrate", "content.code.copy", "content.code.annotate", "search.suggest", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
