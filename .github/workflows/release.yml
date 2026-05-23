@@ -173,6 +173,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          #  Check out the current tip of the release branch, not the
+          #  SHA that triggered the run, so the 'latest' build picks up
+          #  the version bump the 'continue' job just pushed.
+          ref: ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -197,10 +201,17 @@ jobs:
 
           # Each tag that already contains the docs generator gets its
           # own build. Tags from before the docs system are skipped.
+          # -D release/version forces the header to the tag's version,
+          # overriding whatever that tag's conf.py hardcoded - so older
+          # tags built before conf.py read the version dynamically
+          # still show their own number, not a stale one.
           for tag in $(git tag --sort=-version:refname); do
             if git cat-file -e "$tag:docs/_gen.py" 2>/dev/null; then
               git worktree add --detach ../version-build "$tag"
-              sphinx-build -b html ../version-build/docs "site/$tag"
+              sphinx-build -b html \
+                -D release="$tag" \
+                -D version="${tag%.*}" \
+                ../version-build/docs "site/$tag"
               git worktree remove --force ../version-build
               versions="$versions,\"$tag\""
             fi

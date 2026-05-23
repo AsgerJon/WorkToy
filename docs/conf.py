@@ -28,7 +28,27 @@ from _gen import generate
 project = "worktoy"
 author = "Asger Jon Vistisen"
 copyright = "2026, Asger Jon Vistisen"
-release = "0.99.137"
+
+#  The header version is read from worktoy-tag.txt (the file
+#  roll_version.py rewrites on every bump), NOT hardcoded - so each
+#  built version, 'latest' and every tag, shows its own real number.
+#  The file holds the full string (e.g. '0.99.139', or with a dev
+#  bump '0.99.139.dev0'); 'version' is just its first two parts.
+_tagFile = Path(__file__).parent.parent / "worktoy-tag.txt"
+_handle = None
+try:
+  _handle = open(_tagFile, "r", encoding="utf-8")
+except FileNotFoundError as exception:
+  raise FileNotFoundError(str(_tagFile)) from exception
+else:
+  release = _handle.read().strip()
+finally:
+  try:
+    _handle.close()
+  except AttributeError:
+    pass
+
+version = ".".join(release.split(".")[:2])
 
 # ============================================================
 # General configuration
