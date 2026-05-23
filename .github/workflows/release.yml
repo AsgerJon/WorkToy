@@ -163,6 +163,7 @@ jobs:
       contents: read
       pages: write
       id-token: write
+      actions: write   # to delete stale Pages artifacts on a re-run
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -211,6 +212,22 @@ jobs:
             > site/index.html
 
       # ---- publish (only the build above is shipped) ----
+      # A previous FAILED attempt of this job leaves its
+      # 'github-pages' artifact behind in the run; on a re-run the
+      # upload below adds a second one, and deploy-pages then aborts
+      # with "Multiple artifacts named github-pages". Delete any
+      # leftovers first so this attempt uploads exactly one. On the
+      # normal first attempt there are none and this is a no-op.
+      - name: Remove stale Pages artifacts from earlier attempts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+            --jq '.artifacts[] | select(.name=="github-pages") | .id' \
+          | while read -r id; do
+              gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" || true
+            done
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
