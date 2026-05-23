@@ -144,9 +144,78 @@ jobs:
           prerelease: false
           generateReleaseNotes: true
 
-  #  Docs are no longer built here. The 'docs' workflow
-  #  (.github/workflows/docs.yml) builds and publishes every version
-  #  to GitHub Pages on each push to main, and Read the Docs builds
-  #  its own versioned site from .readthedocs.yaml. The old 'mike'
-  #  job was MkDocs-specific and stopped working when MkDocs was
-  #  removed.
+  #  GitHub Pages publication. Runs only as part of this manually-
+  #  triggered release and only after 'continue' succeeds, so the
+  #  PyPI publish has gone through and the new tag exists. Order
+  #  within the job is deliberate: BUILD every version first, THEN
+  #  deploy to GitHub Pages. worktoy is NOT installed: our build
+  #  reads source as text.
+  #
+  #  Read the Docs is NOT touched here. RTD builds itself from
+  #  .readthedocs.yaml, and is configured (on the RTD side) to build
+  #  ONLY when a release tag appears - not on every push. So the tag
+  #  the 'continue' job just cut is what makes RTD build the new
+  #  version; this workflow does not need an RTD token or trigger.
+  docs:
+    needs: continue
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout (full history, for tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r docs/requirements.txt
+
+      # ---- build (after PyPI; nothing is published yet) ----
+      - name: Build all versions
+        run: |
+          set -e
+          mkdir -p site
+
+          # 'latest' is the current commit (main, with the version bump
+          # the 'continue' job just pushed).
+          sphinx-build -b html docs site/latest
+          versions='"latest"'
+
+          # Each tag that already contains the docs generator gets its
+          # own build. Tags from before the docs system are skipped.
+          for tag in $(git tag --sort=-version:refname); do
+            if git cat-file -e "$tag:docs/_gen.py" 2>/dev/null; then
+              git worktree add --detach ../version-build "$tag"
+              sphinx-build -b html ../version-build/docs "site/$tag"
+              git worktree remove --force ../version-build
+              versions="$versions,\"$tag\""
+            fi
+          done
+
+          printf '[%s]\n' "$versions" > site/versions.json
+          printf '%s\n' \
+            '<!doctype html><meta http-equiv="refresh" content="0; url=latest/">' \
+            > site/index.html
+
+      # ---- publish (only the build above is shipped) ----
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

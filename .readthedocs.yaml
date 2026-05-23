@@ -4,8 +4,8 @@
 # given Python, and hosts the result with per-tag versioning.
 #
 # The build does NOT install worktoy: the docs only read the source
-# files as text (literalinclude), so the toolchain is just Sphinx +
-# the theme.
+# files as text and render them to HTML with Pygments, so the
+# toolchain is just Sphinx + the theme.
 
 version: 2
 
