@@ -1,22 +1,22 @@
 name: docs
 
-# Build the Sphinx docs and publish them to GitHub Pages on every
-# push to main (and on manual dispatch). This publishes the exact
-# same site that `./build_docs.sh` produces locally. worktoy is NOT
-# installed: the build only reads source files as text.
+# Build the Sphinx docs for every version and publish them to GitHub
+# Pages on each push to main (and on manual dispatch). This publishes
+# the same site that `./build_docs.sh` produces locally, once per
+# version, under <version>/ subdirectories with a version switcher.
+#
+# worktoy is NOT installed: the build only reads source files as text.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# Permissions required by the official GitHub Pages deploy action.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one in-flight Pages deployment at a time.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -25,8 +25,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (full history, for tags)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,13 +40,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r docs/requirements.txt
 
-      - name: Build HTML
-        run: sphinx-build -b html docs docs/_build/html
+      - name: Build all versions
+        run: |
+          set -e
+          mkdir -p site
+
+          # 'latest' is the current commit (the default branch).
+          sphinx-build -b html docs site/latest
+          versions='"latest"'
+
+          # Each tag that already contains the docs generator gets its
+          # own build. Tags from before the docs system are skipped
+          # (they have no docs/_gen.py and could not build).
+          for tag in $(git tag --sort=-version:refname); do
+            if git cat-file -e "$tag:docs/_gen.py" 2>/dev/null; then
+              git worktree add --detach ../version-build "$tag"
+              sphinx-build -b html ../version-build/docs "site/$tag"
+              git worktree remove --force ../version-build
+              versions="$versions,\"$tag\""
+            fi
+          done
+
+          # versions.json (read by the switcher) and a root redirect.
+          printf '[%s]\n' "$versions" > site/versions.json
+          printf '%s\n' \
+            '<!doctype html><meta http-equiv="refresh" content="0; url=latest/">' \
+            > site/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/_build/html
+          path: site
 
   deploy:
     needs: build

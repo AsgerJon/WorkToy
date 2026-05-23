@@ -48,10 +48,16 @@ exclude_patterns = ["_build", "rst.txt"]
 # ============================================================
 html_theme = "furo"
 
-#  Custom CSS. Highlights the source line that a '#line-N' link
-#  jumped to, via the ':target' rule in _static/custom.css.
+#  Custom CSS / JS.
+#    custom.css  : highlights the source line a '#line-N' link jumped
+#                  to, and styles the version switcher box.
+#    versions.js : the version switcher. On the multi-version GitHub
+#                  Pages build it reads versions.json and shows a
+#                  dropdown; on a local single-version build it finds
+#                  no versions.json and stays silent.
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
+html_js_files = ["versions.js"]
 
 
 def setup(app: Sphinx) -> None:

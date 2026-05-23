@@ -11,3 +11,29 @@
   background-color: rgba(255, 213, 79, 0.35);
   box-shadow: inset 3px 0 0 #ffb300;
 }
+
+/* Version switcher injected by _static/versions.js on the multi-version
+ * (GitHub Pages) build. A small fixed box, bottom-right. Uses furo's
+ * CSS variables with fallbacks so it reads in light and dark mode. */
+
+.version-switcher {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  background: var(--color-background-secondary, #fff);
+  color: var(--color-foreground-primary, #000);
+  border: 1px solid var(--color-background-border, #ccc);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.version-switcher select {
+  font-size: 0.85rem;
+}
+
