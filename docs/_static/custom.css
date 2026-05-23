@@ -1,0 +1,13 @@
+/* worktoy docs: highlight the source line jumped to by a "Used in"
+ * link. Pygments' linespans option wraps each code line in
+ * <span id="line-N">; when the URL fragment is #line-N that span
+ * matches :target, and we give it a warm full-width band plus a
+ * left accent bar. The colour is semi-transparent so it reads on
+ * both furo's light and dark themes. */
+
+.highlight span[id^="line-"]:target {
+  display: inline-block;
+  width: 100%;
+  background-color: rgba(255, 213, 79, 0.35);
+  box-shadow: inset 3px 0 0 #ffb300;
+}

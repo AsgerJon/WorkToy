@@ -4,7 +4,7 @@ protocol. The readme file included provides detailed documentation on the
 included features. The modules provided depend on each other in
 implementation, but can be used independently.
 
-The package consists of thr following modules:
+The package consists of the following modules:
 - utilities: A set of general-purpose utility functions and classes.
 - waitaminute: Tools for managing execution flow and timing.
 - core: Core functionalities and base classes for the package.

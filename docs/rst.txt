@@ -1,0 +1,422 @@
+reStructuredText reference for worktoy docs
+
+This file is for human reference. It has a .retard extension
+so PyCharm's RST plugin does not try to parse the example
+syntax inside it. Sphinx ignores it (only .rst is in
+source_suffix). Read it as plain text.
+
+Notation in this file:
+
+    <PLACEHOLDER>     = you replace this with your own value
+    everything else   = literal text you type exactly as shown
+
+So in ".. <NAME>:: <ARG>", the "..", "::" and the space after
+"::" are literal. <NAME> and <ARG> are your choices.
+
+
+THE THREE BUILDING BLOCKS
+=========================
+
+Everything in rST is one of three things:
+
+1. Paragraphs        — plain text, separated by blank lines.
+2. Directives        — block-level commands.
+3. Roles             — inline commands.
+
+Directives and roles are extensible: Sphinx extensions add new
+ones. That is the whole point of rST over Markdown — the
+grammar is open.
+
+
+DIRECTIVES
+==========
+
+Form:
+
+    .. <NAME>:: <ARG>
+       :<OPTION_NAME>: <OPTION_VALUE>
+       :<OPTION_NAME>: <OPTION_VALUE>
+
+       <CONTENT_BODY_LINE_1>
+       <CONTENT_BODY_LINE_2>
+
+Example:
+
+    .. code-block:: python
+       :linenos:
+       :caption: Example function
+
+       def foo():
+         return 42
+
+In the example:
+    - "code-block" is the directive name (you pick it from
+      the available directives).
+    - "python" is the directive's positional argument (here,
+      the language for syntax highlighting).
+    - ":linenos:" and ":caption:" are options. The colons
+      around the option name are literal — that is the
+      syntax. "linenos" is the option name, no value because
+      it's a flag. "caption" is the option name and "Example
+      function" is its value.
+    - "def foo()..." is the content body, indented to align
+      with the directive's column of options.
+
+Option value forms:
+
+    rST itself does not define how multi-valued options are
+    delimited — each directive defines its own value-parsing
+    rules. The directive's documentation will say. Three
+    forms cover almost everything:
+
+    1. Flag (no value):
+
+           :linenos:
+
+    2. Single-line value (everything after the colon to end
+       of line):
+
+           :caption: My example
+
+    3. Multi-line value (option name alone, then indented
+       continuation):
+
+           :alt: A long alt text that
+                 continues on the next line
+                 indented further.
+
+    Multi-valued options usually pack the values into a
+    single-line value with the directive's own delimiter.
+    Common conventions:
+
+           :emphasize-lines: 2, 5, 8-11       (comma-separated;
+                                               code-block also
+                                               understands ranges)
+           :members: foo, bar, baz            (comma-separated)
+           :exclude-members: __init__ __new__ (space-separated)
+
+    There is no universal rule. If you do not know, check the
+    specific directive's documentation.
+
+
+ROLES
+=====
+
+Form:
+
+    :<NAME>:`<TEXT>`
+
+Example:
+
+    The :class:`worktoy.desc.AttriBox` descriptor enforces types.
+
+In the example:
+    - ":class:" is the role name (you pick it from the
+      available roles). The colons around "class" are
+      literal.
+    - "`worktoy.desc.AttriBox`" is the text the role acts on.
+      The backticks are literal — single backticks here.
+    - Result in HTML: the words "worktoy.desc.AttriBox"
+      become a clickable link to that class's doc page.
+
+Another example:
+
+    Compute :math:`\sqrt{x^2 + y^2}` for the distance.
+
+    - ":math:" is the role.
+    - "`\sqrt{x^2 + y^2}`" is the LaTeX math expression.
+    - Result: the math renders as a typeset expression.
+
+
+COMMENTS
+========
+
+Form:
+
+    .. <ANY_TEXT_THAT_IS_NOT_A_DIRECTIVE_NAME_FOLLOWED_BY::>
+
+Examples:
+
+    .. This is a comment.
+
+    .. note:: This is a directive (the "::" makes it one).
+
+    .. note:  This is a comment (single colon, no directive).
+
+    .. This is the first line of a comment
+       and this indented line continues it.
+
+The rule: ".." then a space then text. If the first word
+after the space ends with "::" it's a directive. Anything
+else is a comment.
+
+
+HEADINGS
+========
+
+Form:
+
+    <TITLE_TEXT>
+    <UNDERLINE_CHARACTER repeated at least as many times as
+     the title is long>
+
+Example:
+
+    Installation
+    ============
+
+In the example:
+    - "Installation" is the heading text.
+    - The line of "=" characters is the underline.
+    - The underline must be at least 12 characters because
+      "Installation" is 12 characters. More is fine.
+
+Heading depth:
+
+    rST has no fixed mapping from underline character to
+    depth. The level is decided by ORDER OF FIRST OCCURRENCE
+    of each character in the document.
+
+    Convention adopted in this project (Python docs style):
+
+        =====   H1 (the page title; exactly one per file)
+        -----   H2 (top-level section)
+        ~~~~~   H3 (subsection)
+        ^^^^^   H4 (subsubsection, rare)
+
+    Stick to that order. If you write "----" before "====",
+    then "----" becomes H1 and you will hate yourself.
+
+
+LISTS
+=====
+
+Bullet list:
+
+    - first item
+    - second item
+    - third item
+
+You can also use "*" or "+" as the bullet character.
+
+Numbered list:
+
+    1. first
+    2. second
+    3. third
+
+Auto-numbered list (Sphinx fills in the numbers):
+
+    #. first
+    #. second
+    #. third
+
+Nested list (indent the inner list):
+
+    - outer item one
+      - inner item
+      - inner item
+    - outer item two
+
+
+INLINE FORMATTING
+=================
+
+    *italic text*          → italic
+    **bold text**          → bold
+    ``inline code``        → monospaced fixed-width text
+
+Note: DOUBLE backticks for inline code. Single backticks mean
+"default role" — usually safe to avoid them.
+
+
+LINKS
+=====
+
+External link, inline:
+
+    `Python <https://python.org>`_
+
+In the example:
+    - The text "Python" becomes the link label.
+    - "https://python.org" inside the angle brackets is the URL.
+    - The trailing underscore is what makes it a link rather
+      than just backtick-quoted text.
+
+External link, target defined elsewhere:
+
+    See `the Python site`_ for details.
+
+    .. _the Python site: https://python.org
+
+Internal cross-reference via label:
+
+    .. _intro-label:
+
+    Introduction
+    ============
+
+    Some text.
+
+    Later, in any file:
+
+    See :ref:`intro-label` for the intro.
+
+    - ".. _intro-label:" defines a label pointing to the next
+      thing (here, the "Introduction" heading).
+    - ":ref:`intro-label`" links to it.
+
+
+PULLING IN OTHER FILES
+======================
+
+There are several ways to bring other files into a Sphinx
+project, depending on what you mean by "import":
+
+    .. include::      Inline another file's content into THIS
+                      page. The included file is parsed as if
+                      it were part of the current file.
+
+    .. toctree::      Add another file as a SEPARATE page in
+                      the navigation tree. Each entry becomes
+                      a sibling page in the sidebar.
+
+    :doc:`<NAME>`     Inline link to another doc page. No
+                      content is pulled in; just a hyperlink.
+
+    :ref:`<LABEL>`    Inline link to a labeled spot in any
+                      page. Same as :doc: but more granular.
+
+    |<NAME>|          Substitution. Define a snippet once
+                      with ".. |<NAME>| replace:: <TEXT>",
+                      reference it inline anywhere as |<NAME>|.
+
+INCLUDE — inlining another file's content
+-----------------------------------------
+
+Form:
+
+    .. include:: <PATH>
+       :<OPTION>: <VALUE>
+
+Path is relative to the current .rst file, or absolute from
+the docs source root if it starts with "/".
+
+Example, inline a shared header file:
+
+    .. include:: _shared_header.rst
+
+Example, inline a slice of a file:
+
+    .. include:: ../CHANGELOG.md
+       :start-after: ## 1.0.0
+       :end-before: ## 0.9.0
+
+Example, inline a file as a literal block (no rST parsing):
+
+    .. include:: snippet.txt
+       :literal:
+
+Example, inline a Python file as a syntax-highlighted code
+block:
+
+    .. include:: example.py
+       :code: python
+
+Useful options:
+
+    :start-line: <N>          start at line N (0-indexed)
+    :end-line: <N>            stop before line N
+    :start-after: <TEXT>      start after the line containing TEXT
+    :end-before: <TEXT>       stop at the line containing TEXT
+    :literal:                 do not parse as rST, render as text
+    :code: <LANGUAGE>         render as a code block in that language
+    :encoding: <ENCODING>     file encoding (default: utf-8)
+
+
+SUBSTITUTIONS — like macros
+---------------------------
+
+Define once:
+
+    .. |product| replace:: worktoy
+    .. |version| replace:: 0.99.137
+
+Use anywhere in the same file:
+
+    Welcome to |product| version |version|.
+
+Substitutions are file-local by default. To share them across
+all files, put them in a file called rst_epilog.rst (or
+similar) and include it via the rst_epilog config setting in
+conf.py:
+
+    rst_epilog = open('rst_epilog.rst').read()
+
+
+LITERAL BLOCKS
+==============
+
+Inline literal:
+
+    Use ``maybe(x, fallback)`` to handle None.
+
+Block literal via the "::" shortcut:
+
+    Run the following command::
+
+       pip install worktoy
+
+    Anything in this indented block is preformatted text. No
+    directives or roles are parsed inside it.
+
+For syntax-highlighted code, use the code-block directive
+shown in the DIRECTIVES section above.
+
+
+COMMON DIRECTIVES YOU WILL ACTUALLY USE
+=======================================
+
+    .. toctree::
+       <FILENAME_WITHOUT_EXTENSION>
+       <ANOTHER_FILENAME>
+
+    .. code-block:: <LANGUAGE>
+
+       <YOUR_CODE>
+
+    .. note::
+
+       <BOXED_NOTE_TEXT>
+
+    .. warning::
+
+       <BOXED_WARNING_TEXT>
+
+    .. figure:: <IMAGE_PATH>
+
+       <CAPTION>
+
+    .. math::
+
+       <LATEX_MATH_EXPRESSION>
+
+
+COMMON ROLES YOU WILL ACTUALLY USE
+==================================
+
+    :class:`worktoy.desc.AttriBox`     Link to a class.
+    :func:`worktoy.utilities.maybe`    Link to a function.
+    :mod:`worktoy.utilities`           Link to a module.
+    :exc:`worktoy.waitaminute.TypeException`   Link to an exception.
+    :ref:`my-label-name`               Link to a labeled section.
+    :doc:`tutorial`                    Link to a doc page by filename.
+    :math:`a^2 + b^2 = c^2`            Inline LaTeX math.
+
+
+THE WHOLE THING IN ONE SENTENCE
+===============================
+
+rST is a small grammar (paragraphs, directives, roles,
+headings, lists, links) plus an open vocabulary of directives
+and roles supplied by Sphinx core and its extensions.

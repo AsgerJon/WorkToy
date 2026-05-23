@@ -1,3 +1,11 @@
-mkdocs>=1.6
-mkdocs-material>=9.5
-mkdocstrings[python]>=0.27
+# Packages needed to BUILD the documentation.
+#
+# Used by Read the Docs, the GitHub Pages workflow, and local builds.
+# Note: worktoy itself is NOT installed for the docs build — the docs
+# only read the source files as text, never import the package.
+
+# Sphinx — builds the navigable, searchable, themed site.
+sphinx>=7
+
+# furo — the HTML theme (html_theme in conf.py).
+furo>=2024.1

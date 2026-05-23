@@ -187,3 +187,7 @@ sym.md
 
 # MkDocs build output
 /site/
+
+# Sphinx documentation
+docs/_build/
+docs/_source/
