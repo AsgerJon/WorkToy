@@ -33,6 +33,10 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/AsgerJon/WorkToy"
 "Bug Tracker" = "https://github.com/AsgerJon/WorkToy/issues"
+
+[tool.setuptools.package-data]
+worktoy = ["py.typed"]
+
 [tool.coverage.run]
 omit = [
     # Pre-PEP 634 fallback. Unreachable on 3.14 where coverage
