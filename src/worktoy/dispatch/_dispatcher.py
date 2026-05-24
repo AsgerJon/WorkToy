@@ -146,9 +146,6 @@ class Dispatcher(Object):
     return fieldOwner
 
   def _getCachedKey(self, ) -> str:
-    """
-    Getter-function for the key belonging to this 'Dispatcher'.
-    """
     return '__bound_dispatch_%s__' % self._getFieldName()
 
   def _createCachedFunction(self) -> None:

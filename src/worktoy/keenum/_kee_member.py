@@ -134,7 +134,6 @@ class Kee(AttriBox[T]):
     return self.index
 
   def __str__(self) -> str:
-    """Return the string representation of the member."""
     infoSpec = """<%s member: %s>"""
     try:
       keeName = self.name

@@ -53,14 +53,10 @@ class SubclassException(TypeError):
   __slots__ = ('subClass', 'baseClass')
 
   def __init__(self, subClass: type, baseClass: type) -> None:
-    """Initialize the exception with the object and expected base class."""
     self.subClass, self.baseClass = subClass, baseClass
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    """
-    Return a string representation of the SubclassException object.
-    """
     infoSpec = """Expected class '%s' to be a subclass of '%s'!"""
     clsName = self.subClass.__name__
     baseName = self.baseClass.__name__

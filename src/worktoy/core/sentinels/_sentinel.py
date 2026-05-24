@@ -107,9 +107,6 @@ class _Sentinel(type):
     return hash((mclsModule, mclsName, clsModule, clsName,))
 
   def __str__(cls) -> str:
-    """
-    Return the string representation of the sentinel.
-    """
     return """<Sentinel: '%s'>""" % cls.__name__
 
   __repr__ = __str__

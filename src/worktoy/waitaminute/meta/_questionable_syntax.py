@@ -16,11 +16,20 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class QuestionableSyntax(SyntaxError):
-  """QuestionableSyntax is raised when a name is encountered that is likely
-  a typo, such as '__set_item__' instead of '__setitem__' or '__setname__'
-  instead of '__set_name__'.
-  This is a subclass of SyntaxError and should be used to indicate that
-  the code is likely to be incorrect. """
+  """
+  QuestionableSyntax is raised when a class body defines a name that is a
+  near-miss for a real dunder, such as '__set_item__' for '__setitem__' or
+  '__setname__' for '__set_name__'. Python would silently accept the typo
+  as an ordinary attribute, so this exception flags it loudly instead. It
+  subclasses 'SyntaxError'.
+
+  Attributes
+  ----------
+  realName : str
+    The correctly spelled dunder the name was probably meant to be.
+  derpName : str
+    The misspelled name that was actually used.
+  """
 
   __slots__ = ('derpName', 'realName',)
 
@@ -30,7 +39,6 @@ class QuestionableSyntax(SyntaxError):
     SyntaxError.__init__(self, )
 
   def __str__(self) -> str:
-    """String representation of the QuestionableSyntax."""
     spec = """Received name '%s' which is similar enough to '%s' to be
     a likely typo."""
     info = spec % (self.derpName, self.realName)

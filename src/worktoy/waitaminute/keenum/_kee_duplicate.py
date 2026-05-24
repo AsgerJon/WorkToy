@@ -23,14 +23,12 @@ class KeeDuplicate(Exception):
   __slots__ = ('name', 'oldMember', 'newMember',)
 
   def __init__(self, name: str, *members: Kee) -> None:
-    """Initialize the KeeDuplicate object."""
     self.name = name
     self.oldMember = members[0]
     self.newMember = members[1]
     Exception.__init__(self, )
 
   def __str__(self, ) -> str:
-    """Return the string representation of the KeeDuplicate object."""
     infoSpec = """Enumeration name '%s' already contains member: '%s', 
     but attempted to add duplicate member: '%s'!"""
     oldStr = str(self.oldMember)

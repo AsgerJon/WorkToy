@@ -55,9 +55,6 @@ class FidGen(BaseObject):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _getGeneratedNames(self) -> list[str]:
-    """
-    Getter-function for the generated names.
-    """
     return maybe(self.__generated_names__, [])
 
   @staticmethod
@@ -157,7 +154,6 @@ class FidGen(BaseObject):
 
   @overload(str)
   def __init__(self, fileName: str, **kwargs) -> None:
-    """Initialize the FidGen object."""
     self.__base_name__ = fileName
     if kwargs:
       self.__init__(**kwargs)
@@ -179,7 +175,6 @@ class FidGen(BaseObject):
 
   @overload()  # kw
   def __init__(self, **kwargs) -> None:
-    """Initialize the FidGen object."""
     nameKeys = stringList("""name, file, fileName, filename, file_name""")
     extKeys = stringList("""ext, extension, file_extension""")
     dirKeys = stringList("""dir, directory, file_directory""")

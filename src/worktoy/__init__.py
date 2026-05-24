@@ -1,21 +1,39 @@
-"""The 'worktoy' package provides a collection of utilities leveraging
-advanced python features including custom metaclasses and the descriptor
-protocol. The readme file included provides detailed documentation on the
-included features. The modules provided depend on each other in
-implementation, but can be used independently.
+"""The 'worktoy' package adds runtime type enforcement, declarative
+attributes, function overloading, and custom-metaclass infrastructure on
+top of stock Python. It targets Python 3.7 through 3.14.
 
-The package consists of the following modules:
-- utilities: A set of general-purpose utility functions and classes.
-- waitaminute: Tools for managing execution flow and timing.
-- core: Core functionalities and base classes for the package.
-- desc: Descriptor protocol utilities.
-- dispatch: Function and method dispatching used by overload system.
-- mcls: Custom metaclass implementations.
-- lorem_ipsum: Lorem ipsum text generation utilities.
-- markwork: Markdown rendering utilities.
-- num: Enumeration utilities.
-- ezdata: Dataclass implementation.
-- work_io: Input/output utilities for file and directory management.
+The package is layered: each module depends only on the modules listed
+before it, and the import order below is the canonical dependency order.
+Code added to a module should import only from earlier modules in this
+chain.
+
+- utilities: Leaf-level helpers with no other 'worktoy' dependencies,
+  such as 'maybe', 'textFmt', 'unpack', 'typeCast', and the
+  'combinatorics' subpackage.
+- waitaminute: Every custom exception in the library, grouped into
+  subpackages by the layer that raises it. The philosophy is fail-fast:
+  a silent fallback is treated as a bug.
+- core: The most primitive runtime types, including 'Object' (the
+  contextual descriptor base), 'MetaType', and the 'sentinels' such as
+  'THIS', 'OWNER', and 'DESC'.
+- dispatch: The '@overload' decorator and its supporting machinery
+  ('Dispatcher', 'TypeSig', 'Permuter', 'flexCall') providing
+  type-signature based function overloading.
+- desc: The descriptor protocol layer, providing 'Field', 'AttriBox',
+  'FixBox', 'Alias', and 'SymbolicName'.
+- mcls: The metaclass framework, providing 'AbstractMetaclass',
+  'BaseMeta', and 'BaseObject', the common base class that enables
+  overloading and 'AttriBox' support.
+- lorem_ipsum: Stochastic placeholder-text generation ('Paragraph',
+  'Sentence', 'Clause', 'StochasticWord').
+- keenum: The enumeration framework, providing 'KeeNum', the 'Kee'
+  member descriptor, and the bitmask-flag 'KeeFlags'.
+- ezdata: The 'EZData' dataclass, built on its own metaclass and field
+  descriptors.
+- work_io: Filesystem helpers for validating, creating, and removing
+  paths.
+- work_test: Testing support, providing 'BaseTest' and the random-data
+  samplers used across the test suite.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

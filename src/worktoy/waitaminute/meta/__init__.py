@@ -1,6 +1,8 @@
-"""
-The 'worktoy.waitaminute.meta' provides the custom exceptions used by the
-class creation flow in 'worktoy.core'.
+"""The 'worktoy.waitaminute.meta' package collects the exceptions raised
+during class creation by the metaclass machinery in 'worktoy.mcls' (and
+the primitive metaclasses in 'worktoy.core'). They cover near-miss dunder
+names, illegal '__del__', reserved names, hook conflicts, and illegal
+instantiation.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

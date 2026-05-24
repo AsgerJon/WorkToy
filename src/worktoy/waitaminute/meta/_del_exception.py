@@ -17,19 +17,29 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DelException(SyntaxError):
   """
-  DelException is a custom exception raised when someone attempts to create
-  a class that implements the '__del__' method without providing the custom
-  keyword argument: 'trustMeBro=True'.
+  DelException is raised when a class body defines '__del__' without the
+  'trustMeBro=True' class keyword. A stray '__del__' is almost always a
+  typo for '__delete__'; pass 'trustMeBro=True' to keep a genuine one. It
+  subclasses 'SyntaxError'.
+
+  Attributes
+  ----------
+  mcls : type
+    The metaclass building the class.
+  name : str
+    The name of the class under construction.
+  bases : tuple[type, ...]
+    The base classes of the class under construction.
+  space : object
+    The namespace in which '__del__' was found.
   """
   __slots__ = ('mcls', 'name', 'bases', 'space')
 
   def __init__(self, *args) -> None:
-    """Initialize the DelException with the class."""
     self.mcls, self.name, self.bases, self.space = args
     SyntaxError.__init__(self, )
 
   def __str__(self) -> str:
-    """Return a string representation of the DelException."""
     infoSpec = """When attempting to derive a class named '%s' from the 
     metaclass '%s', the '__del__' method was found in the namespace! This 
     is almost always a typo, but if not this error can be suppressed by 

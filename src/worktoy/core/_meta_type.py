@@ -28,7 +28,6 @@ class MetaType(type):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __str__(cls, ) -> str:
-    """Returns the name of the class. """
     return """%s[metaclass=%s]""" % (cls.__name__, cls.__class__.__name__)
 
   __repr__ = __str__
@@ -41,26 +40,4 @@ class MetaType(type):
     """
     if '__namespace__' not in space:
       space['__namespace__'] = space
-    validatedSpace = mmcls._mergeErrata(space)
-    return super().__new__(mmcls, name, bases, validatedSpace, **kw)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @staticmethod
-  def _mergeErrata(space: Space) -> Space:
-    """If the class body declared a nested '__Errata__' class, merge its
-    annotations into the outer class's '__annotations__' and remove the
-    nested class from the namespace.
-
-    See 'keenum._kee_meta.KeeMeta.__Errata__' for the canonical use:
-    declaring phantom annotations a type-checker can see without putting
-    them in the real class body."""
-    errata = space.pop('__Errata__', None)
-    if errata is None:
-      return space
-    notations = space.get('__annotations__', dict())
-    notations.update(getattr(errata, '__annotations__', dict()))
-    space['__annotations__'] = notations
-    return space
+    return super().__new__(mmcls, name, bases, space, **kw)

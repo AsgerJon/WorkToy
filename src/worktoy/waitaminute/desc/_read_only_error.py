@@ -1,6 +1,8 @@
-"""ReadOnlyError is raised when an attempt is made to modify a read-only
-attribute. This is a subclass of TypeError and should be used to indicate
-that the attribute is read-only. """
+"""ReadOnlyError is raised on an attempt to assign to a read-only
+attribute. It subclasses 'DescriptorException', the shared base for
+descriptor failures. The default 'Object.__instance_set__' raises it, as
+does any descriptor whose protocol forbids writes.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -15,21 +17,31 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class ReadOnlyError(DescriptorException):
-  """ReadOnlyError is raised when an attempt is made to modify a read-only
-  attribute. This is a subclass of TypeError and should be used to indicate
-  that the attribute is read-only. """
+  """
+  ReadOnlyError is raised on an attempt to assign to a read-only
+  attribute. It subclasses 'DescriptorException' (and so 'Exception'). The
+  default 'Object.__instance_set__' raises it, as does any descriptor
+  whose protocol forbids writes.
+
+  Attributes
+  ----------
+  instance : Any
+    The instance whose attribute the caller tried to write.
+  desc : Any
+    The read-only descriptor that rejected the write.
+  newVal : Any
+    The value the caller tried to assign.
+  """
 
   __slots__ = ('instance', 'desc', 'newVal',)
 
   def __init__(self, instance: Any, desc: Any, val: Any, ) -> None:
-    """Initialize the ReadOnlyError."""
     self.instance = instance
     self.desc = desc
     self.newVal = val
     DescriptorException.__init__(self, )
 
   def __str__(self, ) -> str:
-    """Return the string representation of the ReadOnlyError."""
     infoSpec = """Attempted to overwrite read-only attribute '%s' with 
     new value: '%s'!"""
     ownerName = type(self.instance).__name__

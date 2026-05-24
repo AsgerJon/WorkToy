@@ -1,7 +1,8 @@
 """
-KeeBoxValueError is a custom exception class raised to indicate that a
-value specified in the positional arguments of a 'KeeBox' object does
-match a valid object of the value type of the given enumeration type.
+KeeBoxValueError is raised when a value given to a 'KeeBox' is of the
+enumeration's value type but does not equal the 'value' of any member of
+that enumeration. The value is well-typed yet matches no member, so
+resolution fails.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -15,9 +16,18 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeBoxValueError(ValueError):
   """
-  KeeBoxValueError is a custom exception class raised to indicate that a
-  value specified in the positional arguments of a 'KeeBox' object does
-  match a valid object of the value type of the given enumeration type.
+  KeeBoxValueError is raised when a value given to a 'KeeBox' is of the
+  enumeration's value type but does not equal the 'value' of any member of
+  that enumeration.
+
+  Attributes
+  ----------
+  desc : KeeBox
+    The 'KeeBox' descriptor that failed to resolve the value.
+  num : KeeMeta
+    The enumeration the value was resolved against.
+  value : Any
+    The well-typed value that matched no member.
   """
 
   __slots__ = ('desc', 'num', 'value')

@@ -21,14 +21,12 @@ class KeeTypeException(TypeError):
   __slots__ = ('name', 'value', 'expectedTypes')
 
   def __init__(self, name: str, value: Any, *types) -> None:
-    """Initialize the KeeTypeException object."""
     self.name = name
     self.value = value
     self.expectedTypes = types
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    """Return the string representation of the KeeTypeException object."""
     infoSpec = """KeeNum member '%s' has value '%s' of type '%s', but
     expected type to be: '%s'!"""
     name = self.name

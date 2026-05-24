@@ -134,11 +134,9 @@ class Object(metaclass=MetaType):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def getFieldOwner(self) -> type:
-    """Getter for the field owner of the descriptor object"""
     return self.__field_owner__
 
   def getFieldName(self) -> Optional[str]:
-    """Getter for the field name of the descriptor object"""
     return self.__field_name__
 
   def getContextualSentinels(self, ) -> dict[Type[Sentinel], Any]:
@@ -170,14 +168,12 @@ class Object(metaclass=MetaType):
       return out
 
   def getPosArgs(self, ) -> tuple[Any, ...]:
-    """Getter for the positional arguments of the object."""
     out = []
     for arg in maybe(self.__pos_args__, ()):
       out.append(self.filterSentinels(arg))
     return (*out,)
 
   def getKeyArgs(self, ) -> dict[str, Any]:
-    """Getter for the keyword arguments of the object."""
     out = dict()
     for key, value in maybe(self.__key_args__, dict()).items():
       out[key] = self.filterSentinels(value)

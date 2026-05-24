@@ -13,8 +13,20 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class WriteOnceError(TypeError):
-  """WriteOnceError is a custom error class raised to indicate that a
-  variable was attempted to be written to more than once."""
+  """
+  WriteOnceError is raised on a second write to a write-once attribute,
+  such as a 'FixBox' field that already holds a value or a 'Permuter'
+  whose 'Arrangement' is already set. It subclasses 'TypeError'.
+
+  Attributes
+  ----------
+  desc : object
+    The write-once descriptor that rejected the second write.
+  oldValue : Any
+    The value already stored.
+  newValue : Any
+    The value whose assignment was rejected.
+  """
 
   __slots__ = ('desc', 'oldValue', 'newValue')
 

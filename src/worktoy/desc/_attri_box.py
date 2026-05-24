@@ -104,6 +104,45 @@ class AttriBox(BaseDescriptor[T]):
     first element being hashable. For 'set' and 'frozenset', every element
     must be hashable. The final exception is that in the presence of
     keyword arguments, the 'tuple' is not unpacked.
+
+    Why a tuple splats, and why the builtins are exempt
+    ---------------------------------------------------
+    Two constructor conventions exist and cannot be told apart from
+    the field type alone. Value constructors take their components as
+    separate positional arguments, as in 'complex(re, im)' or any
+    'Foo(x, y)'. Container constructors take a single iterable, as in
+    'list(items)'. Most user types follow the first convention, so a
+    received 'tuple' is splatted by default to make 'self.bar = 69,
+    420' mirror 'AttriBox[Foo](69, 420)'. The four builtin containers
+    and 'dict' follow the second convention and reject splatting, so
+    they are hardcoded as the known exceptions. There is no general
+    way to detect a user type that follows the second convention, so
+    such a type is not granted the same courtesy.
+
+    The corollary is the practical escape hatch: the splat fires on
+    'tuple' specifically, not on every iterable. A field type whose
+    constructor wants a single iterable should therefore be fed a
+    'list', and declaring the field type accordingly documents the
+    intent at the call site:
+
+      class Karen:
+        def __init__(self, pedantry: list[str]) -> None: ...
+
+      class Owner:
+        karen = AttriBox[Karen](['why', 'are', 'you', 'like'])
+
+    The list default builds 'Karen([...])' and 'owner.karen = [...]'
+    rebuilds it the same way, because a 'list' is never splatted.
+    Only forcing a 'tuple' onto such a type re-triggers the splat.
+
+    One asymmetry survives and is worth stating outright: the
+    deferred default and the runtime setter do not treat a 'tuple'
+    alike. The arguments captured by 'AttriBox[T](...)' are already
+    the positional argument list and are never splatted, whereas a
+    'tuple' arriving through '__instance_set__' is. So
+    'AttriBox[T]((a, b))' builds 'T((a, b))', but
+    'instance.attr = (a, b)' builds 'T(a, b)'. Same value, different
+    path, different result. Feeding a 'list' avoids the divergence.
     """
     fieldType = self.getFieldType()
     fieldObject = None

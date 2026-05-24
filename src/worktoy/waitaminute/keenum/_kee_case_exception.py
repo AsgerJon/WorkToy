@@ -21,12 +21,10 @@ class KeeCaseException(ValueError):
   __slots__ = ('name',)
 
   def __init__(self, name: str, ) -> None:
-    """Initialize the KeeCaseException object."""
     self.name = name
     ValueError.__init__(self, )
 
   def __str__(self) -> str:
-    """Return the string representation of the KeeCaseException object."""
     infoSpec = """KeeNum members must have upper case names, but received: 
     '%s'"""
     from ...utilities import textFmt

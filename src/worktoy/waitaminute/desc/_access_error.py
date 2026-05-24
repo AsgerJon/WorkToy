@@ -1,8 +1,8 @@
 """
-AccessError is raised when a descriptor does not provide a way to retrieve
-a requested value. This exception is raised by 'Desc' and its subclasses
-failing to implement '__instance_get__' or which falls back to the parent
-implementation under certain conditions.
+AccessError is raised when a descriptor has no way to retrieve a value,
+for example a 'Field' whose getter was never registered with '@x.GET'. It
+subclasses both 'DescriptorException' and 'AttributeError', so it is caught
+by either.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -19,26 +19,24 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class AccessError(DescriptorException, AttributeError):
   """
-  AccessError is raised when a descriptor does not provide a way to retrieve
-  a requested value. This exception is raised by 'Desc' and its subclasses
-  failing to implement '__instance_get__' or which falls back to the parent
-  implementation under certain conditions.
+  AccessError is raised when a descriptor has no way to retrieve a value,
+  for example a 'Field' whose getter was never registered with '@x.GET'.
+  It subclasses both 'DescriptorException' and 'AttributeError', so it is
+  caught by either.
+
+  Attributes
+  ----------
+  desc : object
+    The descriptor that could not produce a value.
   """
 
   __slots__ = ('desc',)
 
   def __init__(self, desc) -> None:
-    """
-    Initializes the AccessError with the class that failed to provide a
-    value.
-    """
     self.desc = desc
     DescriptorException.__init__(self, )
 
   def __str__(self) -> str:
-    """
-    Returns a string representation of the AccessError.
-    """
     infoSpec = """The '%s' descriptor at '%s.%s' failed to retrieve a 
     value!"""
     descTypeName = type(self.desc).__name__

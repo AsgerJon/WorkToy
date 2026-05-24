@@ -1,13 +1,9 @@
 """
-ProtectedError is raised to indicate an attempt to delete a protected
-object. For example, a descriptor class could implement the '__delete__'
-method to always raise this exception. This provides a more detailed
-error. Particularly because both TypeError and AttributeError are being
-suggested by large language models. Neither of which is wrong, but lacks
-the specificity of this exception.
-
-The ProtectedError class inherits from both TypeError and AttributeError,
-ensuring that it is caught in exception clauses pertaining to either.
+ProtectedError is raised on an attempt to delete a protected attribute.
+The default 'Object.__instance_delete__' raises it, as does any descriptor
+whose protocol forbids deletion. It subclasses 'DescriptorException', a
+deliberately specific type rather than a bare 'TypeError' or
+'AttributeError'.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -24,26 +20,31 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class ProtectedError(DescriptorException):
   """
-  ProtectedError is raised to indicate an attempt to delete a protected
-  object. For example, a descriptor class could implement the '__delete__'
-  method to always raise this exception. This provides a more detailed
-  error. Particularly because both TypeError and AttributeError are being
-  suggested by large language models. Neither of which is wrong, but lacks
-  the specificity of this exception."""
+  ProtectedError is raised on an attempt to delete a protected attribute.
+  The default 'Object.__instance_delete__' raises it, as does any
+  descriptor whose protocol forbids deletion. It subclasses
+  'DescriptorException' (and so 'Exception'); it is a deliberately specific
+  type rather than a bare 'TypeError' or 'AttributeError'.
+
+  Attributes
+  ----------
+  instance : Any
+    The instance whose attribute the caller tried to delete.
+  desc : Any
+    The protected descriptor that rejected the deletion.
+  oldVal : Any
+    The value held before the deletion attempt, if known.
+  """
 
   __slots__ = ('instance', 'desc', 'oldVal')
 
   def __init__(self, instance: Any, desc: Any, oldValue: Any = None) -> None:
-    """Initialize the ReadOnlyError."""
     self.instance = instance
     self.desc = desc
     self.oldVal = oldValue
     DescriptorException.__init__(self, )
 
   def __str__(self, ) -> str:
-    """
-    Return the string representation of the ProtectedError.
-    """
     oldValue = self.oldVal
     desc = self.desc
     fieldOwner = getattr(self.instance, '__field_owner__', None)

@@ -1,7 +1,7 @@
 """
-DuplicateHookError is a custom exception raised when an attempt is made to
-register a hook at a name already populated with a hook. If 'oldHook is
-newHook' is True, this exception may not be appropriate.
+DuplicateHook is raised when a hook is registered on a namespace at a name
+that already holds a different hook. Re-registering the same hook object
+is a no-op and does not raise.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -17,9 +17,20 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DuplicateHook(Exception):
   """
-  DuplicateHookError is a custom exception raised when an attempt is made to
-  register a hook at a name already populated with a hook. If 'oldHook is
-  newHook' is True, this exception may not be appropriate.
+  DuplicateHook is raised when a hook is registered on a namespace at a
+  name that already holds a different hook. Re-registering the same hook
+  object is a no-op; only a genuine collision raises.
+
+  Attributes
+  ----------
+  owner : type
+    The namespace class the hook was being added to.
+  name : str
+    The field name both hooks claim.
+  existingHook : object
+    The hook already registered under that name.
+  newHook : object
+    The hook whose registration was rejected.
   """
 
   __slots__ = ('owner', 'name', 'existingHook', 'newHook')
@@ -33,9 +44,6 @@ class DuplicateHook(Exception):
     Exception.__init__(self, )
 
   def __str__(self) -> str:
-    """
-    String representation of the exception.
-    """
     infonSpec = """The class '%s' already has a hook registered 
     at name: '%s'! The existing hook is '%s', and the new hook is '%s'."""
     ownerName = self.owner.__name__

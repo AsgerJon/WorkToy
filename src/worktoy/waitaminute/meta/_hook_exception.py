@@ -18,17 +18,28 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class HookException(Exception):
   """
-  This custom exception allows get item hooks to interrupt calls to
-  __getitem__. Because the metacall system requires the __getitem__ to
-  specifically raise a KeyError in certain situations, an exception raised
-  by a hook might be confused for the KeyError. Instead,
-  the AbstractNamespace class will catch exceptions raised by hooks and
-  raise them from this exception:
-  For example:
-  try:
-    hook(self, key, val)
-  except Exception as exception:
-    raise HookException(exception) from exception
+  HookException wraps any exception raised by a namespace hook so it cannot
+  be mistaken for the 'KeyError' that the metacall system uses as a control
+  signal during '__getitem__'. 'AbstractNamespace' catches a hook exception
+  and re-raises it from this one:
+
+      try:
+        hook(self, key, val)
+      except Exception as exception:
+        raise HookException(exception, ...) from exception
+
+  Attributes
+  ----------
+  initialException : Exception
+    The original exception raised by the hook.
+  namespaceObject : AbstractNamespace
+    The namespace whose hook raised.
+  itemKey : str
+    The key being accessed when the hook raised.
+  errorValue : object
+    The value passed to the hook.
+  hookFunction : AbstractSpaceHook
+    The hook that raised.
   """
 
   __slots__ = (
@@ -55,9 +66,6 @@ class HookException(Exception):
     Exception.__init__(self, )
 
   def __str__(self) -> str:
-    """
-    String representation of the HookException.
-    """
     spec = """HookException raised from %s! Key: '%s', Value: '%s', 
     Hook: '%s'! Initial exception: %s"""
     cls = type(self).__name__

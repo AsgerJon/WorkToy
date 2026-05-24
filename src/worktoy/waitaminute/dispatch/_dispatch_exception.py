@@ -1,8 +1,8 @@
-"""DispatchException provides a custom exception raised when an instance
-of OverloadDispatcher fails to resolve the correct function from the
-given arguments. Because the overload protocol relies on type matching,
-this exception subclasses TypeError such that it can be caught by external
-error handlers. """
+"""DispatchException is raised when a 'Dispatcher' fails to resolve a
+matching function from the given arguments. Because the overload protocol
+relies on type matching, this exception subclasses 'TypeError' so existing
+error handlers catch it.
+"""
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -27,18 +27,19 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DispatchException(TypeError):
   """
-  DispatchException provides a custom exception raised to indicate that a
-  'Dispatcher' object failed to resolve given arguments to a matching
-  function object.
+  DispatchException is raised when a 'Dispatcher' fails to resolve the
+  given arguments to a matching function.
 
-  Arguments:
-    dispatch: The 'Dispatcher' object that failed to dispatch the given
-    arguments. (When manually raising this exception, the static type
-    checker will recognize the relevant objects as 'overload' objects,
-    but at runtime these will be replaced with 'Dispatcher' objects.
-    Hinting both types prevents type checkers from indicating type
-    mismatch.)
-    args: The arguments that could not be dispatched
+  Attributes
+  ----------
+  dispatch : Dispatcher
+    The 'Dispatcher' that failed to dispatch the arguments. When raising
+    this exception by hand, a static type checker sees the relevant
+    objects as 'overload' instances even though at runtime they are
+    'Dispatcher' instances; the type hint admits both so the checker does
+    not flag a mismatch.
+  args : tuple
+    The arguments that could not be dispatched.
   """
 
   __slots__ = ('dispatch', 'args')
@@ -49,9 +50,6 @@ class DispatchException(TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    """
-    Return a string representation of the DispatchException.
-    """
     infoSpec = """Dispatcher object: <br><tab><tab>%s <br><tab>failed to 
     dispatch arguments: 
     <br><tab><tab>%s<br><tab>matching type signature: <br><tab><tab> 

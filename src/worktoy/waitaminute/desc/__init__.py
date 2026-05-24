@@ -1,7 +1,9 @@
-"""
-The 'worktoy.waitaminute.desc' package provides the custom exceptions
-specific to the implementation of the descriptor protocol in the 'worktoy'
-library.
+"""The 'worktoy.waitaminute.desc' package collects the exceptions raised
+by the descriptor protocol in 'worktoy.desc' and 'worktoy.core'.
+
+Every exception here subclasses 'DescriptorException', which 'Object' uses
+to recognise a descriptor-raised failure: such an exception propagates to
+the caller instead of being routed to a fallback accessor.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

@@ -95,11 +95,9 @@ class AbstractNamespace(dict):
 
   @classmethod
   def getHookListName(cls, ) -> str:
-    """Getter-function for the name of the hook list. """
     return cls.__owner_hooks_list_name__
 
   def getHooks(self, owner: type = None) -> Iterator[AbstractSpaceHook]:
-    """Getter-function for the AbstractHook classes. """
     cls = type(self)
     hooks = self.classGetHooks()
     for hook in hooks:
@@ -243,7 +241,6 @@ class AbstractNamespace(dict):
       dict.__setitem__(self, key, val)
 
   def __str__(self, ) -> str:
-    """Returns the string representation of the namespace object."""
     bases = self.getBases()
     spaceName = type(self).__name__
     clsName = self.getClassName()
@@ -254,7 +251,6 @@ class AbstractNamespace(dict):
     return textFmt(info % (spaceName, mclsName, baseNames, clsName))
 
   def __repr__(self, ) -> str:
-    """Returns the string representation of the namespace object."""
     bases = self.getBases()
     spaceName = type(self).__name__
     clsName = self.getClassName()

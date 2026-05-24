@@ -29,7 +29,6 @@ class KeeNameConflict(ValueError):
   __slots__ = ('member', 'oldName', 'newName')
 
   def __init__(self, kee: Kee, oldName: str, newName: str) -> None:
-    """Initialize the KeeNameConflict object."""
     self.member = kee
     self.oldName = oldName
     self.newName = newName

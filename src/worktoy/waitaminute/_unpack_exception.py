@@ -1,9 +1,9 @@
 """
-UnpackException is a custom exception raised to indicate that an unpacking
-operation found no argument requiring unpacking. This is raised by the
-'unpack' function in the 'worktoy.core' module when the 'strict' mode is
-enabled and no iterable is found among the arguments. Please note that
-this function does not consider strings or bytes as unpackable iterables.
+UnpackException is raised when an unpacking operation finds no argument
+requiring unpacking. It is raised by the 'unpack' function in the
+'worktoy.utilities' module when strict mode is enabled (the default) and
+no iterable is found among the arguments. Note that 'unpack' does not
+treat 'str' or 'bytes' as unpackable iterables.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -19,26 +19,26 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class UnpackException(ValueError):
   """
-  UnpackException is a custom exception raised to indicate that an unpacking
-  operation found no argument requiring unpacking. This is raised by the
-  'unpack' function in the 'worktoy.core' module when the 'strict' mode is
-  enabled and no iterable is found among the arguments. Please note that
-  this function does not consider strings or bytes as unpackable iterables.
+  UnpackException is raised when an unpacking operation finds no argument
+  requiring unpacking. It is raised by the 'unpack' function in the
+  'worktoy.utilities' module when strict mode is enabled (the default) and
+  no iterable is found among the arguments. 'unpack' does not treat 'str'
+  or 'bytes' as unpackable iterables.
+
+  Attributes
+  ----------
+  posArgs : tuple
+    The positional arguments 'unpack' received, none of which was an
+    unpackable iterable.
   """
 
   __slots__ = ('posArgs',)
 
   def __init__(self, *args) -> None:
-    """
-    Initialize the UnpackException with an optional message.
-    """
     self.posArgs = args
     ValueError.__init__(self, )
 
   def __str__(self) -> str:
-    """
-    Return a string representation of the UnpackException.
-    """
     infoSpec = """'unpack' found no iterable argument from: \n'%s'\nand is 
     running in strict mode (default). Change this by setting keyword 
     argument 'strict' to False."""

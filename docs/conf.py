@@ -29,26 +29,28 @@ project = "worktoy"
 author = "Asger Jon Vistisen"
 copyright = "2026, Asger Jon Vistisen"
 
-#  The header version is read from worktoy-tag.txt (the file
-#  roll_version.py rewrites on every bump), NOT hardcoded - so each
-#  built version, 'latest' and every tag, shows its own real number.
-#  The file holds the full string (e.g. '0.99.139', or with a dev
-#  bump '0.99.139.dev0'); 'version' is just its first two parts.
-_tagFile = Path(__file__).parent.parent / "worktoy-tag.txt"
+#  The header version is read from pyproject.toml, the same file the
+#  build takes its version from, so the docs always show the built
+#  version. Both 'release' and 'version' hold the full string.
+_pyproject = Path(__file__).parent.parent / "pyproject.toml"
 _handle = None
 try:
-  _handle = open(_tagFile, "r", encoding="utf-8")
+  _handle = open(_pyproject, "r", encoding="utf-8")
 except FileNotFoundError as exception:
-  raise FileNotFoundError(str(_tagFile)) from exception
+  raise FileNotFoundError(str(_pyproject)) from exception
 else:
-  release = _handle.read().strip()
+  release = ""
+  for _line in _handle:
+    if _line.lstrip().startswith("version") and "=" in _line:
+      release = _line.split("=", 1)[1].strip().strip("'\"")
+      break
 finally:
   try:
     _handle.close()
   except AttributeError:
     pass
 
-version = ".".join(release.split(".")[:2])
+version = release
 
 # ============================================================
 # General configuration

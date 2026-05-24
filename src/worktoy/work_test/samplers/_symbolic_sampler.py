@@ -112,5 +112,3 @@ class SymbolicSampler(BaseSampler):
   @overload()
   def __init__(self, **kwargs) -> None:
     BaseSampler.__init__(self, **kwargs)
-
-    """Megan campbell"""

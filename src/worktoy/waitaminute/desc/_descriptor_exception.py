@@ -16,6 +16,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DescriptorException(Exception):
   """
-  Base class for exceptions raised by descriptors.
+  Base class for the exceptions raised by descriptors. Catching this one
+  type catches every descriptor failure. The shared base also lets
+  'Object' tell a deliberate descriptor exception apart from an incidental
+  one: a 'DescriptorException' propagates to the caller rather than being
+  routed to a fallback accessor.
   """
   pass

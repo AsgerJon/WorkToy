@@ -140,28 +140,14 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   __valued_members__: Optional[dict[Any, Any]] = None
   __kee_num__: Optional[KeeMeta] = None
 
-  space: Field[KSpace] = Field()
   base: Field[KeeMeta] = Field()
+  space: Field[KSpace] = Field()
   mroNum: Field[tuple[KeeMeta, ...]] = Field()
-  members: Field[tuple[Any, ...]] = Field()
+  members: Field[tuple[KeeNum, ...]] = Field()
   valueType: Field[type] = Field()
-  namedMembers: Field[dict[str, KeeMeta]] = Field()
-  valuedMembers: Field[dict[Any, Any]] = Field()
-
-  #  Virtual Variables
-  if TYPE_CHECKING:  # pragma: no cover
-    #  Type-checker view: plain attributes, no descriptor protocol.
-    #  PyCharm cannot resolve metaclass-level descriptors through
-    #  '__get__', so we lie about the types at check time. Runtime
-    #  uses the 'else' branch below where the descriptors are real.
-    space: KSpace
-    base: KeeMeta
-    mroNum: tuple[KeeMeta, ...]
-    members: tuple[KeeMeta, ...]
-    valueType: type
-    namedMembers: dict[str, KeeMeta]
-    valuedMembers: dict[Any, KeeMeta]
-    keeNum: KeeMeta
+  namedMembers: Field[dict[str, KeeNum]] = Field()
+  valuedMembers: Field[dict[Any, KeeNum]] = Field()
+  keeNum: Field[KeeMeta] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -173,8 +159,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     else:
       raise TypeException('__namespace__', cls.__namespace__, KSpace)
 
-  # noinspection PyUnresolvedReferences
-  @space.GET  # PyCharm, wyd?
+  @space.GET
   def _getSpace(cls, **kwargs) -> KSpace:
     """Returns the namespace of 'keeNum'."""
     if cls.__name_space__ is None:
@@ -190,7 +175,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     else:
       mcls = type(cls)
       bases = [b for b in cls.space.__base_classes__ if isinstance(b, mcls)]
-      # ic(cls.space.__base_classes__, cls, mcls)
       if len(bases) != 1:
         if bases:
           infoSpec = """Enumerating classes derived from '%s', may not have 
@@ -207,8 +191,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       base = bases[0]
       cls.__base_class__ = cls if base.__name__ == 'KeeNum' else base
 
-  # noinspection PyUnresolvedReferences
-  @base.GET  # PyCharm, wyd?
+  @base.GET
   def _getBase(cls, **kwargs) -> KeeMeta:
     """Returns the nearest non-Object base of 'keeNum'."""
     if cls.__base_class__ is None:
@@ -218,10 +201,8 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       return cls._getBase(_recursion=True, )
     return cls.__base_class__
 
-  # noinspection PyUnresolvedReferences
-  @mroNum.GET  # PyCharm, wyd?
+  @mroNum.GET
   def _getMroNum(cls, ) -> tuple[KeeMeta, ...]:
-    """Returns the MRO of 'keeNum' filtered to KeeNum classes."""
     return () if cls.base is cls else (cls.base, *cls.base.mroNum,)
 
   def _createMembers(cls, ) -> None:
@@ -237,8 +218,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     cls.__registered_members__ = (*registry,)
     type.__setattr__(cls, '__allow_instantiation__', False)
 
-  # noinspection PyUnresolvedReferences
-  @members.GET  # PyCharm, wyd?
+  @members.GET
   def _getMembers(cls, **kwargs) -> tuple[Any, ...]:
     """Returns the registered enumeration members of 'keeNum'."""
     if cls.__registered_members__ is None:
@@ -248,20 +228,17 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       return cls._getMembers(_recursion=True, )
     return cls.__registered_members__
 
-  # noinspection PyUnresolvedReferences
-  @valueType.GET  # PyCharm, wyd?
+  @valueType.GET
   def _getValueType(cls, ) -> type:
     """Returns the value type of the enumeration."""
     type_ = None
     for member in cls.members:
-      if type_ is None:
+      if isinstance(type_, type):
+        if isinstance(member.value, type_):
+          continue
+        raise TypeException('value', member.value, type_)
+      else:
         type_ = type(member.value)
-        continue
-      if TYPE_CHECKING:  # pragma: no cover
-        assert isinstance(type_, type)
-      if isinstance(member.value, type_):
-        continue
-      raise TypeException('value', member.value, type_)
     if type_ is None:
       infoSpec = """KeeNum class '%s' has no members, so no 'valueType' 
       can be inferred. """
@@ -278,8 +255,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       cache[member.name.lower()] = member
     cls.__named_members__ = cache
 
-  # noinspection PyUnresolvedReferences
-  @namedMembers.GET  # PyCharm, wyd?
+  @namedMembers.GET
   def _getNamedMembers(cls, **kwargs) -> dict[str, Any]:
     if cls.__named_members__ is None:
       if kwargs.get('_recursion', False):
@@ -308,8 +284,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       return
     cls.__valued_members__ = dict(__unhashable__=member.value, )
 
-  # noinspection PyUnresolvedReferences
-  @valuedMembers.GET  # PyCharm, wyd?
+  @valuedMembers.GET
   def _getValuedMembers(cls, **kwargs) -> dict[Any, Any]:
     if cls.__valued_members__ is None:
       if kwargs.get('_recursion', False):
@@ -444,7 +419,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     """Creates the 'KeeMeta' class."""
     if '_root' in kw:
       del kw['_root']
-    #  noinspection PyTypeChecker
+    # noinspection PyTypeChecker
     return super().__new__(mcls, name, bases, space, **kw)
 
   def __init__(cls, name: str, *__, **_) -> None:
@@ -568,24 +543,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     if resolved is NotImplemented:
       raise KeeResolveError(cls, value)
     return resolved
-
-  class __Errata__:  # noqa: N801
-    """
-    This is to PyCharm's typing what samizdat was to the USSR.
-
-    See: https://www.britannica.com/technology/samizdat
-
-    We grant you a seat on the 'if TYPE_CHECKING' block, but we do not
-    grant you rank of "type hint".
-    """
-    base: Field[KeeMeta]
-    space: Field[KSpace]
-    mroNum: Field[tuple[KeeMeta, ...]]
-    members: Field[tuple[KeeNum, ...]]  # noqa
-    valueType: Field[type]
-    namedMembers: Field[dict[str, KeeNum]]  # noqa
-    valuedMembers: Field[dict[Any, KeeNum]]  # noqa
-    keeNum: KeeNum
 
 
 # @formatter:off

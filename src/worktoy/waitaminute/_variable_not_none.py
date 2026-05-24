@@ -13,18 +13,26 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class VariableNotNone(Exception):
-  """VariableNotNone should be raised when a variable is unexpectedly not
-  None."""
+  """VariableNotNone is raised when a variable expected to still be 'None'
+  already holds a value. It guards write-once initialisation: a slot that
+  must be assigned exactly once raises this exception on the second
+  assignment.
+
+  Attributes
+  ----------
+  name : str
+    The name of the variable that was unexpectedly not 'None'.
+  value : Any
+    The existing value found at that name.
+  """
 
   __slots__ = ('name', 'value')
 
   def __init__(self, *args) -> None:
-    """Initialize the VariableNotNone object."""
     self.name, self.value, *_ = [*args, None, None]
     Exception.__init__(self, )
 
   def __str__(self, ) -> str:
-    """Get the info spec."""
     infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
     None!"""
     valueStr = textFmt(str(self.value), )

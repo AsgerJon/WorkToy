@@ -67,10 +67,7 @@ class SymbolicName(Object):
 
   @words.GET
   def _getWords(self) -> StrTuple:
-    """
-    Getter-function for the 'words' component tuple. The private variable
-    '__part_words__' must be populated.
-    """
+    """The private variable '__part_words__' must be populated."""
     if self.__part_words__ is None:
       raise MissingVariable(self, 'words', tuple)
     return self.__part_words__

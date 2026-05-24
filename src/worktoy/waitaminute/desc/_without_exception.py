@@ -1,6 +1,8 @@
 """
-WithoutException provides a custom exception raised to indicate that a
-context-only method called without descriptor-context.
+WithoutException is raised when a context-only descriptor method is used
+outside any active descriptor context, such as reading 'self.instance' or
+calling 'exitContext' on 'Object' when no '(instance, owner)' frame is on
+the context stack.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -14,8 +16,16 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class WithoutException(RuntimeError):
   """
-  WithoutException provides a custom exception raised to indicate a call
-  without context made to a context-only method.
+  WithoutException is raised when a context-only descriptor method is used
+  outside any active descriptor context. 'Object' raises it when
+  'self.instance' or 'self.owner' is read with no frame on the context
+  stack, and when 'exitContext' is called on an empty stack (an unpaired
+  'createContext' / 'exitContext').
+
+  Attributes
+  ----------
+  desc : object
+    The descriptor whose context was missing.
   """
 
   __slots__ = ('desc',)
