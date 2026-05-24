@@ -42,7 +42,7 @@ jobs:
           pytest --cov --cov-branch --cov-report=xml
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.14' }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: AsgerJon/WorkToy
@@ -107,7 +107,7 @@ jobs:
           git push origin HEAD:${{ github.ref }}
 
       - name: GitHub pre-release
-        uses: ncipollo/release-action@v1.14.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ env.VERSION_INFO }}
           name: dev ${{ env.VERSION_INFO }}
