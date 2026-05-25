@@ -1,7 +1,8 @@
 """
 FlexCallHook subclasses 'AbstractSpaceHook' from the
 'worktoy.mcls.space_hooks' module. It detects plain functions defined in
-the class body. During class creation,
+the class body and replaces them with 'flexCall' wrappers during class
+creation.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -21,7 +22,8 @@ class FlexCallHook(AbstractSpaceHook):
   """
   FlexCallHook subclasses 'AbstractSpaceHook' from the
   'worktoy.mcls.space_hooks' module. It detects plain functions defined in
-  the class body. During class creation,
+  the class body and replaces them with 'flexCall' wrappers during
+  class creation.
   """
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:

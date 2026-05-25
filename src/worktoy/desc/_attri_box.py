@@ -239,7 +239,7 @@ class AttriBox(BaseDescriptor[T]):
     self.__field_type__ = fieldType
     return self  # noqa
 
-  def __call__(self, *args: Any, **kwargs: Any) -> Any:
+  def __call__(self, *args, **kwargs) -> Any:
     """Bind constructor arguments for deferred field construction.
 
     The 'AttriBox[T](*args, **kw)' idiom is a two-step

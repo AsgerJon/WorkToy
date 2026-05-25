@@ -326,7 +326,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     """Prepares the namespace for the class."""
     return KSpace(mcls, name, bases, **kw)
 
-  def __call__(cls: KeeMeta, *args: Any, **kwargs: Any) -> T:
+  def __call__(cls: KeeMeta, *args, **kwargs) -> T:
     """
     Resolves a member, or instantiates one during class creation.
     """

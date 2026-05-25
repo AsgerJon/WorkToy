@@ -12,6 +12,7 @@ descriptor-context.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._fast_box import FastBox
 from ._base_descriptor import BaseDescriptor
 from ._alias import Alias
 from ._field import Field
@@ -20,6 +21,7 @@ from ._fix_box import FixBox
 from ._symbolic_name import SymbolicName
 
 __all__ = [
+  'FastBox',
   'BaseDescriptor',
   'Alias',
   'Field',

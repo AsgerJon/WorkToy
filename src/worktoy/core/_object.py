@@ -207,7 +207,7 @@ class Object(metaclass=MetaType):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, *args: Any, **kwargs: Any) -> None:
+  def __init__(self, *args, **kwargs) -> None:
     object.__init__(self)
     self.__pos_args__ = args
     self.__key_args__ = kwargs

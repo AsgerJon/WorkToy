@@ -5,15 +5,12 @@ coercion for speed. The tests pin the value contract (lazy default,
 fresh per-instance defaults, strict typing, delete semantics) and the
 claims that motivated the design: no context machinery, yet nested
 and per-instance access stay correct.
-
-FastBox is a prototype not yet exported from 'worktoy.desc', so it is
-imported from its private module.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc._fast_box import FastBox
+from worktoy.desc import FastBox
 from worktoy.waitaminute import TypeException, MissingVariable
 from . import DescTest
 

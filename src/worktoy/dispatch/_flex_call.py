@@ -91,7 +91,7 @@ def flexCall(func: FunctionType) -> FunctionType:
   minPos: int = code.co_argcount - len(func.__defaults__ or ())
   posNames: tuple[str, ...] = code.co_varnames[:maxPos]
 
-  def wrapper(*args: Any, **kwargs: Any) -> Any:
+  def wrapper(*args, **kwargs) -> Any:
     n: int = len(args)
     if n < minPos:
       missing: tuple[str, ...] = posNames[n:minPos]

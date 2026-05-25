@@ -72,7 +72,7 @@ class overload:  # NOQA
 
   2. When two overloads can both match the same call by
      isinstance, the one registered first wins. The dispatcher does
-     not rank by specificity — it cannot, since a class with a
+     not rank by specificity - it cannot, since a class with a
      custom '__instancecheck__' may legitimately want to absorb
      calls that would otherwise hit a "more specific" overload.
      Order your decorators to match the dispatch you want; treat

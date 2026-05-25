@@ -1,5 +1,5 @@
 """
-ARGS subclasses 'Sentinel' and provides a placeholder for a starred
+ARGS uses a Sentinel metaclass and provides a placeholder for a starred
 argument in an overload signature.
 """
 #  AGPL-3.0 license
@@ -39,7 +39,7 @@ class _MetaARGS(_Sentinel):
 
 class ARGS(metaclass=_MetaARGS):
   """
-  ARGS subclasses 'Sentinel' and provides a placeholder for a starred
+  ARGS uses a Sentinel metaclass and provides a placeholder for a starred
   argument in an overload signature.
   """
 

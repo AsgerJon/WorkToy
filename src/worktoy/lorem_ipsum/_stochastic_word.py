@@ -1,5 +1,5 @@
 """
-StochasticWord subclasses 'BaseGenerator' and exposes a weighted
+StochasticWord subclasses 'BaseObject' and exposes a weighted
 collection of words as a stochastic variable.
 """
 #  AGPL-3.0 license
@@ -101,11 +101,10 @@ class StochasticWord(BaseObject):
 
   def _createMinLen(self, ) -> None:
     """Cache the shortest word length present in 'byLengths' on the
-    concrete class, skipping the leading entry which holds
-    punctuation."""
+    concrete class."""
     cls = type(self)
     lengths = (*dict.keys(self.byLengths, ),)
-    setattr(cls, '__min_len__', min(lengths[1:]))
+    setattr(cls, '__min_len__', min(lengths))
 
   @minLen.GET
   def _getMinLen(self, **kwargs) -> int:

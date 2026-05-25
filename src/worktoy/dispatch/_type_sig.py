@@ -76,10 +76,10 @@ class TypeSig:
   before reaching the metaclass's '__new__' would leak a stack
   entry (Python provides no hook between class-body failure and
   exception propagation). Frame walking has no global state to
-  leak — a failed frame simply drops off the call stack on its own.
+  leak - a failed frame simply drops off the call stack on its own.
 
   Outside an active class-body context, '__hash__' raises
-  'TypeError' — the same fail-loud guard, narrowed to actual
+  'TypeError' - the same fail-loud guard, narrowed to actual
   misuse (code paths that bypass the metaclass and try to hash a
   sentinel-bearing 'TypeSig' on their own). Equality stays enabled
   unconditionally so that list-based dedup ('Dispatcher.addSigFunc'

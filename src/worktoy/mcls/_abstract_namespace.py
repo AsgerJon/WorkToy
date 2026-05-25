@@ -31,15 +31,16 @@ class AbstractNamespace(dict):
   metaprogramming behavior.
 
   The core feature of AbstractNamespace is its support for modular
-  hook-based behavior. Hooks are instances of subclasses of AbstractHook,
-  declared directly within the body of the namespace class. Upon
+  hook-based behavior. Hooks are instances of subclasses of
+  AbstractSpaceHook, declared directly within the body of the namespace
+  class. Upon
   declaration, each hook registers itself with the namespace via the
   descriptor protocol.
 
   These hooks allow interception and transformation of key events during
   class construction, including symbol access, assignment, and final
   namespace compilation. For details on available hook methods and their
-  intended usage, refer to the AbstractHook documentation.
+  intended usage, refer to the AbstractSpaceHook documentation.
 
   This design allows complex functionality, such as decorator-based
   overload resolution and placeholder replacement, to be cleanly

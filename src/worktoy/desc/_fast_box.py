@@ -21,7 +21,7 @@ owning instance must have a '__dict__' (no '__slots__'-only owners).
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING, TypeVar, Generic, overload
 
 from ..waitaminute import TypeException, MissingVariable
 
@@ -50,6 +50,15 @@ class FastBox(Generic[T]):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  if TYPE_CHECKING:  # pragma: no cover
+    # @formatter:off
+    @overload
+    def __init__(self, value: T) -> None: ...
+    @overload
+    def __init__(self, ) -> None: ...
+    def __init__(self, *args, **kwargs) -> None: ...
+    # @formatter:on
+
   @classmethod
   def __class_getitem__(cls, fieldType: type) -> FastBox:
     """Capture the field type via 'FastBox[T]'."""
@@ -57,7 +66,7 @@ class FastBox(Generic[T]):
     self.__field_type__ = fieldType
     return self
 
-  def __call__(self, *args: Any, **kwargs: Any) -> Self:
+  def __call__(self, *args, **kwargs) -> Self:
     """Capture the arguments used to build the default value."""
     self.__default_args__ = args
     self.__default_kwargs__ = kwargs
@@ -83,12 +92,17 @@ class FastBox(Generic[T]):
       return value
 
   def __set__(self, instance: Any, value: Any) -> None:
+    if TYPE_CHECKING:  # pragma: no cover
+      assert isinstance(self.__field_type__, type)
+      assert isinstance(self.__field_name__, str)
     if isinstance(value, self.__field_type__):
       instance.__dict__[self.__private_name__] = value
       return
     raise TypeException(self.__field_name__, value, self.__field_type__)
 
   def __delete__(self, instance: Any) -> None:
+    if TYPE_CHECKING:  # pragma: no cover
+      assert isinstance(self.__field_name__, str)
     try:
       del instance.__dict__[self.__private_name__]
     except KeyError as keyError:

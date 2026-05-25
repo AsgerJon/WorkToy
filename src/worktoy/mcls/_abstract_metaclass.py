@@ -204,14 +204,14 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   def __iter__(cls) -> Any:
     if cls.__class_iter__ is METACALL:
       infoSpec = """type object '%s' is not iterable"""
-      info = infoSpec % type(cls).__name__
+      info = infoSpec % cls.__name__
       raise TypeError(info)
     return cls.__class_iter__()
 
   def __next__(cls) -> Any:
     if cls.__class_next__ is METACALL:
       infoSpec = """type object '%s' is not an iterator"""
-      info = infoSpec % type(cls).__name__
+      info = infoSpec % cls.__name__
       raise TypeError(info)
     return cls.__class_next__()
 
@@ -243,7 +243,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
           return True
       return False
     infoSpec = """argument of type '%s' is not iterable"""
-    info = infoSpec % type(cls).__name__
+    info = infoSpec % cls.__name__
     raise TypeError(info)
 
   def __len__(cls) -> int:
@@ -252,7 +252,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     if cls.__class_iter__ is not METACALL:
       return sum(1 for _ in cls)  # Count items in the iterator
     infoSpec = """type object '%s' has no len()"""
-    info = infoSpec % type(cls).__name__
+    info = infoSpec % cls.__name__
     raise TypeError(info)
 
   def __hash__(cls) -> int:
@@ -273,7 +273,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   #  DO NOT REMOVE THIS COMMENTED OUT METHOD  (not related to above)
   # def __getitem__(keeNum, item: Any) -> Any:
   #   """
-  #   This method is intentionally commented out — not removed — to ensure
+  #   This method is intentionally commented out, not removed, to ensure
   #   discoverability and traceability.
   #   """
   #

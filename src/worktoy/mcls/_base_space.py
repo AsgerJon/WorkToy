@@ -33,7 +33,8 @@ class BaseSpace(AbstractNamespace):
   placeholder during class creation.
 
   The overload mechanism and other behavior are defined in
-  `worktoy.mcls.hooks`. This namespace is returned from BaseMeta.__prepare__.
+  'worktoy.mcls.space_hooks'. This namespace is returned from
+  BaseMeta.__prepare__.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -41,8 +42,6 @@ class BaseSpace(AbstractNamespace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __classmethod_map__ = dict()
-  __static_map__ = dict()
   __overload_map__ = None
   __variadic_overload_map__ = None
   __fallback_map__ = None

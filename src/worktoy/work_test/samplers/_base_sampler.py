@@ -201,7 +201,7 @@ class BaseSampler(BaseObject, ABC):
   def _getTable(self, *args, **kwargs) -> ValueTuples:
     """
     This method generates 'N' tuples each with 'n' sample values where 'N'
-    and 'n' are specified by the 'self.count' and 'self.tupleCount'
+    and 'n' are specified by the 'self.rowCount' and 'self.colCount'
     variables, respectively. Subclasses reimplementing this method are
     responsible for ensuring that the correct number of tuples and sample
     values are included in the generated tuples.
@@ -244,5 +244,5 @@ class BaseSampler(BaseObject, ABC):
     return infoSpec % (clsName, typeName, self.colCount, self.rowCount)
 
   def __repr__(self, ) -> str:
-    infoSpec = """%s(count=%d, tupleCount=%d)"""
+    infoSpec = """%s(colCount=%d, rowCount=%d)"""
     return infoSpec % (type(self).__name__, self.colCount, self.rowCount)

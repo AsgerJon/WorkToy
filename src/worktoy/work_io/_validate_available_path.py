@@ -1,4 +1,4 @@
-"""The 'validateExistingFile' function validates that a given 'str' object
+"""The 'validateAvailablePath' function validates that a given 'str' object
 is a valid file or directory path that does not already exist. """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -28,8 +28,8 @@ def validateAvailablePath(path: Path, **kwargs) -> str:
     str: The validated path.
 
   Raises:
+    PathSyntaxException: If the path is not absolute.
     FileExistsError: If the file or directory already exists.
-    NotADirectoryError: If the path is not a directory.
   """
   if not os.path.isabs(path):
     raise PathSyntaxException(path)

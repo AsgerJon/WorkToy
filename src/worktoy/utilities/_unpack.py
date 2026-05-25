@@ -14,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-def unpack(*args: Any, **kwargs) -> tuple[Any, ...]:
+def unpack(*args, **kwargs) -> tuple[Any, ...]:
   """Flatten nested iterables in positional arguments.
 
   Iterables are expanded recursively; 'str' and 'bytes' are treated

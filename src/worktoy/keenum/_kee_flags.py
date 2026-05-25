@@ -14,22 +14,15 @@ class FileAccess(KeeFlags):
   #  FileAccess demonstrates real-world bitmask flags for file permissions.
 
   #  Enumerations
-  READ = Kee[int](0b0001)
-  WRITE = Kee[int](0b0010)
-  EXECUTE = Kee[int](0b0100)
-  DELETE = Kee[int](0b1000)
-
-  __null_value__ = 0b1111
+  READ = KeeFlag()
+  WRITE = KeeFlag()
+  EXECUTE = KeeFlag()
+  DELETE = KeeFlag()
 
   - The NULL Member -
 While KeeNum enumerations may implement a member called 'NULL', KeeFlags
-enumerations automatically has a member called 'NULL' which equals the
-bitwise negation of all flags defined in the enumeration. KeeFlags
-enumerations may provide a specific value '__null_value__'. If this value
-is passed to the member resolution workflow, and no member equals it,
-the 'fromValue' method will return the NULL member. If the
-'__null_value__' does equal the value of a member, that member is returned
-instead.
+enumerations automatically have a member called 'NULL' for which no
+flags are HIGH.
 
   - Flags and Names -
 Each KeeFlags enumeration has a unique combination of flags that are HIGH.

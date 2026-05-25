@@ -162,7 +162,7 @@ class Permuter(CallMeMaybe):
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def invoke(self, func: Func, *args: Any, **kwargs: Any) -> Any:
+  def invoke(self, func: Func, *args, **kwargs) -> Any:
     """Forward to 'func' after restoring args from arranged order to
     canonical order."""
     return func(*self.arrangement.restoreFrom(*args), **kwargs)

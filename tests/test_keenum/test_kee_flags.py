@@ -12,14 +12,14 @@ from worktoy.waitaminute import MissingVariable, TypeException
 from . import KeeTest
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Type
+  pass
 
 
 class TestKeeFlags(KeeTest):
   """TestKeeFlags class tests the KeeFlags class functionality."""
 
-  exampleFlags: list[Type[KeeFlags]]
-  exampleValueTypes: list[type]
+  # exampleFlags: list[Type[KeeFlags]]
+  # exampleValueTypes: list[type]
 
   def testIndices(self) -> None:
     """Tests the members of the example KeeFlags classes."""
@@ -43,9 +43,10 @@ class TestKeeFlags(KeeTest):
       self.assertTrue(hasattr(cls, 'memberList'))
       self.assertTrue(isinstance(cls.memberList, list))
       for (i, (foo, bar)) in enumerate(zip(cls.memberList, cls)):
-        fromAttr = getattr(cls, bar.name)
-        self.assertIs(foo, getattr(cls, bar.name))
-        self.assertIs(bar, getattr(cls, foo.name))
+        fromBarAttr = getattr(cls, bar.name)
+        fromFooAttr = getattr(cls, foo.name)
+        self.assertIs(foo, fromBarAttr)
+        self.assertIs(bar, fromFooAttr)
 
   def testMemberDict(self, ) -> None:
     """
@@ -541,3 +542,21 @@ class TestKeeFlags(KeeTest):
           self.assertFalse(member)
         else:
           self.assertTrue(member)
+
+  def test_member_to_member(self, ) -> None:
+    """
+    Tests that a member can be resolved to itself.
+    """
+    for cls in self.exampleFlags:
+      for member in cls:
+        fromMember = cls._resolveMember(member)
+        self.assertIs(fromMember, member)
+
+  def test_bad_names(self, ) -> None:
+    """
+    Tests that bad names raise 'KeyError' when passed to '_resolveNames'.
+    """
+    for cls in self.exampleFlags:
+      with self.assertRaises(KeyError) as context:
+        _ = cls._resolveNames("""Bro, it's me, lemme in!""")
+      self.assertIn("""has no member with name""", str(context.exception))

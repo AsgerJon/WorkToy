@@ -60,7 +60,7 @@ class KeeFlagsSpace(BaseSpace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def addBaseFlag(self, name: str, keeFlag: KeeFlag, **kwargs) -> None:
-    """Adds a """
+    """Adds a base-class flag to the inherited base-flags dict."""
     existing = self._getBaseFlags()
     existing[name] = keeFlag
     self.__base_flags__ = existing

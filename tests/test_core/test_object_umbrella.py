@@ -96,9 +96,9 @@ class TestObjectUmbrella(CoreTest):
 
     self.assertIsInstance(Object.directory, Directory)
     self.assertTrue(os.path.exists(Object().directory))
-    with self.assertRaises(ReadOnlyError) as context:
+    with self.assertRaises(ReadOnlyError):
       Object().directory = 'breh'
-    with self.assertRaises(ProtectedError) as context:
+    with self.assertRaises(ProtectedError):
       del Object().directory
 
   def testKeyArgs(self, ) -> None:

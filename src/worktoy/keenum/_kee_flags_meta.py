@@ -190,7 +190,13 @@ class KeeFlagsMeta(BaseMeta):
     raise KeyError(textFmt(info))
 
   def _resolveNames(cls, *names: str) -> KeeFlags:
-    return cls.memberDict[frozenset(names)]
+    identifier = frozenset(name.upper() for name in names)
+    member = cls.memberDict.get(identifier)
+    if member is None:
+      infoSpec = """KeeFlags class '%s' has no member with names: '%s'!"""
+      info = infoSpec % (cls.__name__, str.join("', '", names))
+      raise KeyError(textFmt(info))
+    return member
 
   def _resolveValue(cls, value: Any) -> KeeFlags:
     for member in cls:
@@ -206,6 +212,8 @@ class KeeFlagsMeta(BaseMeta):
     if len(identifier) > 1:
       return cls._resolveNames(*identifier)
     identifier = identifier[0]
+    if isinstance(identifier, cls):
+      return identifier
     if isinstance(identifier, (tuple, list, frozenset, set)):
       return cls._resolveNames(*identifier)
     if isinstance(identifier, int):

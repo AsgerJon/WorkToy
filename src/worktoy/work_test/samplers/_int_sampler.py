@@ -1,5 +1,5 @@
 """
-IntSampler subclasses 'BaseSample' and provides 'int' samplers.
+IntSampler subclasses 'BaseSampler' and provides 'int' samplers.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -25,7 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class IntSampler(BaseSampler):
   """
-  IntSampler subclasses 'BaseSample' and provides 'int' samplers.
+  IntSampler subclasses 'BaseSampler' and provides 'int' samplers.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

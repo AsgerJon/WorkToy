@@ -121,7 +121,7 @@ class CallMeMaybe:
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __call__(self, *args: Any, **kwargs: Any) -> Any:
+  def __call__(self, *args, **kwargs) -> Any:
     func = self._getWrappedFunction()
     return self.invoke(func, *args, **kwargs)
 
@@ -164,7 +164,7 @@ class CallMeMaybe:
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def invoke(self, func: Callable, *args: Any, **kwargs: Any) -> Any:
+  def invoke(self, func: Callable, *args, **kwargs) -> Any:
     """
     This method specifies how the wrapped function object 'func' receives
     the given arguments. The default simply passes them through, leaving

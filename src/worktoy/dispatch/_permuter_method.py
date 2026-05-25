@@ -1,7 +1,7 @@
 """
 PermuterMethod subclasses 'Permuter' from 'worktoy.dispatch' and provides
 a wrapper that extracts the calling 'instance' object and passes only
-remaining positional arguments through the 'Router' object.
+remaining positional arguments through the arrangement.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -19,7 +19,7 @@ class PermuterMethod(Permuter):
   """
   PermuterMethod subclasses 'Permuter' from 'worktoy.dispatch' and provides
   a wrapper that extracts the calling 'instance' object and passes only
-  remaining positional arguments through the 'Router' object.
+  remaining positional arguments through the arrangement.
   """
 
   def invoke(self, func, instance=None, *args, **kwargs) -> Any:

@@ -14,10 +14,10 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  pass
 
 
-def textFmt(*args: Any, **kwargs: Any) -> str:
+def textFmt(*args, **kwargs) -> str:
   """Collapse whitespace and honor explicit '<br>'/'<tab>' tokens.
 
   Joins 'args' with single spaces, replaces any run of

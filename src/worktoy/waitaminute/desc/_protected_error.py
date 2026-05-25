@@ -47,12 +47,11 @@ class ProtectedError(DescriptorException):
   def __str__(self, ) -> str:
     oldValue = self.oldVal
     desc = self.desc
-    fieldOwner = getattr(self.instance, '__field_owner__', None)
-    fieldName = getattr(desc, '__field_name__', None)
-    infoSpec = """Attempted to delete protected attribute '%s.%s' 
+    ownerName = type(self.instance).__name__
+    fieldName = getattr(desc, '__field_name__', 'object')
+    infoSpec = """Attempted to delete protected attribute '%s.%s'
       with value: '%s'"""
-    info = infoSpec % (fieldOwner, fieldName, str(oldValue))
-
+    info = infoSpec % (ownerName, fieldName, str(oldValue))
     return textFmt(info)
 
   __repr__ = __str__

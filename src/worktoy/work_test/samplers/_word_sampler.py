@@ -1,5 +1,5 @@
 """
-WordSampler subclasses 'BaseClass' and provides word samplers.
+WordSampler subclasses 'BaseSampler' and provides word samplers.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class WordSampler(BaseSampler):
   """
-  WordSampler subclasses 'BaseClass' and provides word samplers.
+  WordSampler subclasses 'BaseSampler' and provides word samplers.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -1,6 +1,6 @@
 """
-The 'worktoy.waitaminute.ez' module provides custom exception classes used
-by the 'worktoy.ezdata' module.
+The 'worktoy.waitaminute.ezdata' module provides custom exception
+classes used by the 'worktoy.ezdata' module.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

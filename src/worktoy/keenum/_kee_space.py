@@ -35,7 +35,6 @@ class KeeSpace(BaseSpace):
   __enumeration_members__ = None
   __member_type__ = None
   __num_list__ = None
-  __null_value__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

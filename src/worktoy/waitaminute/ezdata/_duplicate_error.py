@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import textFmt
+
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
@@ -31,6 +33,6 @@ class DuplicateError(AttributeError):
     infoSpec = """In the class body of 'EZData' class '%s', the already 
     existing attribute name '%s' was attempted to be defined again!"""
     clsName = self.space.getClassName()
-    return infoSpec % (clsName, self.name)
+    return textFmt(infoSpec % (clsName, self.name))
 
   __repr__ = __str__

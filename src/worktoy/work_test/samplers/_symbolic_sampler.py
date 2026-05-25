@@ -1,5 +1,5 @@
 """
-SymbolicSampler subclasses 'BaseSample' and provides samplers of symbolic
+SymbolicSampler subclasses 'BaseSampler' and provides samplers of symbolic
 data.
 """
 #  AGPL-3.0 license
@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class SymbolicSampler(BaseSampler):
   """
-  SymbolicSampler subclasses 'BaseSample' and provides samplers of symbolic
+  SymbolicSampler subclasses 'BaseSampler' and provides samplers of symbolic
   data.
   """
 

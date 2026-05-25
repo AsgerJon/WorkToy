@@ -1,5 +1,5 @@
 """
-LoremSampler subclasses 'BaseSample' and provides lorem ipsum samplers.
+LoremSampler subclasses 'BaseSampler' and provides lorem ipsum samplers.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class LoremSampler(BaseSampler):
   """
-  LoremSampler subclasses 'BaseSample' and provides lorem ipsum samplers.
+  LoremSampler subclasses 'BaseSampler' and provides lorem ipsum samplers.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

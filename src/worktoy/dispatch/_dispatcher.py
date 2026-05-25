@@ -39,7 +39,7 @@ class Dispatcher(Object):
   Calls go through up to three resolution tiers, short-circuiting at
   the first hit:
 
-  1. FASTEST — a single 'dict.get' on the exact concrete-type
+  1. FASTEST - a single 'dict.get' on the exact concrete-type
      signature of the call. This is the only tier that runs when the
      argument types are an exact match for a registered overload
      (e.g. 'f(69, 420)' against '@overload(int, int)'). Cost is one
@@ -47,21 +47,21 @@ class Dispatcher(Object):
      whose 'TypeSig' matches the exact concrete types the caller
      supplies.
 
-  2. FAST — iterates every registered signature in registration
+  2. FAST - iterates every registered signature in registration
      order, isinstance-checks each argument, and returns the first
      match. Cost is O(N) in the number of registered overloads. This
      tier only runs when FASTEST misses, i.e. the call relies on
      subclass-via-isinstance matching rather than exact type
      identity.
 
-  3. SLOW — same iteration as FAST but using 'typeCast' instead of
+  3. SLOW - same iteration as FAST but using 'typeCast' instead of
      'isinstance'. Cost is O(N) plus a cast attempt per signature
      per argument. This tier only runs when FAST also produced no
      candidates, i.e. the call relies on flexible type coercion
      ('@overload(int)' matching '"42"' via cast).
 
   Match selection in FAST and SLOW is first-registered-wins. The
-  dispatcher does not rank candidates by "specificity" — it cannot,
+  dispatcher does not rank candidates by "specificity" - it cannot,
   in general. A metaclass with a custom '__instancecheck__' can make
   'isinstance(x, Number)' true for 'int' values intentionally, and
   the dispatcher has no way to tell whether the user meant 'Number'
@@ -75,9 +75,9 @@ class Dispatcher(Object):
   Performance contract
   --------------------
   FASTEST is roughly one or two orders of magnitude faster than FAST
-  or SLOW on a non-trivial dispatcher. Imprecise overloads — those
+  or SLOW on a non-trivial dispatcher. Imprecise overloads - those
   registered against abstract bases, broad union types, or types
-  the caller is unlikely to supply directly — force every call to
+  the caller is unlikely to supply directly - force every call to
   fall through FASTEST and into the FAST/SLOW iteration paths. For
   hot dispatch code this is a real cost, not a micro-optimization.
 
@@ -155,7 +155,7 @@ class Dispatcher(Object):
     finalizer = self._getFinalizerFunction()
     dispatcher = self
 
-    def dispatch(instance: Any, *args: Any, **kwargs: Any) -> Any:
+    def dispatch(instance: Any, *args, **kwargs) -> Any:
       try:
         argSig = TypeSig.fromArgs(*args, )
         func = sigFuncMap.get(argSig, None)
@@ -335,7 +335,7 @@ class Dispatcher(Object):
     for dispatching against the registered signatures:
 
     Class-level access ('Owner.attr') returns the compiled dispatch
-    function with signature '(instance, *args, **kw)' — the same
+    function with signature '(instance, *args, **kw)' - the same
     object Python would have produced for a plain method, so
     'Owner.attr(obj, ...)' dispatches against 'obj' as the first
     argument. The compiled function is built lazily by
@@ -343,7 +343,7 @@ class Dispatcher(Object):
 
     Instance-level access ('obj.attr') returns a bound 'MethodType'
     wrapping that compiled function. The bound object is created on
-    first access and cached on the instance under a mangled key
+    first access and cached on the instance under a reserved key
     derived from '_getCachedKey', so subsequent accesses on the
     same instance return the same bound object.
 

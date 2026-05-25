@@ -1,5 +1,5 @@
 """
-FloatSampler subclasses 'IntSample' and provides 'float' samplers.
+FloatSampler subclasses 'IntSampler' and provides 'float' samplers.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class FloatSampler(IntSampler):
   """
-  FloatSampler subclasses 'IntSample' and provides 'float' samplers.
+  FloatSampler subclasses 'IntSampler' and provides 'float' samplers.
   """
 
   #  Fallback Variables

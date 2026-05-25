@@ -39,4 +39,4 @@ class Directory:
 
   def __delete__(self, instance: Any) -> Never:
     from worktoy.waitaminute.desc import ProtectedError
-    raise ProtectedError(self, instance, )
+    raise ProtectedError(instance, self, )
