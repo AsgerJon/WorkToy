@@ -59,12 +59,6 @@ class AbstractSpaceHook(Object):
     Called during '__init__' of the namespace object. This phase does
     not allow changes to the namespace. Raise an exception to interrupt.
 
-  - 'setAnnotationPhase(self, key, value) -> Any'
-    Called when the namespace encounters an annotation. With
-    'from __future__ import annotations' enabled, this method may be
-    called with a string naming an as-yet unavailable type. The return
-    value is ignored.
-
   - 'setItemPhase(self, key, value, oldValue) -> bool'
     Called just before a name is set in the namespace. Returning True
     blocks the default behavior.
@@ -121,16 +115,11 @@ class AbstractSpaceHook(Object):
     namespace object. This phase does not allow changes to the namespace,
     to interrupt the flow, raise an exception. """
 
-  def setAnnotationPhase(self, key: str, value: Any, ) -> Any:
-    """Hook for setAnnotation. This is called when the namespace encounters
-    an annotation. The default implementation does nothing and returns the
-    value unchanged. If you want to block the annotation, raise an exception.
-    """
-
   def getItemPhase(self, key: str, value: Any, ) -> bool:
-    """Hook for getItem. This is called before the __getitem__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns False. """
+    """Hook run during '__getitem__', after the value is fetched and
+    before it is returned. The return value is ignored (unlike
+    'setItemPhase'); raise an exception to interrupt. The default
+    implementation does nothing. """
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """Hook for setItem. This is called before the __setitem__ method of
@@ -138,15 +127,15 @@ class AbstractSpaceHook(Object):
     and returns False. """
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:
-    """Hook for preCompile. This is called before the __init__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns the contents unchanged. """
+    """Hook run during 'compile()', before the class-body names are
+    merged into the namespace dict. Receives that dict and must return
+    it; the default returns it unchanged. """
     return compiledSpace
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:
-    """Hook for postCompile. This is called after the __init__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns the contents unchanged. """
+    """Hook run during 'compile()', after the class-body names are
+    merged into the namespace dict. Receives the assembled dict and
+    must return it; the default returns it unchanged. """
     return compiledSpace
 
   def newClassPhase(self, cls: Meta, ) -> Meta:  # NOQA
@@ -171,9 +160,9 @@ class AbstractSpaceHook(Object):
 
   def __get__(self, instance: ASpace, owner: Space, **kwargs) -> Any:
     """
-    Descriptor protocol method. Returns the bound hook instance with
-    `space` and `spaceClass` attributes set to the current namespace
-    instance and its class.
+    Descriptor get. Sets '__space_object__' to the current namespace
+    instance and returns the hook, so the 'space' property resolves to
+    that namespace during the hook's calls.
     """
     self.__space_object__ = instance
     return self

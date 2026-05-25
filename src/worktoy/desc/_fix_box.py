@@ -1,7 +1,7 @@
 """
-FixBox subclasses 'AttriBox' and provides a descriptor for immutable
-attributes. The only change reimplemented is that setting is only allowed
-when no value has been set before.
+FixBox subclasses 'AttriBox' and provides a descriptor for write-once
+attributes. Two methods change: a second assignment raises
+'WriteOnceError', and deletion is disabled (it raises 'ProtectedError').
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -19,9 +19,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class FixBox(AttriBox):
   """
-  FixBox subclasses 'AttriBox' and provides a descriptor for immutable
-  attributes. The only change reimplemented is that setting is only allowed
-  when no value has been set before.
+  FixBox subclasses 'AttriBox' and provides a descriptor for write-once
+  attributes. Two methods change: a second assignment raises
+  'WriteOnceError', and deletion is disabled (it raises 'ProtectedError').
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

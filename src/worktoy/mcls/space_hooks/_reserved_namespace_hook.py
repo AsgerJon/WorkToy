@@ -67,8 +67,9 @@ class ReservedNamespaceHook(AbstractSpaceHook):
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    The setItemHook method is called when an item is set in the
-    namespace.
+    Called before a name is set in the namespace. Raises
+    'ReservedName' when 'key' is a reserved name that is already
+    present in the namespace; otherwise returns False.
     """
     if key in self.reservedNames and key in self.space:
       raise ReservedName(key)

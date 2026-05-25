@@ -24,9 +24,10 @@ class TestClassResolve(KeeTest):
 
   def test_class_resolve_returning_not_implemented(self) -> None:
     """
-    Test that a 'KeeNum' enumeration implementing the '__class_resolve__'
-    method that raises 'KeeResolveError' is properly handled by the
-    'KeeMeta' metaclass and that the fallback resolvers are attempted.
+    Test a 'KeeNum' whose '__class_resolve__' returns 'NotImplemented'
+    for identifiers it does not handle: 'KeeMeta' falls through to the
+    remaining resolvers, and resolution raises 'KeeResolveError' when
+    none succeed.
     """
 
     class Cardinal(KeeNum):

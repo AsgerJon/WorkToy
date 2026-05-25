@@ -1,12 +1,13 @@
 """
-KeeFlags enumerations all combinations of boolean valued flags. It
-dynamically adds instances of KeeFlags for each boolean valued entry. The
-result is a KeeNum-like enumeration consisting of all possible combinations
-of boolean flags.
+KeeFlags enumerates every combination of a set of boolean flags. Each
+subclass declares one 'KeeFlag()' per single-bit flag, and the
+metaclass adds one member for every combination of those flags. The
+result is a KeeNum-like enumeration whose members are all the flag
+combinations.
 
-Each enumeration of the KeeFlags class is created at class creation time.
-This means that the number of enumerations increase exponentially with
-number of flags included. This presents no problem for the intended uses.
+Every member is created at class-creation time, so the number of
+members grows exponentially with the number of flags. This presents no
+problem for the intended uses.
 For example the FileAccess enumeration used in the test suite:
 
 
@@ -24,25 +25,34 @@ While KeeNum enumerations may implement a member called 'NULL', KeeFlags
 enumerations automatically have a member called 'NULL' for which no
 flags are HIGH.
 
-  - Flags and Names -
-Each KeeFlags enumeration has a unique combination of flags that are HIGH.
-The 'flags' and 'names' descriptors when accessed through a member returns
-a list of the flags or names respectively that are HIGH for that member.
+  - Flags, Highs, Lows, and Names -
+Each member corresponds to a unique combination of flags that are HIGH.
+Accessed through a member:
 
-For example, 'FileAccess.READ_WRITE.flags' returns the '.READ' and
-'.WRITE' single bit flags that are HIGH for the 'FileAccess.READ_WRITE'
-member. The 'names' descriptor returns the names of the flags that
-are HIGH for the member, such as 'READ' and 'WRITE'.
+- 'flags' returns the list of all single-bit flags declared on the
+  class, not just the HIGH ones (it mirrors the class-level 'flags').
+- 'highs' returns the flags that are HIGH for that member.
+- 'lows' returns the flags that are LOW for that member.
+- 'names' returns a frozenset of the names of the HIGH flags.
 
-  - Flexibility -
-Each enumeration of flags is generated automatically. This raises a
-question of naming. Is it 'FileAccess.READ_EXECUTE' or is it
-'FileAccess.EXECUTE_READ'? It follows the order of appearance in the
-class body. However, while the canonical attribute name is built in
-declaration order, member resolution via 'KeeFlagsMeta.__getitem__'
-and 'KeeFlagsMeta.__getattr__' accepts any order: passing a string
-like 'EXECUTE_READ', a tuple/frozenset like ('READ', 'EXECUTE'), or a
-sequence of separate names all resolve to the same member.
+For example, on a 'FileAccess' with READ, WRITE, EXECUTE, DELETE:
+'FileAccess.READ_WRITE.flags' returns all four single-bit flags,
+'FileAccess.READ_WRITE.highs' returns READ and WRITE, and
+'FileAccess.READ_WRITE.names' returns frozenset({'READ', 'WRITE'}).
+
+  - Resolution and naming -
+Each combined member is named automatically by joining its HIGH flag
+names in declaration order, so the canonical name is
+'FileAccess.READ_EXECUTE', never 'FileAccess.EXECUTE_READ'. Attribute
+access resolves only that canonical name; a reordered name such as
+'FileAccess.EXECUTE_READ' raises (there is no order-insensitive
+'__getattr__').
+
+Subscripting and calling, by contrast, are order-insensitive and
+case-insensitive. 'cls["EXECUTE_READ"]', 'cls["execute_read"]',
+'cls[("READ", "EXECUTE")]', and 'cls["READ", "EXECUTE"]' all resolve
+to the same member, and a repeated name collapses ('cls["READ",
+"READ"]' resolves to READ). An unknown name raises 'KeyError'.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -85,10 +95,17 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   almost certainly want a plain 'int' bitmask with helper functions,
   not a KeeFlags enum.
 
-  Important attributes
-  --------------------
-  - 'flags': descriptor returning the single-bit flags that are HIGH
-    for a particular member.
+  Member attributes
+  -----------------
+  - 'flags': all single-bit flags declared on the class (mirrors the
+    class-level 'flags'; not member-specific).
+  - 'highs': the flags that are HIGH for the member.
+  - 'lows': the flags that are LOW for the member.
+  - 'names': a frozenset of the names of the HIGH flags.
+  - 'index' / 'value': the member's bitmask integer (value defaults
+    to the index).
+  - 'name': the canonical name, the HIGH flag names joined by '_', or
+    'NULL' when no flag is HIGH.
 
   Entries must be integer valued.
   """

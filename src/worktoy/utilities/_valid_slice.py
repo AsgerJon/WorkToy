@@ -65,8 +65,10 @@ class ValidSlice(metaclass=_MetaSlice):
   arguments and only complains at usage time, when CPython tries to
   call '__index__' on each component. 'ValidSlice' short-circuits
   that lazy check: 'isinstance(s, ValidSlice)' is 'True' iff
-  every component of 's' is 'None', an 'int', or an object
-  whose type defines '__index__'.
+  every component of 's' is 'None', an 'int', or an object whose
+  type has a callable '__index__' attribute. The attribute is not
+  invoked, so an object whose '__index__' raises at call time still
+  passes this check.
 
   Instantiating 'ValidSlice' raises 'TypeError'; the class is a
   pure type-level predicate.

@@ -6,10 +6,11 @@ contributes one member, with the following defining properties:
 
   - name: The name of the member, taken from the class-body
     assignment via '__set_name__'. Names must be unique within an
-    enumeration and must be uppercase. The uppercase requirement is
-    enforced (not merely convention). Class-body entries whose key is
-    not uppercase are treated as ordinary class attributes rather than
-    enumeration members.
+    enumeration and must be uppercase. The uppercase rule is
+    enforced: assigning a 'Kee' to a non-uppercase name (lowercase or
+    mixed case) raises 'KeeCaseException' when the class is created. A
+    non-'Kee' class-body entry is unaffected and stays an ordinary
+    class attribute.
   - value: The value of the member. Values are not required to be
     unique across members of the same enumeration.
   - index: The position of the member, equal to the number of members

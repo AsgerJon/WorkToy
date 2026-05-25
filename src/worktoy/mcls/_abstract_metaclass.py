@@ -5,7 +5,7 @@ AbstractMetaclass provides the baseclass for custom metaclasses.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING
 
 from ..core import MetaType
 from ..core.sentinels import METACALL
@@ -110,10 +110,11 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   - '__class_setattr__(cls, name, value) -> None'
   - '__class_delattr__(cls, name) -> None'
 
-  Note on '__class_getitem__': as of Python 3.7+ the interpreter handles
-  '__class_getitem__' on the class directly, so the metaclass does not
-  need a '__getitem__' to route to it. Subscripting a class without
-  '__class_getitem__' falls through to the metaclass '__getitem__'.
+  Note on '__class_getitem__': as of Python 3.7 the interpreter
+  dispatches subscript on a class straight to '__class_getitem__' when
+  it is defined, without going through the metaclass. This metaclass
+  defines no '__getitem__', so subscripting a class that has no
+  '__class_getitem__' raises 'TypeError'.
 
   Unimplemented or intentionally rejected hooks
   ---------------------------------------------
@@ -150,7 +151,6 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     Also, this method removes nothing from the 'bases' tuple. Subclasses
     should also remove nothing from the 'bases' tuple.
     """
-    bases = (*[b for b in bases if b is not Generic],)
     return ASpace(mcls, name, bases, **kwargs)
 
   def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> Self:
@@ -167,10 +167,10 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
-    """Finalize the class. Runs 'type.__init__' first so the class is
-    fully built (including '__set_name__' and '__init_subclass__'),
-    then invokes the optional '__class_init__' hook and the subclass
-    notification."""
+    """Finalize the class. By now 'type.__new__' has already run
+    '__set_name__' and '__init_subclass__'. This calls
+    'MetaType.__init__', then the optional '__class_init__' hook, then
+    the subclass notification ('_notifySubclassHook')."""
     MetaType.__init__(cls, name, bases, space, **kwargs)
     if cls.__class_init__ is not METACALL:
       cls.__class_init__(name, bases, space, **kwargs)

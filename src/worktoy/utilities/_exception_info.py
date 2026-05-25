@@ -25,14 +25,24 @@ class ExceptionInfo:
   """Context manager for capturing and inspecting exceptions.
 
   Wrap a block of code that is expected to raise. The expected
-  exception class is passed to the constructor; on exit, the
-  raised exception (if any) is recorded and a human-readable
-  'report' string is produced for each possible outcome:
-  clean exit, missing exception, exact match, subclass match, or
-  wrong type.
+  exception class is passed to the constructor. On exit, the
+  raised exception (if any) is recorded and 'report' is set, with
+  these outcomes:
 
-  'BaseException' subclasses that are not 'Exception'
-  subclasses (e.g. 'KeyboardInterrupt') always propagate.
+  - no expected type set, no exception: clean-exit report; the
+    block exits normally.
+  - expected type set, no exception: missing-exception report.
+  - expected type set, exact type raised: match report; the
+    exception is suppressed.
+  - expected type set, subclass raised: subclass-match report; the
+    exception is suppressed.
+  - expected type set, different type raised: wrong-type report;
+    the exception is also suppressed.
+  - no expected type set, an exception raised: the exception
+    propagates and 'report' is left empty.
+
+  'BaseException' subclasses that are not 'Exception' subclasses
+  (e.g. 'KeyboardInterrupt') always propagate; 'report' notes this.
 
   Attributes
   ----------

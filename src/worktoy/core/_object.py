@@ -266,7 +266,7 @@ class Object(metaclass=MetaType):
     the attribute already raised), invokes 'hookPreDelete', calls
     '__instance_delete__' with the old value, and finally invokes
     'hookOnDelete'. Subclasses signal deletion by storing the
-    'DELETED' sentinel in their backing storage; see 'Object'."""
+    'DELETED' sentinel in their backing storage."""
     owner = type(instance)
     self.createContext(instance, owner)
     try:
@@ -300,7 +300,7 @@ class Object(metaclass=MetaType):
     should override to define attribute retrieval logic. Return the
     'DELETED' sentinel to signal that the attribute has been deleted;
     the surrounding '__get__' wrapper will translate that into
-    'MissingVariable'. See 'Object' for a full example.
+    'MissingVariable'. See the class docstring for a worked example.
     """
     return self
 
@@ -399,12 +399,12 @@ class Object(metaclass=MetaType):
   def hookPreSet(self, instance: Any, value: Any, **kwargs, ) -> None:
     """
     A hook that is called *before* the value is set on the instance. The
-    given value is the value just set by '__set__'.
+    given value is the incoming value, not yet written.
 
     Parameters
     ----------
     instance: The instance the descriptor is bound to.
-    value: The value just set by '__set__'.
+    value: The incoming value about to be written.
 
     Returns
     -------
@@ -465,11 +465,12 @@ class Object(metaclass=MetaType):
   @classmethod
   def parseKwargs(cls, *args, **kwargs) -> tuple[Any, dict]:
     """
-    Parses the keyword arguments for value matching keys and types given
-    in positional arguments. The return value is a tuple of the value
-    found and the remaining keyword arguments. If no value is found,
-    the returned tuple will be 'None' and all the keyword arguments
-    received. If no types are given, the type of the value is ignored.
+    Parses the keyword arguments for a value matching keys and types
+    given in positional arguments. Returns a tuple of the value found
+    and the remaining keyword arguments. If none of the keys is
+    present, returns '(None, kwargs)' unchanged. If no types are
+    given, the type of the value is ignored. Raises 'TypeException'
+    if a key is present but its value matches none of the given types.
     """
     typeArgs, keys = [], []
     for arg in args:

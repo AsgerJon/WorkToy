@@ -9,7 +9,7 @@ from worktoy.waitaminute import TypeException
 
 
 class TestStringList(UtilitiesTest):
-  """TestStringList tests the StringList class."""
+  """TestStringList tests the 'stringList' function."""
 
   def test_stringList(self) -> None:
     """Test the stringList function."""

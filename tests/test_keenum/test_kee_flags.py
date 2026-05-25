@@ -36,8 +36,10 @@ class TestKeeFlags(KeeTest):
 
   def testMemberList(self, ) -> None:
     """
-    Tests the availability of the 'memberList' attribute on the
-    examples. This attribute is defined on the metaclass.
+    Tests that 'memberList' (defined on the metaclass) is present and
+    is a list, and that its order matches the class iteration order:
+    for each position, the member from 'memberList' and the member
+    from iterating the class resolve to each other by name.
     """
     for cls in self.exampleFlags:
       self.assertTrue(hasattr(cls, 'memberList'))

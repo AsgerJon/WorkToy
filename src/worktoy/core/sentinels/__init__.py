@@ -13,11 +13,13 @@ Contents:
   a custom descriptor from an instance, the descriptor 'sets' the value
   for the instance to 'DELETED'. The same descriptor then raises the
   appropriate 'AttributeError' when '__get__' would return 'DELETED'.
-  - THIS: Allows references to classes from within the class bodies. Used
-  by the 'AttriBox' descriptors and the '@Overload' decorators to specify
-  an instance of the class. Similar to 'typing.Self'.
-  - OWNER: Similar to THIS, but specifying the class itself, rather than
-  an instance of it.
+  - THIS: Placeholder for the enclosing class, used from within a class
+  body. In a deferred 'AttriBox' argument it is replaced by the
+  'instance' passed to '__get__'; in an '@overload' signature it stands
+  for the class itself, matching instances of it (like 'typing.Self').
+  - OWNER: Placeholder for the 'owner' class passed to '__get__'. Used
+  in deferred 'AttriBox' arguments. Unlike THIS, it has no role in
+  overload signatures.
   - DESC: Used by 'AttriBox' along with THIS and OWNER, specifying the
   present descriptor.
   - METACALL: Marker used on a class to defer a given dunder hook to the

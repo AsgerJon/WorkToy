@@ -1,6 +1,6 @@
 """
-KeeTypeException provides a custom exception raised to indicate member
-with wrong type in an enumeration.
+KeeTypeException is raised when a 'KeeNum' member's value type does not
+match the value type established by the enumeration's first member.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -14,8 +14,18 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeTypeException(TypeError):
   """
-  KeeTypeException provides a custom exception raised to indicate member
-  with wrong type in an enumeration.
+  Raised when a 'KeeNum' member's value type does not match the value
+  type established by the enumeration's first member; all members must
+  share one value type.
+
+  Attributes
+  ----------
+  name : str
+    The name of the member whose value had the wrong type.
+  value : Any
+    The value that was rejected.
+  expectedTypes : tuple of type
+    The accepted type(s) for member values.
   """
 
   __slots__ = ('name', 'value', 'expectedTypes')

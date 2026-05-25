@@ -41,7 +41,10 @@ class TestKeeMetaResolve(KeeTest):
 
   def nameContract(self, num: KeeMeta) -> None:
     """
-    Applying name based resolution testing to a 'KeeMeta' enumeration.
+    Resolve each member by its name in several case variants (exact,
+    lower, shuffled, upper) via '_resolveFromName' and
+    '_resolveMember', asserting both return that member. This checks
+    that name resolution is case-insensitive.
     """
     self.assertIsInstance(num, KeeMeta)
     names = (*(m.name for m in num),)
@@ -50,9 +53,9 @@ class TestKeeMetaResolve(KeeTest):
     lowerCase = (*(str.lower(name) for name in names),)
     shuffleCase = (*(self._shuffleCase(name) for name in names),)
     upperCase = (*(str.upper(name) for name in names),)
-    cases = (names, lowerCase, shuffleCase, upperCase)
-    for case in cases:
-      for name, member in zip(names, num):
+    variants = (names, lowerCase, shuffleCase, upperCase)
+    for variant in variants:
+      for name, member in zip(variant, num):
         resolvedFromName = KeeMeta._resolveFromName(num, name)
         resolvedFromMember = KeeMeta._resolveMember(num, name)
         self.assertIs(resolvedFromName, member)

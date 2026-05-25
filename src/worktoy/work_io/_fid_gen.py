@@ -193,13 +193,9 @@ class FidGen(BaseObject):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __get__(self, instance: Any, owner: type, **kwargs) -> FidGen:
-    """
-    When the owning class is created, Python calls this method to allow
-    the type signatures to be updated with the owner class. This is
-    necessary as the type signatures are able to reference the owning
-    class before it is created by using the 'THIS' token object in place
-    of it.
-    """
+    """Descriptor get. Records 'instance' as the context caller, then
+    delegates to '__instance_get__' so a generated file name can be
+    contextualised by the instance the 'FidGen' is accessed through."""
     self.__context_caller__ = instance
     return self.__instance_get__(instance, owner)
 

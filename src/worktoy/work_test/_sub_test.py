@@ -1,5 +1,7 @@
 """
-SubTest subclasses BaseTest and provides a locally instantiated sub test.
+SubTest subclasses 'unittest.TestCase' and provides a per-instance
+accumulator for sub-tests. 'BaseTest' embeds one as the 'subTest'
+descriptor.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -21,7 +23,13 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class SubTest(TestCase):
   """
-  SubTest subclasses BaseTest and provides a locally instantiated sub test.
+  SubTest subclasses 'unittest.TestCase' (for its assertion methods),
+  not 'BaseTest'. It is a per-instance accumulator and context manager:
+  'BaseTest' hosts it as the 'subTest' descriptor, '__get__' lazily
+  builds one per instance, and using it as a context manager records
+  each block as passed, failed (AssertionError), or errored (any other
+  Exception). 'BaseTest.tearDown' then fails the test if any sub-test
+  failed or errored. It is not itself a runnable, discovered test class.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

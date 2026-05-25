@@ -23,8 +23,40 @@ T = TypeVar('T')
 
 class AttriBox(BaseDescriptor[T]):
   """
-  AttriBox implements a lazily instantiated and strongly typed descriptor
-  class.
+  AttriBox is a lazily built, strongly typed attribute descriptor.
+  Declare it as 'x = AttriBox[T](*args, **kwargs)': the subscript fixes
+  the field type 'T', and the call captures the deferred default. The
+  field is built by calling 'T(*args, **kwargs)' the first time it is
+  read on an instance, then cached on that instance.
+
+  Sentinels in the deferred default
+  ---------------------------------
+  The captured arguments may include the contextual sentinels, which
+  are substituted when the field is built, using the active '__get__':
+
+  - THIS  -> the instance the attribute is read from.
+  - OWNER -> the owner class the attribute is read through.
+  - DESC  -> this 'AttriBox' descriptor itself.
+
+  So 'AttriBox[Foo](THIS)' builds a separate 'Foo(instance)' for each
+  instance, and 'AttriBox[Foo](OWNER)' builds 'Foo(owner)'. A sentinel
+  with no active context (no instance or owner available) is passed
+  through unchanged.
+
+  Get and set contract
+  --------------------
+  Reading the field returns the stored 'T' instance, building the
+  deferred default on first read. Reading a deleted field raises
+  'MissingVariable'. Assigning a value:
+
+  - a value already of type 'T' is stored unchanged;
+  - otherwise a lossless 'typeCast(T, value)' is tried with no
+    construction; on success the cast result is stored;
+  - if the cast fails, the value is passed to the field-type
+    constructor ('T(value)', or 'T(*value)' when 'value' is a
+    tuple; see '_resolve' for the splat rules);
+  - if construction also fails, 'TypeException' is raised, chained
+    from the cast failure.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

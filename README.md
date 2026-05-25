@@ -3,9 +3,13 @@
 [![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-# worktoy v0.99.xx
+# worktoy v1.0.0 (release candidate)
 
-The **worktoy** provides utilities for Python development focused on
+worktoy is in the 1.0.0 release-candidate window: the public API is
+frozen for the 1.0 series and the candidates are being validated ahead
+of the stable 1.0.0 release.
+
+**worktoy** provides utilities for Python development focused on
 reducing boilerplate code, type-safety and readability. Each release is
 tested thoroughly on each supported Python version from 3.7* to 3.14.
 
@@ -68,7 +72,7 @@ class Point:
     self.y = y
 ```
 
-When ```AttriBox``` says `float` it enforces `float` at runtime.
+When `AttriBox` says `float` it enforces `float` at runtime.
 Attributes are declared explicitly at the class level. Despite this,
 flexibility remains, for example:
 
@@ -142,7 +146,7 @@ class Point(BaseObject):
     self.x = z.real
     self.y = z.imag
 
-  @overload(THIS)  # THIS is a special token type-hinting to the class itself
+  @overload(THIS)  # THIS = the enclosing class (matches an instance of it)
   def __init__(self, other: Self) -> None:
     self.x = other.x
     self.y = other.y
@@ -213,7 +217,7 @@ class Point(BaseObject):
     self.x = z.real
     self.y = z.imag
 
-  @overload(THIS)  # THIS is a special token type-hinting to the class itself
+  @overload(THIS)  # THIS = the enclosing class (matches an instance of it)
   def __init__(self, other: Self) -> None:
     self.x = other.x
     self.y = other.y

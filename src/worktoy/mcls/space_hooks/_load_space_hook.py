@@ -1,6 +1,7 @@
 """
-LoadSpaceHook collects DescLoad instances encountered in the class body
-and creates an entry in the namespace.
+LoadSpaceHook collects the 'overload' instances declared in the class
+body and assembles one 'Dispatcher' per overloaded name in the
+compiled namespace.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -21,8 +22,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class LoadSpaceHook(AbstractSpaceHook):
   """
-  LoadSpaceHook collects DescLoad instances encountered in the class body
-  and creates an entry in the namespace.
+  LoadSpaceHook collects the 'overload' instances declared in the class
+  body. During 'setItemPhase' it records each overload's signatures,
+  variadics, fallback, and finalizer on the namespace; during
+  'postCompilePhase' it assembles one 'Dispatcher' per overloaded name
+  and writes it into the compiled namespace.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -52,7 +56,9 @@ class LoadSpaceHook(AbstractSpaceHook):
     return True
 
   def postCompilePhase(self, compiledSpace) -> dict:
-    """Populates the namespace with the collected DescLoad instances. """
+    """Assembles one 'Dispatcher' per overloaded name from the collected
+    'overload' registrations (concrete signatures, variadics, fallback,
+    and finalizer) and writes each into 'compiledSpace'."""
     variadicMap = self.space.getVariadics()
     names = set(self.space.getOverloads()) | set(variadicMap)
     for name in names:

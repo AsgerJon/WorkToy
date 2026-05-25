@@ -1,6 +1,6 @@
 """
-The 'TestMaybe' class provides unit tests for the 'worktoy.parse.maybe'
-function.
+The 'TestMaybe' class provides unit tests for the 'maybe' function from
+the 'worktoy.utilities' module.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class TestMaybe(UtilitiesTest):
   """
-  TestMaybe tests the 'maybe' function from the 'worktoy.parse' module.
+  TestMaybe tests the 'maybe' function from 'worktoy.utilities'.
   """
 
   def setUp(self) -> None:

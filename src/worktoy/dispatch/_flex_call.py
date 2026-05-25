@@ -40,7 +40,10 @@ def flexCall(func: FunctionType) -> FunctionType:
   - silently drops positional args beyond the wrapped function's
     declared positional arity,
   - raises TypeError when fewer than the required number of
-    positional args is supplied (defaults are honoured),
+    positional-or-keyword arguments is supplied (parameters with
+    defaults are not counted as required); a missing required
+    keyword-only argument is not checked here and surfaces as the
+    wrapped function's own TypeError,
   - passes keyword args through unchanged,
   - caches arity at wrap time; per-call cost is one length check,
     one comparison, and a slice only when truncation fires.

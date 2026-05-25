@@ -24,10 +24,12 @@ if TYPE_CHECKING:  # pragma: no cover
 class BaseDescriptor(Object, Generic[T]):
   """
   BaseDescriptor subclasses 'Object' and provides decorators for setting
-  access notification callbacks. Each decorator may be applied to as many
-  methods as desired. The functions are identified by name, and when a
-  particular instance is accessed, the callbacks are retrieved from the
-  'type(...)' of that instance.
+  access notification callbacks. Each decorator may be applied to any
+  number of methods; the callbacks are recorded by name in registration
+  order and fire in that order. They are looked up by name on
+  'type(instance)', so a subclass override is used in place of the
+  original. Registering the same method name twice records it twice and
+  fires it twice.
 
   The following example illustrates an exhaustively decorated descriptor
   in a class body:

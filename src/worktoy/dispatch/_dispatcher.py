@@ -36,29 +36,36 @@ class Dispatcher(Object):
 
   Dispatch tiers
   --------------
-  Calls go through up to three resolution tiers, short-circuiting at
-  the first hit:
+  Calls go through up to five ordered passes, returning at the first
+  match. They group into three kinds (FASTEST, FAST, SLOW); FAST and
+  SLOW each run first over concrete signatures, then over variadic
+  ('ARGS'-terminated) signatures:
 
   1. FASTEST - a single 'dict.get' on the exact concrete-type
-     signature of the call. This is the only tier that runs when the
+     signature of the call. This is the only pass that runs when the
      argument types are an exact match for a registered overload
      (e.g. 'f(69, 420)' against '@overload(int, int)'). Cost is one
-     hash and one dict lookup. Use this tier by registering overloads
-     whose 'TypeSig' matches the exact concrete types the caller
-     supplies.
+     hash and one dict lookup. Use it by registering overloads whose
+     'TypeSig' matches the exact concrete types the caller supplies.
 
-  2. FAST - iterates every registered signature in registration
-     order, isinstance-checks each argument, and returns the first
-     match. Cost is O(N) in the number of registered overloads. This
-     tier only runs when FASTEST misses, i.e. the call relies on
-     subclass-via-isinstance matching rather than exact type
-     identity.
+  2. FAST - isinstance-checks each argument against a signature and
+     returns the first match, in registration order: first the
+     concrete signatures, then the variadic ones (a variadic matches
+     when the call is longer than its fixed prefix). Cost is O(N) in
+     the number of registered overloads. Runs only when FASTEST
+     misses, i.e. the call relies on subclass-via-isinstance matching.
 
-  3. SLOW - same iteration as FAST but using 'typeCast' instead of
-     'isinstance'. Cost is O(N) plus a cast attempt per signature
-     per argument. This tier only runs when FAST also produced no
-     candidates, i.e. the call relies on flexible type coercion
-     ('@overload(int)' matching '"42"' via cast).
+  3. SLOW - the same two passes (concrete, then variadic) as FAST but
+     using 'typeCast' instead of 'isinstance', and only over
+     signatures that allow coercion ('__allow_flex__'). Cost is O(N)
+     plus a cast attempt per signature per argument. Runs only when
+     FAST produced no match, i.e. the call relies on flexible type
+     coercion ('@overload(int)' matching '"42"' via cast).
+
+  The full order is FASTEST, FAST-concrete, FAST-variadic,
+  SLOW-concrete, SLOW-variadic, then the fallback (if registered),
+  else 'DispatchException'. With no variadic overloads registered the
+  two variadic passes are empty and dispatch behaves as three tiers.
 
   Match selection in FAST and SLOW is first-registered-wins. The
   dispatcher does not rank candidates by "specificity" - it cannot,
@@ -292,12 +299,15 @@ class Dispatcher(Object):
   def addVariadicSigFunc(self, sig: TypeSig, func: Method) -> Method:
     """Register a '(variadicSig, func)' pair on this dispatcher.
 
-    The 'sig' must end in an 'ARGS' sentinel instance. The
-    dispatcher matches calls against the variadic list in the FAST
-    and SLOW tiers when no concrete sig matches: the prefix raw
-    types are isinstance-checked against the first '(len(sig) - 1)'
-    call arguments, and every remaining argument is
-    isinstance-checked against the 'ARGS' inner type."""
+    Unlike 'addSigFunc', this does not reject duplicates: a repeated
+    variadic signature is appended, and the first-registered one wins
+    at dispatch. The caller must pass a 'sig' ending in an 'ARGS'
+    sentinel; this is not validated here. The dispatcher matches
+    calls against the variadic list in the FAST and SLOW passes when
+    no concrete sig matches: the prefix raw types are
+    isinstance-checked against the first '(len(sig) - 1)' call
+    arguments, and every remaining argument is isinstance-checked
+    against the 'ARGS' inner type."""
     existing = self._getVariadicFuncs()
     self.__variadic_funcs__ = [*existing, (sig, func,)]
     self.__compiled_func__ = None
@@ -437,26 +447,33 @@ class Dispatcher(Object):
     return decorator
 
   def finalize(self, func: Method) -> Decorator:
-    """Register 'func' as the finalizer. The finalizer runs in the
-    'finally' block of every dispatched call, after the body
-    completes (or raises). Only one finalizer is allowed per
-    dispatcher."""
+    """Register 'func' as the finalizer. It runs in the 'finally'
+    block of every dispatched call, after the body returns or raises.
+    If the finalizer itself raises, its exception propagates in place
+    of a normal return and is chained from any in-flight dispatch
+    exception. Only one finalizer is allowed per dispatcher."""
     self.setFinalizerFunction(func)
     return self
 
   def fallback(self, func: Method) -> Decorator:
-    """Register 'func' as the fallback. The fallback runs when no
-    type signature matches the call's arguments, including after
-    type-cast attempts in the SLOW path. Only one fallback is
+    """Register 'func' as the fallback. It runs after every pass has
+    missed: not only on a type mismatch but also on a length
+    mismatch, a coercion-disabled signature, or arguments only a
+    keyword could satisfy (matching is positional and by length, and
+    keyword arguments are not type-matched). Only one fallback is
     allowed per dispatcher."""
     self.setFallbackFunction(func)
     return self
 
   def flex(self, *types: type, ) -> Decorator:
-    """
-    Decorator to register a function that can handle any type signature.
-    This function will be called if no other signature matches.
-    """
+    """Register 'func' under every ordering of the given types, so the
+    caller may pass those arguments in any order. Each ordering is
+    stored as a concrete signature with type coercion disabled (it is
+    matched by isinstance in the FAST pass, never via 'typeCast'); a
+    'PermuterMethod' restores the canonical argument order before
+    calling 'func'. This is not a catch-all and not the fallback: only
+    permutations of 'types' match. See 'fallback' for the no-match
+    catch-all."""
 
     def decorator(func: Method) -> Self:
       for arrangement in Arrangements(*types):

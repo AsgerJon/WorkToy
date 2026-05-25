@@ -26,8 +26,8 @@ class DuplicateSignature(TypeError):
   DuplicateSignature is raised when a 'Dispatcher' receives a second
   function registration under a 'TypeSig' it already has on file.
 
-  Arguments
-  ---------
+  Attributes
+  ----------
   sig: TypeSig
     The signature that was registered twice.
   existing: Callable

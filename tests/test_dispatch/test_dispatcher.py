@@ -1,6 +1,6 @@
 """
-TestDispatcher provides tests for the 'TypeSig' class from the
-'worktoy.dispatch' package.
+TestDispatcher provides tests for the 'Dispatcher' and 'TypeSig'
+classes from the 'worktoy.dispatch' package.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -112,8 +112,8 @@ class Complex(ComplexCartesian):
 
 class TestDispatcher(DispatcherTest):
   """
-  TestDispatcher provides tests for the 'TypeSig' class from the
-  'worktoy.dispatch' package.
+  TestDispatcher provides tests for the 'Dispatcher' and 'TypeSig'
+  classes from the 'worktoy.dispatch' package.
   """
 
   def setUp(self, ) -> None:

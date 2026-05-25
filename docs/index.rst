@@ -16,9 +16,10 @@ Installation
 Source
 ------
 
-Every source file in the package, shown verbatim with syntax
-highlighting. The sidebar lists each package; expand one to reach its
-files. The top-level package file is shown directly below.
+Every source file reachable from a package's public API is shown
+verbatim with syntax highlighting; private helper modules that are not
+re-exported do not appear. The sidebar lists each package; expand one
+to reach its files. The top-level package file is shown directly below.
 
 .. literalinclude:: ../src/worktoy/__init__.py
    :language: python

@@ -17,9 +17,10 @@ class BaseMeta(AbstractMetaclass):
   the default class body namespace with 'BaseSpace', a custom namespace
   implementation.
 
-  This metaclass does not introduce any behavior of its own beyond
-  enabling namespace hooks defined in 'BaseSpace', such as 'LoadSpaceHook',
-  'NamespaceHook', 'ReservedNamespaceHook', and 'FlexCallHook'.
+  This metaclass introduces no behavior of its own beyond switching the
+  namespace class to 'BaseSpace'. 'BaseSpace' adds 'LoadSpaceHook' and
+  inherits 'NamespaceHook', 'ReservedNamespaceHook', and 'FlexCallHook'
+  from 'AbstractNamespace'.
 
   It serves as a ready-to-use entry point for classes that require
   hook-driven behavior during class construction without writing a custom

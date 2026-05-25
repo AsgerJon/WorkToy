@@ -165,9 +165,9 @@ class EZSpace(BaseSpace):
     from this namespace's '__init__' while walking the parent
     classes. The parent's 'EZField' is cloned so any later owner
     binding on the subclass leaves the parent's namespace
-    untouched. Same-named entries from earlier-MRO bases are
-    silently overwritten by later-MRO ones, mirroring Python's
-    normal attribute-resolution rules for inherited classes.
+    untouched. When two bases declare the same field name, the
+    higher-priority base (the one further left in the class header)
+    wins, mirroring Python's normal attribute-resolution rules.
 
     Parameters
     ----------
@@ -192,10 +192,10 @@ class EZSpace(BaseSpace):
     Build the namespace for an 'EZData' subclass under
     construction. After 'BaseSpace.__init__' sets up the standard
     namespace machinery, this constructor walks the parent
-    classes in reverse MRO order, collects any fields they
-    declared through their own 'EZSpace' namespaces, and
-    registers each one as an inherited base field. Walking in
-    reverse means later-MRO ancestors win on same-named entries,
+    classes from right to left, collects any fields they declared
+    through their own 'EZSpace' namespaces, and registers each one
+    as an inherited base field. Processing right to left means the
+    leftmost (highest-priority) base wins on same-named entries,
     matching Python's normal attribute-resolution behavior.
 
     Parameters

@@ -9,13 +9,16 @@ The metaclass instantiates the namespace class and returns the created
 namespace object from the '__prepare__' method. Upon completion of the
 class body execution this namespace object is passed back to the metaclass
 in the '__new__' method. The namespace object is required to implement a
-method called 'compile' which returns an instance of 'dict'. Next the
-metaclass validates the 'dict' object and finally passes it to the
-'__new__' method on type. Before returning the created class,
-the metaclass checks each baseclass for the presence of a method called
-'__subclasshook__'. If it exists, the method is called with the created
-class object allowing the baseclass to modify or even reject the class.
-Finally, the metaclass returns the created class object.
+method called 'compile' which returns an instance of 'dict'. The
+metaclass passes that 'dict' to 'type.__new__'; per-name validation
+(reserved names, near-miss dunders) happens earlier, during class-body
+execution, through the namespace hooks. Before returning the created
+class, the
+metaclass calls '__subclasshook__' on each base class, passing the
+created class. The return value is ignored, so a base cannot modify
+the class; it can only reject the class by raising an exception from
+'__subclasshook__'. Finally, the metaclass returns the created class
+object.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen

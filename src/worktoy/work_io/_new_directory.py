@@ -16,19 +16,27 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def newDirectory(path: Path) -> str:
-  """
-  Creates a new directory at the specified path.
+  """Create a new directory at 'path'.
 
-  Args:
-    path (str): The path where the new directory will be created.
+  Parameters
+  ----------
+  path : str
+    Absolute path at which to create the directory.
 
-  Returns:
-    str: The path of the newly created directory.
+  Returns
+  -------
+  str
+    The normalized path of the created directory.
 
-  Raises:
-    FileExistsError: If the directory already exists.
-    NotADirectoryError: If the path is not a directory.
-    PathSyntaxException: If the path is not absolute.
+  Raises
+  ------
+  PathSyntaxException
+    If 'path' is not absolute.
+  FileExistsError
+    If 'path' already exists.
+  NotADirectoryError
+    If an intermediate component of 'path' exists as a file rather
+    than a directory ('os.makedirs').
   """
   validateAvailablePath(path)
   os.makedirs(path, exist_ok=True)

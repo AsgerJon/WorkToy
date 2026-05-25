@@ -1,9 +1,11 @@
 """The 'worktoy.waitaminute.desc' package collects the exceptions raised
 by the descriptor protocol in 'worktoy.desc' and 'worktoy.core'.
 
-Every exception here subclasses 'DescriptorException', which 'Object' uses
-to recognise a descriptor-raised failure: such an exception propagates to
-the caller instead of being routed to a fallback accessor.
+'AccessError', 'ProtectedError', and 'ReadOnlyError' share the
+'DescriptorException' base, so a single 'except DescriptorException'
+catches all three. 'WriteOnceError' (a 'TypeError') and
+'WithoutException' (a 'RuntimeError') are collected here too but do not
+inherit that base.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

@@ -33,6 +33,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DELETED(Sentinel):
   """
-  DELETED should raise an AttributeError
+  Sentinel signalling that an attribute has been deleted. A descriptor
+  stores 'DELETED' in its backing slot to delete the value; the
+  'worktoy.core' base raises (rather than returning 'DELETED') when the
+  attribute is next read. See the module docstring for the rationale.
   """
   pass

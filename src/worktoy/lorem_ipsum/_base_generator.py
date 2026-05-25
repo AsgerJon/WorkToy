@@ -51,9 +51,10 @@ class BaseGenerator(BaseObject):
       maxIndex: int = None,
   ) -> list[int]:
     """
-    Adjusts the sum of the integers in the given list randomly
-    incrementing or decrementing the integers until the sum of the
-    integers is reduced by the given amount.
+    Adjusts the integers in the list, randomly incrementing or
+    decrementing individual entries one unit at a time, until their
+    sum equals 'targetSum'. The sum may rise or fall depending on
+    whether it currently sits below or above 'targetSum'.
 
     Parameters
     ----------
@@ -69,7 +70,8 @@ class BaseGenerator(BaseObject):
       If given, only entries greater than or equal to this index will be
       adjusted.
     maxIndex: int (Optional)
-      If given, only entries less than this index will be adjusted.
+      If given, only entries at indices up to and including this value
+      are adjusted. Defaults to the last index, 'len(lengths) - 1'.
 
     Returns
     -------

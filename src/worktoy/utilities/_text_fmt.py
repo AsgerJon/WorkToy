@@ -50,8 +50,10 @@ def textFmt(*args, **kwargs) -> str:
 
   Examples
   --------
-  >>> textFmt('first line, <br>second line', '<tab>indented')
-  'first line,\\nsecond line\\n  indented'
+  >>> textFmt('many    spaces   here')
+  'many spaces here'
+  >>> textFmt('paragraph<br><tab>indented line')
+  'paragraph\\n  indented line'
   """
   if not args:
     return ''

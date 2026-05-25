@@ -1,6 +1,6 @@
 """
-KeeDuplicate is a custom exception raised to indicate that a KeeNum
-class received a duplicate entry for an enumeration.
+KeeDuplicate is raised when a 'KeeNum' class body declares two members
+under the same name.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -16,8 +16,18 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeDuplicate(Exception):
   """
-  KeeDuplicate is a custom exception raised to indicate that a KeeNum
-  class received a duplicate entry for an enumeration.
+  Raised when a 'KeeNum' class body declares two members under the same
+  name (a name collision, not a value collision; duplicate values are
+  allowed).
+
+  Attributes
+  ----------
+  name : str
+    The member name declared more than once.
+  oldMember : Kee
+    The member already registered under 'name'.
+  newMember : Kee
+    The member whose registration was rejected.
   """
 
   __slots__ = ('name', 'oldMember', 'newMember',)

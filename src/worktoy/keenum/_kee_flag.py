@@ -1,9 +1,9 @@
 """
-KeeFlag provides a singular enumeration in the KeeFlags class. Like the
-'KeeNum' class, it is itself an enumeration, but where the 'KeeNum' class
-provides only singular members, the 'KeeFlags' populate the enumeration
-with the 'NULL' enumeration, the 'FULL' enumeration and all possible
-combinations of the singular members.
+KeeFlag declares one single-bit flag inside a 'KeeFlags' class body.
+A KeeFlag instance is not itself an enumeration member: the 'KeeFlags'
+metaclass reads the declared flags and builds the members, one per
+combination of flags (including the all-low 'NULL' member). The
+single-bit flags themselves are exposed through the 'flags' descriptor.
 
 Where the 'Kee' class allows the novel syntactic sugar of 'Kee[int](1)',
 'KeeFlag' requires the owning 'KeeFlags' class to specify the type of the
@@ -39,11 +39,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeFlag:
   """
-  KeeFlag provides a singular enumeration in the KeeFlags class. Like the
-  'KeeNum' class, it is itself an enumeration, but where the 'KeeNum' class
-  provides only singular members, the 'KeeFlags' populate the enumeration
-  with the 'NULL' enumeration, the 'FULL' enumeration and all possible
-  combinations of the singular members.
+  KeeFlag declares one single-bit flag inside a 'KeeFlags' class body.
+  Despite the name it is not itself an enumeration; the 'KeeFlags'
+  metaclass reads the declared flags and builds the members, one per
+  combination of flags (including the all-low 'NULL' member).
 
   Please note that the actual instances of this class are *not* the
   members of the enumeration. 'KeeFlags' manages a container of these.
@@ -56,18 +55,14 @@ class KeeFlag:
   however that when retrieving members by value, the member having the
   lowest index is used.
 
-  Attributes (becomes attributes of the instances of the owning 'KeeFlags'
-  class):
-  - name: The name of the member. It is this name that is passed to the
-    '__set_name__' method during class creation.
-  - value: The value of the member. See note about value instantiation.
-  - 'index': The number of previously defined members when this member was
-    being defined (received '__set_name__' call). By default, 'KeeFlags'
-    auto-generates a member named 'NULL' with index 0. Please note that
-    this value gets assigned by the metaclass machinery *before* the
-    KeeFlags class is created.
-  - 'args': Positional arguments passed to the constructor.
-  - 'kw': Keyword arguments passed to the constructor.
+  Attributes (on the 'KeeFlag' itself, describing the single flag, not
+  the wrapped 'KeeFlags' member):
+  - name: The flag's name, set from the class-body assignment via
+    '__set_name__'.
+  - index: The flag's bit index, the number of flags declared before
+    it. Assigned by the metaclass before the 'KeeFlags' class exists.
+  - args: Positional arguments passed to the 'KeeFlag()' constructor.
+  - kwargs: Keyword arguments passed to the 'KeeFlag()' constructor.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

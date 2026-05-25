@@ -1,6 +1,7 @@
 """
-KeeCaseException provides a custom exception raised to indicate that a
-member of an enumeration was set not with upper case.
+KeeCaseException is raised when a 'KeeNum' member name is not upper-case
+(the check is 'name.isupper()'); lowercase or mixed-case names are
+rejected.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -14,8 +15,13 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeCaseException(ValueError):
   """
-  KeeCaseException provides a custom exception raised to indicate that a
-  member of an enumeration was set not with upper case.
+  Raised when a 'KeeNum' member name is not upper-case (the check is
+  'name.isupper()'); lowercase or mixed-case names are rejected.
+
+  Attributes
+  ----------
+  name : str
+    The member name that failed the upper-case check.
   """
 
   __slots__ = ('name',)

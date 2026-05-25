@@ -95,17 +95,29 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
   Member resolution
   -----------------
-  'cls(identifier)' and 'cls[identifier]' both call '_resolveMember',
-  which tries in order:
+  'cls(identifier)' and 'cls[identifier]' resolve a member in this
+  order:
 
-    1. identity (if identifier is already a member, return it)
-    2. case-insensitive name lookup
-    3. a class-defined '__class_resolve__' hook (if present)
-    4. value lookup via 'valueType' / 'fromValue'
+    1. identity: if identifier is already a member, return it.
+    2. name lookup, case-insensitive, when identifier is a 'str'.
+    3. a class-defined '__class_resolve__' hook, if present. Identity
+       and name lookup above bypass the hook; it is consulted before
+       index and value resolution, and returns 'NotImplemented' to
+       defer.
+    4. positional index ('cls[identifier]' only): a non-bool 'int'
+       indexes the member sequence (ordinary list indexing, so
+       'cls[-1]' is the last member). An out-of-range index defers.
+    5. value lookup, when identifier is an instance of the member
+       value type.
 
-  Failure at all four raises 'KeeResolveError'. Subclasses may
-  declare '__class_resolve__' to intercept resolution before the
-  value-based fallback.
+  Failing every applicable step raises 'KeeResolveError'.
+
+  Because the hook is consulted before index and value, an
+  enumeration whose value type is 'int' is particularly encouraged to
+  implement '__class_resolve__': it lets the class decide the
+  index-versus-value question for 'int' identifiers. Without a hook,
+  'cls[i]' uses index before value, so with members A=2, B=5, C=9,
+  'cls[2]' is C (index 2) while 'cls(2)' is A (value 2).
 
   Iteration, length, and membership
   ---------------------------------
@@ -337,16 +349,12 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     return cls._resolveMember(args[0])
 
   def __getitem__(cls, identifier: Any) -> Any:
-    """Gets a member of the enumeration by identifier."""
-    if isinstance(identifier, int):
-      if identifier is not True and identifier is not False:
-        try:
-          member = cls.members[identifier]
-        except IndexError:
-          pass
-        else:
-          return member
-    return cls._resolveMember(identifier)
+    """Gets a member of the enumeration by identifier. Resolution
+    runs '_resolveMember' with the positional-index step enabled, so
+    an identifier that is already a member passes through, then a
+    name, then '__class_resolve__', then a non-bool 'int' as a
+    positional index, then value."""
+    return cls._resolveMember(identifier, allowIndex=True)
 
   def __getattr__(cls, name: str) -> Any:
     """Gets a member of the enumeration by name."""
@@ -486,17 +494,22 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     else:
       return member
 
-  def _resolveMember(cls, identifier: Any) -> Any:
+  def _resolveMember(cls, identifier: Any, **kwargs) -> Any:
     """
     Top-level dispatch for resolving a member from an identifier.
 
     Order
     -----
-    1. If 'identifier' is already a member, return it.
-    2. If 'identifier' is a string: (case-insensitive) name resolution.
-    3. If the class has a custom resolver, use it.
-    4. If 'identifier' is of the 'valueType', resolve by value.
-    5. If all else fails, raise 'KeeResolveError'.
+    1. Identity: if 'identifier' is already a member, return it.
+    2. Name resolution (case-insensitive) when 'identifier' is a
+       'str'.
+    3. The class '__class_resolve__' hook, if present. Identity and
+       name resolution above bypass it; it is consulted before index
+       and value resolution.
+    4. Positional index, only when 'allowIndex=True' (set by
+       '__getitem__'): a non-bool 'int' indexes the member sequence.
+    5. Value resolution when 'identifier' is of the 'valueType'.
+    6. If all else fails, raise 'KeeResolveError'.
 
     Raises
     ------
@@ -525,6 +538,13 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       resolved = cls.__class_resolve__(identifier)
       if resolved is not NotImplemented:
         return resolved
+    if kwargs.get('allowIndex', False):
+      if isinstance(identifier, int):
+        if identifier is not True and identifier is not False:
+          try:
+            return cls.members[identifier]
+          except IndexError:
+            pass
     if isinstance(identifier, cls.valueType):
       resolved = cls._resolveFromValue(identifier)
       if resolved is not NotImplemented:

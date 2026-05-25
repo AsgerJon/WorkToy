@@ -14,18 +14,32 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def validateExistingFile(file: str, **kwargs) -> str:
-  """
-  Validates that a given 'str' object points to an existing file.
+  """Validate that 'file' is an absolute path to an existing file.
 
-  Args:
-    file (str): The file to validate.
+  Parameters
+  ----------
+  file : str
+      Absolute path to the file to validate.
+  **kwargs
+      Pass 'strict=False' to return '' instead of raising when the
+      file is missing or is not a regular file.
 
-  Returns:
-    str: The validated file.
+  Returns
+  -------
+  str
+      The normalized path, or '' when a failure is suppressed by
+      'strict=False'.
 
-  Raises:
-    FileNotFoundError: If the file does not exist.
-    IsADirectoryError: If the path is a directory.
+  Raises
+  ------
+  PathSyntaxException
+      If 'file' is not an absolute path. Raised regardless of
+      'strict'.
+  FileNotFoundError
+      If the file does not exist and 'strict' is True (the default).
+  IsADirectoryError
+      If the path exists but is not a regular file and 'strict' is
+      True.
   """
   if not os.path.isabs(file):
     raise PathSyntaxException(file)

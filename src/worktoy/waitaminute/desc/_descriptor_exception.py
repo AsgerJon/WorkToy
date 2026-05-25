@@ -1,8 +1,8 @@
 """
-DescriptorException provides a base class for the exceptions raised by
-descriptors. By having a shared base class, the 'Object' class is able to
-recognize situations where a descriptor has raised an exception. These
-exceptions propagate *without* being passed to the fallback method.
+DescriptorException is the base class for the descriptor protocol
+exceptions 'AccessError', 'ProtectedError', and 'ReadOnlyError',
+grouping them under one type so they can be caught together. The
+related 'WriteOnceError' and 'WithoutException' do not inherit from it.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -16,10 +16,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DescriptorException(Exception):
   """
-  Base class for the exceptions raised by descriptors. Catching this one
-  type catches every descriptor failure. The shared base also lets
-  'Object' tell a deliberate descriptor exception apart from an incidental
-  one: a 'DescriptorException' propagates to the caller rather than being
-  routed to a fallback accessor.
+  Base class for the descriptor protocol exceptions 'AccessError',
+  'ProtectedError', and 'ReadOnlyError'; catching this type catches
+  those three together. 'WriteOnceError' (a 'TypeError') and
+  'WithoutException' (a 'RuntimeError') are related descriptor errors
+  that do NOT inherit from this class, so a bare
+  'except DescriptorException' does not catch them.
   """
   pass

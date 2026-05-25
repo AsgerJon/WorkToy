@@ -1,12 +1,14 @@
 """
-The 'worktoy.desc' module provides the base descriptor classes. This
-module introduces a novel concept: descriptor-context.
+The 'worktoy.desc' module provides the base descriptor classes. It
+introduces the descriptor-context: during an access the active
+'(instance, owner)' pair is recorded on the descriptor, so accessor
+hooks can read the current instance and owner instead of receiving
+them as arguments.
 
-When a descriptor is accessed through the owning class, the descriptor
-object itself returns. When through an instance, the descriptor usually
-performs the relevant accessor function as appropriate for the instance
-received. This module expands this concept by introducing the
-descriptor-context.
+Accessed through the owning class, a descriptor returns itself.
+Accessed through an instance, it runs the accessor appropriate for
+that instance. See 'Object' in 'worktoy.core' for the full
+descriptor-context machinery.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

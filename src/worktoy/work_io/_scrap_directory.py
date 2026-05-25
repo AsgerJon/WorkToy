@@ -14,8 +14,28 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def scrapDirectory(dirPath: str, **kwargs) -> None:
-  """
-  Removes empty directory at the specified path.
+  """Remove the empty directory at 'dirPath'.
+
+  Parameters
+  ----------
+  dirPath : str
+      Absolute path to the directory to remove.
+  **kwargs
+      Pass 'strict=False' to return silently (instead of raising
+      'FileNotFoundError') when the directory does not exist.
+
+  Raises
+  ------
+  PathSyntaxException
+      If 'dirPath' is not an absolute path.
+  FileNotFoundError
+      If the directory does not exist and 'strict' is True (the
+      default).
+  NotADirectoryError
+      If 'dirPath' exists but is not a directory (raised regardless
+      of 'strict').
+  OSError
+      If the directory exists but is not empty (from 'os.rmdir').
   """
   try:
     validateExistingDirectory(dirPath)

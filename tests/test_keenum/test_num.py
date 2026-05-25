@@ -304,8 +304,10 @@ class TestNum(KeeTest):
     self.assertIs(Compass(-1 - 1j), Compass.SOUTHWEST)
 
   def test_bool(self, ) -> None:
-    """Every KeeNum member is truthy, regardless of name or value.
-    Users wanting null-detection compare via 'is'."""
+    """KeeNum members are always truthy (the class defines no
+    '__bool__'), regardless of name or value. Demonstrated here with
+    'Compass', whose 'NULL' member is still truthy; use 'is' for
+    null-detection."""
     for direction in Compass:
       self.assertTrue(direction)
     self.assertIs(Compass.NULL, Compass.NULL)

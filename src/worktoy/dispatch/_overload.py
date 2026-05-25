@@ -56,17 +56,17 @@ class overload:  # NOQA
   Performance and ordering
   ------------------------
   '@overload(SomeType)' produces a 'TypeSig' that the 'Dispatcher'
-  matches in three tiers (see 'Dispatcher' docstring): exact-type
-  hash lookup, then isinstance iteration, then 'typeCast'
-  iteration. Only the first tier is constant-time; the other two
-  scan every registered overload in registration order and return
-  the first match.
+  matches in three kinds of pass (see 'Dispatcher' docstring):
+  exact-type hash lookup, then isinstance iteration, then 'typeCast'
+  iteration. Only the first is constant-time; the other two scan
+  every registered overload in registration order and return the
+  first match.
 
   Two consequences for how you stack '@overload' decorators:
 
   1. Register against the exact concrete types callers will pass.
      '@overload(int)' for a caller that supplies 'int' values keeps
-     the call on the constant-time tier. '@overload(SomeABC)' or
+     the call on the constant-time pass. '@overload(SomeABC)' or
      '@overload(SomeUnionBase)' forces every matching call through
      O(N) iteration.
 
@@ -210,9 +210,10 @@ class overload:  # NOQA
 
     At dispatch time, the user supplies arguments in some arrangement of
     the canonical order. Each registered 'PermuterMethod' carries the
-    'Arrangement' that produced its signature; the dispatcher uses
-    'arrangement.restoreFrom(*args)' to permute the user's args back
-    into canonical order before forwarding to 'func'.
+    'Arrangement' that produced its signature. When the dispatcher
+    selects it, that 'PermuterMethod' (not the dispatcher) calls
+    'arrangement.restoreFrom(*args)' to permute the caller's arguments
+    back into canonical order, then invokes 'func'.
     """
 
     def decorator(func: Method) -> Self:

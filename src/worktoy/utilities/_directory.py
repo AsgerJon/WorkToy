@@ -2,8 +2,9 @@
 
 'Directory' is a read-only descriptor. When accessed through an
 instance, it returns the absolute path of the directory holding
-the module file in which the owner class is defined. When
-accessed through the class itself, it returns the descriptor."""
+the module file of the instance's class (which may be a subclass
+of the class that declares the descriptor). When accessed through
+the class itself, it returns the descriptor."""
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations

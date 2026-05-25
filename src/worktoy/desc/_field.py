@@ -37,8 +37,9 @@ class Field(BaseDescriptor[T]):
   note that the instance of 'Field' can decorate only methods appearing
   below it in the class body.
 
-  @GET - Decorate one method designating it as the 'getter'. It should be
-  a normal instance method that can be run without any other arguments.
+  @GET - Marks the getter, called as 'method(self)'. Only one getter is
+  kept: a second '@GET' silently replaces the first. Reading a 'Field'
+  with no getter raises 'AccessError'.
 
   @SET - Decorate any number of methods as setters. Every such method runs
   in response to __set__
@@ -80,16 +81,19 @@ class Field(BaseDescriptor[T]):
 
   def GET(self, callMeMaybe: Callable) -> Callable:
     """
-    Decorator for the getter method. The method should be a normal instance
-    method that can be run without any other arguments.
+    Marks the getter, called as 'method(self)'. Only one getter is
+    kept: a second '@GET' silently replaces the first. Reading a
+    'Field' with no getter raises 'AccessError'.
     """
     self.__get_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def SET(self, callMeMaybe: Callable) -> Callable:
     """
-    Decorator for the setter method. The method should be a normal instance
-    method that can be run without any other arguments.
+    Decorator marking a setter. Any number may be registered; each is
+    called as 'method(self, value)' in registration order on every
+    assignment, where 'value' is the incoming value. If no setter is
+    registered, assignment raises 'ReadOnlyError'.
     """
     existing = maybe(self.__set_keys__, ())
     self.__set_keys__ = (*existing, callMeMaybe.__name__,)
@@ -97,8 +101,9 @@ class Field(BaseDescriptor[T]):
 
   def DELETE(self, callMeMaybe: Callable) -> Callable:
     """
-    Decorator for the deleter method. The method should be a normal instance
-    method that can be run without any other arguments.
+    Decorator marking a deleter. Any number may be registered; each is
+    called as 'method(self)' in registration order on 'del'. If no
+    deleter is registered, 'del' raises 'ProtectedError'.
     """
     existing = maybe(self.__delete_keys__, ())
     self.__delete_keys__ = (*existing, callMeMaybe.__name__,)

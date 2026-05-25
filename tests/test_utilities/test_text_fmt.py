@@ -50,8 +50,8 @@ class TestMonoSpace(UtilitiesTest):
     self.assertEqual(expected, actual)
 
   def test_non_str(self) -> None:
-    """Tests if textFmt raises a TypeError when given a non-string
-    input."""
+    """Test that textFmt converts non-string arguments to 'str' and
+    joins them with single spaces (it does not raise)."""
     expected = '69 420 1337'
     actual = textFmt(69, 420, 1337)
     self.assertEqual(expected, actual)

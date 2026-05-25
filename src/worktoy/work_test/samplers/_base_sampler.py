@@ -178,10 +178,10 @@ class BaseSampler(BaseObject, ABC):
   @row.GET
   def _getRow(self, ) -> Row:
     """
-    This method generates a tuple of 'n' sample values with 'n' specified
-    by the 'self.count' variable. Subclasses reimplementing this method
-    are responsible for ensuring that the correct number of sample values
-    are included in the generated tuple.
+    This method generates a tuple of 'n' sample values with 'n' given
+    by the 'self.colCount' variable. Subclasses reimplementing this
+    method are responsible for ensuring that the correct number of
+    sample values are included in the generated tuple.
 
     Returns
     -------
@@ -223,14 +223,14 @@ class BaseSampler(BaseObject, ABC):
 
   def __call__(self, ) -> Any:
     """
-    This method generates a single sample value by calling the 'gen' method.
+    Generates a single sample value by calling '_getItem'.
     """
     return self._getItem()
 
   def __iter__(self) -> Iterator[Any]:
     """
-    This method generates an infinite stream of sample values by repeatedly
-    calling the 'gen' method.
+    Yields exactly 'self.rowCount' rows. Each yielded value is a row
+    tuple produced by '_getRow', not a single sample value.
     """
     _c = int(self.rowCount)
     while _c:

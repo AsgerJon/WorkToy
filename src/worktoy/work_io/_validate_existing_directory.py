@@ -15,18 +15,33 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def validateExistingDirectory(directory: str, **kwargs) -> str:
-  """
-  Validates that a given 'str' object points to an existing directory.
+  """Validate that 'directory' is an absolute path to an existing
+  directory.
 
-  Args:
-    directory (str): The directory to validate.
+  Parameters
+  ----------
+  directory : str
+      Absolute path to the directory to validate.
+  **kwargs
+      Pass 'strict=False' to return '' instead of raising when the
+      directory is missing or is not a directory.
 
-  Returns:
-    str: The validated directory.
+  Returns
+  -------
+  str
+      The normalized path, or '' when a failure is suppressed by
+      'strict=False'.
 
-  Raises:
-    FileNotFoundError: If the directory does not exist.
-    NotADirectoryError: If the path is not a directory.
+  Raises
+  ------
+  PathSyntaxException
+      If 'directory' is not an absolute path. Raised regardless of
+      'strict'.
+  FileNotFoundError
+      If the directory does not exist and 'strict' is True (the
+      default).
+  NotADirectoryError
+      If the path exists but is not a directory and 'strict' is True.
   """
   if not os.path.isabs(directory):
     raise PathSyntaxException(directory)

@@ -232,14 +232,11 @@ class EZField(BaseObject, Generic[T]):
     """
     Construct and return a fresh default value by invoking the
     field type with the stored positional and keyword arguments.
-    Each call returns a new object, so mutating the value
-    returned for one instance never leaks into another. For
-    immutable field types ('int', 'float', 'str', 'tuple', ...)
-    the constructor is idempotent on existing instances, so the
-    behavior degenerates to 'return the literal' without any
-    cost. For mutable field types ('list', 'dict', 'set', ...)
-    the constructor produces a fresh copy of the seed, which is
-    the behavior required for safe per-instance defaults.
+    Each call builds a new top-level object, so two instances do
+    not share the same mutable container ('list', 'dict', 'set',
+    ...). This is a shallow construction, though: a mutable object
+    nested inside the stored arguments is shared across instances,
+    so mutating that nested object leaks between them.
 
     Returns
     -------

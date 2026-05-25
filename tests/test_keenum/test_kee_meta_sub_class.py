@@ -1,8 +1,8 @@
 """
-TestKeeMetaSubClass subclasses 'KeeTest' and provides testing of 'KeeMeta'
-subclassing. Becaues of the unconventional creation of 'KeeNum' in
-'KeeMeta', this test ensures that 'FontMeta' subclasses provides their own
-'KeeNum'-like class.
+TestKeeMetaSubClass subclasses 'KeeTest' and tests subclassing of
+'KeeMeta'. Because 'KeeMeta' creates 'KeeNum' in an unconventional way,
+this verifies that a 'KeeMeta' subclass (here 'KeeMetaSub') provides its
+own distinct 'KeeNum'-like class via the 'keeNum' descriptor.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -20,10 +20,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeMetaSub(KeeMeta):
   """
-  KeeMetaSub subclasses 'KeeMeta' and provides testing of 'KeeMeta'
-  subclassing. Becaues of the unconventional creation of 'KeeNum' in
-  'KeeMeta', this test ensures that 'FontMeta' subclasses provides their own
-  'KeeNum'-like class.
+  KeeMetaSub is a 'KeeMeta' subclass used as a fixture. Because
+  'KeeMeta' creates 'KeeNum' in an unconventional way, deriving from
+  'KeeMeta' must give this subclass its own distinct 'KeeNum'-like
+  class via the 'keeNum' descriptor.
   """
 
 
@@ -43,10 +43,10 @@ class SubNum(KeeMetaSub.keeNum):
 
 class TestKeeMetaSubClass(KeeTest):
   """
-  TestKeeMetaSubClass subclasses 'KeeTest' and provides testing of 'KeeMeta'
-  subclassing. Becaues of the unconventional creation of 'KeeNum' in
-  'KeeMeta', this test ensures that 'FontMeta' subclasses provides their own
-  'KeeNum'-like class.
+  TestKeeMetaSubClass subclasses 'KeeTest' and tests subclassing of
+  'KeeMeta'. Because 'KeeMeta' creates 'KeeNum' in an unconventional
+  way, this verifies that a 'KeeMeta' subclass (here 'KeeMetaSub')
+  provides its own distinct 'KeeNum'-like class via 'keeNum'.
   """
 
   def test_kee_meta(self, ) -> None:

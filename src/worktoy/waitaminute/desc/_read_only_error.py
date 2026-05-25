@@ -1,7 +1,8 @@
 """ReadOnlyError is raised on an attempt to assign to a read-only
-attribute. It subclasses 'DescriptorException', the shared base for
-descriptor failures. The default 'Object.__instance_set__' raises it, as
-does any descriptor whose protocol forbids writes.
+attribute. It subclasses 'DescriptorException', a shared base for
+several of the descriptor exceptions. The default
+'Object.__instance_set__' raises it, as does any descriptor whose
+protocol forbids writes.
 """
 #  AGPL-3.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

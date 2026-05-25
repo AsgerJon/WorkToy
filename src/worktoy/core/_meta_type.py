@@ -18,9 +18,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class MetaType(type):
   """
-  MetaType provides the meta-metaclass for the 'worktoy' library. All
-  metaclasses used across the library both derive from and base on this
-  class. This is necessary to prevent metaclass conflicts.
+  MetaType provides the meta-metaclass for the 'worktoy' library. Every
+  metaclass in 'worktoy' both subclasses 'MetaType' and has 'MetaType'
+  as its own metaclass, so combining worktoy metaclasses does not raise
+  a metaclass conflict.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

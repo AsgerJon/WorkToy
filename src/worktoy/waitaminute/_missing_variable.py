@@ -28,9 +28,10 @@ class MissingVariable(AttributeError):
   varName: str
     The name of the variable that was expected to be assigned a value
     other than 'None'.
-  expectedTypes: type
-    The expected type of the variable that was expected to be assigned a
-    value other than 'None'.
+  expectedTypes: tuple of type
+    The accepted types for the variable. May be empty if no type was
+    given; shown as a single name for one type, or 'Union[...]' for
+    several.
 
   Examples
   --------
