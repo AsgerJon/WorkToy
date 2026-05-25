@@ -302,7 +302,7 @@ class EZField(BaseObject, Generic[T]):
       'IncompleteFieldException' at class-body time.
     """
     self = cls.__new__(cls)
-    self.__field_type__ = type_
+    setattr(self, '__field_type__', type_)
     return self
 
   def __call__(self, *args, **kwargs) -> Self:

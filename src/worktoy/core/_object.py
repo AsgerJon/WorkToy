@@ -26,6 +26,10 @@ if TYPE_CHECKING:  # pragma: no cover
   ExcVal: TypeAlias = Optional[Exception]
   Trace: TypeAlias = Optional[TracebackType]
 
+#  Compiled once at import. 'getPrivateName' sits on the hot path of
+#  every descriptor access, so the pattern must not be rebuilt per call.
+_PRIVATE_KEY_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
+
 
 class Object(metaclass=MetaType):
   """The fundamental base class for objects in the 'worktoy' library.
@@ -120,6 +124,7 @@ class Object(metaclass=MetaType):
   #  Private Variables
   __field_owner__ = None
   __field_name__ = None
+  __private_name__ = None  # cached result of 'getPrivateName'
   __pos_args__ = None
   __key_args__ = None
   __call_chain__ = None
@@ -229,11 +234,14 @@ class Object(metaclass=MetaType):
     regardless of whether the hooks raise."""
     if instance is None:
       return self
-    with self.createContext(instance, owner) as context:
+    self.createContext(instance, owner)
+    try:
       self.hookPreGet(instance, )
-      value = context.__instance_get__(instance, owner)
+      value = self.__instance_get__(instance, owner)
       value = self._deletedGuard(instance, value)
       self.hookOnGet(instance, value, )
+    finally:
+      self.exitContext()
     return value
 
   def __set__(self, instance: Any, newValue: Any, **kwargs) -> None:
@@ -241,14 +249,17 @@ class Object(metaclass=MetaType):
     hook raises 'SkipSet' to abort) calls '__instance_set__' followed
     by 'hookOnSet'. The context frame is popped on the way out
     regardless of whether the hooks raise."""
-    with self.createContext(instance, type(instance)) as context:
+    self.createContext(instance, type(instance))
+    try:
       try:
         self.hookPreSet(instance, newValue, **kwargs)
       except SkipSet:
         pass
       else:
-        context.__instance_set__(instance, newValue, **kwargs)
+        self.__instance_set__(instance, newValue, **kwargs)
         self.hookOnSet(instance, newValue, **kwargs)
+    finally:
+      self.exitContext()
 
   def __delete__(self, instance: Any, **kwargs) -> None:
     """Pushes a context frame, reads the prior value (or 'None' if
@@ -257,32 +268,17 @@ class Object(metaclass=MetaType):
     'hookOnDelete'. Subclasses signal deletion by storing the
     'DELETED' sentinel in their backing storage; see 'Object'."""
     owner = type(instance)
-    with self.createContext(instance, owner) as context:
+    self.createContext(instance, owner)
+    try:
       try:
-        oldVal = context.__instance_get__(instance, owner, **kwargs)
+        oldVal = self.__instance_get__(instance, owner, **kwargs)
       except AttributeError:
         oldVal = None
       else:
         oldVal = self._deletedGuard(instance, oldVal)
       self.hookPreDelete(instance, **kwargs)
-      context.__instance_delete__(instance, oldVal, **kwargs)
+      self.__instance_delete__(instance, oldVal, **kwargs)
       self.hookOnDelete(instance, **kwargs)
-
-  def __enter__(self, ) -> Self:
-    """Context-manager entry. Must be used together with a prior
-    'createContext(instance, owner)' call. Raises 'WithoutException'
-    if no context frame is active when entry happens."""
-    if self.hasContext():
-      return self
-    raise WithoutException(self)
-
-  def __exit__(self, _, exception: BaseException, __) -> None:
-    """Context-manager exit. Pops the active context frame via
-    'exitContext' and re-raises the exception (if any) propagated
-    out of the 'with' block."""
-    try:
-      if exception is not None:
-        raise exception
     finally:
       self.exitContext()
 
@@ -369,10 +365,13 @@ class Object(metaclass=MetaType):
     """Returns the dunder-style private name corresponding to this
     descriptor's field name. 'camelCase' is converted to
     'snake_case' and wrapped in double underscores. For example, a
-    descriptor named 'fooBar' returns '__foo_bar__'."""
-    fieldName = self.__field_name__
-    pattern = re.compile(r'(?<!^)(?=[A-Z])')
-    return '__%s__' % pattern.sub('_', fieldName).lower()
+    descriptor named 'fooBar' returns '__foo_bar__'. The result is
+    cached on first use: the field name is fixed once '__set_name__'
+    has run, and this sits on the hot path of every access."""
+    if self.__private_name__ is None:
+      snake = _PRIVATE_KEY_PATTERN.sub('_', self.__field_name__).lower()
+      self.__private_name__ = '__%s__' % snake
+    return self.__private_name__
 
   def hookPreGet(self, instance, **kwargs) -> None:
     """

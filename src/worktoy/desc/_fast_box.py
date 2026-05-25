@@ -1,0 +1,106 @@
+"""
+FastBox is a lean, type-enforced attribute descriptor that trades the
+ergonomics of 'AttriBox' for speed. It carries no descriptor context,
+no access hooks, and no sentinel resolution: the value lives directly
+in the instance dict, so a read is one dict lookup and a write is one
+type check plus one dict store.
+
+Sacrificed relative to 'AttriBox':
+- access hooks (preGet / onSet / preDelete / ...),
+- 'self.instance' / 'self.owner' context inside accessors,
+- 'THIS' / 'OWNER' sentinels in the deferred default arguments,
+- set-time coercion: a write must already be an instance of the field
+  type, the numeric tower is not applied ('x: float' rejects an int).
+
+Nesting is still correct without any context machinery: '__get__'
+reads the 'instance' parameter rather than shared descriptor state, so
+re-entrant access to the same descriptor lives on the call stack. The
+owning instance must have a '__dict__' (no '__slots__'-only owners).
+"""
+#  AGPL-3.0 license
+#  Copyright (c) 2026 Asger Jon Vistisen
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar, Generic
+
+from ..waitaminute import TypeException, MissingVariable
+
+T = TypeVar('T')
+
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Any, Self, Optional
+
+
+class FastBox(Generic[T]):
+  """Lean, type-enforced attribute descriptor. See the module
+  docstring for the ergonomics traded away for speed."""
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Private Variables
+  __field_type__: Optional[type] = None
+  __field_name__: Optional[str] = None
+  __private_name__: Optional[str] = None
+  __default_args__: tuple = ()
+  __default_kwargs__: Optional[dict] = None
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @classmethod
+  def __class_getitem__(cls, fieldType: type) -> FastBox:
+    """Capture the field type via 'FastBox[T]'."""
+    self = cls.__new__(cls)
+    self.__field_type__ = fieldType
+    return self
+
+  def __call__(self, *args: Any, **kwargs: Any) -> Self:
+    """Capture the arguments used to build the default value."""
+    self.__default_args__ = args
+    self.__default_kwargs__ = kwargs
+    return self
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __set_name__(self, owner: type, name: str) -> None:
+    self.__field_name__ = name
+    self.__private_name__ = '__fast_%s__' % name
+
+  def __get__(self, instance: Any, owner: type) -> Any:
+    if instance is None:
+      return self
+    store = instance.__dict__
+    try:
+      return store[self.__private_name__]
+    except KeyError:
+      value = self._build()
+      store[self.__private_name__] = value
+      return value
+
+  def __set__(self, instance: Any, value: Any) -> None:
+    if isinstance(value, self.__field_type__):
+      instance.__dict__[self.__private_name__] = value
+      return
+    raise TypeException(self.__field_name__, value, self.__field_type__)
+
+  def __delete__(self, instance: Any) -> None:
+    try:
+      del instance.__dict__[self.__private_name__]
+    except KeyError as keyError:
+      raise MissingVariable(instance, self.__field_name__) from keyError
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def _build(self) -> Any:
+    """Construct a fresh default value from the captured arguments."""
+    if self.__field_type__ is None:
+      raise MissingVariable(self, '__field_type__', type)
+    kwargs = self.__default_kwargs__ or {}
+    return self.__field_type__(*self.__default_args__, **kwargs)

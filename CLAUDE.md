@@ -142,10 +142,10 @@ chain. Do not introduce backward edges.
   to keep `desc` general).
 - **`work_io`** — filesystem helpers (`validateExistingFile`,
   `scrapDirectory`, `newDirectory`, `yeetDirectory`, `FidGen`).
-- **`work_test`** — `BaseTest` (subclass of `unittest.TestCase`)
-  and `BaseContract`; tests use these rather than raw `TestCase`.
-- **`termono`** — terminal pretty-printing (`LineSpec`, `Alignum`).
-  Currently in active development (see uncommitted files).
+- **`work_test`** — `BaseTest` (subclass of `unittest.TestCase`),
+  plus `SubTest`, `ComplexMixin` / `ComplexTest`, and the
+  random-data `samplers`; tests subclass these rather than raw
+  `TestCase`.
 
 ### Key idioms users will see (and you should preserve)
 
@@ -193,6 +193,23 @@ in `src/worktoy/`; it's outside the package path on purpose.
   README; the user is reconsidering what shape pedagogical content
   should take. Resurrect with `git mv archive/tutorial
   src/worktoy/tutorial` if needed.
+
+## Someday / maybe (not built yet)
+
+Intended directions, not present in the tree. Do not treat these
+as existing modules or import from them.
+
+- **`termono`** — a system for combining LaTeX-style typography
+  with terminal presentation. Still wanted, just not a priority
+  right now. No code exists yet: `LineSpec` and `Alignum` are
+  provisional names, not real symbols. (The only `Alignum`s in the
+  tree are the unrelated `HAlignum` / `VAlignum` KeeNum test
+  fixtures.)
+- **`BaseContract`** (a `work_test` addition) — a planned testing
+  helper alongside `BaseTest`. Not yet built. Because `work_test`
+  is test scaffolding rather than public API, additions like this
+  are far less bound by the 1.0 compatibility freeze than the core
+  layers, so it can land post-1.0 with low risk.
 
 ## Environment
 

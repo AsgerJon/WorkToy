@@ -248,8 +248,8 @@ class Dispatcher(Object):
           return fallback(instance, *args, **kwargs)
         raise DispatchException(dispatcher, args, )
       finally:
-        _, exception, __ = sys.exc_info()
         if callable(finalizer):
+          _, exception, __ = sys.exc_info()
           try:
             finalizer(instance, *args, **kwargs)
           except Exception as finalException:

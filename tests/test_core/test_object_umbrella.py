@@ -63,14 +63,6 @@ class TestObjectUmbrella(CoreTest):
     self.assertEqual(str(e), repr(e))
     self.assertIs(e.desc, Bar.owned)
 
-  def testBadContext(self) -> None:
-    """Tests context manager"""
-
-    with self.assertRaises(WithoutException) as context:
-      Bar.foo1.__enter__()
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-
   def testExitContextWithoutCreate(self) -> None:
     """Popping the context stack when it is empty must raise
     'WithoutException', since that indicates an unpaired

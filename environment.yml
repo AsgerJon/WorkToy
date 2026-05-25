@@ -10,6 +10,8 @@ dependencies:
   - pytest>=9.0.2  # Development only
   - pytest-cov>=7.0.0  # Development only
   - pyperclip>=1.11.0  # Optional, for clipboard support
+  - pygments>=2.19.2  # Optional, for syntax highlighting
+  - sphinx>=7.0.0  # Optional, for documentation generation
 
 #  Required by icecream
 #    + asttokens    3.0.1  pyhd8ed1ab_0  conda-forge     Cached

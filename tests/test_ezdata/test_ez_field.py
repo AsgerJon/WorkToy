@@ -183,6 +183,21 @@ class TestEZField(EZTest):
     self.assertIn(dict, e.expectedTypes)
     self.assertEqual(str(e), repr(e))
 
+  def test_default_value(self) -> None:
+    """
+    'defaultValue' builds a value from the field type and the stored
+    construction arguments. A mutable type returns a distinct object
+    on each access, which is what makes per-instance defaults safe.
+    """
+    f = EZField[complex](69, 420)
+    self.assertEqual(f.defaultValue, complex(69, 420))
+    g = EZField[list]()
+    first, second = g.defaultValue, g.defaultValue
+    self.assertEqual(first, [])
+    self.assertIsNot(first, second)
+    h = EZField[FullName]('Doe', givenName='John')
+    self.assertIsInstance(h.defaultValue, FullName)
+
   def test_str_repr(self, ) -> None:
     """
     This method tests the '__str__' and '__repr__' methods.

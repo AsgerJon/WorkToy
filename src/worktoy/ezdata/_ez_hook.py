@@ -281,7 +281,7 @@ class EZHook(AbstractSpaceHook):
     compiledSpace['__match_args__'] = self.matchArgsFactory(
       ezFields, compiledSpace['__kw_only__']
     )
-    compiledSpace['__init__'] = self.initFactory()
+    compiledSpace['__init__'] = self.initFactory(ezFields)
     compiledSpace['__iter__'] = self.iterFactory()
     compiledSpace['__eq__'] = self.eqFactory()
     compiledSpace['__delattr__'] = self.badDelAttrFactory()
@@ -360,7 +360,7 @@ class EZHook(AbstractSpaceHook):
     return (*ezFields,)
 
   @classmethod
-  def initFactory(cls, ) -> INIT:
+  def initFactory(cls, ezFields: dict) -> INIT:
     """
     Creates the '__init__' method for the 'EZData' subclass under
     construction. When 'kwOnly' is False, the returned '__init__'
@@ -371,6 +371,12 @@ class EZHook(AbstractSpaceHook):
     keyword. Either way, every field still left unset finally receives
     its default value.
 
+    Field metadata is resolved once, here at class creation: each
+    field's type and a fresh-default recipe are captured so the
+    per-construct path never reads them back through an 'EZField'
+    descriptor. The recipe still builds a new value on every call, so
+    mutable defaults stay unshared between instances.
+
     After every field has been populated, the generated '__init__'
     looks up '__post_init__' on 'type(self)' and calls it with
     'self' if it is defined. The lookup walks the MRO, so a
@@ -378,39 +384,56 @@ class EZHook(AbstractSpaceHook):
     inherits the parent's. The hook is the supported customization
     point for validation, normalization, and derived state.
 
+    Parameters
+    ----------
+    ezFields : dict[str, EZField]
+      The class's merged own and inherited fields, in declaration
+      order.
+
     Returns
     -------
     INIT: (self, *args, **kwargs) -> None
       The '__init__' method for the 'EZData' subclass under construction.
     """
+    specs = []
+    for key, field in ezFields.items():
+      fieldType = field.fieldType
+      posArgs = field.posArgs
+      keyArgs = field.keyArgs
 
-    def _assignField(self: Any, key: str, val: Any, field: EZField) -> None:
+      def makeDefault(t=fieldType, a=posArgs, k=keyArgs) -> Any:
+        return t(*a, **k)
+
+      specs.append((key, fieldType, makeDefault))
+    specs = (*specs,)
+    fieldCount = len(specs)
+
+    def _assignField(self: Any, key: str, val: Any, type_: type) -> None:
       try:
-        casted = typeCast(field.fieldType, val)
+        casted = typeCast(type_, val)
       except TypeCastException as typeCastException:
-        e = TypeException(key, val, field.fieldType)
+        e = TypeException(key, val, type_)
         raise e from typeCastException
       else:
         object.__setattr__(self, key, casted)
 
     def _applyKwargs(self: Any, **kwargs) -> None:
-      for key, field in self.__ez_fields__.items():
+      for key, type_, _ in specs:
         if key in kwargs:
-          _assignField(self, key, kwargs[key], field)
+          _assignField(self, key, kwargs[key], type_)
 
     def _applyArgs(self: Any, *args) -> None:
-      if len(args) > len(self.__ez_fields__):
-        cls_, n, N = type(self), len(self.__ez_fields__), len(args)
-        raise ExtraPositionalException(cls_, n, N)
-      for (key, field), arg in zip(self.__ez_fields__.items(), args):
-        _assignField(self, key, arg, field)
+      if len(args) > fieldCount:
+        raise ExtraPositionalException(type(self), fieldCount, len(args))
+      for (key, type_, _), arg in zip(specs, args):
+        _assignField(self, key, arg, type_)
 
     def _applyDefaults(self: Any) -> None:
-      for key, field in self.__ez_fields__.items():
+      for key, _, makeDefault in specs:
         try:
           _ = getattr(self, key)
         except AttributeError:
-          object.__setattr__(self, key, field.defaultValue)
+          object.__setattr__(self, key, makeDefault())
 
     def __init__(self: Any, *args, **kwargs) -> None:
       if not self.__kw_only__:

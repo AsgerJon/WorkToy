@@ -191,33 +191,51 @@ class BaseDescriptor(Object, Generic[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def hookPreGet(self, instance: Any, **kwargs) -> None:
+    keys = self._getPreGetKeys()
+    if not keys:
+      return
     owner = type(instance)
-    for key in self._getPreGetKeys():
+    for key in keys:
       flexCall(getattr(owner, key))(instance, **kwargs)
 
   def hookOnGet(self, instance: Any, value: Any, **kwargs) -> None:
+    keys = self._getOnGetKeys()
+    if not keys:
+      return
     owner = type(instance)
-    for key in self._getOnGetKeys():
+    for key in keys:
       flexCall(getattr(owner, key))(instance, value, **kwargs)
 
   def hookPreSet(self, instance: Any, value: Any, **kwargs) -> None:
+    keys = self._getPreSetKeys()
+    if not keys:
+      return
     owner = type(instance)
-    for key in self._getPreSetKeys():
+    for key in keys:
       flexCall(getattr(owner, key))(instance, value, **kwargs)
 
   def hookOnSet(self, instance: Any, value: Any, **kwargs) -> None:
+    keys = self._getOnSetKeys()
+    if not keys:
+      return
     owner = type(instance)
-    for key in self._getOnSetKeys():
+    for key in keys:
       flexCall(getattr(owner, key))(instance, value, **kwargs)
 
   def hookPreDelete(self, instance: Any, **kwargs) -> None:
+    keys = self._getPreDeleteKeys()
+    if not keys:
+      return
     owner = type(instance)
-    for key in self._getPreDeleteKeys():
+    for key in keys:
       flexCall(getattr(owner, key))(instance, **kwargs)
 
   def hookOnDelete(self, instance: Any, **kwargs) -> None:
+    keys = self._getOnDeleteKeys()
+    if not keys:
+      return
     owner = type(instance)
-    for key in self._getOnDeleteKeys():
+    for key in keys:
       flexCall(getattr(owner, key))(instance, **kwargs)
 
   def hookSetName(self, owner: type, name: str, **kwargs) -> None:
@@ -239,4 +257,10 @@ class BaseDescriptor(Object, Generic[T]):
 
     def __get__(self, instance: Any, owner: type) -> Union[Self, T]:
       return super().__get__(instance, owner)
+
+    #  Writes require T statically, so type-checked callers are held
+    #  to the field type. Runtime salvage still rescues dynamic or
+    #  untyped callers that pass something coercible.
+    # noinspection PyMethodOverriding
+    def __set__(self, instance: Any, value: T) -> None: ...
   # @formatter:on
