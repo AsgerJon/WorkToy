@@ -1,8 +1,8 @@
 """
-KeeFlagDuplicate is a custom exception raised to indicate that a KeeFlags
-class received a duplicate entry for an enumeration.
+KeeFlagDuplicate is raised when a 'KeeFlags' class body declares the same
+flag name twice.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

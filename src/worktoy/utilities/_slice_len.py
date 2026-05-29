@@ -1,9 +1,7 @@
-"""Compute the length of a slice applied to a sequence.
-
-The 'sliceLen' function takes a 'slice' object and the length of
-a sequence, and returns the number of elements that would result
-from applying the slice to such a sequence."""
-#  AGPL-3.0 license
+"""
+The 'sliceLen' function returns how many elements a slice selects.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

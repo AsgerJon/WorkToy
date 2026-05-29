@@ -1,10 +1,8 @@
 """
-Sentinel provides the base class for the sentinel objects provided by the
-'worktoy.core.sentinels' module. By subclassing 'type' and becoming a
-metaclass, it allows sentinel objects to be instances of 'type' and thus
-classes.
+Sentinel is the base class for sentinel objects, built by the
+'SentinelMeta' metaclass.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -19,11 +17,11 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases = tuple[type, ...]
 
 
-class _Sentinel(type):
+class SentinelMeta(type):
   """
-  Sentinel keeps track of all sentinel objects and prevents multiple
-  sentinels of the same name from being created. It also prevents its
-  derived classes from being instantiated.
+  SentinelMeta is the metaclass for sentinel classes. It registers each
+  sentinel by name, returns the existing sentinel when a name is reused,
+  and prevents its classes from being instantiated.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -112,9 +110,9 @@ class _Sentinel(type):
   __repr__ = __str__
 
 
-class Sentinel(metaclass=_Sentinel):
+class Sentinel(metaclass=SentinelMeta):
   """
-  Sentinel is the base class for all sentinel objects in the 'worktoy.core'
-  module. It prevents instantiation and ensures that only one instance of
-  each sentinel exists.
+  Sentinel is the base class for all sentinel objects in the
+  'worktoy.core.sentinels' package. It prevents instantiation and ensures
+  that only one sentinel of each name exists.
   """

@@ -11,7 +11,7 @@ __flex_wrapped__ marker for entries the hook is required to wrap, and
 identity preservation for entries it must skip (dunders, already-marked
 functions, classmethod/staticmethod descriptors, classes, plain data).
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

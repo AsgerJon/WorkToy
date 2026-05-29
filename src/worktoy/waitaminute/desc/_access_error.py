@@ -1,10 +1,7 @@
 """
-AccessError is raised when a descriptor has no way to retrieve a value,
-for example a 'Field' whose getter was never registered with '@x.GET'. It
-subclasses both 'DescriptorException' and 'AttributeError', so it is caught
-by either.
+AccessError is raised when a descriptor has no way to retrieve a value.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -1,10 +1,7 @@
 """
-flexCall is a factory that wraps a function with truncating positional
-dispatch. Intended to be invoked at class-creation time inside the
-metaclass; the returned function enters the namespace as a regular
-function object.
+flexCall wraps a function with truncating positional-argument dispatch.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

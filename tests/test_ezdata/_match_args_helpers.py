@@ -6,7 +6,7 @@ a 'sys.version_info' guard, so on Python 3.7-3.9 this file is
 never parsed; the legacy module '_match_args_legacy_helpers.py'
 provides a syntactically-portable equivalent for that case.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

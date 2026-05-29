@@ -2,7 +2,7 @@
 TestClassMap tests that classes derived from 'BaseMeta' that implement
 '__class_setitem__' and '__class_getitem__' are called correctly.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

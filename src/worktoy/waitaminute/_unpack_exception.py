@@ -1,11 +1,8 @@
 """
-UnpackException is raised when an unpacking operation finds no argument
-requiring unpacking. It is raised by the 'unpack' function in the
-'worktoy.utilities' module when strict mode is enabled (the default) and
-no iterable is found among the arguments. Note that 'unpack' does not
-treat 'str' or 'bytes' as unpackable iterables.
+UnpackException is raised when 'unpack' finds no iterable argument in
+strict mode.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -21,7 +18,7 @@ class UnpackException(ValueError):
   """
   UnpackException is raised when an unpacking operation finds no argument
   requiring unpacking. It is raised by the 'unpack' function in the
-  'worktoy.utilities' module when strict mode is enabled (the default) and
+  'worktoy.utilities' package when strict mode is enabled (the default) and
   no iterable is found among the arguments. 'unpack' does not treat 'str'
   or 'bytes' as unpackable iterables.
 

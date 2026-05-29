@@ -1,7 +1,7 @@
 [![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
 [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy)
 [![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 # worktoy v1.0.0 (release candidate)
 
@@ -18,11 +18,14 @@ tested thoroughly on each supported Python version from 3.7* to 3.14.
 # Table of Contents
 
 - [Installation](#installation)
-- [Introduction](#introduction)
-- [Features](#features)
-- [Usage](#usage)
+- [Python Is Easy. Too Easy!](#python-is-easy-too-easy)
+    - ['Trust-Me-Bro'-Typing](#trust-me-bro-typing)
+    - [The Python Parsing Situation Is Crazy](#the-python-parsing-situation-is-crazy)
+    - ["Show Don't Tell" Is for Stories, not for Code!](#show-dont-tell-is-for-stories-not-for-code)
+    - [Static Discipline](#static-discipline)
 - [Contributing](#contributing)
 - [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 # Installation
 
@@ -116,7 +119,7 @@ class Point:
       raise TypeError('Invalid arguments')
 ```
 
-Conditional branches. Growing complexity. Manuel parsing. Long gone are
+Conditional branches. Growing complexity. Manual parsing. Long gone are
 those happy days of effortless coding.
 
 But it does not have to be like this. Introducing `@overload`:
@@ -124,12 +127,20 @@ But it does not have to be like this. Introducing `@overload`:
 ```python
 from __future__ import annotations
 
-from typing import Self
+from typing import TYPE_CHECKING
 
 from worktoy.mcls import BaseObject
 from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
 from worktoy.desc import AttriBox
+
+#  Version-specific typing names like 'Self' (3.11+) stay behind
+#  'if TYPE_CHECKING' so they never import at runtime on old Pythons.
+#  This only defers imports and annotations though: it cannot rescue
+#  newer syntax. The walrus ':=' (3.8+) is a SyntaxError on 3.7, and
+#  'X | Y' unions (3.10+) fail at runtime, so prefer Union / Optional.
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Self
 
 
 class Point(BaseObject):
@@ -161,18 +172,18 @@ When reading code, you look for declarations.
 For where symbols are defined. For where meaning begins.
 
 Narrative storytelling is different. The method by which information is
-conveyed is itself part of the the artistic expression. The way
+conveyed is itself part of the artistic expression. The way
 information is revealed is frequently as important as the information
-itself. In *Clair Obscur: Expedition 33*, the horror of the *Gomache*
+itself. In *Clair Obscur: Expedition 33*, the horror of the *Gommage*
 unfolds gradually until Sophie disappears in Gustave's arms. The
 imperative subtlety grants the story its emotional impact.
 
 In code, the declaration **is** the point! In matters of code, I want
-declarations. I don’t want foreshadowing. I don’t want subtlety. I don’t
+declarations. I don't want foreshadowing. I don't want subtlety. I don't
 want subversion of expectations. I want declarations.
 
 Anyway, what were we talking about?
-Right — figure out what point.r is from the code below:
+Right, figure out what `point.r` is from the code below:
 
 ```python
 class Point:
@@ -205,7 +216,7 @@ class Point(BaseObject):
   x = AttriBox[float](0.0)
   y = AttriBox[float](0.0)
 
-  r = Field()  # Straight up declaration! 
+  r: Field[float] = Field()  # Straight up declaration!
 
   @overload(float, float)
   def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
@@ -285,3 +296,20 @@ Now `x` and `y` are declared at the class level, making them visible,
 inspectable and enforced. They are more than just keys in an instance
 dictionary. They are structural elements of the class. In plain Python,
 instances define structure. Here, the class does.
+
+# Contributing
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+the style rules and development setup.
+
+# License
+
+worktoy is released under the Apache License 2.0 (Apache-2.0). See
+[LICENSE](LICENSE) for the full text.
+
+# Acknowledgments
+
+worktoy is the original work of Asger Jon Vistisen. Development was
+assisted by tooling, including PyCharm code completion, GitHub Copilot,
+and Claude (Anthropic); none of these is an author or owner of the code.
+See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for the full account.

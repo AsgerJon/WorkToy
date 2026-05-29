@@ -1,9 +1,8 @@
 """
-DuplicateError subclasses 'AttributeError' and provides a custom exception
-raised to indicate that a second attribute assignment was attempted at the
-same name in the same 'EZData' class body.
+DuplicateError is raised when an 'EZData' class body assigns the same
+field name twice.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

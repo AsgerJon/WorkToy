@@ -2,7 +2,7 @@
 TestDispatcher provides tests for the 'Dispatcher' and 'TypeSig'
 classes from the 'worktoy.dispatch' package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -17,9 +17,7 @@ from worktoy.waitaminute import MissingVariable
 from . import DispatcherTest
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union, Self, Iterator
-
-  FloatBox: TypeAlias = Union[AttriBox, float]
+  from typing import Self, Iterator
 
 
 def funcIntInt(x: int, y: int) -> int:
@@ -39,8 +37,8 @@ class ComplexCartesian(BaseObject):
   Base for complex number implementations
   """
 
-  realPart: FloatBox = AttriBox[float](0.)
-  imagPart: FloatBox = AttriBox[float](0.)
+  realPart = AttriBox[float](0.)
+  imagPart = AttriBox[float](0.)
 
   def __iter__(self, ) -> Iterator[float]:
     yield self.realPart

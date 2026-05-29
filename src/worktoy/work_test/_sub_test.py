@@ -1,9 +1,7 @@
 """
-SubTest subclasses 'unittest.TestCase' and provides a per-instance
-accumulator for sub-tests. 'BaseTest' embeds one as the 'subTest'
-descriptor.
+SubTest is a per-instance accumulator and context manager for sub-tests.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

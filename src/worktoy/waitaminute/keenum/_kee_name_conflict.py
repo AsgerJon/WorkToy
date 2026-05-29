@@ -1,9 +1,8 @@
 """
-KeeNameConflict provides a custom exception raised to indicate that a
-'KeeNum' enumeration received a 'Kee' member reservation already named,
-but provided at a different name.
+KeeNameConflict is raised when a 'Kee' member is registered under a name
+different from its existing one.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

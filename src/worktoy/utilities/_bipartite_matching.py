@@ -1,10 +1,8 @@
-"""Bipartite matching by backtracking with forward checking.
-
-The 'bipartiteMatching' function takes a list of candidate-index
-tuples (one per slot) and returns the first assignment that maps
-each slot to a distinct index, using minimum-remaining-values
-selection to prune the search."""
-#  AGPL-3.0 license
+"""
+The 'bipartiteMatching' function matches each slot to a distinct candidate
+index.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

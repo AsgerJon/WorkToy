@@ -1,9 +1,7 @@
-"""Coalescing helper: first non-'None' argument wins.
-
-The 'maybe' function returns the first positional argument that
-is not 'None', or 'None' if every argument is 'None'. Used
-extensively to express defaults without nested 'if' ladders."""
-#  AGPL-3.0 license
+"""
+The 'maybe' function returns the first of its arguments that is not 'None'.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -7,7 +7,7 @@ that the dispatcher consults via list iteration when the call length
 exceeds the expansion limit. These tests cover both tiers and the
 interaction with explicit overrides.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -95,7 +95,7 @@ class ParentWithVariadic(BaseObject):
 
 
 class ChildOfParentVariadic(ParentWithVariadic):
-  """Empty body — the variadic inheritance happens via
+  """Empty body - the variadic inheritance happens via
   'BaseSpace.__init__' walking the parent's '__namespace__' and
   re-registering each '(name, sig, func)' pair."""
 
@@ -155,7 +155,7 @@ class TestLoadARGS(OverloadTest):
 
   def test_prefix_only(self) -> None:
     """The prefix-only call matches the expanded 'TypeSig(str)'
-    entry — the zero-tail expansion of '(str, *ARGS[int])'."""
+    entry - the zero-tail expansion of '(str, *ARGS[int])'."""
     collector = PrefixedCollector('alpha')
     self.assertEqual(collector.name, 'alpha')
     self.assertEqual(collector.nums, ())
@@ -188,7 +188,7 @@ class TestLoadARGS(OverloadTest):
 
   def test_other_lengths_still_variadic(self) -> None:
     """Lengths the explicit override does not cover still resolve
-    to the variadic function — both within the FASTEST expansion
+    to the variadic function - both within the FASTEST expansion
     and via the variadic catcher."""
     one = MixedCollector('eps', 1)
     three = MixedCollector('zeta', 1, 2, 3)

@@ -6,7 +6,7 @@ the complex number implementations. For no particular reason, it
 subclasses 'ComplexBox', which uses the 'AttriBox' descriptor for its
 real and imaginary parts.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

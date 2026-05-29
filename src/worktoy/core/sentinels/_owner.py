@@ -3,7 +3,7 @@ OWNER provides a sentinel object used together with THIS by the descriptor
 flow where OWNER provides a placeholder for the owning class, while THIS
 refers to an instance of the class (self typically).
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

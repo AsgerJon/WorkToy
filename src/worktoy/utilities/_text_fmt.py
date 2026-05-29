@@ -1,12 +1,7 @@
-"""Whitespace-collapsing formatter for multi-line string literals.
-
-The 'textFmt' function exists because Python multi-line string
-literals preserve every newline and indent verbatim, which is
-almost never what an error message or report wants. 'textFmt'
-collapses runs of whitespace into single spaces, with explicit
-'<br>' and '<tab>' tokens for the few places real line breaks
-or indentation are needed."""
-#  AGPL-3.0 license
+"""
+The 'textFmt' function collapses whitespace in multi-line string literals.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 """
 TestKeeFlags module tests the KeeFlags class functionality.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeFlags, KeeFlagsMeta, KeeFlag
 from worktoy.waitaminute import MissingVariable, TypeException
+from worktoy.waitaminute.keenum import KeeResolveError
 from . import KeeTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -280,7 +281,7 @@ class TestKeeFlags(KeeTest):
     """Tests that bad resolutions raise the appropriate exceptions."""
 
     for cls in self.exampleFlags:
-      with self.assertRaises(IndexError) as context:
+      with self.assertRaises(KeeResolveError) as context:
         _ = cls._resolveIndex(len(cls))
       e = context.exception
       self.assertIn(cls.__name__, str(e))

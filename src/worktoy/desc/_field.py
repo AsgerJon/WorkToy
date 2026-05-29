@@ -1,11 +1,8 @@
 """
-Field provides a property-like descriptor implementation allowing
-descriptor owners to decorate methods to designate them as accessors.
-Since these are identified by name, the function object are entirely
-unaffected by the decoration and subclasses can override any decorated
-method and the descriptor uses the overridden method instead.
+Field is a property-like descriptor whose accessors are methods decorated
+in the class body.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -46,6 +43,9 @@ class Field(BaseDescriptor[T]):
 
   @DELETE - Decorate any number of methods as deleters. Optionally, implement
   by setting the value to the 'DELETED' sentinel object.
+
+  Accessors are resolved by name at access time, so a subclass may
+  override any decorated method and 'Field' uses the override instead.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

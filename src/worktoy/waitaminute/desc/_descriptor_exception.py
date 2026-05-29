@@ -1,10 +1,8 @@
 """
-DescriptorException is the base class for the descriptor protocol
-exceptions 'AccessError', 'ProtectedError', and 'ReadOnlyError',
-grouping them under one type so they can be caught together. The
-related 'WriteOnceError' and 'WithoutException' do not inherit from it.
+DescriptorException is the base class for the descriptor-protocol
+exceptions 'AccessError', 'ProtectedError', and 'ReadOnlyError'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

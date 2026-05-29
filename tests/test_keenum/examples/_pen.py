@@ -4,7 +4,7 @@ class. Rather than having the color as an 'AttriBox' with 'valueType' of
 'RGB', 'Pen' owns a 'KeeBox' instance with 'valueType' of 'ColorNum'. The
 'width' uses 'AttriBox'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

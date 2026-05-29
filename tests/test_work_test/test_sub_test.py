@@ -3,7 +3,7 @@ TestSubTest tests the 'SubTest' class of 'worktoy.work_test'. Covers
 the collector buckets, the nested-label stack, the context-manager
 protocol, the descriptor mechanics, and the framed repr.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

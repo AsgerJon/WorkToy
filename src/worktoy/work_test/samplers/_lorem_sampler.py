@@ -1,21 +1,14 @@
 """
-LoremSampler subclasses 'BaseSampler' and provides lorem ipsum samplers.
+LoremSampler draws random lorem ipsum text.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
-
-from typing import TYPE_CHECKING
 
 from ...desc import Field
 from ...lorem_ipsum import Sentence
 from . import BaseSampler
 from ...waitaminute.control_flow import SkipSet
-
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union
-
-  IntField: TypeAlias = Union[int, Field]
 
 
 class LoremSampler(BaseSampler):
@@ -37,7 +30,7 @@ class LoremSampler(BaseSampler):
   sentence = Sentence()
 
   #  Virtual Variables
-  charCount: IntField = Field()
+  charCount: Field[int] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

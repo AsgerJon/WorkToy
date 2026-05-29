@@ -1,11 +1,7 @@
 """
 ProtectedError is raised on an attempt to delete a protected attribute.
-The default 'Object.__instance_delete__' raises it, as does any descriptor
-whose protocol forbids deletion. It subclasses 'DescriptorException', a
-deliberately specific type rather than a bare 'TypeError' or
-'AttributeError'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

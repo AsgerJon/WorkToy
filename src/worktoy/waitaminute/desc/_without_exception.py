@@ -1,10 +1,8 @@
 """
 WithoutException is raised when a context-only descriptor method is used
-outside any active descriptor context, such as reading 'self.instance' or
-calling 'exitContext' on 'Object' when no '(instance, owner)' frame is on
-the context stack.
+outside any active descriptor context.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

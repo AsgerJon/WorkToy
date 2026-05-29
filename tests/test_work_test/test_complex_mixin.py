@@ -3,7 +3,7 @@ TestComplexMixin subclasses 'ComplexTest' from the 'worktoy.work_test'
 package and provides tests for 'ComplexMixin' from the
 'worktoy.work_test.mixins' package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

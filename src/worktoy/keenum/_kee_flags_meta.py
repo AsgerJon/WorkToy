@@ -1,5 +1,5 @@
 """KeeFlagsMeta provides the metaclass for KeeFlags."""
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt, maybe
+from ..waitaminute.keenum import KeeResolveError
 from . import KeeFlag
 from . import KeeFlagsSpace as KFSpace
 
@@ -147,7 +148,7 @@ class KeeFlagsMeta(BaseMeta):
   def __contains__(cls, identifier: Any) -> bool:
     try:
       _ = cls._resolveMember(identifier)
-    except (IndexError, KeyError, ValueError, TypeError):
+    except (KeeResolveError, IndexError, KeyError, ValueError, TypeError):
       return False
     else:
       return True
@@ -176,9 +177,7 @@ class KeeFlagsMeta(BaseMeta):
     for member in cls:
       if member.index == index:
         return member
-    infoSpec = """KeeFlags class '%s' has no member at index: '%d'!"""
-    info = infoSpec % (cls.__name__, index,)
-    raise IndexError(textFmt(info))
+    raise KeeResolveError(cls, index)
 
   def _resolveName(cls, name: str) -> KeeFlags:
     identifier = frozenset(name.upper().split('_'))

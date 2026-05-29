@@ -1,11 +1,8 @@
 """
 ControlClassError is raised when a 'ControlFlow' subclass defines a
-disallowed attribute. Only '__str__' and '__repr__' may be defined in
-the class body; the interpreter-set dunders '__firstlineno__',
-'__namespace__', and '__static_attributes__' are also permitted. Any
-other attribute raises this exception.
+disallowed attribute.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

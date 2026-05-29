@@ -3,7 +3,7 @@ TestFlexibleArgs tests that the 'BaseDescriptor' system for descriptor
 notifiers correctly passes only arguments that the decorated method
 accepts, allowing for flexible argument signatures.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

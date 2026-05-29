@@ -1,7 +1,7 @@
 """TestClassInitArgs verifies the metaclass-driven '__class_init__'
 hook fires with the expected positional and keyword arguments after
 the class body has finished executing."""
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

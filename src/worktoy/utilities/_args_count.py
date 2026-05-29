@@ -1,9 +1,7 @@
-"""Count the positional parameters of a callable.
-
-The 'argsCount' function inspects a callable and returns how
-many of its parameters can be passed positionally. '*args',
-'**kw', and keyword-only parameters are not counted."""
-#  AGPL-3.0 license
+"""
+The 'argsCount' function counts the positional parameters of a callable.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

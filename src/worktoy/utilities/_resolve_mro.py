@@ -1,16 +1,8 @@
-"""C3 linearization preview without constructing a class.
-
-The 'resolveMRO' function returns the C3 linearization of the
-given base classes, in the same order CPython would compute when
-constructing a class with those bases. The result is the
-linearization of the *bases*, not of the hypothetical class
-itself: for 'class Foo(*bases): pass',
-'resolveMRO(*bases) == Foo.mro()[1:]'.
-
-Useful for previewing the MRO from inside metaclass machinery,
-where actually constructing 'type('_', bases, {})' would
-re-enter the metaclass and recurse."""
-#  AGPL-3.0 license
+"""
+The 'resolveMRO' function returns the C3 linearization of some base
+classes.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

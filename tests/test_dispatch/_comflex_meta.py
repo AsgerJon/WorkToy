@@ -4,7 +4,7 @@ featuring the 'flex' decorator allowing flexible overloading. In contrast
 to 'ComFlex', this implementation uses the metaclass to expose the
 'Dispatcher' overloading functionality.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

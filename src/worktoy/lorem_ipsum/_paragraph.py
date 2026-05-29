@@ -1,8 +1,7 @@
 """
-Paragraph subclasses 'BaseGenerator' and concatenates 'Sentence' objects
-forming size specified paragraphs.
+Paragraph assembles a paragraph from a sequence of 'Sentence' objects.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -38,6 +37,9 @@ class Paragraph(BaseGenerator):
   #  Class Variables
   __sentence_mean__: int = 80
   __sentence_var__: int = 20
+  #  A paragraph is built from sentences, so its floor must leave room
+  #  for at least one sentence (matches '__sentence_mean__').
+  __min_char_count__: int = 80
 
   #  Fallback Variables
   __fallback_count__: int = 800

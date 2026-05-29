@@ -1,25 +1,8 @@
 """
-DELETED indicates deletion. If any 'object.__getattribute__' would return
-DELETED, it should instead raise an AttributeError. The core classes in
-the 'worktoy.core' module implements this behaviour. The example below
-illustrates the motivation behind this sentinel.
-
-A descriptor class implements a default value that descriptor objects
-return if the normal __get__ is not able to find a value on a given
-owning instance. Each descriptor object may have its own default value,
-but if not, the class provides a fallback value. Thus, when accessing
-the descriptor described in this example, the descriptor attempts three
-separate lookups:
-1.  from the instance passed to __get__
-2.  a default value set on the descriptor object itself
-3.  the fallback value set on the descriptor class itself
-
-Instead of requiring handling three different lookups, the '__delete__'
-functionality may be implemented by 'setting' the descriptor to the
-DELETED sentinel. Then, the first lookup finds the DELETED sentinel,
-which signals the 'Desc.__get__' method to raise 'AttributeError'.
+DELETED is the sentinel a descriptor stores in place of a value to mark
+that value as deleted.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -33,9 +16,14 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class DELETED(Sentinel):
   """
-  Sentinel signalling that an attribute has been deleted. A descriptor
-  stores 'DELETED' in its backing slot to delete the value; the
-  'worktoy.core' base raises (rather than returning 'DELETED') when the
-  attribute is next read. See the module docstring for the rationale.
+  DELETED is the sentinel a descriptor stores in its backing slot to mark
+  an attribute as deleted; the 'worktoy.core' base then raises
+  'AttributeError' on the next read rather than returning 'DELETED'.
+
+  A descriptor resolves a value through up to three lookups: the value on
+  the accessing instance, a default set on the descriptor object, and a
+  fallback set on the descriptor class. Rather than thread deletion
+  through all three, it is implemented by setting the slot to 'DELETED';
+  the first lookup then finds it and signals 'Desc.__get__' to raise.
   """
   pass

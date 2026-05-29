@@ -1,7 +1,7 @@
 """
-FloatSampler subclasses 'IntSampler' and provides 'float' samplers.
+FloatSampler draws random 'float' values.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -17,9 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Optional, Union
 
   MaybeFloat: TypeAlias = Optional[float]
-  FloatField: TypeAlias = Union[float, Field]
   MaybeBool: TypeAlias = Optional[bool]
-  BoolField: TypeAlias = Union[bool, Field]
 
 
 class FloatSampler(IntSampler):

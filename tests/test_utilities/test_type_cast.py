@@ -1,7 +1,7 @@
 """
 TestTypeCast tests the 'typeCast' function from 'worktoy.utilities'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -241,3 +241,83 @@ class TestTypeCast(UtilitiesTest):
     """
     for value in [69, 420, 1337, 80085, 8008135]:
       self.assertAlmostEqual(typeCast(float, value), float(value))
+
+  def test_int_to_float_overflow(self) -> None:
+    """
+    Test that 'typeCast(float, arg)' raises 'TypeCastException' (chained
+    from 'OverflowError') for an int too large for a float, instead of
+    letting the 'OverflowError' escape.
+    """
+    for big in [2 ** 2000, 10 ** 400, -(2 ** 2000)]:
+      with self.assertRaises(TypeCastException) as context:
+        typeCast(float, big)
+      e = context.exception
+      self.assertEqual(str(e), repr(e))
+      self.assertIs(e.type_, float)
+      self.assertEqual(e.arg, big)
+      self.assertIsInstance(e.__cause__, OverflowError)
+
+  def test_int_to_float_precision_loss(self) -> None:
+    """
+    Test that 'typeCast(float, arg)' raises 'TypeCastException' for an
+    int a float cannot hold exactly, honoring the lossless contract in
+    the int-to-float direction.
+    """
+    for lossy in [2 ** 53 + 1, 2 ** 60 + 1, -(2 ** 64 + 1)]:
+      with self.assertRaises(TypeCastException) as context:
+        typeCast(float, lossy)
+      e = context.exception
+      self.assertEqual(str(e), repr(e))
+      self.assertIs(e.type_, float)
+      self.assertEqual(e.arg, lossy)
+
+  def test_int_to_float_exact_large(self) -> None:
+    """
+    Test that 'typeCast(float, arg)' still succeeds for large ints a
+    float represents exactly, including powers of two at and beyond the
+    53-bit mantissa boundary.
+    """
+    for exact in [2 ** 53, 2 ** 100, -(2 ** 90), 2 ** 53 - 1]:
+      out = typeCast(float, exact)
+      self.assertIsInstance(out, float)
+      self.assertEqual(int(out), exact)
+
+  def test_int_to_complex_overflow(self) -> None:
+    """
+    Test that 'typeCast(complex, arg)' raises 'TypeCastException'
+    (chained from 'OverflowError') for an int too large for the float
+    real part, instead of leaking the 'OverflowError'.
+    """
+    for big in [2 ** 2000, 10 ** 400, -(2 ** 2000)]:
+      with self.assertRaises(TypeCastException) as context:
+        typeCast(complex, big)
+      e = context.exception
+      self.assertEqual(str(e), repr(e))
+      self.assertIs(e.type_, complex)
+      self.assertEqual(e.arg, big)
+      self.assertIsInstance(e.__cause__, OverflowError)
+
+  def test_int_to_complex_precision_loss(self) -> None:
+    """
+    Test that 'typeCast(complex, arg)' raises 'TypeCastException' for an
+    int whose value a float real part cannot hold exactly.
+    """
+    for lossy in [2 ** 53 + 1, 2 ** 60 + 1, -(2 ** 64 + 1)]:
+      with self.assertRaises(TypeCastException) as context:
+        typeCast(complex, lossy)
+      e = context.exception
+      self.assertEqual(str(e), repr(e))
+      self.assertIs(e.type_, complex)
+      self.assertEqual(e.arg, lossy)
+
+  def test_int_to_complex_exact_large(self) -> None:
+    """
+    Test that 'typeCast(complex, arg)' still succeeds for large ints a
+    float represents exactly, returning a complex with zero imaginary
+    part.
+    """
+    for exact in [2 ** 53, 2 ** 100, -(2 ** 90)]:
+      out = typeCast(complex, exact)
+      self.assertIsInstance(out, complex)
+      self.assertEqual(out.imag, 0.0)
+      self.assertEqual(int(out.real), exact)

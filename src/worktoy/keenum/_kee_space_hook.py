@@ -1,13 +1,7 @@
 """
-KeeSpaceHook collects the 'Kee' descriptors encountered in the class
-bodies of KeeNum classes. This happens during the 'setItemPhase'. To
-avoid context leakage, the members are collected in the owning
-namespace object. The namespace object is expected to implement an
-'addNum' method which KeeSpaceHook calls to register each Kee. The
-hook provides no further functionality than deciding which key,
-value pairs to collect as future members of the enumeration.
+KeeSpaceHook collects the 'Kee' descriptors from a 'KeeNum' class body.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -6,7 +6,7 @@ resolve to the member of 'PrimeNum' at index 2. For values greater than
 the number of members, the resolution will instead resolve to the member
 having the 'value' equal to the given value.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

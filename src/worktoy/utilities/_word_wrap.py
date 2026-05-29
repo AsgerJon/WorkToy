@@ -1,10 +1,7 @@
-"""Word-wrap text to a fixed character width.
-
-The 'wordWrap' function reflows the supplied text fragments so
-each output line stays within 'width' characters, joining words
-with single spaces and respecting an explicit line-break token
-(default '<br>')."""
-#  AGPL-3.0 license
+"""
+The 'wordWrap' function reflows text to a fixed character width.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 

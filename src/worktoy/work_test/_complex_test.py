@@ -1,17 +1,8 @@
 """
-ComplexTest exercises the arithmetic dunder methods that 'ComplexMixin'
-provides. The point of the mixin is that several different complex
-number implementations can share one set of arithmetic dunders, and
-this single test class is the shared testing framework for them.
-
-List the implementations to test in the 'targets' class attribute.
-Each one is a class that mixes in 'ComplexMixin' and is constructed
-from two positional arguments: the real part and the imaginary part.
-Every test runs once against each target.
-
-The tests touch nothing but the 'REAL' and 'IMAG' attributes.
+ComplexTest is the shared test framework for the 'ComplexMixin' arithmetic
+dunders.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -26,9 +17,15 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class ComplexTest(BaseTest):
   """
-  Shared test framework for the arithmetic dunder methods of
-  'ComplexMixin'. Set 'targets' to the complex number classes under
-  test.
+  ComplexTest is the shared test framework for the arithmetic dunder
+  methods of 'ComplexMixin', so several complex-number implementations
+  can share one set of tests.
+
+  List the implementations to test in the 'targets' class attribute. Each
+  is a class that mixes in 'ComplexMixin' and is constructed from two
+  positional arguments, the real and imaginary parts; every test runs once
+  against each target. The tests touch nothing but the 'REAL' and 'IMAG'
+  attributes.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

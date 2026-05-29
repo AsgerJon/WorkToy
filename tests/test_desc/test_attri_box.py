@@ -2,7 +2,7 @@
 TestAttriBox tests specific functionality of the 'AttriBox' descriptor not
 covered by the contextual tests in 'DescTest'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -13,11 +13,6 @@ from worktoy.desc import AttriBox
 from worktoy.waitaminute import TypeException, MissingVariable
 from . import DescTest
 from .geometry import Circle, Point2D
-
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union
-
-  ComplexBox: TypeAlias = Union[AttriBox, complex]
 
 eps = sys.float_info.epsilon
 
@@ -180,3 +175,97 @@ class TestAttriBox(DescTest):
     self.assertIs(e.instance, susBox)
     self.assertEqual(e.varName, '__field_type__')
     self.assertIn(type, e.expectedTypes)
+
+  def test_set_overflow_int(self) -> None:
+    """
+    Testing that assigning an int too large for the field type raises
+    'OverflowError' rather than masking it with the constructor
+    fallback. Stupid args, stupid prizes.
+    """
+    for box in [float, complex]:
+      class Foo:
+        # noinspection PyTypeHints
+        bar = AttriBox[box](box(0))
+
+      foo = Foo()
+      with self.assertRaises(OverflowError):
+        foo.bar = 2 ** 2000
+
+  def test_set_exact_large_int(self) -> None:
+    """
+    Testing that assigning a large int the field type represents
+    exactly still succeeds, so the overflow guard does not reject
+    in-range values.
+    """
+
+    class Foo:
+      bar = AttriBox[float](0.0)
+
+    foo = Foo()
+    foo.bar = 2 ** 100
+    self.assertEqual(int(foo.bar), 2 ** 100)
+
+  def test_set_lossy_scalar_raises(self) -> None:
+    """
+    Testing that assigning a value a numeric field type would only
+    accept by losing data raises 'TypeException' rather than silently
+    rounding through the constructor fallback.
+    """
+    cases = [
+      (int, 3.9), (float, 2 ** 60 + 1), (complex, 2 ** 60 + 1),
+      (bool, 2), (int, '3.9')
+    ]
+    for box, value in cases:
+      class Foo:
+        # noinspection PyTypeHints
+        bar = AttriBox[box](box())
+
+      foo = Foo()
+      with self.assertRaises(TypeException):
+        foo.bar = value
+
+  def test_set_tuple_splat_survives(self) -> None:
+    """
+    Testing that the constructor fallback still serves the tuple-splat
+    path for a numeric field type, so 'complex(re, im)' construction is
+    not caught by the scalar guard.
+    """
+
+    class Foo:
+      bar = AttriBox[complex]()
+
+    foo = Foo()
+    # noinspection PyTypeChecker
+    foo.bar = 69, 420
+    if TYPE_CHECKING:  # pragma: no cover
+      assert isinstance(foo.bar, complex)
+    self.assertAlmostEqual(foo.bar.real, 69)
+    self.assertAlmostEqual(foo.bar.imag, 420)
+
+  def test_bad_resolve(self) -> None:
+    """
+    This method covers the TypeError, ValueError branch in
+    'AttriBox._resolve'.
+    """
+
+    class Wessel(complex):
+      """
+      Wessel is a subclass of 'complex' named after Caspar Wessel,
+      who first represented complex numbers geometrically. The purpose of
+      this subclass is to bypass a branch that specifically handles
+      'complex'.
+      """
+
+    class Foo:
+      bar = AttriBox[Wessel]()
+
+    foo = Foo()
+    with self.assertRaises(TypeException) as context:
+      susValue = """some real ones, some imaginary ones, trust me bro!"""
+      # noinspection PyTypeChecker
+      foo.bar = susValue
+    e = context.exception
+    self.assertEqual(e.varName, 'value')
+    self.assertEqual(e.actualObject, susValue)
+    self.assertIs(e.actualType, str)
+    self.assertIn(Wessel, e.expectedTypes)

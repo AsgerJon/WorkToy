@@ -1,8 +1,8 @@
 """
-KeeBoxException is a custom exception class raised to indicate that a
-'KeeBox' object failed to resolve to the underlying member.
+KeeBoxException is raised when a 'KeeBox' fails to resolve to a member of
+its enumeration.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

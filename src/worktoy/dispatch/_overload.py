@@ -1,11 +1,8 @@
 """
-The 'overload' function provides a decorator setting type signatures for
-particular function overload. This overloading implementation requires
-that the owning class is derived from 'BaseMeta' or a subclass of
-'BaseMeta'. Other classes must use the 'Dispatcher' descriptor from
-'worktoy.dispatch' instead.
+The 'overload' decorator registers a type signature for one overloaded
+function.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -152,7 +149,7 @@ class overload:  # NOQA
     A single variadic entry is also recorded in
     '__variadic_sig_func_list__' so the dispatcher can match calls
     whose length exceeds the FASTEST expansion."""
-    raw = sig._getRawTypes()
+    raw = sig.getRawTypes()
     if raw and isinstance(raw[-1], ARGS):
       argsInst = raw[-1]
       innerType = argsInst.__inner_type__

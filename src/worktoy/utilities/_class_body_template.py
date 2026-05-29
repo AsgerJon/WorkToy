@@ -7,7 +7,7 @@ place. Neither is part of the public API in any meaningful sense;
 they live here because the author writes new class files by
 copy-pasting one or the other and prefers to keep that scaffolding
 visible inside the package rather than in a scratch file."""
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -6,7 +6,7 @@ through the 'descriptor' protocol. The primary concern is the case where
 the attempting to cast an argument to a type, arises from a prior attempt
 to instantiate that type.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

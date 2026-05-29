@@ -1,7 +1,7 @@
 """
 TypeSig encapsulates type signatures for overloads
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ class TypeSig:
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getRawTypes(self) -> RawTypes:
+  def getRawTypes(self) -> RawTypes:
     return self.__raw_types__
 
   @classmethod
@@ -151,10 +151,10 @@ class TypeSig:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __iter__(self, ) -> Iterator[type]:
-    yield from self._getRawTypes()
+    yield from self.getRawTypes()
 
   def __hash__(self, ) -> int:
-    raw = self._getRawTypes()
+    raw = self.getRawTypes()
     if THIS in raw or OWNER in raw:
       ctx = type(self)._findActiveNamespace()
       if ctx is None:
@@ -166,14 +166,14 @@ class TypeSig:
         raise TypeError(textFmt(infoSpec % (type(self).__name__,)))
       hashValue, metaclass = ctx
       substituted = self(this=hashValue, owner=metaclass)
-      return hash(substituted._getRawTypes())
+      return hash(substituted.getRawTypes())
     return hash(raw)
 
   def __len__(self, ) -> int:
-    return len(self._getRawTypes())
+    return len(self.getRawTypes())
 
   def __contains__(self, type_: HASHABLE) -> bool:
-    for rawType in self._getRawTypes():
+    for rawType in self.getRawTypes():
       if rawType is type_:
         return True
     return False
@@ -210,7 +210,7 @@ class TypeSig:
     primitive for any caller that needs a hashable copy without
     waiting for 'swapTHIS' to fire."""
     newTypes = []
-    for rawType in self._getRawTypes():
+    for rawType in self.getRawTypes():
       if rawType is THIS and this is not None:
         newTypes.append(this)
       elif rawType is OWNER and owner is not None:
@@ -228,7 +228,7 @@ class TypeSig:
 
   def swapTHIS(self, thisType: type) -> None:
     newTypes = []
-    for rawType in self._getRawTypes():
+    for rawType in self.getRawTypes():
       if rawType is THIS:
         newTypes.append(thisType)
       else:

@@ -5,7 +5,7 @@ instances to test the forwarding of the information retrieved during the
 field objects created by AttriBox instances, are aware of their field name
 and field owner.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

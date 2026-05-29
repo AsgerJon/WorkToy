@@ -1,9 +1,7 @@
 """
-FixBox subclasses 'AttriBox' and provides a descriptor for write-once
-attributes. Two methods change: a second assignment raises
-'WriteOnceError', and deletion is disabled (it raises 'ProtectedError').
+FixBox is a write-once 'AttriBox'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

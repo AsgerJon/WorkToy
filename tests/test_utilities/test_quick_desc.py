@@ -2,7 +2,7 @@
 TestQuickDesc provides tests for the 'QuickDesc' descriptor class
 from 'worktoy.utilities'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ class _Demo:
 
 
 class TestQuickDesc(UtilitiesTest):
-  """Tests for QuickDesc — the minimal-boilerplate descriptor used
+  """Tests for QuickDesc - the minimal-boilerplate descriptor used
   internally by worktoy."""
 
   #  ================================================================
@@ -58,7 +58,7 @@ class TestQuickDesc(UtilitiesTest):
     self.assertEqual(qd.__private_key__, '__some_key__')
 
   def test_init_leaves_field_name_and_owner_unset(self) -> None:
-    """A loose QuickDesc — never bound to a class attribute — has
+    """A loose QuickDesc, never bound to a class attribute, has
     no field name or owner. Those slots are populated by
     __set_name__ at class-creation time, not by __init__."""
     qd = QuickDesc('__some_key__')
@@ -71,7 +71,7 @@ class TestQuickDesc(UtilitiesTest):
   #  ================================================================
 
   #  ________________________________________________________________
-  #  __set_name__ — good binding
+  #  __set_name__ - good binding
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_set_name_records_field_name(self) -> None:
@@ -83,7 +83,7 @@ class TestQuickDesc(UtilitiesTest):
     self.assertIs(_Demo.value.__field_owner__, _Demo)
 
   #  ________________________________________________________________
-  #  __set_name__ — name collision
+  #  __set_name__ - name collision
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_set_name_rejects_collision(self) -> None:
@@ -104,7 +104,7 @@ class TestQuickDesc(UtilitiesTest):
         foo = QuickDesc('foo')
 
   #  ________________________________________________________________
-  #  __get__ — class-level access
+  #  __get__ - class-level access
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_get_on_class_returns_descriptor_itself(self) -> None:
@@ -114,7 +114,7 @@ class TestQuickDesc(UtilitiesTest):
     self.assertIsInstance(_Demo.value, QuickDesc)
 
   #  ________________________________________________________________
-  #  __get__ — instance access
+  #  __get__ - instance access
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_get_on_instance_returns_stored_value(self) -> None:
@@ -130,7 +130,7 @@ class TestQuickDesc(UtilitiesTest):
     self.assertIsNone(inst.value)
 
   #  ________________________________________________________________
-  #  __get__ — missing private key
+  #  __get__ - missing private key
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_get_raises_when_private_key_is_none(self) -> None:
@@ -144,7 +144,7 @@ class TestQuickDesc(UtilitiesTest):
       qd.__get__(inst, type(inst))
 
   #  ________________________________________________________________
-  #  __set__ — read-only enforcement
+  #  __set__ - read-only enforcement
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_set_raises_attribute_error(self) -> None:
@@ -174,7 +174,7 @@ class TestQuickDesc(UtilitiesTest):
       qd.__set__(_Demo(), 'whoops')
 
   #  ________________________________________________________________
-  #  __delete__ — read-only enforcement
+  #  __delete__ - read-only enforcement
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_delete_raises_attribute_error(self) -> None:

@@ -14,7 +14,7 @@ helper looks attributes up by name and does not touch
 '__match_args__', mirroring what the interpreter does for a
 keyword 'case Cls(field=name):' pattern.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

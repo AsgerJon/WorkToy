@@ -1,14 +1,14 @@
 """
-AbstractNamespace class provides a base class for custom namespace
-objects used in custom metaclasses.
+AbstractNamespace is the base class for the custom namespace objects.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ..utilities import textFmt, resolveMRO
+from ..waitaminute import TypeException
 from ..waitaminute.meta import HookException, DuplicateHook
 from .space_hooks import NamespaceHook, ReservedNamespaceHook, FlexCallHook
 from . import Base
@@ -82,7 +82,7 @@ class AbstractNamespace(dict):
     """Returns the base classes of the class under creation."""
     return (*self.__base_classes__,)
 
-  def deepGetItem(self, item: str, **kwargs) -> Any:
+  def deepGetItem(self, item: str, ) -> Any:
     """
     Looks up the given key in the self. If not found, then each base class
     is searched.
@@ -98,7 +98,7 @@ class AbstractNamespace(dict):
   def getHookListName(cls, ) -> str:
     return cls.__owner_hooks_list_name__
 
-  def getHooks(self, owner: type = None) -> Iterator[AbstractSpaceHook]:
+  def getHooks(self, ) -> Iterator[AbstractSpaceHook]:
     cls = type(self)
     hooks = self.classGetHooks()
     for hook in hooks:
@@ -200,7 +200,7 @@ class AbstractNamespace(dict):
       #  capable of raising. For this reason, we omit the brittle
       #  inspection check of the exception message. The reason
       #  'resolveMRO' will never raise any other 'TypeError' is because it
-      #  would always raise 'AttributeError' first. 
+      #  would always raise 'AttributeError' first.
       if kwargs.get('_strictMRO', True):
         raise typeError
     for hook in self.getHooks():
@@ -275,6 +275,8 @@ class AbstractNamespace(dict):
     returned. """
     if namespace is None:
       namespace = dict()
+    elif not isinstance(namespace, dict):
+      raise TypeException('namespace', namespace, dict)
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       namespace = hook.preCompilePhase(namespace)

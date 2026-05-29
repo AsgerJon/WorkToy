@@ -1,9 +1,7 @@
-"""TypeException is a custom exception raised on a type mismatch.
-Specifically, it should NOT be raised when the object is 'None' instead of
-the expected type, since 'None' indicates absence rather than a type
-mismatch. Use 'MissingVariable' for the absence case.
 """
-#  AGPL-3.0 license
+TypeException is raised when a value is an instance of the wrong type.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

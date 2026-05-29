@@ -1,16 +1,7 @@
 """
-ComplexMixin is a mixin class for the purpose of complex number
-implementations.
-
-Subclasses can override the attributes 'REAL' and 'IMAG' to provide the
-real and imaginary parts of the complex number, respectively.
-Alternatively, subclasses can override the getter methods: '_getReal' and
-'_getImag' to compute the real and imaginary parts dynamically.
-
-The mixin provides the dunder methods for arithmetic operations related to
-complex numbers.
+ComplexMixin adds complex-number arithmetic dunders to a class.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

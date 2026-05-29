@@ -1,10 +1,7 @@
-"""Join words into a human-readable list string.
-
-The 'joinWords' function combines a sequence of strings into a
-single phrase using commas and a final separator. By default the
-final two items are joined with 'and'; pass 'sep='or'' (or any
-other connector) to change the trailing separator."""
-#  AGPL-3.0 license
+"""
+The 'joinWords' function joins words into a human-readable list phrase.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 

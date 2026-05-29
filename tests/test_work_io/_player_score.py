@@ -4,7 +4,7 @@ unique JSON file names for persisting instance state. Each call to
 'save' writes a fresh '.json' file in the configured directory;
 'load' reconstructs an instance from a previously written file.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

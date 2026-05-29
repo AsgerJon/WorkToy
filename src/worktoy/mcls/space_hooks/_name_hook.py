@@ -1,7 +1,7 @@
 """
 NamespaceHook filters names used in the namespace system.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -9,11 +9,10 @@ from typing import TYPE_CHECKING
 
 from ...core.sentinels import METACALL
 from ...waitaminute.meta import QuestionableSyntax, DelException
-from . import AbstractSpaceHook, SpaceDesc
+from . import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias
-  from .. import AbstractNamespace
 
   NearMiss: TypeAlias = tuple[str, str]
 
@@ -55,13 +54,6 @@ class NamespaceHook(AbstractSpaceHook):
       class Space(AbstractNamespace):
         nameHook = NamespaceHook()
   """
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Public Variables
-  space: SpaceDesc[AbstractNamespace] = SpaceDesc()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

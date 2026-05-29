@@ -17,7 +17,7 @@ Both modules expose the same two functions returning the same
 tagged tuples, so every test method in this file runs on every
 supported Python version against the appropriate implementation.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

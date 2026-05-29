@@ -1,8 +1,7 @@
 """
-SymbolicSampler subclasses 'BaseSampler' and provides samplers of symbolic
-data.
+SymbolicSampler draws samples of symbolic data.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -17,11 +16,8 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Optional, Union
 
   MaybeInt: TypeAlias = Optional[int]
-  IntField: TypeAlias = Union[int, Field]
   MaybeStr: TypeAlias = Optional[str]
-  StrField: TypeAlias = Union[str, Field]
   MaybeSymbolic: TypeAlias = Optional[SymbolicName]
-  SymbolicField: TypeAlias = Union[Field, SymbolicName]
 
 
 class SymbolicSampler(BaseSampler):
@@ -59,7 +55,7 @@ class SymbolicSampler(BaseSampler):
   __word_count__: MaybeInt = None
 
   #  Public Variables
-  wordCount: IntField = Field()
+  wordCount: Field[int] = Field()
   stochWord = StochasticWord()
 
   #  Virtual Variables

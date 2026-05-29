@@ -3,7 +3,7 @@ CombinatoricsTest subclasses 'UtilitiesTest' from the
 'tests.test_utilities' package. It provides the test base for tests of the
 'worktoy.utilities.combinatorics' package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 
 from .. import UtilitiesTest

@@ -1,23 +1,8 @@
 """
 FastBox is a lean, type-enforced attribute descriptor that trades the
-ergonomics of 'AttriBox' for speed. It carries no descriptor context,
-no access hooks, and no sentinel resolution: the value lives directly
-in the instance dict, so a read is one dict lookup and a write is one
-type check plus one dict store.
-
-Sacrificed relative to 'AttriBox':
-- access hooks (preGet / onSet / preDelete / ...),
-- 'self.instance' / 'self.owner' context inside accessors,
-- 'THIS' / 'OWNER' sentinels in the deferred default arguments,
-- set-time coercion: a write must already be an instance of the field
-  type, the numeric tower is not applied ('x: float' rejects an int).
-
-Nesting is still correct without any context machinery: '__get__'
-reads the 'instance' parameter rather than shared descriptor state, so
-re-entrant access to the same descriptor lives on the call stack. The
-owning instance must have a '__dict__' (no '__slots__'-only owners).
+ergonomics of 'AttriBox' for speed.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -32,8 +17,25 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class FastBox(Generic[T]):
-  """Lean, type-enforced attribute descriptor. See the module
-  docstring for the ergonomics traded away for speed."""
+  """
+  FastBox is a lean, type-enforced attribute descriptor that trades the
+  ergonomics of 'AttriBox' for speed. It carries no descriptor context,
+  no access hooks, and no sentinel resolution: the value lives directly
+  in the instance dict, so a read is one dict lookup and a write is one
+  type check plus one dict store.
+
+  Sacrificed relative to 'AttriBox':
+  - access hooks (preGet / onSet / preDelete / ...),
+  - 'self.instance' / 'self.owner' context inside accessors,
+  - 'THIS' / 'OWNER' sentinels in the deferred default arguments,
+  - set-time coercion: a write must already be an instance of the field
+    type, the numeric tower is not applied ('x: float' rejects an int).
+
+  Nesting is still correct without any context machinery: '__get__'
+  reads the 'instance' parameter rather than shared descriptor state, so
+  re-entrant access to the same descriptor lives on the call stack. The
+  owning instance must have a '__dict__' (no '__slots__'-only owners).
+  """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

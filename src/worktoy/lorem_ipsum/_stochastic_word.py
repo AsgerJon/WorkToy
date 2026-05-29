@@ -1,8 +1,7 @@
 """
-StochasticWord subclasses 'BaseObject' and exposes a weighted
-collection of words as a stochastic variable.
+StochasticWord draws words from a weighted collection.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

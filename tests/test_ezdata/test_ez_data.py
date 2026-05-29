@@ -2,7 +2,7 @@
 TestEZData subclasses 'EZTest' from the 'tests.test_ezdata' package and
 provides tests for the 'EZData' class from the 'worktoy.ezdata' package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

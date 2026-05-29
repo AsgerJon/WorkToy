@@ -1,8 +1,7 @@
 """
-BaseDescriptor subclasses 'Object' and provides decorators for setting
-access notification callbacks.
+BaseDescriptor adds access-notification hook decorators to a descriptor.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -14,7 +14,7 @@ counter is incremented and lower-order counters are reset, with 'micro'
 set to 1 after 'minor' or 'major' so that the next default 'lts' release
 is the patch-level above the one just published.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -134,6 +134,42 @@ def _readVersion() -> dict[str, int]:
       pass
 
 
+def _readComments() -> list[str]:
+  """
+  This function reads the comments from the 'VERSION' file, which are
+  expected to be lines starting with '#' and located at the top of the
+  file.
+
+  Returns
+  -------
+  list[str]
+    A list of comment lines, including the leading '#' character.
+  """
+  if _badLocation():
+    infoSpec = """Could not validate location of this script!"""
+    raise RuntimeError(infoSpec)
+  versionPath = os.path.join(_here(), 'VERSION')
+  f = None
+  out = []
+  try:
+    f = open(versionPath, 'r', encoding='utf-8')
+  except Exception as exception:
+    raise exception
+  else:
+    lines = str.split(f.read(), '\n')
+    for line in lines:
+      line = str.strip(line)
+      if not line or not str.startswith(line, '#'):
+        continue
+      out.append(line)
+    return out
+  finally:
+    try:
+      f.close()  # noqa: F821
+    except AttributeError:
+      pass
+
+
 def _writeVersion(versionInfo: dict[str, int]) -> None:
   """
   Overwrite the 'VERSION' file with the given version data.
@@ -151,15 +187,20 @@ def _writeVersion(versionInfo: dict[str, int]) -> None:
     infoSpec = """Received invalid data! Expected keys: 'major', 
     'minor', 'micro', 'dev' and 'rc', with integer values for each."""
     raise RuntimeError(str.join(' ', str.split(infoSpec)))
+  comments = _readComments()
   versionPath = os.path.join(_here(), 'VERSION')
-  content: str = str.join('\n', [
-    'MAJOR=%d' % versionInfo['major'],
-    'MINOR=%d' % versionInfo['minor'],
-    'MICRO=%d' % versionInfo['micro'],
-    'RC=%d' % versionInfo['rc'],
-    'DEV=%d' % versionInfo['dev'],
-  ]
-                          ) + '\n'
+  content: str = str.join(
+    '\n',
+    [
+      *comments,
+      'MAJOR=%d' % versionInfo['major'],
+      'MINOR=%d' % versionInfo['minor'],
+      'MICRO=%d' % versionInfo['micro'],
+      'RC=%d' % versionInfo['rc'],
+      'DEV=%d' % versionInfo['dev'],
+      ''
+    ]
+  )
   f = None
   try:
     f = open(versionPath, 'w', encoding='utf-8', newline='')

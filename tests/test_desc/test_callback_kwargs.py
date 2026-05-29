@@ -2,7 +2,7 @@
 TestCallbackKwargs tests that the 'BaseDescriptor' correctly passes kw
 on to decorated callbacks that expect them by inclusion of '**kw'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -27,14 +27,12 @@ class HamBox(AttriBox):
 
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Union
-
-  IntBox: TypeAlias = Union[int, AttriBox]
+  from typing import Any
 
 
 class Foo:
-  bar: IntBox = HamBox[int](69)
-  ham: IntBox = HamBox[int](420)
+  bar = HamBox[int](69)
+  ham = HamBox[int](420)
 
   @bar.preGet
   @ham.preGet

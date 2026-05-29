@@ -2,7 +2,7 @@
 FullName subclasses 'EZData' and provides an ordered encapsulation of a
 person's full name, with family name first and given names second.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -10,6 +10,6 @@ object (a 2D point) is implemented several ways in '_subjects', and
 of the worktoy machinery can be localised per operation rather than
 lumped into one ratio.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations

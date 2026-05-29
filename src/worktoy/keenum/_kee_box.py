@@ -1,58 +1,8 @@
 """
-KeeBox subclasses AttriBox and provides special support for the
-enumerations. This solves a general problem with 'AttriBox' objects using
-enumerations as their field types. When doing so, the positional arguments
-in the parentheses, *must* be a member of the enumeration. First of all,
-this requires duplication of the enumeration class. Secondly, it fails to
-provide the intended flexibility of passing constructor arguments for
-deferred instantiation. Because enumerations instantiate *during* class
-creation, there is no deferred instantiation. Finally, when an descriptor
-is retrieved from an instance, it is mostly for the purpose of retrieving
-the value of the descriptor.
-
-The KeeBox makes the following attempts at resolving arguments to a member
-of the enumeration:
-1: Single 'str' object received
-1a: The string matches the 'name' of a member of the enumeration.
-1b: The string matches the 'value' of a member of the enumeration.
-2: Single 'int' object received
-2a: The integer matches the 'index' of a member of the enumeration.
-2b: The integer matches the 'value' of a member of the enumeration.
-3: Single argument received of the 'valueType' type of the enumeration.
-3a: The argument matches the 'value' of a member of the enumeration.
-4: Any number of arguments received
-4a: If the enumeration class is a 'KeeFlags' class instead. Then for each
-argument, it attempts to resolve it to a flag member. If all succeed,
-it returns the member having those flags high.
-
-The above process applies to both instantiation and setting. Please note
-that 'KeeBox' will never attempt to instantiate the 'valueType' of the
-enumeration.
-
-Examples:
-
-  #  KeeNum classes:
-  class KeyboardNum(KeeNum):
-    A = Kee[str]('key A')
-    B = Kee[str]('key B')
-    ...
-
-  class KeyModFlags(KeeFlags):
-    SHIFT = KeeFlag(0)
-    CTRL = KeeFlag(1)
-    ALT = KeeFlag(2)
-    META = KeeFlag(3)
-
-  #  Illustrative classes using the above KeeNum classes:
-  class SelectAll:
-    key = KeeBox[KeyboardNum]('A')
-    mod = KeeBox[KeyModFlags]('ctrl')
-
-  class Settings:  # PyCharm: CTRL+SHIFT+S
-    key = KeeBox[KeyboardNum]('S')
-    mod = KeeBox[KeyModFlags]('ctrl', 'shift')
+KeeBox is an 'AttriBox' that resolves its arguments to a member of an
+enumeration field type.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -71,7 +21,57 @@ if TYPE_CHECKING:  # pragma: no cover
 class KeeBox(AttriBox):
   """
   KeeBox subclasses AttriBox and provides special support for the
-  enumerations.
+  enumerations. This solves a general problem with 'AttriBox' objects using
+  enumerations as their field types. When doing so, the positional arguments
+  in the parentheses, *must* be a member of the enumeration. First of all,
+  this requires duplication of the enumeration class. Secondly, it fails to
+  provide the intended flexibility of passing constructor arguments for
+  deferred instantiation. Because enumerations instantiate *during* class
+  creation, there is no deferred instantiation. Finally, when an descriptor
+  is retrieved from an instance, it is mostly for the purpose of retrieving
+  the value of the descriptor.
+
+  The KeeBox makes the following attempts at resolving arguments to a member
+  of the enumeration:
+  1: Single 'str' object received
+  1a: The string matches the 'name' of a member of the enumeration.
+  1b: The string matches the 'value' of a member of the enumeration.
+  2: Single 'int' object received
+  2a: The integer matches the 'index' of a member of the enumeration.
+  2b: The integer matches the 'value' of a member of the enumeration.
+  3: Single argument received of the 'valueType' type of the enumeration.
+  3a: The argument matches the 'value' of a member of the enumeration.
+  4: Any number of arguments received
+  4a: If the enumeration class is a 'KeeFlags' class instead. Then for each
+  argument, it attempts to resolve it to a flag member. If all succeed,
+  it returns the member having those flags high.
+
+  The above process applies to both instantiation and setting. Please note
+  that 'KeeBox' will never attempt to instantiate the 'valueType' of the
+  enumeration.
+
+  Examples:
+
+    #  KeeNum classes:
+    class KeyboardNum(KeeNum):
+      A = Kee[str]('key A')
+      B = Kee[str]('key B')
+      ...
+
+    class KeyModFlags(KeeFlags):
+      SHIFT = KeeFlag(0)
+      CTRL = KeeFlag(1)
+      ALT = KeeFlag(2)
+      META = KeeFlag(3)
+
+    #  Illustrative classes using the above KeeNum classes:
+    class SelectAll:
+      key = KeeBox[KeyboardNum]('A')
+      mod = KeeBox[KeyModFlags]('ctrl')
+
+    class Settings:  # PyCharm: CTRL+SHIFT+S
+      key = KeeBox[KeyboardNum]('S')
+      mod = KeeBox[KeyModFlags]('ctrl', 'shift')
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

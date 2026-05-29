@@ -1,9 +1,8 @@
 """
-Permuter subclasses 'CallMeMaybe' from 'worktoy.dispatch' and provides
-an 'Arrangement' that reorders received positional arguments before
-forwarding to the wrapped function.
+Permuter reorders positional arguments before forwarding them to the
+wrapped function.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

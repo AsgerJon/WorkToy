@@ -1,8 +1,8 @@
 """
-EZHook subclasses 'AbstractSpaceHook' from the 'worktoy.mcls.space_hooks'
-package and provides the namespace hook for the 'EZSpace' namespace.
+EZHook is the namespace hook that builds the 'EZData' methods from its
+declared fields.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

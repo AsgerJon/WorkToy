@@ -2,9 +2,9 @@
 attributes, function overloading, and custom-metaclass infrastructure on
 top of stock Python. It targets Python 3.7 through 3.14.
 
-The package is layered: each module depends only on the modules listed
+The package is layered: each package depends only on the packages listed
 before it, and the import order below is the canonical dependency order.
-Code added to a module should import only from earlier modules in this
+Code added to a package should import only from earlier packages in this
 chain.
 
 - utilities: Leaf-level helpers with no other 'worktoy' dependencies,
@@ -35,7 +35,7 @@ chain.
 - work_test: Testing support, providing 'BaseTest' and the random-data
   samplers used across the test suite.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

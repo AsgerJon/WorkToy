@@ -5,9 +5,10 @@ object equal only to itself.
 
 Contents:
 
-  - Sentinel: Base class for all sentinels. It derives from a custom
-  metaclass providing functionality preventing instantiation and
-  duplication.
+  - Sentinel: Base class for all sentinels. It is built by the
+  'SentinelMeta' metaclass, which prevents instantiation and duplication.
+  - SentinelMeta: The metaclass behind 'Sentinel', exposed so new sentinel
+  families can build on it directly.
   - DELETED: Sentinel used to indicate that an element has been deleted.
   Used by custom descriptors to implement deletion semantics: to 'delete'
   a custom descriptor from an instance, the descriptor 'sets' the value
@@ -25,11 +26,11 @@ Contents:
   - METACALL: Marker used on a class to defer a given dunder hook to the
   metaclass implementation.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._sentinel import Sentinel, _Sentinel
+from ._sentinel import Sentinel, SentinelMeta
 from ._deleted import DELETED
 from ._owner import OWNER
 from ._this import THIS
@@ -39,6 +40,7 @@ from ._args import ARGS
 
 __all__ = [
   'Sentinel',
+  'SentinelMeta',
   'DELETED',
   'OWNER',
   'THIS',

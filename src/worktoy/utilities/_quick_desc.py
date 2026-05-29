@@ -1,9 +1,7 @@
-"""Lightweight read-only descriptor for internal use.
-
-'QuickDesc' is the minimal descriptor used inside 'worktoy' to
-expose private slot values as public attributes without dragging
-in the full 'worktoy.desc' machinery."""
-#  AGPL-3.0 license
+"""
+QuickDesc is a minimal read-only descriptor exposing a private slot.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

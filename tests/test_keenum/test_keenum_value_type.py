@@ -4,7 +4,7 @@ type of the values of the enumeration members. This is a useful addition
 to the 'KeeNum' class, as it allows for more robust type checking and error
 handling when working with enumeration members and their values.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

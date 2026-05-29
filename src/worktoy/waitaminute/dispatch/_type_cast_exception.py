@@ -1,11 +1,8 @@
 """
-TypeCastException is raised by the 'typeCast' function in the
-'worktoy.utilities' module when a value cannot be cast to the target type
-without loss. It also surfaces wherever 'typeCast' backs another feature,
-such as the SLOW tier of the overload dispatcher and 'AttriBox'
-assignment.
+TypeCastException is raised when 'typeCast' cannot convert a value to the
+target type without loss.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -18,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class TypeCastException(TypeError):
   """
   TypeCastException is raised by the 'typeCast' function in the
-  'worktoy.utilities' module when a value cannot be cast to the target
+  'worktoy.utilities' package when a value cannot be cast to the target
   type without loss.
 
   Attributes

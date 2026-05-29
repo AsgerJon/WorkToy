@@ -1,11 +1,8 @@
 """
-KeeResolveError subclasses 'Exception' and should be raised by 'KeeNum'
-enumerations that implement the '__class_resolve__' classmethod to
-indicate the equivalent of returning 'NotImplemented'. The 'KeeMeta'
-metaclass catches this exception and attempts fallback resolvers. If they
-all fail, the caught exception is raised.
+KeeResolveError is raised when a 'KeeNum' enumeration cannot resolve an
+identifier to a member.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

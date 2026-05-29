@@ -1,8 +1,8 @@
 """
 TestSentinels performs edge case focused testing of the 'Sentinel' classes
-provided by the 'worktoy.core.sentinels' module.
+provided by the 'worktoy.core.sentinels' package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from . import CoreTest
 from worktoy.core.sentinels import DESC, THIS, OWNER, METACALL
 from worktoy.core.sentinels import DELETED
-from worktoy.core.sentinels._sentinel import _Sentinel  # NOQA
+from worktoy.core.sentinels import SentinelMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class TestSentinels(CoreTest):
   """
   TestSentinels performs edge case focused testing of the 'Sentinel' classes
-  provided by the 'worktoy.core.sentinels' module.
+  provided by the 'worktoy.core.sentinels' package.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -38,7 +38,7 @@ class TestSentinels(CoreTest):
     """
 
     with self.assertRaises(KeyError) as context:
-      _ = _Sentinel.__new__(_Sentinel, 'breh', (), {}, _recursion=True)
+      _ = SentinelMeta.__new__(SentinelMeta, 'breh', (), {}, _recursion=True)
     e = context.exception
     self.assertEqual(str(e), str(KeyError('breh')))
 
@@ -48,4 +48,4 @@ class TestSentinels(CoreTest):
     """
     for sentinel in self.sentinels:
       self.assertEqual(str(sentinel), repr(sentinel))
-      self.assertIsInstance(sentinel, _Sentinel)
+      self.assertIsInstance(sentinel, SentinelMeta)

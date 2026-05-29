@@ -1,8 +1,8 @@
 """
-This module provides word collections separated into common, uncommon and
-rare.
+This file provides the common, uncommon, and rare word collections used
+by the lorem ipsum generators.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

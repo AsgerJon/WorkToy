@@ -1,9 +1,8 @@
 """
-DelException is a custom exception raised when someone attempts to create
-a class that implements the '__del__' method without providing the custom
-keyword argument: 'trustMeBro=True'.
+DelException is raised when a class body defines '__del__' without the
+'trustMeBro=True' keyword.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

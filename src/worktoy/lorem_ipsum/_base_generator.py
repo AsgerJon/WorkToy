@@ -1,8 +1,7 @@
 """
-BaseGenerator subclasses 'BaseObject' and provides functionality shared by
-'Sentence' and 'Paragraph' for generating stochastic text.
+BaseGenerator is the shared base for the 'lorem_ipsum' text generators.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -14,6 +13,7 @@ from worktoy.utilities import maybe
 from worktoy.dispatch import overload
 from worktoy.desc import AttriBox, Field
 from worktoy.mcls import BaseObject
+from worktoy.waitaminute.lorem_ipsum import CharCountException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Optional, Self
@@ -96,6 +96,9 @@ class BaseGenerator(BaseObject):
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  #  Class Variables
+  __min_char_count__: int = 12
+
   #  Private Variables
   __is_first__: MaybeBool = None
 
@@ -110,6 +113,22 @@ class BaseGenerator(BaseObject):
   @isFirst.GET
   def _getIsFirst(self, ) -> bool:
     return maybe(self.__is_first__, False)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @charCount.preSet
+  def _preSetCharCount(self, value: int) -> None:
+    """Reject a 'charCount' below the generator's minimum on every
+    assignment, construction and direct write alike, since the hook
+    fires inside '__set__' ahead of the store. Only numeric values are
+    checked; anything else falls through to the AttriBox type handling.
+    A whole-number 'float' is caught here too, so it cannot slip below
+    the floor through the lossless 'float -> int' cast."""
+    floor = type(self).__min_char_count__
+    if isinstance(value, (int, float)) and value < floor:
+      raise CharCountException(type(self), value, floor)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

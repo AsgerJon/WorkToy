@@ -1,6 +1,7 @@
-"""FidGen provides filename generator. Given a format specification and a
-directory, it returns the next available filename of the given format."""
-#  AGPL-3.0 license
+"""
+FidGen generates the next available filename in a directory.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

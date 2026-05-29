@@ -1,11 +1,8 @@
-"""Strict type-casting helper.
-
-The 'typeCast' function converts a value to a target type using
-hand-written rules for the built-in numeric, string, and container
-types so that lossy or surprising coercions raise instead of
-silently succeeding. For other targets, the target's constructor
-is called as a fallback."""
-#  AGPL-3.0 license
+"""
+The 'typeCast' function casts a value to a target type, raising on a lossy
+conversion.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -75,7 +72,13 @@ def _castInt(arg: Any) -> int:
 
 def _castFloat(arg: Any) -> float:
   if isinstance(arg, int):
-    return float(arg)
+    try:
+      out = float(arg)
+    except OverflowError as overflowError:
+      raise _exc(float, arg) from overflowError
+    if int(out) != arg:
+      raise _exc(float, arg)
+    return out
   if isinstance(arg, complex):
     if arg.imag == 0:
       return float(arg.real)
@@ -89,8 +92,16 @@ def _castFloat(arg: Any) -> float:
 
 
 def _castComplex(arg: Any) -> complex:
-  if isinstance(arg, (int, float)):
-    return float(arg) + 0j
+  if isinstance(arg, int):
+    try:
+      out = float(arg)
+    except OverflowError as overflowError:
+      raise _exc(complex, arg) from overflowError
+    if int(out) != arg:
+      raise _exc(complex, arg)
+    return out + 0j
+  if isinstance(arg, float):
+    return arg + 0j
   if isinstance(arg, str):
     try:
       return complex(arg)

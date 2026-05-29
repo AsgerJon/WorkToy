@@ -1,7 +1,7 @@
 """
 TestTypeSigUmbrella provides test coverage gymnastics for the TypeSig class.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ class TestTypeSigUmbrella(DispatcherTest):
     other entry in the raw types untouched."""
     sig = TypeSig(THIS, OWNER, int)
     substituted = sig(this=42, owner=type)
-    self.assertEqual(substituted._getRawTypes(), (42, type, int))
+    self.assertEqual(substituted.getRawTypes(), (42, type, int))
 
   def test_find_active_namespace_currentframe_returns_none(self) -> None:
     """On Python implementations without stack-frame support,

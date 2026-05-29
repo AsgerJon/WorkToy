@@ -6,7 +6,7 @@ fresh per-instance defaults, strict typing, delete semantics) and the
 claims that motivated the design: no context machinery, yet nested
 and per-instance access stay correct.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

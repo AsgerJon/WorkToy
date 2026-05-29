@@ -1,5 +1,5 @@
 """
-The 'worktoy.mcls' module provides the base custom metaclass and
+The 'worktoy.mcls' package provides the base custom metaclass and
 namespace uses across the 'worktoy' library. The pattern used is for the
 namespace class to implement a method called 'compile' which decides the
 actual namespace to be used in the class creation based on the code found
@@ -20,7 +20,7 @@ the class; it can only reject the class by raising an exception from
 '__subclasshook__'. Finally, the metaclass returns the created class
 object.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
 """
-KeeMeta provides the metaclass for the 'worktoy.keenum' module.
+KeeMeta is the metaclass for the 'worktoy.keenum' enumerations.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from ..mcls import BaseMeta
 from ..utilities import textFmt
 from ..waitaminute import TypeException
 from ..waitaminute.keenum import KeeResolveError
+from . import KeeBase
 from . import KeeSpace as KSpace
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -59,17 +60,16 @@ class KeeMetaMeta(MetaType):
 
   @keeNum.GET
   def _getKeeNum(mcls, **kwargs) -> KeeMeta:  # noqa N805
-    from . import _KeeBase
     if mcls.__kee_num__ is None:
       if kwargs.get('_recursion', False):
         raise RecursionError
       num = """%sNum""" % (mcls.__name__,)
       name = 'KeeNum' if mcls.__name__ == 'KeeMeta' else num
-      numSpace = KSpace(mcls, name, (_KeeBase,), _root=True)
+      numSpace = KSpace(mcls, name, (KeeBase,), _root=True)
       numSpace['__root_class__'] = True
-      numSpace['__doc__'] = _KeeBase.__doc__
+      numSpace['__doc__'] = KeeBase.__doc__
       # noinspection PyTypeChecker
-      num = mcls.__new__(mcls, name, (_KeeBase,), numSpace, _root=True)
+      num = mcls.__new__(mcls, name, (KeeBase,), numSpace, _root=True)
       mcls.__kee_num__ = num
       return mcls._getKeeNum(_recursion=True, )
     return mcls.__kee_num__
@@ -567,8 +567,8 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
 # @formatter:off
 if TYPE_CHECKING:  # pragma: no cover
-  from . import _KeeBase
-  class KeeNum(_KeeBase, metaclass = KeeMeta):  # noqa
+  from . import KeeBase
+  class KeeNum(KeeBase, metaclass = KeeMeta):  # noqa
     """
     This is to PyCharm's typing what samizdat was to the USSR.
 

@@ -1,8 +1,7 @@
 """
-BaseSampler provides the base class for sample classes in the
-'worktoy.work_test.samplers' module.
+BaseSampler is the base class for the sample-data generators.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -15,22 +14,16 @@ from ...mcls import BaseObject
 from ...waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional, Union, Iterator
+  from typing import TypeAlias, Optional, Iterator
 
   MaybeInt: TypeAlias = Optional[int]
-  IntField: TypeAlias = Union[int, Field]
 
-  TypeField: TypeAlias = Union[type, Field]
   ValueTuple: TypeAlias = tuple[Any, ...]
   ValueTuples: TypeAlias = tuple[ValueTuple, ...]
 
   Item: TypeAlias = Any
   Row: TypeAlias = tuple[Item, ...]
   Table: TypeAlias = tuple[Row, ...]
-
-  ItemField: TypeAlias = Union[Item, Field]
-  RowField: TypeAlias = Union[Row, Field]
-  TableField: TypeAlias = Union[Table, Field]
 
   from abc import ABC, abstractmethod
 else:
@@ -40,7 +33,7 @@ else:
 class BaseSampler(BaseObject, ABC):
   """
   BaseSampler provides the base class for sample classes in the
-  'worktoy.work_test.samplers' module.
+  'worktoy.work_test.samplers' package.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

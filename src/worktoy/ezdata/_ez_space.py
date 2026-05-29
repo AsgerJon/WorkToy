@@ -1,8 +1,7 @@
 """
-EZSpace subclasses 'BaseSpace' from the 'worktoy.mcls' package and
-provides the namespace class for the 'EZMeta' metaclass.
+EZSpace is the namespace 'EZMeta' uses to build 'EZData' classes.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -1,10 +1,7 @@
-"""Validator type for well-formed 'slice' objects.
-
-'ValidSlice' is an un-instantiable class whose 'isinstance'
-check returns 'True' only for 'slice' objects whose 'start',
-'stop', and 'step' are 'None', 'int', or values supporting
-'__index__'."""
-#  AGPL-3.0 license
+"""
+ValidSlice is a validator type matching well-formed 'slice' objects.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

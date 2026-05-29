@@ -1,20 +1,17 @@
 """
-ReservedNameHook protects reserved names from being overridden.
+ReservedNamespaceHook protects reserved names from being overridden.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ...waitaminute.meta import ReservedName
-from . import AbstractSpaceHook, ReservedNames, SpaceDesc
+from . import AbstractSpaceHook, ReservedNames
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias
-  from .. import AbstractNamespace
-
-  Names: TypeAlias = tuple[str, ...]
+  from typing import Any
 
 
 class ReservedNamespaceHook(AbstractSpaceHook):
@@ -58,7 +55,6 @@ class ReservedNamespaceHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Public variables
-  space: SpaceDesc[AbstractNamespace] = SpaceDesc()
   reservedNames: ReservedNames = ReservedNames()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

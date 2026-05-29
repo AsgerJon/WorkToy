@@ -1,13 +1,7 @@
 """
-EZData is the base class for worktoy dataclasses. Subclasses
-declare their fields in the class body as 'EZField[T](...)'
-instances; the EZHook namespace hook generates '__init__',
-'__iter__', '__eq__', '__delattr__', 'asDict', 'asTuple',
-'replace', '__match_args__', and the display dunders, plus
-conditional '__hash__'/'__setattr__' for frozen classes and the
-four ordering dunders for ordered classes.
+EZData is the base class for 'worktoy' dataclasses.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

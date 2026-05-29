@@ -3,7 +3,7 @@ BoxedNumber provides a class suitable for use in an AttriBox without
 being a subclass of 'worktoy.core.Object'. This class achieves this by
 implementing '__set_name__'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

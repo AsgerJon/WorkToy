@@ -1,7 +1,8 @@
-"""ReservedName is raised when a class body reassigns a name reserved by
-the interpreter or the metaclass system, such as '__module__' or
-'__match_args__'."""
-#  AGPL-3.0 license
+"""
+ReservedName is raised when a class body reassigns a name reserved by the
+interpreter or the metaclass system.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

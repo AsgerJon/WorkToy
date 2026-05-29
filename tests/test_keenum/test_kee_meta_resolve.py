@@ -2,7 +2,7 @@
 TestKeeMetaResolve subclasses 'KeeTest' and provides testing of different
 resolution methods on the 'KeeMeta'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -236,7 +236,7 @@ class TestKeeMetaResolve(KeeTest):
       ElementData('trollium', 'Tr', 69, 420.69),
       ElementData('unobtainium', 'Uo', 420, 69.42),
       ElementData('Hesperium', 'Hp', 1337, 800.85),
-      ElementData('Adamantium', 'Ad', 80.08135, 6.7),
+      ElementData('Adamantium', 'Ad', 8008135, 6.7),
       ElementData('Nipponium', 'Np', 69, 420.69),
     )
 

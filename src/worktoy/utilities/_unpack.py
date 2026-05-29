@@ -1,9 +1,7 @@
-"""Recursive flattener for varargs.
-
-The 'unpack' function expands every iterable in the positional
-arguments (other than 'str' / 'bytes') until none remain,
-producing a flat tuple."""
-#  AGPL-3.0 license
+"""
+The 'unpack' function flattens nested iterables in its arguments.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

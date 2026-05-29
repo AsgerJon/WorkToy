@@ -1,6 +1,7 @@
-"""VariableNotNone should be raised when a variable is unexpectedly not
-None."""
-#  AGPL-3.0 license
+"""
+VariableNotNone is raised when a write-once slot already holds a value.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

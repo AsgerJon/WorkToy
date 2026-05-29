@@ -1,8 +1,10 @@
 """
 The 'worktoy.ezdata' package provides 'EZData', a dataclass-style
 base class with auto-generated construction, equality, iteration,
-hashing, ordering, and conversion methods, plus a '__post_init__'
-hook.
+and conversion methods, plus a '__post_init__' hook. Hashing and
+ordering are opt-in: '__hash__' is added when the class is declared
+'frozen' (or 'hashable'), and the ordering methods when it is
+declared 'ordered'.
 
 Public surface:
 
@@ -17,7 +19,7 @@ Public surface:
 See 'worktoy.waitaminute.ezdata' for the typed exceptions raised
 by the package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

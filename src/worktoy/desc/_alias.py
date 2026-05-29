@@ -1,8 +1,7 @@
 """
-Alias provides a descriptor allowing renaming of a descriptor, typically
-one inherited from a parent.
+Alias re-exposes another descriptor under a second name.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

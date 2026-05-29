@@ -1,7 +1,7 @@
 """
-AbstractMetaclass provides the baseclass for custom metaclasses.
+AbstractMetaclass is the base class for the 'worktoy' metaclasses.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   Custom namespace compilation
   ----------------------------
-  This module also provides an 'AbstractNamespace' class intended to be
+  The 'AbstractNamespace' class is intended to be
   used with '__prepare__'. It defines a 'compile()' method and an
   '__init__()' signature compatible with the arguments passed to
   '__prepare__'. Specifically:
@@ -153,12 +153,14 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     """
     return ASpace(mcls, name, bases, **kwargs)
 
-  def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> Self:
-    if hasattr(space, 'compile'):
+  def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> type:
+    if isinstance(space, ASpace):
       namespace = space.compile()
     else:
       namespace = mcls.__prepare__(name, bases, **kw)
-      namespace = namespace.compile(space)
+      for key, val in dict.items(space):
+        namespace[key] = val
+      namespace = namespace.compile()
     cls = MetaType.__new__(mcls, name, bases, namespace, **kw)
     if hasattr(space, 'getHooks'):
       for hook in space.getHooks():

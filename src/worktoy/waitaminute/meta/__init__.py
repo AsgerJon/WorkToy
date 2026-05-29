@@ -4,7 +4,7 @@ the primitive metaclasses in 'worktoy.core'). They cover near-miss dunder
 names, illegal '__del__', reserved names, hook conflicts, and illegal
 instantiation.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

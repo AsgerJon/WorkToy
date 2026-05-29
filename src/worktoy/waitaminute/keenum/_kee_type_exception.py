@@ -2,7 +2,7 @@
 KeeTypeException is raised when a 'KeeNum' member's value type does not
 match the value type established by the enumeration's first member.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

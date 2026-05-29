@@ -1,9 +1,7 @@
 """
-BaseTest subclasses unittest.TestCase to provide a base class shared by
-testclasses across the 'tests' package. It implements module unloading in
-the 'tearDownClass' method and adds 'assertIsSubclass' (and negation).
+BaseTest is the 'unittest.TestCase' subclass shared by the worktoy tests.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -22,14 +20,12 @@ from ..mcls import BaseMeta
 from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Iterator, Optional, Union
+  from typing import TypeAlias, Iterator, Optional
 
   MaybeStr: TypeAlias = Optional[str]
-  StrField: TypeAlias = Union[str, Field]
 
   StrTuple: TypeAlias = tuple[str, ...]
   MaybeStrTuple: TypeAlias = Optional[StrTuple]
-  StrTupleField: TypeAlias = Union[StrTuple, Field]
 
   IntTuple: TypeAlias = tuple[int, ...]
   IntTuples: TypeAlias = tuple[IntTuple, ...]

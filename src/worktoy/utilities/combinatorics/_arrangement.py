@@ -1,10 +1,7 @@
-"""A single permutation of a ground tuple of items.
-
-'Arrangement' carries both the 'forward' index recipe (which
-produces the permuted order) and its inverse, exposing them via
-'applyTo' / 'restoreFrom' to make the call direction explicit at
-every site."""
-#  AGPL-3.0 license
+"""
+Arrangement is a single permutation of a ground tuple of items.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

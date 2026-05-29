@@ -3,7 +3,7 @@ machinery in 'Object' by re-entering the same descriptor object
 through nested attribute access. Each frame must see its own
 '(instance, owner)' regardless of how deeply the stack grows, and
 the stack must unwind cleanly even when an exception propagates."""
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

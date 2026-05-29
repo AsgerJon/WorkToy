@@ -2,7 +2,7 @@
 TestFlexCall provides tests for the 'flexCall' factory from
 'worktoy.dispatch'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -110,7 +110,7 @@ class TestFlexCall(DispatcherTest):
   #  ================================================================
 
   #  ________________________________________________________________
-  #  Good construction — wrapping
+  #  Good construction - wrapping
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_wraps_normal_function(self) -> None:
@@ -134,7 +134,7 @@ class TestFlexCall(DispatcherTest):
     self.assertIs(twice, once)
 
   #  ________________________________________________________________
-  #  Good construction — passthrough cases
+  #  Good construction - passthrough cases
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_varargs_function_passes_through(self) -> None:
@@ -148,7 +148,7 @@ class TestFlexCall(DispatcherTest):
     self.assertIs(flexCall(_looksLikeDunder), _looksLikeDunder)
 
   #  ________________________________________________________________
-  #  Bad construction — non-FunctionType
+  #  Bad construction - non-FunctionType
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_rejects_non_function_types(self) -> None:
@@ -225,7 +225,7 @@ class TestFlexCall(DispatcherTest):
   #  ================================================================
 
   #  ________________________________________________________________
-  #  Calling — exact arity
+  #  Calling - exact arity
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_call_with_exact_args(self) -> None:
@@ -235,7 +235,7 @@ class TestFlexCall(DispatcherTest):
     self.assertEqual(flexCall(_zeroArg)(), 'noop')
 
   #  ________________________________________________________________
-  #  Calling — truncation (n > maxPos)
+  #  Calling - truncation (n > maxPos)
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_call_with_extra_args_truncates(self) -> None:
@@ -248,7 +248,7 @@ class TestFlexCall(DispatcherTest):
     self.assertEqual(flexCall(_zeroArg)(1, 2, 3), 'noop')
 
   #  ________________________________________________________________
-  #  Calling — defaults (minPos < n <= maxPos)
+  #  Calling - defaults (minPos < n <= maxPos)
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_call_uses_defaults_when_args_below_maxPos(self) -> None:
@@ -265,7 +265,7 @@ class TestFlexCall(DispatcherTest):
     self.assertEqual(flexCall(_allDefaults)(), (1, 2, 3))
 
   #  ________________________________________________________________
-  #  Calling — too few args (n < minPos)
+  #  Calling - too few args (n < minPos)
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_call_with_too_few_args_raises_type_error(self) -> None:
@@ -298,7 +298,7 @@ class TestFlexCall(DispatcherTest):
     self.assertIn('0', msg)  # received count
 
   #  ________________________________________________________________
-  #  Calling — kw passthrough
+  #  Calling - kw passthrough
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_call_passes_kwargs_through(self) -> None:

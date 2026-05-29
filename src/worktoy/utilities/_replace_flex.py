@@ -1,9 +1,7 @@
-"""Replace a single specific occurrence of a substring.
-
-Unlike 'str.replace', which always rewrites the first 'count'
-occurrences from the left, 'replaceFlex' rewrites *only* the
-'n'-th occurrence and leaves the rest in place."""
-#  AGPL-3.0 license
+"""
+The 'replaceFlex' function replaces a chosen occurrence of a substring.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

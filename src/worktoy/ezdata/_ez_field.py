@@ -1,10 +1,7 @@
 """
-EZField subclasses 'BaseObject' from the 'worktoy.mcls' package
-and 'Generic[T]' from 'typing'. It is the per-field descriptor
-used in the class body of 'EZData' subclasses to declare typed
-attributes with default values.
+EZField is the per-field descriptor declared in an 'EZData' class body.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

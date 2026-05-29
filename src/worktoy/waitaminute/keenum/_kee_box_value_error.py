@@ -1,10 +1,8 @@
 """
-KeeBoxValueError is raised when a value given to a 'KeeBox' is of the
-enumeration's value type but does not equal the 'value' of any member of
-that enumeration. The value is well-typed yet matches no member, so
-resolution fails.
+KeeBoxValueError is raised when a 'KeeBox' value is of the right type but
+matches no member of its enumeration.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

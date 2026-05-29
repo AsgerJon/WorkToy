@@ -1,60 +1,7 @@
 """
-KeeFlags enumerates every combination of a set of boolean flags. Each
-subclass declares one 'KeeFlag()' per single-bit flag, and the
-metaclass adds one member for every combination of those flags. The
-result is a KeeNum-like enumeration whose members are all the flag
-combinations.
-
-Every member is created at class-creation time, so the number of
-members grows exponentially with the number of flags. This presents no
-problem for the intended uses.
-For example the FileAccess enumeration used in the test suite:
-
-
-class FileAccess(KeeFlags):
-  #  FileAccess demonstrates real-world bitmask flags for file permissions.
-
-  #  Enumerations
-  READ = KeeFlag()
-  WRITE = KeeFlag()
-  EXECUTE = KeeFlag()
-  DELETE = KeeFlag()
-
-  - The NULL Member -
-While KeeNum enumerations may implement a member called 'NULL', KeeFlags
-enumerations automatically have a member called 'NULL' for which no
-flags are HIGH.
-
-  - Flags, Highs, Lows, and Names -
-Each member corresponds to a unique combination of flags that are HIGH.
-Accessed through a member:
-
-- 'flags' returns the list of all single-bit flags declared on the
-  class, not just the HIGH ones (it mirrors the class-level 'flags').
-- 'highs' returns the flags that are HIGH for that member.
-- 'lows' returns the flags that are LOW for that member.
-- 'names' returns a frozenset of the names of the HIGH flags.
-
-For example, on a 'FileAccess' with READ, WRITE, EXECUTE, DELETE:
-'FileAccess.READ_WRITE.flags' returns all four single-bit flags,
-'FileAccess.READ_WRITE.highs' returns READ and WRITE, and
-'FileAccess.READ_WRITE.names' returns frozenset({'READ', 'WRITE'}).
-
-  - Resolution and naming -
-Each combined member is named automatically by joining its HIGH flag
-names in declaration order, so the canonical name is
-'FileAccess.READ_EXECUTE', never 'FileAccess.EXECUTE_READ'. Attribute
-access resolves only that canonical name; a reordered name such as
-'FileAccess.EXECUTE_READ' raises (there is no order-insensitive
-'__getattr__').
-
-Subscripting and calling, by contrast, are order-insensitive and
-case-insensitive. 'cls["EXECUTE_READ"]', 'cls["execute_read"]',
-'cls[("READ", "EXECUTE")]', and 'cls["READ", "EXECUTE"]' all resolve
-to the same member, and a repeated name collapses ('cls["READ",
-"READ"]' resolves to READ). An unknown name raises 'KeyError'.
+KeeFlags enumerates every combination of a set of single-bit flags.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -106,6 +53,16 @@ class KeeFlags(metaclass=KeeFlagsMeta):
     to the index).
   - 'name': the canonical name, the HIGH flag names joined by '_', or
     'NULL' when no flag is HIGH.
+
+  Naming and lookup
+  -----------------
+  A combined member's canonical name joins its HIGH flag names in
+  declaration order ('FileAccess.READ_EXECUTE', never
+  'FileAccess.EXECUTE_READ'), and attribute access resolves only that
+  canonical name. Subscripting and calling are order- and
+  case-insensitive: 'cls["EXECUTE_READ"]', 'cls["execute_read"]', and
+  'cls["READ", "EXECUTE"]' all resolve to the same member, a repeated name
+  collapses, and an unknown name raises 'KeyError'.
 
   Entries must be integer valued.
   """

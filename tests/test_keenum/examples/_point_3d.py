@@ -2,7 +2,7 @@
 Point3D subclasses 'object' and provides an example class encapsulating a
 space point.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -1,8 +1,7 @@
 """
-GaussianSampler subclasses 'BaseSampler' and provides a sampler for
-normally distributed random numbers.
+GaussianSampler draws normally distributed random numbers.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -18,10 +17,9 @@ from ...waitaminute.dispatch import TypeCastException
 from . import BaseSampler
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Union, Optional
+  from typing import TypeAlias, Optional
 
   MaybeFloat: TypeAlias = Optional[float]
-  FloatField: TypeAlias = Union[float, Field]
 
 
 class GaussianSampler(BaseSampler):
@@ -70,8 +68,8 @@ class GaussianSampler(BaseSampler):
   __std_dev__: MaybeFloat = None
 
   #  Public Variables
-  mean: FloatField = Field()
-  stdDev: FloatField = Field()
+  mean: Field[float] = Field()
+  stdDev: Field[float] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

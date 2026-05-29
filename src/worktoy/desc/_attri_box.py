@@ -1,8 +1,7 @@
 """
-AttriBox implements a lazily instantiated and strongly typed descriptor
-class.
+AttriBox is a lazily built, strongly typed attribute descriptor.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -52,7 +51,13 @@ class AttriBox(BaseDescriptor[T]):
   - a value already of type 'T' is stored unchanged;
   - otherwise a lossless 'typeCast(T, value)' is tried with no
     construction; on success the cast result is stored;
-  - if the cast fails, the value is passed to the field-type
+  - if 'T' is 'bool', 'int', 'float', or 'complex', the cast is
+    authoritative: a refused non-tuple value raises (the chained
+    'OverflowError' when an int is too large for the float,
+    otherwise 'TypeException') instead of being forced through
+    'T(value)', which would silently round. Stupid args, stupid
+    prizes;
+  - for any other 'T', a failed cast falls back to the field-type
     constructor ('T(value)', or 'T(*value)' when 'value' is a
     tuple; see '_resolve' for the splat rules);
   - if construction also fails, 'TypeException' is raised, chained
@@ -234,6 +239,13 @@ class AttriBox(BaseDescriptor[T]):
     try:
       cast = typeCast(fieldType, value, allowInstantiation=False)
     except TypeCastException as typeCastException:
+      cause = typeCastException.__cause__
+      if isinstance(cause, OverflowError):
+        raise cause
+      if fieldType in (bool, int, float, complex):
+        if not isinstance(value, tuple):
+          raise TypeException(
+            'value', value, fieldType) from typeCastException
       if isinstance(value, tuple):
         args = (*(self.filterSentinels(arg) for arg in value),)
       else:

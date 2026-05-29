@@ -1,14 +1,8 @@
 """
-KeeWriteOnceError provides a custom exception raised to indicate attempt
-to modify a KeeNum enumeration member. All such members are write-once,
-disallowing any and all modifications after initialization.
-
-Note: Subclasses of Kee may implement 'value' with lazy evaluation,
-setting it upon first access, after which it becomes immutable.
-This implementation detail is invisible to KeeNum users; all
-enumeration members appear strictly write-once.
+KeeWriteOnceError is raised on an attempt to modify a 'KeeNum' member
+after initialization.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

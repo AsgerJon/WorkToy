@@ -1,9 +1,8 @@
-"""QuestionableSyntax is raised when a name is encountered that is likely
-a typo, such as '__set_item__' instead of '__setitem__' or '__setname__'
-instead of '__set_name__'. It subclasses 'SyntaxError' and is used to
-flag code that is likely incorrect even though Python itself would
-accept it."""
-#  AGPL-3.0 license
+"""
+QuestionableSyntax is raised when a class body defines a near-miss dunder
+name, such as '__set_item__' for '__setitem__'.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

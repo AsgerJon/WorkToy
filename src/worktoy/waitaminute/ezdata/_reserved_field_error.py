@@ -1,10 +1,8 @@
 """
-ReservedFieldError is raised when an EZData class body attempts to
-declare an EZField at a name that the EZData machinery reserves
-for its generated conversion helpers and display dunders, such as
-'asDict', 'asTuple', or 'replace'.
+ReservedFieldError is raised when an 'EZData' class body declares a field
+at a name reserved for a generated method.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

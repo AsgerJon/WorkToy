@@ -2,7 +2,7 @@
 TrollSlice tests provides a class that does have an '__index__' attribute,
 but not a callable.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

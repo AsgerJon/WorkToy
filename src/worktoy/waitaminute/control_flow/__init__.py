@@ -1,8 +1,8 @@
 """
-The 'waitaminute.control_flow' module provides special exceptions used
-during control flow, much like 'StopIteration' and 'GeneratorExit'.
+The 'worktoy.waitaminute.control_flow' package provides the control-flow
+signal exceptions, much like 'StopIteration' and 'GeneratorExit'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

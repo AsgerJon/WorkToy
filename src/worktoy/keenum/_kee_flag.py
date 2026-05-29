@@ -1,27 +1,7 @@
 """
 KeeFlag declares one single-bit flag inside a 'KeeFlags' class body.
-A KeeFlag instance is not itself an enumeration member: the 'KeeFlags'
-metaclass reads the declared flags and builds the members, one per
-combination of flags (including the all-low 'NULL' member). The
-single-bit flags themselves are exposed through the 'flags' descriptor.
-
-Where the 'Kee' class allows the novel syntactic sugar of 'Kee[int](1)',
-'KeeFlag' requires the owning 'KeeFlags' class to specify the type of the
-'value' of each member. While duplicate 'name' attributes between members
-are disallowed, duplicate 'value' attributes are allowed. Please note
-however that when retrieving members by value, the member having the
-lowest index is used.
-
-Attributes (becomes attributes of the instances of the owning 'KeeFlags'
-class):
-- name: The name of the member. It is this name that is passed to the
-'__set_name__' method during class creation.
-- value: The value of the member. See note about value instantiation.
-- 'index': The number of previously defined members when this member was
-being defined (received '__set_name__' call). By default, 'KeeFlags'
-auto-generates a member named 'NULL' with index 0.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

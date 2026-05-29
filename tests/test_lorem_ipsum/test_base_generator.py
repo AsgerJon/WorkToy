@@ -2,7 +2,7 @@
 TestBaseGenerator tests the 'BaseGenerator' class from the
 'worktoy.examples.lorem_ipsum' package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -10,6 +10,9 @@ from random import randint
 from typing import TYPE_CHECKING
 
 from worktoy.lorem_ipsum import BaseGenerator
+from worktoy.lorem_ipsum import Clause, Sentence, Paragraph
+from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.lorem_ipsum import CharCountException
 from . import LoremIpsumTest
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -86,3 +89,40 @@ class TestBaseGenerator(LoremIpsumTest):
 
       adjusted = BaseGenerator.scaleSum(lengths, targetSum, minVal, maxVal)
       self.assertEqual(sum(adjusted), targetSum)
+
+  def test_min_char_count(self) -> None:
+    """
+    Testing that a 'charCount' below the generator's minimum raises
+    'CharCountException', while the minimum itself constructs cleanly.
+    The floors differ per generator because each is built from a
+    larger sub-unit than the one below it.
+    """
+    cases = [(Clause, 12), (Sentence, 40), (Paragraph, 80)]
+    for generator, floor in cases:
+      with self.assertRaises(CharCountException) as context:
+        generator(floor - 1)
+      e = context.exception
+      self.assertEqual(str(e), repr(e))
+      self.assertIs(e.generator, generator)
+      self.assertEqual(e.charCount, floor - 1)
+      self.assertEqual(e.minCount, floor)
+      self.assertIsInstance(generator(floor), generator)
+
+  def test_set_below_floor(self) -> None:
+    """
+    Testing that the 'charCount' floor is enforced on direct assignment
+    too, not only at construction, via the descriptor's preSet hook.
+    """
+    clause = Clause(40)
+    with self.assertRaises(CharCountException):
+      clause.charCount = 3
+    #  A whole-number float must not slip below the floor through the
+    #  lossless 'float -> int' cast.
+    with self.assertRaises(CharCountException):
+      clause.charCount = 3.0
+    #  A non-numeric value falls through to the normal type handling.
+    with self.assertRaises(TypeException):
+      clause.charCount = 'not a number'
+    #  An in-range assignment still works.
+    clause.charCount = 50
+    self.assertEqual(clause.charCount, 50)

@@ -1,8 +1,7 @@
 """
-Sentence subclasses 'BaseGenerator' and implements period separated
-sequences of words.
+Sentence assembles a period-separated sequence of words.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -37,6 +36,9 @@ class Sentence(BaseGenerator):
   #  Class Variables
   __clause_mean__: int = 40
   __clause_var__: int = 15
+  #  A sentence is built from clauses, so its floor must leave room for
+  #  at least one clause (matches '__clause_mean__').
+  __min_char_count__: int = 40
 
   #  Fallback Variables
   __fallback_count__: int = 120

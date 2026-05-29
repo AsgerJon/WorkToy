@@ -1,7 +1,7 @@
 """
 BaseSpace provides the namespace class used by worktoy.mcls.BaseMeta
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -118,7 +118,7 @@ class BaseSpace(AbstractNamespace):
       Mapping from overloaded name to its mapping from type signature to
       function object.
     """
-    return maybe(self.__overload_map__, {})
+    return maybe(self.__overload_map__, dict())
 
   def addVariadic(self, name: str, sig: TypeSig, func: Callable) -> None:
     """Register a variadic '(TypeSig, func)' pair under 'name'. The

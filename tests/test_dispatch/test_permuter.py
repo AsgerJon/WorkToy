@@ -2,7 +2,7 @@
 TestPermuter subclasses 'DispatcherTest' from 'tests.test_dispatch' and
 provides tests for the 'Permuter' class from 'worktoy.dispatch'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def _identity(a: Any, b: Any, c: Any) -> Any:
-  """Three-arg function returning args as a tuple — easy to assert
+  """Three-arg function returning args as a tuple - easy to assert
   against."""
   return a, b, c
 
@@ -45,7 +45,7 @@ def _two_args(x: Any, y: Any) -> Any:
 
 def _arr(items: tuple, forward: tuple) -> Arrangement:
   """Construct an Arrangement from explicit items + forward recipe.
-  Test helper — production code should iterate 'Arrangements(*items)'."""
+  Test helper, production code should iterate 'Arrangements(*items)'."""
   return Arrangement(items, forward)
 
 
@@ -80,7 +80,7 @@ class TestPermuter(DispatcherTest):
     self.assertIs(p.arrangement, a)
 
   def test_init_arrangement_then_func(self) -> None:
-    """Argument order should not matter — dispatch is type-driven."""
+    """Argument order should not matter - dispatch is type-driven."""
     a = _arr(('A', 'B', 'C'), (2, 0, 1))
     p = Permuter(a, _identity)
     self.assertIs(p.__wrapped__, _identity)
@@ -177,7 +177,7 @@ class TestPermuter(DispatcherTest):
     self.assertEqual(e.newValue, a2)
 
   #  ________________________________________________________________
-  #  Functionality — the actual point of the class
+  #  Functionality - the actual point of the class
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_invoke_reorders_positional_args(self) -> None:
@@ -229,7 +229,7 @@ class TestPermuter(DispatcherTest):
     self.assertIs(p.arrangement, a)
 
   #  ________________________________________________________________
-  #  Bad setter — write-once
+  #  Bad setter - write-once
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_set_arrangement_again(self) -> None:
@@ -245,7 +245,7 @@ class TestPermuter(DispatcherTest):
     self.assertEqual(e.newValue, a2)
 
   #  ________________________________________________________________
-  #  Bad setter — type check
+  #  Bad setter - type check
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_set_arrangement_wrong_type(self) -> None:

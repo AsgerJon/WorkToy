@@ -2,7 +2,7 @@
 TestCallMeMaybe subclasses 'DispatcherTest' from 'tests.test_dispatch' and
 provides tests for the 'CallMeMaybe' class from 'worktoy.dispatch'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -151,7 +151,7 @@ class TestCallMeMaybe(DispatcherTest):
       c()
 
   def test_invoke_is_default_passthrough(self) -> None:
-    """The default invoke() forwards args verbatim — subclasses override."""
+    """The default invoke() forwards args verbatim - subclasses override."""
     c = CallMeMaybe(_two_args)
     self.assertEqual(c.invoke(_two_args, 1, 2), (1, 2))
 

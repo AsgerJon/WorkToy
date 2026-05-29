@@ -7,7 +7,7 @@ supporting negative indices, and raises 'IndexError' if the index is out
 of range. The 'slice' overload returns a tuple of entries at the given
 slice indices.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

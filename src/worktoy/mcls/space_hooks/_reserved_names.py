@@ -1,8 +1,7 @@
 """
-ReservedNames provides a list of reserved names that are set
-automatically by the interpreter.
+ReservedNames lists the names the interpreter sets automatically.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

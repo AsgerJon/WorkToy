@@ -1,3 +1,10 @@
+#  VERSION holds the UPCOMING version, not the one currently released.
+#  The counters below describe the next version each workflow publishes:
+#    next lts -> MAJOR.MINOR.MICRO
+#    next rc  -> MAJOR.MINOR.MICRO-rc<RC>
+#    next dev -> MAJOR.MINOR.MICRO-dev<DEV>
+#  The currently released version lives in pyproject.toml and
+#  src/worktoy/__init__.py.
 MAJOR=1
 MINOR=0
 MICRO=0

@@ -1,6 +1,7 @@
-"""WriteOnceError is a custom error class raised to indicate that a
-variable was attempted to be written to more than once."""
-#  AGPL-3.0 license
+"""
+WriteOnceError is raised on a second write to a write-once attribute.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

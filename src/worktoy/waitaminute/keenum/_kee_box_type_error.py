@@ -1,9 +1,8 @@
 """
-KeeBoxTypeError is a custom exception class raised to indicate that a
-given 'KeeBox' descriptor could not resolve given arguments to member of
-the value type of the field enumeration of the descriptor.
+KeeBoxTypeError is raised when a 'KeeBox' cannot resolve its arguments to
+the value type of its enumeration.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

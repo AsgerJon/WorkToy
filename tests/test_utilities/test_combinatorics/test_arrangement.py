@@ -2,7 +2,7 @@
 TestArrangement provides tests for the 'Arrangement' class from
 'worktoy.utilities.combinatorics'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class TestArrangement(TestCase):
-  """Tests for Arrangement(items, forward) — one permutation of a
+  """Tests for Arrangement(items, forward) - one permutation of a
   ground tuple, with a forward/inverse index pair."""
 
   #  ================================================================
@@ -87,7 +87,7 @@ class TestArrangement(TestCase):
     self.assertEqual(a.inverse, (0,))
 
   #  ________________________________________________________________
-  #  Bad construction — length mismatch
+  #  Bad construction - length mismatch
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_init_rejects_forward_too_long(self) -> None:
@@ -126,7 +126,7 @@ class TestArrangement(TestCase):
     self.assertEqual(list(Arrangement((), ())), [])
 
   #  ________________________________________________________________
-  #  Equality — good
+  #  Equality - good
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_eq_arrangement_same_values(self) -> None:
@@ -150,7 +150,7 @@ class TestArrangement(TestCase):
     self.assertNotEqual(a, b)
 
   #  ________________________________________________________________
-  #  Equality — verifying 'NotImplemented' return value
+  #  Equality - verifying 'NotImplemented' return value
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_eq_returns_not_implemented_for_unrelated_types(self) -> None:
@@ -193,7 +193,7 @@ class TestArrangement(TestCase):
   #  ================================================================
 
   #  ________________________________________________________________
-  #  applyTo — canonical to arranged
+  #  applyTo - canonical to arranged
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_apply_to_identity(self) -> None:
@@ -218,7 +218,7 @@ class TestArrangement(TestCase):
       a.applyTo('a', 'b', 'c', 'd')
 
   #  ________________________________________________________________
-  #  restoreFrom — arranged to canonical
+  #  restoreFrom - arranged to canonical
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_restore_from_identity(self) -> None:
@@ -236,7 +236,7 @@ class TestArrangement(TestCase):
       a.restoreFrom('a', 'b')
 
   #  ________________________________________________________________
-  #  Round-trip — applyTo and restoreFrom are inverses
+  #  Round-trip - applyTo and restoreFrom are inverses
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_round_trip_apply_then_restore(self) -> None:

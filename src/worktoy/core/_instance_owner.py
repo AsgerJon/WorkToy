@@ -1,15 +1,8 @@
 """
-'ContextInstance' and 'ContextOwner' are the two descriptors that
-back 'Object.instance' and 'Object.owner'. Each one delegates to the
-descriptor's context stack (managed by 'Object.createContext' /
-'Object.exitContext') and returns the currently active value, or
-raises 'WithoutException' if no context frame is on the stack.
-
-They are intentionally minimal: each defines only '__get__'. Writes
-to 'self.instance' or 'self.owner' from inside an '__instance_*'
-hook are not supported.
+'ContextInstance' and 'ContextOwner' back 'Object.instance' and
+'Object.owner', returning the active value from the descriptor context.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

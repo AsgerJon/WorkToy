@@ -1,7 +1,7 @@
 """
-Clause subclasses 'BaseGenerator' and implements word sequences.
+Clause assembles a sequence of words.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ class Clause(BaseGenerator):
   __words_array__: MaybeStrList = None
 
   #  Public Variables
-  stochWord: AttriBox[StochasticWord] = AttriBox[StochasticWord]()
+  stochWord = AttriBox[StochasticWord]()
   wordsLengths: Field[IntList] = Field()
   wordsArray: Field[StrList] = Field()
 

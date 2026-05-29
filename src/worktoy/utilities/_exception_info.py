@@ -1,11 +1,8 @@
-"""Context manager for capturing and inspecting exceptions.
-
-'ExceptionInfo' is intended for testing-framework debugging
-where an expected exception either fails to raise or raises but
-as an unexpected 'Exception' subclass. The captured exception,
-its type, and a human-readable report are exposed as attributes
-after the 'with' block exits."""
-#  AGPL-3.0 license
+"""
+ExceptionInfo is a context manager for capturing and inspecting an
+expected exception.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

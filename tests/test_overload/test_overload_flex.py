@@ -3,7 +3,7 @@ TestOverloadFlex subclasses 'OverloadTest' and provides tests for the
 'overload.flex' method on the 'overload' class in the 'worktoy.dispatch'
 package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ class TestOverloadFlex(OverloadTest):
   """
 
   #  ________________________________________________________________
-  #  Canonical order — no permutation required
+  #  Canonical order - no permutation required
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_canonical_order(self) -> None:
@@ -82,7 +82,7 @@ class TestOverloadFlex(OverloadTest):
     self.assertEqual(foo.num, 69)
 
   #  ________________________________________________________________
-  #  Reversed order — the regression case
+  #  Reversed order - the regression case
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_reversed_order_is_permuted(self) -> None:
@@ -96,7 +96,7 @@ class TestOverloadFlex(OverloadTest):
     self.assertEqual(foo.num, 420)
 
   def test_reversed_order_distinct_values(self) -> None:
-    """Sanity: name and num are not coincidentally equal — confirms the
+    """Sanity: name and num are not coincidentally equal - confirms the
     permutation actually swapped, rather than both attrs receiving the
     same arg."""
     foo = _Foo(1337, 'Harry')
@@ -115,39 +115,39 @@ class TestOverloadFlex(OverloadTest):
     self.assertEqual(foo.num, 69)
 
   #  ________________________________________________________________
-  #  Three-arg flex — permutation across str/int/float
+  #  Three-arg flex - permutation across str/int/float
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_three_arg_canonical(self) -> None:
-    """(str, int, float) — no permutation needed."""
+    """(str, int, float) - no permutation needed."""
     foo = _Foo('Tom', 69, 0.5)
     self.assertEqual(foo.name, 'Tom')
     self.assertEqual(foo.num, 69)
     self.assertAlmostEqual(foo.ratio, 0.5)
 
   def test_three_arg_fully_reversed(self) -> None:
-    """(float, int, str) — every position wrong."""
+    """(float, int, str) - every position wrong."""
     foo = _Foo(0.5, 69, 'Tom')
     self.assertEqual(foo.name, 'Tom')
     self.assertEqual(foo.num, 69)
     self.assertAlmostEqual(foo.ratio, 0.5)
 
   def test_three_arg_int_str_float(self) -> None:
-    """(int, str, float) — only the first two positions swapped."""
+    """(int, str, float) - only the first two positions swapped."""
     foo = _Foo(69, 'Tom', 0.5)
     self.assertEqual(foo.name, 'Tom')
     self.assertEqual(foo.num, 69)
     self.assertAlmostEqual(foo.ratio, 0.5)
 
   def test_three_arg_float_str_int(self) -> None:
-    """(float, str, int) — non-trivial three-cycle."""
+    """(float, str, int) - non-trivial three-cycle."""
     foo = _Foo(0.5, 'Tom', 69)
     self.assertEqual(foo.name, 'Tom')
     self.assertEqual(foo.num, 69)
     self.assertAlmostEqual(foo.ratio, 0.5)
 
   #  ________________________________________________________________
-  #  Overloaded instance method — single-arg dispatch
+  #  Overloaded instance method - single-arg dispatch
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_update_str_only(self) -> None:
@@ -173,7 +173,7 @@ class TestOverloadFlex(OverloadTest):
     self.assertAlmostEqual(foo.ratio, 0.9)
 
   #  ________________________________________________________________
-  #  Overloaded instance method — flex permutation
+  #  Overloaded instance method - flex permutation
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_update_two_arg_permuted(self) -> None:
@@ -195,7 +195,7 @@ class TestOverloadFlex(OverloadTest):
 
   def test_update_preserves_untouched_attrs(self) -> None:
     """Single-arg update must not clobber attributes outside its
-    signature — guards against an over-eager body or a bound-instance
+    signature - guards against an over-eager body or a bound-instance
     leak into the args tuple."""
     foo = _Foo('Tom', 69, 0.5)
     foo.update('Dick')

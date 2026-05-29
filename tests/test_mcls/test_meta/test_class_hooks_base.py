@@ -2,7 +2,7 @@
 TestClassHooksBase tests that classes derived from 'AbstractMetaclass' that
 implement the '__class_[HOOK]__' methods are called correctly.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

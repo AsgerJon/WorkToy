@@ -1,27 +1,7 @@
 """
-Kee is the descriptor that declares a member of a KeeNum enumeration.
-
-Each 'Kee' instance placed in the class body of a KeeNum subclass
-contributes one member, with the following defining properties:
-
-  - name: The name of the member, taken from the class-body
-    assignment via '__set_name__'. Names must be unique within an
-    enumeration and must be uppercase. The uppercase rule is
-    enforced: assigning a 'Kee' to a non-uppercase name (lowercase or
-    mixed case) raises 'KeeCaseException' when the class is created. A
-    non-'Kee' class-body entry is unaffected and stays an ordinary
-    class attribute.
-  - value: The value of the member. Values are not required to be
-    unique across members of the same enumeration.
-  - index: The position of the member, equal to the number of members
-    declared before it.
-
-'Kee' may be used directly or further subclassed. KeeNum classes are
-created by the KeeMeta metaclass, which defines class-level behavior;
-'Kee' defines how individual members are admitted into the
-enumeration.
+Kee is the descriptor that declares a member of a 'KeeNum' enumeration.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -41,9 +21,29 @@ T = TypeVar('T')
 
 
 class Kee(AttriBox[T]):
-  """Kee is the descriptor that declares a member of a KeeNum
-  enumeration. See the module docstring for the rules governing
-  member name, value, and index."""
+  """
+  Kee is the descriptor that declares a member of a KeeNum enumeration.
+
+  Each 'Kee' instance placed in the class body of a KeeNum subclass
+  contributes one member, with the following defining properties:
+
+    - name: The name of the member, taken from the class-body
+      assignment via '__set_name__'. Names must be unique within an
+      enumeration and must be uppercase. The uppercase rule is
+      enforced: assigning a 'Kee' to a non-uppercase name (lowercase or
+      mixed case) raises 'KeeCaseException' when the class is created. A
+      non-'Kee' class-body entry is unaffected and stays an ordinary
+      class attribute.
+    - value: The value of the member. Values are not required to be
+      unique across members of the same enumeration.
+    - index: The position of the member, equal to the number of members
+      declared before it.
+
+  'Kee' may be used directly or further subclassed. KeeNum classes are
+  created by the KeeMeta metaclass, which defines class-level behavior;
+  'Kee' defines how individual members are admitted into the
+  enumeration.
+  """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

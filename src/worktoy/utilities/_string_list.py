@@ -1,10 +1,7 @@
-"""Split strings into a cleaned list of substrings.
-
-The 'stringList' function splits each input string by one or
-more separators (default ', '), strips whitespace from each
-piece, and discards empty results. Multiple separators may be
-applied in sequence by passing a list or tuple."""
-#  AGPL-3.0 license
+"""
+The 'stringList' function splits strings into a cleaned list of pieces.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

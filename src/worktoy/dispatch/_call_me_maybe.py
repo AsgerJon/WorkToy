@@ -1,9 +1,7 @@
 """
-CallMeMaybe subclasses 'Object' from 'worktoy.core' and provides a general
-function decorator that wraps the decorated function and forwards calls to
-it by implementing the '__call__' method.
+CallMeMaybe wraps a function and forwards calls to it through '__call__'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -1,9 +1,8 @@
 """
-PermuterMethod subclasses 'Permuter' from 'worktoy.dispatch' and provides
-a wrapper that extracts the calling 'instance' object and passes only
-remaining positional arguments through the arrangement.
+PermuterMethod is a 'Permuter' that forwards the calling instance ahead
+of the reordered positional arguments.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

@@ -1,8 +1,8 @@
-"""Generator of integer-index permutations.
-
-The 'indexPermutations' function yields every permutation of
-'(0, 1, ..., n - 1)' as a tuple, in lexicographic order."""
-#  AGPL-3.0 license
+"""
+The 'indexPermutations' function yields the permutations of
+'(0, 1, ..., n - 1)'.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

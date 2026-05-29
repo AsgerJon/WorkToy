@@ -1,9 +1,8 @@
-"""DispatchException is raised when a 'Dispatcher' fails to resolve a
-matching function from the given arguments. Because the overload protocol
-relies on type matching, this exception subclasses 'TypeError' so existing
-error handlers catch it.
 """
-#  AGPL-3.0 license
+DispatchException is raised when a 'Dispatcher' cannot resolve the given
+arguments to a registered overload.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 

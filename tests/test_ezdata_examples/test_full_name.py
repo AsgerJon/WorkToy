@@ -3,7 +3,7 @@ TestFullName subclasses 'EZExamplesTest' from the
 'tests.test_ezdata.examples._ez_examples_test' package and provides tests for
 the 'FullName' class from the 'tests.test_ezdata.examples' package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

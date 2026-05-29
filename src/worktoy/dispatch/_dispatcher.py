@@ -1,8 +1,8 @@
 """
-Dispatcher encapsulates the mapping from type signature to function
-objects and thus provides the core overloading functionality.
+Dispatcher maps type signatures to functions and resolves overloaded
+calls to the matching one.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -180,7 +180,7 @@ class Dispatcher(Object):
             return func(instance, *args, **kwargs)
         #  FAST (variadic)
         for sig, func in variadicFuncs:
-          rawTypes = sig._getRawTypes()
+          rawTypes = sig.getRawTypes()
           prefix = rawTypes[:-1]
           innerType = rawTypes[-1].__inner_type__
           if len(args) < len(prefix):
@@ -221,7 +221,7 @@ class Dispatcher(Object):
         for sig, func in variadicFuncs:
           if not sig.__allow_flex__:
             continue
-          rawTypes = sig._getRawTypes()
+          rawTypes = sig.getRawTypes()
           prefix = rawTypes[:-1]
           innerType = rawTypes[-1].__inner_type__
           if len(args) < len(prefix):

@@ -1,23 +1,17 @@
 """
-LoadSpaceHook collects the 'overload' instances declared in the class
-body and assembles one 'Dispatcher' per overloaded name in the
-compiled namespace.
+LoadSpaceHook assembles the overload 'Dispatcher' objects for a class.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ...dispatch import overload, Dispatcher
-from . import AbstractSpaceHook, SpaceDesc
+from . import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias
-
-  from .. import BaseSpace
-
-  Meta: TypeAlias = Type[type]
+  from typing import Any
 
 
 class LoadSpaceHook(AbstractSpaceHook):
@@ -33,8 +27,9 @@ class LoadSpaceHook(AbstractSpaceHook):
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Public Variables
-  space: SpaceDesc[BaseSpace] = SpaceDesc()
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #

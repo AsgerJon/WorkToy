@@ -2,7 +2,7 @@
 TestNumMRO tests the MRO (Method Resolution Order) of the KeeNum
 enumerations by chaining a series of color enumerating classes.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

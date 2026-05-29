@@ -1,10 +1,8 @@
 """
-'fields' returns the tuple of 'EZField' descriptors declared on an
-'EZData' class, mirroring 'dataclasses.fields' for callers who
-prefer a module-level free function over the metaclass property
-'cls.fields'.
+The 'fields' function returns the 'EZField' descriptors declared on an
+'EZData' class.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

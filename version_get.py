@@ -15,7 +15,7 @@ the first dev version. Release candidates follow the same scheme, but with
 the '-rc' suffix. For example, if the next LTS release is '1.2.3',
 the first release candidate is '1.2.3-rc0'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

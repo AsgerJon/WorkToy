@@ -56,9 +56,18 @@ python run_tests.py
 # Profile the test suite (writes results.prof)
 python profile_tests.py
 
-# Bump version + sync pyproject.toml + tag file
-python roll_version.py {major|minor|patch|dev}
+# Print the next version for a release channel (reads the VERSION file)
+python version_get.py {dev|rc|lts|minor|major}
+
+# Advance the VERSION counters after a channel has published
+python version_bump.py {dev|rc|lts|minor|major}
 ```
+
+Releases are cut by three manual (`workflow_dispatch`-only) GitHub
+workflows — `dev.yml`, `rc.yml`, `lts.yml` — which read the `VERSION`
+file and publish via trusted publishing. There is no `roll_version.py`
+anymore; `version_get.py` and `version_bump.py` are the only version
+scripts.
 
 `main.py` is the scratch entry point used during development — every
 contributor keeps a `main.py` in repo root for ad-hoc work (it's
@@ -133,15 +142,21 @@ chain. Do not introduce backward edges.
   `mcls/space_hooks/`, not to the metaclass itself.
 - **`lorem_ipsum`** — text generation (`Paragraph`, `Sentence`,
   `Clause`, `StochasticWord`).
-- **`keenum`** — enum framework: `KeeNum` (recently reworked to
-  remove index-based resolution and the bool/int conflation, see
-  recent commits), `KeeMeta`, `KeeSpace`, `Kee` member descriptor,
-  plus `KeeFlags`/`KeeFlag` for flag enums.
-- **`ezdata`** — `EZData` dataclass (uses its own metaclass
-  `EZMeta` and `EZSlot`/`EZDesc` descriptors, separate from `desc`
-  to keep `desc` general).
+- **`keenum`** — enum framework: `KeeNum`, `KeeMeta`, `KeeSpace`,
+  `Kee` member descriptor, `KeeBox` (boxed-enum attribute), plus
+  `KeeFlags`/`KeeFlag` for flag enums. Member resolution order
+  (`KeeMeta._resolveMember`) is identity → name (case-insensitive)
+  → `__class_resolve__` hook → positional index (subscript only)
+  → value; identity and name bypass the hook, and `bool` is never
+  resolved against an `int`-valued enum.
+- **`ezdata`** — `EZData` dataclass with its own metaclass
+  `EZMeta`, namespace `EZSpace`, and space hook `EZHook`. The
+  per-field descriptor is `EZField` (spelled `EZField[T](...)`),
+  with a `fields()` helper; kept separate from `desc` to keep
+  `desc` general.
 - **`work_io`** — filesystem helpers (`validateExistingFile`,
-  `scrapDirectory`, `newDirectory`, `yeetDirectory`, `FidGen`).
+  `validateExistingDirectory`, `validateAvailablePath`,
+  `scrapDirectory`, `newDirectory`, `FidGen`).
 - **`work_test`** — `BaseTest` (subclass of `unittest.TestCase`),
   plus `SubTest`, `ComplexMixin` / `ComplexTest`, and the
   random-data `samplers`; tests subclass these rather than raw
@@ -210,6 +225,26 @@ as existing modules or import from them.
   is test scaffolding rather than public API, additions like this
   are far less bound by the 1.0 compatibility freeze than the core
   layers, so it can land post-1.0 with low risk.
+- **Modern / legacy dual release** (a 2.0 idea, not 1.x). When the
+  no-GIL transition forces a 2.0 and the `>=3.7` floor lifts,
+  `worktoy` becomes the modern mainline (walrus, `match`, `X | Y`
+  in any position) while a frozen `worktoy-legacy`, or just a
+  frozen 1.x branch, keeps serving 3.7 to 3.9. That one-time fork
+  is the sane shape. The rejected shape is a "cute" CI step that
+  transpiles modern source down to a legacy artifact on every
+  release: it means owning correctness-critical codegen (`X | Y`
+  is a trivial codemod, but lowering `match` patterns and walrus
+  in comprehensions or `while` conditions is not) and running the
+  full suite against the generated artifact instead of the source,
+  all in the release pipeline, for essentially zero user benefit
+  since runtime behaviour is identical. Two PyPI names also make
+  an install cliff: a 3.7 user runs `pip install worktoy`, gets
+  blocked by `requires-python`, and must know to fetch
+  `worktoy-legacy`. Interim win needing no tooling: `X | Y` is
+  already legal in annotation positions under future-annotations
+  (a policy choice), and the parse-incompatible constructs stay
+  isolated in fallback modules, as already done in
+  `tests/test_ezdata/_match_args_legacy_helpers.py`.
 
 ## Environment
 

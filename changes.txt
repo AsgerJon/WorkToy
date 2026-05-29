@@ -1,2 +1,3 @@
 Version 0.99.xx
 - Initial Release imminent!
+- Relicensed from AGPL-3.0 to Apache-2.0 ahead of 1.0.

@@ -7,7 +7,7 @@ to win over the byValue resolver. The '__class_resolve__' method is
 implemented to ensure that 'int' identifiers are always interpreted as
 status codes, never as indices.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

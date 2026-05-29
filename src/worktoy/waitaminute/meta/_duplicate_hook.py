@@ -1,9 +1,8 @@
 """
-DuplicateHook is raised when a hook is registered on a namespace at a name
-that already holds a different hook. Re-registering the same hook object
-is a no-op and does not raise.
+DuplicateHook is raised when a hook is registered at a name that already
+holds a different hook.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

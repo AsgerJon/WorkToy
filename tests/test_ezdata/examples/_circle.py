@@ -3,7 +3,7 @@ Circle subclasses 'EZData' and provides a keyword-only subclass
 encapsulating the collection of 'Point2D' objects equidistant from a
 shared 'Point2D' object.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

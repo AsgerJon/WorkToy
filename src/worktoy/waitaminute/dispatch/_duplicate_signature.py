@@ -1,11 +1,8 @@
 """
-DuplicateSignature is raised by 'Dispatcher.addSigFunc' when an
-attempt is made to register a second function under a 'TypeSig' that
-the same 'Dispatcher' already has on file. Silent overwrite would
-lead to first-vs-last-write-wins ambiguity between the dispatch
-paths, so the registration is rejected loudly instead.
+DuplicateSignature is raised when a second function is registered under
+a 'TypeSig' that a 'Dispatcher' already holds.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

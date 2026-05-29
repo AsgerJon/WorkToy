@@ -2,7 +2,7 @@
 The 'tests.test_desc.geometry' package provides geometry flavoured classes
 used by test modules.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

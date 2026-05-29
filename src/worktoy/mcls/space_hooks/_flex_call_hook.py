@@ -1,10 +1,7 @@
 """
-FlexCallHook subclasses 'AbstractSpaceHook' from the
-'worktoy.mcls.space_hooks' module. It detects plain functions defined in
-the class body and replaces them with 'flexCall' wrappers during class
-creation.
+FlexCallHook wraps plain class-body functions with 'flexCall'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -21,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class FlexCallHook(AbstractSpaceHook):
   """
   FlexCallHook subclasses 'AbstractSpaceHook' from the
-  'worktoy.mcls.space_hooks' module. It detects plain functions defined in
+  'worktoy.mcls.space_hooks' package. It detects plain functions defined in
   the class body and replaces them with 'flexCall' wrappers during
   class creation.
   """

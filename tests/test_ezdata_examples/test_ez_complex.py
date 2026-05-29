@@ -3,7 +3,7 @@ TestEZComplex subclasses 'ComplexTest' from the 'worktoy.work_test'
 package and provides complex number implementation tests for classes that
 share the 'ComplexMixin' from the same package.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

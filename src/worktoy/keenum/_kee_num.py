@@ -1,7 +1,7 @@
 """
-KeeNum provides the shared baseclass for KeeNum enumerating classes.
+KeeBase provides the base for 'worktoy.keenum' enumerations.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
   MaybeBool: TypeAlias = Optional[bool]
 
 
-class _KeeBase(Object, ):
+class KeeBase(Object, ):
   """
   Base class for all enumerating classes in the KeeNum framework.
 
@@ -125,7 +125,7 @@ class _KeeBase(Object, ):
       raise KeeWriteOnceError(self, name)
     object.__setattr__(self, name, value)
 
-  def __set_name__(self, owner: type, name: str) -> None:
+  def __set_name__(self, owner: type, name: str, **kw) -> None:
     """This reimplementation of '__set_name__' is necessary to prevent the
     '__setattr__' method above from raising when a class wants an
     enumeration defined in its namespace. """

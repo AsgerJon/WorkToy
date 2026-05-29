@@ -1,10 +1,7 @@
 """
-EZMeta subclasses 'BaseMeta' from the 'worktoy.mcls' package and
-provides the metaclass for 'EZData' dataclasses. It hosts the
-class-level introspection accessors and the cross-class
-congruence check used by the generated '__eq__'.
+EZMeta is the metaclass behind 'EZData'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -264,8 +261,13 @@ class EZMeta(BaseMeta):
   def isCongruent(cls, other: Any) -> bool:
     """
     Returns True if 'other' is an 'EZData' class congruent with this
-    one. Congruent classes declare the same fields, so an instance of
-    one may compare equal to an instance of the other.
+    one. Two classes are congruent when they sit in the same
+    inheritance line (one is the other, a subclass of it, or a base it
+    derives from) AND declare the identical field-type signature. So a
+    subclass that adds or retypes a field is not congruent with its
+    parent, and two unrelated classes that merely share a field-type
+    layout are not congruent either. Only congruent classes may
+    compare equal.
 
     Parameters
     ----------
@@ -275,10 +277,13 @@ class EZMeta(BaseMeta):
     Returns
     -------
     bool
-      True if 'other' is an 'EZData' class whose field signature
-      equals that of this class.
+      True if 'other' is a same-line 'EZData' class whose field-type
+      signature equals that of 'cls'.
     """
     mcls = type(cls)
     if not isinstance(other, mcls):
+      return False
+    related = issubclass(cls, other) or issubclass(other, cls)
+    if not related:
       return False
     return True if cls.sig == other.sig else False

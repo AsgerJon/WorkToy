@@ -2,7 +2,7 @@
 TestIndexPermutations provides tests for the 'indexPermutations'
 function from 'worktoy.utilities.combinatorics'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ class TestIndexPermutations(CombinatoricsTest):
   #  ================================================================
 
   #  ________________________________________________________________
-  #  Good input — exact small cases
+  #  Good input - exact small cases
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_zero_yields_empty_tuple_once(self) -> None:
@@ -46,7 +46,7 @@ class TestIndexPermutations(CombinatoricsTest):
     self.assertEqual(list(indexPermutations(3)), expected)
 
   #  ________________________________________________________________
-  #  Bad input — negative n
+  #  Bad input - negative n
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_negative_raises(self) -> None:

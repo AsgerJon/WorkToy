@@ -1,8 +1,7 @@
 """
-AbstractSpaceHook provides an abstract baseclass for hooks used by the
-namespaces in the metaclass system.
+AbstractSpaceHook is the base class for the namespace hooks.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 

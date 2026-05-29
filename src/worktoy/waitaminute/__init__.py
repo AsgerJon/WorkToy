@@ -1,7 +1,8 @@
 """The 'worktoy.waitaminute' package collects every custom exception in
 the library. Exceptions are grouped into subpackages by the layer that
-raises them ('desc', 'meta', 'dispatch', 'keenum', 'ezdata', and
-'control_flow'), with a handful of cross-cutting exceptions
+raises them ('desc', 'meta', 'dispatch', 'keenum', 'ezdata',
+'control_flow', and 'lorem_ipsum'), with a handful of cross-cutting
+exceptions
 ('TypeException', 'MissingVariable', and others) defined at the top level.
 
 The guiding philosophy is fail-fast: 'worktoy' raises a specific, typed
@@ -10,7 +11,7 @@ caller might overlook. Each exception subclasses the built-in that best
 matches its meaning ('TypeError', 'ValueError', 'AttributeError', and so
 on) so existing 'except' clauses keep working.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ from . import dispatch
 from . import keenum
 from . import ezdata
 from . import control_flow
+from . import lorem_ipsum
 
 __all__ = [
   'TypeException',
@@ -40,4 +42,5 @@ __all__ = [
   'keenum',
   'ezdata',
   'control_flow',
+  'lorem_ipsum',
 ]

@@ -2,9 +2,11 @@
 TestExistingDirValidator tests the ExistingDirValidator class from the
 'worktoy.work_io' module.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
+
+import os
 
 from . import WorkIOTest
 from worktoy.waitaminute import PathSyntaxException
@@ -43,3 +45,11 @@ class TestExistingDirValidator(WorkIOTest):
     mode."""
     for tempFile in self.tempFiles:
       self.assertFalse(validateExistingDirectory(tempFile, strict=False), )
+
+    self.randomWord.colCount = 8
+    fakeNames = [str.split(self.tempFiles[-1], '\\')[-1], ]
+    for fakeName in (*fakeNames, *self.randomWord.row):
+      fakeDir: str = str(os.path.join(self.tempDir, fakeName))
+      if os.path.exists(fakeDir):
+        continue
+      self.assertFalse(validateExistingDirectory(fakeDir, strict=False), )

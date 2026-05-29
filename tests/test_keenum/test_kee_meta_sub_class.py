@@ -4,7 +4,7 @@ TestKeeMetaSubClass subclasses 'KeeTest' and tests subclassing of
 this verifies that a 'KeeMeta' subclass (here 'KeeMetaSub') provides its
 own distinct 'KeeNum'-like class via the 'keeNum' descriptor.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

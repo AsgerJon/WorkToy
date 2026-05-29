@@ -1,9 +1,7 @@
-"""All unique arrangements of a ground tuple of items.
-
-'Arrangements' enumerates the distinct permutations of the
-supplied items. Repeated items collapse: Arrangements('A', 'A',
-'B') yields three arrangements, not six."""
-#  AGPL-3.0 license
+"""
+Arrangements enumerates the unique permutations of a ground tuple.
+"""
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 

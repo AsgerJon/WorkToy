@@ -2,7 +2,7 @@
 TestArrangements provides tests for the 'Arrangements' class from
 'worktoy.utilities.combinatorics'.
 """
-#  AGPL-3.0 license
+#  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class TestArrangements(CombinatoricsTest):
-  """Tests for Arrangements(*items) — the deduplicated collection of
+  """Tests for Arrangements(*items) - the deduplicated collection of
   unique value-orderings of a ground tuple."""
 
   #  ================================================================
@@ -42,7 +42,7 @@ class TestArrangements(CombinatoricsTest):
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_init_empty(self) -> None:
-    """Arrangements() — zero items still admits exactly one
+    """Arrangements() - zero items still admits exactly one
     arrangement (the empty one, by convention 0! = 1)."""
     a = Arrangements()
     self.assertEqual(a.items, ())
@@ -103,7 +103,7 @@ class TestArrangements(CombinatoricsTest):
     self.assertEqual(sum(1 for _ in a), len(a))
 
   #  ________________________________________________________________
-  #  Indexing — good
+  #  Indexing - good
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_getitem_returns_arrangement(self) -> None:
@@ -115,7 +115,7 @@ class TestArrangements(CombinatoricsTest):
     self.assertIs(a[-1], a[len(a) - 1])
 
   #  ________________________________________________________________
-  #  Indexing — out of range
+  #  Indexing - out of range
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_getitem_out_of_range_raises(self) -> None:
@@ -124,7 +124,7 @@ class TestArrangements(CombinatoricsTest):
       _ = a[len(a)]
 
   #  ________________________________________________________________
-  #  Membership — good
+  #  Membership - good
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_contains_arrangement_with_matching_values(self) -> None:
@@ -137,7 +137,7 @@ class TestArrangements(CombinatoricsTest):
     self.assertIn(('C', 'A', 'B'), a)
 
   #  ________________________________________________________________
-  #  Membership — non-matches
+  #  Membership - non-matches
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_contains_arrangement_with_non_matching_values(self) -> None:
@@ -163,17 +163,17 @@ class TestArrangements(CombinatoricsTest):
   #  ================================================================
 
   #  ________________________________________________________________
-  #  isHashable — detection
+  #  isHashable - detection
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_isHashable_true_when_all_items_hashable(self) -> None:
-    """All items hashable — _createIsHashable's loop completes
+    """All items hashable, _createIsHashable's loop completes
     without break, falling into the for/else and assigning True."""
     a = Arrangements('A', 'B', 'C')
     self.assertTrue(a.isHashable())
 
   def test_isHashable_false_when_any_item_unhashable(self) -> None:
-    """One unhashable item is enough — the break fires on the first
+    """One unhashable item is enough, the break fires on the first
     such item, the for/else does not execute, and the method
     falls through to assigning False."""
     a = Arrangements('A', [1], 'C')
@@ -184,7 +184,7 @@ class TestArrangements(CombinatoricsTest):
     self.assertFalse(a.isHashable())
 
   #  ________________________________________________________________
-  #  isHashable — caching
+  #  isHashable - caching
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_isHashable_populates_cache_lazily(self) -> None:
@@ -198,14 +198,14 @@ class TestArrangements(CombinatoricsTest):
 
   def test_isHashable_returns_cached_value_without_recomputing(self) -> None:
     """Items are genuinely hashable, but the cache is poisoned with
-    False. isHashable() must trust the cache and return False —
+    False. isHashable() must trust the cache and return False,
     proving it short-circuits without re-running detection."""
     a = Arrangements('A', 'B')
     a.__is_hashable__ = False
     self.assertFalse(a.isHashable())
 
   #  ________________________________________________________________
-  #  isHashable — peek API
+  #  isHashable - peek API
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_isHashable_raises_recursion_error_with_unset_cache(self) -> None:
@@ -275,7 +275,7 @@ class TestArrangements(CombinatoricsTest):
         self.assertEqual(len(seen), len(set(seen)))
 
   #  ________________________________________________________________
-  #  Unhashable items — equality-list fallback
+  #  Unhashable items - equality-list fallback
   #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
   def test_unhashable_distinct_yields_factorial(self) -> None:
