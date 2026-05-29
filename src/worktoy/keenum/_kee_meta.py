@@ -8,14 +8,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar, Any
 from collections.abc import Callable
 
-from ..core import MetaType
 from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt
 from ..waitaminute import TypeException
 from ..waitaminute.keenum import KeeResolveError
-from . import KeeBase
 from . import KeeSpace as KSpace
+from . import KeeBase
+from . import KeeMetaMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Iterator, Optional
@@ -25,54 +25,6 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases: TypeAlias = tuple[type, ...]
 
 T = TypeVar('T')
-
-
-class KeeMetaMeta(MetaType):
-  """
-  This is the meta-metaclass of the 'worktoy.keenum' package. It allows
-  derived metaclasses to access their dedicated derived root class through
-  the descriptor protocol. For the recommended 'KeeMeta' metaclass,
-  the value retrieved from 'KeeMeta.keeNum' is identical to the 'KeeNum'
-  class. When deriving a new class from a subclass of 'KeeMeta', set as
-  base class of the new class the 'keeNum' attribute of the custom
-  metaclass.
-  For example, suppose 'FontMeta' was a subclass of 'KeeMeta' and
-  'FontFamilyNum' was an enumerating class derived from 'FontMeta',
-  the following would be the recommended syntax:
-
-  class FontMeta(KeeMeta):
-    pass
-
-  class FontFamilyNum(FontMeta.keeNum):
-    ARIAL = Kee[int](1)
-    TIMES_NEW_ROMAN = Kee[int](2)
-    CALIBRI = Kee[int](3)
-    ... etc.
-
-  The '__init_subclass__' implementation of 'KeeMeta' removes 'KeeNum'
-  from being retrievable from the private attribute '__kee_num__'. Thus,
-  calls to the getter function for 'keeNum' on subclasses of 'KeeMeta'
-  will trigger the creation of a new 'KeeNum'-like class for that metaclass.
-  """
-
-  __kee_num__: Any = None
-  keeNum: Field[KeeMeta] = Field()
-
-  @keeNum.GET
-  def _getKeeNum(mcls, **kwargs) -> KeeMeta:  # noqa N805
-    if mcls.__kee_num__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      num = """%sNum""" % (mcls.__name__,)
-      name = 'KeeNum' if mcls.__name__ == 'KeeMeta' else num
-      numSpace = KSpace(mcls, name, (KeeBase,), _root=True)
-      numSpace['__root_class__'] = True
-      numSpace['__doc__'] = KeeBase.__doc__
-      # noinspection PyTypeChecker
-      num = mcls.__new__(mcls, name, (KeeBase,), numSpace, _root=True)
-      mcls.__kee_num__ = num
-      return mcls._getKeeNum(_recursion=True, )
-    return mcls.__kee_num__
 
 
 class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
@@ -567,7 +519,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
 # @formatter:off
 if TYPE_CHECKING:  # pragma: no cover
-  from . import KeeBase
   class KeeNum(KeeBase, metaclass = KeeMeta):  # noqa
     """
     This is to PyCharm's typing what samizdat was to the USSR.
@@ -589,4 +540,4 @@ if TYPE_CHECKING:  # pragma: no cover
 else:
   KeeNum = KeeMeta.keeNum  # noqa
 
-__all__ = ('KeeMetaMeta', 'KeeMeta', 'KeeNum',)
+__all__ = ('KeeMeta', 'KeeNum',)

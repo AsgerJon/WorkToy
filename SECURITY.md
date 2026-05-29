@@ -1,49 +1,33 @@
 # Security Policy
 
+## Supported Versions
+
+worktoy is currently in 1.0 release-candidate. Security fixes
+land in the next RC; please upgrade to the latest RC before
+reporting. Once 1.0 ships, fixes will be issued against the
+1.x line.
+
 ## Reporting a Vulnerability
 
-If you believe you have identified a security vulnerability in
-*worktoy*, **do not open a public issue**.
+Do not open a public issue. Report privately through one of:
 
-Instead, please report it privately using one of the following methods:
+- **GitHub Private Vulnerability Reporting (preferred)**:
+  open the
+  [Security tab](https://github.com/AsgerJon/WorkToy/security)
+  and click "Report a vulnerability".
+- **Email**: asgerjon2@gmail.com.
 
-1. **GitHub Private Vulnerability Reporting (preferred)**
-   Navigate to the [
-   *Security*](https://github.com/AsgerJon/WorkToy/security "Security overview")
-   tab and click "Report a vulnerability".
+A minimal reproducer and the affected version do the most to
+get a fix out quickly.
 
-2. **Email (fallback)**  
-   asgerjon2@gmail.com
+## Security Posture
 
-If you suspect active exploitation, please indicate this clearly in your
-report.
+`src/worktoy/` uses `import os` and `import sys` only as
+needed for filesystem and module-lookup work. The dynamic-
+execution builtins `exec`, `eval`, and `__import__` are not
+used anywhere in the package, and contributions that
+introduce them will be rejected.
 
-The following information is especially helpful:
-
-- Affected version(s)
-- Description
-- Steps to reproduce
-- Potential impact
-- Suggested remedy
-
-We may request additional information.
-
----
-
-## Response Process
-
-- Reports will be acknowledged within 72 hours.
-- All reports are treated as confidential.
-- We follow coordinated disclosure practices.
-- Public disclosure should be avoided until a fix has been
-  developed and released.
-
----
-
-## Disclosure and Fixes
-
-When a vulnerability is confirmed:
-
-- A GitHub Security Advisory will be published.
-- If appropriate, a CVE identifier may be requested and included.
-- Security-related fixes will be clearly identified in release notes.
+This is a posture statement, not a guarantee. Bugs that
+expand the attack surface beyond it are exactly what this
+file is for reporting.

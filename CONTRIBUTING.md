@@ -1,85 +1,35 @@
-# Contributing to Our Project
+# Contributing to worktoy
 
-Thank you for your interest in contributing to our project! We welcome
-contributions from everyone and value your effort to improve the software.
-Below are the guidelines which will help you get started smoothly.
+Thanks for your interest. This document covers the practical
+mechanics; the social contract lives in
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-## Code of Conduct
+## Setup
 
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to keep our community
-approachable and respectable.
+## Project Layout
 
-## Getting Started
+## Coding Style
 
-Before you begin, create your github account if you don't have one. You
-are strongly encouraged to setup two-factor authentication for your account.
+worktoy uses four code-style rules:
 
-### Setting Up Your Environment
+- **Indentation:** 2 spaces (ignoring PEP 8: E111)
+- **Line length:** 77 characters (ignoring PEP 8: E501)
+- **Function and variable names:** `camelCase` (ignoring PEP 8: N802, N806)
+- **Class names:** `PascalCase` (following PEP 8: N801)
 
-1. **Install miniforge3**
-   [Miniforge3](https://github.com/conda-forge/miniforge)
-2. **Clone the repository**
-   ```bash
-   git clone https://github.com/AsgerJon/WorkToy.git
-   cd WorkToy
-   ```
+Example:
 
-3. **Create virtual environment**
-    ```bash
-    mamba env create -f environment.yml
-    ```
+```python
+class Rectangle:
 
-4. Create a new branch:
-   ```bash
-   git checkout -b yourBranch
-   ```
-5. Push your changes:
-   ```bash
-   git push origin yourBranch
-   ```
-
-6. Submit a pull request through the GitHub website. Provide a
-   description of the changes and improvements made. You are free to
-   write a detailed comment, but frequently a short video can actually
-   prove more helpful.s
-
-### Development setup
-
-During development, have a file called main.py in the root directory of the
-project. Use this file to run the code you are working on. This will ensure
-that the code is always runnable from the root directory of the project.
-If you use pycharm, set the project interpreter to the newly created
-environment. To run a file in the terminal using the new environment, use:
-
-```bash  
-mamba activate worktoy_env
-python main.py
+  def computeArea(self, width: float, height: float) -> float:
+    return width * height
 ```
 
-### Python Code Style
+## Syntax
 
-- **Indentation**: Use two spaces for indentation, not tabs.
-- **Line Length**: Keep all lines to a maximum of 77 characters.
-- **Naming Conventions**:
-    - Variables and functions should use `camelCase`.
-    - Classes should use `PascalCase`.
-- **Type Hinting**: Functions should be type-hinted to clarify the expected
-  type of arguments and return types.
-- **Docstrings**: Every function and class should include a docstring
-  describing what it does. Use triple double quotes (""") for docstrings.
-- **Error Handling**: Make use of type guard checks and raise exceptions
-  as appropriate.
--
+## Code layout
 
-### Commit Messages
+## Documentation
 
-- Write clear, concise commit messages in the imperative mood, like "Add
-  featureX" or "Fix bugY".
-- Begin the commit message with a capital letter.
-
-### Pull Requests
-
-- Make sure your code complies with the coding guidelines.
-- Pull requests should be based on the latest version of the main branch.
-- Include tests for new features and fixes when applicable.
-- Provide a description of what the pull request fixes or enhances.
+## Testing

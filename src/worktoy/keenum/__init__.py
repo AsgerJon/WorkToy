@@ -14,7 +14,8 @@ from ._kee_flag import KeeFlag
 from ._kee_space_hook import KeeSpaceHook
 from ._kee_flags_hook import KeeFlagsHook
 from ._kee_space import KeeSpace
-from ._kee_meta import KeeMetaMeta, KeeMeta, KeeNum
+from ._kee_meta_meta import KeeMetaMeta
+from ._kee_meta import KeeMeta, KeeNum
 from ._kee_flags_space import KeeFlagsSpace
 from ._kee_flags_meta import KeeFlagsMeta
 from ._kee_flags import KeeFlags
