@@ -135,11 +135,6 @@ from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
 from worktoy.desc import AttriBox
 
-#  Version-specific typing names like 'Self' (3.11+) stay behind
-#  'if TYPE_CHECKING' so they never import at runtime on old Pythons.
-#  This only defers imports and annotations though: it cannot rescue
-#  newer syntax. The walrus ':=' (3.8+) is a SyntaxError on 3.7, and
-#  'X | Y' unions (3.10+) fail at runtime, so prefer Union / Optional.
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self
 
