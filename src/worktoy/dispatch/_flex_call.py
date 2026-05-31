@@ -20,7 +20,18 @@ _FLEX_MARKER: str = '__flex_wrapped__'  # idempotency sentinel
 
 def isFlex(func: FunctionType) -> bool:
   """
-  This method determines if a function is already 'flexed'.
+  The 'isFlex' function returns True if 'func' has already been wrapped
+  by 'flexCall', detected by the presence of the idempotency marker.
+
+  Parameters
+  ----------
+  func : FunctionType
+      The function to test.
+
+  Returns
+  -------
+  bool
+      True if 'func' carries the flex marker, otherwise False.
   """
   try:
     _ = getattr(func, _FLEX_MARKER)

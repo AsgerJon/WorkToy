@@ -94,3 +94,15 @@ class TestSentence(LoremIpsumTest):
     expectedText = str(self.sentence)
     actualText = self.sentence.realize()
     self.assertEqual(expectedText, actualText)
+
+  def test_short_truncation(self) -> None:
+    """
+    Testing that a sentence too short to lay out a clause degrades to a
+    placeholder of exactly the requested length: leading dots below four
+    characters, a truncated 'Lorem Ipsum...' below the build threshold.
+    """
+    self.assertEqual(str(Sentence(0)), '')
+    self.assertEqual(str(Sentence(2)), '..')
+    self.assertEqual(str(Sentence(3)), '...')
+    self.assertEqual(str(Sentence(8)), 'Lorem...')
+    self.assertEqual(str(Sentence(14)), 'Lorem Ipsum...')

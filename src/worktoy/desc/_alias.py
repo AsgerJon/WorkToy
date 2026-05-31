@@ -83,8 +83,5 @@ class Alias(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, realName: str) -> None:
-    """
-    Initializes the Alias descriptor with the name of the real descriptor.
-    """
     Object.__init__(self, realName)
     self.__real_name__ = realName

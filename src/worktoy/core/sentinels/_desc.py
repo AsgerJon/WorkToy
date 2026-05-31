@@ -15,7 +15,4 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class DESC(Sentinel):
-  """
-  DESC sentinel provides a placeholder for the descriptor object in the
-  descriptor flow along with THIS and OWNER.
-  """
+  pass

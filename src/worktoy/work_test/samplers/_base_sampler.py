@@ -32,8 +32,15 @@ else:
 
 class BaseSampler(BaseObject, ABC):
   """
-  BaseSampler provides the base class for sample classes in the
-  'worktoy.work_test.samplers' package.
+  BaseSampler is the base class for the sample-data generators. A
+  concrete sampler supplies a value type and a single-sample recipe
+  through the abstract '_getValueType' and '_getItem' hooks; this base
+  builds the rest on top of them. 'colCount' and 'rowCount' (with the
+  'width'/'height'/'size'/'count' aliases) size the output, and the
+  'item', 'row', and 'table' accessors draw one value, one row of
+  'colCount' values, and a 'rowCount' by 'colCount' table respectively.
+  Calling the sampler draws a single item; iterating yields 'rowCount'
+  rows.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -171,10 +178,10 @@ class BaseSampler(BaseObject, ABC):
   @row.GET
   def _getRow(self, ) -> Row:
     """
-    This method generates a tuple of 'n' sample values with 'n' given
-    by the 'self.colCount' variable. Subclasses reimplementing this
-    method are responsible for ensuring that the correct number of
-    sample values are included in the generated tuple.
+    The 'row' getter generates a tuple of 'n' sample values, with 'n'
+    given by the 'self.colCount' variable. Subclasses reimplementing this
+    are responsible for ensuring that the correct number of sample values
+    are included in the generated tuple.
 
     Returns
     -------
@@ -193,9 +200,9 @@ class BaseSampler(BaseObject, ABC):
   @table.GET
   def _getTable(self, *args, **kwargs) -> ValueTuples:
     """
-    This method generates 'N' tuples each with 'n' sample values where 'N'
-    and 'n' are specified by the 'self.rowCount' and 'self.colCount'
-    variables, respectively. Subclasses reimplementing this method are
+    The 'table' getter generates 'N' tuples each with 'n' sample values,
+    where 'N' and 'n' are given by the 'self.rowCount' and 'self.colCount'
+    variables respectively. Subclasses reimplementing this are
     responsible for ensuring that the correct number of tuples and sample
     values are included in the generated tuples.
 
@@ -216,7 +223,7 @@ class BaseSampler(BaseObject, ABC):
 
   def __call__(self, ) -> Any:
     """
-    Generates a single sample value by calling '_getItem'.
+    Calling a sampler draws a single sample value through '_getItem'.
     """
     return self._getItem()
 

@@ -40,7 +40,12 @@ class KeeSpace(BaseSpace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def addNum(self, name: str, member: Kee) -> None:
-    """Adds the member to the enumeration dict. """
+    """
+    The 'addNum' method registers one 'Kee' member under 'name', raising
+    'KeeDuplicate' on a repeated name and 'KeeNameConflict' if the member
+    already carries a different name. It assigns the member its index and
+    runs it through 'typeGuard' before storing it.
+    """
     if name in self.__enumeration_members__:
       oldMember = self.__enumeration_members__[name]
       raise KeeDuplicate(name, oldMember, member)
@@ -56,7 +61,11 @@ class KeeSpace(BaseSpace):
     self.__enumeration_members__[name] = member
 
   def typeGuard(self, member: Kee) -> Kee:
-    """Ensures that the member is an instance of KeeNum. """
+    """
+    The 'typeGuard' method pins the enumeration to the value type of its
+    first member and rejects any later member of a different type with
+    'KeeTypeException'.
+    """
     if self.__member_type__ is None:
       self.__member_type__ = member.__field_type__
       return member

@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import SpacePoint, DispatcherTest
+from . import DispatcherTest
+from .examples import SpacePoint
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

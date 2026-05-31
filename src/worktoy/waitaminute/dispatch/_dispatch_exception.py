@@ -49,21 +49,23 @@ class DispatchException(TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """Dispatcher object: <br><tab><tab>%s <br><tab>failed to 
-    dispatch arguments: 
-    <br><tab><tab>%s<br><tab>matching type signature: <br><tab><tab> 
-    '%s'<br>
-    The 'Dispatcher' object supports the following type signatures:
-    <br><tab><tab>%s<br>
-    """
-    dispStr = str(self.dispatch)
-    args = (*('<%s %s>' % (type(a).__name__, repr(a)) for a in self.args),)
-    argsStr = '<br><tab><tab>'.join(str(arg) for arg in args)
-    signatures = (*(sig for sig, _ in self.dispatch.__sig_funcs__),)
-    sigStr = '<br><tab><tab>'.join(str(sig) for sig in signatures)
+    """Render the dispatch failure as a got-then-expected report."""
     from ...dispatch import TypeSig
-    typeStr = str(TypeSig.fromArgs(*self.args))
-    info = infoSpec % (dispStr, argsStr, typeStr, sigStr)
-    return textFmt(info, )
+    owner = self.dispatch.__field_owner__  # adjust to the real owner attr
+    name = '%s.%s' % (owner.__name__, self.dispatch.__field_name__)
+    received = '<br><tab><tab>'.join(
+      '<%s %s>' % (type(a).__name__, repr(a)) for a in self.args
+    )
+    argSig = str(TypeSig.fromArgs(*self.args))
+    available = '<br><tab><tab>'.join(
+      str(sig) for sig, _ in self.dispatch.__sig_funcs__
+    )
+    lines = [
+      """no overload of '%s' accepts these arguments:""" % name,
+      """<tab>received:<br><tab><tab>%s""" % received,
+      """<tab>argument signature: %s""" % argSig,
+      """<tab>available signatures:<br><tab><tab>%s""" % available,
+    ]
+    return textFmt('<br>'.join(lines))
 
   __repr__ = __str__

@@ -6,42 +6,52 @@ StochasticWord draws words from a weighted collection.
 from __future__ import annotations
 
 import random
+from itertools import accumulate
+from math import sqrt
 from typing import TYPE_CHECKING
 
 from . import COMMON_WORDS, UNCOMMON_WORDS, RARE_WORDS
-from worktoy.desc import Field
-from worktoy.mcls import BaseObject
+from . import StochasticVariable
+from ..desc import Field
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional
+  from typing import TypeAlias
 
-  MaybeInt: TypeAlias = Optional[int]
+  from ..mcls import BaseSpace
 
   Words: TypeAlias = tuple[str, ...]
-  WeightedWord: TypeAlias = tuple[str, float]
-  WeightedWords: TypeAlias = tuple[WeightedWord, ...]
-  WeightedLengths: TypeAlias = dict[int, WeightedWords]
-  MaybeLengths: TypeAlias = Optional[WeightedLengths]
-
-  MaybeWeighted: TypeAlias = Optional[WeightedWords]
   CategoryWeight: TypeAlias = tuple[Words, float]
   CategoryWeights: TypeAlias = tuple[CategoryWeight, ...]
 
+  CumWeights: TypeAlias = tuple[float, ...]
+  LengthChoice: TypeAlias = tuple[Words, CumWeights]
+  ByLengths: TypeAlias = dict[int, LengthChoice]
+  WordLengths: TypeAlias = dict[int, Words]
 
-class StochasticWord(BaseObject):
+  Bases: TypeAlias = tuple[type, ...]
+  Space: TypeAlias = BaseSpace
+
+
+class StochasticWord(StochasticVariable):
   """
-  StochasticWord subclasses 'BaseObject' and exposes a weighted
-  collection of words as a stochastic variable.
+  StochasticWord is a 'StochasticVariable' whose distribution is the
+  weighted collection of words it carries: drawing a value means drawing a
+  word length, weighted by how the words are distributed.
 
-  Unlike 'Clause', 'Sentence', and 'Paragraph', a 'StochasticWord' has
-  no 'charCount', no 'isFirst' notion, and no '.first(...)' constructor:
-  it is a distribution over words, not a size-driven text generator.
+  The 'mean', 'var', 'minVal', and 'maxVal' fields belong to the base
+  class; this subclass only fills their getters, each returning a value
+  cached once. Those four statistics and the per-length sampler are
+  computed in '__class_init__' from '__category_weights__'. The sampler
+  pairs each length with its words and the cumulative weights of those
+  words, so 'realizeLength' draws with a single 'bisect' rather than
+  rebuilding a weight table per call. A subclass overriding the weights
+  gets its own caches when it is declared, so no analysis happens per
+  instance.
 
-  Derived caches ('weightedWords', 'byLengths', 'minLen', 'maxLen') are
-  fully determined by '__category_weights__' and are therefore stored
-  on the concrete class rather than per instance. Each subclass that
-  overrides '__category_weights__' computes its own caches on first
-  access via 'cls.__dict__' lookups.
+  'sampleInteger' draws a length from the distribution and 'realize' turns
+  that length into a word, so a realized word's length follows the cached
+  statistics. This assumes the word lengths are gapless across
+  '[minVal, maxVal]', which holds for the built-in collection.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -56,166 +66,157 @@ class StochasticWord(BaseObject):
   )
 
   #  Class-Level Caches
-  #  Populated lazily per concrete class via 'cls.__dict__' lookups so
-  #  subclasses overriding '__category_weights__' get their own.
-  __weighted_words__: MaybeWeighted = None
-  __by_lengths__: MaybeLengths = None
-  __min_len__: MaybeInt = None
-  __max_len__: MaybeInt = None
+  __by_lengths__: ByLengths = None
+  __mean_value__: float = None
+  __var_value__: float = None
+  __min_value__: int = None
+  __max_value__: int = None
 
   #  Public Variables
-  weightedWords: Field[WeightedWords] = Field()
-  byLengths: Field[WeightedLengths] = Field()
-  minLen: Field[int] = Field()
-  maxLen: Field[int] = Field()
-
-  #  Virtual Variables
-  meanLen: Field[float] = Field()
-  varianceLen: Field[float] = Field()
+  byLengths: Field[WordLengths] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _buildWeightedWords(self, ) -> None:
-    """Flatten the category-weighted word tuples into a single weighted
-    tuple and store it on the concrete class."""
-    cls = type(self)
-    weightedWords: list[WeightedWord] = []
-    for category, weight in cls.__category_weights__:
-      for word in category:
-        weightedWords.append((word, weight))
-    setattr(cls, '__weighted_words__', (*weightedWords,))
+  def _getMean(self) -> float:
+    return self.__mean_value__
 
-  @weightedWords.GET
-  def _getWeightedWords(self, **kwargs) -> WeightedWords:
-    cls = type(self)
-    cached = cls.__dict__.get('__weighted_words__')
-    if cached is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._buildWeightedWords()
-      return self._getWeightedWords(_recursion=True, )
-    return cached
+  def _getVar(self) -> float:
+    return self.__var_value__
 
-  def _createMinLen(self, ) -> None:
-    """Cache the shortest word length present in 'byLengths' on the
-    concrete class."""
-    cls = type(self)
-    lengths = (*dict.keys(self.byLengths, ),)
-    setattr(cls, '__min_len__', min(lengths))
+  def _getMinVal(self) -> int:
+    return self.__min_value__
 
-  @minLen.GET
-  def _getMinLen(self, **kwargs) -> int:
-    cls = type(self)
-    cached = cls.__dict__.get('__min_len__')
-    if cached is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._createMinLen()
-      return self._getMinLen(_recursion=True, )
-    return cached
-
-  def _createMaxLen(self, ) -> None:
-    """Cache the longest word length present in 'byLengths' on the
-    concrete class."""
-    cls = type(self)
-    lengths = dict.keys(self.byLengths, )
-    setattr(cls, '__max_len__', max(lengths))
-
-  @maxLen.GET
-  def _getMaxLen(self, **kwargs) -> int:
-    cls = type(self)
-    cached = cls.__dict__.get('__max_len__')
-    if cached is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._createMaxLen()
-      return self._getMaxLen(_recursion=True, )
-    return cached
-
-  def _createByLength(self, ) -> None:
-    """Group all weighted words by their character length and store the
-    resulting 'length -> WeightedWords' mapping on the concrete class."""
-    cls = type(self)
-    byLengths: dict = dict()
-    tmp = dict()
-    for word, weight in self.weightedWords:
-      n = len(word)
-      if n in tmp:
-        list.append(tmp[n], (word, weight))
-        continue
-      tmp[n] = [(word, weight), ]
-    for key, existing in tmp.items():
-      byLengths[key] = (*existing,)
-    setattr(cls, '__by_lengths__', byLengths)
+  def _getMaxVal(self) -> int:
+    return self.__max_value__
 
   @byLengths.GET
-  def _getByLengths(self, **kwargs) -> WeightedLengths:
-    cls = type(self)
-    cached = cls.__dict__.get('__by_lengths__')
-    if cached is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._createByLength()
-      return self._getByLengths(_recursion=True, )
-    return cached
-
-  @meanLen.GET
-  def _getMeanLen(self, **kwargs) -> float:
-    totalLen = 0
-    totalWords = 0
-    for word, weight in self.weightedWords:
-      totalLen += len(word) * weight
-      totalWords += weight
-    return totalLen / totalWords
-
-  @varianceLen.GET
-  def _getVarianceLen(self, **kwargs) -> float:
-    mean = self.meanLen
-    totalLen = 0
-    totalWords = 0
-    for word, weight in self.weightedWords:
-      totalLen += ((len(word) - mean) ** 2) * weight
-      totalWords += weight
-    return totalLen / totalWords
+  def _getByLengths(self) -> WordLengths:
+    return {n: words for n, (words, _) in self.__by_lengths__.items()}
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __getitem__(self, index: int) -> WeightedWords:
-    try:
-      words = self.byLengths[index]
-    except KeyError as keyError:
-      infoSpec = """Found no words of length '%d'!"""
-      info = infoSpec % index
-      raise IndexError(info) from keyError
-    else:
-      return (*words,)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  PUBLIC API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def realize(self, ) -> str:
+  @classmethod
+  def __class_init__(
+      cls,
+      name: str,
+      bases: Bases,
+      space: Space,
+      **kwargs,
+  ) -> None:
     """
-    Realizes a random word from the weighted collection of words.
+    The '__class_init__' method flattens '__category_weights__' into a
+    weighted word table, builds the per-length sampler, and reduces the
+    table to the four
+    statistics, caching them on the concrete class so the getters and
+    'realizeLength' read prepared values rather than rebuild them.
+
+    Parameters
+    ----------
+    name : str
+      The name given to the concrete class being created.
+    bases : Bases
+      The base classes of the concrete class, a 'tuple[type, ...]'.
+    space : Space
+      The prepared class body namespace, a 'BaseSpace'.
+    """
+    super().__class_init__(name, bases, space, **kwargs)
+    pairs = []
+    for words, weight in cls.__category_weights__:
+      for word in words:
+        pairs.append((word, weight))
+    grouped: dict = dict()
+    for word, weight in pairs:
+      grouped.setdefault(len(word), []).append((word, weight))
+    byLengths = dict()
+    for length, bucket in grouped.items():
+      words = (*(word for word, _ in bucket),)
+      cumWeights = (*accumulate(weight for _, weight in bucket),)
+      byLengths[length] = (words, cumWeights)
+    total = sum(weight for _, weight in pairs)
+    mean = sum(len(word) * weight for word, weight in pairs) / total
+    spread = sum((len(word) - mean) ** 2 * weight for word, weight in pairs)
+    cls.__by_lengths__ = byLengths
+    cls.__mean_value__ = mean
+    cls.__var_value__ = spread / total
+    cls.__min_value__ = min(grouped)
+    cls.__max_value__ = max(grouped)
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __getitem__(self, length: int) -> str:
+    """
+    The '__getitem__' method aliases 'realizeLength', so indexing by a
+    length realizes a word of that length.
+
+    Parameters
+    ----------
+    length : int
+      The exact character length the realized word must have.
 
     Returns
     -------
     str
-      A random word from the weighted collection of words.
+      A word of the requested length.
     """
-    words = tuple(map(lambda x: x[0], self.weightedWords))
-    weights = tuple(map(lambda x: x[1], self.weightedWords))
-    return random.choices(words, weights=weights, k=1)[0]
+    return self.realizeLength(length)
 
-  def realizeLength(self, charLen: int, ) -> str:
+  def sampleInteger(self) -> int:
     """
-    Realizes a random word from the weighted collection of words having
-    the given length.
+    The 'sampleInteger' method draws one length from the distribution, a
+    Gaussian of the cached mean and variance clamped to the inclusive
+    bounds.
+
+    Returns
+    -------
+    int
+      A length drawn from the distribution and clamped to
+      '[minVal, maxVal]'.
     """
-    words = tuple(map(lambda x: x[0], self[charLen]))
-    weights = tuple(map(lambda x: x[1], self[charLen]))
-    return random.choices(words, weights=weights, k=1)[0]
+    value = round(random.gauss(self.mean, sqrt(self.var)))
+    return min(self.maxVal, max(self.minVal, value))
+
+  def realize(self) -> str:
+    """
+    The 'realize' method draws a length from the distribution and realizes a
+    word of that length, so the realized word's length follows the cached
+    statistics.
+
+    Returns
+    -------
+    str
+      A word whose length was drawn from the distribution.
+    """
+    return self.realizeLength(self.sampleInteger())
+
+  def realizeLength(self, length: int) -> str:
+    """
+    The 'realizeLength' method draws one word of the requested length,
+    weighted by the category each word came from.
+
+    Parameters
+    ----------
+    length : int
+      The exact character length the realized word must have.
+
+    Returns
+    -------
+    str
+      A word of the requested length.
+
+    Raises
+    ------
+    IndexError
+      If the distribution holds no word of the requested length.
+    """
+    choice = self.__by_lengths__.get(length)
+    if choice is None:
+      infoSpec = """Found no words of length '%d'!"""
+      raise IndexError(infoSpec % length)
+    words, cumWeights = choice
+    return random.choices(words, cum_weights=cumWeights)[0]

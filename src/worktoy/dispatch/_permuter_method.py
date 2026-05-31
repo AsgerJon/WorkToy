@@ -23,7 +23,25 @@ class PermuterMethod(Permuter):
 
   def invoke(self, func, instance=None, *args, **kwargs) -> Any:
     """
-    This implementation accepts an instance parameter allowing handling of
-    bound methods.
+    The 'invoke' method accepts the calling instance ahead of the
+    reordered positional arguments, so a 'PermuterMethod' can wrap a
+    bound method: 'instance' is forwarded first, then the arguments
+    restored to canonical order.
+
+    Parameters
+    ----------
+    func : FunctionType
+        The wrapped function.
+    instance : Any, optional
+        The calling instance, forwarded as the first argument.
+    *args : Any
+        Positional arguments in arranged order.
+    **kwargs : Any
+        Keyword arguments forwarded unchanged.
+
+    Returns
+    -------
+    Any
+        Whatever 'func' returns.
     """
     return func(instance, *self.arrangement.restoreFrom(*args), **kwargs)

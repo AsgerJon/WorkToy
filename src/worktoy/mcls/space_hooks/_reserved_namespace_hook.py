@@ -63,9 +63,30 @@ class ReservedNamespaceHook(AbstractSpaceHook):
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    Called before a name is set in the namespace. Raises
-    'ReservedName' when 'key' is a reserved name that is already
-    present in the namespace; otherwise returns False.
+    The 'setItemPhase' method runs before a name is bound. It raises
+    'ReservedName' when 'key' is reserved and already present in the
+    namespace, otherwise returning False so the assignment proceeds. The
+    already-present check still allows the interpreter's own deferred
+    initialization of these names.
+
+    Parameters
+    ----------
+    key : str
+        The name being bound in the class body.
+    val : Any
+        The value being bound.
+    old : Any, optional
+        The previous value bound under 'key', if any.
+
+    Returns
+    -------
+    bool
+        False, so the namespace performs the default assignment.
+
+    Raises
+    ------
+    ReservedName
+        If 'key' is reserved and already present in the namespace.
     """
     if key in self.reservedNames and key in self.space:
       raise ReservedName(key)

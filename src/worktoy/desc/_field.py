@@ -81,19 +81,41 @@ class Field(BaseDescriptor[T]):
 
   def GET(self, callMeMaybe: Callable) -> Callable:
     """
-    Marks the getter, called as 'method(self)'. Only one getter is
-    kept: a second '@GET' silently replaces the first. Reading a
-    'Field' with no getter raises 'AccessError'.
+    The 'GET' decorator marks the getter, called as 'method(self)'.
+    Only one getter is kept: a second '@GET' silently replaces the
+    first. Reading a 'Field' with no getter raises 'AccessError'.
+
+    Parameters
+    ----------
+    callMeMaybe : Callable
+        The method to register as the getter.
+
+    Returns
+    -------
+    Callable
+        The same method, unchanged, so the name stays bound in the
+        class body.
     """
     self.__get_key__ = callMeMaybe.__name__
     return callMeMaybe
 
   def SET(self, callMeMaybe: Callable) -> Callable:
     """
-    Decorator marking a setter. Any number may be registered; each is
-    called as 'method(self, value)' in registration order on every
-    assignment, where 'value' is the incoming value. If no setter is
-    registered, assignment raises 'ReadOnlyError'.
+    The 'SET' decorator marks a setter. Any number may be registered;
+    each is called as 'method(self, value)' in registration order on
+    every assignment, where 'value' is the incoming value. If no setter
+    is registered, assignment raises 'ReadOnlyError'.
+
+    Parameters
+    ----------
+    callMeMaybe : Callable
+        The method to register as a setter.
+
+    Returns
+    -------
+    Callable
+        The same method, unchanged, so the name stays bound in the
+        class body.
     """
     existing = maybe(self.__set_keys__, ())
     self.__set_keys__ = (*existing, callMeMaybe.__name__,)
@@ -101,9 +123,21 @@ class Field(BaseDescriptor[T]):
 
   def DELETE(self, callMeMaybe: Callable) -> Callable:
     """
-    Decorator marking a deleter. Any number may be registered; each is
-    called as 'method(self)' in registration order on 'del'. If no
-    deleter is registered, 'del' raises 'ProtectedError'.
+    The 'DELETE' decorator marks a deleter. Any number may be
+    registered; each is called as 'method(self)' in registration order
+    on 'del'. If no deleter is registered, 'del' raises
+    'ProtectedError'.
+
+    Parameters
+    ----------
+    callMeMaybe : Callable
+        The method to register as a deleter.
+
+    Returns
+    -------
+    Callable
+        The same method, unchanged, so the name stays bound in the
+        class body.
     """
     existing = maybe(self.__delete_keys__, ())
     self.__delete_keys__ = (*existing, callMeMaybe.__name__,)
@@ -115,12 +149,13 @@ class Field(BaseDescriptor[T]):
 
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
-    Retrieves the getter from the owner of instance and the registered
-    name of getter function. Please note that while the instance received
-    is certain to satisfy: isinstance(instance, self.getFieldOwner()),
-    the field owner is the class where the descriptor was instantiated.
-    For this reason, the decorated method is retrieved by name from the
-    owner of the instance received.
+    The '__instance_get__' method retrieves the getter by its
+    registered name from the owner of the instance and calls it. While
+    the instance received is certain to satisfy
+    'isinstance(instance, self.getFieldOwner())', the field owner is the
+    class where the descriptor was instantiated. For this reason the
+    decorated method is retrieved by name from the owner of the instance
+    received, so a subclass override is honoured.
     """
     getterKey = self._getGetterKey()
     getterFunc = getattr(owner, getterKey)
@@ -128,7 +163,10 @@ class Field(BaseDescriptor[T]):
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
-    All decorated setters are retrieved in the same fashion as the getter.
+    The '__instance_set__' method retrieves every decorated setter by
+    name in the same fashion as the getter and calls each in
+    registration order. With no setter registered, assignment raises
+    'ReadOnlyError'.
     """
     setterKeys = self._getSetterKeys()
     owner = type(instance)
@@ -140,7 +178,10 @@ class Field(BaseDescriptor[T]):
 
   def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
     """
-    All decorated deleters are retrieved in the same fashion as the getter.
+    The '__instance_delete__' method retrieves every decorated deleter
+    by name in the same fashion as the getter and calls each in
+    registration order. With no deleter registered, deletion raises
+    'ProtectedError'.
     """
     deleterKeys = self._getDeleterKeys()
     owner = type(instance)

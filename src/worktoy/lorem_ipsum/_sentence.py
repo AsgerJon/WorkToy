@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 from worktoy.utilities import textFmt
 from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
-from worktoy.desc import Field
-from . import BaseGenerator, Clause
+from worktoy.desc import AttriBox, Field
+from . import BaseGenerator, Clause, GaussianLengths
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias, Optional, Iterator
@@ -25,53 +25,40 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Sentence(BaseGenerator):
   """
-  Sentence subclasses 'BaseGenerator' and implements period separated
-  sequences of words.
+  Sentence assembles a comma-separated sequence of 'Clause' objects
+  terminated by a period, summing to a target character count. Clause
+  lengths are drawn from a Gaussian 'clauseDist'; the sentence's first word
+  is capitalized and its last is given the closing period.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Class Variables
-  __clause_mean__: int = 40
-  __clause_var__: int = 15
-  #  A sentence is built from clauses, so its floor must leave room for
-  #  at least one clause (matches '__clause_mean__').
-  __min_char_count__: int = 40
-
-  #  Fallback Variables
-  __fallback_count__: int = 120
-
   #  Private Variables
   __clause_lengths__: MaybeIntList = None
   __clause_array__: MaybeClausesList = None
 
   #  Public Variables
+  #  Clause lengths are drawn from this Gaussian: mean 40, variance 15,
+  #  bounded to [12, 70].
+  clauseDist = AttriBox[GaussianLengths](40, 15, 12, 70)
   clausesLengths: Field[IntList] = Field()
   clausesArray: Field[ClausesList] = Field()
-
-  #  Virtual Variables
-  clauseCount: Field[int] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @clauseCount.GET
-  def _getClauseCount(self) -> int:
-    return int(round(self.charCount / self.__clause_mean__))
-
   def _buildClauseLengths(self, ) -> None:
-    """Sample a log-normal sequence of clause lengths summing to
-    'charCount' and cache it."""
-    mean, var = self.__clause_mean__, self.__clause_var__
-    lengths = [self.logNormal(mean, var) for _ in range(self.clauseCount)]
-    factor = self.charCount / sum(lengths)
-    lengths = [int(round(l * factor)) for l in lengths]
-    target = self.charCount - self.clauseCount * 2 + 1
-    minV, maxV = mean - 2 * var, mean + 2 * var
-    self.__clause_lengths__ = self.scaleSum(lengths, target, minV, maxV, )
+    """
+    The '_buildClauseLengths' method partitions 'charCount' into clause
+    lengths drawn from 'clauseDist' and caches them. The target leaves room
+    for the ', ' between clauses and the closing period.
+    """
+    lengths = self.clauseDist.partitionSpaced(self.charCount + 1)
+    target = self.charCount - 2 * (len(lengths) - 1) - 1
+    self.__clause_lengths__ = self.clauseDist._settle(lengths, target)
 
   @clausesLengths.GET
   def _getClauseLengths(self, **kwargs) -> IntList:
@@ -83,8 +70,11 @@ class Sentence(BaseGenerator):
     return self.__clause_lengths__
 
   def _buildClausesArray(self, ) -> None:
-    """Materialize a 'Clause' for each cached length, capitalize the
-    sentence's first word, and append a period to its last word."""
+    """
+    The '_buildClausesArray' method materializes a 'Clause' for each cached
+    length, capitalizes the sentence's first word, and appends a period to
+    its last word.
+    """
     clauses = []
     for length in self.clausesLengths:
       if not clauses and self.isFirst:
@@ -121,18 +111,30 @@ class Sentence(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def clear(self) -> None:
-    """Drop the cached clause lengths and clause array."""
+    """
+    The 'clear' method drops the cached clause lengths and clause array.
+    """
     self.__clause_lengths__ = None
     self.__clause_array__ = None
 
   def reset(self, ) -> None:
-    """Clear and regenerate the cached clause lengths and clause array."""
+    """
+    The 'reset' method clears and regenerates the cached clause lengths and
+    clause array.
+    """
     self.clear()
     self._buildClauseLengths()
     self._buildClausesArray()
 
   def realize(self) -> str:
-    """Return the realized text for this sentence."""
+    """
+    The 'realize' method returns the realized text for this sentence.
+
+    Returns
+    -------
+    str
+      The sentence rendered as text.
+    """
     return str(self)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -140,6 +142,8 @@ class Sentence(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __str__(self, ) -> str:
+    if self.charCount < self.__truncate_below__:
+      return self._shortText()
     return textFmt(str.join(', ', [*(str(c) for c in self.clausesArray)]))
 
   def __repr__(self, ) -> str:

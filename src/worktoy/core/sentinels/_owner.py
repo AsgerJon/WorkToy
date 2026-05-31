@@ -16,8 +16,4 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class OWNER(Sentinel):
-  """
-  OWNER provides a sentinel object used together with THIS by the descriptor
-  flow where OWNER provides a placeholder for the owning class, while THIS
-  refers to an instance of the class (self typically).
-  """
+  pass

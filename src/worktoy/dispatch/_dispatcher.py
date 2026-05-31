@@ -118,35 +118,52 @@ class Dispatcher(Object):
     return {sig: func for sig, func in self._getSigFuncList()}
 
   def _getVariadicFuncs(self) -> SigFuncList:
-    """Return the list of '(variadicSig, func)' pairs registered for
-    this dispatcher. Each variadicSig has a trailing 'ARGS'
-    instance; the FAST and SLOW dispatch tiers iterate this list
-    after the regular concrete sigs to match calls whose length
-    exceeds what the FASTEST-tier expansion covers."""
     return maybe(self.__variadic_funcs__, [])
 
   def _getFallbackFunction(self) -> Optional[Method]:
     return self.__fallback_func__
 
   def _getFinalizerFunction(self) -> Optional[Method]:
-    """
-    Get the finalizer function if it exists.
-    """
     return self.__finalizer_func__
 
   def _getFieldName(self, ) -> str:
-    """Guarded variant of 'Object.getFieldName'. Raises
-    'MissingVariable' if '__field_name__' has not been set yet
-    (i.e. '__set_name__' has not fired)."""
+    """
+    The '_getFieldName' method is a guarded variant of
+    'Object.getFieldName'.
+
+    Returns
+    -------
+    str
+        The field name assigned once this dispatcher is placed on a
+        class.
+
+    Raises
+    ------
+    MissingVariable
+        If '__field_name__' has not been set yet, that is, if
+        '__set_name__' has not fired.
+    """
     fieldName = self.__field_name__
     if fieldName is None:
       raise MissingVariable(self, '__field_name__', str)
     return fieldName
 
   def _getFieldOwner(self, ) -> type:
-    """Guarded variant of 'Object.getFieldOwner'. Raises
-    'MissingVariable' if '__field_owner__' has not been set yet
-    (i.e. '__set_name__' has not fired)."""
+    """
+    The '_getFieldOwner' method is a guarded variant of
+    'Object.getFieldOwner'.
+
+    Returns
+    -------
+    type
+        The class this dispatcher is placed on.
+
+    Raises
+    ------
+    MissingVariable
+        If '__field_owner__' has not been set yet, that is, if
+        '__set_name__' has not fired.
+    """
     fieldOwner = self.__field_owner__
     if fieldOwner is None:
       raise MissingVariable(self, '__field_owner__', type)
@@ -284,9 +301,27 @@ class Dispatcher(Object):
 
   def addSigFunc(self, sig: TypeSig, func: Method) -> Method:
     """
-    Add a signature-function pair to the internal signature-function map.
-    Raises 'DuplicateSignature' if a function is already registered
-    under 'sig'.
+    The 'addSigFunc' method adds a signature-function pair to the
+    internal signature-function map.
+
+    Parameters
+    ----------
+    sig : TypeSig
+        The type signature to register the function under.
+    func : Method
+        The function to register. 'Method' expands to
+        'Callable[[Any, ...], Any]'.
+
+    Returns
+    -------
+    Method
+        The same 'func', so the method can sit at the end of a
+        registration chain.
+
+    Raises
+    ------
+    DuplicateSignature
+        If a function is already registered under 'sig'.
     """
     existing = self._getSigFuncList()
     for existingSig, existingFunc in existing:
@@ -297,23 +332,60 @@ class Dispatcher(Object):
     return func
 
   def addVariadicSigFunc(self, sig: TypeSig, func: Method) -> Method:
-    """Register a '(variadicSig, func)' pair on this dispatcher.
+    """
+    The 'addVariadicSigFunc' method registers a '(variadicSig, func)'
+    pair on this dispatcher. Unlike 'addSigFunc', it does not reject
+    duplicates: a repeated variadic signature is appended, and the
+    first-registered one wins at dispatch. The dispatcher matches calls
+    against the variadic list in the FAST and SLOW passes when no
+    concrete sig matches, isinstance-checking the prefix raw types
+    against the first '(len(sig) - 1)' call arguments and every
+    remaining argument against the 'ARGS' inner type.
 
-    Unlike 'addSigFunc', this does not reject duplicates: a repeated
-    variadic signature is appended, and the first-registered one wins
-    at dispatch. The caller must pass a 'sig' ending in an 'ARGS'
-    sentinel; this is not validated here. The dispatcher matches
-    calls against the variadic list in the FAST and SLOW passes when
-    no concrete sig matches: the prefix raw types are
-    isinstance-checked against the first '(len(sig) - 1)' call
-    arguments, and every remaining argument is isinstance-checked
-    against the 'ARGS' inner type."""
+    Parameters
+    ----------
+    sig : TypeSig
+        The variadic signature, which must end in an 'ARGS' sentinel.
+        This is not validated here.
+    func : Method
+        The function to register. 'Method' expands to
+        'Callable[[Any, ...], Any]'.
+
+    Returns
+    -------
+    Method
+        The same 'func', so the method can sit at the end of a
+        registration chain.
+    """
     existing = self._getVariadicFuncs()
     self.__variadic_funcs__ = [*existing, (sig, func,)]
     self.__compiled_func__ = None
     return func
 
   def setFallbackFunction(self, func: Method) -> Method:
+    """
+    The 'setFallbackFunction' method registers the fallback, run when no
+    registered signature matches a dispatched call.
+
+    Parameters
+    ----------
+    func : Method
+        The fallback to register. 'Method' expands to
+        'Callable[[Any, ...], Any]'.
+
+    Returns
+    -------
+    Method
+        The same 'func', so the method can sit at the end of a
+        registration chain.
+
+    Raises
+    ------
+    TypeException
+        If 'func' is not callable.
+    VariableNotNone
+        If a fallback is already set.
+    """
     if not callable(func):
       raise TypeException('__fallback_func__', func, Func, MethodType)
     if self.__fallback_func__ is not None:
@@ -324,8 +396,31 @@ class Dispatcher(Object):
 
   def setFinalizerFunction(self, func: Method) -> Method:
     """
-    Set the finalizer function that will be called when the dispatcher is
-    deleted or finalized.
+    The 'setFinalizerFunction' method registers the finalizer. Like a
+    'finally' clause, the finalizer runs at the end of every dispatched
+    call no matter which overload was selected, and it runs even when the
+    body raised, including a 'DispatchException' from no overload
+    matching. If the finalizer itself raises while an exception is
+    already in flight, its exception is chained from the in-flight one.
+
+    Parameters
+    ----------
+    func : Method
+        The finalizer to register. 'Method' expands to
+        'Callable[[Any, ...], Any]'.
+
+    Returns
+    -------
+    Method
+        The same 'func', so the method can sit at the end of a
+        registration chain.
+
+    Raises
+    ------
+    TypeException
+        If 'func' is not callable.
+    VariableNotNone
+        If a finalizer is already set.
     """
     if not callable(func):
       raise TypeException('__finalizer_func__', func, Func, MethodType)
@@ -341,8 +436,9 @@ class Dispatcher(Object):
 
   def __get__(self, instance: Any, owner: type, **kwargs) -> Callable:
     """
-    Descriptor protocol method. Always returns a callable suitable
-    for dispatching against the registered signatures:
+    The '__get__' method is the descriptor protocol entry point. It
+    always returns a callable suitable for dispatching against the
+    registered signatures.
 
     Class-level access ('Owner.attr') returns the compiled dispatch
     function with signature '(instance, *args, **kw)' - the same
@@ -361,6 +457,20 @@ class Dispatcher(Object):
     attribute access on the owning class. Reach it through
     'Owner.__dict__[name]' for introspection, post-hoc registration,
     or cloning.
+
+    Parameters
+    ----------
+    instance : Any
+        The instance the attribute is read from, or None on
+        class-level access.
+    owner : type
+        The class the descriptor is attached to.
+
+    Returns
+    -------
+    Callable
+        On class-level access, the compiled dispatch function; on
+        instance-level access, a bound 'MethodType' wrapping it.
     """
     if instance is None:
       return self._getCachedFunction()
@@ -378,11 +488,26 @@ class Dispatcher(Object):
       return boundCache
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
-    """Illegal setter operation"""
+    """
+    A 'Dispatcher' is read-only, so the '__set__' method always raises.
+
+    Raises
+    ------
+    ReadOnlyError
+        On every call.
+    """
     raise ReadOnlyError(instance, self, value)
 
   def __delete__(self, instance: Any, **kwargs) -> Never:
-    """Illegal delete operation"""
+    """
+    A 'Dispatcher' is protected, so the '__delete__' method always
+    raises.
+
+    Raises
+    ------
+    ProtectedError
+        On every call.
+    """
     raise ProtectedError(instance, self, )
 
   def __set_name__(self, owner: type, name: str, **kwargs) -> None:
@@ -411,12 +536,18 @@ class Dispatcher(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def clone(self, ) -> Self:
-    """Create a clone of this 'Dispatcher' carrying the same
-    registered signature/function pairs (including variadic ones),
-    the same fallback, and the same finalizer. The clone starts
-    with an empty compiled-function cache and no field name or
-    owner; those are populated when the clone is placed on a class
-    and its '__set_name__' fires."""
+    """
+    The 'clone' method builds a copy of this 'Dispatcher' carrying the
+    same registered signature/function pairs (including variadic ones),
+    the same fallback, and the same finalizer.
+
+    Returns
+    -------
+    Self
+        A new 'Dispatcher' with an empty compiled-function cache and no
+        field name or owner. Those are populated when the clone is
+        placed on a class and its '__set_name__' fires.
+    """
     newLoad = type(self)()
     newLoad.__sig_funcs__ = self._getSigFuncList()
     variadicFuncs = self._getVariadicFuncs()
@@ -435,10 +566,25 @@ class Dispatcher(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def overload(self, *types: type) -> Decorator:
-    """Return a decorator that registers a function under the given
-    positional-argument type signature. The decorator returns the
-    dispatcher itself so subsequent '@dispatcher.overload(...)'
-    layers stack on the same instance."""
+    """
+    The 'overload' method builds a decorator that registers the
+    decorated function under the given positional-argument type
+    signature. The decorator returns the dispatcher itself, so
+    successive '@dispatcher.overload(...)' layers stack on the same
+    instance.
+
+    Parameters
+    ----------
+    *types : type
+        The positional-argument types of the signature.
+
+    Returns
+    -------
+    Decorator
+        A decorator registering its function and returning this
+        dispatcher. 'Decorator' expands to
+        'Callable[[Method], Dispatcher]'.
+    """
 
     def decorator(func: Method) -> Self:
       self.addSigFunc(TypeSig(*types), func)
@@ -447,33 +593,78 @@ class Dispatcher(Object):
     return decorator
 
   def finalize(self, func: Method) -> Decorator:
-    """Register 'func' as the finalizer. It runs in the 'finally'
-    block of every dispatched call, after the body returns or raises.
-    If the finalizer itself raises, its exception propagates in place
-    of a normal return and is chained from any in-flight dispatch
-    exception. Only one finalizer is allowed per dispatcher."""
+    """
+    The 'finalize' method registers 'func' as the finalizer. It runs in
+    the 'finally' block of every dispatched call, after the body returns
+    or raises. If the finalizer itself raises, its exception propagates
+    in place of a normal return and is chained from any in-flight
+    dispatch exception. Only one finalizer is allowed per dispatcher.
+
+    Parameters
+    ----------
+    func : Method
+        The finalizer to register. 'Method' expands to
+        'Callable[[Any, ...], Any]'.
+
+    Returns
+    -------
+    Decorator
+        This dispatcher, so the decorator form returns the same
+        instance. 'Decorator' expands to
+        'Callable[[Method], Dispatcher]'.
+    """
     self.setFinalizerFunction(func)
     return self
 
   def fallback(self, func: Method) -> Decorator:
-    """Register 'func' as the fallback. It runs after every pass has
-    missed: not only on a type mismatch but also on a length
-    mismatch, a coercion-disabled signature, or arguments only a
-    keyword could satisfy (matching is positional and by length, and
-    keyword arguments are not type-matched). Only one fallback is
-    allowed per dispatcher."""
+    """
+    The 'fallback' method registers 'func' as the fallback. It runs
+    after every pass has missed: not only on a type mismatch but also on
+    a length mismatch, a coercion-disabled signature, or arguments only
+    a keyword could satisfy (matching is positional and by length, and
+    keyword arguments are not type-matched). Only one fallback is allowed
+    per dispatcher.
+
+    Parameters
+    ----------
+    func : Method
+        The fallback to register. 'Method' expands to
+        'Callable[[Any, ...], Any]'.
+
+    Returns
+    -------
+    Decorator
+        This dispatcher, so the decorator form returns the same
+        instance. 'Decorator' expands to
+        'Callable[[Method], Dispatcher]'.
+    """
     self.setFallbackFunction(func)
     return self
 
   def flex(self, *types: type, ) -> Decorator:
-    """Register 'func' under every ordering of the given types, so the
-    caller may pass those arguments in any order. Each ordering is
-    stored as a concrete signature with type coercion disabled (it is
-    matched by isinstance in the FAST pass, never via 'typeCast'); a
-    'PermuterMethod' restores the canonical argument order before
-    calling 'func'. This is not a catch-all and not the fallback: only
-    permutations of 'types' match. See 'fallback' for the no-match
-    catch-all."""
+    """
+    The 'flex' method builds a decorator that registers its function
+    under every ordering of the given types, so the caller may pass
+    those arguments in any order. Each ordering is stored as a concrete
+    signature with type coercion disabled (it is matched by isinstance
+    in the FAST pass, never via 'typeCast'), and a 'PermuterMethod'
+    restores the canonical argument order before calling the function.
+    This is not a catch-all and not the fallback: only permutations of
+    'types' match. See 'fallback' for the no-match catch-all.
+
+    Parameters
+    ----------
+    *types : type
+        The canonical positional-argument types. Every ordering of
+        them is registered.
+
+    Returns
+    -------
+    Decorator
+        A decorator registering its function and returning this
+        dispatcher. 'Decorator' expands to
+        'Callable[[Method], Dispatcher]'.
+    """
 
     def decorator(func: Method) -> Self:
       for arrangement in Arrangements(*types):
@@ -489,10 +680,17 @@ class Dispatcher(Object):
 
   def swapAllTHIS(self, thisType: type) -> None:
     """
-    Swap all occurrences of THIS in the registered signatures with the
-    provided type. Walks both the concrete signature list and the
-    variadic signature list. Invalidates the compiled-function
-    cache, since 'TypeSig' hashes change with the swap.
+    The 'swapAllTHIS' method replaces every occurrence of THIS in the
+    registered signatures with the provided type, walking both the
+    concrete signature list and the variadic signature list. It
+    invalidates the compiled-function cache, since 'TypeSig' hashes
+    change with the swap.
+
+    Parameters
+    ----------
+    thisType : type
+        The class to substitute for the THIS sentinel, supplied once
+        the enclosing class exists.
     """
     for sig, func in self._getSigFuncList():
       sig.swapTHIS(thisType)

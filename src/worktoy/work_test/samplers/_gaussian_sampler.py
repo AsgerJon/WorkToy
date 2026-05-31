@@ -24,8 +24,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class GaussianSampler(BaseSampler):
   """
-  GaussianSampler subclasses 'BaseSampler' and provides a sampler for
-  normally distributed random numbers.
+  GaussianSampler draws normally distributed random floats with a given
+  'mean' and 'stdDev', defaulting to the standard normal (mean 0.0,
+  standard deviation 1.0). Both parameters accept synonym spellings and
+  are validated as finite, with 'stdDev' additionally required to be
+  non-negative.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -184,7 +187,7 @@ class GaussianSampler(BaseSampler):
 
   def _getItem(self, *args, **kwargs) -> float:
     """
-    Returns a random float sampled from a normal distribution with mean
-    'mean' and standard deviation 'stdDev'.
+    The '_getItem' method draws one float from a normal distribution with
+    mean 'mean' and standard deviation 'stdDev'.
     """
     return gauss(self.mean, self.stdDev)

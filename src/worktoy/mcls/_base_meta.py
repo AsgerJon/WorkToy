@@ -5,9 +5,15 @@ BaseMeta is the metaclass that wires up the overload protocol.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from . import AbstractMetaclass
 from . import BaseSpace as BSpace
-from . import Types
+
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import TypeAlias
+
+  Types: TypeAlias = tuple[type, ...]
 
 
 class BaseMeta(AbstractMetaclass):
@@ -33,5 +39,9 @@ class BaseMeta(AbstractMetaclass):
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Types, **kwargs) -> BSpace:
-    """Prepare the class namespace."""
+    """
+    The '__prepare__' method returns a 'BaseSpace' as the class-body
+    namespace, the one override 'BaseMeta' makes over
+    'AbstractMetaclass'.
+    """
     return BSpace(mcls, name, bases, **kwargs)

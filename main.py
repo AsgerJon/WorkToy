@@ -14,11 +14,14 @@ from types import WrapperDescriptorType, MethodWrapperType
 from types import MethodDescriptorType, ClassMethodDescriptorType
 from types import LambdaType, BuiltinMethodType
 
+from test_overload.test_this_cast_recursion import TestThisCastRecursion
+from worktoy.utilities import ExceptionInfo, textFmt
+
 try:
   from pyperclip import copy
 except ImportError:
 
-  def copy(text: str) -> None:
+  def copy(_) -> None:
     pass
 
 from profile_tests import profileTests
@@ -79,6 +82,39 @@ def tester00() -> int:
     return 0
 
 
+def tester01() -> int:
+  """
+  "They call be Nobody!" "Bro, no we don't, we call you 'None'!"
+  """
+
+  class Derp:
+    callMeMaybe = None
+
+  derp = Derp()
+  with ExceptionInfo(TypeError) as info:
+    res = derp.callMeMaybe()
+  if info:
+    print(info.actualException)
+  else:
+    print(res)
+
+  return 0
+
+
+def tester02() -> int:
+  """
+  testing length
+  Returns
+  -------
+
+  """
+  words = """software. From 1.0 onwards, versions that no longer receive 
+  security updates"""
+  print(len(textFmt(words)))
+  return 0
+
+
 if __name__ == '__main__':
-  # yolo(tester00)
-  yolo(runTests, tester00)
+  # runTest(TestThisCastRecursion)
+  yolo(tester02)
+  # yolo(runTests, tester00)

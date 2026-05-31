@@ -35,10 +35,10 @@ class TestClause(LoremIpsumTest):
     """
     lengths = sorted([randint(30, 80) for _ in range(16)])
     clause = Clause(self.clause)
-    self.assertEqual(len(clause), Clause.__fallback_count__)
+    self.assertEqual(len(clause), clause.charCount)
     clause.clear()
     clause = Clause(clause)
-    self.assertEqual(len(clause), Clause.__fallback_count__)
+    self.assertEqual(len(clause), clause.charCount)
     for length in lengths:
       clause = Clause(length)
       self.assertIsInstance(clause, Clause)
@@ -71,3 +71,30 @@ class TestClause(LoremIpsumTest):
     expectedText = str(self.clause)
     actualText = self.clause.realize()
     self.assertEqual(expectedText, actualText)
+
+  def test_first_placeholder(self) -> None:
+    """
+    Testing that a first clause too short for a full word sequence degrades
+    to a 'Lorem ipsum ...' placeholder of exactly the requested length,
+    covering the lead-in truncation, the empty gap, and the 'etc' prefix.
+    """
+    cases = {
+        12: 'Lorem ips...',
+        14: 'Lorem ipsum...',
+        15: 'Lorem ipsum ...',
+        16: 'Lorem ipsum e...',
+        17: 'Lorem ipsum et...',
+        18: 'Lorem ipsum etc...',
+    }
+    for length, expected in cases.items():
+      self.assertEqual(str(Clause.first(length)), expected)
+    #  A gap of four or more characters draws a real word.
+    for length in range(19, 24):
+      clause = Clause.first(length)
+      self.assertEqual(len(str(clause)), length)
+      self.assertTrue(str(clause).startswith('Lorem ipsum '))
+      self.assertTrue(str(clause).endswith('...'))
+    #  Reading the cached lengths of a placeholder reads them back from the
+    #  realized words rather than partitioning.
+    clause = Clause.first(16)
+    self.assertEqual(clause.wordsLengths, [len(w) for w in clause.wordsArray])

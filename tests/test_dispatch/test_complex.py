@@ -10,7 +10,8 @@ from math import sin, cos
 from typing import TYPE_CHECKING
 
 from worktoy.utilities import stringList
-from . import DispatcherTest, ComplexNumber, ComplexSubclass, ComplexMeta
+from . import DispatcherTest
+from .examples import ComplexNumber, ComplexSubclass, ComplexMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

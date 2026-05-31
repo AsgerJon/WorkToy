@@ -22,9 +22,6 @@ class _MetaARGS(SentinelMeta):
   __inner_type__: Optional[type] = None
 
   def __new__(mcls, *args, **kwargs) -> _MetaARGS:
-    """
-    Creates a new instance of the 'ARGS' sentinel.
-    """
     # noinspection PyTypeChecker
     return type.__new__(mcls, *args, **kwargs)
 

@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 
 from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
-from worktoy.desc import Field
+from worktoy.desc import AttriBox, Field
 from worktoy.utilities import textFmt
-from . import Sentence, BaseGenerator
+from . import Sentence, BaseGenerator, GaussianLengths
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, TypeAlias, Optional, Iterator
@@ -26,23 +26,15 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Paragraph(BaseGenerator):
   """
-  Paragraph subclasses 'BaseGenerator' and concatenates 'Sentence'
-  objects forming size specified paragraphs.
+  Paragraph assembles a space-separated sequence of 'Sentence' objects
+  summing to a target character count, with sentence lengths drawn from a
+  Gaussian 'sentenceDist'. Paragraphs default to 'isFirst=True', so the
+  first sentence begins with 'Lorem ipsum'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Class Variables
-  __sentence_mean__: int = 80
-  __sentence_var__: int = 20
-  #  A paragraph is built from sentences, so its floor must leave room
-  #  for at least one sentence (matches '__sentence_mean__').
-  __min_char_count__: int = 80
-
-  #  Fallback Variables
-  __fallback_count__: int = 800
 
   #  Private Variables
   #  Paragraphs default to 'isFirst=True' so the first sentence begins
@@ -54,35 +46,24 @@ class Paragraph(BaseGenerator):
   __sentences_array__: MaybeSentenceList = None
 
   #  Public Variables
+  #  Sentence lengths are drawn from this Gaussian: mean 80, variance 20,
+  #  bounded to [40, 120].
+  sentenceDist = AttriBox[GaussianLengths](80, 20, 40, 120)
   sentenceLengths: Field[IntList] = Field()
   sentenceArray: Field[SentenceList] = Field()
-
-  #  Virtual Variables
-  sentenceCount: Field[int] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @sentenceCount.GET
-  def _getSentenceCount(self, ) -> int:
-    return int(round(self.charCount / self.__sentence_mean__))
-
   def _buildSentencesLengths(self, ) -> None:
-    """Sample a log-normal sequence of sentence lengths summing to
-    'charCount' and cache it."""
-    mean, var = self.__sentence_mean__, self.__sentence_var__
-    lengths = [self.logNormal(mean, var) for _ in range(self.sentenceCount)]
-    factor = self.charCount / sum(lengths)
-    lengths = [int(round(length * factor)) for length in lengths]
-    target = self.charCount - self.sentenceCount + 1
-    minV, maxV = mean - 2 * var, mean + 2 * var
-    self.__sentences_lengths__ = self.scaleSum(
-      lengths,
-      target,
-      minV,
-      maxV,
-    )
+    """
+    The '_buildSentencesLengths' method partitions 'charCount' into
+    sentence lengths drawn from 'sentenceDist' and caches them. The target
+    leaves room for the single space between sentences.
+    """
+    self.__sentences_lengths__ = self.sentenceDist.partitionSpaced(
+        self.charCount + 1)
 
   @sentenceLengths.GET
   def _getSentenceLengths(self, **kwargs) -> IntList:
@@ -94,8 +75,10 @@ class Paragraph(BaseGenerator):
     return self.__sentences_lengths__
 
   def _buildSentencesArray(self, ) -> None:
-    """Materialize a 'Sentence' for each cached length and cache the
-    resulting sentence list."""
+    """
+    The '_buildSentencesArray' method materializes a 'Sentence' for each
+    cached length and caches the resulting sentence list.
+    """
     sentences: SentenceList = []
     for length in self.sentenceLengths:
       if not sentences and self.isFirst:
@@ -130,18 +113,31 @@ class Paragraph(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def clear(self) -> None:
-    """Drop the cached sentence lengths and sentence array."""
+    """
+    The 'clear' method drops the cached sentence lengths and sentence
+    array.
+    """
     self.__sentences_lengths__ = None
     self.__sentences_array__ = None
 
   def reset(self, ) -> None:
-    """Clear and regenerate the cached sentence lengths and array."""
+    """
+    The 'reset' method clears and regenerates the cached sentence lengths
+    and array.
+    """
     self.clear()
     self._buildSentencesLengths()
     self._buildSentencesArray()
 
   def realize(self) -> str:
-    """Return the realized text for this paragraph."""
+    """
+    The 'realize' method returns the realized text for this paragraph.
+
+    Returns
+    -------
+    str
+      The paragraph rendered as text.
+    """
     return str(self)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -20,7 +20,8 @@ if TYPE_CHECKING:  # pragma: no cover
   class CallMeMaybe:  # noqa
     __function_case__: Optional[tuple[Callable]]
     __wrapped__: _Wrapped
-    def __init__(self, func: Callable = None) -> None: print(func)
+    # noinspection PyUnusedLocal
+    def __init__(self, func: Optional[Callable] = None) -> None: ...
     def setFunction(self, func: Callable) -> None: ...
     def invoke(self, func: Callable, *args, **kwargs) -> Any: ...
     def __call__(self, *args, **kwargs) -> Any: ...
@@ -87,6 +88,7 @@ class TestCallMeMaybe(DispatcherTest):
 
   def test_init_rejects_non_callable(self) -> None:
     with self.assertRaises(TypeException):
+      # noinspection PyTypeChecker
       CallMeMaybe(42)
 
   def test_init_accepts_callable_non_function(self) -> None:

@@ -91,12 +91,10 @@ class KeeBase(Object, ):
 
   @value.GET
   def _getValue(self) -> Any:
-    """Return the value of the member."""
     return self.kee.getValue()
 
   @valueType.GET
   def _getValueType(self) -> type:
-    """Return the type of the value of the member."""
     return self.kee.getFieldType()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -120,7 +118,11 @@ class KeeBase(Object, ):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __setattr__(self, name: str, value: Any) -> None:
-    """Set an attribute of the member."""
+    """
+    A member is frozen after construction, so '__setattr__' raises
+    'KeeWriteOnceError' once the freeze flag is set; assignments during
+    construction pass through.
+    """
     if object.__getattribute__(self, '__frozen_state__'):
       raise KeeWriteOnceError(self, name)
     object.__setattr__(self, name, value)
@@ -145,7 +147,6 @@ class KeeBase(Object, ):
     raise ProtectedError(instance, self, self)
 
   def __int__(self) -> int:
-    """Return the index of the member."""
     return self.index
 
   __index__ = __int__

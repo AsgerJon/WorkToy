@@ -103,10 +103,12 @@ class TypeSig:
 
   @classmethod
   def _findActiveNamespace(cls) -> MaybeCtx:
-    """Walk up the call stack looking for a class-body frame whose
-    locals expose '__hash_value__' and '__metaclass__'. Returns the
-    '(hashValue, metaclass)' pair of the innermost such frame, or
-    'None' if no active class-body context is found.
+    """
+    The '_findActiveNamespace' method walks up the call stack looking
+    for a class-body frame whose locals expose '__hash_value__' and
+    '__metaclass__'. It returns the '(hashValue, metaclass)' pair of the
+    innermost such frame, or None if no active class-body context is
+    found.
 
     CPython treats class-body and module-body frames specially:
     'frame.f_locals' is the real namespace mapping that
@@ -142,7 +144,19 @@ class TypeSig:
   @classmethod
   def fromArgs(cls, *args, ) -> Self:
     """
-    Create a TypeSig from the given arguments.
+    The 'fromArgs' constructor builds a 'TypeSig' from concrete values by
+    taking the type of each argument in order. This is how the dispatcher
+    derives the lookup key for an incoming call.
+
+    Parameters
+    ----------
+    *args : Any
+        The concrete call arguments whose types form the signature.
+
+    Returns
+    -------
+    Self
+        A 'TypeSig' of the argument types, in order.
     """
     return cls(*[type(arg) for arg in args], )
 
@@ -189,26 +203,39 @@ class TypeSig:
     return True
 
   def __str__(self) -> str:
-    """Returns a string representation of the type signature."""
     infoSpec = """<%s: %s>"""
     typeStr = '[%s]' % ', '.join(t.__name__ for t in self)
     clsName = type(self).__name__
     return textFmt(infoSpec % (clsName, typeStr))
 
   def __repr__(self) -> str:
-    """Returns code that would recreate the type signature."""
     infoSpec = """%s(%s)"""
     typeStr = ', '.join(t.__name__ for t in self)
     return textFmt(infoSpec % (type(self).__name__, typeStr))
 
   def __call__(self, this: object = None, owner: type = None) -> Self:
-    """Return a new 'TypeSig' with 'THIS' replaced by 'this' and
-    'OWNER' replaced by 'owner'. Either kwarg can be omitted to
-    leave the corresponding sentinel in place. Used by '__hash__'
-    to substitute predicted-hash and metaclass values while a class
-    is still under construction, and available externally as a
-    primitive for any caller that needs a hashable copy without
-    waiting for 'swapTHIS' to fire."""
+    """
+    Calling a 'TypeSig' returns a new 'TypeSig' with 'THIS' replaced by
+    'this' and 'OWNER' replaced by 'owner'. Either argument can be
+    omitted to leave the corresponding sentinel in place. '__hash__' uses
+    this to substitute predicted-hash and metaclass values while a class
+    is still under construction, and it is available externally as a
+    primitive for any caller that needs a hashable copy without waiting
+    for 'swapTHIS' to fire.
+
+    Parameters
+    ----------
+    this : object, optional
+        The value to substitute for the THIS sentinel.
+    owner : type, optional
+        The value to substitute for the OWNER sentinel.
+
+    Returns
+    -------
+    Self
+        A new 'TypeSig' with the requested substitutions applied and the
+        same '__allow_flex__' flag.
+    """
     newTypes = []
     for rawType in self.getRawTypes():
       if rawType is THIS and this is not None:
@@ -227,6 +254,16 @@ class TypeSig:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def swapTHIS(self, thisType: type) -> None:
+    """
+    The 'swapTHIS' method replaces the THIS sentinel in the raw types
+    with 'thisType' in place, called once the enclosing class exists so
+    that '@overload(THIS)' resolves to the finished class.
+
+    Parameters
+    ----------
+    thisType : type
+        The class to substitute for the THIS sentinel.
+    """
     newTypes = []
     for rawType in self.getRawTypes():
       if rawType is THIS:

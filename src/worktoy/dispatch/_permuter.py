@@ -64,8 +64,21 @@ class Permuter(CallMeMaybe):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def setArrangement(self, arrangement: Arrangement) -> None:
-    """Set the 'Arrangement' once. Raises 'WriteOnceError' if already
-    set, 'TypeException' if not an 'Arrangement'."""
+    """
+    The 'setArrangement' method records the 'Arrangement' once.
+
+    Parameters
+    ----------
+    arrangement : Arrangement
+        The arrangement describing how received arguments are reordered.
+
+    Raises
+    ------
+    TypeException
+        If 'arrangement' is not an 'Arrangement'.
+    WriteOnceError
+        If an arrangement has already been set.
+    """
     if not isinstance(arrangement, Arrangement):
       raise TypeException('arrangement', arrangement, Arrangement)
     if self.__arg_arrangement__ is not None:
@@ -134,8 +147,23 @@ class Permuter(CallMeMaybe):
   def newArrangement(
       cls, original: Self, arrangement: Arrangement,
   ) -> Self:
-    """Construct a new 'Permuter' wrapping the same function as
-    'original' but with a different 'Arrangement'."""
+    """
+    The 'newArrangement' classmethod builds a new 'Permuter' wrapping the
+    same function as 'original' but with a different 'Arrangement'.
+
+    Parameters
+    ----------
+    original : Self
+        The 'Permuter' whose wrapped function is reused.
+    arrangement : Arrangement
+        The arrangement for the new 'Permuter'.
+
+    Returns
+    -------
+    Self
+        A new 'Permuter' over the same function and the given
+        arrangement.
+    """
     return cls(original.__wrapped__, arrangement)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -162,6 +190,22 @@ class Permuter(CallMeMaybe):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def invoke(self, func: Func, *args, **kwargs) -> Any:
-    """Forward to 'func' after restoring args from arranged order to
-    canonical order."""
+    """
+    The 'invoke' method forwards to 'func' after restoring the arguments
+    from arranged order back to the canonical order 'func' expects.
+
+    Parameters
+    ----------
+    func : FunctionType
+        The wrapped function.
+    *args : Any
+        Positional arguments in arranged order.
+    **kwargs : Any
+        Keyword arguments forwarded unchanged.
+
+    Returns
+    -------
+    Any
+        Whatever 'func' returns.
+    """
     return func(*self.arrangement.restoreFrom(*args), **kwargs)

@@ -1,7 +1,7 @@
 """The 'worktoy.waitaminute' package collects every custom exception in
 the library. Exceptions are grouped into subpackages by the layer that
-raises them ('desc', 'meta', 'dispatch', 'keenum', 'ezdata',
-'control_flow', and 'lorem_ipsum'), with a handful of cross-cutting
+raises them ('desc', 'meta', 'dispatch', 'keenum', 'ezdata', and
+'control_flow'), with a handful of cross-cutting
 exceptions
 ('TypeException', 'MissingVariable', and others) defined at the top level.
 
@@ -18,7 +18,6 @@ from __future__ import annotations
 from ._type_exception import TypeException
 from ._variable_not_none import VariableNotNone
 from ._unpack_exception import UnpackException
-from ._path_syntax_exception import PathSyntaxException
 from ._subclass_exception import SubclassException
 from ._missing_variable import MissingVariable
 from . import desc
@@ -27,13 +26,11 @@ from . import dispatch
 from . import keenum
 from . import ezdata
 from . import control_flow
-from . import lorem_ipsum
 
 __all__ = [
   'TypeException',
   'VariableNotNone',
   'UnpackException',
-  'PathSyntaxException',
   'SubclassException',
   'MissingVariable',
   'desc',
@@ -42,5 +39,4 @@ __all__ = [
   'keenum',
   'ezdata',
   'control_flow',
-  'lorem_ipsum',
 ]

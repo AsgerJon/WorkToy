@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from worktoy.utilities.combinatorics import Arrangement
-from . import DispatcherTest
 from worktoy.dispatch import Permuter
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.desc import WriteOnceError
+from . import DispatcherTest
 
 if TYPE_CHECKING:  # pragma: no cover
   # @formatter:off

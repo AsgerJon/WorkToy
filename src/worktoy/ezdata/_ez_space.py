@@ -70,9 +70,9 @@ class EZSpace(BaseSpace):
 
   def getEZFields(self, ) -> dict[str, EZField]:
     """
-    Return the mapping of own (non-inherited) field names to
-    'EZField' instances, in declaration order. Empty when no own
-    fields have been registered yet.
+    The 'getEZFields' method returns the mapping of own (non-inherited)
+    field names to 'EZField' instances, in declaration order, empty when
+    no own fields have been registered yet.
 
     Returns
     -------
@@ -83,11 +83,11 @@ class EZSpace(BaseSpace):
 
   def getBaseFields(self, ) -> dict[str, EZField]:
     """
-    Return the mapping of inherited field names to their cloned
-    'EZField' instances, populated during '__init__' by walking
-    the parent classes. Each entry is a clone of the parent's
-    field, so subsequent owner binding on the subclass does not
-    mutate the parent's namespace.
+    The 'getBaseFields' method returns the mapping of inherited field
+    names to their cloned 'EZField' instances, populated during
+    '__init__' by walking the parent classes. Each entry is a clone of
+    the parent's field, so subsequent owner binding on the subclass does
+    not mutate the parent's namespace.
 
     Returns
     -------
@@ -98,11 +98,11 @@ class EZSpace(BaseSpace):
 
   def getFields(self, ) -> dict[str, EZField]:
     """
-    Return the merged mapping of base fields followed by own
-    fields, in declaration order. Own-field entries overwrite
-    same-named inherited entries, so a subclass redeclaring a
-    parent's field wins. The result is what 'EZHook' compiles
-    into '__ez_fields__', '__slots__', and '__match_args__'.
+    The 'getFields' method returns the merged mapping of base fields
+    followed by own fields, in declaration order. Own-field entries
+    overwrite same-named inherited entries, so a subclass redeclaring a
+    parent's field wins. The result is what 'EZHook' compiles into
+    '__ez_fields__', '__slots__', and '__match_args__'.
 
     Returns
     -------
@@ -124,11 +124,12 @@ class EZSpace(BaseSpace):
 
   def registerEZField(self, key: str, field: EZField, ) -> None:
     """
-    Bind an own field at the given attribute name. Called from
-    'EZHook.setItemPhase' when the class body assigns either an
-    'EZField' instance or a bare value that gets wrapped through
-    'EZField.fromValue'. Stores 'field' in '__ez_fields__' and
-    sets its '__field_name__' for later introspection.
+    The 'registerEZField' method binds an own field at the given
+    attribute name. It is called from 'EZHook.setItemPhase' when the
+    class body assigns either an 'EZField' instance or a bare value that
+    gets wrapped through 'EZField.fromValue'. It stores 'field' in
+    '__ez_fields__' and sets its '__field_name__' for later
+    introspection.
 
     Parameters
     ----------
@@ -160,10 +161,10 @@ class EZSpace(BaseSpace):
 
   def registerBaseField(self, key: str, field: EZField, ) -> None:
     """
-    Bind an inherited field at the given attribute name. Called
-    from this namespace's '__init__' while walking the parent
-    classes. The parent's 'EZField' is cloned so any later owner
-    binding on the subclass leaves the parent's namespace
+    The 'registerBaseField' method binds an inherited field at the given
+    attribute name. It is called from this namespace's '__init__' while
+    walking the parent classes. The parent's 'EZField' is cloned so any
+    later owner binding on the subclass leaves the parent's namespace
     untouched. When two bases declare the same field name, the
     higher-priority base (the one further left in the class header)
     wins, mirroring Python's normal attribute-resolution rules.
@@ -188,14 +189,14 @@ class EZSpace(BaseSpace):
 
   def __init__(self, mcls: type, name: str, bases: Bases, **kw) -> None:
     """
-    Build the namespace for an 'EZData' subclass under
-    construction. After 'BaseSpace.__init__' sets up the standard
-    namespace machinery, this constructor walks the parent
-    classes from right to left, collects any fields they declared
-    through their own 'EZSpace' namespaces, and registers each one
-    as an inherited base field. Processing right to left means the
-    leftmost (highest-priority) base wins on same-named entries,
-    matching Python's normal attribute-resolution behavior.
+    The '__init__' method builds the namespace for an 'EZData' subclass
+    under construction. After 'BaseSpace.__init__' sets up the standard
+    namespace machinery, it walks the parent classes from right to left,
+    collects any fields they declared through their own 'EZSpace'
+    namespaces, and registers each one as an inherited base field.
+    Processing right to left means the leftmost (highest-priority) base
+    wins on same-named entries, matching Python's normal
+    attribute-resolution behavior.
 
     Parameters
     ----------

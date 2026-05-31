@@ -11,11 +11,12 @@ from ..core import MetaType
 from ..core.sentinels import METACALL
 from ..utilities import maybe
 from ..waitaminute import MissingVariable
-from . import Base
 from . import AbstractNamespace as ASpace
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self
+  from typing import Any, Self, TypeAlias
+
+  Base: TypeAlias = tuple[type, ...]
 
 
 class AbstractMetaclass(MetaType, metaclass=MetaType):
@@ -331,10 +332,18 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls
 
   def getNamespace(cls) -> ASpace:
-    """Get the namespace object for the class."""
+    """
+    The 'getNamespace' method returns the namespace object that built
+    'cls', read directly off '__namespace__' to bypass the class-level
+    attribute hooks.
+    """
     return type.__getattribute__(cls, '__namespace__', )
 
   @classmethod
   def getNamespaceClass(mcls) -> type:
-    """Get the namespace class for the class."""
+    """
+    The 'getNamespaceClass' classmethod returns the namespace type this
+    metaclass uses, obtained by inspecting the object '__prepare__'
+    returns.
+    """
     return type(mcls.__prepare__('_', ()))

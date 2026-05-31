@@ -1,8 +1,35 @@
 """
-The 'worktoy.keenum' package provides the enumerating KeeNum class
-along with KeeFlags for bitmask-style flag enums, the Kee member
-descriptor, KeeFlag descriptor, KeeBox attribute wrapper, and the
-supporting metaclass and namespace machinery.
+The 'worktoy.keenum' package builds two enumeration systems on the
+metaclass and descriptor machinery from 'worktoy.mcls' and
+'worktoy.desc'. 'KeeNum' is the value enumeration: 'Kee' members declared
+in the class body are collected by a space hook and frozen into typed
+members by 'KeeMeta'. 'KeeFlags' is the bitmask-flag enumeration: each
+'KeeFlag' is one bit, and 'KeeFlagsMeta' materializes every combination as
+a member. 'KeeBox' adapts either system for use as an 'AttriBox' field
+type.
+
+KeeNum machinery:
+
+- Kee
+- KeeBase
+- KeeSpaceHook
+- KeeSpace
+- KeeMetaMeta
+- KeeMeta
+- KeeNum
+
+KeeFlags machinery:
+
+- KeeFlag
+- KeeFlagsHook
+- KeeFlagsSpace
+- KeeFlagsMeta
+- KeeFlags
+
+Shared:
+
+- KeeBox
+- AccessNum
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

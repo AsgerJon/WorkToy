@@ -1,6 +1,19 @@
 """
-The 'worktoy.mcls.space_hooks' package provides the hooks used by the
-Namespace system.
+The 'worktoy.mcls.space_hooks' package provides the hooks that make the
+worktoy namespace programmable. A hook is declared in a namespace
+subclass body and opts into one or more phases of class construction:
+prepare, set-item, get-item, pre-compile, post-compile, and new-class.
+'AbstractSpaceHook' defines the phase protocol; the concrete hooks each
+handle one job, and 'LoadSpaceHook' is where stacked 'overload'
+declarations are assembled into 'Dispatcher' objects.
+
+- SpaceDesc
+- ReservedNames
+- AbstractSpaceHook
+- FlexCallHook
+- ReservedNamespaceHook
+- NamespaceHook
+- LoadSpaceHook
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

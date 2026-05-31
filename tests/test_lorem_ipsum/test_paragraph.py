@@ -35,7 +35,7 @@ class TestParagraph(LoremIpsumTest):
     """
     lengths = sorted([randint(self.minLen, self.maxLen) for _ in range(16)])
     paragraph = Paragraph()
-    self.assertEqual(len(paragraph), Paragraph.__fallback_count__)
+    self.assertEqual(len(paragraph), paragraph.charCount)
     for length in lengths:
       paragraph = Paragraph(length)
       self.assertIsInstance(paragraph, Paragraph)

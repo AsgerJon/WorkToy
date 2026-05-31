@@ -30,7 +30,11 @@ class SpaceDesc(Generic[NamespaceT]):
   # @formatter:on
 
   def __get__(self, instance: Any, owner: type) -> Union[Self, NamespaceT]:
-    """Returns the space hook of the 'AbstractSpaceHook' instance."""
+    """
+    Accessed on a hook instance, '__get__' returns the namespace object
+    bound to that hook; accessed on the class, it returns the descriptor
+    itself.
+    """
     if instance is None:
       return self
     return getattr(instance, '__space_object__')

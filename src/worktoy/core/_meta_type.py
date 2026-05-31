@@ -34,9 +34,6 @@ class MetaType(type):
   #  The 'mmcls' parameter refers this being a meta-metaclass
   #  noinspection PyMethodParameters
   def __new__(mmcls, name: str, bases: Bases, space: Space, **kw) -> type:
-    """
-    Creates a new class with the given name, bases and namespace.
-    """
     if '__namespace__' not in space:
       space['__namespace__'] = space
     return super().__new__(mmcls, name, bases, space, **kw)

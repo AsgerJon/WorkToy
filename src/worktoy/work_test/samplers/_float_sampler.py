@@ -22,7 +22,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class FloatSampler(IntSampler):
   """
-  FloatSampler subclasses 'IntSampler' and provides 'float' samplers.
+  FloatSampler draws uniformly random 'float' values between 'minVal' and
+  'maxVal', defaulting to the '[0.0, 1.0]' unit interval. It reuses the
+  bound-handling machinery of 'IntSampler' but works in floating point
+  throughout.
   """
 
   #  Fallback Variables
@@ -96,7 +99,8 @@ class FloatSampler(IntSampler):
 
   def _getItem(self, *args, **kwargs) -> float:
     """
-    Returns a random float between 'minVal' and 'maxVal'.
+    The '_getItem' method draws one uniformly random float between
+    'minVal' and 'maxVal'.
     """
     return random() * (self.maxVal - self.minVal) + self.minVal
 

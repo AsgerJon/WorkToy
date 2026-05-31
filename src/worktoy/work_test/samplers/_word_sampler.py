@@ -19,7 +19,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class WordSampler(BaseSampler):
   """
-  WordSampler subclasses 'BaseSampler' and provides word samplers.
+  WordSampler draws single random words, each realized from the
+  'StochasticWord' distribution shared with 'lorem_ipsum'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -44,8 +45,9 @@ class WordSampler(BaseSampler):
   def _getValueType(self, **kwargs) -> type:
     return str
 
-  def _getItem(self, *args, **kwargs) -> WordSampleTuple:
+  def _getItem(self, *args, **kwargs) -> str:
     """
-    Generates a word using the 'StochasticWord' class.
+    The '_getItem' method realizes one random word from the
+    'StochasticWord' distribution.
     """
     return self.stochWord.realize()

@@ -14,8 +14,9 @@ from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.dispatch import Dispatcher, TypeSig, overload
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
 from worktoy.waitaminute.dispatch import DuplicateSignature
-from . import DispatcherTest, ComplexNumber, PlanePoint
-from . import SusComplex, ComplexMetaSub, SpacePoint
+from . import DispatcherTest
+from .examples import SusComplex, ComplexMetaSub, SpacePoint
+from .examples import ComplexNumber, PlanePoint
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -186,7 +187,7 @@ class TestDispatchUmbrella(DispatcherTest):
     clone = original.clone()
     self.assertIsNot(clone, original)
     self.assertEqual(
-      clone._getSigFuncList(), original._getSigFuncList(),
+        clone._getSigFuncList(), original._getSigFuncList(),
     )
     self.assertIs(clone._getFallbackFunction(), fallback)
     self.assertIs(clone._getFinalizerFunction(), finalizer)

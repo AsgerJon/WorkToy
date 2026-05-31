@@ -37,9 +37,8 @@ class SentinelMeta(type):
 
   @classmethod
   def _getRegisteredSentinels(mcls) -> list[Self]:
-    """
-    Get the dictionary of registered sentinel classes.
-    """
+    """The sentinel classes registered so far, or an empty list when none
+    have been registered yet."""
     return maybe(mcls.__registered_sentinels__, [])
 
   @classmethod
@@ -59,25 +58,20 @@ class SentinelMeta(type):
 
   @classmethod
   def _registerSentinel(mcls, sentinel: Self) -> None:
-    """
-    Register a sentinel class to prevent multiple sentinels of the same name
-    from being created.
-    """
+    """Records 'sentinel' in the registry, so a later class statement reusing
+    its name receives the existing sentinel instead of building a second one
+    of the same name."""
     existing = mcls._getRegisteredSentinels()
     mcls.__registered_sentinels__ = [*existing, sentinel]
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> dict:
-    """
-    Prepare the class namespace for the sentinel class.
-    """
     return dict()
 
   def __new__(mcls, name: str, bases: Bases, space: dict, **kwargs) -> Self:
-    """
-    Create a new sentinel class. If a sentinel with the same name already
-    exists, return it instead of creating a new one.
-    """
+    """Returns the sentinel class for 'name', building and registering it on
+    first use and handing back the already-registered class whenever the name
+    is reused."""
     try:
       cls = mcls._getNamedSentinel(name)
     except KeyError as keyError:

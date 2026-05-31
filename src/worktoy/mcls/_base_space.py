@@ -87,8 +87,8 @@ class BaseSpace(AbstractNamespace):
 
   def addOverload(self, name: str, sig: TypeSig, func: Callable, ) -> None:
     """
-    This method sets the mapping between the given type signature and
-    function object to the overloaded name.
+    The 'addOverload' method records the mapping from type signature to
+    function object under the overloaded name.
 
     Parameters
     ----------
@@ -108,9 +108,8 @@ class BaseSpace(AbstractNamespace):
 
   def getOverloads(self, ) -> OverloadMap:
     """
-    This method returns dictionary mapping names of overloaded function to
-    the dictionary mapping type signature to function object assigned to
-    the overload at the given name.
+    The 'getOverloads' method returns the mapping from each overloaded
+    name to its own mapping from type signature to function object.
 
     Returns
     -------
@@ -121,11 +120,13 @@ class BaseSpace(AbstractNamespace):
     return maybe(self.__overload_map__, dict())
 
   def addVariadic(self, name: str, sig: TypeSig, func: Callable) -> None:
-    """Register a variadic '(TypeSig, func)' pair under 'name'. The
-    'TypeSig' must carry a trailing 'ARGS' sentinel as its last raw
-    type. Stored in a list rather than a dict because 'ARGS'
-    instances are not hashable and the dispatcher matches variadic
-    sigs by structural iteration, not by hash lookup."""
+    """
+    The 'addVariadic' method registers a variadic '(TypeSig, func)' pair
+    under 'name'. The 'TypeSig' must carry a trailing 'ARGS' sentinel as
+    its last raw type. These pairs are stored in a list rather than a
+    dict because 'ARGS' instances are not hashable and the dispatcher
+    matches variadic sigs by structural iteration, not by hash lookup.
+    """
     existing = self.getVariadics()
     if name not in existing:
       existing[name] = []
@@ -133,15 +134,17 @@ class BaseSpace(AbstractNamespace):
     self.__variadic_overload_map__ = {**existing, }
 
   def getVariadics(self, ) -> VariadicMap:
-    """Mapping from overloaded name to its list of variadic
-    '(TypeSig, func)' pairs. Returns an empty dict when no variadic
-    overloads have been registered."""
+    """
+    The 'getVariadics' method returns the mapping from each overloaded
+    name to its list of variadic '(TypeSig, func)' pairs, an empty dict
+    when none have been registered.
+    """
     return maybe(self.__variadic_overload_map__, {})
 
   def addFallback(self, name: str, func: Callable) -> None:
     """
-    Sets the fallback function for the overloaded name to the given
-    function object. These fallbacks are dispatched by the overload
+    The 'addFallback' method records the fallback function for the
+    overloaded name. These fallbacks are dispatched by the overload
     system when no other assigned overload matches the type signature of
     given arguments.
 
@@ -160,8 +163,8 @@ class BaseSpace(AbstractNamespace):
 
   def getFallbacks(self) -> dict[str, Callable]:
     """
-    This method returns the mappings from overloaded names to assigned
-    fallback functions.
+    The 'getFallbacks' method returns the mapping from overloaded names
+    to their assigned fallback functions.
 
     Returns
     -------
@@ -172,10 +175,9 @@ class BaseSpace(AbstractNamespace):
 
   def addFinalizer(self, name: str, func: Callable) -> None:
     """
-    Sets the finalizer function for the overloaded name to the given
-    function object. Finalizer functions are dispatched by the overload
-    system as a final step by the overload system. Please note that these
-    finalizers run even when the overloaded system encountered an error.
+    The 'addFinalizer' method records the finalizer function for the
+    overloaded name. Finalizer functions are dispatched by the overload
+    system as a final step, and run even when the dispatched call raised.
 
     Parameters
     ----------
@@ -191,8 +193,8 @@ class BaseSpace(AbstractNamespace):
 
   def getFinalizers(self, ) -> dict[str, Callable]:
     """
-    This method returns the mappings from overloaded names to assigned
-    finalizer functions.
+    The 'getFinalizers' method returns the mapping from overloaded names
+    to their assigned finalizer functions.
 
     Returns
     -------

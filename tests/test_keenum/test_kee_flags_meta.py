@@ -165,6 +165,7 @@ class TestKeeFlagsMeta(KeeTest):
 
     for cls in self.exampleFlags:
       with self.assertRaises(TypeError) as context:
+        # noinspection PyTypeChecker
         _ = issubclass("""Bro, I'm a class, trust!""", cls)
       actualMessage = str(context.exception)
       self.assertIn(expectedMessage, actualMessage)
@@ -176,19 +177,39 @@ class TestKeeFlagsMeta(KeeTest):
         if not issubclass(left, right):
           self.assertIsNot(KeeFlagsMeta.__eq__(left, right), NotImplemented)
 
-  def testBaseDuplicateFlag(self, ) -> None:
-    """Tests that defining a duplicate flag raises an error."""
+  def testInBodyDuplicateFlag(self, ) -> None:
+    """Declaring the same flag name twice in one class body raises."""
     a = KeeFlag()
     b = KeeFlag()
     with self.assertRaises(KeeFlagDuplicate) as context:
+      # noinspection PyUnusedLocal
       class StackedOverflow(KeeFlags):
         BREH = a
+        # noinspection PyRedeclaration
         BREH = b
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.name, 'BREH')
     self.assertIs(e.oldFlag, a)
     self.assertIs(e.newFlag, b)
+
+  def testInheritedDuplicateFlag(self, ) -> None:
+    """A subclass that redeclares an inherited flag name raises, matching
+    'KeeNum'. Neither family allows redeclaring an inherited name."""
+
+    class Base(KeeFlags):
+      READ = KeeFlag()
+      WRITE = KeeFlag()
+
+    with self.assertRaises(KeeFlagDuplicate) as context:
+      # noinspection PyUnusedLocal
+      class Sub(Base):
+        READ = KeeFlag()  # collides with the inherited 'READ'
+    e = context.exception
+    self.assertEqual(e.name, 'READ')
+    self.assertIsInstance(e.oldFlag, KeeFlag)
+    self.assertIsInstance(e.newFlag, KeeFlag)
+    self.assertEqual(e.oldFlag.name, 'READ')
 
   def testCustomGetValue(self) -> None:
     """Tests that defining a custom 'getValue' method works as intended."""

@@ -27,10 +27,12 @@ class FixBox(AttriBox):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
-    """Set the value once; subsequent assignments raise
-    'WriteOnceError'. Uses 'AttributeError' (not 'is None') to
-    detect the unset state, so that an explicit assignment of
-    'None' still counts as a write."""
+    """
+    The '__instance_set__' method stores the value once; a subsequent
+    assignment raises 'WriteOnceError'. The unset state is detected via
+    'AttributeError' rather than 'is None', so an explicit assignment of
+    'None' still counts as the one write.
+    """
     pvtName = self.getPrivateName()
     try:
       oldValue = object.__getattribute__(instance, pvtName)
@@ -41,6 +43,9 @@ class FixBox(AttriBox):
     AttriBox.__instance_set__(self, instance, value, **kwargs)
 
   def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
-    """Deletion is disabled on 'FixBox'. Falls through to
-    'Object.__instance_delete__', which raises 'ProtectedError'."""
+    """
+    Deletion is disabled on 'FixBox'. The '__instance_delete__' method
+    falls through to 'Object.__instance_delete__', which raises
+    'ProtectedError'.
+    """
     Object.__instance_delete__(self, instance, *_, **kwargs)

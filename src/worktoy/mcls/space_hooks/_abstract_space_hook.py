@@ -110,38 +110,49 @@ class AbstractSpaceHook(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def preparePhase(self, space: ASpace, ) -> None:
-    """Hook for prepare. This runs during the __init__ method of the
-    namespace object. This phase does not allow changes to the namespace,
-    to interrupt the flow, raise an exception. """
+    """
+    The 'preparePhase' method runs during the namespace object's
+    '__init__'. This phase does not allow changes to the namespace;
+    raise an exception to interrupt the flow. The default does nothing.
+    """
 
   def getItemPhase(self, key: str, value: Any, ) -> bool:
-    """Hook run during '__getitem__', after the value is fetched and
-    before it is returned. The return value is ignored (unlike
-    'setItemPhase'); raise an exception to interrupt. The default
-    implementation does nothing. """
+    """
+    The 'getItemPhase' method runs during '__getitem__', after the value
+    is fetched and before it is returned. Its return value is ignored
+    (unlike 'setItemPhase'); raise an exception to interrupt. The default
+    does nothing.
+    """
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    """Hook for setItem. This is called before the __setitem__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns False. """
+    """
+    The 'setItemPhase' method runs before a name is bound in the
+    namespace. Returning True blocks the namespace's own assignment. The
+    default does nothing and returns False.
+    """
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:
-    """Hook run during 'compile()', before the class-body names are
-    merged into the namespace dict. Receives that dict and must return
-    it; the default returns it unchanged. """
+    """
+    The 'preCompilePhase' method runs during 'compile()', before the
+    class-body names are merged into the namespace dict. It receives that
+    dict and must return it; the default returns it unchanged.
+    """
     return compiledSpace
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:
-    """Hook run during 'compile()', after the class-body names are
-    merged into the namespace dict. Receives the assembled dict and
-    must return it; the default returns it unchanged. """
+    """
+    The 'postCompilePhase' method runs during 'compile()', after the
+    class-body names are merged into the namespace dict. It receives the
+    assembled dict and must return it; the default returns it unchanged.
+    """
     return compiledSpace
 
   def newClassPhase(self, cls: Meta, ) -> Meta:  # NOQA
     """
-    Final phase invoked by the metaclass after it has created the new
-    class object, but before returning it. This phase occurs before the
-    normal post class creation flow continues.
+    The 'newClassPhase' method is the final phase, invoked by the
+    metaclass after it has created the new class object but before
+    returning it, ahead of the normal post-class-creation flow. The
+    default returns the class unchanged.
     """
     return cls
 
@@ -151,17 +162,19 @@ class AbstractSpaceHook(Object):
 
   def __set_name__(self, owner: Space, name: str, **kwargs) -> None:
     """
-    After the super call, adds one self to the namespace class as a hook
-    class.
+    The '__set_name__' method runs the 'Object' registration and then
+    registers this hook with the owning namespace class via 'addHook',
+    so hook authors never call 'addHook' by hand.
     """
     super().__set_name__(owner, name, )
     owner.addHook(self)
 
   def __get__(self, instance: ASpace, owner: Space, **kwargs) -> Any:
     """
-    Descriptor get. Sets '__space_object__' to the current namespace
-    instance and returns the hook, so the 'space' property resolves to
-    that namespace during the hook's calls.
+    Accessed on a namespace instance, '__get__' binds
+    '__space_object__' to that instance and returns the hook, so the
+    'space' property resolves to the active namespace during the hook's
+    calls.
     """
     self.__space_object__ = instance
     return self

@@ -102,8 +102,8 @@ class EZField(BaseObject, Generic[T]):
   @fieldOwner.GET
   def _getFieldOwner(self, ) -> type:
     """
-    Return the EZData subclass this field is bound to. Set by
-    'EZMeta.__init__' after class construction.
+    The 'fieldOwner' getter returns the EZData subclass this field is
+    bound to, set by 'EZMeta.__init__' after class construction.
 
     Returns
     -------
@@ -126,8 +126,8 @@ class EZField(BaseObject, Generic[T]):
   @fieldName.GET
   def _getFieldName(self, ) -> str:
     """
-    Return the attribute name this field is bound to on its
-    owner class. Set by 'EZSpace.registerEZField' at class-body
+    The 'fieldName' getter returns the attribute name this field is bound
+    to on its owner class, set by 'EZSpace.registerEZField' at class-body
     assignment time.
 
     Returns
@@ -151,9 +151,9 @@ class EZField(BaseObject, Generic[T]):
   @fieldType.GET
   def _getFieldType(self, ) -> Type[T]:
     """
-    Return the declared type of this field's values. Set by
-    'EZField.__class_getitem__' for the 'EZField[T]' form and by
-    'EZField.fromValue' for the bare-value path.
+    The 'fieldType' getter returns the declared type of this field's
+    values, set by 'EZField.__class_getitem__' for the 'EZField[T]' form
+    and by 'EZField.fromValue' for the bare-value path.
 
     Returns
     -------
@@ -177,9 +177,9 @@ class EZField(BaseObject, Generic[T]):
   @posArgs.GET
   def _getPosArgs(self, ) -> tuple:
     """
-    Return the positional arguments stored at construction time.
-    Used by 'defaultValue' to materialize a fresh default
-    instance per call.
+    The 'posArgs' getter returns the positional arguments stored at
+    construction time, used by 'defaultValue' to materialize a fresh
+    default instance per call.
 
     Returns
     -------
@@ -203,8 +203,8 @@ class EZField(BaseObject, Generic[T]):
   @keyArgs.GET
   def _getKeyArgs(self, ) -> dict:
     """
-    Return the keyword arguments stored at construction time,
-    paired with 'posArgs' to build the default value.
+    The 'keyArgs' getter returns the keyword arguments stored at
+    construction time, paired with 'posArgs' to build the default value.
 
     Returns
     -------
@@ -227,9 +227,10 @@ class EZField(BaseObject, Generic[T]):
   @defaultValue.GET
   def _getDefaultValue(self, ) -> T:
     """
-    Construct and return a fresh default value by invoking the
-    field type with the stored positional and keyword arguments.
-    Each call builds a new top-level object, so two instances do
+    The 'defaultValue' getter constructs a fresh default value by
+    invoking the field type with the stored positional and keyword
+    arguments. Each call builds a new top-level object, so two instances
+    do
     not share the same mutable container ('list', 'dict', 'set',
     ...). This is a shallow construction, though: a mutable object
     nested inside the stored arguments is shared across instances,
@@ -255,11 +256,11 @@ class EZField(BaseObject, Generic[T]):
 
   def __init__(self, *args, **kwargs) -> None:
     """
-    Store the positional and keyword arguments that will later be
-    used to build the field's default value via 'fieldType(*args,
-    **kwargs)'. The field type itself is set separately, either
-    by '__class_getitem__' (for the 'EZField[T](...)' shape) or
-    by 'fromValue' (for the bare-value class-body shape).
+    The '__init__' method stores the positional and keyword arguments
+    that will later be used to build the field's default value via
+    'fieldType(*args, **kwargs)'. The field type itself is set
+    separately, either by '__class_getitem__' (for the 'EZField[T](...)'
+    shape) or by 'fromValue' (for the bare-value class-body shape).
 
     Parameters
     ----------
@@ -276,9 +277,9 @@ class EZField(BaseObject, Generic[T]):
   @classmethod
   def __class_getitem__(cls, type_: Type[T]) -> EZField:
     """
-    Implements the 'EZField[T]' subscript syntax. Returns a fresh
-    EZField with its field type set to 'type_' and its
-    construction arguments unset. Callable next to bind the
+    The '__class_getitem__' method implements the 'EZField[T]' subscript
+    syntax. It returns a fresh EZField with its field type set to 'type_'
+    and its construction arguments unset, callable next to bind the
     construction arguments, as in 'EZField[float](0.0)'.
 
     Parameters
@@ -301,9 +302,9 @@ class EZField(BaseObject, Generic[T]):
 
   def __call__(self, *args, **kwargs) -> Self:
     """
-    Bind the construction arguments used to build the field's
-    default value. Calling on an already-bound EZField replaces
-    its stored arguments.
+    The '__call__' method binds the construction arguments used to build
+    the field's default value. Calling on an already-bound EZField
+    replaces its stored arguments.
 
     Parameters
     ----------
@@ -325,10 +326,10 @@ class EZField(BaseObject, Generic[T]):
   @classmethod
   def fromValue(cls, value: Any) -> Self:
     """
-    Build an EZField from a bare class-body value, inferring the
-    field type from 'type(value)' and using the value itself as
-    the single positional construction argument. The bare-value
-    path in 'EZHook.setItemPhase' takes this route to wrap
+    The 'fromValue' constructor builds an EZField from a bare class-body
+    value, inferring the field type from 'type(value)' and using the
+    value itself as the single positional construction argument. The
+    bare-value path in 'EZHook.setItemPhase' takes this route to wrap
     expressions like 'name = "Anonymous"' inside the class body.
 
     Parameters
@@ -350,14 +351,13 @@ class EZField(BaseObject, Generic[T]):
   @classmethod
   def clone_(cls, self: Self) -> EZField[T]:
     """
-    Build an independent EZField that mirrors the given one. The
-    new field shares the same field type and the same
+    The 'clone_' classmethod builds an independent EZField that mirrors
+    the given one. The new field shares the same field type and the same
     construction arguments, but has its own '__field_name__' and
-    '__field_owner__' slots (left unset and bound by the new
-    owner class when registration runs). Used by
-    'EZSpace.registerBaseField' to copy inherited fields into a
-    subclass namespace without mutating the parent's field
-    objects.
+    '__field_owner__' slots (left unset and bound by the new owner class
+    when registration runs). It is used by 'EZSpace.registerBaseField'
+    to copy inherited fields into a subclass namespace without mutating
+    the parent's field objects.
 
     Parameters
     ----------
@@ -394,10 +394,10 @@ class EZField(BaseObject, Generic[T]):
 
   def __str__(self) -> str:
     """
-    Render the field as 'Owner.name: type(args)', using fallback
-    placeholders when the field has not yet been bound to a
-    class. Unbound fields show 'EZField.<unbound>: object()' and
-    do not raise, matching the defensive behavior of '__repr__'.
+    The '__str__' method renders the field as 'Owner.name: type(args)',
+    using fallback placeholders when the field has not yet been bound to
+    a class. Unbound fields show 'EZField.<unbound>: object()' and do not
+    raise, matching the defensive behavior of '__repr__'.
 
     Returns
     -------
@@ -424,10 +424,10 @@ class EZField(BaseObject, Generic[T]):
 
   def __repr__(self) -> str:
     """
-    Render the field as 'EZField[type](args)', the canonical
-    construction expression that would reproduce it. Uses
-    fallback placeholders so unbound fields still render rather
-    than raising 'MissingVariable'.
+    The '__repr__' method renders the field as 'EZField[type](args)',
+    the canonical construction expression that would reproduce it. It
+    uses fallback placeholders so unbound fields still render rather than
+    raising 'MissingVariable'.
 
     Returns
     -------

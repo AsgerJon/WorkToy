@@ -105,10 +105,19 @@ class overload:  # NOQA
     return maybe(self.__sig_func_dict__, dict())
 
   def getVariadics(self) -> list[tuple[TypeSig, Method]]:
-    """Return the list of (variadicSig, func) pairs registered on
-    this overload. Each variadicSig has a trailing 'ARGS' instance
-    as its last raw type; the dispatcher uses it to match calls
-    whose length exceeds what the FASTEST-tier expansion covers."""
+    """
+    The 'getVariadics' method returns the list of '(variadicSig, func)'
+    pairs registered on this overload. Each variadicSig has a trailing
+    'ARGS' instance as its last raw type, which the dispatcher uses to
+    match calls whose length exceeds what the FASTEST-tier expansion
+    covers.
+
+    Returns
+    -------
+    list of tuple of (TypeSig, Method)
+        The registered variadic pairs. 'Method' expands to
+        'Callable[..., Any]'.
+    """
     return maybe(self.__variadic_sig_func_list__, [])
 
   def _getLatestFunc(self) -> Method:
@@ -119,19 +128,21 @@ class overload:  # NOQA
     return self.__latest_func__
 
   def isFallback(self) -> bool:
-    """Check if the current overload is a fallback function."""
+    """True when a fallback function has been registered on this
+    overload."""
     return False if self.__fallback_func__ is None else True
 
   def getFallback(self, ) -> Method:
-    """Get the fallback function for the overload."""
+    """The fallback function registered on this overload, or None."""
     return self.__fallback_func__
 
   def isFinalizer(self) -> bool:
-    """Check if the current overload is a finalizer function."""
+    """True when a finalizer function has been registered on this
+    overload."""
     return False if self.__finalizer_func__ is None else True
 
   def getFinalizer(self, ) -> Method:
-    """Get the finalizer function for the overload."""
+    """The finalizer function registered on this overload, or None."""
     return self.__finalizer_func__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -139,16 +150,25 @@ class overload:  # NOQA
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _addSigFunc(self, sig: TypeSig, func: Method) -> None:
-    """Register a (TypeSig, func) pair on this overload.
+    """
+    The '_addSigFunc' method registers a '(TypeSig, func)' pair on this
+    overload. If 'sig' ends in an 'ARGS' sentinel instance (a variadic
+    overload), the registration is expanded: the dispatcher's FASTEST
+    tier gets concrete 'TypeSig' entries for every length from the
+    prefix-only form up through prefix+N copies of the 'ARGS' inner type,
+    where N is 'cls.__variadic_fastpath_limit__'. A single variadic entry
+    is also recorded in '__variadic_sig_func_list__' so the dispatcher
+    can match calls whose length exceeds the FASTEST expansion.
 
-    If 'sig' ends in an 'ARGS' sentinel instance (variadic
-    overload), the registration is expanded: the dispatcher's
-    FASTEST tier gets concrete 'TypeSig' entries for every length
-    from the prefix-only form up through prefix+N copies of the
-    'ARGS' inner type, where N is 'cls.__variadic_fastpath_limit__'.
-    A single variadic entry is also recorded in
-    '__variadic_sig_func_list__' so the dispatcher can match calls
-    whose length exceeds the FASTEST expansion."""
+    Parameters
+    ----------
+    sig : TypeSig
+        The signature to register, possibly ending in an 'ARGS'
+        sentinel.
+    func : Method
+        The function to register. 'Method' expands to
+        'Callable[..., Any]'.
+    """
     raw = sig.getRawTypes()
     if raw and isinstance(raw[-1], ARGS):
       argsInst = raw[-1]
@@ -171,7 +191,17 @@ class overload:  # NOQA
     self.__latest_func__ = func
 
   def _extendLatest(self, sig: TypeSig) -> None:
-    """Extend the latest function with a new signature."""
+    """
+    The '_extendLatest' method registers another signature against the
+    most recently added function, so stacked '@overload(...)' decorators
+    all resolve to the same function body.
+
+    Parameters
+    ----------
+    sig : TypeSig
+        The additional signature to register against the latest
+        function.
+    """
     self._addSigFunc(sig, self._getLatestFunc())
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -179,7 +209,22 @@ class overload:  # NOQA
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __new__(cls, *types, **kwargs) -> Decorator:
-    """Create a decorator that sets the type signature for the function."""
+    """
+    The 'overload' constructor returns a decorator that registers the
+    decorated function under the given positional-argument type
+    signature.
+
+    Parameters
+    ----------
+    *types : type
+        The positional-argument types of the signature.
+
+    Returns
+    -------
+    Decorator
+        A decorator registering its function and returning the 'overload'
+        instance. 'Decorator' expands to 'Callable[[Method], Any]'.
+    """
 
     if kwargs.get('_root', False):
       return super(overload, cls).__new__(cls)
@@ -202,8 +247,9 @@ class overload:  # NOQA
   @classmethod
   def flex(cls, *types: type) -> Decorator:
     """
-    Creates a decorator that registers the function under every
-    arrangement of the given canonical type signature.
+    The 'flex' decorator factory returns a decorator that registers the
+    function under every arrangement of the given canonical type
+    signature.
 
     At dispatch time, the user supplies arguments in some arrangement of
     the canonical order. Each registered 'PermuterMethod' carries the
@@ -211,6 +257,18 @@ class overload:  # NOQA
     selects it, that 'PermuterMethod' (not the dispatcher) calls
     'arrangement.restoreFrom(*args)' to permute the caller's arguments
     back into canonical order, then invokes 'func'.
+
+    Parameters
+    ----------
+    *types : type
+        The canonical positional-argument types. Every ordering of them
+        is registered.
+
+    Returns
+    -------
+    Decorator
+        A decorator registering its function and returning the 'overload'
+        instance. 'Decorator' expands to 'Callable[[Method], Any]'.
     """
 
     def decorator(func: Method) -> Self:
@@ -228,16 +286,40 @@ class overload:  # NOQA
 
   @classmethod
   def fallback(cls, func) -> Self:
-    """Create a decorator that sets the fallback function for the
-    overload."""
+    """
+    The 'fallback' classmethod registers 'func' as the fallback, invoked
+    when no signature matches a dispatched call.
+
+    Parameters
+    ----------
+    func : Method
+        The fallback function. 'Method' expands to 'Callable[..., Any]'.
+
+    Returns
+    -------
+    Self
+        A new 'overload' carrying the fallback.
+    """
     self = cls(_root=True)
     self.__fallback_func__ = func
     return self
 
   @classmethod
   def finalize(cls, func: Method) -> Self:
-    """Create a decorator that sets the finalizer function for the
-    overload."""
+    """
+    The 'finalize' classmethod registers 'func' as the finalizer, run in
+    the 'finally' block of every dispatched call.
+
+    Parameters
+    ----------
+    func : Method
+        The finalizer function. 'Method' expands to 'Callable[..., Any]'.
+
+    Returns
+    -------
+    Self
+        A new 'overload' carrying the finalizer.
+    """
     self = cls(_root=True)
     self.__finalizer_func__ = func
     return self
@@ -262,7 +344,16 @@ class overload:  # NOQA
       return value
 
   def __iter__(self, ) -> Iterator[tuple[TypeSig, Method]]:
-    """Iterate over the signatures and functions in the overload."""
+    """
+    Iterating an 'overload' yields each '(TypeSig, function)' pair
+    registered on it.
+
+    Yields
+    ------
+    tuple of (TypeSig, Method)
+        Each registered signature-function pair. 'Method' expands to
+        'Callable[..., Any]'.
+    """
     yield from self._getSigFuncDict().items()
 
   if TYPE_CHECKING:  # pragma: no cover

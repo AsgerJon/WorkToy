@@ -5,7 +5,8 @@ KeeFlagsSpace is the namespace 'KeeFlagsMeta' uses to build 'KeeFlags'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
+from collections.abc import Callable
 
 from ..mcls import BaseSpace
 from ..utilities import maybe
@@ -13,14 +14,13 @@ from ..waitaminute.keenum import KeeFlagDuplicate
 from . import KeeFlag, KeeFlagsHook
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Type, TypeAlias, Callable, Self
+  from typing import Type, TypeAlias
 
   from . import KeeFlags
   from . import KeeFlagsMeta
 
   KFMType: TypeAlias = Type[KeeFlagsMeta]
   Bases: TypeAlias = tuple[Type, ...]
-  GetKeeFlags: TypeAlias = Callable[[Self], dict[str, KeeFlag]]
 
 
 class KeeFlagsSpace(BaseSpace):
@@ -58,18 +58,23 @@ class KeeFlagsSpace(BaseSpace):
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def addBaseFlag(self, name: str, keeFlag: KeeFlag, **kwargs) -> None:
-    """Adds a base-class flag to the inherited base-flags dict."""
+  def addBaseFlag(self, name: str, keeFlag: KeeFlag, **_) -> None:
+    """
+    The 'addBaseFlag' method records an inherited flag in the base-flags
+    dict, so a subclass keeps the flags declared on its parents.
+    """
     existing = self._getBaseFlags()
     existing[name] = keeFlag
     self.__base_flags__ = existing
 
-  def addKeeFlag(self, name: str, keeFlag: KeeFlag, **kwargs) -> None:
+  def addKeeFlag(self, name: str, keeFlag: KeeFlag, **_) -> None:
     baseFlags = self._getBaseFlags()
     keeFlags = self.getKeeFlags()
     if name in maybe(self.__kee_flags__, dict()):
       oldFlag = self.__kee_flags__[name]
       raise KeeFlagDuplicate(name, oldFlag, keeFlag)
+    if name in baseFlags:
+      raise KeeFlagDuplicate(name, baseFlags[name], keeFlag)
     keeFlag.__member_index__ = len(baseFlags) + len(keeFlags)
     keeFlag.__member_name__ = name
     keeFlag.__field_name__ = name
@@ -97,10 +102,11 @@ class KeeFlagsSpace(BaseSpace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @classmethod
-  def _getKeeFlagsFactory(cls, ) -> GetKeeFlags:
+  def _getKeeFlagsFactory(cls, ) -> Callable:
     """
-    Factory function creating the getter function for the dictionary of
-    the 'KeeFlag' objects forming the basis of the 'KeeFlags' class.
+    The '_getKeeFlagsFactory' classmethod builds the 'getKeeFlags'
+    classmethod installed on each concrete 'KeeFlags' class, which clones
+    the declared flags onto that class with fresh per-class indices.
     """
 
     def func(cls_: Type[KeeFlags]) -> dict[str, KeeFlag]:
@@ -116,13 +122,16 @@ class KeeFlagsSpace(BaseSpace):
 
   def postCompile(self, namespace: dict) -> dict:
     """
-    Post compile is called after the class has been created.
-    This method is used to finalize the namespace.
+    The 'postCompile' method finalizes the namespace for a concrete
+    'KeeFlags' subclass, recording the collected flags and installing the
+    'getKeeFlags' classmethod. The 'KeeFlags' base itself is left
+    unchanged.
     """
     namespace = BaseSpace.postCompile(self, namespace)
     if self.getClassName() == 'KeeFlags':
       return namespace
     namespace['__kee_flags__'] = self.getKeeFlags()
     namespace['__kee_members__'] = None
-    namespace['getKeeFlags'] = classmethod(self._getKeeFlagsFactory())
+    flagsFactory = cast(Callable, self._getKeeFlagsFactory())
+    namespace['getKeeFlags'] = classmethod(flagsFactory)
     return namespace

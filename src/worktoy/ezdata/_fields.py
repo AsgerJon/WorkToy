@@ -17,9 +17,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 def fields(obj: Any) -> tuple:
   """
-  Returns the tuple of 'EZField' descriptors declared on an
-  'EZData' class, in declaration order. Accepts either the
-  class itself or an instance of it. Raises 'TypeError' when
+  The 'fields' function returns the tuple of 'EZField' descriptors
+  declared on an 'EZData' class, in declaration order. It accepts either
+  the class itself or an instance of it, and raises 'TypeError' when
   passed anything else.
 
   Parameters

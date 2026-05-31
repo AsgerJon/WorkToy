@@ -90,10 +90,10 @@ class AttriBox(BaseDescriptor[T]):
 
   def _resolve(self, *args, **kwargs) -> T:
     """
-    Creates a new instance of the field type from the given arguments.
-    Please note, that this method does *not* retrieve arguments from
-    'self', but requires them to be passed in as arguments. This is because
-    this method is used both when setting and getting.
+    The '_resolve' method builds a new instance of the field type from
+    the given arguments. It does *not* retrieve arguments from 'self',
+    but requires them to be passed in, because it is used both when
+    setting and getting.
 
     When '__instance_get__' is unable to retrieve a value from a given
     instance. The 'args' and 'kw' passed to the constructor of the
@@ -180,6 +180,26 @@ class AttriBox(BaseDescriptor[T]):
     'AttriBox[T]((a, b))' builds 'T((a, b))', but
     'instance.attr = (a, b)' builds 'T(a, b)'. Same value, different
     path, different result. Feeding a 'list' avoids the divergence.
+
+    Parameters
+    ----------
+    *args : Any
+        Positional arguments forwarded to the field-type constructor,
+        splatted from a received 'tuple' under the rules above.
+    **kwargs : Any
+        Keyword arguments forwarded to the field-type constructor.
+
+    Returns
+    -------
+    T
+        The freshly built field-type instance, tagged with its field
+        name, owner, and owning box.
+
+    Raises
+    ------
+    TypeException
+        If neither the cast nor the field-type constructor accepts the
+        arguments.
     """
     fieldType = self.getFieldType()
     fieldObject = None
@@ -206,8 +226,10 @@ class AttriBox(BaseDescriptor[T]):
 
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
-    Returns the value of the field for the given instance. If the value is
-    not set, it initializes it with a new instance of the field type.
+    The '__instance_get__' method returns the stored field value for the
+    given instance, building the deferred default with a fresh
+    field-type instance on the first read and caching it under the
+    private name.
     """
     pvtName = self.getPrivateName()
     try:
@@ -225,8 +247,11 @@ class AttriBox(BaseDescriptor[T]):
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
-    Sets the value of the field for the given instance. If the value is
-    not set, it initializes it with a new instance of the field type.
+    The '__instance_set__' method stores 'value' for the given instance.
+    A value already of the field type is stored unchanged; otherwise a
+    lossless 'typeCast' is tried, and only failing that does the field
+    type constructor run. See the class docstring for the full coercion
+    contract.
     """
     fieldType = self.getFieldType()
     pvtName = self.getPrivateName()
@@ -261,8 +286,9 @@ class AttriBox(BaseDescriptor[T]):
 
   def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
     """
-    Deletes the value of the field for the given instance by storing
-    the 'DELETED' sentinel under the private attribute name.
+    The '__instance_delete__' method deletes the field for the given
+    instance by storing the 'DELETED' sentinel under the private
+    attribute name, which a later read translates into 'MissingVariable'.
     """
     pvtName = self.getPrivateName()
     setattr(instance, pvtName, DELETED)
@@ -274,8 +300,21 @@ class AttriBox(BaseDescriptor[T]):
   @classmethod
   def __class_getitem__(cls, fieldType: Union[type, TypeVar]) -> Self:
     """
-    Allows the AttriBox to be used as a generic type with a specified
-    field type.
+    The '__class_getitem__' method captures the field type from the
+    'AttriBox[T]' subscript. A 'TypeVar' is forwarded to the generic
+    machinery; a concrete type produces a fresh 'AttriBox' parametrized
+    with it.
+
+    Parameters
+    ----------
+    fieldType : type or TypeVar
+        The field type fixed by the subscript.
+
+    Returns
+    -------
+    Self
+        A new 'AttriBox' carrying 'fieldType', ready for the deferred
+        '__call__'.
     """
     if isinstance(fieldType, TypeVar):
       return super().__class_getitem__(fieldType)  # noqa
@@ -284,19 +323,21 @@ class AttriBox(BaseDescriptor[T]):
     return self  # noqa
 
   def __call__(self, *args, **kwargs) -> Any:
-    """Bind constructor arguments for deferred field construction.
+    """
+    The '__call__' method captures constructor arguments for deferred
+    field construction. The 'AttriBox[T](*args, **kw)' idiom is a
+    two-step decoration: '__class_getitem__' produces a fresh 'AttriBox'
+    parametrized with the field type 'T', and this '__call__' captures
+    the positional and keyword arguments forwarded to 'T(...)' when the
+    field is first accessed on an instance. The arguments are stashed via
+    'Object.__init__' (which routes them through 'getPosArgs' /
+    'getKeyArgs'); the field type is not instantiated here.
 
-    The 'AttriBox[T](*args, **kw)' idiom is a two-step
-    decoration: '__class_getitem__' produces a fresh 'AttriBox'
-    parametrized with the field type 'T', and this '__call__'
-    captures the positional and keyword arguments that should be
-    forwarded to 'T(...)' when the field is first accessed on an
-    instance. The arguments are stashed via 'Object.__init__'
-    (which routes them through 'getPosArgs' / 'getKeyArgs'); the
-    field type is not instantiated here.
-
-    Returns 'self' so the call site can chain straight into a
-    class-body assignment, e.g. 'x = AttriBox[int](42)'.
+    Returns
+    -------
+    Any
+        'self', so the call site can chain straight into a class-body
+        assignment, for example 'x = AttriBox[int](42)'.
     """
     Object.__init__(self, *args, **kwargs)
     return self

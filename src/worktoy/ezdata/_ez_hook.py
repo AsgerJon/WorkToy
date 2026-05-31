@@ -81,13 +81,13 @@ class EZHook(AbstractSpaceHook):
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    Intercept class-body assignments. An EZField value is routed
-    to 'EZSpace.registerEZField' after passing
+    The 'setItemPhase' method intercepts class-body assignments. An
+    EZField value is routed to 'EZSpace.registerEZField' after passing
     '_assertCompleteField'; a function value falls through to the
     namespace untouched; any other value is wrapped through
-    'EZField.fromValue' and registered. Reserved Python names
-    (names starting and ending with double underscores that the
-    interpreter populates automatically) are also passed through.
+    'EZField.fromValue' and registered. Reserved Python names (names
+    starting and ending with double underscores that the interpreter
+    populates automatically) are also passed through.
 
     Parameters
     ----------
@@ -148,12 +148,12 @@ class EZHook(AbstractSpaceHook):
 
   def _assertCompleteField(self, key: str, field: EZField) -> None:
     """
-    Assert that 'field' carries both a type and at least one of
-    the positional or keyword argument buckets used to build the
-    default value. A missing piece raises
-    'IncompleteFieldException' so the class body fails at the
-    exact line that introduced the incomplete field, rather than
-    waiting for class compilation or first instantiation.
+    The '_assertCompleteField' method asserts that 'field' carries both
+    a type and at least one of the positional or keyword argument
+    buckets used to build the default value. A missing piece raises
+    'IncompleteFieldException' so the class body fails at the exact line
+    that introduced the incomplete field, rather than waiting for class
+    compilation or first instantiation.
 
     Parameters
     ----------
@@ -180,14 +180,14 @@ class EZHook(AbstractSpaceHook):
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    Install the dunder methods and conversion helpers that 'EZData'
-    subclasses are allowed to overwrite ('__repr__', '__str__',
-    '__field_pairs__', 'asDict', 'asTuple', 'replace'). Each entry
-    is installed before the class body is merged in, so a
-    class-body method definition with the same name wins. The
-    reserved-name guard in 'EZSpace.registerEZField' prevents
-    these names from being used as field names while still
-    permitting method overrides.
+    The 'preCompilePhase' method installs the dunder methods and
+    conversion helpers that 'EZData' subclasses are allowed to overwrite
+    ('__repr__', '__str__', '__field_pairs__', 'asDict', 'asTuple',
+    'replace'). Each entry is installed before the class body is merged
+    in, so a class-body method definition with the same name wins. The
+    reserved-name guard in 'EZSpace.registerEZField' prevents these
+    names from being used as field names while still permitting method
+    overrides.
 
     Parameters
     ----------

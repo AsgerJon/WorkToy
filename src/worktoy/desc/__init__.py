@@ -9,6 +9,14 @@ Accessed through the owning class, a descriptor returns itself.
 Accessed through an instance, it runs the accessor appropriate for
 that instance. See 'Object' in 'worktoy.core' for the full
 descriptor-context machinery.
+
+- FastBox
+- BaseDescriptor
+- Alias
+- Field
+- AttriBox
+- FixBox
+- SymbolicName
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

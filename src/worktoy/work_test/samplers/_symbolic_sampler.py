@@ -22,8 +22,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class SymbolicSampler(BaseSampler):
   """
-  SymbolicSampler subclasses 'BaseSampler' and provides samplers of symbolic
-  data.
+  SymbolicSampler draws 'SymbolicName' values, each built from
+  'wordCount' stochastically generated words (default three). A
+  'SymbolicName' then renders in any of the case formats, so this sampler
+  is the source of random identifier-like test data.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

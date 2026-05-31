@@ -281,9 +281,9 @@ class Object(metaclass=MetaType):
       self.exitContext()
 
   def __init_subclass__(cls, **kwargs) -> None:
-    """Accept arbitrary class kw so worktoy metaclass machinery
-    can forward them to space hooks without 'object.__init_subclass__'
-    rejecting them."""
+    """Accepts arbitrary class keyword arguments so the worktoy metaclass
+    machinery can forward them on to the space hooks without
+    'object.__init_subclass__' rejecting them."""
     super().__init_subclass__()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -295,9 +295,9 @@ class Object(metaclass=MetaType):
 
     Inside this method, 'self.instance' resolves to the currently
     active instance and 'self.owner' to the owning class. Subclasses
-    should override to define attribute retrieval logic. Return the
-    'DELETED' sentinel to signal that the attribute has been deleted;
-    the surrounding '__get__' wrapper will translate that into
+    override it to define attribute retrieval logic. Returning the
+    'DELETED' sentinel signals that the attribute has been deleted, and
+    the surrounding '__get__' wrapper then translates that into
     'MissingVariable'. See the class docstring for a worked example.
     """
     return self
@@ -320,9 +320,9 @@ class Object(metaclass=MetaType):
   ) -> None:
     """Instance-specific deleter for this descriptor.
 
-    To signal deletion, assign the 'DELETED' sentinel to your storage
-    so the next '__instance_get__' returns 'DELETED'; the wrapper
-    will raise 'MissingVariable' on subsequent access. The default
+    Assigning the 'DELETED' sentinel to the backing storage signals
+    deletion: the next '__instance_get__' returns 'DELETED', and the
+    wrapper raises 'MissingVariable' on subsequent access. The default
     raises 'ProtectedError'. See 'Object' for a full example.
     """
     raise ProtectedError(instance, self, old)

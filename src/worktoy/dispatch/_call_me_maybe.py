@@ -70,7 +70,8 @@ class CallMeMaybe:
 
   def _getWrappedFunction(self, ) -> Callable:
     """
-    Returns the wrapped function from its single-element tuple storage.
+    The '_getWrappedFunction' method returns the wrapped function from
+    its single-element tuple storage.
 
     The wrapped function is held in '__function_case__' as a one-tuple
     '(func,)' rather than as a bare attribute. This is deliberate. Plain
@@ -99,9 +100,14 @@ class CallMeMaybe:
 
   def setFunction(self, func: Callable) -> None:
     """
-    This method sets the wrapped function. The default implementation
-    stores the function object in a single-element tuple thus deactivating
-    the descriptor protocol on it.
+    The 'setFunction' method stores the wrapped function. The default
+    implementation keeps the function object in a single-element tuple,
+    which deactivates the descriptor protocol on it.
+
+    Parameters
+    ----------
+    func : Callable
+        The function to wrap.
     """
     self.__function_case__ = (func,)
 
@@ -125,23 +131,24 @@ class CallMeMaybe:
 
   def __set_name__(self, owner: type, name: str) -> None:
     """
-    CallMeMaybe implements only the invocation of wrapped functions
-    allowing for customization and enhancement. It does not provide
-    descriptor protocol support. Thus, this implementation of
-    '__set_name__' always raises 'TypeError' preventing accidental
-    descriptor use.
-
-    Subclasses that need descriptor behaviour must replace this method as
-    class creation will invoke it and pass the following:
+    The '__set_name__' method always raises, because 'CallMeMaybe'
+    implements only the invocation of wrapped functions and offers no
+    descriptor protocol support. Raising here prevents accidental use as
+    a class attribute. Subclasses that need descriptor behaviour must
+    replace this method, which class creation invokes with the arguments
+    below.
 
     Parameters
     ----------
-    self : Subclass of CallMeMaybe
-      The instance of the subclass instantiated in a class body.
     owner : type
-      The class created by the class body
+        The class created by the class body.
     name : str
-      The name by which the instance is assigned in the class body
+        The name by which the instance is assigned in the class body.
+
+    Raises
+    ------
+    TypeError
+        On every call, since 'CallMeMaybe' is not a descriptor.
     """
     infoSpec = """'%s' does not support the descriptor protocol!"""
     clsName = type(self).__name__
@@ -164,24 +171,24 @@ class CallMeMaybe:
 
   def invoke(self, func: Callable, *args, **kwargs) -> Any:
     """
-    This method specifies how the wrapped function object 'func' receives
-    the given arguments. The default simply passes them through, leaving
-    subclasses free to customize.
+    The 'invoke' method specifies how the wrapped function object 'func'
+    receives the given arguments. The default simply passes them through,
+    leaving subclasses free to customize.
 
     Parameters
     ----------
     func : FunctionType
-      The wrapped function. Provided as an explicit argument so that
-      subclasses can transform, replace, or selectively invoke it
-      without reaching into instance state.
+        The wrapped function. Provided as an explicit argument so that
+        subclasses can transform, replace, or selectively invoke it
+        without reaching into instance state.
     *args : Any
-      Positional arguments forwarded from '__call__'.
+        Positional arguments forwarded from '__call__'.
     **kwargs : Any
-      Keyword arguments forwarded from '__call__'.
+        Keyword arguments forwarded from '__call__'.
 
     Returns
     -------
     Any
-      Whatever 'func' returns, possibly transformed by the subclass.
+        Whatever 'func' returns, possibly transformed by the subclass.
     """
     return func(*args, **kwargs)

@@ -19,13 +19,19 @@ created class. The return value is ignored, so a base cannot modify
 the class; it can only reject the class by raising an exception from
 '__subclasshook__'. Finally, the metaclass returns the created class
 object.
+
+- space_hooks
+- AbstractNamespace
+- AbstractMetaclass
+- BaseSpace
+- BaseMeta
+- BaseObject
 """
 #  Apache-2.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from . import space_hooks  # Public sub package
-from ._type_names import Spaces, Base, Space, Types
 from ._abstract_namespace import AbstractNamespace
 from ._abstract_metaclass import AbstractMetaclass
 from ._base_space import BaseSpace
@@ -34,10 +40,6 @@ from ._base_object import BaseObject
 
 __all__ = [
   'space_hooks',
-  'Spaces',
-  'Base',
-  'Space',
-  'Types',
   'AbstractNamespace',
   'AbstractMetaclass',
   'BaseSpace',

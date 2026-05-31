@@ -183,7 +183,11 @@ class KeeFlag:
     self.__key_args__ = kwargs
 
   def clone(self, owner: type, index: int = None) -> Self:
-    """Creates a clone of this KeeFlag for the specified owner."""
+    """
+    The 'clone' method copies this 'KeeFlag' for the specified owner,
+    carrying over its constructor arguments, name, and index (the index
+    overridable via the argument).
+    """
     cls = type(self)
     cloned = cls(*self.args, **self.kwargs)
     cloned.__field_owner__ = owner

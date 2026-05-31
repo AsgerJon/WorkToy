@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 
 from worktoy.dispatch import Dispatcher, TypeSig
 from worktoy.waitaminute.dispatch import DispatchException
-from . import DispatcherTest, PlanePoint, SpacePoint
+from . import DispatcherTest
+from .examples import PlanePoint, SpacePoint
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

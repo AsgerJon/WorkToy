@@ -13,7 +13,10 @@ from ...waitaminute.control_flow import SkipSet
 
 class LoremSampler(BaseSampler):
   """
-  LoremSampler subclasses 'BaseSampler' and provides lorem ipsum samplers.
+  LoremSampler draws random lorem ipsum sentences, each realized from a
+  'Sentence' of the configured 'charCount'. The backing 'Sentence' is
+  reset after every draw, so successive samples are independent rather
+  than repeating one frozen sentence.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -66,7 +69,8 @@ class LoremSampler(BaseSampler):
 
   def _getItem(self, *args, **kwargs) -> str:
     """
-    Generates a sentence using the 'Sentence' class.
+    The '_getItem' method realizes one sentence from the backing
+    'Sentence', resetting it afterward so the next draw is independent.
     """
     try:
       return str(self.sentence)

@@ -24,7 +24,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class IntSampler(BaseSampler):
   """
-  IntSampler subclasses 'BaseSampler' and provides 'int' samplers.
+  IntSampler draws uniformly random 'int' values between 'minVal' and
+  'maxVal' (inclusive), defaulting to the '[0, 255]' byte range. The
+  bounds accept the usual synonym spellings ('min'/'minimum'/...,
+  'max'/'maximum'/...) and are kept ordered, so a swapped pair is
+  silently corrected.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

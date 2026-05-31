@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._complex_number import ComplexNumber
+from . import ComplexNumber
 
 if TYPE_CHECKING:  # pragma: no cover
   pass

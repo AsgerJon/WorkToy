@@ -159,13 +159,12 @@ class KeeBox(AttriBox):
   @classmethod
   def __class_getitem__(cls, fieldType: Any) -> Self:
     """
-    Before calling 'AttriBox.__class_getitem__', it ensures that the item
-    given is a class derived from either 'KeeMeta' or 'KeeFlagsMeta'. If
-    not, it will raise 'TypeException'. By restricting 'KeeBox' this way,
-    it greatly simplifies the implementation. In those cases, the existing
-    'AttriBox' provides the necessary implementation. Please note however,
-    that 'AttriBox' provides no such check and will accept every 'type',
-    even those derived from 'KeeMeta'  or 'KeeFlagsMeta'.
+    The '__class_getitem__' method restricts the 'KeeBox[...]' subscript
+    to a class derived from 'KeeMeta' or 'KeeFlagsMeta', raising
+    'TypeException' otherwise, before delegating to
+    'AttriBox.__class_getitem__'. The restriction simplifies the
+    implementation; plain 'AttriBox' performs no such check and accepts
+    every 'type'.
     """
     if isinstance(fieldType, KeeMeta) or isinstance(fieldType, KeeFlagsMeta):
       return super().__class_getitem__(fieldType)

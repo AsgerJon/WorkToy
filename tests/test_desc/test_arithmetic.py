@@ -11,7 +11,7 @@ from random import random
 from typing import TYPE_CHECKING
 
 from . import DescTest
-from tests.test_dispatch import Comflex, ComflexMeta
+from tests.test_dispatch.examples import Comflex, ComflexMeta
 
 if TYPE_CHECKING:  # pragma: no cover
   pass
@@ -26,10 +26,10 @@ class TestArithmetic(DescTest):
   def setUp(self) -> None:
     from . import ComplexBox, ComplexFields, ComplexFieldsSubclass
     from . import ComplexFix, ComplexAlias
-    from tests.test_dispatch import ComplexNumber, ComplexSubclass
-    from tests.test_dispatch import ComplexMeta, ComplexMetaSub
-    from tests.test_dispatch import Comflex, ComflexMeta
-    self.classes = [
+    from tests.test_dispatch.examples import ComplexNumber, ComplexSubclass
+    from tests.test_dispatch.examples import ComplexMeta, ComplexMetaSub
+    from tests.test_dispatch.examples import Comflex, ComflexMeta
+    self.classes: list[type] = [
       ComplexBox,
       ComplexFields,
       ComplexFieldsSubclass,
@@ -232,8 +232,8 @@ class TestArithmetic(DescTest):
     z = 69 + 420j
     x = 1337.
     for Z in (Comflex, ComflexMeta):
-      z1 = Comflex(x, z)
-      z2 = Comflex(z, x)
+      z1 = Z(x, z)
+      z2 = Z(z, x)
       self.assertAlmostEqual(z1.RE, x + z.real)
       self.assertAlmostEqual(z1.IM, z.imag)
       self.assertAlmostEqual(z2.RE, x + z.real)

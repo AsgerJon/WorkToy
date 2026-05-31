@@ -119,7 +119,10 @@ class ComplexMixin:
   @classmethod
   def _resolveOther(cls, other: Any) -> Union[NotImpType, Self]:
     """
-    This method resolves other to an instance of 'cls'.
+    The '_resolveOther' method coerces 'other' to an instance of 'cls',
+    accepting another instance, a real number, a builtin complex, or any
+    iterable or single value the constructor admits, and returning
+    'NotImplemented' when none of those work.
     """
     if isinstance(other, cls):
       return other
@@ -147,7 +150,10 @@ class ComplexMixin:
         return resolved
 
   def conjugate(self) -> Self:
-    """Return the complex conjugate as a new instance."""
+    """
+    The 'conjugate' method returns the complex conjugate as a new
+    instance.
+    """
     cls = type(self)
     out = cls(self.REAL, -self.IMAG)
     return cast(Self, out)
@@ -157,7 +163,6 @@ class ComplexMixin:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __repr__(self) -> str:
-    """Code representation of the complex number."""
     clsName = type(self).__name__
     if not self:
       return """%s()""" % clsName
@@ -168,7 +173,6 @@ class ComplexMixin:
     return """%s(%.3f, %.3f)""" % (clsName, self.REAL, self.IMAG)
 
   def __str__(self) -> str:
-    """String representation of the complex number."""
     if not self:
       return '0'
     if abs(self.IMAG) < sys.float_info.epsilon:
@@ -179,15 +183,18 @@ class ComplexMixin:
     return """%.3f %s %.3fJ""" % (self.REAL, sign, abs(self.IMAG))
 
   def __complex__(self) -> complex:
-    """Convert to the builtin complex type."""
     return complex(self.REAL, self.IMAG)
 
   def __bool__(self) -> bool:
-    """A complex number is truthy when it is not zero."""
+    """
+    A complex number is truthy when it is nonzero. Rather than an exact
+    comparison to zero, the magnitude is tested against
+    'sys.float_info.epsilon', so floating-point dust below that threshold
+    still counts as zero.
+    """
     return True if abs(self) > sys.float_info.epsilon else False
 
   def __eq__(self, other: Any) -> bool:
-    """Two complex numbers are equal when both parts are equal."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
@@ -197,27 +204,21 @@ class ComplexMixin:
     return False
 
   def __hash__(self) -> int:
-    """Hash consistent with the builtin complex type."""
     return hash(complex(self.REAL, self.IMAG))
 
   def __abs__(self) -> float:
-    """Magnitude of the complex number."""
     return (self.REAL ** 2 + self.IMAG ** 2) ** 0.5
 
   def __pos__(self) -> Self:
-    """Unary plus returns a copy of the complex number."""
     return cast(Self, type(self)(self.REAL, self.IMAG))
 
   def __neg__(self) -> Self:
-    """Unary minus negates both the real and imaginary parts."""
     return cast(Self, type(self)(-self.REAL, -self.IMAG))
 
   def __invert__(self) -> Self:
-    """The invert operator returns the complex conjugate."""
     return cast(Self, type(self)(self.REAL, -self.IMAG))
 
   def __add__(self, other: Any) -> Union[NotImpType, Self]:
-    """Add a complex, real or builtin complex number."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
@@ -225,11 +226,9 @@ class ComplexMixin:
     return cast(Self, type(self)(self.REAL + x, self.IMAG + y))
 
   def __radd__(self, other: Any) -> Union[NotImpType, Self]:
-    """Reflected addition."""
     return self.__add__(other)
 
   def __sub__(self, other: Any) -> Union[NotImpType, Self]:
-    """Subtract a complex, real or builtin complex number."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
@@ -237,7 +236,6 @@ class ComplexMixin:
     return cast(Self, type(self)(self.REAL - x, self.IMAG - y))
 
   def __rsub__(self, other: Any) -> Union[NotImpType, Self]:
-    """Reflected subtraction."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
@@ -245,7 +243,6 @@ class ComplexMixin:
     return cast(Self, type(self)(x - self.REAL, y - self.IMAG))
 
   def __mul__(self, other: Any) -> Union[NotImpType, Self]:
-    """Multiply by a complex, real or builtin complex number."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
@@ -255,11 +252,9 @@ class ComplexMixin:
     return cast(Self, type(self)(newReal, newImag))
 
   def __rmul__(self, other: Any) -> Union[NotImpType, Self]:
-    """Reflected multiplication."""
     return self.__mul__(other)
 
   def __truediv__(self, other: Any) -> Union[NotImpType, Self]:
-    """Divide by a complex, real or builtin complex number."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
@@ -272,7 +267,6 @@ class ComplexMixin:
     return cast(Self, type(self)(newX / factor, newY / factor))
 
   def __rtruediv__(self, other: Any) -> Union[NotImpType, Self]:
-    """Reflected true division."""
     if not self:
       raise ZeroDivisionError
     resolved = self._resolveOther(other)
@@ -281,7 +275,6 @@ class ComplexMixin:
     return resolved / self
 
   def __pow__(self, other: Any) -> Union[NotImpType, Self]:
-    """Raise the complex number to a complex or real power."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
@@ -290,13 +283,11 @@ class ComplexMixin:
     return cast(Self, type(self)(result.real, result.imag))
 
   def __rpow__(self, other: Any) -> Union[NotImpType, Self]:
-    """Reflected power."""
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented
     return resolved ** self
 
   def __iter__(self, ) -> Iterator[float]:
-    """Iterate over the real and imaginary parts in order."""
     yield self.REAL
     yield self.IMAG

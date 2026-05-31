@@ -11,12 +11,12 @@ from ..utilities import textFmt, resolveMRO
 from ..waitaminute import TypeException
 from ..waitaminute.meta import HookException, DuplicateHook
 from .space_hooks import NamespaceHook, ReservedNamespaceHook, FlexCallHook
-from . import Base
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator, Union, Self
   from .space_hooks import AbstractSpaceHook
 
+  Base: TypeAlias = tuple[type, ...]
   Bases: TypeAlias = tuple[Self, ...]
   Hooks: TypeAlias = list[AbstractSpaceHook]
   MROSpace: TypeAlias = dict[str, list[Any]]
@@ -79,13 +79,13 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def getBases(self) -> Bases:
-    """Returns the base classes of the class under creation."""
     return (*self.__base_classes__,)
 
   def deepGetItem(self, item: str, ) -> Any:
     """
-    Looks up the given key in the self. If not found, then each base class
-    is searched.
+    The 'deepGetItem' method looks up 'item' in the namespace itself,
+    then in the combined MRO namespace if absent, raising 'KeyError'
+    when neither holds it.
     """
     for key, val in dict.items(self, ):
       if key == item:
@@ -109,7 +109,8 @@ class AbstractNamespace(dict):
   @classmethod
   def classGetHooks(cls, ) -> Hooks:
     """
-    Returns the hooks registered on this class or baseclasses.
+    The 'classGetHooks' classmethod returns the hooks registered on this
+    namespace class and its bases, de-duplicated in MRO order.
     """
     pvtName = cls.getHookListName()
     out = []
@@ -123,24 +124,23 @@ class AbstractNamespace(dict):
     return out
 
   def getMetaclass(self, ) -> type:
-    """Returns the metaclass."""
     return self.__metaclass__
 
   def getClassName(self, ) -> str:
-    """Returns the name of the class."""
     return self.__class_name__
 
   def getKwargs(self, ) -> dict:
-    """Returns the keyword arguments passed to the class."""
     return {**self.__key_args__, **dict()}
 
   def getMRO(self, ) -> list[type]:
-    """Returns the method resolution order of the class."""
     return self.__class_mro__
 
   def getMROSpace(self, ) -> MROSpace:
-    """Combines the namespaces of all bases in the MRO into a single
-    'dict' object with each value being a list of all values provided. """
+    """
+    The 'getMROSpace' method combines the compiled namespaces of every
+    base in the MRO into one dict, where each key maps to the list of
+    values contributed for it across the MRO.
+    """
     mroClasses = [b for b in self.getMRO() if hasattr(b, '__namespace__')]
     mroSpaces = [getattr(b, '__namespace__', ) for b in mroClasses]
     compiledSpaces = []
@@ -164,7 +164,11 @@ class AbstractNamespace(dict):
 
   @classmethod
   def addHook(cls, hook: AbstractSpaceHook) -> None:
-    """Adds a hook to the list of hooks. """
+    """
+    The 'addHook' classmethod registers 'hook' on the namespace class,
+    raising 'DuplicateHook' if a different hook is already registered
+    under the same field name.
+    """
     existingHooks = cls.classGetHooks()
     for existingHook in existingHooks:
       existingName = existingHook.getFieldName()
@@ -212,7 +216,11 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __getitem__(self, key: str, **kwargs) -> Any:
-    """Returns the value of the key."""
+    """
+    The '__getitem__' method fetches 'key', then runs every hook's
+    'getItemPhase' before returning the value or re-raising the
+    'KeyError'.
+    """
     try:
       val = dict.__getitem__(self, key)
     except KeyError as keyError:
@@ -229,7 +237,11 @@ class AbstractNamespace(dict):
       return val
 
   def __setitem__(self, key: str, val: Any, **kwargs) -> None:
-    """Sets the value of the key."""
+    """
+    The '__setitem__' method offers each hook's 'setItemPhase' a chance
+    to handle 'key' first; the namespace performs the default assignment
+    only when no hook claims it.
+    """
     try:
       oldVal = dict.__getitem__(self, key)
     except KeyError:
@@ -269,10 +281,12 @@ class AbstractNamespace(dict):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def preCompile(self, namespace: dict = None) -> dict:
-    """The return value from this method is passed to the compile method.
-    Subclasses can implement this method to provide special objects at
-    particular names in the namespace. By default, an empty dictionary is
-    returned. """
+    """
+    The 'preCompile' method runs each hook's 'preCompilePhase' over the
+    starting namespace dict (a fresh dict when none is given) and returns
+    the accumulated result, which 'compile' then merges the class-body
+    names into.
+    """
     if namespace is None:
       namespace = dict()
     elif not isinstance(namespace, dict):
@@ -283,9 +297,13 @@ class AbstractNamespace(dict):
     return namespace
 
   def compile(self, namespace: dict = None) -> dict:
-    """This method is responsible for building the final namespace object.
-    Subclasses may reimplement preCompile or postCompile as needed,
-    but must not reimplement this method."""
+    """
+    The 'compile' method builds the final namespace passed to
+    'type.__new__': it runs 'preCompile', merges in the class-body names,
+    runs 'postCompile', and records the metaclass, namespace, and
+    keyword arguments. Subclasses may reimplement 'preCompile' or
+    'postCompile' as needed, but must not reimplement this method.
+    """
     namespace = self.preCompile(namespace)
     for (key, val) in dict.items(self, ):
       namespace[key] = val
@@ -297,11 +315,12 @@ class AbstractNamespace(dict):
     return namespace
 
   def postCompile(self, namespace: dict) -> dict:
-    """The object returned from this method is passed to the __new__
-    method in the owning metaclass. By default, this method returns dict
-    object created by the compile method after performing certain
-    validations. Subclasses can implement this method to provide further
-    processing of the compiled object. """
+    """
+    The 'postCompile' method runs each hook's 'postCompilePhase' over the
+    assembled namespace and returns the result, which 'compile' hands to
+    the metaclass. This is where 'LoadSpaceHook' turns collected
+    overloads into 'Dispatcher' objects.
+    """
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       namespace = hook.postCompilePhase(namespace)

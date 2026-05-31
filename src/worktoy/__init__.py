@@ -19,8 +19,9 @@ chain.
 - dispatch: The '@overload' decorator and its supporting machinery
   ('Dispatcher', 'TypeSig', 'Permuter', 'flexCall') providing
   type-signature based function overloading.
-- desc: The descriptor protocol layer, providing 'Field', 'AttriBox',
-  'FixBox', 'Alias', and 'SymbolicName'.
+- desc: The descriptor protocol layer, providing 'BaseDescriptor',
+  'Field', 'AttriBox', 'FixBox', 'FastBox', 'Alias', and
+  'SymbolicName'.
 - mcls: The metaclass framework, providing 'AbstractMetaclass',
   'BaseMeta', and 'BaseObject', the common base class that enables
   overloading and 'AttriBox' support.
@@ -30,8 +31,6 @@ chain.
   member descriptor, and the bitmask-flag 'KeeFlags'.
 - ezdata: The 'EZData' dataclass, built on its own metaclass and field
   descriptors.
-- work_io: Filesystem helpers for validating, creating, and removing
-  paths.
 - work_test: Testing support, providing 'BaseTest' and the random-data
   samplers used across the test suite.
 """
@@ -50,7 +49,6 @@ from . import mcls
 from . import lorem_ipsum
 from . import keenum
 from . import ezdata
-from . import work_io
 from . import work_test
 
 __all__ = [
@@ -63,6 +61,5 @@ __all__ = [
   'lorem_ipsum',
   'keenum',
   'ezdata',
-  'work_io',
   'work_test',
 ]

@@ -62,7 +62,8 @@ class NamespaceHook(AbstractSpaceHook):
   @classmethod
   def _getClassDunders(cls) -> list[str]:
     """
-    Get the class dunder names that are allowed in the namespace.
+    The '_getClassDunders' method returns the class-level dunder hook
+    names that 'AbstractMetaclass' routes to its own implementations.
     """
     return [
       '__class_call__',
@@ -105,7 +106,8 @@ class NamespaceHook(AbstractSpaceHook):
   @classmethod
   def _getNearMisses(cls) -> list[NearMiss]:
     """
-    Get the near-miss names.
+    The '_getNearMisses' method returns the '(intended, mistyped)' name
+    pairs that the hook rejects on sight.
     """
     return [
       ('__set_name__', '__setname__'),  # NOQA, miss-spelled name
@@ -117,8 +119,9 @@ class NamespaceHook(AbstractSpaceHook):
   @classmethod
   def _validateName(cls, name: str) -> bool:
     """
-    Compares the name to list of potential near-miss names. If the name
-    is a near-miss, a QuestionableSyntax exception is raised.
+    The '_validateName' method compares 'name' against the near-miss
+    list and raises 'QuestionableSyntax' on a match, otherwise returning
+    False so the assignment proceeds.
     """
     nearMisses = cls._getNearMisses()
     for nearMiss in nearMisses:
@@ -128,7 +131,9 @@ class NamespaceHook(AbstractSpaceHook):
 
   def _validateDel(self, ) -> bool:
     """
-    Validates that the current class is allowed to implement '__del__'.
+    The '_validateDel' method reports whether the current class is
+    allowed to implement '__del__', which it is only when the class was
+    declared with the 'trustMeBro' keyword.
     """
     if 'trustMeBro' in self.space.getKwargs():
       return True
@@ -140,9 +145,32 @@ class NamespaceHook(AbstractSpaceHook):
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    Hook for setItem. This is called before the __setitem__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns False.
+    The 'setItemPhase' method screens each name as it is bound. A
+    '__del__' definition raises 'DelException' unless the class opted in
+    with 'trustMeBro'; any near-miss dunder raises 'QuestionableSyntax'.
+    Returns False for an acceptable name so the namespace stores it
+    normally.
+
+    Parameters
+    ----------
+    key : str
+        The name being bound in the class body.
+    val : Any
+        The value being bound.
+    old : Any, optional
+        The previous value bound under 'key', if any.
+
+    Returns
+    -------
+    bool
+        False, so the namespace performs the default assignment.
+
+    Raises
+    ------
+    DelException
+        If '__del__' is defined without the 'trustMeBro' keyword.
+    QuestionableSyntax
+        If 'key' is a near-miss spelling of a known dunder.
     """
     if key == '__del__':
       if self._validateDel():
@@ -155,7 +183,22 @@ class NamespaceHook(AbstractSpaceHook):
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    Populates the class dunder hooks with the 'METACALL' sentinel object.
+    The 'preCompilePhase' method seeds the class-dunder hook names with
+    the 'METACALL' sentinel, but only where the class body has not
+    already supplied its own. This is what lets 'AbstractMetaclass'
+    route '__class_len__', '__class_iter__', and the rest to its own
+    implementations.
+
+    Parameters
+    ----------
+    compiledSpace : dict
+        The namespace dict being assembled.
+
+    Returns
+    -------
+    dict
+        The same dict, with 'METACALL' filled in for any unhandled
+        class-dunder name.
     """
     dunderNames = self._getClassDunders()
     for name in dunderNames:
@@ -166,12 +209,4 @@ class NamespaceHook(AbstractSpaceHook):
         continue
       else:
         continue
-    return compiledSpace
-
-  def postCompilePhase(self, compiledSpace: dict) -> dict:
-    """
-    Hook for postCompile. This is called after the __init__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns the contents unchanged.
-    """
     return compiledSpace

@@ -128,8 +128,9 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   @classmethod
   def setUpClass(cls) -> None:
     """
-    After the super call, this method creates the stochastic word
-    generator to the class.
+    The 'setUpClass' method runs the super call, then attaches a shared
+    'StochasticWord' and 'Sentence' to the class for the test methods to
+    draw on.
     """
     super().setUpClass()
     cls.stochWord = StochasticWord()
@@ -166,12 +167,11 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   @classmethod
   def argReport(cls, *args, **kwargs) -> str:
     """
-    This method creates a string report of the given arguments. It is used
-    in the test cases to provide informative error messages when the test
-    fails. The report includes the type and a truncated string representation
-    of each argument. If the string representation of an argument is longer
-    than 48 characters, it is truncated to 45 characters followed by an
-    ellipsis.
+    The 'argReport' method builds a string report of the given arguments,
+    used in the test cases to provide informative error messages when a
+    test fails. The report includes the type and a truncated string
+    representation of each argument. A representation longer than 48
+    characters is truncated to 45 characters followed by an ellipsis.
     """
     lineLength: int = kwargs.get('chars', cls.__fallback_line_length__)
     newLine: str = kwargs.get('newLine', cls.__fallback_new_line__)
@@ -192,9 +192,9 @@ class BaseTest(_Temp, metaclass=BaseMeta):
 
   def tearDown(self, ) -> None:
     """
-    After the super call, peek at any sub test recorded on this
-    instance via the 'subTest' descriptor and raise if it has any
-    fails or errors.
+    The 'tearDown' method runs the super call, then peeks at any sub-test
+    recorded on this instance through the 'subTest' descriptor and fails
+    the test if that sub-test holds any fails or errors.
     """
     super().tearDown()
     cls = type(self)

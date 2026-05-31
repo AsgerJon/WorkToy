@@ -25,9 +25,20 @@ class FlexCallHook(AbstractSpaceHook):
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    This implementation detects plain functions defined in the class body
-    and replaces them with 'flexCall' objects, allowing them to be flexibly
-    overloaded.
+    The 'postCompilePhase' method detects plain functions in the
+    compiled namespace and replaces each with its 'flexCall' wrapper, so
+    that ordinary methods tolerate the truncating-argument calls the
+    dispatch machinery makes.
+
+    Parameters
+    ----------
+    compiledSpace : dict
+        The namespace dict being assembled.
+
+    Returns
+    -------
+    dict
+        The same dict, with plain functions wrapped by 'flexCall'.
     """
 
     for key, val in compiledSpace.items():

@@ -70,7 +70,9 @@ class Kee(AttriBox[T]):
   @value.GET
   def getValue(self, **kwargs) -> Any:
     """
-    Uses the 'AttriBox' lazy instantiation mechanism.
+    The 'getValue' getter realizes the member's value through the
+    'AttriBox' lazy instantiation mechanism, building it from the captured
+    constructor arguments on first access and type-checking it thereafter.
     """
     if self.__field_value__ is None:
       if kwargs.get('_recursion', False):

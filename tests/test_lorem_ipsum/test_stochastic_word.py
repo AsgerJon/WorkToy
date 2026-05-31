@@ -79,8 +79,8 @@ class TestStochasticWord(LoremIpsumTest):
     Test the distribution of the 'StochasticWord' class.
     """
     n = 1000
-    predictedMean = self.stochasticWord.meanLen
-    predictedVariance = self.stochasticWord.varianceLen
+    predictedMean = self.stochasticWord.mean
+    predictedVariance = self.stochasticWord.var
     samples = [len(self.stochasticWord.realize()) for _ in range(n)]
     sampleMean = sum(samples) / n
     sampleVar = sum((x - sampleMean) ** 2 for x in samples) / n
@@ -88,35 +88,6 @@ class TestStochasticWord(LoremIpsumTest):
     self.assertLessEqual(abs(sampleMean - predictedMean), 6 * SE)
     SEvar = predictedVariance * (2 / n) ** 0.5
     self.assertLessEqual(abs(sampleVar - predictedVariance), 6 * SEvar)
-
-  def test_recursion_guard(self, ) -> None:
-    """
-    Testing that the recursion guard of the 'StochasticWord' class works
-    correctly.
-    """
-
-    class SusWord(StochasticWord):
-      pass
-
-    type.__setattr__(SusWord, '__data_dir__', None)
-    type.__setattr__(SusWord, '__weighted_words__', None)
-    type.__setattr__(SusWord, '__min_len__', None)
-    type.__setattr__(SusWord, '__max_len__', None)
-    type.__setattr__(SusWord, '__by_lengths__', None)
-
-    sus = SusWord()
-
-    with self.assertRaises(RecursionError):
-      _ = sus._getWeightedWords(_recursion=True)
-
-    with self.assertRaises(RecursionError):
-      _ = sus._getMinLen(_recursion=True)
-
-    with self.assertRaises(RecursionError):
-      _ = sus._getMaxLen(_recursion=True)
-
-    with self.assertRaises(RecursionError):
-      _ = sus._getByLengths(_recursion=True)
 
   def test_index_error_guard(self, ) -> None:
     """
@@ -127,3 +98,13 @@ class TestStochasticWord(LoremIpsumTest):
 
     with self.assertRaises(IndexError):
       _ = self.stochasticWord.realizeLength(420)
+
+  def test_getitem(self, ) -> None:
+    """
+    Testing that indexing by a length realizes a word of that length, the
+    same as 'realizeLength'.
+    """
+    for length in self.stochasticWord.byLengths:
+      word = self.stochasticWord[length]
+      self.assertIsInstance(word, str)
+      self.assertEqual(len(word), length)

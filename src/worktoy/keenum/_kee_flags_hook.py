@@ -28,9 +28,10 @@ class KeeFlagsHook(AbstractSpaceHook):
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    Hook for setItem. This is called before the __setitem__ method of
-    the namespace object is called. The default implementation does nothing
-    and returns False.
+    The 'setItemPhase' method routes each 'KeeFlag' bound in the class
+    body to the namespace's 'addKeeFlag', claiming it so the namespace
+    does not store it as an ordinary attribute. Anything else is left
+    untouched.
     """
     if isinstance(val, KeeFlag):
       self.space.addKeeFlag(key, val)

@@ -26,10 +26,12 @@ if TYPE_CHECKING:  # pragma: no cover
     __annotations__: dict[str, Any]
     __wrapped__: Callable
     def __call__(self, *args) -> Any: ...
-    def __init__(self, func: Callable) -> None: print(func)
+    # noinspection PyUnusedLocal
+    def __init__(self, func: Callable) -> None: ...
   class isFlex:  # noqa
     def __call__(self, func: Any) -> bool: ...
-    def __init__(self, func: Any) -> None: print(func)
+    # noinspection PyUnusedLocal
+    def __init__(self, func: Any) -> None: ...
   # @formatter:on
 
 

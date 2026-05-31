@@ -1,35 +1,27 @@
-# Contributing to worktoy
+# Contributing
 
-Thanks for your interest. This document covers the practical
-mechanics; the social contract lives in
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+Thank you for taking an interest in the development of *worktoy*!
 
 ## Setup
 
-## Project Layout
+*worktoy* has no runtime dependencies. `environment.yml` provides a
+convenient development environment that includes commonly used tools.
+Install miniforge3 as relevant to your platform and then run:
 
-## Coding Style
-
-worktoy uses four code-style rules:
-
-- **Indentation:** 2 spaces (ignoring PEP 8: E111)
-- **Line length:** 77 characters (ignoring PEP 8: E501)
-- **Function and variable names:** `camelCase` (ignoring PEP 8: N802, N806)
-- **Class names:** `PascalCase` (following PEP 8: N801)
-
-Example:
-
-```python
-class Rectangle:
-
-  def computeArea(self, width: float, height: float) -> float:
-    return width * height
+```
+mamba env create -f environment.yml
+mamba activate worktoy_env
 ```
 
-## Syntax
+Replace `mamba` with `conda` if you prefer.
 
-## Code layout
+## Tests
 
-## Documentation
+The whole suite must pass at 100% branch coverage. Run it from the project
+root with `./coverage_test.sh`, which runs pytest with branch coverage and
+opens the HTML report in the system browser provided the tests pass.
 
-## Testing
+## LICENSE
+
+worktoy is released under Apache-2.0, and contributions are accepted under
+the same license.

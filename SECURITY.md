@@ -1,33 +1,33 @@
 # Security Policy
 
-## Supported Versions
+## Reporting a vulnerability
 
-worktoy is currently in 1.0 release-candidate. Security fixes
-land in the next RC; please upgrade to the latest RC before
-reporting. Once 1.0 ships, fixes will be issued against the
-1.x line.
+Please do not report security issues through public issues. Report them
+privately through either:
 
-## Reporting a Vulnerability
+- GitHub Private Vulnerability Reporting: the
+  [Security tab](https://github.com/AsgerJon/WorkToy/security), "Report a
+  vulnerability".
+- Email to asgerjon2@gmail.com with `worktoy security` in the subject.
 
-Do not open a public issue. Report privately through one of:
+A report is most useful with a description of the issue, the steps to
+reproduce it, the affected version, and the impact.
 
-- **GitHub Private Vulnerability Reporting (preferred)**:
-  open the
-  [Security tab](https://github.com/AsgerJon/WorkToy/security)
-  and click "Report a vulnerability".
-- **Email**: asgerjon2@gmail.com.
+## Scope
 
-A minimal reproducer and the affected version do the most to
-get a fix out quickly.
+*worktoy* is a pure-Python library with no runtime dependencies. It opens
+no sockets, starts no processes, and reads no files it is not given. The
+dynamic-execution builtins `exec`, `eval`, and `__import__` are not used
+in the package.
 
-## Security Posture
+In scope is any behaviour that lets the library compromise a program using
+it as documented, including faults in the class-construction machinery
+(metaclasses, namespaces, and descriptors). Out of scope is anything that
+requires already-hostile code in the same process, or hostile input passed
+to an interface documented as trusting its caller.
 
-`src/worktoy/` uses `import os` and `import sys` only as
-needed for filesystem and module-lookup work. The dynamic-
-execution builtins `exec`, `eval`, and `__import__` are not
-used anywhere in the package, and contributions that
-introduce them will be rejected.
+## Supported versions
 
-This is a posture statement, not a guarantee. Bugs that
-expand the attack surface beyond it are exactly what this
-file is for reporting.
+Pre 1.0 versions of *worktoy* should be regarded as unstable alpha
+software. From 1.0 onwards, versions that no longer receive security updates
+will be clearly marked as "End-of-Life".

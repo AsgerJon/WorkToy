@@ -22,8 +22,14 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeFlagsMeta(BaseMeta):
   """
-  KeeFlagsMeta is the metaclass for KeeFlags, providing additional
-  functionality for handling flags.
+  KeeFlagsMeta is the metaclass driving every 'KeeFlags' bitmask-flag
+  enumeration. During '__new__' it reads the 'KeeFlag' declarations
+  collected by 'KeeFlagsHook', then materializes one member per
+  combination of those flags, 2 ** N members for N flags, caching them in
+  'memberList' and a names-keyed 'memberDict'. It also resolves the
+  '_getValue' getter up a custom MRO so a subclass override wins, and
+  routes 'cls(...)' / 'cls[...]' through '_resolveMember' once
+  instantiation is locked.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -88,13 +94,19 @@ class KeeFlagsMeta(BaseMeta):
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kw) -> KFSpace:
-    """Replaces the KeeSpace with KeeFlagsSpace"""
+    """
+    The '__prepare__' method returns a 'KeeFlagsSpace' as the class-body
+    namespace, in place of the plain 'BaseSpace'.
+    """
     return KFSpace(mcls, name, bases, **kw)
 
   def __new__(mcls, name: str, bases: Bases, space: KFSpace, **kw) -> Self:
     """
-    Creates a new instance of the class.
-    This method is called when the class is created.
+    The '__new__' method builds the flag enumeration: it constructs the
+    class, then for every subclass past the 'KeeFlags' base materializes
+    all 2 ** N flag combinations as members, populating 'memberList' and
+    'memberDict' and selecting the effective '_getValue' getter from the
+    custom MRO.
     """
     cls = BaseMeta.__new__(mcls, name, bases, space, **kw)
     if name == 'KeeFlags':

@@ -26,8 +26,6 @@ class ContextInstance:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __get__(self, instance: Any, owner: type) -> Any:
-    """Return 'self' on class access; delegate to
-    'instance.getContextInstance' on instance access."""
     if instance is None:
       return self
     return instance.getContextInstance()
@@ -47,8 +45,6 @@ class ContextOwner:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __get__(self, instance: Any, owner: type) -> Any:
-    """Return 'self' on class access; delegate to
-    'instance.getContextOwner' on instance access."""
     if instance is None:
       return self
     return instance.getContextOwner()

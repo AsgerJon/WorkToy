@@ -15,7 +15,4 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class METACALL(Sentinel):
-  """METACALL sentinel specifies that a class defers to the metaclass for the
-  class dunder hooks.
-  """
   pass

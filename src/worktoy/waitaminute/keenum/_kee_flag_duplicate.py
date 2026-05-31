@@ -1,6 +1,6 @@
 """
-KeeFlagDuplicate is raised when a 'KeeFlags' class body declares the same
-flag name twice.
+KeeFlagDuplicate is raised on a flag name collision in a 'KeeFlags'
+enumeration, whether in the class body or against an inherited flag.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -11,14 +11,16 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
-  pass
+  from ...keenum import KeeFlag
 
 
 class KeeFlagDuplicate(Exception):
   """
-  KeeFlagDuplicate is raised when a 'KeeFlags' class body declares the same
-  'KeeFlag' member name twice, or inherits a flag whose name collides with
-  one declared on the subclass.
+  Raised on a flag name collision in a 'KeeFlags' enumeration: either a
+  class body that declares the same 'KeeFlag' name twice, or a subclass
+  that redeclares a flag name it already inherits. The 'KeeFlags'
+  counterpart to 'KeeDuplicate'; neither family allows redeclaring an
+  inherited name.
 
   Attributes
   ----------
@@ -32,7 +34,7 @@ class KeeFlagDuplicate(Exception):
 
   __slots__ = ('name', 'oldFlag', 'newFlag',)
 
-  def __init__(self, name: str, *members: Kee) -> None:
+  def __init__(self, name: str, *members: KeeFlag) -> None:
     self.name = name
     self.oldFlag = members[0]
     self.newFlag = members[1]

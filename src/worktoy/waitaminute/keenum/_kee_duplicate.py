@@ -16,9 +16,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeDuplicate(Exception):
   """
-  Raised when a 'KeeNum' class body declares two members under the same
-  name (a name collision, not a value collision; duplicate values are
-  allowed).
+  Raised on a member name collision in a 'KeeNum' enumeration: either a
+  class body that declares the same name twice, or a subclass that
+  redeclares a name it already inherits (overriding an inherited member is
+  not allowed). This is a name collision, not a value collision; duplicate
+  values are allowed.
 
   Attributes
   ----------

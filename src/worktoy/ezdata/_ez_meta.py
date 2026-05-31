@@ -109,9 +109,9 @@ class EZMeta(BaseMeta):
   @fields.GET
   def _getFields(cls, ) -> tuple[EZField, ...]:
     """
-    Return the tuple of EZField descriptors declared on the
-    class, in declaration order. Drawn from the namespace's
-    merged own+inherited mapping so subclasses see the full
+    The 'fields' getter returns the tuple of EZField descriptors
+    declared on the class, in declaration order. It is drawn from the
+    namespace's merged own+inherited mapping so subclasses see the full
     field surface.
 
     Returns
@@ -126,9 +126,9 @@ class EZMeta(BaseMeta):
   @sig.GET
   def _getSig(cls, ) -> TypeSig:
     """
-    Return the field-type signature of the class as a 'TypeSig'.
-    Used by 'isCongruent' to decide whether two classes share
-    the same field structure and so admit cross-class equality.
+    The 'sig' getter returns the field-type signature of the class as a
+    'TypeSig'. It is used by 'isCongruent' to decide whether two classes
+    share the same field structure and so admit cross-class equality.
 
     Returns
     -------
@@ -140,9 +140,9 @@ class EZMeta(BaseMeta):
   @isFrozen.GET
   def _getIsFrozen(cls, ) -> bool:
     """
-    Return the resolved 'frozen' build-option flag set during
-    'EZHook.postCompilePhase'. Truthy when the class was
-    declared with any of the 'frozen', 'immutable', or
+    The 'isFrozen' getter returns the resolved 'frozen' build-option
+    flag set during 'EZHook.postCompilePhase'. It is truthy when the
+    class was declared with any of the 'frozen', 'immutable', or
     'hashable' synonyms.
 
     Returns
@@ -155,9 +155,9 @@ class EZMeta(BaseMeta):
   @isOrdered.GET
   def _getIsOrdered(cls, ) -> bool:
     """
-    Return the resolved 'ordered' build-option flag set during
-    'EZHook.postCompilePhase'. Truthy when the class was
-    declared with any of the 'ordered', 'sortable', or
+    The 'isOrdered' getter returns the resolved 'ordered' build-option
+    flag set during 'EZHook.postCompilePhase'. It is truthy when the
+    class was declared with any of the 'ordered', 'sortable', or
     'comparable' synonyms.
 
     Returns
@@ -170,12 +170,12 @@ class EZMeta(BaseMeta):
   @kwOnly.GET
   def _getKwOnly(cls, ) -> bool:
     """
-    Return the resolved 'kwOnly' build-option flag set during
-    'EZHook.postCompilePhase'. Truthy when the class was
-    declared with any of the 'kwOnly', 'keywordOnly', or
-    'kw_only' synonyms; controls whether '__init__' accepts
-    positional arguments and whether '__match_args__' is the
-    full field tuple or empty.
+    The 'kwOnly' getter returns the resolved 'kwOnly' build-option flag
+    set during 'EZHook.postCompilePhase'. It is truthy when the class
+    was declared with any of the 'kwOnly', 'keywordOnly', or 'kw_only'
+    synonyms; it controls whether '__init__' accepts positional
+    arguments and whether '__match_args__' is the full field tuple or
+    empty.
 
     Returns
     -------
@@ -206,10 +206,10 @@ class EZMeta(BaseMeta):
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kw) -> EZSpace:
     """
-    Return the 'EZSpace' namespace object that collects the
-    class body. Python calls this before executing the class
-    body; the returned namespace stays in scope until the
-    metaclass's '__new__' compiles it.
+    The '__prepare__' method returns the 'EZSpace' namespace object that
+    collects the class body. Python calls it before executing the class
+    body; the returned namespace stays in scope until the metaclass's
+    '__new__' compiles it.
 
     Parameters
     ----------
@@ -232,11 +232,11 @@ class EZMeta(BaseMeta):
 
   def __init__(cls, name: str, bases: Bases, space: EZSpace, **kw) -> None:
     """
-    Finalize the class object after Python has built it. Walks
-    every field on the class (own and inherited) and binds its
-    '__field_owner__' to this class, so later access through
-    'field.fieldOwner' returns the most-derived class that
-    declared or inherited the field.
+    The '__init__' method finalizes the class object after Python has
+    built it. It walks every field on the class (own and inherited) and
+    binds its '__field_owner__' to this class, so later access through
+    'field.fieldOwner' returns the most-derived class that declared or
+    inherited the field.
 
     Parameters
     ----------

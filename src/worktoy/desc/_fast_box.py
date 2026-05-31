@@ -63,13 +63,37 @@ class FastBox(Generic[T]):
 
   @classmethod
   def __class_getitem__(cls, fieldType: type) -> FastBox:
-    """Capture the field type via 'FastBox[T]'."""
+    """
+    The '__class_getitem__' method captures the field type from the
+    'FastBox[T]' subscript.
+
+    Parameters
+    ----------
+    fieldType : type
+        The field type fixed by the subscript.
+
+    Returns
+    -------
+    FastBox
+        A new 'FastBox' carrying 'fieldType', ready for the deferred
+        '__call__'.
+    """
     self = cls.__new__(cls)
     self.__field_type__ = fieldType
     return self
 
   def __call__(self, *args, **kwargs) -> Self:
-    """Capture the arguments used to build the default value."""
+    """
+    The '__call__' method captures the arguments used to build the
+    default value, forwarded to the field-type constructor on first
+    access.
+
+    Returns
+    -------
+    Self
+        'self', so the call site can chain straight into a class-body
+        assignment, for example 'x = FastBox[int](42)'.
+    """
     self.__default_args__ = args
     self.__default_kwargs__ = kwargs
     return self
@@ -115,7 +139,20 @@ class FastBox(Generic[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _build(self) -> Any:
-    """Construct a fresh default value from the captured arguments."""
+    """
+    The '_build' method constructs a fresh default value from the
+    captured arguments.
+
+    Returns
+    -------
+    Any
+        A new field-type instance built from the captured arguments.
+
+    Raises
+    ------
+    MissingVariable
+        If no field type has been captured.
+    """
     if self.__field_type__ is None:
       raise MissingVariable(self, '__field_type__', type)
     kwargs = self.__default_kwargs__ or {}
