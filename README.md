@@ -119,8 +119,9 @@ class Point:
       raise TypeError('Invalid arguments')
 ```
 
-Conditional branches. Growing complexity. Manual parsing. Long gone are
-those happy days of effortless coding.
+Possible? Sure, but look at that syntactic broccoli! Conditional branches.
+Growing complexity. Manual parsing. Long gone are those happy days of
+effortless coding.
 
 But it does not have to be like this. Introducing `@overload`:
 
