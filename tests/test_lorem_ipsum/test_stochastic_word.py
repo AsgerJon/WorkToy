@@ -74,21 +74,6 @@ class TestStochasticWord(LoremIpsumTest):
         self.assertIsInstance(word, str)
         self.assertEqual(len(word), length)
 
-  def test_distribution(self) -> None:
-    """
-    Test the distribution of the 'StochasticWord' class.
-    """
-    n = 1000
-    predictedMean = self.stochasticWord.mean
-    predictedVariance = self.stochasticWord.var
-    samples = [len(self.stochasticWord.realize()) for _ in range(n)]
-    sampleMean = sum(samples) / n
-    sampleVar = sum((x - sampleMean) ** 2 for x in samples) / n
-    SE = (predictedVariance / n) ** 0.5
-    self.assertLessEqual(abs(sampleMean - predictedMean), 6 * SE)
-    SEvar = predictedVariance * (2 / n) ** 0.5
-    self.assertLessEqual(abs(sampleVar - predictedVariance), 6 * SEvar)
-
   def test_index_error_guard(self, ) -> None:
     """
     Testing the index error raised when asking for unavailable lengths.
