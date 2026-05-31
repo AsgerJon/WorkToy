@@ -306,10 +306,3 @@ the style rules and development setup.
 
 worktoy is released under the Apache License 2.0 (Apache-2.0). See
 [LICENSE](LICENSE) for the full text.
-
-# Acknowledgments
-
-worktoy is the original work of Asger Jon Vistisen. Development was
-assisted by tooling, including PyCharm code completion, GitHub Copilot,
-and Claude (Anthropic); none of these is an author or owner of the code.
-See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for the full account.
