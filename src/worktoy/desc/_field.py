@@ -44,8 +44,23 @@ class Field(BaseDescriptor[T]):
   @DELETE - Decorate any number of methods as deleters. Optionally, implement
   by setting the value to the 'DELETED' sentinel object.
 
-  Accessors are resolved by name at access time, so a subclass may
-  override any decorated method and 'Field' uses the override instead.
+  Notes
+  -----
+  The accessors are stored by name, not as captured function objects. A
+  decorator such as 'GET' records 'callMeMaybe.__name__', and at access
+  time '__instance_get__' looks that name up with 'getattr(owner, key)',
+  where 'owner' is the type of the instance being accessed rather than
+  the class in which the 'Field' was declared. Setters and deleters
+  resolve the same way.
+
+  The consequence is that a subclass overrides any decorated accessor
+  just by redefining a method of the same name, with no need to decorate
+  it again: the name lookup finds the override. A subclass that redefines
+  an inherited '_getValue' as a plain method changes what the inherited
+  'Field' returns, because the parent never captured the decorated method,
+  only its name. The sampler hierarchy in 'worktoy.work_test' relies on
+  exactly this, where 'FloatSampler' replaces the 'int' accessors it
+  inherits from 'IntSampler' with floating-point versions.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

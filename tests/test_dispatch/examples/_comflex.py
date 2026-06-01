@@ -15,7 +15,9 @@ from worktoy.desc import AttriBox, Field
 from worktoy.dispatch import Dispatcher
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, Iterator
+  from typing import Any, Self, Iterator, TypeAlias, Union, Type
+
+  NIType: TypeAlias = Type[NotImplemented]
 
 
 class Comflex:
@@ -35,8 +37,8 @@ class Comflex:
   IM = AttriBox[float](0.0)
 
   #  Virtual Variables
-  ABS = Field()
-  ARG = Field()
+  ABS: Field[float] = Field()
+  ARG: Field[float] = Field()
 
   #  Overloaded Functions
   __init__ = Dispatcher()
@@ -88,13 +90,13 @@ class Comflex:
   def __hash__(self, ) -> int:
     return hash((*self,))
 
-  def cast(self, other: Any) -> Self:
+  def cast(self, other: Any) -> Union[Self, NIType]:
     cls = type(self)
     if isinstance(other, cls):
       return other
     try:
       other = cls(other)
-    except (ValueError, TypeError) as exception:
+    except (ValueError, TypeError):
       return NotImplemented
     else:
       return other
@@ -105,7 +107,7 @@ class Comflex:
       return NotImplemented
     return True if (self - other).ABS < 1e-16 else False
 
-  def __add__(self, other: Any) -> Self:
+  def __add__(self, other: Any) -> Union[Self, NIType]:
     other = self.cast(other)
     if other is NotImplemented:
       return NotImplemented
@@ -113,17 +115,17 @@ class Comflex:
     x, y = self.RE + other.RE, self.IM + other.IM
     return cls(x, y)
 
-  def __neg__(self, ) -> Self:
+  def __neg__(self, ) -> Union[Self, NIType]:
     cls = type(self)
     return cls(-self.RE, -self.IM)
 
-  def __sub__(self, other: Any) -> Self:
+  def __sub__(self, other: Any) -> Union[Self, NIType]:
     other = self.cast(other)
     if other is NotImplemented:
       return NotImplemented
     return self + (-other)
 
-  def __mul__(self, other: Any) -> Self:
+  def __mul__(self, other: Any) -> Union[Self, NIType]:
     other = self.cast(other)
     if other is NotImplemented:
       return NotImplemented
@@ -132,13 +134,13 @@ class Comflex:
     y = self.RE * other.IM + self.IM * other.RE
     return cls(x, y)
 
-  def __invert__(self, ) -> Self:
+  def __invert__(self, ) -> Union[Self, NIType]:
     if not self:
       raise ZeroDivisionError
     cls = type(self)
     return cls(self.RE / self.ABS ** 2, -self.IM / self.ABS ** 2)
 
-  def __truediv__(self, other: Any) -> Self:
+  def __truediv__(self, other: Any) -> Union[Self, NIType]:
     other = self.cast(other)
     if other is NotImplemented:
       return NotImplemented
@@ -148,7 +150,7 @@ class Comflex:
       return self
     return self * (~other)
 
-  def __pow__(self, other: Any) -> Self:
+  def __pow__(self, other: Any) -> Union[Self, NIType]:
     other = self.cast(other)
     if other is NotImplemented:
       return NotImplemented

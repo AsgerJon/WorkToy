@@ -9,7 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import sys
 
+from worktoy.core.sentinels import THIS
 from worktoy.desc import AttriBox
+from worktoy.dispatch import overload
+from worktoy.mcls import BaseObject
 from worktoy.waitaminute import TypeException, MissingVariable
 from . import DescTest
 from .geometry import Circle, Point2D
@@ -269,3 +272,89 @@ class TestAttriBox(DescTest):
     self.assertEqual(e.actualObject, susValue)
     self.assertIs(e.actualType, str)
     self.assertIn(Wessel, e.expectedTypes)
+
+  def test_this_builds_through_constructor(self) -> None:
+    """
+    Testing that a 'THIS' captured in the deferred default goes through
+    the field-type constructor even when the owning instance is already
+    an instance of the field type. The earlier passthrough returned the
+    owner itself because 'isinstance(child, Parent)' held, which the
+    sentinel guard now suppresses.
+    """
+
+    class Ancestor(BaseObject):
+      """Ancestor can be built from any object, recording its origin."""
+
+      source = AttriBox[object]()
+
+      @overload(object)
+      def __init__(self, source: object) -> None:
+        self.source = source
+
+      @overload()
+      def __init__(self) -> None:
+        pass
+
+    class Heir(Ancestor):
+      """Heir builds a separate 'Ancestor' from itself, not itself."""
+
+      mom = AttriBox[Ancestor](THIS)
+      dad = AttriBox[Ancestor](THIS)
+
+    heir = Heir()
+    self.assertIsNot(heir.mom, heir)
+    self.assertIsInstance(heir.mom, Ancestor)
+    self.assertIs(heir.mom.source, heir)
+    #  Each box builds its own field, and the owner is never passed through
+    self.assertIsNot(heir.mom, heir.dad)
+    #  A second owner gets its own freshly built field
+    other = Heir()
+    self.assertIsNot(other.mom, heir.mom)
+    self.assertIs(other.mom.source, other)
+
+  def test_prebuilt_value_passes_through(self) -> None:
+    """
+    Testing that the passthrough survives for a genuine pre-built value.
+    Without a sentinel in the deferred default, a lone argument already of
+    the field type is stored unchanged rather than rebuilt.
+    """
+
+    class Ancestor(BaseObject):
+      """Ancestor needs no arguments to build."""
+
+      @overload()
+      def __init__(self) -> None:
+        pass
+
+    seed = Ancestor()
+
+    class Holder(BaseObject):
+      """Holder captures an already-built 'Ancestor' as its default."""
+
+      held = AttriBox[Ancestor](seed)
+
+    holder = Holder()
+    self.assertIs(holder.held, seed)
+
+  def test_this_requires_compatible_constructor(self) -> None:
+    """
+    Testing that a 'THIS' default whose field type cannot accept the owner
+    raises 'TypeException', chained from the underlying 'TypeError', rather
+    than silently passing the owner through. A bare field type falls back
+    to 'object.__init__', which rejects the extra argument.
+    """
+
+    class Plain:
+      """Plain has no constructor that accepts an argument."""
+
+    class Sub(Plain):
+      """Sub captures itself as the default of an incompatible box."""
+
+      parent = AttriBox[Plain](THIS)
+
+    sub = Sub()
+    with self.assertRaises(TypeException) as context:
+      _ = sub.parent
+    e = context.exception
+    self.assertIs(e.expectedTypes[0], Plain)
+    self.assertIsInstance(e.__cause__, TypeError)

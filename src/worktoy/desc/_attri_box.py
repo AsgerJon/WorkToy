@@ -62,6 +62,31 @@ class AttriBox(BaseDescriptor[T]):
     tuple; see '_resolve' for the splat rules);
   - if construction also fails, 'TypeException' is raised, chained
     from the cast failure.
+
+  Notes
+  -----
+  A sentinel captured in the deferred default is rebuilt through the
+  field type even when the owning instance is already an instance of
+  that type. The convenience case is 'AttriBox[Foo](someFoo)', where a
+  lone argument that is already a 'Foo' is stored unchanged instead of
+  being rebuilt. That passthrough is suppressed whenever the captured
+  arguments contain 'THIS', 'OWNER', or 'DESC', because such an argument
+  becomes an instance of the field type only by the accident of the
+  surrounding class hierarchy.
+
+  The case to watch is a field type that is also a base of its owner:
+
+    class Parent: ...
+
+    class Child(Parent):
+      mom = AttriBox[Parent](THIS)
+
+  Reading 'child.mom' builds 'Parent(child)', not 'child' itself, even
+  though 'isinstance(child, Parent)' holds. The corollary is that the
+  field type must accept whatever 'THIS' resolves to. A 'Parent' with no
+  constructor taking an argument raises 'TypeException' here, chained
+  from the 'TypeError' that 'object.__init__' raises, rather than
+  silently handing back the owner.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -94,6 +119,14 @@ class AttriBox(BaseDescriptor[T]):
     the given arguments. It does *not* retrieve arguments from 'self',
     but requires them to be passed in, because it is used both when
     setting and getting.
+
+    A lone argument that is already an instance of the field type is
+    normally returned unchanged rather than rebuilt. This passthrough is
+    suppressed when the box captured a contextual sentinel, since a value
+    that became a field-type instance only because 'THIS' resolved to the
+    owner must still go through the constructor. So 'AttriBox[Parent](
+    THIS)' read on a 'Child' instance builds 'Parent(child)' instead of
+    handing back 'child' itself just because it happens to be a 'Parent'.
 
     When '__instance_get__' is unable to retrieve a value from a given
     instance. The 'args' and 'kw' passed to the constructor of the
@@ -203,7 +236,7 @@ class AttriBox(BaseDescriptor[T]):
     """
     fieldType = self.getFieldType()
     fieldObject = None
-    if len(args) == 1:
+    if not self.hasSentinelArgs() and len(args) == 1:
       if isinstance(args[0], fieldType):
         fieldObject = args[0]
     if fieldObject is None:

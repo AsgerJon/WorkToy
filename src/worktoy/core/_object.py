@@ -182,6 +182,22 @@ class Object(metaclass=MetaType):
       out[key] = self.filterSentinels(value)
     return out
 
+  def hasSentinelArgs(self) -> bool:
+    """
+    Reports whether any captured positional or keyword argument is one of
+    the contextual sentinels 'THIS', 'OWNER', or 'DESC'. A descriptor
+    consults this to tell a value that became an instance of the field
+    type only because a sentinel was substituted apart from a genuine
+    pre-built value handed over at declaration.
+    """
+    posArgs = maybe(self.__pos_args__, ())
+    keyArgs = maybe(self.__key_args__, dict())
+    sentinels = (THIS, OWNER, DESC)
+    for arg in (*posArgs, *keyArgs.values()):
+      if any(arg is sentinel for sentinel in sentinels):
+        return True
+    return False
+
   def getContextInstance(self) -> Any:
     """Returns the contextual instance or raises 'WithoutException'"""
     if self.hasContext():
