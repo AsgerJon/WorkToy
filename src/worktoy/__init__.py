@@ -38,7 +38,7 @@ chain.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-__version__ = '1.0.0-rc8'
+__version__ = '1.0.0-rc9'
 
 from . import utilities
 from . import waitaminute
