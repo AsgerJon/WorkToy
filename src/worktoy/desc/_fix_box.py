@@ -5,7 +5,7 @@ FixBox is a write-once 'AttriBox'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from worktoy.core import Object
 from worktoy.desc import AttriBox
@@ -14,8 +14,10 @@ from worktoy.waitaminute.desc import WriteOnceError
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
+T = TypeVar('T')
 
-class FixBox(AttriBox):
+
+class FixBox(AttriBox[T]):
   """
   FixBox subclasses 'AttriBox' and provides a descriptor for write-once
   attributes. Two methods change: a second assignment raises
