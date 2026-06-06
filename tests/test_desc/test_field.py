@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from worktoy.core import Object
 from worktoy.core.sentinels import DELETED
 from worktoy.desc import Field
 from worktoy.utilities import maybe
@@ -355,3 +356,36 @@ class TestField(DescTest):
     childPoint.y = expectedY + 1
     self.assertEqual(childPoint.x, expectedX + 1)
     self.assertEqual(childPoint.y, expectedY + 1)
+
+  def test_bad_key_type(self, ) -> None:
+    """
+    This method tests the '__get_key__' attribute to be of the wrong type.
+    """
+
+    class Sus(Object):
+      tom: Field[str] = Field()
+      dick: Field[str] = Field()
+      harry: Field[str] = Field()
+
+      @tom.GET
+      def _getTom(self) -> int:
+        return 69420
+
+    sus = Sus()
+
+    setattr(Sus.harry, '__get_key__', sus.tom)
+
+    self.assertEqual(sus.tom, 69420)
+
+    with self.assertRaises(AccessError) as context:
+      _ = sus.dick
+    e = context.exception
+    self.assertIs(e.desc, Sus.dick)
+
+    with self.assertRaises(TypeException) as context:
+      _ = sus.harry
+    e = context.exception
+    self.assertEqual(e.varName, '__get_key__')
+    self.assertEqual(e.actualObject, sus.tom)
+    self.assertIs(e.actualType, int)
+    self.assertIn(str, e.expectedTypes)

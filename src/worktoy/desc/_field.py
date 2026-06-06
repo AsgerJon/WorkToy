@@ -80,9 +80,11 @@ class Field(BaseDescriptor[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _getGetterKey(self) -> str:
-    if not isinstance(self.__get_key__, str):
+    if self.__get_key__ is None:
       raise AccessError(self)
-    return self.__get_key__
+    if isinstance(self.__get_key__, str):
+      return self.__get_key__
+    raise TypeException('__get_key__', self.__get_key__, str)
 
   def _getSetterKeys(self, ) -> tuple[str, ...]:
     return (*[k for k in maybe(self.__set_keys__, ()) if k],)
