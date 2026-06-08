@@ -312,11 +312,12 @@ class TestAttriBox(DescTest):
     self.assertIsNot(other.mom, heir.mom)
     self.assertIs(other.mom.source, other)
 
-  def test_prebuilt_value_passes_through(self) -> None:
+  def test_prebuilt_value_is_copied_per_instance(self) -> None:
     """
-    Testing that the passthrough survives for a genuine pre-built value.
-    Without a sentinel in the deferred default, a lone argument already of
-    the field type is stored unchanged rather than rebuilt.
+    Testing that a genuine pre-built value of the field type is
+    deep-copied rather than shared. Without a sentinel in the deferred
+    default, a lone argument already of the field type gives every
+    instance its own copy, never the single captured object.
     """
 
     class Ancestor(BaseObject):
@@ -333,8 +334,10 @@ class TestAttriBox(DescTest):
 
       held = AttriBox[Ancestor](seed)
 
-    holder = Holder()
-    self.assertIs(holder.held, seed)
+    a, b = Holder(), Holder()
+    self.assertIsInstance(a.held, Ancestor)
+    self.assertIsNot(a.held, seed)
+    self.assertIsNot(a.held, b.held)
 
   def test_this_requires_compatible_constructor(self) -> None:
     """

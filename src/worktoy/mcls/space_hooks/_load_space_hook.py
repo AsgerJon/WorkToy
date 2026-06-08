@@ -53,20 +53,39 @@ class LoadSpaceHook(AbstractSpaceHook):
   def postCompilePhase(self, compiledSpace) -> dict:
     """Assembles one 'Dispatcher' per overloaded name from the collected
     'overload' registrations (concrete signatures, variadics, fallback,
-    and finalizer) and writes each into 'compiledSpace'."""
+    and finalizer) and writes each into 'compiledSpace'.
+
+    A name that the class body bound to a plain (non-'overload')
+    definition is left untouched: that explicit definition overrides any
+    overloads inherited from a base class. The inherited registrations
+    for such a name are dropped, so neither this class nor a subclass
+    rebuilds a 'Dispatcher' over the override. The signal is the
+    namespace's own storage: '@overload' declarations are claimed by
+    'setItemPhase' and never reach it, whereas a plain definition is
+    stored there under its name.
+    """
+    overloadMap = self.space.getOverloads()
     variadicMap = self.space.getVariadics()
-    names = set(self.space.getOverloads()) | set(variadicMap)
+    fallbackMap = self.space.getFallbacks()
+    finalizerMap = self.space.getFinalizers()
+    names = set(overloadMap) | set(variadicMap)
     for name in names:
+      if dict.__contains__(self.space, name):
+        overloadMap.pop(name, None)
+        variadicMap.pop(name, None)
+        fallbackMap.pop(name, None)
+        finalizerMap.pop(name, None)
+        continue
       dispatcher = Dispatcher()
-      sigFunc = self.space.getOverloads().get(name, {})
+      sigFunc = overloadMap.get(name, {})
       for sig, func in sigFunc.items():
         dispatcher.addSigFunc(sig, func)
       for sig, func in variadicMap.get(name, []):
         dispatcher.addVariadicSigFunc(sig, func)
-      fallback = self.space.getFallbacks().get(name, None)
+      fallback = fallbackMap.get(name, None)
       if fallback is not None:
         dispatcher.setFallbackFunction(fallback)
-      finalizer = self.space.getFinalizers().get(name, None)
+      finalizer = finalizerMap.get(name, None)
       if finalizer is not None:
         dispatcher.setFinalizerFunction(finalizer)
       compiledSpace[name] = dispatcher

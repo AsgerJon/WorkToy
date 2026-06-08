@@ -5,6 +5,7 @@ AttriBox is a lazily built, strongly typed attribute descriptor.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING, TypeVar
 
 from . import Field, BaseDescriptor
@@ -68,11 +69,14 @@ class AttriBox(BaseDescriptor[T]):
   A sentinel captured in the deferred default is rebuilt through the
   field type even when the owning instance is already an instance of
   that type. The convenience case is 'AttriBox[Foo](someFoo)', where a
-  lone argument that is already a 'Foo' is stored unchanged instead of
-  being rebuilt. That passthrough is suppressed whenever the captured
-  arguments contain 'THIS', 'OWNER', or 'DESC', because such an argument
-  becomes an instance of the field type only by the accident of the
-  surrounding class hierarchy.
+  lone argument that is already a 'Foo' is deep-copied for each instance
+  instead of being rebuilt, so 'AttriBox[list]([1, 2, 3])' gives every
+  instance its own list rather than one shared default. A value that
+  refuses to be copied is stored unchanged rather than raising. That
+  copy is suppressed whenever the captured arguments contain 'THIS',
+  'OWNER', or 'DESC', because such an argument becomes an instance of
+  the field type only by the accident of the surrounding class
+  hierarchy.
 
   The case to watch is a field type that is also a base of its owner:
 
@@ -121,12 +125,16 @@ class AttriBox(BaseDescriptor[T]):
     setting and getting.
 
     A lone argument that is already an instance of the field type is
-    normally returned unchanged rather than rebuilt. This passthrough is
-    suppressed when the box captured a contextual sentinel, since a value
-    that became a field-type instance only because 'THIS' resolved to the
-    owner must still go through the constructor. So 'AttriBox[Parent](
-    THIS)' read on a 'Child' instance builds 'Parent(child)' instead of
-    handing back 'child' itself just because it happens to be a 'Parent'.
+    deep-copied rather than rebuilt, so each instance owns its default
+    instead of sharing the single object captured in the class body. A
+    value that refuses to be copied is stored unchanged rather than
+    raising, since receiving a value of the exact field type must never
+    error. This copy is suppressed when the box captured a contextual
+    sentinel, since a value that became a field-type instance only
+    because 'THIS' resolved to the owner must still go through the
+    constructor. So 'AttriBox[Parent](THIS)' read on a 'Child' instance
+    builds 'Parent(child)' instead of copying 'child' itself just
+    because it happens to be a 'Parent'.
 
     When '__instance_get__' is unable to retrieve a value from a given
     instance. The 'args' and 'kw' passed to the constructor of the
@@ -238,7 +246,18 @@ class AttriBox(BaseDescriptor[T]):
     fieldObject = None
     if not self.hasSentinelArgs() and len(args) == 1:
       if isinstance(args[0], fieldType):
-        fieldObject = args[0]
+        #  A lone argument already of the field type is deep-copied so
+        #  that each instance owns its default rather than sharing the
+        #  single object captured in the class body. Atomic immutables
+        #  ('int', 'float', 'str', ...) deep-copy to themselves, so the
+        #  common scalar default costs nothing. A value that refuses to
+        #  be copied is stored as-is rather than raising: receiving a
+        #  value of the exact field type must never error, and an
+        #  un-copyable value can only be shared or rejected.
+        try:
+          fieldObject = deepcopy(args[0])
+        except Exception:  # un-copyable: share rather than raise
+          fieldObject = args[0]
     if fieldObject is None:
       try:
         if fieldType in (list, set, frozenset, dict, tuple):
