@@ -27,7 +27,7 @@ class TestNumMRO(KeeTest):
 
   def test_mro(self) -> None:
     """
-    Test the MRO of the RGBNum class.
+    Testing the MRO of the RGBNum class.
     """
     for color in RootRGB:
       self.assertIs(getattr(MoreRGB, color.name), color)
@@ -40,7 +40,7 @@ class TestNumMRO(KeeTest):
       self.assertIs(getattr(RGBNum, color.name), color)
 
   def test_color_keys(self) -> None:
-    """Test that instances of RGBNum can be used as dictionary keys and
+    """Testing that instances of RGBNum can be used as dictionary keys and
     that RED from any of the color enumerations finds the same entry in
     the dict."""
     color_dict: dict[RootRGB, Any] = {}
@@ -51,13 +51,13 @@ class TestNumMRO(KeeTest):
       self.assertIs(key, val)
 
   def test_coverage_gymnastics(self) -> None:
-    """Test that the MRO descriptor works as expected."""
+    """Testing that the MRO descriptor works as expected."""
     self.assertIn('#FF0000', str(RGBNum.RED.value))
     self.assertIn('#00FF00', str(RGBNum.GREEN.value))
     self.assertIn('#0000FF', str(RGBNum.BLUE.value))
 
   def test_repr(self) -> None:
-    """Test that the repr of RGBNum is as expected."""
+    """Testing that the repr of RGBNum is as expected."""
     redExpected = 'RGB(255, 0, 0)'
     greenExpected = 'RGB(0, 255, 0)'
     blueExpected = 'RGB(0, 0, 255)'
@@ -66,19 +66,19 @@ class TestNumMRO(KeeTest):
     self.assertEqual(repr(RGBNum.BLUE.value), blueExpected)
 
   def test_index(self) -> None:
-    """Test that the index of the members is as expected."""
+    """Testing that the index of the members is as expected."""
     for i, color in enumerate(RGBNum):
       self.assertEqual(int(color), i)
       self.assertIs(color, RGBNum[color.name])
       self.assertIs(color, RGBNum[i])
 
   def test_resolve_index(self) -> None:
-    """Test that the resolve_index method works as expected."""
+    """Testing that the resolve_index method works as expected."""
     for i, color in enumerate(RGBNum):
       self.assertIs(RGBNum[i], color)
 
   def test_resolve_key(self) -> None:
-    """Test that the resolve_key method works as expected."""
+    """Testing that the resolve_key method works as expected."""
     for color in RGBNum:
       resolved = RGBNum(color.name)
       self.assertIs(resolved, color)
@@ -91,14 +91,14 @@ class TestNumMRO(KeeTest):
     self.assertIs(type(RGBNum), KeeMeta)
 
   def test_mro_num(self) -> None:
-    """Test the MRO of the RGBNum class."""
+    """Testing the MRO of the RGBNum class."""
     for cls in RGBNum.mroNum:
       for item in cls.mroNum:
         self.assertIn(item, RGBNum.mroNum)
     self.assertFalse(KeeNum.mroNum)
 
   def test_identity(self, ) -> None:
-    """Test that the identity of the members is as expected."""
+    """Testing that the identity of the members is as expected."""
 
     for keenum in RGBNum.mroNum:
       for num in keenum:
@@ -107,13 +107,13 @@ class TestNumMRO(KeeTest):
             self.assertIs(getattr(nextKeenum, num.name), num)
 
   def test_good_resolve_value(self) -> None:
-    """Test that the resolve_value method works as expected."""
+    """Testing that the resolve_value method works as expected."""
 
     for color in RGBNum:
       self.assertIs(RGBNum.fromValue(color.value), color)
 
   def test_bad_resolve_value(self) -> None:
-    """Test that the resolve_value method raises an error for invalid
+    """Testing that the resolve_value method raises an error for invalid
     values."""
 
     with self.assertRaises(TypeException) as context:
@@ -125,7 +125,7 @@ class TestNumMRO(KeeTest):
     self.assertIn(RGBNum.valueType, e.expectedTypes)
 
   def test_bad_member_type(self) -> None:
-    """Test that passing a member with a value of an unsupported type
+    """Testing that passing a member with a value of an unsupported type
     raises a KeeTypeException. """
     with self.assertRaises(KeeTypeException) as context:
       class Breh(KeeNum):
@@ -236,11 +236,6 @@ class TestNumMRO(KeeTest):
         for nextNum in colorNums[i + 1:]:
           nextElement = getattr(nextNum, element.name)
           self.assertIs(element, nextElement)
-
-  def test_inheritance_length(self, ) -> None:
-    """
-    This method tests that the length of the RGBNum class is as expected.
-    """
 
   def test_members(self, ) -> None:
     """

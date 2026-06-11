@@ -7,15 +7,10 @@ class exists: any attribute assignment or deletion on a member raises
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import Kee, KeeNum, KeeFlag, KeeFlags
 from worktoy.waitaminute.keenum import KeeWriteOnceError
 
 from . import KeeTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestMemberFreeze(KeeTest):

@@ -5,12 +5,7 @@ AccessNum enumerates descriptor access operations.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import KeeNum, Kee
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class AccessNum(KeeNum):

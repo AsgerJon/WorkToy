@@ -230,8 +230,7 @@ class EZField(BaseObject, Generic[T]):
     The 'defaultValue' getter constructs a fresh default value by
     invoking the field type with the stored positional and keyword
     arguments. Each call builds a new top-level object, so two instances
-    do
-    not share the same mutable container ('list', 'dict', 'set',
+    do not share the same mutable container ('list', 'dict', 'set',
     ...). This is a shallow construction, though: a mutable object
     nested inside the stored arguments is shared across instances,
     so mutating that nested object leaks between them.

@@ -8,13 +8,9 @@ from __future__ import annotations
 
 import os
 from random import random
-from typing import TYPE_CHECKING
 
 from . import DescTest
 from tests.test_dispatch.examples import Comflex, ComflexMeta
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestArithmetic(DescTest):
@@ -162,7 +158,7 @@ class TestArithmetic(DescTest):
 
   def test_good_equals(self) -> None:
     """
-    Test that the __eq__ method works correctly.
+    Testing that the __eq__ method works correctly.
     """
     for cls in self.classes:
       for z0 in self.numbers[cls]:
@@ -171,7 +167,7 @@ class TestArithmetic(DescTest):
 
   def test_hash(self) -> None:
     """
-    Test that the __hash__ method works correctly.
+    Testing that the __hash__ method works correctly.
     """
     for cls in self.classes:
       for z0 in self.numbers[cls]:
@@ -179,7 +175,7 @@ class TestArithmetic(DescTest):
 
   def test_str_repr(self) -> None:
     """
-    Test that the __str__ and __repr__ methods work correctly.
+    Testing that the __str__ and __repr__ methods work correctly.
     """
     for cls in self.classes:
       z0 = cls(.0, .0)
@@ -198,7 +194,7 @@ class TestArithmetic(DescTest):
 
   def test_iter(self) -> None:
     """
-    Test that the __iter__ method works correctly.
+    Testing that the __iter__ method works correctly.
     """
     for cls in self.classes:
       z = cls(69, 420)
@@ -208,7 +204,8 @@ class TestArithmetic(DescTest):
 
   def test_bad_args(self) -> None:
     """
-    Test that the __init__ method raises TypeError when given bad arguments.
+    Testing that the __init__ method raises TypeError when given bad
+    arguments.
     """
     for cls in self.classes:
       zero = cls(0, 0)
@@ -217,7 +214,7 @@ class TestArithmetic(DescTest):
 
   def test_complex(self) -> None:
     """
-    Test that the __complex__ method works correctly.
+    Testing that the __complex__ method works correctly.
     """
     for cls in self.classes:
       z = cls(69, 420)
@@ -240,7 +237,7 @@ class TestArithmetic(DescTest):
       self.assertAlmostEqual(z2.IM, z.imag)
 
   def test_flex(self) -> None:
-    """Test the ComflexMeta constructor"""
+    """Testing the ComflexMeta constructor"""
 
     z = ComflexMeta(69 + 420j, 1337.)
     self.assertAlmostEqual(z.RE, 69. + 1337.)

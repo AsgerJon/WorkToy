@@ -6,13 +6,8 @@ space as implemented by the RGB EZData class.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import KeeNum, Kee
 from . import RGB
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class RootRGB(KeeNum):

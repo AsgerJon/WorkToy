@@ -113,7 +113,7 @@ class TestClassLenBoolContains(MCLSTest):
 
   def testExplicitClassContains(self) -> None:
     """
-    Test that '__class_contains__' is respected.
+    Testing that '__class_contains__' is respected.
     """
     self.assertIn('foo', ContainClass)
     self.assertNotIn('nope', ContainClass)

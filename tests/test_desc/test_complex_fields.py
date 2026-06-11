@@ -6,13 +6,8 @@ the 'ComplexFields' class.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import AccessNum
 from . import DescTest, ComplexFields, ComplexFieldsSubclass
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestComplexFields(DescTest):
@@ -26,7 +21,7 @@ class TestComplexFields(DescTest):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def test_good_get(self, ) -> None:
-    """Test the 'get' functionality of the 'ComplexFields' class."""
+    """Testing the 'get' functionality of the 'ComplexFields' class."""
     c = ComplexFields(0, 0)
     self.assertAlmostEqual(c.RE, 0.0)
     self.assertAlmostEqual(c.IM, 0.0)
@@ -41,7 +36,7 @@ class TestComplexFields(DescTest):
     self.assertAlmostEqual(c.ABS ** 2, 2.0)
 
   def test_good_set(self, ) -> None:
-    """Test the 'set' functionality of the 'ComplexFields' class."""
+    """Testing the 'set' functionality of the 'ComplexFields' class."""
     c = ComplexFields(0, 0)
     self.assertAlmostEqual(c.RE, 0.0)
     self.assertAlmostEqual(c.IM, 0.0)
@@ -58,14 +53,14 @@ class TestComplexFields(DescTest):
     self.assertAlmostEqual(c.ABS ** 2, 2.0)
 
   def test_good_subclass(self) -> None:
-    """Test the 'subclass' functionality of the 'ComplexFields' class."""
+    """Testing the 'subclass' functionality of the 'ComplexFields' class."""
     z = ComplexFieldsSubclass(0, 0)
     self.assertAlmostEqual(z.RE, 0.0)
     self.assertAlmostEqual(z.IM, 0.0)
     self.assertAlmostEqual(z.ABS, 0.0)
 
   def test_registry(self) -> None:
-    """Test the 'registry' functionality of the 'ComplexFields' class."""
+    """Testing the 'registry' functionality of the 'ComplexFields' class."""
     z = ComplexFields(69, 420)
     self.assertEqual(z.RE, 69)
     self.assertEqual(z.IM, 420)

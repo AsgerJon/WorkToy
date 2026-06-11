@@ -1,39 +1,36 @@
 """
-TestClause tests the 'Clause' class from the
-'worktoy.examples.lorem_ipsum' package.
+TestClause tests the 'Clause' class from the 'worktoy.lorem_ipsum'
+package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from random import randint
-from typing import TYPE_CHECKING
 
 from tests.test_lorem_ipsum import LoremIpsumTest
 from worktoy.lorem_ipsum import Clause
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestClause(LoremIpsumTest):
   """
   TestClause provides tests for the 'Clause' class from the
-  'worktoy.examples.lorem_ipsum' package.
+  'worktoy.lorem_ipsum' package.
   """
 
   def setUp(self) -> None:
     super().setUp()
-    self.clause = Clause()
+    self.clause: Clause = Clause()
     self.clause.reset()
-    self.minLen = 30
-    self.maxLen = 80
+    self.minLen: int = 30
+    self.maxLen: int = 80
 
   def test_lengths(self, ) -> None:
     """
-    Testing that the 'Clause' correctly realizes clauses.
+    Testing that 'Clause' realizes to exactly the requested character
+    count.
     """
-    lengths = sorted([randint(30, 80) for _ in range(16)])
+    lengths = [randint(self.minLen, self.maxLen) for _ in range(16)]
     clause = Clause(self.clause)
     self.assertEqual(len(clause), clause.charCount)
     clause.clear()
@@ -46,7 +43,7 @@ class TestClause(LoremIpsumTest):
 
   def test_iteration(self) -> None:
     """
-    Testing that the 'Clause' correctly realizes clauses.
+    Testing that iterating a 'Clause' yields its words as 'str' objects.
     """
     clause = Clause(self.clause)
     self.assertIsInstance(clause, Clause)
@@ -79,12 +76,12 @@ class TestClause(LoremIpsumTest):
     covering the lead-in truncation, the empty gap, and the 'etc' prefix.
     """
     cases = {
-        12: 'Lorem ips...',
-        14: 'Lorem ipsum...',
-        15: 'Lorem ipsum ...',
-        16: 'Lorem ipsum e...',
-        17: 'Lorem ipsum et...',
-        18: 'Lorem ipsum etc...',
+      12: 'Lorem ips...',
+      14: 'Lorem ipsum...',
+      15: 'Lorem ipsum ...',
+      16: 'Lorem ipsum e...',
+      17: 'Lorem ipsum et...',
+      18: 'Lorem ipsum etc...',
     }
     for length, expected in cases.items():
       self.assertEqual(str(Clause.first(length)), expected)
@@ -97,4 +94,17 @@ class TestClause(LoremIpsumTest):
     #  Reading the cached lengths of a placeholder reads them back from the
     #  realized words rather than partitioning.
     clause = Clause.first(16)
-    self.assertEqual(clause.wordsLengths, [len(w) for w in clause.wordsArray])
+    for i, word in enumerate(clause):
+      self.assertEqual(len(word), clause.wordsLengths[i])
+
+  def test_too_short_raises(self) -> None:
+    """
+    Testing that a clause that is not a first clause refuses character
+    counts below the shortest available word with 'ValueError', while
+    a first clause degrades to a placeholder of exactly the requested
+    length at those counts.
+    """
+    for length in range(4):
+      with self.assertRaises(ValueError):
+        _ = str(Clause(length))
+      self.assertEqual(len(str(Clause.first(length))), length)

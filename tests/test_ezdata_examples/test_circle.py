@@ -1,28 +1,24 @@
 """
-TestCircle subclasses 'EZTest' from the 'tests.test_ezdata' package and
-provides tests for the 'Circle' class from the
-'tests.test_ezdata.examples' package.
+TestCircle subclasses 'EZExamplesTest' from the
+'tests.test_ezdata_examples' package and provides tests for the
+'Circle' class from the 'tests.test_ezdata.examples' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from math import pi
-from typing import TYPE_CHECKING
 
 from tests.test_ezdata.examples import Point2D, Circle, FullName
 from worktoy.waitaminute.ezdata import KwargsOnlyException
 from . import EZExamplesTest
 
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class TestCircle(EZExamplesTest):
   """
-  TestCircle subclasses 'EZTest' from the 'tests.test_ezdata' package and
-  provides tests for the 'Circle' class from the
-  'tests.test_ezdata.examples' package.
+  TestCircle subclasses 'EZExamplesTest' from the
+  'tests.test_ezdata_examples' package and provides tests for the
+  'Circle' class from the 'tests.test_ezdata.examples' package.
   """
 
   def test_init(self, ) -> None:

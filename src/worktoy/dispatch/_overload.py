@@ -180,6 +180,10 @@ class overload:  # NOQA
         concreteTypes = (*prefix, *([innerType] * n))
         concrete = TypeSig(*concreteTypes)
         concrete.__allow_flex__ = sig.__allow_flex__
+        #  Marks the signature as an expansion artifact, ranking it
+        #  below explicit declarations when equal signatures collide
+        #  during registration on the namespace.
+        concrete.__expanded_from_variadic__ = True
         existing[concrete] = func
       self.__sig_func_dict__ = existing
       variadics = self.getVariadics()

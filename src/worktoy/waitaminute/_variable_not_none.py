@@ -5,12 +5,7 @@ VariableNotNone is raised when a write-once slot already holds a value.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ..utilities import textFmt
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class VariableNotNone(Exception):

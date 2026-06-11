@@ -5,12 +5,7 @@ Month enumerates the months of the year.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import KeeNum, Kee
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class Month(KeeNum):

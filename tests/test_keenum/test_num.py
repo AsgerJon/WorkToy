@@ -6,7 +6,6 @@ TestNum provides the basic tests for the KeeNum class.
 from __future__ import annotations
 
 from datetime import date
-from typing import TYPE_CHECKING
 
 from worktoy.keenum import KeeNum, Kee, KeeMeta
 from worktoy.waitaminute import VariableNotNone, TypeException
@@ -18,15 +17,12 @@ from . import KeeTest
 from .examples import WeekDay, Compass, Brush, RGBNum, RootRGB, RGB, Dato, \
   Month
 
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class TestNum(KeeTest):
   """TestNum provides the basic tests for the KeeNum class."""
 
   def test_ad_hoc(self) -> None:
-    """Test ad-hoc functionality."""
+    """Testing ad-hoc functionality."""
 
     for day in WeekDay:
       self.assertIsInstance(day, WeekDay)
@@ -34,7 +30,8 @@ class TestNum(KeeTest):
       self.assertEqual(repr(day), str(day))
 
   def test_contains_members(self) -> None:
-    """Test that the members of the WeekDay enumeration are as expected."""
+    """Testing that the members of the WeekDay enumeration are as
+    expected."""
     self.assertEqual(len(WeekDay), 7)
     self.assertIn(WeekDay.MONDAY, WeekDay)
     self.assertIn(WeekDay.TUESDAY, WeekDay)
@@ -45,7 +42,7 @@ class TestNum(KeeTest):
     self.assertIn(WeekDay.SUNDAY, WeekDay)
 
   def test_keenum(self) -> None:
-    """Test that the WeekDay class is a KeeNum."""
+    """Testing that the WeekDay class is a KeeNum."""
     self.assertIs(KeeNum.base, KeeNum)
     self.assertEqual(str(KeeNum), repr(KeeNum))
     self.assertEqual(str(WeekDay), repr(WeekDay))
@@ -62,7 +59,7 @@ class TestNum(KeeTest):
       self.assertIsSubclass(cls, KeeNum)
 
   def test_is_not_instancecheck(self) -> None:
-    """Test that the WeekDay class is not an instance of KeeNum."""
+    """Testing that the WeekDay class is not an instance of KeeNum."""
     items = [
       69,
       420.0,
@@ -75,7 +72,7 @@ class TestNum(KeeTest):
         self.assertNotIsInstance(item, KeeNum)
 
   def test_is_not_subclasscheck(self) -> None:
-    """Test that the WeekDay class is not a subclass of KeeNum."""
+    """Testing that the WeekDay class is not a subclass of KeeNum."""
     items = [
       int, float, str, type,
     ]
@@ -85,7 +82,7 @@ class TestNum(KeeTest):
         self.assertNotIsSubclass(item, KeeNum)
 
   def test_bad_subclasscheck(self) -> None:
-    """Test that the WeekDay class is not a subclass of KeeNum."""
+    """Testing that the WeekDay class is not a subclass of KeeNum."""
     items = [
       69,
       420.0,
@@ -101,12 +98,12 @@ class TestNum(KeeTest):
         self.assertNotIsSubclass(type('imma a Kee, trust!', (), {}), cls)
 
   def test_good_resolve_member(self) -> None:
-    """Test that the resolve_member method works as expected."""
+    """Testing that the resolve_member method works as expected."""
     for day in WeekDay:
       self.assertIn(day, WeekDay)
 
   def test_bad_resolve_member(self) -> None:
-    """Test that the correct exception is raised when failing to resolve a
+    """Testing that the correct exception is raised when failing to resolve a
     member. """
     with self.assertRaises(KeeResolveError) as context:
       _ = WeekDay['trololololo']
@@ -137,7 +134,7 @@ class TestNum(KeeTest):
     self.assertEqual(str(e), repr(e))
 
   def test_duplicate_exception(self) -> None:
-    """Test that a duplicate exception is raised when creating an
+    """Testing that a duplicate exception is raised when creating an
     enumeration with duplicate members."""
     #  Testing duplicating member from base class
     breh = Kee[str]('breh')
@@ -168,8 +165,8 @@ class TestNum(KeeTest):
     self.assertIs(e.newMember, b)
 
   def test_bad_type(self) -> None:
-    """Test that a NotImplementedError is raised when the member type is not
-    a KeeNum."""
+    """Testing that a NotImplementedError is raised when the member type
+    is not a KeeNum."""
     with self.assertRaises(KeeTypeException) as context:
       # noinspection PyUnusedLocal
       class BadType(KeeNum):
@@ -218,7 +215,7 @@ class TestNum(KeeTest):
     self.assertEqual(str(e), repr(e))
 
   def test_class_variable_num(self) -> None:
-    """Test that the class variable 'num' is set correctly."""
+    """Testing that the class variable 'num' is set correctly."""
     brushTest = Brush()
     self.assertIsInstance(brushTest, Brush)
 

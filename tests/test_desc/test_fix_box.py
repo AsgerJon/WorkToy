@@ -6,15 +6,11 @@ TestFixBox provides unit tests specifically for the `FixBox` descriptor.
 from __future__ import annotations
 
 from math import pi
-from typing import TYPE_CHECKING
 
 from worktoy.desc import FixBox
 from worktoy.waitaminute.desc import ProtectedError, WriteOnceError
 from . import DescTest, ComplexFix
 from .geometry import Point2DFix, CircleFix
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestFixBox(DescTest):

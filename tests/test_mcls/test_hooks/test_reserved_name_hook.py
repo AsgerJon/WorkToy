@@ -43,7 +43,7 @@ class TestReservedNameHook(MCLSTest):
 
   def test_str_repr_reserved_names(self) -> None:
     """
-    Test the string representation of the ReservedNames descriptor.
+    Testing the string representation of the ReservedNames descriptor.
     """
 
     class Foo:

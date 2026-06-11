@@ -1,27 +1,21 @@
 """
 TestStochasticWord tests the 'StochasticWord' class from the
-'worktoy.examples.lorem_ipsum' package.
+'worktoy.lorem_ipsum' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 import os.path
-from typing import TYPE_CHECKING
 
 from worktoy.lorem_ipsum import StochasticWord
 from . import LoremIpsumTest
 
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional
-
-  WeightedFiles: TypeAlias = Optional[tuple[str, float]]
-
 
 class TestStochasticWord(LoremIpsumTest):
   """
-  TestLoremIpsum provides tests for the 'worktoy.examples.lorem_ipsum'
-  package.
+  TestStochasticWord provides tests for the 'StochasticWord' class from
+  the 'worktoy.lorem_ipsum' package.
   """
 
   @classmethod
@@ -43,7 +37,7 @@ class TestStochasticWord(LoremIpsumTest):
   def setUp(self) -> None:
     super().setUp()
     self.dataDir = os.environ.get('WORKTOY_DATA_DIR')
-    self.stochasticWord = StochasticWord()
+    self.stochasticWord: StochasticWord = StochasticWord()
     self.stochasticWord.realize()  # Preload the data
 
   def tearDown(self, ) -> None:
@@ -58,7 +52,7 @@ class TestStochasticWord(LoremIpsumTest):
 
   def test_realize(self) -> None:
     """
-    Test the 'realize' method of the 'StochasticWord' class.
+    Testing that 'realize' draws words as 'str' objects.
     """
     for _ in range(10):
       word = self.stochasticWord.realize()
@@ -66,7 +60,8 @@ class TestStochasticWord(LoremIpsumTest):
 
   def test_realize_length(self) -> None:
     """
-    Test the 'realizeLength' method of the 'StochasticWord' class.
+    Testing that 'realizeLength' draws a word of exactly the requested
+    length for every available length.
     """
     for length, words in self.stochasticWord.byLengths.items():
       for _ in range(10):

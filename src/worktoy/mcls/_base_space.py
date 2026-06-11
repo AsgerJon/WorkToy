@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from ..dispatch import TypeSig
 from ..utilities import maybe
+from ..waitaminute.dispatch import DuplicateSignature
 from . import AbstractNamespace
 from .space_hooks import LoadSpaceHook
 
@@ -46,6 +47,8 @@ class BaseSpace(AbstractNamespace):
   __variadic_overload_map__ = None
   __fallback_map__ = None
   __finalizer_map__ = None
+  __own_overload_keys__ = None
+  __ambiguous_overloads__ = None
 
   #  Public Variables
   loadSpaceHook = LoadSpaceHook()
@@ -69,7 +72,7 @@ class BaseSpace(AbstractNamespace):
         else:
           for overloadName, sigFuncMap in {**overloadMap, }.items():
             for sig, func in {**sigFuncMap, }.items():
-              self.addOverload(overloadName, sig, func)
+              self.addOverload(overloadName, sig, func, _inherited=True)
           variadicMap: VariadicMap = space.getVariadics()
           for variadicName, variadicList in {**variadicMap, }.items():
             for sig, func in [*variadicList, ]:
@@ -85,10 +88,22 @@ class BaseSpace(AbstractNamespace):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def addOverload(self, name: str, sig: TypeSig, func: Callable, ) -> None:
+  def addOverload(
+      self, name: str, sig: TypeSig, func: Callable, **kwargs,
+  ) -> None:
     """
     The 'addOverload' method records the mapping from type signature to
     function object under the overloaded name.
+
+    Colliding registrations of equal signatures resolve by origin and
+    kind. A registration belonging to the class body itself always
+    displaces one inherited from a base class. Among the class body's
+    own registrations, an explicit declaration displaces a concrete
+    signature expanded from a variadic declaration, two such expanded
+    signatures from different functions mark the signature as
+    ambiguous (resolved later unless an explicit declaration arrives),
+    and two explicit declarations of the same signature with different
+    functions raise 'DuplicateSignature' on the spot.
 
     Parameters
     ----------
@@ -99,12 +114,139 @@ class BaseSpace(AbstractNamespace):
     func: Callable
       The function object to be dispatched when given arguments matching
       the given type signature.
+    **kwargs
+      The '_inherited' keyword marks registrations copied from a base
+      class namespace, which own registrations always displace.
+
+    Raises
+    ------
+    DuplicateSignature
+      If the class body explicitly declares the same signature twice
+      under this name with different functions.
     """
+    inherited = kwargs.get('_inherited', False)
     existing = self.getOverloads()
     if name not in existing:
       existing[name] = dict()
-    existing[name][sig] = func
+    sigFunc = existing[name]
+    oldKey = None
+    for key in sigFunc:
+      if key == sig:
+        oldKey = key
+        break
+    ownKeys = self.getOwnOverloadKeys()
+    if oldKey is None:
+      sigFunc[sig] = func
+      if not inherited:
+        ownKeys.add((name, sig))
+        self.__own_overload_keys__ = ownKeys
+    elif inherited:
+      #  Collision among inherited registrations: the base processed
+      #  later wins, preserving the pre-existing merge semantics.
+      sigFunc[oldKey] = func
+    elif (name, oldKey) not in ownKeys:
+      #  An own declaration displaces an inherited registration. The
+      #  old key is removed so the stored key carries the own
+      #  declaration's expansion marking.
+      del sigFunc[oldKey]
+      sigFunc[sig] = func
+      ownKeys.add((name, sig))
+      self.__own_overload_keys__ = ownKeys
+    else:
+      self._resolveOwnCollision(name, sigFunc, oldKey, sig, func)
     self.__overload_map__ = {**existing, }
+
+  def _resolveOwnCollision(
+      self,
+      name: str,
+      sigFunc: SigFunc,
+      oldKey: TypeSig,
+      sig: TypeSig,
+      func: Callable,
+  ) -> None:
+    """
+    The '_resolveOwnCollision' method settles two registrations of equal
+    signatures both declared in the class body itself. Signatures
+    expanded from a variadic declaration carry the
+    '__expanded_from_variadic__' marking and rank below explicit
+    declarations: an explicit declaration displaces an expanded one,
+    an expanded one never displaces anything, and two expanded ones
+    from different functions mark the signature ambiguous until an
+    explicit declaration settles it. Two explicit declarations with
+    different functions raise 'DuplicateSignature' immediately.
+
+    Parameters
+    ----------
+    name: str
+      The overloaded name under which the collision occurred.
+    sigFunc: SigFunc
+      Spells out to 'dict[TypeSig, Callable]'. The live signature
+      mapping for 'name', mutated in place.
+    oldKey: TypeSig
+      The signature object already stored, carrying its own expansion
+      marking.
+    sig: TypeSig
+      The arriving signature object, equal to 'oldKey'.
+    func: Callable
+      The arriving function object.
+
+    Raises
+    ------
+    DuplicateSignature
+      If both registrations are explicit declarations of different
+      functions.
+    """
+    newArtifact = getattr(sig, '__expanded_from_variadic__', False)
+    oldArtifact = getattr(oldKey, '__expanded_from_variadic__', False)
+    oldFunc = sigFunc[oldKey]
+    if newArtifact and oldArtifact:
+      if oldFunc is not func:
+        ambiguous = self.getAmbiguousOverloads()
+        ambiguous[(name, sig)] = (oldFunc, func)
+        self.__ambiguous_overloads__ = ambiguous
+      return
+    if newArtifact:
+      #  An explicit declaration already holds the slot.
+      return
+    if oldArtifact:
+      del sigFunc[oldKey]
+      sigFunc[sig] = func
+      ambiguous = self.getAmbiguousOverloads()
+      ambiguous.pop((name, sig), None)
+      self.__ambiguous_overloads__ = ambiguous
+      return
+    if oldFunc is not func:
+      raise DuplicateSignature(sig, oldFunc, func)
+
+  def getOwnOverloadKeys(self, ) -> set:
+    """
+    The 'getOwnOverloadKeys' method returns the set of '(name, sig)'
+    pairs registered by the class body itself, as opposed to those
+    copied from base class namespaces. An empty set when nothing has
+    been registered yet.
+
+    Returns
+    -------
+    set[tuple[str, TypeSig]]
+      The '(name, sig)' pairs the class body registered itself.
+    """
+    return maybe(self.__own_overload_keys__, set())
+
+  def getAmbiguousOverloads(self, ) -> dict:
+    """
+    The 'getAmbiguousOverloads' method returns the mapping of
+    '(name, sig)' pairs to the two function objects whose variadic
+    declarations expanded to the same concrete signature. Entries
+    remain only while no explicit declaration of the signature has
+    settled the ambiguity; 'LoadSpaceHook.postCompilePhase' raises for
+    any entry still present when the class compiles.
+
+    Returns
+    -------
+    dict[tuple[str, TypeSig], tuple[Callable, Callable]]
+      The unresolved ambiguous signature registrations.
+    """
+    return maybe(self.__ambiguous_overloads__, dict())
 
   def getOverloads(self, ) -> OverloadMap:
     """

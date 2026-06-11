@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 from random import random
 
 from ...dispatch import overload
-from ...desc import Field
 from . import IntSampler, BaseSampler
 from ...waitaminute import TypeException
 

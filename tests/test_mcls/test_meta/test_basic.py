@@ -24,12 +24,12 @@ class TestBasicMeta(MCLSTest):
 
   def test_good_class(self) -> None:
     """
-    Test that the metaclass is set correctly.
+    Testing that the metaclass is set correctly.
     """
 
     class Foo(metaclass=BaseMeta):
       """
-      Foo is a class with AbstractMetaclass as its metaclass.
+      Foo is a class with BaseMeta as its metaclass.
       """
 
       def __getitem__(self, item: Any) -> Any:
@@ -72,7 +72,7 @@ class TestBasicMeta(MCLSTest):
 
     class IHaveNoSubclasses(metaclass=BaseMeta):
       """
-      NoSub is a class with BaseMeta as its metaclass.
+      IHaveNoSubclasses is a class with BaseMeta as its metaclass.
       """
 
       @classmethod
@@ -90,7 +90,7 @@ class TestBasicMeta(MCLSTest):
 
   def test_bad_class(self) -> None:
     """
-    Test that the metaclass is set correctly.
+    Testing that the metaclass is set correctly.
     """
 
     with self.assertRaises(QuestionableSyntax) as context:
@@ -111,7 +111,7 @@ class TestBasicMeta(MCLSTest):
 
   def test_str_repr(self) -> None:
     """
-    Test the string representation of the metaclass.
+    Testing the string representation of the metaclass.
     """
 
     class Foo(metaclass=BaseMeta):
@@ -142,7 +142,7 @@ class TestBasicMeta(MCLSTest):
 
   def test_good_iteration(self) -> None:
     """
-    Test that the metaclass supports iteration.
+    Testing that the metaclass supports iteration.
     """
 
     class Foo(metaclass=BaseMeta):
@@ -161,7 +161,8 @@ class TestBasicMeta(MCLSTest):
 
   def test_bad_iteration(self) -> None:
     """
-    Test that the metaclass raises an error when iteration is not supported.
+    Testing that the metaclass raises an error when iteration is not
+    supported.
     """
 
     class Foo(metaclass=BaseMeta):
@@ -268,13 +269,12 @@ class TestBasicMeta(MCLSTest):
         """
         raise Trolololololo
 
-    with self.assertRaises(Trolololololo) as context:
+    with self.assertRaises(Trolololololo):
       _ = len(Derp)
-    e = context.exception
 
   def test_hash(self, ) -> None:
     """
-    Test that the metaclass supports hashing.
+    Testing that the metaclass supports hashing.
     """
 
     class Foo(metaclass=BaseMeta):
@@ -301,7 +301,7 @@ class TestBasicMeta(MCLSTest):
 
   def test_good_del(self) -> None:
     """
-    Test that the metaclass supports deletion.
+    Testing that the metaclass supports deletion.
     """
 
     class DeleteMe(Object, trustMeBro=True, metaclass=BaseMeta):
@@ -341,7 +341,8 @@ class TestBasicMeta(MCLSTest):
 
   def test_bad_del(self) -> None:
     """
-    Test that the metaclass raises an error when deletion is not supported.
+    Testing that the metaclass raises an error when deletion is not
+    supported.
     """
 
     with self.assertRaises(DelException) as context:
@@ -361,7 +362,7 @@ class TestBasicMeta(MCLSTest):
 
   def test_dict_space(self) -> None:
     """
-    Test that the metaclass supports creation with a standard 'dict'
+    Testing that the metaclass supports creation with a standard 'dict'
     instead of the 'AbstractNamespace' returned from its '__prepare__'
     method.
     """

@@ -137,12 +137,16 @@ jobs:
           mkdir -p site
           sphinx-build -b html docs site/latest
           versions='"latest"'
-          # Build each official tag that carries the docs generator.
-          # Pre-releases (dev / rc) are skipped so Pages only shows
-          # finished versions.
+          # Build each official tag that carries the docs generator:
+          # either the in-repo docs/_gen.py of older tags, or a
+          # conf.py using the markwork extension. Pre-releases
+          # (dev / rc) are skipped so Pages only shows finished
+          # versions.
           for tag in $(git tag --sort=-version:refname); do
             case "$tag" in *dev*|*rc*) continue;; esac
-            if git cat-file -e "$tag:docs/_gen.py" 2>/dev/null; then
+            if git cat-file -e "$tag:docs/_gen.py" 2>/dev/null \
+                || git show "$tag:docs/conf.py" 2>/dev/null \
+                | grep -q markwork; then
               git worktree add --detach ../version-build "$tag"
               sphinx-build -b html \
                 -D release="$tag" \

@@ -5,15 +5,10 @@ TestKeeFlags module tests the KeeFlags class functionality.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import KeeFlags, KeeFlagsMeta, KeeFlag
 from worktoy.waitaminute import MissingVariable, TypeException
 from worktoy.waitaminute.keenum import KeeResolveError
 from . import KeeTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestKeeFlags(KeeTest):

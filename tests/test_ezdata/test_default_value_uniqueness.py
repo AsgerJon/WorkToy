@@ -7,13 +7,8 @@ default values in 'EZData' dataclasses.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.ezdata import EZData, EZField
 from . import EZTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestDefaultValueUniqueness(EZTest):

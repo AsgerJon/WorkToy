@@ -6,16 +6,11 @@ TestGaussianSampler subclasses 'SamplerTest' and provides testing of the
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.dispatch import overload
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.dispatch import TypeCastException
 from worktoy.work_test.samplers import GaussianSampler
 from . import SamplerTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestGaussianSampler(SamplerTest):

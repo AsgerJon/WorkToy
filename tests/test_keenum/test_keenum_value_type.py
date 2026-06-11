@@ -8,14 +8,9 @@ handling when working with enumeration members and their values.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import Kee, KeeNum
 from worktoy.waitaminute import TypeException
 from . import KeeTest, examples
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestKeeNumValueType(KeeTest):

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from types import FunctionType as Func
 from types import MethodType
-from typing import TYPE_CHECKING
 
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.dispatch import Dispatcher, TypeSig, overload
@@ -18,9 +17,6 @@ from . import DispatcherTest
 from .examples import SusComplex, ComplexMetaSub, SpacePoint
 from .examples import ComplexNumber, PlanePoint
 
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class TestDispatchUmbrella(DispatcherTest):
   """
@@ -29,13 +25,13 @@ class TestDispatchUmbrella(DispatcherTest):
   """
 
   def test_plane_point(self) -> None:
-    """Test PlanePoint class"""
+    """Testing the PlanePoint example class."""
     p = PlanePoint(0.123456789)
     self.assertEqual(p.x, 0.123456789)
     self.assertEqual(p.y, 0.0)
 
   def test_sus(self) -> None:
-    """Test sus"""
+    """Testing the SusComplex example class."""
     sus0 = SusComplex()
     sus1 = SusComplex(69.)
     sus2 = SusComplex(69.0, 420.0)
@@ -57,7 +53,7 @@ class TestDispatchUmbrella(DispatcherTest):
     self.assertEqual(str(s), repr(s))
 
   def test_sig_func_map(self) -> None:
-    """Test the sig func map"""
+    """Testing the sig func map"""
     sigFuncDict = ComplexNumber.__dict__['__init__']._getSigFuncMap()
     self.assertIsInstance(sigFuncDict, dict)
 
@@ -92,7 +88,7 @@ class TestDispatchUmbrella(DispatcherTest):
     self.assertIn(str(sig), str(e))
 
   def test_callback_setter(self) -> None:
-    """Test the callback setter"""
+    """Testing the callback setter"""
     dispatcher = Dispatcher()
     self.assertIsNone(dispatcher._getFallbackFunction())
     with self.assertRaises(TypeException) as context:

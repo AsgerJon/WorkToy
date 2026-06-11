@@ -34,11 +34,6 @@ class TestKeeMetaResolve(KeeTest):
     c, C, X = str.lower(text), str.upper(text), self.randomInteger.row
     return ''.join((C if x % 2 else c for c, C, x in zip(c, C, X)))
 
-  def test_dev_null(self) -> None:
-    """
-    Testing test functionality
-    """
-
   def nameContract(self, num: KeeMeta) -> None:
     """
     Resolve each member by its name in several case variants (exact,

@@ -5,11 +5,6 @@ The 'sliceLen' function returns how many elements a slice selects.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 def sliceLen(sliceObj: slice, length: int) -> int:
   """Return the number of elements produced by a slice.

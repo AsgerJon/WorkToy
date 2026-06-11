@@ -6,13 +6,8 @@ package.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import UtilitiesTest
 from worktoy.utilities import replaceFlex
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestReplaceFlex(UtilitiesTest):

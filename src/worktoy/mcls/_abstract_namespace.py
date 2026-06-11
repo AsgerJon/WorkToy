@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..utilities import textFmt, resolveMRO
+from ..utilities import maybe, textFmt, resolveMRO
 from ..waitaminute import TypeException
 from ..waitaminute.meta import HookException, DuplicateHook
 from .space_hooks import NamespaceHook, ReservedNamespaceHook, FlexCallHook
@@ -68,6 +68,7 @@ class AbstractNamespace(dict):
   __type_annotations__ = None
   __class_annotations__ = None
   __global_scope__ = None
+  __shadow_space__ = None
 
   #  Public Variables
   reservedNameHook = ReservedNamespaceHook()
@@ -80,6 +81,25 @@ class AbstractNamespace(dict):
 
   def getBases(self) -> Bases:
     return (*self.__base_classes__,)
+
+  def getShadowSpace(self, ) -> dict:
+    """
+    The 'getShadowSpace' method returns the shadow mapping recording
+    every assignment the class body has made, including assignments a
+    hook claimed away from the namespace itself. The reading protocol
+    falls back to this mapping, so a name bound earlier in the class
+    body remains readable even after a hook has claimed it. Without
+    this fallback, reading a claimed name would escape to the module
+    scope, silently picking up whatever global happens to share the
+    name.
+
+    Returns
+    -------
+    dict
+      The mapping of every class-body assignment seen so far, with
+      the most recent assignment winning on repeated names.
+    """
+    return maybe(self.__shadow_space__, dict())
 
   def deepGetItem(self, item: str, ) -> Any:
     """
@@ -219,12 +239,18 @@ class AbstractNamespace(dict):
     """
     The '__getitem__' method fetches 'key', then runs every hook's
     'getItemPhase' before returning the value or re-raising the
-    'KeyError'.
+    'KeyError'. A key absent from the namespace but present in the
+    shadow space resolves to its shadow value: the class body can
+    read back a name even after a hook has claimed the assignment.
     """
     try:
       val = dict.__getitem__(self, key)
     except KeyError as keyError:
-      val = keyError
+      shadow = self.getShadowSpace()
+      if key in shadow:
+        val = shadow[key]
+      else:
+        val = keyError
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       try:
@@ -240,8 +266,13 @@ class AbstractNamespace(dict):
     """
     The '__setitem__' method offers each hook's 'setItemPhase' a chance
     to handle 'key' first; the namespace performs the default assignment
-    only when no hook claims it.
+    only when no hook claims it. Every assignment is also recorded in
+    the shadow space, claimed or not, keeping the name readable from
+    the class body either way.
     """
+    shadow = self.getShadowSpace()
+    shadow[key] = val
+    self.__shadow_space__ = shadow
     try:
       oldVal = dict.__getitem__(self, key)
     except KeyError:

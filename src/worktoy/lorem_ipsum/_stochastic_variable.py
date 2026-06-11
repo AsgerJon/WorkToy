@@ -8,15 +8,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from random import shuffle
-from typing import TYPE_CHECKING
 
 from ..desc import Field
 from ..mcls import BaseObject
 from ..utilities import textFmt
 from ..waitaminute import TypeException
-
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import Optional
 
 
 class StochasticVariable(BaseObject):

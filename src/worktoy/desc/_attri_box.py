@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, TypeVar
 from . import Field, BaseDescriptor
 from ..core import Object
 from ..core.sentinels import DELETED
-from ..utilities import typeCast
+from ..utilities import textFmt, typeCast
 from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.dispatch import TypeCastException
 
@@ -137,7 +137,7 @@ class AttriBox(BaseDescriptor[T]):
     because it happens to be a 'Parent'.
 
     When '__instance_get__' is unable to retrieve a value from a given
-    instance. The 'args' and 'kw' passed to the constructor of the
+    instance, the 'args' and 'kw' passed to the constructor of the
     'AttriBox' are retrieved from the 'getPosArgs' and 'getKeyArgs'
     methods, and passed to this method.
 
@@ -367,9 +367,20 @@ class AttriBox(BaseDescriptor[T]):
     Self
         A new 'AttriBox' carrying 'fieldType', ready for the deferred
         '__call__'.
+
+    Raises
+    ------
+    ValueError
+        If 'fieldType' is 'NoneType', whose field could only ever
+        hold 'None' and whose deferred construction would fail on
+        the first read.
     """
     if isinstance(fieldType, TypeVar):
       return super().__class_getitem__(fieldType)  # noqa
+    if fieldType is type(None):
+      infoSpec = """'%s' cannot use 'NoneType' as its field type! A
+      field of this type could only ever hold 'None'."""
+      raise ValueError(textFmt(infoSpec % cls.__name__))
     self = object.__new__(cls)
     self.__field_type__ = fieldType
     return self  # noqa

@@ -5,11 +5,6 @@ KeeCaseException is raised when a 'KeeNum' member name is not upper-case.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class KeeCaseException(ValueError):
   """

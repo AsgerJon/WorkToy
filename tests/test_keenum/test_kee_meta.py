@@ -6,15 +6,10 @@ tests the 'KeeMeta' metaclass.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import KeeNum, KeeSpace, Kee, KeeMeta
 from worktoy.waitaminute import TypeException
 from . import KeeTest
 from .examples import WeekDay, RGBNum, Point3D
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestKeeMeta(KeeTest):
@@ -25,7 +20,7 @@ class TestKeeMeta(KeeTest):
 
   def test_good_get_base(self, ) -> None:
     """
-    Test that 'KeeMeta.get_base' properly returns the base class of a
+    Testing that 'KeeMeta.get_base' properly returns the base class of a
     'KeeNum' enumeration.
     """
 

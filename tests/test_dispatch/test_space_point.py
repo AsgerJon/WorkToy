@@ -6,13 +6,8 @@ TestSpacePoint tests overloaded methods on subclasses as exposed by the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import DispatcherTest
 from .examples import SpacePoint
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestSpacePoint(DispatcherTest):
@@ -22,7 +17,7 @@ class TestSpacePoint(DispatcherTest):
   """
 
   def test_good_get(self, ) -> None:
-    """Test the 'get' functionality of the 'SpacePoint' class."""
+    """Testing the 'get' functionality of the 'SpacePoint' class."""
     p = SpacePoint(0, 0, 0)
     self.assertAlmostEqual(p.x, 0.0)
     self.assertAlmostEqual(p.y, 0.0)
@@ -33,7 +28,7 @@ class TestSpacePoint(DispatcherTest):
     self.assertAlmostEqual(p.z, 5.0)
 
   def test_dispatcher(self, ) -> None:
-    """Test the dispatcher functionality of the 'SpacePoint' class."""
+    """Testing the dispatcher functionality of the 'SpacePoint' class."""
     d = SpacePoint.__dict__['__init__'].__sig_funcs__
     s = SpacePoint(1, 2, 3)
     s2 = SpacePoint(s)

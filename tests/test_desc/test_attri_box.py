@@ -361,3 +361,13 @@ class TestAttriBox(DescTest):
     e = context.exception
     self.assertIs(e.expectedTypes[0], Plain)
     self.assertIsInstance(e.__cause__, TypeError)
+
+  def test_none_type_field_rejected(self) -> None:
+    """
+    Testing that subscripting 'AttriBox' with 'NoneType' raises
+    'ValueError' at the declaration line, rather than failing
+    confusingly on the first read of the attribute.
+    """
+    with self.assertRaises(ValueError) as context:
+      _ = AttriBox[type(None)]
+    self.assertIn('NoneType', str(context.exception))

@@ -14,7 +14,7 @@ from ..waitaminute import MissingVariable
 from . import AbstractNamespace as ASpace
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, TypeAlias
+  from typing import Any, TypeAlias
 
   Base: TypeAlias = tuple[type, ...]
 

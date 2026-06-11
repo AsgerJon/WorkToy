@@ -8,13 +8,8 @@ to 'ComFlex', this implementation uses the metaclass to expose the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import ComplexMeta
 from worktoy.dispatch import overload
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class ComflexMeta(ComplexMeta):

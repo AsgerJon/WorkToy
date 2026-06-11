@@ -6,14 +6,9 @@ package.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.waitaminute import TypeException
 from . import SamplerTest
 from worktoy.work_test.samplers import BaseSampler
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class FooSampler(BaseSampler):

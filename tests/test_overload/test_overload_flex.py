@@ -8,7 +8,6 @@ package.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
 
 from tests.test_overload import OverloadTest
 from tests.test_utilities import Diagnostic, \
@@ -17,9 +16,6 @@ from tests.test_utilities import Diagnostic, \
 from worktoy.desc import AttriBox
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class _Foo(BaseObject):

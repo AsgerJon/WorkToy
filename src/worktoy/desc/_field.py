@@ -16,7 +16,7 @@ from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 T = TypeVar('T')
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Any, Callable, TypeAlias, Optional
+  from typing import TypeAlias, Any, Callable, Optional
   from typing import Self
 
   MaybeStr: TypeAlias = Optional[str]

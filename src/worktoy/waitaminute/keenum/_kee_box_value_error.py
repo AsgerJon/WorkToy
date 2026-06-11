@@ -6,11 +6,6 @@ matches no member of its enumeration.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class KeeBoxValueError(ValueError):
   """

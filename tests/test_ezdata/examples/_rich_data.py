@@ -7,13 +7,8 @@ subclass that has methods and a descriptor in addition to the single
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.desc import Field
 from worktoy.ezdata import EZData, EZField
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class RichData(EZData):

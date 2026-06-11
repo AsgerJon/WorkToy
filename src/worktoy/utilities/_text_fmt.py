@@ -6,10 +6,6 @@ The 'textFmt' function collapses whitespace in multi-line string literals.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 def textFmt(*args, **kwargs) -> str:

@@ -4,8 +4,6 @@ module."""
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.work_test import BaseTest
 from .examples import FlagsExample, SubclassExample, ChessPieceNum
 from .examples import PrimeNum, CurrencyNum, PlanetNum, ElementNum
@@ -14,9 +12,6 @@ from .examples import NobleGasNum, NetworkPortNum
 from .examples import VAlignum, HAlignum, HTTPStatus
 from .examples import FileAccess, KeyboardModifier
 from .examples import RootRGB, MoreRGB, EvenMoreRGB, RGBNum, Month, WeekDay
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class KeeTest(BaseTest):

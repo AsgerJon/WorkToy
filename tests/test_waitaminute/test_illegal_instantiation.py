@@ -6,14 +6,9 @@ TestIllegalInstantiation tests the IllegalInstantiation class from the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import WaitAMinuteTest
 from worktoy.core.sentinels import THIS
 from worktoy.waitaminute.meta import IllegalInstantiation
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestIllegalInstantiation(WaitAMinuteTest):

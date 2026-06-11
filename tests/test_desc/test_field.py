@@ -98,7 +98,7 @@ class TestField(DescTest):
   """
 
   def test_field(self) -> None:
-    """Test the 'Field' descriptor functionality."""
+    """Testing the 'Field' descriptor functionality."""
 
     class DeleteMeNot(Exception):
       pass
@@ -223,7 +223,7 @@ class TestField(DescTest):
     self.assertEqual(e.newVal, 'imma write lol!', )
 
   def test_bad_delete(self) -> None:
-    """Test that 'Field' raises 'AttributeError' when delete fails."""
+    """Testing that 'Field' raises 'AttributeError' when delete fails."""
 
     class Foo69420:
       __x_fallback__ = 0

@@ -11,7 +11,7 @@ class TestMonoSpace(UtilitiesTest):
   """TestMonoSpace tests the textFmt function."""
 
   def test_textFmt(self) -> None:
-    """Test the textFmt function."""
+    """Testing the textFmt function."""
 
     sample = """This is a multi-line 
     string  with a lot of spaces!!"""
@@ -50,7 +50,7 @@ class TestMonoSpace(UtilitiesTest):
     self.assertEqual(expected, actual)
 
   def test_non_str(self) -> None:
-    """Test that textFmt converts non-string arguments to 'str' and
+    """Testing that textFmt converts non-string arguments to 'str' and
     joins them with single spaces (it does not raise)."""
     expected = '69 420 1337'
     actual = textFmt(69, 420, 1337)

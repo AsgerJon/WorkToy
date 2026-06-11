@@ -5,14 +5,9 @@ TestValidSlice tests the ValidSlice class.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.utilities import ValidSlice, typeCast
 from worktoy.waitaminute.dispatch import TypeCastException
 from . import UtilitiesTest, Freddy, TrollSlice, EvilSlice, DataArray
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestValidSlice(UtilitiesTest):

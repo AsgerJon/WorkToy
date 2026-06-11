@@ -1,6 +1,6 @@
 """
-The 'tests.test_examples.test_lorem_ipsum' module provides tests for the
-'worktoy.examples.lorem_ipsum' package.
+The 'tests.test_lorem_ipsum' package provides tests for the
+'worktoy.lorem_ipsum' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen

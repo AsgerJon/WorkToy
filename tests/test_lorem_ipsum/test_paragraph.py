@@ -1,39 +1,36 @@
 """
 TestParagraph tests the 'Paragraph' class from the
-'worktoy.examples.lorem_ipsum' package.
+'worktoy.lorem_ipsum' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from random import randint
 
 from worktoy.lorem_ipsum import Paragraph
 from . import LoremIpsumTest
 
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class TestParagraph(LoremIpsumTest):
   """
   TestParagraph provides tests for the 'Paragraph' class from the
-  'worktoy.examples.lorem_ipsum' package.
+  'worktoy.lorem_ipsum' package.
   """
 
   def setUp(self) -> None:
     super().setUp()
-    self.paragraph = Paragraph()
+    self.paragraph: Paragraph = Paragraph()
     self.paragraph.reset()
-    self.minLen = 300
-    self.maxLen = 1500
+    self.minLen: int = 300
+    self.maxLen: int = 1500
 
   def test_lengths(self, ) -> None:
     """
-    Testing that the 'Clause' correctly realizes clauses.
+    Testing that 'Paragraph' realizes to exactly the requested character
+    count.
     """
-    lengths = sorted([randint(self.minLen, self.maxLen) for _ in range(16)])
+    lengths = [randint(self.minLen, self.maxLen) for _ in range(16)]
     paragraph = Paragraph()
     self.assertEqual(len(paragraph), paragraph.charCount)
     for length in lengths:

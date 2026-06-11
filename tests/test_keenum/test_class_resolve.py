@@ -24,7 +24,7 @@ class TestClassResolve(KeeTest):
 
   def test_class_resolve_returning_not_implemented(self) -> None:
     """
-    Test a 'KeeNum' whose '__class_resolve__' returns 'NotImplemented'
+    Testing a 'KeeNum' whose '__class_resolve__' returns 'NotImplemented'
     for identifiers it does not handle: 'KeeMeta' falls through to the
     remaining resolvers, and resolution raises 'KeeResolveError' when
     none succeed.

@@ -18,7 +18,7 @@ class TestResolveMRO(UtilitiesTest):
 
   def test_good_mro(self) -> None:
     """
-    Test that resolveMRO returns the correct MRO for a class with multiple
+    Testing that resolveMRO returns the correct MRO for a class with multiple
     inheritance.
     """
 
@@ -37,7 +37,7 @@ class TestResolveMRO(UtilitiesTest):
 
   def test_bad_mro(self, ) -> None:
     """
-    Test that resolveMRO correctly raises an error when receiving base
+    Testing that resolveMRO correctly raises an error when receiving base
     classes that cannot form a valid MRO.
     """
 
@@ -60,7 +60,7 @@ class TestResolveMRO(UtilitiesTest):
 
   def test_recursion_guard(self) -> None:
     """
-    Test that resolveMRO raises a RecursionError when the MRO resolution
+    Testing that resolveMRO raises a RecursionError when the MRO resolution
     exceeds the maximum recursion depth.
     """
 

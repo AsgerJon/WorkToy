@@ -1,22 +1,18 @@
 """
 TestPoint2D subclasses 'EZExamplesTest' from the
-'tests.test_ezdata.examples._ez_examples_test' package and provides tests for
-the 'Point2D' class from the 'tests.test_ezdata.examples' package.
+'tests.test_ezdata_examples' package and provides tests for the
+'Point2D' class from the 'tests.test_ezdata.examples' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 import random
 
 from tests.test_ezdata.examples import Point2D
 from worktoy.desc import AttriBox
 from worktoy.work_test.samplers import BaseSampler
 from . import EZExamplesTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class Point2DSampler(BaseSampler):
@@ -59,9 +55,8 @@ class Point2DSampler(BaseSampler):
 class TestPoint2D(EZExamplesTest):
   """
   TestPoint2D subclasses 'EZExamplesTest' from the
-  'tests.test_ezdata.examples._ez_examples_test' package and provides
-  tests for
-  the 'Point2D' class from the 'tests.test_ezdata.examples' package.
+  'tests.test_ezdata_examples' package and provides tests for the
+  'Point2D' class from the 'tests.test_ezdata.examples' package.
   """
 
   point2DSampler = Point2DSampler()

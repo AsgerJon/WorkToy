@@ -6,13 +6,8 @@ TestSubclassException tests the SubclassException class from the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import WaitAMinuteTest
 from worktoy.waitaminute import SubclassException
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestSubclassException(WaitAMinuteTest):

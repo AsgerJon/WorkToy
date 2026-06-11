@@ -14,16 +14,11 @@ testing the lazy instantiation.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from tests.test_keenum import KeeTest
 from worktoy.keenum import Kee, KeeNum
 from worktoy.waitaminute import TypeException, VariableNotNone
 from worktoy.waitaminute import MissingVariable
 from worktoy.waitaminute.keenum import KeeNameConflict, KeeDuplicate
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestKee(KeeTest):

@@ -6,14 +6,9 @@ TestHTTPStatusResolve tests the '__class_resolve__' method of the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.waitaminute.keenum import KeeResolveError
 from . import KeeTest
 from .examples import HTTPStatus
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestHTTPStatusResolve(KeeTest):
@@ -109,7 +104,7 @@ class TestHTTPStatusResolve(KeeTest):
 
   def test_bad_value(self, ) -> None:
     """
-    Test that passing a member with a value of an unsupported type raises
+    Testing that passing a member with a value of an unsupported type raises
     a KeeTypeException.
     """
     with self.assertRaises(KeeResolveError) as context:

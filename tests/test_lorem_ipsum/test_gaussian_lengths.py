@@ -5,13 +5,8 @@ TestGaussianLengths tests the 'GaussianLengths' distribution.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.lorem_ipsum import GaussianLengths
 from . import LoremIpsumTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestGaussianLengths(LoremIpsumTest):

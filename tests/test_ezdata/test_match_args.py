@@ -21,13 +21,8 @@ supported Python version against the appropriate implementation.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import EZTest, matchAsPoint2D, matchAsCircleKw
 from .examples import Point2D, Circle, FullName, EZComplex
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestMatchArgs(EZTest):

@@ -153,6 +153,12 @@ class EZSpace(BaseSpace):
       raise ReservedFieldError(key, self)
     existing = self.getEZFields()
     if key not in existing:
+      if field.__field_name__ is not None:
+        #  The field instance is already bound to another name, either
+        #  earlier in this class body or in another class. Registering
+        #  a clone keeps the alias independent instead of mutating the
+        #  shared instance's name binding.
+        field = field.clone()
       setattr(field, '__field_name__', key)
       existing[key] = field
       self.__ez_fields__ = existing

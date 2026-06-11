@@ -5,14 +5,9 @@ TestNumDict tests that KeeNum enumerations can be used as dictionary keys.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import KeeNum
 from . import KeeTest
 from .examples import RGBNum
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestNumDict(KeeTest):
@@ -24,7 +19,7 @@ class TestNumDict(KeeTest):
     self.colorDict = {num: str.capitalize(num.name) for num in RGBNum}
 
   def test_num_dict(self, ) -> None:
-    """Test that KeeNum enumerations can be used as dictionary keys. """
+    """Testing that KeeNum enumerations can be used as dictionary keys. """
     for keenum in RGBNum.mroNum:
       for num in keenum:
         self.assertIn(num, self.colorDict)

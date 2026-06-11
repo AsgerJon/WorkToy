@@ -86,7 +86,6 @@ class KeeFlagsMeta(BaseMeta):
     otherKeeBases = getattr(other, '__kee_bases__', None)
     if otherKeeBases is None:
       return False
-    out = None
     for base in otherKeeBases:
       if base is cls or cls.__subclasscheck__(base):
         return True

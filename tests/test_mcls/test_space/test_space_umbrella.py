@@ -4,16 +4,11 @@
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.mcls.space_hooks import AbstractSpaceHook, SpaceDesc
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.meta import ReservedName
 from .. import MCLSTest
 from worktoy.mcls import BaseObject, AbstractNamespace, AbstractMetaclass
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestSpaceUmbrella(MCLSTest):
@@ -23,7 +18,7 @@ class TestSpaceUmbrella(MCLSTest):
   """
 
   def test_reserved_name(self) -> None:
-    """Test ReservedNamespaceHook"""
+    """Testing ReservedNamespaceHook"""
     with self.assertRaises(ReservedName) as context:
       class Breh(BaseObject):
         __match_args__ = 'Never'
@@ -36,7 +31,7 @@ class TestSpaceUmbrella(MCLSTest):
     self.assertEqual(e.resName, '__match_args__')
 
   def test_hook_space_descriptor(self) -> None:
-    """Test ReservedNamespaceHook"""
+    """Testing ReservedNamespaceHook"""
     desc = AbstractSpaceHook.space
     self.assertIsInstance(desc, SpaceDesc)
 

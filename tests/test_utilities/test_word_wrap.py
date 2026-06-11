@@ -31,7 +31,7 @@ class TestWordWrap(UtilitiesTest):
     never gonna run"""
 
   def test_wordWrap(self) -> None:
-    """Test the wordWrap function."""
+    """Testing the wordWrap function."""
     for width in range(25, 100):
       actual = wordWrap(width, self.paragraph)
       lines = actual.split('\n')
@@ -40,7 +40,7 @@ class TestWordWrap(UtilitiesTest):
 
   def test_missing_length(self) -> None:
     """
-    Test that wordWrap raises 'TypeException' when the width is not an
+    Testing that wordWrap raises 'TypeException' when the width is not an
     integer.
     """
     with self.assertRaises(TypeException) as context:
@@ -54,7 +54,7 @@ class TestWordWrap(UtilitiesTest):
 
   def test_non_str_lines(self, ) -> None:
     """
-    Test that wordWrap raises 'TypeException' when a line is not a string.
+    Testing that wordWrap raises 'TypeException' when a line is not a string.
     """
     with self.assertRaises(TypeException) as context:
       wordWrap(50, self.paragraph, 123, 'breh')
@@ -95,3 +95,12 @@ class TestWordWrap(UtilitiesTest):
     lines = result.split('\n')
     self.assertEqual(lines[0], 'first half')
     self.assertEqual(lines[1], 'second half')
+
+  def test_non_positive_width(self) -> None:
+    """
+    Testing that 'wordWrap' rejects zero and negative widths with
+    'ValueError' rather than producing one word per line.
+    """
+    for width in (0, -1, -69):
+      with self.assertRaises(ValueError):
+        _ = wordWrap(width, 'never gonna give you up')

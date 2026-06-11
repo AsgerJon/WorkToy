@@ -6,13 +6,8 @@ with 'FixBox' descriptors to create immutable 2D points.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.desc import FixBox
 from . import Point2D
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class Point2DFix(Point2D):

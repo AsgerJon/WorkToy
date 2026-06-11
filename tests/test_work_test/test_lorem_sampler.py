@@ -6,13 +6,8 @@ TestLoremSample subclasses 'SampleTest' and provides tests for
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.work_test.samplers import LoremSampler
 from . import SamplerTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestLoremSampler(SamplerTest):
@@ -23,12 +18,12 @@ class TestLoremSampler(SamplerTest):
 
   def test_value_type(self, ) -> None:
     """
-    Test that the value type of the sampler is 'str'.
+    Testing that the value type of the sampler is 'str'.
     """
     self.assertIs(LoremSampler()._getValueType(), str)
 
   def test_get_item(self, ) -> None:
     """
-    Test that the get item method of the sampler returns a string.
+    Testing that the get item method of the sampler returns a string.
     """
     self.assertIsInstance(LoremSampler()._getItem(), str)

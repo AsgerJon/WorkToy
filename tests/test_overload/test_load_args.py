@@ -11,16 +11,11 @@ interaction with explicit overrides.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.core.sentinels import ARGS
 from worktoy.dispatch import Dispatcher, TypeSig, overload
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute.dispatch import DispatchException
 from . import OverloadTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class IntCollector(BaseObject):
@@ -73,7 +68,10 @@ class DualVariadic(BaseObject):
   """Two variadic overloads stacked under the same method name.
   The second '@overload' registration finds 'collect' already in
   the namespace's variadic map and appends to the existing list
-  rather than creating a new entry."""
+  rather than creating a new entry. Both variadics accept the empty
+  call, so the explicit '@overload()' declaration settles which
+  function receives it; without it, class creation raises
+  'DuplicateSignature' for the ambiguous empty signature."""
 
   @overload(*ARGS[int])
   def collect(self, *nums: int) -> str:
@@ -82,6 +80,10 @@ class DualVariadic(BaseObject):
   @overload(*ARGS[str])
   def collect(self, *names: str) -> str:
     return 'str'
+
+  @overload()
+  def collect(self) -> str:
+    return 'empty'
 
 
 class ParentWithVariadic(BaseObject):
@@ -304,6 +306,7 @@ class TestLoadARGS(OverloadTest):
     obj = DualVariadic()
     self.assertEqual(obj.collect(1, 2, 3, 4, 5, 6, 7), 'int')
     self.assertEqual(obj.collect('a', 'b', 'c', 'd', 'e', 'f', 'g'), 'str')
+    self.assertEqual(obj.collect(), 'empty')
 
   def test_child_inherits_parent_variadic(self) -> None:
     """A 'BaseObject' subclass of a class with a variadic overload

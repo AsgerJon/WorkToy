@@ -6,15 +6,10 @@ descriptors.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
 from worktoy.keenum import KeeBox
 from . import KeyboardModifier, KeyboardKeyNum
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class KeyBind(BaseObject):

@@ -118,4 +118,4 @@ class TestClassCallRegistry(MCLSTest):
     self.assertIs(newEpsilon, newerEpsilon)
     self.assertIs(newZeta, newerZeta)
 
-    thing = Thing('breh')
+    _ = Thing('breh')

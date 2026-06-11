@@ -13,7 +13,7 @@ from worktoy.utilities.combinatorics import Arrangement, Arrangements
 
 if TYPE_CHECKING:  # pragma: no cover
   # @formatter:off
-  from typing import Any, Iterator
+  from typing import Any, Iterator, Optional
 
   class Arrangements:  # noqa
     __is_hashable__: Optional[bool]

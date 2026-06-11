@@ -12,7 +12,7 @@ class TestStringList(UtilitiesTest):
   """TestStringList tests the 'stringList' function."""
 
   def test_stringList(self) -> None:
-    """Test the stringList function."""
+    """Testing the stringList function."""
     items = 'a, b, c, d'
     expected = ['a', 'b', 'c', 'd']
     actual = stringList(items)
@@ -34,14 +34,14 @@ class TestStringList(UtilitiesTest):
     self.assertEqual(expected, actual)
 
   def test_stringList_empty(self) -> None:
-    """Test the stringList function with empty string."""
+    """Testing the stringList function with empty string."""
     items = ''
     expected = []
     actual = stringList(items)
     self.assertEqual(expected, actual)
 
   def test_custom_separator(self) -> None:
-    """Test the stringList function with custom separator."""
+    """Testing the stringList function with custom separator."""
     sample = """1, 2, fizz, 4, buzz, 6, 7, 8, 9, 10"""
     sep = 'fizz'
     expected = ['1, 2,', ', 4, buzz, 6, 7, 8, 9, 10']
@@ -53,7 +53,7 @@ class TestStringList(UtilitiesTest):
     self.assertEqual(expected, actual)
 
   def test_multiple_separators(self) -> None:
-    """Test the stringList function with multiple separators."""
+    """Testing the stringList function with multiple separators."""
     sample = 'a, b; c, d'
     expected = ['a', 'b', 'c', 'd']
     actual = stringList(sample, separator=[', ', '; '])

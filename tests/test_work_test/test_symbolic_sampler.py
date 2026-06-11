@@ -6,14 +6,9 @@ TestSymbolicSampler subclasses 'BaseTest' and provides tests for the
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.dispatch import overload
 from worktoy.work_test.samplers import SymbolicSampler
 from . import SamplerTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestSymbolicSampler(SamplerTest):

@@ -6,17 +6,12 @@ provides tests for the 'EZData' class from the 'worktoy.ezdata' package.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.ezdata import EZData, EZField, EZMeta, fields
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.ezdata import DuplicateError, \
   IncompleteFieldException, ReservedFieldError
 from . import EZTest
 from .examples import RichData, EZComplex, Circle, FullName, Point2D
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestEZData(EZTest):
@@ -38,7 +33,7 @@ class TestEZData(EZTest):
 
   def test_duplicate_fields(self, ) -> None:
     """
-    Test that duplicate fields are not allowed in 'EZData' classes.
+    Testing that duplicate fields are not allowed in 'EZData' classes.
     """
     with self.assertRaises(DuplicateError) as context:
       class Sus(EZData):  # noqa: F841
@@ -53,7 +48,7 @@ class TestEZData(EZTest):
 
   def test_flags(self, ) -> None:
     """
-    Test that the 'frozen' and 'slots' flags are properly set in 'EZData'
+    Testing that the 'frozen' and 'slots' flags are properly set in 'EZData'
     classes.
     """
 
@@ -63,7 +58,7 @@ class TestEZData(EZTest):
 
   def test_congruency(self, ) -> None:
     """
-    Test that 'EZComplex' is congruent with the 'ComplexMixin' from the
+    Testing that 'EZComplex' is congruent with the 'ComplexMixin' from the
     'worktoy.work_test' package.
     """
     self.assertFalse(EZComplex.isCongruent(type('_', (), dict())))

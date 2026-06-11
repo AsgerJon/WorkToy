@@ -7,8 +7,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from types import FunctionType
+
 from ...core.sentinels import METACALL
 from ...waitaminute.meta import QuestionableSyntax, DelException
+from ...waitaminute.meta import UnboundClassHook
 from . import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -169,6 +172,9 @@ class NamespaceHook(AbstractSpaceHook):
     ------
     DelException
         If '__del__' is defined without the 'trustMeBro' keyword.
+    UnboundClassHook
+        If 'key' is a routed '__class_*__' hook name bound to a plain
+        function or staticmethod rather than a classmethod.
     QuestionableSyntax
         If 'key' is a near-miss spelling of a known dunder.
     """
@@ -179,6 +185,15 @@ class NamespaceHook(AbstractSpaceHook):
       name = self.space.getClassName()
       bases = self.space.getBases()
       raise DelException(mcls, name, bases, self.space)
+    if key in self._getClassDunders():
+      if isinstance(val, (FunctionType, staticmethod)):
+        #  The metaclass invokes these hooks as bound classmethods. A
+        #  plain function receives no class binding: most hooks fail
+        #  with a confusing 'TypeError' at call time, and
+        #  '__class_call__' silently swallows the first constructor
+        #  argument as the class.
+        clsName = self.space.getClassName()
+        raise UnboundClassHook(clsName, key)
     return self._validateName(key)
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:

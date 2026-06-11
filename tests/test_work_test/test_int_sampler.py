@@ -6,15 +6,10 @@ TestIntSample subclasses 'SampleTest' and provides test cases for the
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.dispatch import DispatchException
 from worktoy.work_test.samplers import IntSampler
 from . import SamplerTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestIntSampler(SamplerTest):

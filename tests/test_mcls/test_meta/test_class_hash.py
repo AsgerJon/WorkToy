@@ -6,13 +6,8 @@ implement __class_hash__ are called correctly.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class Christiania(metaclass=AbstractMetaclass):

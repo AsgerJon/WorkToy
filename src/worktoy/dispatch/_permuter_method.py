@@ -30,7 +30,7 @@ class PermuterMethod(Permuter):
 
     Parameters
     ----------
-    func : FunctionType
+    func : Callable
         The wrapped function.
     instance : Any, optional
         The calling instance, forwarded as the first argument.

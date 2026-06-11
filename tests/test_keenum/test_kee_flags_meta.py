@@ -5,17 +5,12 @@ TestKeeFlagsMeta tests the KeeFlagsMeta metaclass functionality.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.utilities.combinatorics import Arrangements
 from worktoy.waitaminute.keenum import KeeFlagDuplicate
 from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsMeta, KeeNum
 from worktoy.desc import Field
 from .examples import SubclassExample, FlagsExample, MouseButton, PrimeValued
 from . import KeeTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestKeeFlagsMeta(KeeTest):

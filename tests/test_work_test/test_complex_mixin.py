@@ -28,7 +28,7 @@ class TestComplexMixin(ComplexTest):
 
   def test_init(self, ) -> None:
     """
-    Test that the 'ComplexMixin' can be initialized without errors.
+    Testing that the 'ComplexMixin' can be initialized without errors.
     """
     for target in self.targets:
       instance = target()
@@ -38,7 +38,7 @@ class TestComplexMixin(ComplexTest):
 
   def test_recursion(self, ) -> None:
     """
-    Test that the 'ComplexMixin' does not cause recursion errors when
+    Testing that the 'ComplexMixin' does not cause recursion errors when
     accessing the REAL and IMAG properties.
     """
     for target in self.targets:

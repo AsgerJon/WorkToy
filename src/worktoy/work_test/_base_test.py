@@ -43,11 +43,11 @@ try:
 except AttributeError:  # pragma: no cover
   class _Temp(TestCase):
     def assertIsSubclass(self, cls: type, base: type, msg=None) -> None:
-      """Assert that 'subClass' is a subclass of 'superClass'."""
+      """Asserts that 'cls' is a subclass of 'base'."""
       self.assertTrue(issubclass(cls, base))
 
     def assertNotIsSubclass(self, cls: type, base: type, msg=None) -> None:
-      """Assert that 'subClass' is not a subclass of 'superClass'."""
+      """Asserts that 'cls' is not a subclass of 'base'."""
       self.assertFalse(issubclass(cls, base))
 else:  # version >= 3.14
   _Temp = TestCase

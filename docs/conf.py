@@ -1,26 +1,20 @@
 """Sphinx configuration: render the worktoy source verbatim.
 
 This build does NOT import worktoy, does NOT introspect it, and does
-NOT parse docstrings as markup. Every page is one source file
-rendered by docs/_gen.py: it highlights the file with Pygments into
-an HTML fragment and embeds that via a `.. raw:: html` directive,
-then wires the page into a navigation tree.
+NOT parse docstrings as markup. Every page is one source file rendered
+by the markwork extension: the file is highlighted into an HTML
+fragment, every name becomes a link to its definition, and the page is
+wired into a navigation tree alongside a mirror of the test suite.
 
 Sphinx is used only for the parts it is genuinely good at: building
 the multi-page navigable, searchable, themed site and hosting it on
 Read the Docs / GitHub Pages. None of the autodoc machinery is loaded.
+markwork itself began life as this project's docs/_gen.py before
+moving to its own package.
 """
 from __future__ import annotations
 
-import sys
 from pathlib import Path
-
-#  Put this docs/ directory on sys.path so conf.py can import the
-#  generator module (_gen) that lives beside it.
-sys.path.insert(0, str(Path(__file__).parent))
-
-from sphinx.application import Sphinx
-from _gen import generate
 
 # ============================================================
 # Project metadata
@@ -56,10 +50,16 @@ version = release
 # General configuration
 # ============================================================
 #
-# No extensions are needed. The 'raw' and 'toctree' directives that
-# the generated pages use are part of Sphinx / docutils core. We
-# deliberately do NOT load autodoc, autosummary, or napoleon.
-extensions = []
+# markwork generates the verbatim source pages into docs/_source/ at
+# builder-inited and ships its own stylesheet for the go-to-definition
+# anchors. We deliberately do NOT load autodoc, autosummary, or
+# napoleon.
+extensions = ["markwork"]
+
+#  The package under src/ to document. markwork would auto-detect a
+#  lone package, but the explicit declaration is cheap and survives
+#  the day a second package appears under src/.
+markwork_package = "worktoy"
 
 #  rst.txt is Asger's plain-text cheat sheet, not a doc page. The
 #  generated _source/ pages ARE read (they are the site); _build is
@@ -81,11 +81,3 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_js_files = ["versions.js"]
-
-
-def setup(app: Sphinx) -> None:
-  """Wire the source-page generator to run before Sphinx reads
-  sources, so a plain `sphinx-build` regenerates docs/_source/ each
-  time. This mirrors how sphinx.ext.autosummary generates its own
-  stub files at builder-inited."""
-  app.connect("builder-inited", generate)

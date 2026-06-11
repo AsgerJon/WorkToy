@@ -473,7 +473,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
     Returns
     -------
-    KeeNum
+    KeeNum or NotImplemented
       The resolved member, or 'NotImplemented' if resolution fails.
     """
     if cls.valueType is int:
@@ -522,7 +522,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
     Returns
     -------
-    T
+    KeeNum
       The resolved enumeration member.
     """
     if isinstance(identifier, cls):

@@ -5,17 +5,12 @@ TestTypeCast tests the 'typeCast' function from 'worktoy.utilities'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.dispatch import overload
 from . import UtilitiesTest
 from worktoy.mcls import BaseObject
 from worktoy.utilities import typeCast
 from worktoy.core.sentinels import THIS
 from worktoy.waitaminute.dispatch import TypeCastException
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestTypeCast(UtilitiesTest):
@@ -25,7 +20,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_exact(self) -> None:
     """
-    Test that 'typeCast(target, arg)' returns 'arg' when 'arg' is an
+    Testing that 'typeCast(target, arg)' returns 'arg' when 'arg' is an
     instance of 'target'.
     """
     self.assertEqual(typeCast(int, 42), 42)
@@ -35,14 +30,14 @@ class TestTypeCast(UtilitiesTest):
 
   def test_good_to_str(self) -> None:
     """
-    Test that 'typeCast(str, arg)' converts 'arg' to a string, but only
+    Testing that 'typeCast(str, arg)' converts 'arg' to a string, but only
     when arg is an instance of 'bytes'.
     """
     self.assertEqual(typeCast(str, b'hello'), 'hello')
 
   def test_bad_to_str(self) -> None:
     """
-    Test that 'typeCast(str, arg)' raises 'TypeCastException' for a
+    Testing that 'typeCast(str, arg)' raises 'TypeCastException' for a
     value that is neither a 'str' nor decodable 'bytes' (here an int).
     """
     with self.assertRaises(TypeCastException) as context:
@@ -54,7 +49,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_to_dispatcher(self) -> None:
     """
-    Test that 'typeCast' raises 'TypeCastException' when 'arg' cannot be
+    Testing that 'typeCast' raises 'TypeCastException' when 'arg' cannot be
     cast to 'target' (here a 'BaseObject' subclass).
     """
 
@@ -84,7 +79,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_good_to_int(self) -> None:
     """
-    Test that 'typeCast(int, arg)' returns an int for a whole-number
+    Testing that 'typeCast(int, arg)' returns an int for a whole-number
     float, an integer-valued real complex, a parseable str, and bool.
     """
     self.assertEqual(typeCast(int, 3.0), 3)
@@ -95,7 +90,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_value_to_int(self) -> None:
     """
-    Test that 'typeCast(int, arg)' raises 'TypeCastException' for values
+    Testing that 'typeCast(int, arg)' raises 'TypeCastException' for values
     that cannot be converted without loss: a non-integer float, a
     non-parseable str, and a complex with a nonzero imaginary part.
     """
@@ -109,7 +104,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_type_to_int(self) -> None:
     """
-    Test that 'typeCast(int, arg)' raises 'TypeCastException' for a value
+    Testing that 'typeCast(int, arg)' raises 'TypeCastException' for a value
     whose type has no conversion rule (a lambda).
     """
     with self.assertRaises(TypeCastException) as context:
@@ -120,7 +115,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_good_to_float(self) -> None:
     """
-    Test that 'typeCast(float, arg)' returns a float for an int, a
+    Testing that 'typeCast(float, arg)' returns a float for an int, a
     parseable str, and a real-valued complex.
     """
     self.assertEqual(typeCast(float, 3), 3.0)
@@ -129,7 +124,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_value_to_float(self) -> None:
     """
-    Test that 'typeCast(float, arg)' raises 'TypeCastException' for a
+    Testing that 'typeCast(float, arg)' raises 'TypeCastException' for a
     non-parseable str and a complex with a nonzero imaginary part.
     """
     for bad in ['breh', 69 + 420j, ]:
@@ -142,7 +137,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_type_to_float(self) -> None:
     """
-    Test that 'typeCast(float, arg)' raises 'TypeCastException' for a
+    Testing that 'typeCast(float, arg)' raises 'TypeCastException' for a
     value whose type has no conversion rule (a lambda).
     """
     with self.assertRaises(TypeCastException) as context:
@@ -153,7 +148,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_good_to_complex(self) -> None:
     """
-    Test that 'typeCast(complex, arg)' returns a complex for an int, a
+    Testing that 'typeCast(complex, arg)' returns a complex for an int, a
     float, and a parseable str (including '3+4j').
     """
     self.assertEqual(typeCast(complex, 3), 3 + 0j)
@@ -163,7 +158,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_value_to_complex(self) -> None:
     """
-    Test that 'typeCast(complex, arg)' raises 'TypeCastException' for a
+    Testing that 'typeCast(complex, arg)' raises 'TypeCastException' for a
     non-parseable str.
     """
     for bad in ['breh', ]:
@@ -176,7 +171,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_type_to_complex(self) -> None:
     """
-    Test that 'typeCast(complex, arg)' raises 'TypeCastException' for a
+    Testing that 'typeCast(complex, arg)' raises 'TypeCastException' for a
     value whose type has no conversion rule (a lambda).
     """
     with self.assertRaises(TypeCastException) as context:
@@ -187,7 +182,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_any_to_bool(self) -> None:
     """
-    Test that 'typeCast(bool, arg)' converts 'arg' to a boolean.
+    Testing that 'typeCast(bool, arg)' converts 'arg' to a boolean.
     """
     self.assertTrue(typeCast(bool, 1))
     self.assertFalse(typeCast(bool, 0))
@@ -196,7 +191,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_bad_targets(self, ) -> None:
     """
-    Test that 'typeCast' raises 'TypeCastException' when 'target' is an
+    Testing that 'typeCast' raises 'TypeCastException' when 'target' is an
     unsupported type (list, tuple, set, frozenset, dict), except for an
     exact match where 'arg' is already an instance of that type.
     """
@@ -217,8 +212,8 @@ class TestTypeCast(UtilitiesTest):
 
   def test_str_to_str(self) -> None:
     """
-    Test that 'typeCast(str, arg)' returns 'arg' when 'arg' is an instance of
-    'str'.
+    Testing that 'typeCast(str, arg)' returns 'arg' when 'arg' is an
+    instance of 'str'.
     """
     self.assertEqual(typeCast(str, 'hello'), 'hello')
 
@@ -235,7 +230,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_int_to_float(self) -> None:
     """
-    Test that 'typeCast(float, arg)' returns 'arg' when 'arg' is an
+    Testing that 'typeCast(float, arg)' returns 'arg' when 'arg' is an
     instance of
     'int'.
     """
@@ -244,7 +239,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_int_to_float_overflow(self) -> None:
     """
-    Test that 'typeCast(float, arg)' raises 'TypeCastException' (chained
+    Testing that 'typeCast(float, arg)' raises 'TypeCastException' (chained
     from 'OverflowError') for an int too large for a float, instead of
     letting the 'OverflowError' escape.
     """
@@ -259,7 +254,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_int_to_float_precision_loss(self) -> None:
     """
-    Test that 'typeCast(float, arg)' raises 'TypeCastException' for an
+    Testing that 'typeCast(float, arg)' raises 'TypeCastException' for an
     int a float cannot hold exactly, honoring the lossless contract in
     the int-to-float direction.
     """
@@ -273,7 +268,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_int_to_float_exact_large(self) -> None:
     """
-    Test that 'typeCast(float, arg)' still succeeds for large ints a
+    Testing that 'typeCast(float, arg)' still succeeds for large ints a
     float represents exactly, including powers of two at and beyond the
     53-bit mantissa boundary.
     """
@@ -284,7 +279,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_int_to_complex_overflow(self) -> None:
     """
-    Test that 'typeCast(complex, arg)' raises 'TypeCastException'
+    Testing that 'typeCast(complex, arg)' raises 'TypeCastException'
     (chained from 'OverflowError') for an int too large for the float
     real part, instead of leaking the 'OverflowError'.
     """
@@ -299,7 +294,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_int_to_complex_precision_loss(self) -> None:
     """
-    Test that 'typeCast(complex, arg)' raises 'TypeCastException' for an
+    Testing that 'typeCast(complex, arg)' raises 'TypeCastException' for an
     int whose value a float real part cannot hold exactly.
     """
     for lossy in [2 ** 53 + 1, 2 ** 60 + 1, -(2 ** 64 + 1)]:
@@ -312,7 +307,7 @@ class TestTypeCast(UtilitiesTest):
 
   def test_int_to_complex_exact_large(self) -> None:
     """
-    Test that 'typeCast(complex, arg)' still succeeds for large ints a
+    Testing that 'typeCast(complex, arg)' still succeeds for large ints a
     float represents exactly, returning a complex with zero imaginary
     part.
     """

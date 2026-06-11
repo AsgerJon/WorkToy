@@ -1,26 +1,21 @@
 """
 TestFullName subclasses 'EZExamplesTest' from the
-'tests.test_ezdata.examples._ez_examples_test' package and provides tests for
-the 'FullName' class from the 'tests.test_ezdata.examples' package.
+'tests.test_ezdata_examples' package and provides tests for the
+'FullName' class from the 'tests.test_ezdata.examples' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from tests.test_ezdata.examples import FullName
 from . import EZExamplesTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestFullName(EZExamplesTest):
   """
   TestFullName subclasses 'EZExamplesTest' from the
-  'tests.test_ezdata.examples._ez_examples_test' package and provides tests
-  for the 'FullName' class from the 'tests.test_ezdata.examples' package.
+  'tests.test_ezdata_examples' package and provides tests for the
+  'FullName' class from the 'tests.test_ezdata.examples' package.
   """
 
   def setUp(self) -> None:

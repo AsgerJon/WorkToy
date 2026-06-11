@@ -67,7 +67,6 @@ class HookException(Exception):
   def __str__(self) -> str:
     spec = """HookException raised from %s! Key: '%s', Value: '%s', 
     Hook: '%s'! Initial exception: %s"""
-    cls = type(self).__name__
     info = spec % (
       self.namespaceObject, self.itemKey, self.errorValue,
       self.hookFunction, self.initialException,

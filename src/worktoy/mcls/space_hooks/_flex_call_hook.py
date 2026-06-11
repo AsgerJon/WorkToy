@@ -6,13 +6,9 @@ FlexCallHook wraps plain class-body functions with 'flexCall'.
 from __future__ import annotations
 
 from types import FunctionType
-from typing import TYPE_CHECKING
 
 from ...dispatch import flexCall
 from . import AbstractSpaceHook
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class FlexCallHook(AbstractSpaceHook):

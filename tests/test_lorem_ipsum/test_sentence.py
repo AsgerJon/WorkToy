@@ -1,42 +1,37 @@
 """
 TestSentence tests the 'Sentence' class from the
-'worktoy.examples.lorem_ipsum' package.
+'worktoy.lorem_ipsum' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.lorem_ipsum import Sentence
 from worktoy.work_test.samplers import IntSampler
 from . import LoremIpsumTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
-CHI2_6SIGMA_DOF4 = 55.52
 
 
 class TestSentence(LoremIpsumTest):
   """
   TestSentence provides tests for the 'Sentence' class from the
-  'worktoy.examples.lorem_ipsum' package.
+  'worktoy.lorem_ipsum' package.
   """
 
   randomInteger = IntSampler(69, 420)
 
   def setUp(self) -> None:
     """
-    Sets the 'charCount' of the 'randomLorem'.
+    Creates the sentence under test and pins the 'charCount' of the
+    'randomLorem' sampler inherited from 'BaseTest'.
     """
     super().setUp()
-    self.sentence = Sentence()
+    self.sentence: Sentence = Sentence()
     self.randomLorem.charCount = 69
 
   def test_lengths(self, ) -> None:
     """
-    Testing that the 'Clause' correctly realizes clauses.
+    Testing that 'Sentence' realizes to exactly the requested character
+    count.
     """
     self.randomInteger.rowCount = 10
     for length in self.randomInteger.row:

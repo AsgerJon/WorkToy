@@ -14,6 +14,7 @@ from ._duplicate_hook import DuplicateHook
 from ._del_exception import DelException
 from ._questionable_syntax import QuestionableSyntax
 from ._reserved_name import ReservedName
+from ._unbound_class_hook import UnboundClassHook
 
 __all__ = [
   'DuplicateHook',
@@ -22,4 +23,5 @@ __all__ = [
   'DelException',
   'QuestionableSyntax',
   'ReservedName',
+  'UnboundClassHook',
 ]

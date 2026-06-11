@@ -6,13 +6,8 @@ with 'FixBox' descriptors to create immutable circles.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.desc import FixBox
 from . import Circle, Point2DFix
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class CircleFix(Circle):

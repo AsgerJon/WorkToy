@@ -8,15 +8,10 @@ casting.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.mcls import BaseObject
 from worktoy.dispatch import overload
 from worktoy.waitaminute.dispatch import DispatchException
 from . import OverloadTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class Chill(BaseObject):

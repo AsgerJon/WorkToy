@@ -9,15 +9,11 @@ rebuilt into a 'Dispatcher' that would silently shadow the override.
 from __future__ import annotations
 
 from types import FunctionType
-from typing import TYPE_CHECKING
 
 from worktoy.desc import AttriBox
 from worktoy.dispatch import overload, Dispatcher
 from worktoy.mcls import BaseObject
 from .. import MCLSTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class Base(BaseObject):

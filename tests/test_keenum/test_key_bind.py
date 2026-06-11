@@ -6,14 +6,9 @@ descriptors typed by a 'KeeNum' and a 'KeeFlags' enumeration.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from .examples import KeyBind, KeyboardModifier, KeyboardKeyNum
 
 from . import KeeTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestKeyBind(KeeTest):

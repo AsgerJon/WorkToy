@@ -6,15 +6,10 @@ functionality.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.dispatch import Dispatcher, TypeSig
 from worktoy.waitaminute.dispatch import DispatchException
 from . import DispatcherTest
 from .examples import PlanePoint, SpacePoint
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestDescriptorOverloadBasic(DispatcherTest):
@@ -32,7 +27,7 @@ class TestDescriptorOverloadBasic(DispatcherTest):
       self.assertTrue(callable(val))
 
   def test_good_init(self) -> None:
-    """Test that PlanePoint correctly initializes across all overloads."""
+    """Testing that PlanePoint correctly initializes across all overloads."""
     #  Test with two floats
     point = PlanePoint(0.1337, 0.80085)
     self.assertIsInstance(point, PlanePoint)
@@ -66,7 +61,7 @@ class TestDescriptorOverloadBasic(DispatcherTest):
     self.assertEqual(str(point), repr(point))
 
   def test_bad_init(self) -> None:
-    """Test that PlanePoint correctly raises DispatchException on
+    """Testing that PlanePoint correctly raises DispatchException on
     unsupported arguments."""
     #  Test with malformed strings
     with self.assertRaises(DispatchException) as context:
@@ -98,7 +93,7 @@ class TestDescriptorOverloadBasic(DispatcherTest):
     self.assertEqual(str(e), repr(e))
 
   def test_good_subclass_init(self) -> None:
-    """Test that PlanePoint subclasses can be initialized correctly."""
+    """Testing that PlanePoint subclasses can be initialized correctly."""
     point = SpacePoint(0.1337, 0.80085, 0.69)
     self.assertIsInstance(point, SpacePoint)
     self.assertIsInstance(point, PlanePoint)

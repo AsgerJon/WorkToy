@@ -6,13 +6,8 @@ for those difficult to cover edges.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.lorem_ipsum import StochasticVariable
 from . import LoremIpsumTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestGymnastics(LoremIpsumTest):
@@ -23,7 +18,8 @@ class TestGymnastics(LoremIpsumTest):
 
   def test_stupid_class_init(self, ) -> None:
     """
-    Testing that the 'StupidClass' initializes correctly.
+    Testing that the underlying '__class_init__' raises 'AttributeError'
+    when handed a plain 'dict' in place of the expected namespace object.
     """
     init = StochasticVariable.__class_init__
     init = getattr(init, '__func__', init)

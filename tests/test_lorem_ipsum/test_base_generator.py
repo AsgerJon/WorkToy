@@ -1,35 +1,29 @@
 """
 TestBaseGenerator tests the 'BaseGenerator' class from the
-'worktoy.examples.lorem_ipsum' package.
+'worktoy.lorem_ipsum' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from random import randint
-from typing import TYPE_CHECKING
 
 from worktoy.lorem_ipsum import BaseGenerator
 from worktoy.lorem_ipsum import Clause
 from worktoy.waitaminute import TypeException
 from . import LoremIpsumTest
 
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class TestBaseGenerator(LoremIpsumTest):
   """
   TestBaseGenerator provides tests for the 'BaseGenerator' class from the
-  'worktoy.examples.lorem_ipsum' package.
+  'worktoy.lorem_ipsum' package.
   """
-
-  def setUp(self) -> None:
-    super().setUp()
 
   def test_init(self) -> None:
     """
-    Testing that the 'BaseGenerator' initializes correctly.
+    Testing that 'BaseGenerator' stores a given 'charCount' and falls
+    back to the 'AttriBox' default when constructed without one.
     """
     for _ in range(16):
       count = randint(69, 420)

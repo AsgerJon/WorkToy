@@ -1,5 +1,5 @@
 """
-Test module used by the TestRuntimeResolveType class
+Testing module used by the TestRuntimeResolveType class
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

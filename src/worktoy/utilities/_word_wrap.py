@@ -57,6 +57,8 @@ def wordWrap(width: int, *textLines: str, **kwargs) -> str:
   TypeException
       If 'width' is not an 'int' or any fragment is not a
       'str'.
+  ValueError
+      If 'width' is zero or negative.
 
   Examples
   --------
@@ -67,6 +69,9 @@ def wordWrap(width: int, *textLines: str, **kwargs) -> str:
   """
   if not isinstance(width, int):
     raise _typeException('width', width, int)
+  if width < 1:
+    infoSpec = """Expected a positive 'width', but received: %d!"""
+    raise ValueError(infoSpec % width)
   newLine = kwargs.get('newLine', '<br>').strip().lower()
   words: List[str] = []
   for fragment in textLines:

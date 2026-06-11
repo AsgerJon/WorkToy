@@ -7,12 +7,8 @@ TestBaseTest tests the 'BaseTest' class of the 'worktoy.work_test' package.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
 
 from worktoy.work_test import BaseTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestBaseTest(BaseTest):

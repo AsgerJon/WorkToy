@@ -8,14 +8,9 @@ own distinct 'KeeNum'-like class via the 'keeNum' descriptor.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from tests.test_keenum import KeeTest
 from worktoy.keenum import KeeMeta, KeeNum, Kee, KeeMetaMeta
 from worktoy.mcls import BaseMeta
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class KeeMetaSub(KeeMeta):

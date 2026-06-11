@@ -13,7 +13,7 @@ to 3.14.
 *Maybe it is time to consider updating if you are still using Python 3.7.
 
 # Table of Contents
- 
+
 - [Installation](#installation)
 - [Python Is Easy. Too Easy!](#python-is-easy-too-easy)
     - ['Trust-Me-Bro'-Typing](#trust-me-bro-typing)
@@ -22,7 +22,6 @@ to 3.14.
     - [Static Discipline](#static-discipline)
 - [Contributing](#contributing)
 - [License](#license)
-- [Acknowledgments](#acknowledgments)
 
 # Installation
 
@@ -154,6 +153,11 @@ class Point(BaseObject):
   def __init__(self, other: Self) -> None:
     self.x = other.x
     self.y = other.y
+
+  @overload()
+  def __init__(self, ) -> None:
+    pass
+
 ```
 
 Each new signature requires one new overloaded function. No more painful
@@ -225,6 +229,10 @@ class Point(BaseObject):
   def __init__(self, other: Self) -> None:
     self.x = other.x
     self.y = other.y
+
+  @overload()
+  def __init__(self, ) -> None:
+    pass
 
   @r.GET  # Straight up declaration of something called 'GET'.
   def _getR(self) -> float:

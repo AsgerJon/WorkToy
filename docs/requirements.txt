@@ -9,3 +9,8 @@ sphinx>=7
 
 # furo provides the HTML theme (html_theme in conf.py).
 furo>=2024.1
+
+# markwork generates the verbatim source pages (extensions in
+# conf.py). Pinned exactly while on the dev channel: pip skips
+# pre-releases unless the version names one.
+markwork==0.1.0.dev0

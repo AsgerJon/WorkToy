@@ -131,7 +131,7 @@ class TestClassBool(MCLSTest):
     self.assertFalse(VintageIteratorFalse)
 
   def test_iterable(self) -> None:
-    """Test that classes with __class_iter__ are iterable."""
+    """Testing that classes with __class_iter__ are iterable."""
     i = 8008135
     for i, _ in enumerate(VintageIteratorTrue):
       pass

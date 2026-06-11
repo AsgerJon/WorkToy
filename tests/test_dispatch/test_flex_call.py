@@ -39,6 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
 #  Module-level fixtures
 #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
+
 def _binary(a, b) -> tuple[Any, Any]:
   """Standard two-arg function. minPos=2, maxPos=2."""
   return a, b

@@ -5,13 +5,8 @@ TestKeeFlag provides tests specifically for the entry class KeeFlag.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.keenum import KeeFlag
 from . import KeeTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestKeeFlag(KeeTest):

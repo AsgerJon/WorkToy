@@ -86,7 +86,7 @@ class BaseGenerator(BaseObject):
   @overload()
   def __init__(self, **kwargs) -> None:
     pass
-  
+
   @classmethod
   def first(cls, *args, **kwargs) -> Self:
     """

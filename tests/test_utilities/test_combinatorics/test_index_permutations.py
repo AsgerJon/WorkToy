@@ -6,13 +6,8 @@ function from 'worktoy.utilities.combinatorics'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import CombinatoricsTest
 from worktoy.utilities.combinatorics import indexPermutations
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestIndexPermutations(CombinatoricsTest):

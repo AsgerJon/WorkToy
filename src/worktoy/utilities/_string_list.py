@@ -5,11 +5,6 @@ The 'stringList' function splits strings into a cleaned list of pieces.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 def stringList(*args: str, **kwargs) -> list[str]:
   """Split strings into a stripped, non-empty list of pieces.

@@ -6,11 +6,6 @@ exceptions 'AccessError', 'ProtectedError', and 'ReadOnlyError'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
-
 
 class DescriptorException(Exception):
   """

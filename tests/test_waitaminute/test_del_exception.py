@@ -6,15 +6,10 @@ the 'worktoy.waitaminute' module.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import WaitAMinuteTest
 from worktoy.mcls import AbstractMetaclass as AMeta
 from worktoy.mcls import AbstractNamespace as ASpace
 from worktoy.waitaminute.meta import DelException
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestDelException(WaitAMinuteTest):

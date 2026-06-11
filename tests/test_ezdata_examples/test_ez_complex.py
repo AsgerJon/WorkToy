@@ -7,16 +7,11 @@ share the 'ComplexMixin' from the same package.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.waitaminute.ezdata import ExtraPositionalException
 from worktoy.work_test import ComplexTest
 from worktoy.waitaminute import TypeException
 from worktoy.ezdata import EZData, EZField
 from tests.test_ezdata.examples import EZComplex
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class FrozenComplex(EZComplex, frozen=True):

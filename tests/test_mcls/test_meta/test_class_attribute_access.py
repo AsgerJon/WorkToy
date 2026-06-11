@@ -9,14 +9,10 @@ can implement attribute access hooks:
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from typing import Any
 
 from .. import MCLSTest
 from worktoy.mcls import AbstractMetaclass
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class ClassAccessor(metaclass=AbstractMetaclass):

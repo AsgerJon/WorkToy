@@ -111,11 +111,26 @@ class Clause(BaseGenerator):
     remaining words are sampled. A first clause shorter than
     '__dotted_below__' falls back to a placeholder, whose lengths are read
     back from the realized words.
+
+    Raises
+    ------
+    ValueError
+      If this clause is not a first clause and 'charCount' falls below
+      the shortest word that 'stochWord' can realize, since no word
+      sequence could then reach the requested length exactly.
     """
     leadIn = self.__lead_in__ if self.isFirst else ()
     if leadIn and self.charCount < self.__dotted_below__:
       self.__words_lengths__ = [len(word) for word in self.wordsArray]
       return
+    if not leadIn:
+      shortestWord = min(self.stochWord.byLengths)
+      if self.charCount < shortestWord:
+        infoSpec = """A 'Clause' that is not a first clause cannot
+        realize fewer than %d characters, but received a character
+        count of %d!"""
+        info = infoSpec % (shortestWord, self.charCount)
+        raise ValueError(textFmt(info))
     leadLengths = [len(word) for word in leadIn]
     target = self.charCount + 1 - sum(leadLengths) - len(leadLengths)
     rest = self.stochWord.partitionSpaced(target)

@@ -8,13 +8,9 @@ from __future__ import annotations
 
 from math import sqrt
 from random import gauss
-from typing import TYPE_CHECKING
 
 from . import StochasticVariable
 from ..utilities import textFmt
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class GaussianLengths(StochasticVariable):

@@ -5,12 +5,7 @@ The 'replaceFlex' function replaces a chosen occurrence of a substring.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from . import maybe
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 def replaceFlex(text: str, old: str, new: str, n: int = None) -> str:

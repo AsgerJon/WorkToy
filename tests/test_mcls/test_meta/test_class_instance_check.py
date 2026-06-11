@@ -135,7 +135,7 @@ class TestClassInstanceCheck(MCLSTest):
 
     self.assertFalse(issubclass(Bad, self.Number))
     self.assertTrue(issubclass(Good, self.Number))
-    with self.assertRaises(TypeError) as context:
+    with self.assertRaises(TypeError):
       _ = float(Bad())
     self.assertEqual(int(Good()), 80085)
     self.assertAlmostEqual(float(Good()), 0.1337)

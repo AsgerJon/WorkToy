@@ -6,14 +6,9 @@ package.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.desc import SymbolicName
 from worktoy.waitaminute import TypeException, MissingVariable
 from . import UtilitiesTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestSymbolicName(UtilitiesTest):

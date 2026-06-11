@@ -1,6 +1,6 @@
 """
 SamplerTest subclasses 'BaseTest' and provides base classes for the tests
-of the 'sampler classes in the 'worktoy.work_test.samplers' module.
+of the sampler classes in the 'worktoy.work_test.samplers' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -17,8 +17,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class SamplerTest(BaseTest):
   """
-  SamplerTest provides base classes for the tests of the 'sample classes in
-  the 'worktoy.work_test.samplers' module.
+  SamplerTest provides base classes for the tests of the sampler classes
+  in the 'worktoy.work_test.samplers' package.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

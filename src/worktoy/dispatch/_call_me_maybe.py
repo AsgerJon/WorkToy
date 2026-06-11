@@ -177,7 +177,7 @@ class CallMeMaybe:
 
     Parameters
     ----------
-    func : FunctionType
+    func : Callable
         The wrapped function. Provided as an explicit argument so that
         subclasses can transform, replace, or selectively invoke it
         without reaching into instance state.

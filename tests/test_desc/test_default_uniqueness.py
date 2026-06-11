@@ -9,14 +9,9 @@ template, never as one object shared across all instances.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.desc import AttriBox
 from worktoy.mcls import BaseObject
 from . import DescTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestDefaultUniqueness(DescTest):

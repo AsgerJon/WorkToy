@@ -6,12 +6,7 @@ person's full name, with family name first and given names second.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.ezdata import EZData, EZField
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class FullName(EZData, ordered=True):

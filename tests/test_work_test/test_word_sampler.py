@@ -6,13 +6,8 @@ TestWordSampler subclasses 'SamplerTest' and provides tests for
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from worktoy.work_test.samplers import WordSampler
 from . import SamplerTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestWordSampler(SamplerTest):
@@ -23,7 +18,7 @@ class TestWordSampler(SamplerTest):
 
   def test_value_type(self, ) -> None:
     """
-    Test that the value type of the sampler is 'str'.
+    Testing that the value type of the sampler is 'str'.
     """
     self.assertIs(WordSampler()._getValueType(), str)
 

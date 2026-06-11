@@ -6,12 +6,7 @@ metaclass from the 'worktoy.mcls' package.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from .. import MCLSTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  pass
 
 
 class TestBaseMeta(MCLSTest):

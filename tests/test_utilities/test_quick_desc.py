@@ -33,6 +33,7 @@ if TYPE_CHECKING:  # pragma: no cover
 #  Module-level fixture
 #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
 
+
 class _Demo:
   """Fixture exercising QuickDesc as it is used inside worktoy:
   a private slot at class scope, with a public descriptor proxying
