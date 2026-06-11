@@ -37,26 +37,26 @@ class DispatchException(TypeError):
     objects as 'overload' instances even though at runtime they are
     'Dispatcher' instances; the type hint admits both so the checker does
     not flag a mismatch.
-  args : tuple
+  posArgs : tuple
     The arguments that could not be dispatched.
   """
 
-  __slots__ = ('dispatch', 'args')
+  __slots__ = ('dispatch', 'posArgs')
 
   def __init__(self, dispatch: Overloaded, args: Args, ) -> None:
     self.dispatch = dispatch
-    self.args = args
+    self.posArgs = args
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
     """Render the dispatch failure as a got-then-expected report."""
     from ...dispatch import TypeSig
-    owner = self.dispatch.__field_owner__  # adjust to the real owner attr
+    owner = self.dispatch.__field_owner__
     name = '%s.%s' % (owner.__name__, self.dispatch.__field_name__)
     received = '<br><tab><tab>'.join(
-      '<%s %s>' % (type(a).__name__, repr(a)) for a in self.args
+      '<%s %s>' % (type(a).__name__, repr(a)) for a in self.posArgs
     )
-    argSig = str(TypeSig.fromArgs(*self.args))
+    argSig = str(TypeSig.fromArgs(*self.posArgs))
     available = '<br><tab><tab>'.join(
       str(sig) for sig, _ in self.dispatch.__sig_funcs__
     )

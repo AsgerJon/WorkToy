@@ -482,7 +482,13 @@ class Dispatcher(Object):
         raise RecursionError from attributeError
       unboundCache = self._getCachedFunction()
       boundCache = MethodType(unboundCache, instance)
-      setattr(instance, key, boundCache)
+      try:
+        setattr(instance, key, boundCache)
+      except AttributeError:
+        #  An instance refusing attribute creation, such as a frozen
+        #  enumeration member, cannot host the per-instance cache. The
+        #  bound method is then rebuilt on every access instead.
+        return boundCache
       return self.__get__(instance, owner, _recursion=True)
     else:
       return boundCache

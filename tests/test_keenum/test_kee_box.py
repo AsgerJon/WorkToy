@@ -69,7 +69,7 @@ class TestKeeBox(KeeTest):
       _ = Pen('never', 'gonna', 'give', 'you', 'up')
     e = context.exception
     self.assertIs(e.dispatch, Pen.__dict__['__init__'])
-    self.assertEqual(e.args, ('never', 'gonna', 'give', 'you', 'up'))
+    self.assertEqual(e.posArgs, ('never', 'gonna', 'give', 'you', 'up'))
 
   def test_good_set(self, ) -> None:
     """
@@ -187,6 +187,34 @@ class TestKeeBox(KeeTest):
     foo = Foo()
     self.assertIs(foo.bar, EF.A | EF.B | EF.C)
 
+  def test_box_of_flags_set(self, ) -> None:
+    """
+    Tests that assigning to a 'KeeBox' with a 'KeeFlags' field type
+    resolves the assigned value rather than reapplying the declared
+    default.
+    """
+
+    class EF(KeeFlags):  # ExampleFlags, but shortened
+      A = KeeFlag()
+      B = KeeFlag()
+      C = KeeFlag()
+
+    class Foo:
+      bar = KeeBox[EF]('A')
+
+    foo = Foo()
+    self.assertIs(foo.bar, EF.A)
+    foo.bar = 'B'
+    self.assertIs(foo.bar, EF.B)
+    foo.bar = ('A', 'C')
+    self.assertIs(foo.bar, EF.A | EF.C)
+    foo.bar = ['b', 'c']
+    self.assertIs(foo.bar, EF.B | EF.C)
+    foo.bar = frozenset(('A', 'B', 'C'))
+    self.assertIs(foo.bar, EF.A | EF.B | EF.C)
+    foo.bar = EF.NULL
+    self.assertIs(foo.bar, EF.NULL)
+
   def test_bad_box(self, ) -> None:
     """
     Tests that 'KeeBox' raises 'KeeBoxException' when given a field type
@@ -219,7 +247,7 @@ class TestKeeBox(KeeTest):
       _ = foo.bar
     e = context.exception
     self.assertIs(e.box, Foo.bar)
-    self.assertEqual(e.args, ())
+    self.assertEqual(e.posArgs, ())
 
   def test_str_field_type(self) -> None:
     """
@@ -248,7 +276,7 @@ class TestKeeBox(KeeTest):
       foo.eggs = 694206
     e = context.exception
     self.assertIs(e.box, Foo.eggs)
-    self.assertEqual(e.args, ())
+    self.assertEqual(e.posArgs, ())
     self.assertEqual(repr(e), str(e))
 
     with self.assertRaises(RecursionError):
@@ -301,7 +329,7 @@ class TestKeeBox(KeeTest):
       _ = Bad().bar
     e = context.exception
     self.assertIs(e.box, Bad.bar)
-    self.assertEqual(e.args, ('never', 'gonna', 'give', 'you', 'up'))
+    self.assertEqual(e.posArgs, ('never', 'gonna', 'give', 'you', 'up'))
     self.assertEqual(repr(e), str(e))
 
   def test_skip_set(self, ) -> None:

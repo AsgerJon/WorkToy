@@ -47,29 +47,35 @@ class TypeSig:
   '@overload(THIS, ...)' registers a 'TypeSig' carrying the 'THIS'
   sentinel because the enclosing class does not yet exist at the
   moment the decorator runs. 'THIS' is a singleton, so its identity
-  is shared across every class body that uses it; hashing such a
-  'TypeSig' naively would either collide between unrelated overloads
-  or corrupt downstream hash tables once 'swapTHIS' mutates the raw
-  types after class construction.
+  is shared across every class body that uses it. Hashing such a
+  'TypeSig' by its raw types alone would therefore collide between
+  unrelated overloads, while the signature must still serve as a
+  dict key during registration.
 
-  The metaclass machinery solves this by predicting the final class
-  hash at namespace-creation time. 'AbstractNamespace.__init__'
-  computes 'hash((name, *baseNames, mcls.__name__))' (the same
-  formula 'AbstractMetaclass.__hash__' will produce once the class
-  exists) and stores it on the namespace instance as
-  '__hash_value__'.
+  The metaclass machinery provides a stand-in value instead.
+  'AbstractNamespace.__init__' computes
+  'hash((name, *baseNames, mcls.__name__))' (the same name tuple
+  'AbstractMetaclass.__hash__' hashes once the class exists) and
+  stores it on the namespace instance as '__hash_value__'.
 
   When 'TypeSig.__hash__' encounters 'THIS' or 'OWNER' in its raw
   types, it walks the call stack via '_findActiveNamespace' and
   picks up the '__hash_value__' and '__metaclass__' of the
   innermost class-body frame. It then substitutes 'THIS' with the
-  predicted hash value and 'OWNER' with the metaclass via
+  stand-in value and 'OWNER' with the metaclass via
   'self(this=..., owner=...)' (see '__call__'), and hashes the
-  substituted raw types. Because tuple hashing combines
-  'hash(element)' for each element, and CPython's
-  'hash(int) == int' for the relevant range, the substituted hash
-  matches the eventual concrete-class hash exactly. Dict invariants
-  therefore survive the later in-place mutation by 'swapTHIS'.
+  substituted raw types. The resulting hash is stable for the whole
+  class body and distinct between class bodies, which is all the
+  registration dicts require.
+
+  The stand-in hash is not required to equal the hash of the
+  finished class, and nothing depends on such equality. Dicts keyed
+  by sentinel-bearing signatures are filled and queried only while
+  the class body executes. Once the class exists, 'swapTHIS'
+  replaces the sentinel with the concrete class in place; from then
+  on those dicts are only ever iterated, and the dispatcher compiles
+  fresh lookup tables from the swapped signatures, which hash
+  through the class itself.
 
   Using frame inspection rather than a global push/pop stack
   eliminates a real correctness problem: a class body that raises

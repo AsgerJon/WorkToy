@@ -82,7 +82,7 @@ class TestSlicedLoad(BaseTest):
         _ = self.fruitNinja[badType]
       e = context.exception
       self.assertIs(e.dispatch, FruitNinja.__dict__['__getitem__'])
-      self.assertEqual(e.args, (badType,))
+      self.assertEqual(e.posArgs, (badType,))
 
   def test_get_item_index_error(self) -> None:
     """

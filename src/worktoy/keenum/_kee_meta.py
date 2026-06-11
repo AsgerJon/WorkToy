@@ -12,7 +12,7 @@ from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt
 from ..waitaminute import TypeException
-from ..waitaminute.keenum import KeeResolveError
+from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
 from . import KeeSpace as KSpace
 from . import KeeBase
 from . import KeeMetaMeta
@@ -332,6 +332,32 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     else:
       return type.__getattribute__(cls, name)
     return value
+
+  def __setattr__(cls, name: str, value: Any) -> None:
+    """
+    Rebinding a name that currently holds an enumeration member raises
+    'KeeWriteOnceError': the members of an enumeration are write-once
+    constants, and the resolution caches would keep serving the original
+    member anyway. While '__allow_instantiation__' is high the guard
+    stands down, which is the window '_createMembers' uses to bind the
+    members in the first place.
+    """
+    if not cls.__allow_instantiation__:
+      existing = cls.__dict__.get(name, None)
+      if isinstance(existing, KeeBase):
+        raise KeeWriteOnceError(existing, name)
+    BaseMeta.__setattr__(cls, name, value)
+
+  def __delattr__(cls, name: str) -> None:
+    """
+    Deleting a name that currently holds an enumeration member raises
+    'KeeWriteOnceError' unconditionally: no stage of class construction
+    deletes a member, so no window exists.
+    """
+    existing = cls.__dict__.get(name, None)
+    if isinstance(existing, KeeBase):
+      raise KeeWriteOnceError(existing, name)
+    BaseMeta.__delattr__(cls, name)
 
   def __iter__(cls) -> Iterator[Any]:
     yield from cls.members

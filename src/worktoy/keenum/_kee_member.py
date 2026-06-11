@@ -133,6 +133,21 @@ class Kee(AttriBox[T]):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+    """
+    A 'Kee' declared inside a proper 'KeeNum' class body never receives
+    the interpreter-driven call: 'KeeSpaceHook' claims it during class
+    body execution, before the namespace stores it. The interpreter
+    reaches this method only when a 'Kee' landed in the class body of a
+    class not built by 'KeeMeta', so an owner of any other kind is
+    rejected with 'TypeException'.
+    """
+    #  Local import: 'KeeMeta' loads after this file in the package.
+    from . import KeeMeta
+    if isinstance(owner, KeeMeta):
+      return AttriBox.__set_name__(self, owner, name, **kwargs)
+    raise TypeException('owner', owner, KeeMeta)
+
   def __int__(self, ) -> int:
     return self.index
 

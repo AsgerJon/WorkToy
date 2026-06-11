@@ -107,7 +107,7 @@ class KeeBox(AttriBox):
     if isinstance(fieldNum, KeeMeta):
       return self._resolveNum(*args, )
     elif isinstance(fieldNum, KeeFlagsMeta):
-      return self._resolveFlags()
+      return self._resolveFlags(*args, )
     else:
       raise KeeBoxException(self, self.getPosArgs())
 
@@ -145,8 +145,17 @@ class KeeBox(AttriBox):
       else:
         raise KeeBoxValueError(self, fieldNum, tempObject)
 
-  def _resolveFlags(self, ) -> Any:
-    highs, args, kwargs = [], self.getPosArgs(), self.getKeyArgs()
+  def _resolveFlags(self, *args, ) -> Any:
+    """
+    The '_resolveFlags' method resolves to a flags member, falling back
+    to the captured constructor arguments when called without any. A
+    lone container argument counts as several flag identifiers, since
+    the descriptor protocol delivers an assigned tuple as one object.
+    """
+    args = args or self.getPosArgs()
+    if len(args) == 1 and isinstance(args[0], (tuple, list, set, frozenset)):
+      args = (*args[0],)
+    highs = []
     for arg in args:
       highs.append(self._resolveNum(arg, ))
     names = frozenset((*(h.name for h in highs),), )

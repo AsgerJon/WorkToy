@@ -75,7 +75,7 @@ class TestIntSampler(SamplerTest):
       _ = IntSampler(*args)  # noqa
     e = context.exception
     self.assertIs(e.dispatch, IntSampler.__dict__['__init__'])
-    for expected, actual in zip(args, e.args):
+    for expected, actual in zip(args, e.posArgs):
       self.assertEqual(expected, actual)
 
     #  Keyword arguments assigning bad types

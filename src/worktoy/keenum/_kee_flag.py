@@ -126,6 +126,20 @@ class KeeFlag:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __set_name__(self, owner: KeeFlagsMeta, name: str) -> None:
+    """
+    'KeeFlagsMeta.__new__' invokes this directly when binding the flags
+    to the finished enumeration class. A 'KeeFlag' declared inside a
+    proper 'KeeFlags' class body never receives the interpreter-driven
+    call: 'KeeFlagsHook' claims it during class body execution, before
+    the namespace stores it. The interpreter reaches this method only
+    when a 'KeeFlag' landed in the class body of a class not built by
+    'KeeFlagsMeta', so an owner of any other kind is rejected with
+    'TypeException'.
+    """
+    #  Local import: 'KeeFlagsMeta' loads after this file in the package.
+    from . import KeeFlagsMeta
+    if not isinstance(owner, KeeFlagsMeta):
+      raise TypeException('owner', owner, KeeFlagsMeta)
     self.__field_owner__ = owner
     self.__field_name__ = name
 

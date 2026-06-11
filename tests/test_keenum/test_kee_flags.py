@@ -232,7 +232,9 @@ class TestKeeFlags(KeeTest):
       HARRY = KeeFlag()
 
     tom = BadlyTypedFlags(1)
-    delattr(tom, '__member_index__')
+    #  Forced corruption through 'object' bypasses the member freeze on
+    #  purpose, reaching the validation branches in the getters.
+    object.__delattr__(tom, '__member_index__')
 
     with self.assertRaises(MissingVariable) as context:
       _ = tom.index
@@ -241,7 +243,7 @@ class TestKeeFlags(KeeTest):
     self.assertEqual(e.varName, '__member_index__')
     self.assertIn(int, e.expectedTypes, )
 
-    setattr(tom, '__member_index__', """I'm an integer, trust me bro!""")
+    object.__setattr__(tom, '__member_index__', "I'm an integer, trust!")
 
     with self.assertRaises(TypeException) as context:
       _ = tom.index

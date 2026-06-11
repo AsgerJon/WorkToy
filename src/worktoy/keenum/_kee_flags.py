@@ -10,10 +10,11 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..utilities import textFmt
 from ..waitaminute import MissingVariable, TypeException
+from ..waitaminute.keenum import KeeWriteOnceError
 from . import KeeFlag, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Iterator, Self
+  from typing import Any, Iterator, Never, Self
 
 
 class KeeFlags(metaclass=KeeFlagsMeta):
@@ -65,6 +66,12 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   collapses, and an unknown name raises 'KeyError'.
 
   Entries must be integer valued.
+
+  Like 'KeeNum' members, the members are write-once constants: once
+  'KeeFlagsMeta.__new__' has stamped a member, any attempt to set or
+  delete an attribute on it raises 'KeeWriteOnceError', as does
+  rebinding or deleting the member name on the owning class. A member
+  needing extra attributes should come from a subclass declaring them.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -183,6 +190,23 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __setattr__(self, name: str, value: Any) -> None:
+    """
+    A member is frozen once 'KeeFlagsMeta.__new__' has stamped it, so
+    '__setattr__' raises 'KeeWriteOnceError' once the freeze flag is
+    set; assignments during construction pass through.
+    """
+    if object.__getattribute__(self, '__frozen_state__'):
+      raise KeeWriteOnceError(self, name)
+    object.__setattr__(self, name, value)
+
+  def __delattr__(self, name: str) -> Never:
+    """
+    No stage of member construction deletes an attribute, so deletion
+    raises 'KeeWriteOnceError' unconditionally.
+    """
+    raise KeeWriteOnceError(self, name)
 
   def __bool__(self) -> bool:
     """The NULL member (no flags HIGH) is falsy. Any member with at

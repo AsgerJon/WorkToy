@@ -17,6 +17,8 @@ from ._subclass_example import SubclassExample
 from ._prime_valued import PrimeValued
 from ._file_access import FileAccess
 from ._keyboard_modifier import KeyboardModifier
+from ._keyboard_key_num import KeyboardKeyNum
+from ._key_bind import KeyBind
 from ._mouse_button import MouseButton
 from ._rgb_num import RootRGB, MoreRGB, EvenMoreRGB, RGBNum
 from ._week_day import WeekDay
@@ -45,6 +47,8 @@ __all__ = [
   'PrimeValued',
   'FileAccess',
   'KeyboardModifier',
+  'KeyboardKeyNum',
+  'KeyBind',
   'MouseButton',
   'RootRGB',
   'MoreRGB',

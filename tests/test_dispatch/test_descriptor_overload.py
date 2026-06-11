@@ -73,28 +73,28 @@ class TestDescriptorOverloadBasic(DispatcherTest):
       PlanePoint('imma number, trust!')
     e = context.exception
     self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
-    self.assertEqual(e.args, ('imma number, trust!',))
+    self.assertEqual(e.posArgs, ('imma number, trust!',))
     self.assertEqual(str(e), repr(e))
     #  Test with a list
     with self.assertRaises(DispatchException) as context:
       PlanePoint([0.1337, 0.80085])
     e = context.exception
     self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
-    self.assertEqual(e.args, ([0.1337, 0.80085],))
+    self.assertEqual(e.posArgs, ([0.1337, 0.80085],))
     self.assertEqual(str(e), repr(e))
     #  Test with a dict
     with self.assertRaises(DispatchException) as context:
       PlanePoint({'x': 0.1337, 'y': 0.80085})
     e = context.exception
     self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
-    self.assertEqual(e.args, ({'x': 0.1337, 'y': 0.80085},))
+    self.assertEqual(e.posArgs, ({'x': 0.1337, 'y': 0.80085},))
     self.assertEqual(str(e), repr(e))
     #  Test with a tuple
     with self.assertRaises(DispatchException) as context:
       PlanePoint((0.1337, 0.80085))
     e = context.exception
     self.assertIs(e.dispatch, PlanePoint.__dict__['__init__'])
-    self.assertEqual(e.args, ((0.1337, 0.80085),))
+    self.assertEqual(e.posArgs, ((0.1337, 0.80085),))
     self.assertEqual(str(e), repr(e))
 
   def test_good_subclass_init(self) -> None:

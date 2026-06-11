@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt, maybe
-from ..waitaminute.keenum import KeeResolveError
+from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
 from . import KeeFlag
 from . import KeeFlagsSpace as KFSpace
 
@@ -127,6 +127,9 @@ class KeeFlagsMeta(BaseMeta):
       setattr(cls, member.name, member)
       memberList.append(member)
       memberDict[member.names] = member
+      #  The stamping above must precede the freeze; from here on the
+      #  member is a write-once constant.
+      object.__setattr__(member, '__frozen_state__', True)
     cls.__member_list__ = memberList
     cls.__member_dict__ = memberDict
     cls.__allow_instantiation__ = False
@@ -145,6 +148,34 @@ class KeeFlagsMeta(BaseMeta):
     valueGetters.append(getattr(mcls.__kee_class__, '_getValue'))
     setattr(cls, '_getValue', valueGetters[0])
     return cls
+
+  def __setattr__(cls, name: str, value: Any) -> None:
+    """
+    Rebinding a name that currently holds an enumeration member raises
+    'KeeWriteOnceError': the members of an enumeration are write-once
+    constants, and 'memberList' and 'memberDict' would keep serving the
+    original member anyway. While '__allow_instantiation__' is high the
+    guard stands down, which is the window '__new__' uses to bind the
+    members in the first place.
+    """
+    if not cls.__allow_instantiation__:
+      existing = cls.__dict__.get(name, None)
+      keeClass = type(cls).__kee_class__
+      if keeClass is not None and isinstance(existing, keeClass):
+        raise KeeWriteOnceError(existing, name)
+    BaseMeta.__setattr__(cls, name, value)
+
+  def __delattr__(cls, name: str) -> None:
+    """
+    Deleting a name that currently holds an enumeration member raises
+    'KeeWriteOnceError' unconditionally: no stage of class construction
+    deletes a member, so no window exists.
+    """
+    existing = cls.__dict__.get(name, None)
+    keeClass = type(cls).__kee_class__
+    if keeClass is not None and isinstance(existing, keeClass):
+      raise KeeWriteOnceError(existing, name)
+    BaseMeta.__delattr__(cls, name)
 
   def __call__(cls, *args, **kwargs) -> Any:
     if getattr(cls, '__allow_instantiation__', False):

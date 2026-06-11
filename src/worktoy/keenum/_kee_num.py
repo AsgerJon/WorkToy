@@ -127,6 +127,13 @@ class KeeBase(Object, ):
       raise KeeWriteOnceError(self, name)
     object.__setattr__(self, name, value)
 
+  def __delattr__(self, name: str) -> Never:
+    """
+    No stage of member construction deletes an attribute, so deletion
+    raises 'KeeWriteOnceError' unconditionally.
+    """
+    raise KeeWriteOnceError(self, name)
+
   def __set_name__(self, owner: type, name: str, **kw) -> None:
     """This reimplementation of '__set_name__' is necessary to prevent the
     '__setattr__' method above from raising when a class wants an

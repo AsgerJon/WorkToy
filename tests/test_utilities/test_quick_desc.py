@@ -92,13 +92,12 @@ class TestQuickDesc(UtilitiesTest):
     recurse onto itself when accessed via getattr; class creation
     must fail before the class object escapes.
 
-    Please note the ambiguity in the error type. The 'worktoy' library
-    supports Python 3.7. In this version, the recently implemented
-    '__set_name__' introduced in 3.6, would raise a 'RuntimeError' if
-    any exception occurred during the execution of a '__set_name__'. The
-    code under testing does indeed raise 'ValueError', which is what
-    propagates in Python 3.8 and later. But in 3.7, this propagates as a
-    'RuntimeError'.
+    Please note the ambiguity in the error type. The code under testing
+    raises 'ValueError', which is what propagates in Python 3.12 and
+    later. On Python 3.7 through 3.11 the interpreter wraps any
+    exception raised during '__set_name__' in a 'RuntimeError', with
+    the original attached as both '__cause__' and '__context__', so
+    both types are accepted.
     """
     with self.assertRaises((ValueError, RuntimeError)):
       class _Bad:  # noqa

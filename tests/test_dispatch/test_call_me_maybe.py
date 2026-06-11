@@ -168,10 +168,10 @@ class TestCallMeMaybe(DispatcherTest):
     that need descriptor behavior must override __set_name__.
 
     Notes about the error type:
-    Please note the ambiguity in the error type. The 'worktoy' library
-    supports Python 3.7, in which any exception raised inside
-    '__set_name__' is wrapped and propagated as a 'RuntimeError' (with
-    the original exception attached as '__context__'). From Python 3.8
+    Please note the ambiguity in the error type. On Python 3.7 through
+    3.11, any exception raised inside '__set_name__' is wrapped and
+    propagated as a 'RuntimeError', with the original exception
+    attached as both '__cause__' and '__context__'. From Python 3.12
     onward, the original exception propagates unchanged. Tests that
     exercise '__set_name__' failure paths therefore accept both the
     expected exception type and 'RuntimeError'.
