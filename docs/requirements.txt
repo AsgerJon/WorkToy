@@ -4,8 +4,8 @@
 # Note: worktoy itself is NOT installed for the docs build — the docs
 # only read the source files as text, never import the package.
 
-# Sphinx — builds the navigable, searchable, themed site.
+# Sphinx builds the navigable, searchable, themed site.
 sphinx>=7
 
-# furo — the HTML theme (html_theme in conf.py).
+# furo provides the HTML theme (html_theme in conf.py).
 furo>=2024.1

@@ -229,10 +229,11 @@ def _getMAJOR() -> str:
   return infoSpec % (major + 1)
 
 
-def _saveVersion(versionStr: str) -> None:
+def _saveVersion(versionStr: str, envKey: str) -> None:
   """
-  This function saves the versionStr to the 'VERSION_INFO' environment
-  variable in the 'GITHUB_ENV'.
+  This function appends 'envKey=versionStr' to the file named by the
+  'GITHUB_ENV' environment variable, the mechanism a GitHub Actions step
+  uses to export a value to the steps that follow it.
 
   Parameters
   ----------
@@ -240,6 +241,9 @@ def _saveVersion(versionStr: str) -> None:
     The version string to save, expected to be in the format 'X.Y.Z' for
     LTS versions, 'X.Y.Z-devN' for dev versions, and 'X.Y.Z-rcN' for
     release candidate versions, where X, Y, Z and N are integers.
+  envKey : str
+    The name of the environment variable to export the version under, for
+    example 'VERSION_INFO'.
   """
   f = None
   try:
@@ -247,7 +251,7 @@ def _saveVersion(versionStr: str) -> None:
   except Exception as exception:
     raise exception
   else:
-    f.write('VERSION_INFO=%s\n' % versionStr)
+    f.write('%s=%s\n' % (envKey, versionStr))
   finally:
     try:
       f.close()  # noqa: F821
@@ -257,18 +261,19 @@ def _saveVersion(versionStr: str) -> None:
 
 def main(*args: str, ) -> int:
   """
-  This is the main function of the script. It requires exactly one
-  argument specifying the workflow, one of either: 'dev', 'rc', 'lts',
-  'minor' or 'major'.
-  It resolves the next version string for the specified workflow and saves
-  it to the 'VERSION_INFO' environment variable in the 'GITHUB_ENV'. It
-  returns 0 on success, and a non-zero integer on failure.
+  This is the main function of the script. The first argument specifies
+  the workflow, one of either: 'dev', 'rc', 'lts', 'minor' or 'major'. An
+  optional second argument names an environment variable: when given, the
+  resolved version is exported under that name through 'GITHUB_ENV' (the
+  channel used by GitHub Actions to pass a value to later steps); when
+  omitted, the version is printed to stdout so a local caller can read it
+  directly. It returns 0 on success, and a non-zero integer on failure.
 
   Parameters
   ----------
   *args : str
     The command-line arguments passed to the script, excluding the script
-    name. Expected to contain exactly one argument specifying the workflow:
+    name. The first selects the workflow:
     - 'dev': The development workflow, with version strings in the format
       'X.Y.Z-devN', where X, Y, Z and N are integers. The X.Y.Z part is
       the same as the next LTS version number, and the N part is the next
@@ -287,32 +292,39 @@ def main(*args: str, ) -> int:
     - 'major': The major version update incrementing the major version
     number, zeroing the minor and micro numbers.
 
+    An optional second argument names an environment variable. When it is
+    present, the resolved version is exported under that name through
+    'GITHUB_ENV'; when it is absent, the version is printed to stdout.
 
   Returns
   -------
   int
     0 on success, and a non-zero integer on failure. Possible failure codes:
     - 1: No arguments provided.
-    - 2: More than one argument provided.
+    - 2: More than two arguments provided.
     - 3: Unrecognized workflow argument.
-    - 4: Exception raised while saving the version string.
+    - 4: Exception raised while exporting the version string.
+    - 5: A dev version was requested while a release candidate cycle is
+      already underway for the current version.
   """
   if not args:
-    infoSpec = """Usage: python version_get.py [dev|rc|lts|minor|major]"""
+    infoSpec = """Usage: python version_get.py [dev|rc|lts|minor|major] """
+    infoSpec += """[ENV_VAR_NAME]"""
     print(infoSpec)
     return 1
   funcDict = dict(
-    dev=_getDEV,
-    rc=_getRC,
-    lts=_getLTS,
-    minor=_getMINOR,
-    major=_getMAJOR,
+      dev=_getDEV,
+      rc=_getRC,
+      lts=_getLTS,
+      minor=_getMINOR,
+      major=_getMAJOR,
   )
   workflow, *remainder = args
-  if remainder:
-    infoSpec = """Received unexpected extra arguments: %s! Expected 
-    exactly one argument specifying the workflow."""
-    argStr = ', '.join(["'%s'" % arg for arg in remainder])
+  envKey, *extra = remainder or [None]
+  if extra:
+    infoSpec = """Received unexpected extra arguments: %s! Expected the
+    workflow and an optional environment variable name."""
+    argStr = ', '.join(["'%s'" % arg for arg in extra])
     info = infoSpec % argStr
     print(str.join(' ', str.split(info)))
     return 2
@@ -322,10 +334,27 @@ def main(*args: str, ) -> int:
     expected = """dev, rc, lts, minor or major"""
     print(infoSpec % (workflow, expected))
     return 3
+  if workflow == 'dev':
+    versionInfo = _readVersion()
+    if versionInfo['rc']:
+      infoSpec = """Refusing to resolve a dev version while a release
+      candidate cycle is already underway (rc=%d) for %d.%d.%d: a dev
+      release sorts below the release candidates already published, which
+      would break version ordering. Publish dev releases before the first
+      rc, or cut the lts release first."""
+      info = infoSpec % (
+        versionInfo['rc'], versionInfo['major'],
+        versionInfo['minor'], versionInfo['micro']
+      )
+      print(str.join(' ', str.split(info)))
+      return 5
   func = funcDict[workflow]
   versionStr = func()
+  if envKey is None:
+    print(versionStr)
+    return 0
   try:
-    _saveVersion(versionStr)
+    _saveVersion(versionStr, envKey)
   except Exception as exception:
     print(exception)
     return 4

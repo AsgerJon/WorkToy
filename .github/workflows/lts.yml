@@ -68,13 +68,13 @@ jobs:
       # Compute the official version from VERSION and expose it as
       # VERSION_INFO in the environment for the steps below.
       - name: Resolve next version
-        run: python version_get.py lts
+        run: python version_get.py lts VERSION_INFO
 
       # Write VERSION_INFO into pyproject.toml (the build reads its
-      # version from there), into src/worktoy/__init__.py (so
-      # 'worktoy.__version__' matches the published version), and into
-      # worktoy-tag.txt (docs/conf.py reads that for the version header).
-      - name: Stamp version into pyproject, package, and tag file
+      # version from there) and into src/worktoy/__init__.py (so
+      # 'worktoy.__version__' matches the published version). docs/conf.py
+      # reads the version straight from the stamped pyproject.toml.
+      - name: Stamp version into pyproject and package
         run: |
           python - <<'PY'
           import os
@@ -91,7 +91,6 @@ jobs:
                       break
               open(path, "w", encoding="utf-8").write("\n".join(lines) + "\n")
           PY
-          printf '%s' "$VERSION_INFO" > worktoy-tag.txt
 
       - name: Build
         run: python -m build
@@ -108,7 +107,7 @@ jobs:
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
-          git add VERSION pyproject.toml src/worktoy/__init__.py worktoy-tag.txt
+          git add VERSION pyproject.toml src/worktoy/__init__.py
           git commit -m "LTS ${{ env.VERSION_INFO }}"
           git push origin HEAD:${{ github.ref }}
 

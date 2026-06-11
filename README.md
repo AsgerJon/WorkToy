@@ -10,13 +10,14 @@ frozen for the 1.0 series and the candidates are being validated ahead
 of the stable 1.0.0 release.
 
 **worktoy** provides utilities for Python development focused on
-reducing boilerplate code, type-safety and readability. Each release is
-tested thoroughly on each supported Python version from 3.7* to 3.14.
+reducing boilerplate while improving type safety and readability. Each
+release is tested thoroughly on each supported Python version from 3.7*
+to 3.14.
 
 *Maybe it is time to consider updating if you are still using Python 3.7.
 
 # Table of Contents
-
+ 
 - [Installation](#installation)
 - [Python Is Easy. Too Easy!](#python-is-easy-too-easy)
     - ['Trust-Me-Bro'-Typing](#trust-me-bro-typing)
@@ -60,7 +61,7 @@ class Point:
 
 The above code is perfectly valid Python, it even includes types. Or does
 it? Those `float` annotations are not there at runtime. Basically, it is
-'trust-me-bro'-typing. Point('breh', None) will happily create a `Point`
+'trust-me-bro'-typing. `Point('breh', None)` will happily create a `Point`
 object.
 
 Instead:
@@ -171,7 +172,7 @@ Narrative storytelling is different. The method by which information is
 conveyed is itself part of the artistic expression. The way
 information is revealed is frequently as important as the information
 itself. In *Clair Obscur: Expedition 33*, the horror of the *Gommage*
-unfolds gradually until Sophie disappears in Gustave's arms. The
+unfolds gradually until Sophie disappears from Gustave's arms. The
 imperative subtlety grants the story its emotional impact.
 
 In code, the declaration **is** the point! In matters of code, I want
@@ -250,9 +251,9 @@ class Point:
     self.y = y
 ```
 
-Inspecting the class reveals nothing about x or y. They do not exist at the
-class level. They are created at runtime on the instance. Two common
-remedies are `__slots__` and annotations:
+Inspecting the class reveals nothing about `x` or `y`. They do not exist
+at the class level. They are created at runtime on the instance. Two
+common remedies are `__slots__` and annotations:
 
 ```python
 class Point:

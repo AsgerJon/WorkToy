@@ -13,6 +13,11 @@ incremented. For 'lts', 'minor' and 'major' workflows, the relevant
 counter is incremented and lower-order counters are reset, with 'micro'
 set to 1 after 'minor' or 'major' so that the next default 'lts' release
 is the patch-level above the one just published.
+
+A 'dev' bump is refused while a release candidate cycle is already
+underway, that is while the 'rc' counter is non-zero, mirroring the same
+guard in version_get.py: dev releases belong before the first rc within a
+version line, since a dev version sorts below an rc.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -190,16 +195,16 @@ def _writeVersion(versionInfo: dict[str, int]) -> None:
   comments = _readComments()
   versionPath = os.path.join(_here(), 'VERSION')
   content: str = str.join(
-    '\n',
-    [
-      *comments,
-      'MAJOR=%d' % versionInfo['major'],
-      'MINOR=%d' % versionInfo['minor'],
-      'MICRO=%d' % versionInfo['micro'],
-      'RC=%d' % versionInfo['rc'],
-      'DEV=%d' % versionInfo['dev'],
-      ''
-    ]
+      '\n',
+      [
+        *comments,
+        'MAJOR=%d' % versionInfo['major'],
+        'MINOR=%d' % versionInfo['minor'],
+        'MICRO=%d' % versionInfo['micro'],
+        'RC=%d' % versionInfo['rc'],
+        'DEV=%d' % versionInfo['dev'],
+        ''
+      ]
   )
   f = None
   try:
@@ -343,6 +348,8 @@ def main(*args: str, ) -> int:
     - 3: Unrecognized workflow argument.
     - 4: Exception raised while reading, bumping or writing the VERSION
       file.
+    - 5: A dev bump was requested while a release candidate cycle is
+      already underway for the current version.
   """
   if not args:
     infoSpec = """Usage: python version_bump.py 
@@ -350,11 +357,11 @@ def main(*args: str, ) -> int:
     print(str.join(' ', str.split(infoSpec)))
     return 1
   funcDict = dict(
-    dev=_bumpDEV,
-    rc=_bumpRC,
-    lts=_bumpLTS,
-    minor=_bumpMINOR,
-    major=_bumpMAJOR,
+      dev=_bumpDEV,
+      rc=_bumpRC,
+      lts=_bumpLTS,
+      minor=_bumpMINOR,
+      major=_bumpMAJOR,
   )
   workflow, *remainder = args
   if remainder:
@@ -370,6 +377,20 @@ def main(*args: str, ) -> int:
     expected = """dev, rc, lts, minor or major"""
     print(infoSpec % (workflow, expected))
     return 3
+  if workflow == 'dev':
+    versionInfo = _readVersion()
+    if versionInfo['rc']:
+      infoSpec = """Refusing to bump the dev counter while a release
+      candidate cycle is already underway (rc=%d) for %d.%d.%d: a dev
+      release sorts below the release candidates already published, which
+      would break version ordering. Publish dev releases before the first
+      rc, or cut the lts release first."""
+      info = infoSpec % (
+        versionInfo['rc'], versionInfo['major'],
+        versionInfo['minor'], versionInfo['micro']
+      )
+      print(str.join(' ', str.split(info)))
+      return 5
   func = funcDict[workflow]
   try:
     versionInfo = _readVersion()
