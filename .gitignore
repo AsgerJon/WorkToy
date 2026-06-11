@@ -192,3 +192,4 @@ sym.md
 # Sphinx documentation
 docs/_build/
 docs/_source/
+/out.txt
