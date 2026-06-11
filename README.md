@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# worktoy v1.0.0-rc13 (release candidate)
+# worktoy v1.0.0-rc14 (release candidate)
 
 **worktoy** provides utilities for Python development focused on
 reducing boilerplate while improving type safety and readability. Each
