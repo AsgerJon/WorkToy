@@ -4,6 +4,8 @@
 [![PyPI version](https://img.shields.io/pypi/v/worktoy)](https://pypi.org/project/worktoy/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+![Read the Docs](https://img.shields.io/readthedocs/worktoy?style=for-the-badge&link=https%3A%2F%2Fworktoy.readthedocs.io%2Fstable%2F)
+
 # worktoy v1.0.0
 
 **worktoy** provides utilities for Python development focused on
