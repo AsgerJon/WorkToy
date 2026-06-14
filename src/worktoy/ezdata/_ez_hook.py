@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import operator
 from collections.abc import Callable
+from copy import deepcopy
 from types import FunctionType
 from typing import TYPE_CHECKING
 
@@ -311,6 +312,8 @@ class EZHook(AbstractSpaceHook):
     if compiledSpace['__is_frozen__']:
       compiledSpace['__hash__'] = self.hashFactory()
       compiledSpace['__setattr__'] = self.badSetAttrFactory()
+      compiledSpace['__copy__'] = self.copyFactory()
+      compiledSpace['__deepcopy__'] = self.deepCopyFactory()
     else:
       compiledSpace['__hash__'] = None
     if compiledSpace['__is_ordered__']:
@@ -784,3 +787,55 @@ class EZHook(AbstractSpaceHook):
       raise AttributeError(textFmt(infoSpec % (clsName, key)))
 
     return __delattr__
+
+  @classmethod
+  def copyFactory(cls, ) -> Callable[..., Any]:
+    """
+    Creates the '__copy__' method for a frozen 'EZData' subclass. A
+    frozen class rejects every assignment through its generated
+    '__setattr__', so the default 'copy.copy' reconstruction (build a
+    blank instance, then set each slot) raises. The returned '__copy__'
+    instead builds a fresh instance and writes the field values straight
+    through 'object.__setattr__', the same bypass '__init__' uses, so a
+    frozen instance copies as a faithful shallow clone.
+
+    Returns
+    -------
+    Callable[..., Any]: (self) -> Self
+      The '__copy__' method for the frozen 'EZData' subclass.
+    """
+
+    def __copy__(self: Any) -> Any:
+      newSelf = type(self).__new__(type(self))
+      for name in self.__ez_fields__:
+        object.__setattr__(newSelf, name, getattr(self, name))
+      return newSelf
+
+    return __copy__
+
+  @classmethod
+  def deepCopyFactory(cls, ) -> Callable[..., Any]:
+    """
+    Creates the '__deepcopy__' method for a frozen 'EZData' subclass,
+    the deep counterpart of 'copyFactory'. Each field value is deep
+    copied (threading the 'memo' dict so shared and cyclic references
+    are preserved) and written through 'object.__setattr__' to sidestep
+    the frozen guard. The new instance is registered in 'memo' before
+    its fields are filled, so a value that refers back to the instance
+    resolves to the same clone.
+
+    Returns
+    -------
+    Callable[..., Any]: (self, memo) -> Self
+      The '__deepcopy__' method for the frozen 'EZData' subclass.
+    """
+
+    def __deepcopy__(self: Any, memo: Any) -> Any:
+      newSelf = type(self).__new__(type(self))
+      memo[id(self)] = newSelf
+      for name in self.__ez_fields__:
+        value = deepcopy(getattr(self, name), memo)
+        object.__setattr__(newSelf, name, value)
+      return newSelf
+
+    return __deepcopy__
