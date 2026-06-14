@@ -39,7 +39,7 @@ chain.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-__version__ = '1.0.0-rc17'
+__version__ = '1.0.0-rc18'
 
 from . import utilities
 from . import waitaminute
