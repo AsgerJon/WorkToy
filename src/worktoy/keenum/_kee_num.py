@@ -156,6 +156,19 @@ class KeeBase(Object, ):
     """Ensures 'ProtectedError' is raised instead of 'KeeWriteOnceError'."""
     raise ProtectedError(instance, self, self)
 
+  def __copy__(self) -> Self:
+    """A member is a singleton, so a copy is the member itself. Returning
+    a fresh instance would compare unequal to every canonical member,
+    since equality is identity."""
+    return self
+
+  def __deepcopy__(self, memo: Any) -> Self:
+    """A member is a singleton, so a deep copy is the member itself. This
+    keeps a member stored as an 'AttriBox' default, or carried inside a
+    structure that gets deep-copied, equal to the canonical member rather
+    than a clone that matches nothing."""
+    return self
+
   def __int__(self) -> int:
     return self.index
 

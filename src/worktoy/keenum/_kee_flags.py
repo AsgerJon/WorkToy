@@ -208,6 +208,17 @@ class KeeFlags(metaclass=KeeFlagsMeta):
     """
     raise KeeWriteOnceError(self, name)
 
+  def __copy__(self) -> Self:
+    """A member is a singleton, so a copy is the member itself. A fresh
+    instance would break identity checks such as 'member is cls.NULL'."""
+    return self
+
+  def __deepcopy__(self, memo: Any) -> Self:
+    """A member is a singleton, so a deep copy is the member itself,
+    keeping a member carried inside a deep-copied structure identical to
+    the canonical member."""
+    return self
+
   def __bool__(self) -> bool:
     """The NULL member (no flags HIGH) is falsy. Any member with at
     least one flag HIGH is truthy, mirroring the truthiness of the
