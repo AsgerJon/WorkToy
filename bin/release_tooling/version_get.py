@@ -37,17 +37,42 @@ def _here() -> str:
   return os.path.dirname(filePath)
 
 
+def _root() -> str:
+  """
+  This function resolves the repository root by walking up from this
+  script's directory until it finds the directory holding 'pyproject.toml',
+  so the script works regardless of how deeply it is nested under the root.
+
+  Returns
+  -------
+  str
+    The absolute path to the repository root.
+
+  Raises
+  ------
+  RuntimeError
+    If no ancestor directory holds 'pyproject.toml'.
+  """
+  current = _here()
+  while current != os.path.dirname(current):
+    if os.path.isfile(os.path.join(current, 'pyproject.toml')):
+      return current
+    current = os.path.dirname(current)
+  raise RuntimeError("Could not locate the repository root!")
+
+
 def _badLocation() -> int:
   """
-  This function validates that the script is correctly located in the root.
+  This function validates that the repository root can be resolved and
+  carries the expected project layout.
 
   Returns
   -------
   int
     0 if the script is correctly located, 1 otherwise.
   """
-  requiredItems = ['VERSION', 'src', 'tests']
-  presentItems = os.listdir(_here())
+  requiredItems = ['src', 'tests']
+  presentItems = os.listdir(_root())
   for item in requiredItems:
     if item not in presentItems:
       break
@@ -88,8 +113,7 @@ def _badData(**kwargs: int) -> int:
 
 def _readVersion() -> dict[str, int]:
   """
-  This function locates the 'VERSION' file in the same directory of this
-  script.
+  This function locates the 'VERSION' file beside this script.
 
   Returns
   -------
@@ -308,7 +332,7 @@ def main(*args: str, ) -> int:
       already underway for the current version.
   """
   if not args:
-    infoSpec = """Usage: python version_get.py [dev|rc|lts|minor|major] """
+    infoSpec = """Usage: python bin/release_tooling/version_get.py [dev|rc|lts|minor|major] """
     infoSpec += """[ENV_VAR_NAME]"""
     print(infoSpec)
     return 1

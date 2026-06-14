@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, overload, TypeVar
 
 from ..core import Object
 from ..desc import Field
+from ..utilities import textFmt
 from ..waitaminute import MissingVariable
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.keenum import KeeWriteOnceError
@@ -18,6 +19,8 @@ T = TypeVar('T')
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Never, Self, Optional, TypeAlias
+
+  from . import KeeNum
 
   MaybeInt: TypeAlias = Optional[int]
   MaybeStr: TypeAlias = Optional[str]
@@ -163,7 +166,13 @@ class KeeBase(Object, ):
     with unhashable values are themselves unhashable, so that any
     hashed lookup on the member side remains consistent with hashed
     lookup on the value side."""
-    hash(self.value)
+    try:
+      hash(self.value)
+    except TypeError as typeError:
+      infoSpec = """Enumeration member '%s' is unhashable because its
+      value of type '%s' is unhashable!"""
+      info = infoSpec % (self, type(self.value).__name__)
+      raise TypeError(textFmt(info)) from typeError
     base = str.join('::', (type(self).__name__, self.name,))
     return int.from_bytes(base.encode(), 'big')
 

@@ -42,7 +42,6 @@ class KeeFlagsMeta(BaseMeta):
 
   #  Private Variables
   __kee_flags__ = None
-  __kee_members__ = None
   __allow_instantiation__ = None
 
   #  Public Variables
@@ -114,8 +113,6 @@ class KeeFlagsMeta(BaseMeta):
       return cls
     setattr(cls, '__kee_bases__', bases)
     cls.__allow_instantiation__ = True
-    for flag in cls.flags:
-      flag.__set_name__(cls, flag.name)
     memberList = []
     memberDict = dict()
     n = 2 ** len(cls.flags)

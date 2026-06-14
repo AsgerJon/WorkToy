@@ -38,11 +38,11 @@ class KeeTypeException(TypeError):
 
   def __str__(self) -> str:
     infoSpec = """KeeNum member '%s' has value '%s' of type '%s', but
-    expected type to be: '%s'!"""
+    expected the value to be an instance of %s!"""
     name = self.name
-    typeNames = [t.__name__ for t in self.expectedTypes]
+    typeNames = [getattr(t, '__name__', str(t)) for t in self.expectedTypes]
     from ...utilities import joinWords, textFmt
-    typeStr = joinWords(*["""'%s'""" % name for name in typeNames], )
+    typeStr = joinWords(*["""'%s'""" % n for n in typeNames], sep='or')
     value = str(self.value)
     valueType = type(self.value).__name__
     info = infoSpec % (name, value, valueType, typeStr)

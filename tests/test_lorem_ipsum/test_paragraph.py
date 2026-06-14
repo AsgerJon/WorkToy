@@ -93,3 +93,13 @@ class TestParagraph(LoremIpsumTest):
     expectedText = str(self.paragraph)
     actualText = self.paragraph.realize()
     self.assertEqual(expectedText, actualText)
+
+  def test_short_charcount(self) -> None:
+    """
+    A 'charCount' below the sentence distribution's minimum collapses to a
+    single sentence length equal to 'charCount', since 'Sentence' realizes
+    short counts exactly through its own placeholder fallback.
+    """
+    short = Paragraph(20)
+    self.assertLess(short.charCount, short.sentenceDist.minVal)
+    self.assertEqual(short.sentenceLengths, [20])

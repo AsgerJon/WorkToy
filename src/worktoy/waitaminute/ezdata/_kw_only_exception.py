@@ -1,6 +1,6 @@
 """
 KwargsOnlyException is raised when an EZData subclass declared with
-'kw_only=True' receives positional arguments.
+'kwOnly=True' receives positional arguments.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -11,9 +11,10 @@ from ...utilities import textFmt
 
 class KwargsOnlyException(TypeError):
   """
-  Raised when an EZData subclass declared with 'kw_only=True' is
-  called with positional arguments. Such a subclass accepts only
-  keyword arguments at construction.
+  Raised when an EZData subclass declared with 'kwOnly=True' (or a
+  synonym such as 'keywordOnly' or 'kw_only') is called with positional
+  arguments. Such a subclass accepts only keyword arguments at
+  construction.
   """
 
   __slots__ = ('cls', 'argCount')

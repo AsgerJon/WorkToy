@@ -329,7 +329,10 @@ class EZField(BaseObject, Generic[T]):
     value, inferring the field type from 'type(value)' and using the
     value itself as the single positional construction argument. The
     bare-value path in 'EZHook.setItemPhase' takes this route to wrap
-    expressions like 'name = "Anonymous"' inside the class body.
+    expressions like 'name = "Anonymous"' inside the class body. A
+    bare 'None' never reaches this constructor: the hook rejects it
+    at class-body time with 'IncompleteFieldException', since
+    'NoneType' cannot rebuild a value from itself.
 
     Parameters
     ----------
@@ -410,7 +413,7 @@ class EZField(BaseObject, Generic[T]):
     posArgs = maybe(self.__pos_args__, ())
     posStr = ', '.join(repr(a) for a in posArgs)
     keyArgs = maybe(self.__key_args__, {})
-    keyStr = ', '.join(f"{k}={v!r}" for k, v in keyArgs.items())
+    keyStr = ', '.join('%s=%r' % (k, v) for k, v in keyArgs.items())
     if posArgs and keyArgs:
       argStr = str.join(', ', (posStr, keyStr))
     elif posArgs:
@@ -439,7 +442,7 @@ class EZField(BaseObject, Generic[T]):
     posArgs = maybe(self.__pos_args__, ())
     posStr = ', '.join(repr(a) for a in posArgs)
     keyArgs = maybe(self.__key_args__, {})
-    keyStr = ', '.join(f"{k}={v!r}" for k, v in keyArgs.items())
+    keyStr = ', '.join('%s=%r' % (k, v) for k, v in keyArgs.items())
     if posArgs and keyArgs:
       argStr = str.join(', ', (posStr, keyStr))
     elif posArgs:

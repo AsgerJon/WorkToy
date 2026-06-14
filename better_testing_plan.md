@@ -275,7 +275,8 @@ the judge.
 
 - Run tests with the project interpreter:
   `PYTHONDONTWRITEBYTECODE=1 ~/miniforge3/envs/worktoy_env/bin/python -m pytest -q`.
-  The suite enforces 100 percent branch coverage through `pytest.ini`, so any new
+  The suite enforces 100 percent branch coverage (pytest config now lives
+  in `pyproject.toml` under `[tool.pytest.ini_options]`), so any new
   branch needs a test that exercises it.
 - For ad hoc scripts, use `PYTHONPATH=src`.
 - Do not commit or push without the maintainer saying so in the moment. Releases

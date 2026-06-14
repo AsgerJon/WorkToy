@@ -9,9 +9,23 @@ import os
 import sys
 
 #  Put the src layout on the path before importing worktoy-backed
-#  subjects, so the bench runs without an editable install.
+#  subjects, so the bench runs without an editable install. The repo
+#  root is found by walking up to the directory holding 'pyproject.toml',
+#  so the bench works wherever it is nested under the root.
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_SRC = os.path.join(os.path.dirname(_HERE), 'src')
+
+
+def _repoRoot(start: str) -> str:
+  """Walk up from 'start' to the directory holding 'pyproject.toml'."""
+  current = start
+  while current != os.path.dirname(current):
+    if os.path.isfile(os.path.join(current, 'pyproject.toml')):
+      return current
+    current = os.path.dirname(current)
+  return start
+
+
+_SRC = os.path.join(_repoRoot(_HERE), 'src')
 if _SRC not in sys.path:
   sys.path.insert(0, _SRC)
 

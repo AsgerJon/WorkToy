@@ -1,5 +1,7 @@
 """
-Sentence assembles a period-separated sequence of words.
+Sentence assembles a comma-separated sequence of 'Clause' objects
+terminated by a period. Each clause is itself comma-free, so the commas
+mark the boundaries between clauses unambiguously.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen

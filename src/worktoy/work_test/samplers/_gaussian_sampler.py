@@ -42,7 +42,6 @@ class GaussianSampler(BaseSampler):
   __fallback_std_dev__: float = 1.0
 
   #  Namespace
-  __field_keys__: tuple[str, ...] = ('mean', 'stdDev',)
   __mean_keys__ = ('mean', 'average', 'avg', 'mean_value', 'meanValue')
   __std_dev_keys__ = (
     'stdDev',

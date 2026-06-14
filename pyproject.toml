@@ -9,8 +9,9 @@ version = "1.0.0-rc16"
 authors = [
     { name = "Asger Jon Vistisen", email = "asgerjon2@gmail.com" },
 ]
-description = "Collection of Utilities"
+description = "Declarative structure for Python that enforces types at runtime and enables true function overloading"
 readme = "README.md"
+license = { text = "Apache-2.0" }
 requires-python = ">=3.7"
 classifiers = [
     'Programming Language :: Python :: 3.7',
@@ -46,8 +47,8 @@ docs = [
 dev = [
     'icecream>=2.1.8',
     'pyperclip>=1.11.0',
-    {include-group = 'test'},
-    {include-group = 'docs'},
+    { include-group = 'test' },
+    { include-group = 'docs' },
 ]
 
 [tool.setuptools.package-data]
@@ -59,3 +60,12 @@ omit = [
     # runs; exercised by unittest on <3.10.
     "tests/test_ezdata/_match_args_legacy_helpers.py",
 ]
+
+# pytest configuration lives here rather than in a root 'pytest.ini' so
+# the repository root stays uncluttered. pytest auto-discovers this
+# table, so no '-c' flag is needed locally or in CI.
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=worktoy --cov=tests --cov-branch --cov-report=term-missing"

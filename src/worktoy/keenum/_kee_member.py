@@ -151,6 +151,25 @@ class Kee(AttriBox[T]):
   def __int__(self, ) -> int:
     return self.index
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def clone(self) -> Self:
+    """
+    The 'clone' method copies this 'Kee' so a subclass can register the
+    copy in its own namespace. The copy carries the field type, the
+    captured constructor arguments and the name, while the index is left
+    unset for the registering namespace to assign. Registering the
+    original object instead would write the subclass index onto the
+    member shared with the parent enumeration.
+    """
+    cls = type(self)
+    cloned = cls[self.getFieldType()]
+    cloned(*self.getPosArgs(), **self.getKeyArgs())
+    cloned.__num_name__ = self.__num_name__
+    return cloned
+
   def __str__(self) -> str:
     infoSpec = """<%s member: %s>"""
     try:

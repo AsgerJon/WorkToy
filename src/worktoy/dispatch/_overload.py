@@ -365,8 +365,24 @@ class overload:  # NOQA
       """Linter friendly explicitly disabled call method. """
 
   def __str__(self, ) -> str:
+    """
+    The string representation names the overloaded function and lists the
+    registered type signatures. An instance carrying only a fallback or
+    only a finalizer has no signature and function pair yet, so it renders
+    a short note naming that function instead of raising.
+    """
+    if self.__latest_func__ is None:
+      if self.isFallback():
+        infoSpec = """overload with only a fallback function: '%s'
+        registered so far"""
+        return textFmt(infoSpec % (self.getFallback().__name__,))
+      if self.isFinalizer():
+        infoSpec = """overload with only a finalizer function: '%s'
+        registered so far"""
+        return textFmt(infoSpec % (self.getFinalizer().__name__,))
+      return textFmt("""overload with no function registered so far""")
     latestFunc = self._getLatestFunc()
-    infoSpec = """overload of function: '%s', supporting type signatures: 
+    infoSpec = """overload of function: '%s', supporting type signatures:
     <br><tab>%s"""
     sigLines = []
     for sig, _ in self._getSigFuncDict().items():

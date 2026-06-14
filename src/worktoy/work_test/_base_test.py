@@ -68,25 +68,6 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   __fallback_line_length__: int = 48
   __fallback_new_line__: str = os.linesep
 
-  __min_keys__: StrTuple = (
-    'minVal',
-    'min',
-    'minimum',
-    'min_value',
-    'minval',
-  )
-  __max_keys__: StrTuple = (
-    'maxVal',
-    'max',
-    'maximum',
-    'max_value',
-    'maxval',
-  )
-  __key_groups__: dict[str, StrTuple] = dict(
-    minVal=__min_keys__,
-    maxVal=__max_keys__,
-  )
-
   #  Fallback Variables
 
   #  Private Variables

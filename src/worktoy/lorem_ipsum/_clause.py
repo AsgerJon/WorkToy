@@ -47,7 +47,6 @@ class Clause(BaseGenerator):
   #  are pinned to the leading positions and their character lengths
   #  override the sampled lengths at those indices.
   __lead_in__: Words = ('Lorem', 'ipsum')
-  __length_var__: int = 15
 
   #  A first clause shorter than '__dotted_below__' characters is rendered
   #  as a 'Lorem ipsum ...' placeholder of exactly that length rather than a

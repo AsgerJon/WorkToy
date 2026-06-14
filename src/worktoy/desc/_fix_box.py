@@ -22,6 +22,13 @@ class FixBox(AttriBox[T]):
   FixBox subclasses 'AttriBox' and provides a descriptor for write-once
   attributes. Two methods change: a second assignment raises
   'WriteOnceError', and deletion is disabled (it raises 'ProtectedError').
+
+  The single write counts whatever stores the value, not only an
+  explicit assignment. Reading an unset field lazily builds and stores
+  the deferred default, and that store consumes the single write, so an
+  explicit assignment after any read raises 'WriteOnceError' with the
+  lazily built default as the old value. A field meant to receive its
+  value at runtime must therefore be written before it is first read.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

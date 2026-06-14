@@ -13,7 +13,7 @@ from ..waitaminute import TypeException, MissingVariable
 T = TypeVar('T')
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, Optional
+  from typing import Any, Self, Optional, Union
 
 
 class FastBox(Generic[T]):
@@ -62,14 +62,16 @@ class FastBox(Generic[T]):
     # @formatter:on
 
   @classmethod
-  def __class_getitem__(cls, fieldType: type) -> FastBox:
+  def __class_getitem__(cls, fieldType: Union[type, TypeVar]) -> FastBox:
     """
     The '__class_getitem__' method captures the field type from the
-    'FastBox[T]' subscript.
+    'FastBox[T]' subscript. A 'TypeVar' is forwarded to the generic
+    machinery, so 'class Sub(FastBox[T])' declares a generic subclass;
+    a concrete type produces a fresh 'FastBox' parametrized with it.
 
     Parameters
     ----------
-    fieldType : type
+    fieldType : type or TypeVar
         The field type fixed by the subscript.
 
     Returns
@@ -78,6 +80,8 @@ class FastBox(Generic[T]):
         A new 'FastBox' carrying 'fieldType', ready for the deferred
         '__call__'.
     """
+    if isinstance(fieldType, TypeVar):
+      return super().__class_getitem__(fieldType)  # noqa
     self = cls.__new__(cls)
     self.__field_type__ = fieldType
     return self

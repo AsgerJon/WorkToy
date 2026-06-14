@@ -25,6 +25,9 @@ Contents:
   present descriptor.
   - METACALL: Marker used on a class to defer a given dunder hook to the
   metaclass implementation.
+  - ARGS: Placeholder for a starred argument in an overload signature.
+  Unlike the other sentinels it is instantiable and carries an inner
+  type via 'ARGS[int]', marking the variadic tail of a signature.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

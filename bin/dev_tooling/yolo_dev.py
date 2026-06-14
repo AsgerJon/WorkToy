@@ -15,6 +15,16 @@ sys.dont_write_bytecode = True
 from worktoy.utilities import stringList  # noqa: E402
 
 
+def _repoRoot() -> str:
+  """Walk up from this file to the directory holding 'pyproject.toml'."""
+  current = os.path.abspath(os.path.dirname(__file__))
+  while current != os.path.dirname(current):
+    if os.path.isfile(os.path.join(current, 'pyproject.toml')):
+      return current
+    current = os.path.dirname(current)
+  raise RuntimeError('Could not locate the repository root!')
+
+
 def _yolo(*args: Callable) -> None:
   """The 'yolo' function receives any number of callables and runs them."""
   tic = time.perf_counter_ns()
@@ -107,7 +117,7 @@ def runTests(verbosity: int = None) -> int:
   results = []
   loader = unittest.TestLoader()
   res = None
-  here = os.path.abspath(os.path.dirname(__file__))
+  here = _repoRoot()
   testRoot = os.path.join(here, 'tests')
   testRoot = os.path.normpath(testRoot)
   suite = loader.discover(start_dir=testRoot, )

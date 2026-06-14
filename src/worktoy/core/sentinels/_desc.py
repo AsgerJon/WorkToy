@@ -10,4 +10,9 @@ from . import Sentinel
 
 
 class DESC(Sentinel):
-  pass
+  """
+  DESC is a sentinel placeholder for the descriptor object itself, used
+  in deferred 'AttriBox' constructor arguments alongside THIS and OWNER.
+  At access time it is replaced by the descriptor mediating the
+  attribute access.
+  """

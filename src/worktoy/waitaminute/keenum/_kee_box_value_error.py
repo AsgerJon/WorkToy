@@ -35,13 +35,17 @@ class KeeBoxValueError(ValueError):
     which does not match the 'value' of any member of the '%s' 
     enumeration!"""
     descSpec = """%s.%s: %s"""
-    ownerName = getattr(self.desc, '__field_owner__', ).__name__
-    fieldName = getattr(self.desc, '__field_name__', )
-    fieldType = str(getattr(self.desc, '__field_type__', ))
-    desc = descSpec % (ownerName, fieldName, fieldType)
-    num = str(self.num)
-    valueType = str(type(self.value))
-    info = infoSpec % (desc, num, valueType, repr(self.value), fieldType)
+    owner = getattr(self.desc, '__field_owner__', object())  # no __name__
+    ownerName = getattr(owner, '__name__', 'Unknown')
+    fieldName = getattr(self.desc, '__field_name__', 'Unknown')
+    fieldType = getattr(self.desc, '__field_type__', None)
+    fieldTypeName = getattr(fieldType, '__name__', str(fieldType))
+    desc = descSpec % (ownerName, fieldName, fieldTypeName)
+    numName = getattr(self.num, '__name__', str(self.num))
+    valueType = getattr(self.num, 'valueType', None)
+    valueTypeName = getattr(valueType, '__name__', str(valueType))
+    value = repr(self.value)
+    info = infoSpec % (desc, numName, valueTypeName, value, numName)
     from ...utilities import textFmt
     return textFmt(info, )
 

@@ -37,24 +37,24 @@ class StochasticVariable(BaseObject):
   the target always falls inside the reachable band), then nudging the
   integers to land exactly on the target.
   """
-  
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  
+
   #  Class Variables
   __required_fields__ = ('mean', 'var', 'minVal', 'maxVal')
-  
+
   #  Public Variables
   mean: Field[float] = Field()
   var: Field[float] = Field()
   minVal: Field[int] = Field()
   maxVal: Field[int] = Field()
-  
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  
+
   @mean.GET
   def _getMean(self) -> float:
     """
@@ -102,11 +102,11 @@ class StochasticVariable(BaseObject):
     int
       The highest value the distribution may produce.
     """
-  
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  
+
   @classmethod
   def __class_init__(cls, name: str, bases, space, **kwargs) -> None:
     """
@@ -151,11 +151,11 @@ class StochasticVariable(BaseObject):
         raise TypeError(textFmt(info))
       if not callable(found):
         raise TypeException(getterKey, found, Callable)
-  
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  
+
   def sampleInteger(self) -> int:
     """
     The 'sampleInteger' method is left abstract on the base and implemented
@@ -174,7 +174,7 @@ class StochasticVariable(BaseObject):
       the draw.
     """
     raise NotImplementedError
-  
+
   def _settle(self, values: list[int], target: int) -> list[int]:
     """
     The '_settle' method distributes the difference between 'target' and the

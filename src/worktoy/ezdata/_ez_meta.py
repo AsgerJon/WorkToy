@@ -21,36 +21,6 @@ if TYPE_CHECKING:  # pragma: no cover
   AsTypeSig: TypeAlias = Callable[..., TypeSig]
   Bases: TypeAlias = tuple[EZMeta, ...]
 
-#  For each dunder method 'EZHook' generates, the arguments whose
-#  placeholder 'Any' annotation is rewritten to the concrete class.
-#  The instance argument 'self' is always rewritten; the ordering
-#  dunders also rewrite 'other', since they meaningfully compare only
-#  against the same class. '__init__' is excluded: its
-#  '*args'/'**kwargs' signature carries no annotation worth
-#  correcting.
-_CLS_ARGS: dict[str, tuple[str, ...]] = {
-  '__iter__'   : ('self',),
-  '__repr__'   : ('self',),
-  '__eq__'     : ('self',),
-  '__hash__'   : ('self',),
-  '__setattr__': ('self',),
-  '__delattr__': ('self',),
-  '__lt__'     : ('self', 'other',),
-  '__le__'     : ('self', 'other',),
-  '__gt__'     : ('self', 'other',),
-  '__ge__'     : ('self', 'other',),
-}
-
-#  For each generated dunder, the arguments whose placeholder 'Any'
-#  annotation is rewritten to 'object', because they accept any value:
-#  '__eq__' compares against any object and returns 'NotImplemented'
-#  otherwise, while the frozen '__setattr__' raises before ever
-#  inspecting the assigned value.
-_OBJECT_ARGS: dict[str, tuple[str, ...]] = {
-  '__eq__'     : ('other',),
-  '__setattr__': ('value',),
-}
-
 
 class EZMeta(BaseMeta):
   """

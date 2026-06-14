@@ -75,7 +75,9 @@ class KeeFlagsSpace(BaseSpace):
       raise KeeFlagDuplicate(name, oldFlag, keeFlag)
     if name in baseFlags:
       raise KeeFlagDuplicate(name, baseFlags[name], keeFlag)
-    keeFlag.__member_index__ = len(baseFlags) + len(keeFlags)
+    #  The bit index is assigned later by 'getKeeFlags', which clones
+    #  each flag with a fresh contiguous index in declaration order, so
+    #  it is deliberately not set here.
     keeFlag.__member_name__ = name
     keeFlag.__field_name__ = name
     keeFlags[name] = keeFlag
@@ -131,7 +133,6 @@ class KeeFlagsSpace(BaseSpace):
     if self.getClassName() == 'KeeFlags':
       return namespace
     namespace['__kee_flags__'] = self.getKeeFlags()
-    namespace['__kee_members__'] = None
     flagsFactory = cast(Callable, self._getKeeFlagsFactory())
     namespace['getKeeFlags'] = classmethod(flagsFactory)
     return namespace

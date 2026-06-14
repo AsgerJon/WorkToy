@@ -62,8 +62,10 @@ class AbstractSpaceHook(Object):
     Called just before a name is set in the namespace. Returning True
     blocks the default behavior.
 
-  - 'getItemPhase(self, key, value) -> bool'
-    Called just before a name is retrieved from the namespace.
+  - 'getItemPhase(self, key, value) -> None'
+    Called during '__getitem__', after the value is fetched and before
+    it is returned. Its return value is ignored, so unlike
+    'setItemPhase' it cannot veto the read; it signals only by raising.
 
   - 'preCompilePhase(self, compiled: dict) -> dict'
     Called after the class body finishes executing, but before the
@@ -116,7 +118,7 @@ class AbstractSpaceHook(Object):
     raise an exception to interrupt the flow. The default does nothing.
     """
 
-  def getItemPhase(self, key: str, value: Any, ) -> bool:
+  def getItemPhase(self, key: str, value: Any, ) -> None:
     """
     The 'getItemPhase' method runs during '__getitem__', after the value
     is fetched and before it is returned. Its return value is ignored
@@ -130,6 +132,7 @@ class AbstractSpaceHook(Object):
     namespace. Returning True blocks the namespace's own assignment. The
     default does nothing and returns False.
     """
+    return False
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:
     """
@@ -174,7 +177,10 @@ class AbstractSpaceHook(Object):
     Accessed on a namespace instance, '__get__' binds
     '__space_object__' to that instance and returns the hook, so the
     'space' property resolves to the active namespace during the hook's
-    calls.
+    calls. Accessed on the namespace class ('instance' is None), it
+    returns the hook unchanged without rebinding.
     """
+    if instance is None:
+      return self
     self.__space_object__ = instance
     return self

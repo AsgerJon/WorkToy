@@ -38,18 +38,20 @@ class KeeBoxTypeError(TypeError):
     value type: '%s' could not be instantiated with the given arguments: 
     <br><tab>%s<br>"""
     descSpec = """%s.%s: %s"""
-    ownerName = getattr(self.box, '__field_owner__', ).__name__
-    fieldName = getattr(self.box, '__field_name__', )
-    fieldType = str(getattr(self.box, '__field_type__', ))
-    desc = descSpec % (ownerName, fieldName, fieldType)
-    num = str(self.box.fieldType)
-    valueType = str(self.box.fieldType.valueType)
+    owner = getattr(self.box, '__field_owner__', object())  # no __name__
+    ownerName = getattr(owner, '__name__', 'Unknown')
+    fieldName = getattr(self.box, '__field_name__', 'Unknown')
+    fieldNum = getattr(self.box, '__field_type__', None)
+    numName = getattr(fieldNum, '__name__', str(fieldNum))
+    desc = descSpec % (ownerName, fieldName, numName)
+    valueType = getattr(fieldNum, 'valueType', None)
+    valueTypeName = getattr(valueType, '__name__', str(valueType))
     argSpec = """<%s: %s>"""
     argTypes = (*(type(arg).__name__ for arg in self.posArgs),)
     argStrs = (*(repr(arg) for arg in self.posArgs),)
     argInfos = (*(argSpec % (t, s) for s, t in zip(argStrs, argTypes)),)
     argInfo = '<br><tab>'.join(argInfos)
-    info = infoSpec % (desc, num, valueType, argInfo)
+    info = infoSpec % (desc, numName, valueTypeName, argInfo)
     from ...utilities import textFmt
     return textFmt(info, )
 

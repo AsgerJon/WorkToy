@@ -34,31 +34,27 @@ class MissingVariable(AttributeError):
 
   Examples
   --------
-  >>>  from typing import TypeAlias, Optional, Callable, Any, Type, Union
-  >>>  from types import FunctionType as Func
-  >>>  from worktoy.waitaminute import TypeException
+  >>> from typing import Callable, Any
+  >>> from worktoy.waitaminute import MissingVariable, TypeException
+  >>> class Decorate:
+  ...   __wrapped__ = None
   ...
-  >>>  MaybeFunc: TypeAlias = Optional[Func]
+  ...   def __init__(self, func: Any = None) -> None:
+  ...     if func is not None:
+  ...       if not callable(func):
+  ...         raise TypeException('func', func, Callable)
+  ...       self.__wrapped__ = func
   ...
-  >>>  class Decorate:
-  ...    __wrapped__: MaybeFunc = None
+  ...   def __call__(self, *args, **kw) -> Any:
+  ...     if self.__wrapped__ is None:
+  ...       raise MissingVariable(self, '__wrapped__', Callable)
+  ...     return self.__wrapped__(*args, **kw)
   ...
-  ...    def __init__(self, func: MaybeFunc = None) -> None:
-  ...      if func is not None:
-  ...        if not callable(func):
-  ...          raise TypeException('func', func, Callable)
-  ...        self.__wrapped__ = func
-  ...
-  ...    def __call__(self, *args, **kw) -> Any:
-  ...      if self.__wrapped__ is None:
-  ...        raise MissingVariable(self, '__wrapped__', Callable)
-  ...      return self.__wrapped__(*args, **kw)
-  ...
-  >>>  try:
-  ...    decorated = Decorate()
-  ...    decorated()
-  ...  except MissingVariable as missingVariable:
-  ...    print(missingVariable)
+  >>> try:
+  ...   decorated = Decorate()
+  ...   decorated()
+  ... except MissingVariable as missingVariable:
+  ...   print(missingVariable)
   """
 
   __slots__ = ('instance', 'varName', 'expectedTypes')

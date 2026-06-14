@@ -67,7 +67,7 @@ jobs:
       # Compute the next dev version from VERSION and expose it as
       # VERSION_INFO in the environment for the steps below.
       - name: Resolve next version
-        run: python version_get.py dev VERSION_INFO
+        run: python bin/release_tooling/version_get.py dev VERSION_INFO
 
       # Write VERSION_INFO into pyproject.toml (the build reads its
       # version from there), into src/worktoy/__init__.py (so
@@ -75,7 +75,7 @@ jobs:
       # README.md heading. docs/conf.py reads the version straight from
       # the stamped pyproject.toml.
       - name: Stamp version into pyproject, package and README
-        run: python version_stamp.py VERSION_INFO
+        run: python bin/release_tooling/version_stamp.py VERSION_INFO
 
       - name: Build
         run: python -m build
@@ -86,13 +86,13 @@ jobs:
       # Only reached if the publish above succeeded: advance the
       # counters in VERSION, then commit VERSION + the stamped files.
       - name: Bump version counters
-        run: python version_bump.py dev
+        run: python bin/release_tooling/version_bump.py dev
 
       - name: Commit version changes
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
-          git add VERSION pyproject.toml src/worktoy/__init__.py README.md
+          git add bin/release_tooling/VERSION pyproject.toml src/worktoy/__init__.py README.md
           git commit -m "dev ${{ env.VERSION_INFO }}"
           git push origin HEAD:${{ github.ref }}
 

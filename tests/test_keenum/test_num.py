@@ -145,7 +145,10 @@ class TestNum(KeeTest):
     e = context.exception
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.name, 'MONDAY')
-    self.assertIs(e.oldMember, WeekDay.MONDAY.kee)
+    #  The inherited member is cloned into the subclass namespace, so
+    #  'oldMember' is that registered clone, equal by name rather than
+    #  identical to the parent's original 'Kee'.
+    self.assertEqual(e.oldMember.name, WeekDay.MONDAY.kee.name)
     self.assertIs(e.newMember, breh)
 
     #  Testing duplicating member in same class

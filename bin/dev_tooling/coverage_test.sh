@@ -6,6 +6,10 @@
 
 set -eu
 
+#  Anchor the working directory so relative paths resolve
+#  no matter where the script is invoked from.
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+
 export DEVELOPMENT_ENVIRONMENT=1
 export PYTHONDONTWRITEBYTECODE=1
 export MARKWORK_ETC_DIR="$(pwd)/etc"

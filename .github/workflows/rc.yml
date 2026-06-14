@@ -67,7 +67,7 @@ jobs:
       # Compute the next rc version from VERSION and expose it as
       # VERSION_INFO in the environment for the steps below.
       - name: Resolve next version
-        run: python version_get.py rc VERSION_INFO
+        run: python bin/release_tooling/version_get.py rc VERSION_INFO
 
       # Write VERSION_INFO into pyproject.toml (the build reads its
       # version from there), into src/worktoy/__init__.py (so
@@ -75,7 +75,12 @@ jobs:
       # README.md heading. docs/conf.py reads the version straight from
       # the stamped pyproject.toml.
       - name: Stamp version into pyproject, package and README
-        run: python version_stamp.py VERSION_INFO
+        run: python bin/release_tooling/version_stamp.py VERSION_INFO
+
+      # Refresh the cumulative token-usage badge in the README from the
+      # canonical count in token_stats.json.
+      - name: Stamp token-usage badge into README
+        run: python bin/release_tooling/token_stamp.py
 
       - name: Build
         run: python -m build
@@ -86,13 +91,13 @@ jobs:
       # Only reached if the publish above succeeded: advance the
       # counters in VERSION, then commit VERSION + the stamped files.
       - name: Bump version counters
-        run: python version_bump.py rc
+        run: python bin/release_tooling/version_bump.py rc
 
       - name: Commit version changes
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
-          git add VERSION pyproject.toml src/worktoy/__init__.py README.md
+          git add bin/release_tooling/VERSION bin/release_tooling/token_stats.json pyproject.toml src/worktoy/__init__.py README.md
           git commit -m "rc ${{ env.VERSION_INFO }}"
           git push origin HEAD:${{ github.ref }}
 

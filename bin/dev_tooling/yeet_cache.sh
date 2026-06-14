@@ -3,6 +3,10 @@
 
 set -euo pipefail
 
+#  Anchor the working directory so relative paths resolve
+#  no matter where the script is invoked from.
+cd "$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+
 pycacheDirs=()
 while IFS= read -r dir; do
   pycacheDirs+=("$dir")

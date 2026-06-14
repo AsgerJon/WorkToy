@@ -10,4 +10,9 @@ from . import Sentinel
 
 
 class METACALL(Sentinel):
-  pass
+  """
+  METACALL marks a class-level dunder hook as deferred to the metaclass.
+  When 'AbstractMetaclass' finds this sentinel as the value of a hook
+  such as '__class_str__' or '__class_iter__', it falls back to its own
+  implementation instead of calling the hook on the class.
+  """

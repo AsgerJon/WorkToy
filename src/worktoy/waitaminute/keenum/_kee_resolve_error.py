@@ -16,10 +16,20 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeResolveError(Exception):
   """
-  Raised by '__class_resolve__' to decline resolution.
+  Raised when an enumeration cannot resolve an identifier to one of its
+  members. It is the terminal signal of the resolution machinery: every
+  applicable tier (identity, name, the optional '__class_resolve__'
+  hook, positional index, and value) has been tried and none produced a
+  member. A '__class_resolve__' hook declines by returning
+  'NotImplemented', not by raising this; the machinery then raises it
+  once the remaining tiers also miss.
 
-  Equivalent to returning 'NotImplemented' from the resolver. Any
-  other exception raised by '__class_resolve__' propagates normally.
+  Attributes
+  ----------
+  keeNum : type
+    The enumeration class against which resolution was attempted.
+  identifier : Any
+    The identifier that matched no member.
   """
 
   __slots__ = ('keeNum', 'identifier')
@@ -33,8 +43,8 @@ class KeeResolveError(Exception):
     self.identifier = identifier
 
   def __str__(self, ) -> str:
-    infoSpec = """Custom resolver for enumeration '%s' declined to resolve 
-    the identifier '%s'!"""
+    infoSpec = """Enumeration '%s' could not resolve the identifier '%s'
+    to any of its members!"""
     clsName = self.keeNum.__name__
     identifier = str(self.identifier)
     info = infoSpec % (clsName, identifier)

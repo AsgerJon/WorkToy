@@ -32,6 +32,8 @@ def _castSlice(arg: Any) -> Slice:
   if isinstance(slice(arg), ValidSlice):
     return slice(arg)
   if isinstance(arg, (list, tuple)) and arg:
+    if len(arg) > 3:
+      raise _exc(slice, arg)
     a, b, c, *_ = (*arg, None, None, None)
     if isinstance(slice(a, b, c), ValidSlice):
       return slice(a, b, c)
@@ -156,7 +158,8 @@ def typeCast(target: type, arg: Any, **kwargs) -> Any:
   ----------------
   - 'slice' : accepts a 'slice', a single index, or a
     'list' / 'tuple' of up to three values that yield a valid
-    slice. Validated via 'ValidSlice'.
+    slice; more than three values fail. Validated via
+    'ValidSlice'.
   - 'str' : accepts 'bytes' / 'bytearray' (UTF-8 decoded);
     arbitrary objects are *not* stringified.
   - 'bool' : accepts only values equal to '0', '1',

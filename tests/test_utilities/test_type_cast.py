@@ -316,3 +316,18 @@ class TestTypeCast(UtilitiesTest):
       self.assertIsInstance(out, complex)
       self.assertEqual(out.imag, 0.0)
       self.assertEqual(int(out.real), exact)
+
+  def test_slice_from_valid_list(self) -> None:
+    """
+    Testing that 'typeCast(slice, arg)' builds the matching slice from a
+    list of up to three int or None components.
+    """
+    self.assertEqual(typeCast(slice, [1, 10, 2]), slice(1, 10, 2))
+
+  def test_slice_from_invalid_list(self) -> None:
+    """
+    Testing that 'typeCast(slice, arg)' raises 'TypeCastException' for a
+    list whose components do not form a valid slice.
+    """
+    with self.assertRaises(TypeCastException):
+      typeCast(slice, ['x', 'y'])

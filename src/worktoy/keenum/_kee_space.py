@@ -33,7 +33,6 @@ class KeeSpace(BaseSpace):
   #  Private Variables
   __enumeration_members__ = None
   __member_type__ = None
-  __num_list__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -98,7 +97,12 @@ class KeeSpace(BaseSpace):
           if key in self.__enumeration_members__:
             oldMember = self.__enumeration_members__[key]
             raise KeeDuplicate(key, oldMember, val)
-          self.addNum(key, val)
+          #  The inherited member is cloned before registration, since
+          #  'addNum' writes the index directly onto its argument. The
+          #  original stays untouched on the parent enumeration, even
+          #  when the class under construction later fails, for example
+          #  for declaring multiple bases.
+          self.addNum(key, val.clone())
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

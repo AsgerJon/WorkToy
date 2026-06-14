@@ -11,4 +11,10 @@ from . import Sentinel
 
 
 class OWNER(Sentinel):
-  pass
+  """
+  OWNER is a sentinel placeholder for the owning class, the 'owner'
+  argument passed to '__get__' in the descriptor protocol. In a deferred
+  'AttriBox' constructor argument it is replaced at access time by that
+  class, while THIS stands in for the accessing instance. Unlike THIS,
+  OWNER plays no role in overload signatures.
+  """

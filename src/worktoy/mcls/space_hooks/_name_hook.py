@@ -136,11 +136,12 @@ class NamespaceHook(AbstractSpaceHook):
     """
     The '_validateDel' method reports whether the current class is
     allowed to implement '__del__', which it is only when the class was
-    declared with the 'trustMeBro' keyword.
+    declared with a truthy 'trustMeBro' keyword (for example
+    'trustMeBro=True'). An absent keyword, or a falsy value such as
+    'trustMeBro=False', denies it.
     """
-    if 'trustMeBro' in self.space.getKwargs():
-      return True
-    return False
+    kwargs = self.space.getKwargs()
+    return True if kwargs.get('trustMeBro', False) else False
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -11,6 +11,10 @@
 
 set -eu
 
+#  Anchor the working directory so relative paths resolve
+#  no matter where the script is invoked from.
+cd "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
 export PYTHONDONTWRITEBYTECODE=1
 
 python3 -m bench "$@"

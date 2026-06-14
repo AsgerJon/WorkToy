@@ -60,8 +60,14 @@ class Paragraph(BaseGenerator):
     """
     The '_buildSentencesLengths' method partitions 'charCount' into
     sentence lengths drawn from 'sentenceDist' and caches them. The target
-    leaves room for the single space between sentences.
+    leaves room for the single space between sentences. A 'charCount'
+    below the shortest length 'sentenceDist' can draw becomes a single
+    sentence length of exactly 'charCount', since 'Sentence' realizes
+    short counts exactly through its own placeholder fallback.
     """
+    if self.charCount < self.sentenceDist.minVal:
+      self.__sentences_lengths__ = [self.charCount, ]
+      return
     self.__sentences_lengths__ = self.sentenceDist.partitionSpaced(
         self.charCount + 1)
 

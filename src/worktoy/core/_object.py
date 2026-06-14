@@ -62,10 +62,10 @@ class Object(metaclass=MetaType):
   '(instance, owner)' pairs in '__call_chain__'. The stack is grown
   by 'createContext(instance, owner)' and shrunk by 'exitContext()'.
   'self.instance' and 'self.owner' read the top of that stack via
-  the 'ContextInstance' and 'ContextOwner' descriptors. The
-  'with self.createContext(...) as context:' idiom inside '__get__'
-  / '__set__' / '__delete__' guarantees the pop happens even if the
-  hook raises.
+  the 'ContextInstance' and 'ContextOwner' descriptors. Inside
+  '__get__' / '__set__' / '__delete__' the frame is pushed with
+  'createContext(...)' and popped in a 'finally' block that calls
+  'exitContext()', so the pop happens even if a hook raises.
 
   Re-entrant access to the same descriptor object is safe: an inner
   call pushes a new frame, 'self.instance' inside that frame sees
@@ -109,7 +109,8 @@ class Object(metaclass=MetaType):
   ...     return getattr(instance, '_count', 0)
   ...   def __instance_set__(self, instance: Any, value: Any, **kw) -> None:
   ...     instance._count = value
-  ...   def __instance_delete__(self, instance: Any, **kw) -> None:
+  ...   def __instance_delete__(self, instance: Any, old: Any = None,
+  ...                           **kw) -> None:
   ...     instance._count = DELETED
   """
 

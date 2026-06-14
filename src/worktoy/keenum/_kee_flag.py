@@ -13,7 +13,7 @@ from ..utilities import textFmt, maybe
 from ..waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Tuple, Self, Iterator
+  from typing import Any, Tuple, Self, Iterator, Never
   from ..keenum import KeeFlagsMeta
 
 
@@ -48,12 +48,6 @@ class KeeFlag:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Type hints for the benefit of linters
-  value: Any
-  lows: tuple
-  highs: tuple
-  names: tuple[str, ...]
 
   #  Private Variables
   __field_name__ = None
@@ -125,23 +119,20 @@ class KeeFlag:
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __set_name__(self, owner: KeeFlagsMeta, name: str) -> None:
+  def __set_name__(self, owner: type, name: str) -> Never:
     """
-    'KeeFlagsMeta.__new__' invokes this directly when binding the flags
-    to the finished enumeration class. A 'KeeFlag' declared inside a
-    proper 'KeeFlags' class body never receives the interpreter-driven
-    call: 'KeeFlagsHook' claims it during class body execution, before
-    the namespace stores it. The interpreter reaches this method only
-    when a 'KeeFlag' landed in the class body of a class not built by
-    'KeeFlagsMeta', so an owner of any other kind is rejected with
-    'TypeException'.
+    Reaching this method always signals misuse, so it always raises. A
+    'KeeFlag' declared inside a proper 'KeeFlags' class body is claimed
+    by 'KeeFlagsHook' during class-body execution and never stored in
+    the namespace, so the interpreter never runs its '__set_name__'; the
+    owner binding for a real flag is performed by 'KeeFlag.clone' as the
+    enumeration is assembled. The only way to arrive here is a 'KeeFlag'
+    placed in the body of a class not built by 'KeeFlagsMeta', which is
+    rejected with 'TypeException'.
     """
     #  Local import: 'KeeFlagsMeta' loads after this file in the package.
     from . import KeeFlagsMeta
-    if not isinstance(owner, KeeFlagsMeta):
-      raise TypeException('owner', owner, KeeFlagsMeta)
-    self.__field_owner__ = owner
-    self.__field_name__ = name
+    raise TypeException('owner', owner, KeeFlagsMeta)
 
   def __str__(self, ) -> str:
     if self.__field_owner__ is None:

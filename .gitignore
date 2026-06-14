@@ -193,3 +193,6 @@ sym.md
 docs/_build/
 docs/_source/
 /out.txt
+
+#  Local docs-preview build artifacts (build_docs.sh)
+etc/docs_build/

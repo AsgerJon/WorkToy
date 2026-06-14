@@ -9,13 +9,22 @@ import sys
 from unittest import TestLoader, TextTestRunner
 
 
+def _repoRoot() -> str:
+  """Walk up from this file to the directory holding 'pyproject.toml'."""
+  current = os.path.abspath(os.path.dirname(__file__))
+  while current != os.path.dirname(current):
+    if os.path.isfile(os.path.join(current, 'pyproject.toml')):
+      return current
+    current = os.path.dirname(current)
+  raise RuntimeError('Could not locate the repository root!')
+
+
 def main() -> int:
   """Main Tester Script"""
   # verbosityLevel = [*sys.argv, 2][1]
   os.environ['RUNNING_TESTS'] = '1'
   loader = TestLoader()
-  here = os.path.abspath(os.path.dirname(__file__))
-  here = os.path.normpath(here)
+  here = _repoRoot()
   testRoot = os.path.join(here, 'tests')
   testRoot = os.path.normpath(testRoot)
   runner = None

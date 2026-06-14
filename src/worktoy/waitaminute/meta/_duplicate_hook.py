@@ -38,12 +38,12 @@ class DuplicateHook(Exception):
     Exception.__init__(self, )
 
   def __str__(self) -> str:
-    infonSpec = """The class '%s' already has a hook registered 
+    infoSpec = """The class '%s' already has a hook registered 
     at name: '%s'! The existing hook is '%s', and the new hook is '%s'."""
     ownerName = self.owner.__name__
     oldHook = str(self.existingHook)
     newHook = str(self.newHook)
-    info = infonSpec % (ownerName, self.name, oldHook, newHook)
+    info = infoSpec % (ownerName, self.name, oldHook, newHook)
     return textFmt(info)
 
   __repr__ = __str__

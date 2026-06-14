@@ -199,6 +199,24 @@ class TestFixBox(DescTest):
     self.assertAlmostEqual(e.oldValue, 0.0)
     self.assertAlmostEqual(e.newValue, 1337)
 
+  def test_lazy_default_consumes_write(self) -> None:
+    """
+    Testing that the lazy default store counts as the single write: a
+    read of an unset attribute builds and stores the default, so the
+    first explicit assignment afterwards raises 'WriteOnceError' with
+    the default as the old value. This is the documented contract, so
+    an attribute meant to receive a runtime value must be written
+    before it is first read.
+    """
+    z = ComplexFix()
+    self.assertAlmostEqual(z.RE, 0.0)
+    with self.assertRaises(WriteOnceError) as context:
+      z.RE = 1337
+    e = context.exception
+    self.assertIs(e.desc, ComplexFix.RE)
+    self.assertAlmostEqual(e.oldValue, 0.0)
+    self.assertAlmostEqual(e.newValue, 1337)
+
   def test_bad_delete(self, ) -> None:
     """
     Testing that deleting attributes that are not set raises appropriate

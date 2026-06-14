@@ -108,7 +108,7 @@ class ComplexMixin:
         other = complex(args[0])
         self._setReal(other.real)
         self._setImag(other.imag)
-    elif len(args) >= 1:
+    elif len(args) >= 2:
       self._setReal(float(args[0]))
       self._setImag(float(args[1]))
 

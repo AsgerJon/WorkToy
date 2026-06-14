@@ -1,5 +1,5 @@
 [![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
-[![Tokens](https://img.shields.io/badge/Tokens-7.6B-D97757)](https://claude.com/claude-code)
+[![Tokens](https://img.shields.io/badge/Tokens-8.2B-D97757)](https://claude.com/claude-code)
 [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy)
 [![PyPI version](https://badge.fury.io/py/worktoy.svg)](https://pypi.org/project/worktoy/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -63,6 +63,9 @@ object.
 Instead:
 
 ```python
+from worktoy.desc import AttriBox
+
+
 class Point:
   x = AttriBox[float](0.0)
   y = AttriBox[float](0.0)
@@ -84,6 +87,11 @@ point.y == 420.0
 
 When types do not match, `AttriBox` attempts casting before raising an
 error. Same ergonomics. Stronger guarantees.
+
+Note that `Point` above is a plain class: both `AttriBox` and `Field`
+are ordinary descriptors and work on any class. The `BaseObject` base
+shown in the examples below is required only for the `@overload`
+machinery, not for declarative attributes.
 
 ## The Python Parsing Situation Is Crazy
 
@@ -210,6 +218,9 @@ worse in other languages. Anyway, here is the alternative provided by
 **worktoy**: `Field`.
 
 ```python
+from worktoy.desc import Field
+
+
 class Point(BaseObject):
   x = AttriBox[float](0.0)
   y = AttriBox[float](0.0)

@@ -134,7 +134,9 @@ class AttriBox(BaseDescriptor[T]):
     because 'THIS' resolved to the owner must still go through the
     constructor. So 'AttriBox[Parent](THIS)' read on a 'Child' instance
     builds 'Parent(child)' instead of copying 'child' itself just
-    because it happens to be a 'Parent'.
+    because it happens to be a 'Parent'. The copy likewise yields to
+    normal construction when keyword arguments are present, since
+    copying the lone argument would silently discard them.
 
     When '__instance_get__' is unable to retrieve a value from a given
     instance, the 'args' and 'kw' passed to the constructor of the
@@ -244,7 +246,7 @@ class AttriBox(BaseDescriptor[T]):
     """
     fieldType = self.getFieldType()
     fieldObject = None
-    if not self.hasSentinelArgs() and len(args) == 1:
+    if not self.hasSentinelArgs() and len(args) == 1 and not kwargs:
       if isinstance(args[0], fieldType):
         #  A lone argument already of the field type is deep-copied so
         #  that each instance owns its default rather than sharing the
@@ -260,7 +262,7 @@ class AttriBox(BaseDescriptor[T]):
           fieldObject = args[0]
     if fieldObject is None:
       try:
-        if fieldType in (list, set, frozenset, dict, tuple):
+        if fieldType in (list, set, frozenset, dict, tuple) and not kwargs:
           fieldObject = fieldType(args)
         else:
           fieldObject = fieldType(*args, **kwargs)

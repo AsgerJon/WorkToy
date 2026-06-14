@@ -84,7 +84,7 @@ later versions of Python *cannot* be backported this way. This is why
 A point of pride for *worktoy* is the 100% branch coverage of the test
 suite. This requirement is non-negotiable. The CI-pipeline contains a
 measurement of the coverage that is authoritative, but included in the
-repository is the `coverage_test.sh` script that reliably achieves the
+repository is the `bin/dev_tooling/coverage_test.sh` script that reliably achieves the
 same results as the CI-pipeline. It does rely on the previously mentioned
 development dependencies. It runs all the tests in the `tests` directory
 and if all pass, the script opens the HTML report in the system browser.
@@ -92,7 +92,7 @@ and if all pass, the script opens the HTML report in the system browser.
 Running tests without measuring coverage is substantially faster and is
 frequently desirable during development when designing the tests
 themselves. For this purpose, two Python functions are available from the
-`yolo_dev.py` module: `runTests`, which runs all the tests found and puts
+`bin/dev_tooling/yolo_dev.py` module: `runTests`, which runs all the tests found and puts
 results in the terminal. A related function, `runTest`, allows running a
 single test by passing the test class to it.
 
@@ -124,8 +124,8 @@ defined earlier in the same file links back to that line, and a
 standard-library member or a builtin links out to the matching page on the
 official Python documentation. These links are read from the syntax tree,
 so they land exactly rather than by guesswork. To preview the whole site
-locally, run `build_docs.sh`, which builds the same pages into
-`docs/_build` and opens them in the browser.
+locally, run `bin/dev_tooling/build_docs.sh`, which builds the same pages
+into `etc/docs_build` and opens them in the browser.
 
 ## STYLE
 

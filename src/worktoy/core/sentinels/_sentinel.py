@@ -42,11 +42,11 @@ class SentinelMeta(type):
     return maybe(mcls.__registered_sentinels__, [])
 
   @classmethod
-  def _getNamedSentinel(cls, sentinelName: str, ) -> Self:
+  def _getNamedSentinel(mcls, sentinelName: str, ) -> Self:
     """
     Returns registered sentinel having this name.
     """
-    existing = cls._getRegisteredSentinels()
+    existing = mcls._getRegisteredSentinels()
     for existingSentinel in existing:
       if existingSentinel.__name__ == sentinelName:
         return existingSentinel
@@ -77,8 +77,7 @@ class SentinelMeta(type):
     except KeyError as keyError:
       if kwargs.get('_recursion', False):
         raise keyError from RecursionError
-      namespace = dict()
-      cls = super().__new__(mcls, name, (), namespace, **kwargs)
+      cls = super().__new__(mcls, name, bases, space, **kwargs)
       mcls._registerSentinel(cls)
       return mcls.__new__(mcls, name, (), {}, _recursion=True)
     else:

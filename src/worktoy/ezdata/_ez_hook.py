@@ -35,6 +35,18 @@ _DESCRIPTOR_KEYS: tuple[str, ...] = (
 )
 
 
+def _unorderable(self: Any, other: Any) -> Any:
+  """
+  The '_unorderable' function is the shared comparison dunder installed
+  as '__lt__', '__le__', '__gt__', and '__ge__' on every non-ordered
+  'EZData' subclass. It returns 'NotImplemented' unconditionally, so
+  the interpreter falls back to its standard TypeError for unsupported
+  comparisons, while ordering dunders inherited from an ordered base
+  class are still shadowed.
+  """
+  return NotImplemented
+
+
 class EZHook(AbstractSpaceHook):
   """
   EZHook is the namespace hook installed on every 'EZSpace'. It
@@ -85,9 +97,11 @@ class EZHook(AbstractSpaceHook):
     EZField value is routed to 'EZSpace.registerEZField' after passing
     '_assertCompleteField'; a function value falls through to the
     namespace untouched; any other value is wrapped through
-    'EZField.fromValue' and registered. Reserved Python names (names
-    starting and ending with double underscores that the interpreter
-    populates automatically) are also passed through.
+    'EZField.fromValue' and registered. A bare 'None' value is
+    rejected outright, since no field type can be inferred from it.
+    Reserved Python names (names starting and ending with double
+    underscores that the interpreter populates automatically) are
+    also passed through.
 
     Parameters
     ----------
@@ -111,9 +125,10 @@ class EZHook(AbstractSpaceHook):
     ------
     IncompleteFieldException
       If the EZField at 'key' is missing its type or its
-      construction arguments. Raised via '_assertCompleteField'
-      before registration so the traceback points at the
-      class-body line.
+      construction arguments, or if a bare 'None' value was
+      assigned in the class body, leaving no type to infer the
+      field from. Raised before registration so the traceback
+      points at the class-body line.
     ReservedFieldError
       If an EZField is being registered at a reserved name such
       as 'asDict' or '__post_init__'. Raised by
@@ -140,6 +155,10 @@ class EZHook(AbstractSpaceHook):
       else:
         break
     else:
+      if val is None:
+        clsName = self.space.getClassName()
+        missing = 'a bare None default cannot infer a field type'
+        raise IncompleteFieldException(clsName, key, missing)
       # noinspection PyTypeChecker
       valField = EZField.fromValue(val)
       self.space.registerEZField(key, valField)
@@ -245,7 +264,11 @@ class EZHook(AbstractSpaceHook):
        get '__hash__' set to 'None' so the interpreter rejects
        hashing. Ordered classes receive '__lt__', '__le__',
        '__gt__', and '__ge__' through 'orderingFactory';
-       non-ordered classes get those four dunders set to 'None'.
+       non-ordered classes get those four dunders set to the
+       shared '_unorderable' function, which always returns
+       'NotImplemented' so the interpreter raises its standard
+       TypeError for unsupported comparisons while still blocking
+       inheritance of an ordered base class's ordering dunders.
 
     The conversion helpers 'asDict', 'asTuple', and 'replace',
     plus the display dunders '__repr__'/'__str__' and the
@@ -296,10 +319,10 @@ class EZHook(AbstractSpaceHook):
       compiledSpace['__gt__'] = self.orderingFactory(operator.gt)
       compiledSpace['__ge__'] = self.orderingFactory(operator.ge)
     else:
-      compiledSpace['__lt__'] = None
-      compiledSpace['__le__'] = None
-      compiledSpace['__gt__'] = None
-      compiledSpace['__ge__'] = None
+      compiledSpace['__lt__'] = _unorderable
+      compiledSpace['__le__'] = _unorderable
+      compiledSpace['__gt__'] = _unorderable
+      compiledSpace['__ge__'] = _unorderable
     return compiledSpace
 
   @classmethod
