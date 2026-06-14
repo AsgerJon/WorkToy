@@ -149,7 +149,7 @@ class Point(BaseObject):
   y = AttriBox[float](0.0)
 
   @overload(float, float)
-  def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+  def __init__(self, x: float, y: float) -> None:
     self.x = x
     self.y = y
 
