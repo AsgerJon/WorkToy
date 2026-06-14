@@ -19,6 +19,6 @@
 #  the next line.
 MAJOR=1
 MINOR=0
-MICRO=0
-RC=21
-DEV=2
+MICRO=1
+RC=0
+DEV=0
