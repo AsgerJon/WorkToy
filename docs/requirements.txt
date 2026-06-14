@@ -11,6 +11,9 @@ sphinx>=7
 furo>=2024.1
 
 # markwork generates the verbatim source pages (extensions in
-# conf.py). Pinned exactly while on the dev channel: pip skips
-# pre-releases unless the version names one.
-markwork==0.1.0.dev0
+# conf.py). Its host-facing contract is intentionally stable: it asks
+# only that the sources live in 'src' and the tests in 'tests', so
+# newer releases stay compatible and worktoy floats forward to pick up
+# generator fixes. The floor is 0.1.0, the first stable release; a '>='
+# floor also keeps pip from pulling pre-releases.
+markwork>=0.1.0
