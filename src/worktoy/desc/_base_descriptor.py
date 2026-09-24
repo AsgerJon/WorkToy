@@ -256,12 +256,12 @@ class BaseDescriptor(Object, Generic[T]):
     @overload
     def __get__(self, instance: Any, owner: type) -> T: ...
 
-    def __get__(self, instance: Any, owner: type) -> Union[Self, T]:
+    def __get__(self, instance: Any, owner: type) -> Union[Any, T]:
       return super().__get__(instance, owner)
 
     #  Writes require T statically, so type-checked callers are held
     #  to the field type. Runtime salvage still rescues dynamic or
     #  untyped callers that pass something coercible.
     # noinspection PyMethodOverriding
-    def __set__(self, instance: Any, value: T) -> None: ...
+    def __set__(self, instance: Any, value: Any) -> None: ...
   # @formatter:on

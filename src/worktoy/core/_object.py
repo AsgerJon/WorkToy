@@ -121,12 +121,12 @@ class Object(metaclass=MetaType):
   #  Class Variables
 
   #  Private Variables
-  __field_owner__ = None
-  __field_name__ = None
-  __private_name__ = None  # cached result of 'getPrivateName'
-  __pos_args__ = None
-  __key_args__ = None
-  __call_chain__ = None
+  __field_owner__: Optional[type] = None
+  __field_name__: Optional[str] = None
+  __private_name__: Optional[str] = None  # cached result of 'getPrivateName'
+  __pos_args__: Optional[tuple[Any, ...]] = None
+  __key_args__: Optional[dict[str, Any]] = None
+  __call_chain__: Optional[list[tuple[Any, type]]] = None
 
   #  Public Variables
   directory = Directory()
@@ -137,7 +137,7 @@ class Object(metaclass=MetaType):
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def getFieldOwner(self) -> type:
+  def getFieldOwner(self) -> Optional[type]:
     return self.__field_owner__
 
   def getFieldName(self) -> Optional[str]:
@@ -202,12 +202,16 @@ class Object(metaclass=MetaType):
   def getContextInstance(self) -> Any:
     """Returns the contextual instance or raises 'WithoutException'"""
     if self.hasContext():
+      if self.__call_chain__ is None:
+        raise MissingVariable(self, '__call_chain__', tuple)
       return self.__call_chain__[-1][0]
     raise WithoutException(self)
 
-  def getContextOwner(self) -> type:
+  def getContextOwner(self) -> Optional[type]:
     """Returns the contextual owner or raises 'WithoutException'"""
     if self.hasContext():
+      if self.__call_chain__ is None:
+        raise MissingVariable(self, '__call_chain__', tuple)
       return self.__call_chain__[-1][1]
     raise WithoutException(self)
 
@@ -351,9 +355,8 @@ class Object(metaclass=MetaType):
     a context manager. The stack makes the protocol safe under
     re-entrant access to the same descriptor.
     """
-    if self.__call_chain__ is None:
-      self.__call_chain__ = []
-    self.__call_chain__.append((instance, owner))
+    existing: list[tuple[Any, type]] = maybe(self.__call_chain__, [])
+    self.__call_chain__ = [*existing, (instance, owner), ]
     return self
 
   def exitContext(self) -> Self:
@@ -373,7 +376,9 @@ class Object(metaclass=MetaType):
     so callers see the attribute as absent. Otherwise return 'value'
     unchanged."""
     if value is DELETED:
-      raise MissingVariable(instance, self.__field_name__)
+      if self.__field_name__ is None:
+        raise MissingVariable(instance, '__field_name__', str)
+      raise MissingVariable(instance, self.__field_name__, object)
     return value
 
   def getPrivateName(self, ) -> str:
@@ -384,9 +389,13 @@ class Object(metaclass=MetaType):
     cached on first use: the field name is fixed once '__set_name__'
     has run, and this sits on the hot path of every access."""
     if self.__private_name__ is None:
+      if self.__field_name__ is None:
+        raise MissingVariable(self, '__field_name__', str)
       snake = _PRIVATE_KEY_PATTERN.sub('_', self.__field_name__).lower()
       self.__private_name__ = '__%s__' % snake
-    return self.__private_name__
+    if isinstance(self.__private_name__, str):
+      return self.__private_name__
+    raise TypeException('__private_name__', self.__private_name__, str)
 
   def hookPreGet(self, instance, **kwargs) -> None:
     """

@@ -6,18 +6,25 @@ covered by the contextual tests in 'DescTest'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, TypeVar
 import sys
 
 from worktoy.core.sentinels import THIS
 from worktoy.desc import AttriBox
+from worktoy.desc._attri_box import _RootAlias  # noqa
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import TypeException, MissingVariable
+from worktoy.waitaminute.desc import PhantomBoxError
 from . import DescTest
 from .geometry import Circle, Point2D
 
 eps = sys.float_info.epsilon
+
+T = TypeVar('T')
+
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Optional
 
 
 class TestAttriBox(DescTest):
@@ -179,6 +186,240 @@ class TestAttriBox(DescTest):
     self.assertEqual(e.varName, '__field_type__')
     self.assertIn(type, e.expectedTypes)
 
+  @staticmethod
+  def _raisingFrames(exception: BaseException) -> list:
+    """
+    Return the function names along an exception's traceback, outermost
+    first.
+
+    Several guards in this file exist to fail early rather than to
+    change what is raised, so the exception alone cannot distinguish
+    them from the deeper failure they pre-empt. The frame list can.
+    """
+    out = []
+    tb = exception.__traceback__
+    while tb is not None:
+      out.append(tb.tb_frame.f_code.co_name)
+      tb = tb.tb_next
+    return out
+
+  def test_unsubscripted_box_declaration(self) -> None:
+    """
+    Testing that a box which never captured a field type is refused as
+    the class is created, rather than at the first read of it.
+
+    Nothing can rescue such a box afterwards, since '__class_getitem__'
+    is the only place a field type is ever assigned, so the declaration
+    itself is already the whole mistake. The bare form covers a box
+    built with no subscript at all, and the parametrized-generic form
+    covers a subscript that 'AttriBox[T]' declined to claim, whose alias
+    then built a box with the field type still unset.
+
+    The generic case spells the subscript as 'List[int]' rather than
+    'list[int]' because the builtin form is only subscriptable from
+    Python 3.9, and because 'isinstance(list[int], type)' answers 'True'
+    on 3.9 and 3.10 alone, which would route that spelling differently on
+    those two versions.
+    """
+    raised = []
+
+    with self.assertRaises(Exception) as context:
+      class Bare:  # noqa
+        bar = AttriBox()
+    raised.append(context.exception)
+
+    with self.assertRaises(Exception) as context:
+      class Generic:  # noqa
+        bar = AttriBox[List[int]]([1, 2])
+    raised.append(context.exception)
+
+    for exception in raised:
+      e = self._unwrapSetName(exception, MissingVariable)
+      self.assertIsInstance(e, MissingVariable)
+      self.assertEqual(e.varName, '__field_type__')
+      self.assertIn(type, e.expectedTypes)
+
+  def test_unsubscripted_box_installed_late(self) -> None:
+    """
+    Testing that a box with no field type is refused on read when it
+    reached the class after creation, through 'setattr', which is the
+    one route '__set_name__' never sees.
+
+    The guard in '__get__' is what makes this fail at the access itself.
+    Removing it does not change which exception arrives, since
+    'getFieldType' raises an identical 'MissingVariable' once '_resolve'
+    asks for the field type, so only the frame list tells the two apart.
+    """
+
+    class Foo:
+      pass
+
+    box = AttriBox()
+    setattr(Foo, 'bar', box)
+
+    #  The exception is caught by hand rather than through
+    #  'assertRaises', which detaches the traceback with
+    #  'with_traceback(None)' to avoid a reference cycle and so leaves
+    #  nothing to inspect.
+    try:
+      _ = Foo().bar
+    except MissingVariable as exception:
+      e, frames = exception, self._raisingFrames(exception)
+    else:  # pragma: no cover (the read above always raises)
+      self.fail("""Reading 'bar' should have raised!""")
+    self.assertIs(e.instance, box)
+    self.assertEqual(e.varName, '__field_type__')
+    self.assertIn(type, e.expectedTypes)
+    self.assertEqual(frames[-1], '__get__')
+    self.assertNotIn('_resolve', frames)
+    self.assertNotIn('getFieldType', frames)
+
+    #  Class access is unaffected: the descriptor stays introspectable.
+    self.assertIs(Foo.bar, box)
+
+  def test_no_parens_box_declaration(self) -> None:
+    """
+    Testing that a subscript naming a plain type still yields a working
+    attribute when the trailing call is left off. The subscript already
+    fixed the field type, so the only thing the missing parentheses
+    withheld is the deferred argument list, and '__set_name__' captures
+    an empty one on the box's behalf. The result is indistinguishable
+    from the declaration written out in full.
+
+    This is the one incomplete spelling that is met with a remedy rather
+    than a refusal, because it is the only one where the field type
+    survives. A subscript the box declines to claim leaves nothing to
+    build from, so those raise instead.
+    """
+
+    class Foo:
+      bar = AttriBox[int]
+      baz = AttriBox[list]
+
+    class Bar:
+      bar = AttriBox[int]()
+      baz = AttriBox[list]()
+
+    for owner in (Foo, Bar):
+      box = owner.__dict__['bar']
+      #  The captured arguments are asserted on the private names as
+      #  well as through the getters, because the getters route through
+      #  'maybe' and answer with the empty default whether or not the
+      #  capture ever ran. Only the raw attributes show that
+      #  '__set_name__' actually performed it.
+      self.assertIsNotNone(box.__pos_args__)
+      self.assertEqual(box.__pos_args__, ())
+      self.assertIsNotNone(box.__key_args__)
+      self.assertEqual(box.__key_args__, dict())
+      self.assertEqual(box.getPosArgs(), ())
+      self.assertEqual(box.getKeyArgs(), dict())
+      self.assertEqual(box.getFieldName(), 'bar')
+      self.assertIs(box.getFieldOwner(), owner)
+      instance = owner()
+      self.assertEqual(instance.bar, 0)
+      self.assertEqual(instance.baz, [])
+      instance.bar = 7
+      self.assertEqual(instance.bar, 7)
+
+    #  The mutable default is owned per instance, not shared.
+    first, second = Foo(), Foo()
+    first.baz.append(69)
+    self.assertEqual(first.baz, [69])
+    self.assertEqual(second.baz, [])
+
+  @staticmethod
+  def _unwrapSetName(
+      exception: BaseException,
+      expected: type = PhantomBoxError,
+  ) -> BaseException:
+    """
+    Return the exception a class body raised from '__set_name__'.
+
+    Python 3.7 through 3.11 re-raise it wrapped in a 'RuntimeError' with
+    the original on '__cause__', while 3.12 onward propagates it
+    unchanged. This reads it back either way, with 'expected' naming the
+    class the caller is after, so the wrapper can be told apart from the
+    exception it wraps.
+    """
+    if isinstance(exception, expected):
+      return exception
+    return exception.__cause__  # pragma: no cover (Python < 3.12)
+
+  def test_no_call_box_declaration(self) -> None:
+    """
+    Testing that a subscript written without its trailing call is
+    refused as the class is created. Such a declaration never produces
+    an 'AttriBox' at all: the class body binds the alias the generic
+    machinery returned, and '_RootAlias.__set_name__' refuses it at that
+    binding, so no broken class ever escapes.
+    """
+    with self.assertRaises((PhantomBoxError, RuntimeError)) as context:
+      class Foo:  # pragma: no cover
+        bar = AttriBox[List[int]]
+    e = self._unwrapSetName(context.exception)
+    self.assertIsInstance(e, PhantomBoxError)
+    self.assertIsInstance(e.alias, _RootAlias)
+    self.assertEqual(e.fieldName, 'bar')
+    self.assertEqual(e.owner.__name__, 'Foo')
+    self.assertEqual(str(e), repr(e))
+    #  The rendering names the binding and keeps the parameters rather
+    #  than collapsing the subscript to the bare origin name.
+    self.assertIn('bar = ', str(e))
+    self.assertIn('List[int]', str(e))
+    self.assertIn('Foo', str(e))
+
+  def test_no_call_box_installed_late(self) -> None:
+    """
+    Testing that an alias installed on a finished class is refused on
+    read. Assigning through 'setattr' never triggers '__set_name__', so
+    this is the one route that still reaches '_RootAlias.__get__'. With
+    no name ever assigned, the message names none.
+    """
+
+    class Foo:
+      pass
+
+    alias = AttriBox[List[int]]
+    setattr(Foo, 'bar', alias)
+
+    for probe in (lambda: Foo().bar, lambda: Foo.bar):
+      with self.assertRaises(PhantomBoxError) as context:
+        probe()
+      e = context.exception
+      self.assertIs(e.alias, alias)
+      self.assertIs(e.owner, Foo)
+      self.assertIsNone(e.fieldName)
+      self.assertEqual(str(e), repr(e))
+      self.assertNotIn(' = ', str(e))
+
+  def test_alias_substitution_keeps_class(self) -> None:
+    """
+    Testing that substituting the 'TypeVar' of a generic subscript
+    preserves the '_RootAlias' class. The generic machinery routes that
+    substitution through 'copy_with', which without the override rebuilds
+    the alias as the plain class and quietly drops the hooks that refuse
+    a box declared without its trailing call.
+    """
+    alias = AttriBox[T]
+    self.assertIsInstance(alias, _RootAlias)
+
+    concrete = alias[int]
+    self.assertIsInstance(concrete, _RootAlias)
+    self.assertIs(concrete.__origin__, AttriBox)
+    self.assertEqual(concrete.__args__, (int,))
+
+    #  Both are refused on declaration. The unsubstituted alias still
+    #  holds a 'TypeVar', which renders through the 'typing' fallback,
+    #  while the substituted one holds a plain type, which renders as a
+    #  bare class name. A raw subscript reaches neither path.
+    for declared, expected in ((alias, 'T'), (concrete, 'AttriBox[int]')):
+      with self.assertRaises((PhantomBoxError, RuntimeError)) as context:
+        class Foo:  # pragma: no cover
+          bar = declared
+      e = self._unwrapSetName(context.exception)
+      self.assertIsInstance(e, PhantomBoxError)
+      self.assertIn(expected, str(e))
+
   def test_set_overflow_int(self) -> None:
     """
     Testing that assigning an int too large for the field type raises
@@ -238,12 +479,13 @@ class TestAttriBox(DescTest):
       bar = AttriBox[complex]()
 
     foo = Foo()
-    # noinspection PyTypeChecker
     foo.bar = 69, 420
+    # noinspection PyUnresolvedReferences
+    self.assertAlmostEqual(foo.bar.real, 69)
+    # noinspection PyUnresolvedReferences
+    self.assertAlmostEqual(foo.bar.imag, 420)
     if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(foo.bar, complex)
-    self.assertAlmostEqual(foo.bar.real, 69)
-    self.assertAlmostEqual(foo.bar.imag, 420)
 
   def test_bad_resolve(self) -> None:
     """
@@ -362,12 +604,20 @@ class TestAttriBox(DescTest):
     self.assertIs(e.expectedTypes[0], Plain)
     self.assertIsInstance(e.__cause__, TypeError)
 
-  def test_none_type_field_rejected(self) -> None:
+  def test_bad_type(self, ) -> None:
     """
-    Testing that subscripting 'AttriBox' with 'NoneType' raises
-    'ValueError' at the declaration line, rather than failing
-    confusingly on the first read of the attribute.
+    Testing that passing a non-type to 'AttriBox' raises 'TypeException'.
     """
-    with self.assertRaises(ValueError) as context:
-      _ = AttriBox[type(None)]
-    self.assertIn('NoneType', str(context.exception))
+    susType: str = """I'm a type, trust me bro!"""
+    with self.assertRaises(TypeException) as context:
+      class Foo:  # pragma: no cover
+        bar = AttriBox[int](69)
+        good = str(bar)
+        # noinspection PyTypeChecker
+        bad = AttriBox[susType](420)
+    e = context.exception
+    self.assertEqual(e.varName, 'fieldType')
+    self.assertEqual(e.actualObject, susType)
+    self.assertIs(e.actualType, str)
+    why: Optional[BaseException] = e.__cause__
+    self.assertIsInstance(why, SyntaxError)

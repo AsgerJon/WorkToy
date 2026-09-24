@@ -7,18 +7,119 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import TYPE_CHECKING, TypeVar
+import typing
 
 from . import Field, BaseDescriptor
 from ..core import Object
 from ..core.sentinels import DELETED
-from ..utilities import textFmt, typeCast
+from ..utilities import typeCast
 from ..waitaminute import TypeException, MissingVariable
+from ..waitaminute.desc import PhantomBoxError
 from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, Union, Optional
+  from typing import Any, Self, Union, Optional, TypeAlias, Never
+
+  FieldType: TypeAlias = Union[type, TypeVar]
 
 T = TypeVar('T')
+
+
+class _RootAlias(typing._GenericAlias, _root=True):
+  """
+  This class is returned when AttriBox is used as a 'TypeVar' or 'Generic'.
+
+  The generic machinery hands back a plain 'typing._GenericAlias', which
+  is the object a class body actually stores when a subscript is written
+  without the trailing call. Its type carries no '__get__', so reading
+  such an attribute quietly returns the alias itself. Re-clothing the
+  alias in this subclass puts a '__get__' on the stored object, which is
+  the only hook the descriptor protocol consults for it.
+  """
+
+  @classmethod
+  def fromAlias(cls, alias: typing._GenericAlias) -> _RootAlias:
+    """
+    The 'fromAlias' constructor rebuilds 'alias' as an instance of this
+    class, carrying over the origin, the arguments, and the two display
+    settings that decide how the alias renders and whether it may be
+    instantiated.
+
+    Cloning through 'copy_with' does not work here: that method builds
+    'self.__class__(...)', and 'self' is the plain alias the generic
+    machinery returned, so the copy comes back the same plain class no
+    matter which class the method is looked up on.
+
+    Parameters
+    ----------
+    alias : typing._GenericAlias
+        The alias handed back by the generic machinery.
+
+    Returns
+    -------
+    _RootAlias
+        A faithful copy of 'alias' whose type supplies '__get__'.
+    """
+    return cls(
+        alias.__origin__,
+        alias.__args__,
+        name=alias._name,
+        inst=alias._inst,
+    )
+
+  def copy_with(self, args: tuple) -> _RootAlias:
+    """
+    The 'copy_with' method keeps this class through the copies the
+    generic machinery makes internally, for instance while substituting
+    a 'TypeVar'. Without the override those copies fall back to the
+    plain alias class and silently lose '__get__' again.
+
+    The name is snake_case because it overrides a CPython 'typing'
+    internal, not because the surrounding convention changed.
+
+    Parameters
+    ----------
+    args : tuple
+        The replacement arguments for the copy.
+
+    Returns
+    -------
+    _RootAlias
+        A copy carrying 'args' and this class.
+    """
+    return type(self)(
+        self.__origin__,
+        args,
+        name=self._name,
+        inst=self._inst,
+    )
+
+  def __set_name__(self, owner: type, name: str) -> Never:
+    """
+    Binding this alias to a name in a class body is refused as the class
+    is created, which is the earliest moment the mistake is unambiguous.
+    The subscript alone cannot be judged, since 'class Sub(AttriBox[T])'
+    legitimately asks for the very same alias; a base-class entry is not
+    a namespace value, so that declaration never reaches here.
+
+    The interpreter looks '__set_name__' up on the type of each value in
+    the class body, and the type of a stored alias is this class, so a
+    plain method is all the hook requires.
+
+    Note that Python 3.7 through 3.11 re-raise anything from
+    '__set_name__' wrapped in a 'RuntimeError', with the original left
+    on '__cause__'. From 3.12 onward it propagates unchanged.
+    """
+    raise PhantomBoxError(self, owner, name)
+
+  def __get__(self, instance: Any, owner: type = None) -> Never:
+    """
+    Reading an attribute that holds this alias is refused as well. The
+    class-body route is already closed by '__set_name__', so what
+    reaches here is an alias installed after the fact, by 'setattr' on a
+    finished class, where no name was ever assigned to report.
+    """
+    raise PhantomBoxError(self, owner)
 
 
 class AttriBox(BaseDescriptor[T]):
@@ -278,7 +379,7 @@ class AttriBox(BaseDescriptor[T]):
       pass
     return fieldObject
 
-  def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
+  def __instance_get__(self, instance: Any, owner: type, **kwargs) -> T:
     """
     The '__instance_get__' method returns the stored field value for the
     given instance, building the deferred default with a fresh
@@ -317,14 +418,13 @@ class AttriBox(BaseDescriptor[T]):
     #  Attempt to 'typeCast' without instantiation
     try:
       cast = typeCast(fieldType, value, allowInstantiation=False)
-    except TypeCastException as typeCastException:
-      cause = typeCastException.__cause__
+    except TypeCastException as typeCastExc:
+      cause = typeCastExc.__cause__
       if isinstance(cause, OverflowError):
         raise cause
       if fieldType in (bool, int, float, complex):
         if not isinstance(value, tuple):
-          raise TypeException(
-            'value', value, fieldType) from typeCastException
+          raise TypeException('value', value, fieldType) from typeCastExc
       if isinstance(value, tuple):
         args = (*(self.filterSentinels(arg) for arg in value),)
       else:
@@ -332,7 +432,7 @@ class AttriBox(BaseDescriptor[T]):
       try:
         fieldObject = self._resolve(*args, **kwargs)
       except Exception as exception:
-        raise exception from typeCastException
+        raise exception from typeCastExc
       else:
         return self.__instance_set__(instance, fieldObject, _recursion=True)
     else:
@@ -351,8 +451,29 @@ class AttriBox(BaseDescriptor[T]):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def __get__(self, instance: Any, owner: type) -> Any:
+    """
+    The '__get__' method confirms that a field type was captured before
+    handing the access to the 'Object' descriptor protocol.
+
+    The class-body route is already closed by '__set_name__', so a box
+    that reaches here without a field type was installed on a finished
+    class by 'setattr', where no name was ever assigned and no hook ever
+    ran. Failing here names the descriptor at the access itself, rather
+    than several frames deeper once '_resolve' asks for the field type
+    and 'getFieldType' raises the identical exception from there.
+
+    Class-level access is unaffected: a box read through its owning class
+    still returns the descriptor, so it stays available for
+    introspection.
+    """
+    if instance is not None:
+      if self.__field_type__ is None:
+        raise MissingVariable(self, '__field_type__', type)
+    return super().__get__(instance, owner)
+
   @classmethod
-  def __class_getitem__(cls, fieldType: Union[type, TypeVar]) -> Self:
+  def __class_getitem__(cls, fieldType: FieldType) -> Self:
     """
     The '__class_getitem__' method captures the field type from the
     'AttriBox[T]' subscript. A 'TypeVar' is forwarded to the generic
@@ -367,27 +488,30 @@ class AttriBox(BaseDescriptor[T]):
     Returns
     -------
     Self
-        A new 'AttriBox' carrying 'fieldType', ready for the deferred
-        '__call__'.
+        A new instance of the box class the subscript was written
+        against, carrying 'fieldType' and ready for the deferred
+        '__call__'. Subclasses such as 'FixBox' and 'Kee' therefore get
+        an instance of themselves rather than of 'AttriBox'.
 
     Raises
     ------
-    ValueError
-        If 'fieldType' is 'NoneType', whose field could only ever
-        hold 'None' and whose deferred construction would fail on
-        the first read.
-    """
-    if isinstance(fieldType, TypeVar):
-      return super().__class_getitem__(fieldType)  # noqa
-    if fieldType is type(None):
-      infoSpec = """'%s' cannot use 'NoneType' as its field type! A
-      field of this type could only ever hold 'None'."""
-      raise ValueError(textFmt(infoSpec % cls.__name__))
-    self = object.__new__(cls)
-    self.__field_type__ = fieldType
-    return self  # noqa
+    TypeException
+        If 'fieldType' is not a 'type' or 'TypeVar'.
 
-  def __call__(self, *args, **kwargs) -> Any:
+    """
+    if isinstance(fieldType, type):
+      self = object.__new__(cls)
+      self.__field_type__ = fieldType
+      return self  # noqa
+    try:
+      out = super().__class_getitem__(fieldType)
+    except Exception as exception:
+      name, value = 'fieldType', fieldType
+      raise TypeException(name, value, type, TypeVar) from exception
+    else:
+      return _RootAlias.fromAlias(out)
+
+  def __call__(self: Any, *args, **kwargs) -> Self:
     """
     The '__call__' method captures constructor arguments for deferred
     field construction. The 'AttriBox[T](*args, **kw)' idiom is a
@@ -400,9 +524,45 @@ class AttriBox(BaseDescriptor[T]):
 
     Returns
     -------
-    Any
+    Self
         'self', so the call site can chain straight into a class-body
         assignment, for example 'x = AttriBox[int](42)'.
     """
     Object.__init__(self, *args, **kwargs)
     return self
+
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+    """
+    This implementation settles what an incomplete declaration meant, at
+    the moment the class is created.
+
+    Two incomplete spellings reach here, and they are treated
+    differently because only one of them leaves anything to work with. A
+    box that never captured a field type has nothing to build from, and
+    no later chance to learn one, since '__class_getitem__' is the only
+    place a field type is ever assigned. That one is refused outright. A
+    box whose subscript did name a type, but whose trailing call was
+    left off, is missing only the deferred argument list, and an absent
+    list reads naturally as an empty one. That one has the capture run
+    on its behalf, which leaves it indistinguishable from a box written
+    as 'AttriBox[T]()'.
+
+    Refusing at class creation rather than at first read is what
+    '_RootAlias.__set_name__' does for the alias case, and for the same
+    reason. This is the earliest moment the mistake is unambiguous, and
+    the class body is where the offending line actually sits.
+
+    The normalisation has to happen before the inherited implementation
+    runs, since that is what records the owner and the name and fires
+    'hookSetName'. Skipping the delegation would leave every box without
+    a field name, which the private-name lookup needs on the first read.
+
+    Note that Python 3.7 through 3.11 re-raise anything from
+    '__set_name__' wrapped in a 'RuntimeError', with the original left
+    on '__cause__'. From 3.12 onward it propagates unchanged.
+    """
+    if self.__field_type__ is None:
+      raise MissingVariable(self, '__field_type__', type)
+    if self.__pos_args__ is None:
+      BaseDescriptor.__init__(self)
+    super().__set_name__(owner, name, **kwargs)
