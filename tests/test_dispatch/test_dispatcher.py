@@ -236,12 +236,19 @@ class TestDispatcher(DispatcherTest):
   def test_str_repr(self, ) -> None:
     """
     This method tests the '__str__' and '__repr__' methods on the
-    'Dispatcher' class. Both names map to the same method.
+    'Dispatcher' class. Both names map to the same method. A dispatcher
+    not yet placed on a class renders like a plain object; one placed on
+    a class names its owner and field and lists every signature it holds.
     """
     self.assertIs(Dispatcher.__str__, Dispatcher.__repr__)
-    z = Complex(69, 420)
-    dispatcher = Dispatcher()
-    actualStr = str(dispatcher)
+    unowned = str(Dispatcher())
+    self.assertTrue(unowned.startswith('<Dispatcher object at 0x'))
+    owned = Complex.__dict__['__init__']
+    actualStr = str(owned)
+    self.assertTrue(actualStr.startswith("Dispatcher at 'Complex.__init__'"))
+    self.assertTrue(owned.__sig_funcs__)
+    for sig, _ in owned.__sig_funcs__:
+      self.assertIn(str(sig), actualStr)
 
   def test_complex(self, ) -> None:
     """
@@ -312,17 +319,12 @@ class TestDispatcher(DispatcherTest):
 
   def test_peek(self, ) -> None:
     """
-    Testing the 'peeking' pattern.
+    Testing the 'peeking' pattern on the compiled-function cache that a
+    'Dispatcher' keeps on itself.
     """
 
     class Foo:
       bar = Dispatcher()
-
-    foo = Foo()
-    setattr(foo, '__field_name__', 'foo')
-
-    with self.assertRaises(RecursionError):
-      Foo.__dict__['bar'].__get__(foo, object, _recursion=True)
 
     with self.assertRaises(RecursionError):
       Foo.__dict__['bar']._getCachedFunction(_recursion=True)

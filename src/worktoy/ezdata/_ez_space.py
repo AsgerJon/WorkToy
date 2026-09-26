@@ -13,7 +13,7 @@ from ..utilities import maybe
 from ..waitaminute.ezdata import DuplicateError, ReservedFieldError
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Optional, TypeAlias, Type
+  from typing import Optional, TypeAlias, Type
   from . import EZMeta, EZField
 
   Meta: TypeAlias = Type[EZMeta]
@@ -31,7 +31,8 @@ class EZSpace(BaseSpace):
 
   Subclasses of EZSpace can extend '__reserved_ez_names__' to
   reserve additional names; the guard in 'registerEZField'
-  consults that tuple unmodified.
+  consults that tuple unmodified. The same holds for
+  '__reserved_ez_methods__', consulted by 'EZHook.setItemPhase'.
 
   Attributes
   ----------
@@ -42,6 +43,10 @@ class EZSpace(BaseSpace):
     Names claimed by the generated method protocol that may not
     be used as EZField names. Method overrides at these names
     are still allowed; only EZField declarations are rejected.
+  __reserved_ez_methods__ : tuple[str, ...]
+    Names of generated methods that EZData keeps for itself. A
+    class body binding one of them raises 'ReservedMethodError',
+    whatever the value.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -58,6 +63,9 @@ class EZSpace(BaseSpace):
     'asDict',
     'asTuple',
     'replace',
+  )
+  __reserved_ez_methods__: tuple = (
+    '__setattr__',
   )
 
   #  Private Variables
@@ -102,7 +110,7 @@ class EZSpace(BaseSpace):
     followed by own fields, in declaration order. Own-field entries
     overwrite same-named inherited entries, so a subclass redeclaring a
     parent's field wins. The result is what 'EZHook' compiles into
-    '__ez_fields__', '__slots__', and '__match_args__'.
+    '__ez_fields__', '__match_args__', and the generated '__init__'.
 
     Returns
     -------
@@ -169,11 +177,13 @@ class EZSpace(BaseSpace):
     """
     The 'registerBaseField' method binds an inherited field at the given
     attribute name. It is called from this namespace's '__init__' while
-    walking the parent classes. The parent's 'EZField' is cloned so any
-    later owner binding on the subclass leaves the parent's namespace
-    untouched. When two bases declare the same field name, the
-    higher-priority base (the one further left in the class header)
-    wins, mirroring Python's normal attribute-resolution rules.
+    walking the method resolution order. The parent's 'EZField' is
+    cloned so any later owner binding on the subclass leaves the
+    parent's namespace untouched. Registering a name again replaces the
+    field but keeps the position the name first took. Since '__init__'
+    registers the classes from the far end of the method resolution
+    order, the farthest class decides the position of a field and the
+    nearest class decides the field itself.
 
     Parameters
     ----------
@@ -197,12 +207,14 @@ class EZSpace(BaseSpace):
     """
     The '__init__' method builds the namespace for an 'EZData' subclass
     under construction. After 'BaseSpace.__init__' sets up the standard
-    namespace machinery, it walks the parent classes from right to left,
-    collects any fields they declared through their own 'EZSpace'
-    namespaces, and registers each one as an inherited base field.
-    Processing right to left means the leftmost (highest-priority) base
-    wins on same-named entries, matching Python's normal
-    attribute-resolution behavior.
+    namespace machinery, it walks the method resolution order of the
+    class under construction from the far end, and registers the fields
+    each 'EZData' class declared in its own body as inherited base
+    fields. The fields therefore run from the most general class to the
+    most specific, the order 'dataclasses' uses, and every base keeps
+    the relative order of its own fields. When several classes declare
+    the same name, the one nearest in the method resolution order
+    decides the field, just as attribute lookup would find it.
 
     Parameters
     ----------
@@ -221,15 +233,8 @@ class EZSpace(BaseSpace):
     """
     BaseSpace.__init__(self, mcls, name, bases, **kw)
     cls = type(self)
-    baseSpace = dict()
-    for base in reversed(bases):
-      try:
-        space: Self = getattr(base, '__namespace__')
-      except AttributeError:
-        continue
-      else:
-        if isinstance(space, cls):
-          for key, field in space.getFields().items():
-            baseSpace[key] = field
-    for key, field in baseSpace.items():
-      self.registerBaseField(key, field)
+    for base in reversed(self._getLookupOrder()):
+      space = base.__dict__.get('__namespace__', None)
+      if isinstance(space, cls):
+        for key, field in space.getEZFields().items():
+          self.registerBaseField(key, field)

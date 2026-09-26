@@ -87,9 +87,8 @@ class DualVariadic(BaseObject):
 
 
 class ParentWithVariadic(BaseObject):
-  """Parent class registering a variadic overload that 'ChildOf
-  ParentVariadic' should inherit during its own namespace
-  construction."""
+  """Parent class registering a variadic overload that
+  'ChildOfParentVariadic' should inherit when its class is created."""
 
   @overload(*ARGS[int])
   def collect(self, *nums: int) -> str:
@@ -97,9 +96,9 @@ class ParentWithVariadic(BaseObject):
 
 
 class ChildOfParentVariadic(ParentWithVariadic):
-  """Empty body - the variadic inheritance happens via
-  'BaseSpace.__init__' walking the parent's '__namespace__' and
-  re-registering each '(name, sig, func)' pair."""
+  """Empty body. When the class compiles, its namespace walks the
+  method resolution order and collects the variadic registration from
+  the namespace of 'ParentWithVariadic'."""
 
 
 class TestLoadARGS(OverloadTest):
@@ -295,6 +294,28 @@ class TestLoadARGS(OverloadTest):
       clone._getVariadicFuncs(), original._getVariadicFuncs(),
     )
 
+  def test_clone_dispatches_variadics(self) -> None:
+    """A clone of a 'Dispatcher' carrying a variadic overload must
+    dispatch through it once placed on a class, both for calls matching
+    without a cast and for calls that need one. The clone therefore has
+    to carry everything the variadic passes consult, not only the
+    signature list itself."""
+    original = Dispatcher()
+
+    def func(self_, *nums) -> str:
+      """variadic body"""
+      return 'variadic'
+
+    # noinspection PyTypeChecker
+    original.addVariadicSigFunc(TypeSig(ARGS[int]), func)
+
+    class Host:
+      """Host receives the clone as an ordinary class attribute."""
+      collect = original.clone()
+
+    self.assertEqual(Host().collect(1, 2, 3), 'variadic')
+    self.assertEqual(Host().collect('1', '2', '3'), 'variadic')
+
   def test_dual_variadic_under_same_name(self) -> None:
     """Two '@overload(*ARGS[T])' decorators on the same method name
     register two variadics under one key in the namespace's
@@ -310,9 +331,8 @@ class TestLoadARGS(OverloadTest):
 
   def test_child_inherits_parent_variadic(self) -> None:
     """A 'BaseObject' subclass of a class with a variadic overload
-    must inherit that variadic. 'BaseSpace.__init__' walks the
-    parent's namespace, calls 'getVariadics' on it, and re-
-    registers each '(name, sig, func)' pair on the child's own
-    variadic map."""
+    must inherit that variadic. 'BaseSpace.collectVariadics' walks the
+    method resolution order and collects the '(sig, func)' pair from
+    the parent's namespace into the child's 'Dispatcher'."""
     child = ChildOfParentVariadic()
     self.assertEqual(child.collect(1, 2, 3, 4, 5, 6, 7), 'parent-int')

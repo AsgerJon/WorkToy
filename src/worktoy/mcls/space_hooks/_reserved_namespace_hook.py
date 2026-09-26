@@ -33,6 +33,10 @@ class ReservedNamespaceHook(AbstractSpaceHook):
   '__qualname__'          Fully qualified class name
   '__firstlineno__'       Source line for class definition
   '__static_attributes__' Internal metadata used by the metaclass
+  '__classcell__'         Cell behind 'super()' and '__class__'
+  '__classdictcell__'     Cell behind lazy annotations (3.14 and up)
+  '__orig_bases__'        Bases as written, before substitution
+  '__type_params__'       Type parameters of a generic class (3.12 and up)
 
   Behavior
   --------

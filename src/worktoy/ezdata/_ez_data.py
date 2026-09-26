@@ -24,12 +24,17 @@ class EZData(Object, metaclass=EZMeta):
   validation or derived state.
 
   In return the class receives auto-generated '__init__',
-  '__iter__', '__eq__', '__delattr__', 'asDict', 'asTuple',
-  'replace', '__match_args__', and the display dunders. Frozen
-  classes additionally receive '__hash__' and a rejecting
-  '__setattr__'; ordered classes receive the four comparison
-  dunders. See 'EZHook.postCompilePhase' for the full
-  generation contract.
+  '__iter__', '__eq__', '__setattr__', '__delattr__', 'asDict',
+  'asTuple', 'replace', '__match_args__', and the display dunders.
+  The '__setattr__' casts every field assignment the way '__init__'
+  does, or refuses it on a frozen class, which additionally receives
+  '__hash__'; a class body may not define '__setattr__' itself. Every
+  field therefore holds an instance of its field type, though not
+  necessarily of exactly that type: a 'bool' given to an 'int' field
+  stays a 'bool'.
+  Ordered classes receive the four comparison dunders. Several EZData
+  classes with fields may be combined as bases. See
+  'EZHook.postCompilePhase' for the full generation contract.
 
   Example
   -------

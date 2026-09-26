@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from . import SubTest
 from .samplers import FloatSampler, IntSampler, GaussianSampler
 from .samplers import SymbolicSampler, WordSampler, LoremSampler
-from ..desc import Field, SymbolicName
+from ..desc import Field, AttriBox, SymbolicName
 from ..lorem_ipsum import StochasticWord, Sentence
 from ..mcls import BaseMeta
 from ..utilities import textFmt
@@ -58,6 +58,12 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   BaseTest provides a base class shared by the testing classes in the
   tests package. It implements module unloading in the 'tearDownClass'
   method and adds 'assertIsNotInstance' and 'assertIsNotSubclass'.
+
+  The random-data samplers ('randomInteger' and the rest) and the
+  'stochWord' and 'loremSentence' generators belong to the test that
+  reads them. 'unittest' builds one instance of a test class per test
+  method, and each such instance builds its own on first read, so a
+  sampler narrowed in 'setUp' keeps its settings for that test alone.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -73,12 +79,14 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   #  Private Variables
 
   #  Public Variables
-  randomInteger = IntSampler()
-  randomFloat = FloatSampler()
-  randomGaussian = GaussianSampler()
-  randomSymbolicName = SymbolicSampler()
-  randomWord = WordSampler()
-  randomLorem = LoremSampler()
+  randomInteger = AttriBox[IntSampler]()
+  randomFloat = AttriBox[FloatSampler]()
+  randomGaussian = AttriBox[GaussianSampler]()
+  randomSymbolicName = AttriBox[SymbolicSampler]()
+  randomWord = AttriBox[WordSampler]()
+  randomLorem = AttriBox[LoremSampler]()
+  stochWord = AttriBox[StochasticWord]()
+  loremSentence = AttriBox[Sentence]()
   subTest = SubTest()
 
   #  Virtual Variables
@@ -105,17 +113,6 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @classmethod
-  def setUpClass(cls) -> None:
-    """
-    The 'setUpClass' method runs the super call, then attaches a shared
-    'StochasticWord' and 'Sentence' to the class for the test methods to
-    draw on.
-    """
-    super().setUpClass()
-    cls.stochWord = StochasticWord()
-    cls.loremSentence = Sentence()
 
   @classmethod
   def tearDownClass(cls) -> None:

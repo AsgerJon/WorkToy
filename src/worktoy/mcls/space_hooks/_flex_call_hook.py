@@ -17,14 +17,23 @@ class FlexCallHook(AbstractSpaceHook):
   'worktoy.mcls.space_hooks' package. It detects plain functions defined in
   the class body and replaces them with 'flexCall' wrappers during
   class creation.
+
+  No namespace in 'worktoy' declares it, so the methods of a 'BaseObject'
+  are called exactly as Python calls any method, and a positional
+  argument beyond those a method declares raises 'TypeError'. A namespace
+  whose classes should drop such arguments instead opts in by declaring
+  the hook:
+
+      class FlexSpace(BaseSpace):
+        flexCallHook = FlexCallHook()
   """
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:
     """
     The 'postCompilePhase' method detects plain functions in the
     compiled namespace and replaces each with its 'flexCall' wrapper, so
-    that ordinary methods tolerate the truncating-argument calls the
-    dispatch machinery makes.
+    that each method of the class drops positional arguments beyond
+    those it declares.
 
     Parameters
     ----------

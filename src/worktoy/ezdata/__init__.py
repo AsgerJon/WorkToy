@@ -15,6 +15,9 @@ Public surface:
 - 'EZMeta', 'EZSpace', 'EZHook' : the metaclass, namespace, and
   space hook that drive class construction. Exposed for users
   building their own auto-generating bases against the same shape.
+- 'EZStore' : the descriptor keeping a field in the instance
+  '__dict__' when a data descriptor of the same name would otherwise
+  take the name over.
 
 See 'worktoy.waitaminute.ezdata' for the typed exceptions raised
 by the package.
@@ -24,6 +27,7 @@ by the package.
 from __future__ import annotations
 
 from ._ez_field import EZField
+from ._ez_store import EZStore
 from ._ez_hook import EZHook
 from ._ez_space import EZSpace
 from ._ez_meta import EZMeta
@@ -32,6 +36,7 @@ from ._fields import fields
 
 __all__ = (
   'EZField',
+  'EZStore',
   'EZHook',
   'EZSpace',
   'EZMeta',

@@ -56,8 +56,22 @@ class TestMoreSpace(MCLSTest):
   def test_str_repr(self) -> None:
     """
     Tests that the string representation of the AbstractNamespace class
-    is correct.
+    is correct. The 'str' form names the namespace type, the metaclass,
+    the bases and the class in a sentence; the 'repr' form reads like the
+    call that built the namespace, class keywords included.
     """
+    expectedStr = """Namespace object of type: 'BaseSpace' created by the
+    '__prepare__' method on metaclass: 'HookedMeta' with bases: (Object)
+    to create class: 'TrustedClass'."""
+    self.assertEqual(TrustedClass.__str_space__, ' '.join(expectedStr.split()))
+    expectedRepr = """BaseSpace(HookedMeta, 'TrustedClass', (Object),
+    trustMeBro=True)"""
+    self.assertEqual(
+      TrustedClass.__repr_space__, ' '.join(expectedRepr.split()),
+    )
+    self.assertEqual(
+      SusClass.__repr_space__, "BaseSpace(HookedMeta, 'SusClass', (Object))",
+    )
 
   def test_ad_hoc(self) -> None:
     """

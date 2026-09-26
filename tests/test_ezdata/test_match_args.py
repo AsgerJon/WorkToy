@@ -44,11 +44,11 @@ class TestMatchArgs(EZTest):
     """
     Adding 'ordered=True' does not affect '__match_args__';
     only 'kwOnly=True' does. 'FullName' declares its fields as
-    'givenNames' then 'familyName', and that order survives.
+    'familyName' then 'givenNames', and that order survives.
     """
     self.assertEqual(
       FullName.__match_args__,
-      ('givenNames', 'familyName'),
+      ('familyName', 'givenNames'),
     )
 
   def test_match_args_with_mixin(self) -> None:

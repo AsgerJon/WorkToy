@@ -148,7 +148,11 @@ class AttriBox(BaseDescriptor[T]):
   --------------------
   Reading the field returns the stored 'T' instance, building the
   deferred default on first read. Reading a deleted field raises
-  'MissingVariable'. Assigning a value:
+  'MissingVariable'. The field always holds an instance of 'T', though
+  not necessarily of exactly 'T': a 'bool' assigned to an
+  'AttriBox[int]' stays a 'bool'. A field type whose constructor returns
+  something other than an instance of it is refused with
+  'TypeException'. Assigning a value:
 
   - a value already of type 'T' is stored unchanged;
   - otherwise a lossless 'typeCast(T, value)' is tried with no
@@ -192,6 +196,20 @@ class AttriBox(BaseDescriptor[T]):
   constructor taking an argument raises 'TypeException' here, chained
   from the 'TypeError' that 'object.__init__' raises, rather than
   silently handing back the owner.
+
+  Each instance stores the value of a field under the private name that
+  'Object.getPrivateName' derives from the field name, followed by the
+  lower-case name of the box class and '_field_object__', so an
+  'AttriBox' named 'fooBar' stores at
+  '__foo_bar__attribox_field_object__'. The double underscore inside
+  keeps the storage apart from dunders Python uses and from private
+  class attributes such as '__foo_bar__'. Names that differ only in how
+  their words are joined or capitalised derive the same private name,
+  though: 'fooBar' and 'foo_bar' both store at
+  '__foo_bar__attribox_field_object__', as do 'X' and 'x' at
+  '__x__attribox_field_object__'. Declaring two such fields on one
+  class, the same name once in each spelling, leaves them sharing one
+  storage, and the behaviour is then undefined.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -217,6 +235,23 @@ class AttriBox(BaseDescriptor[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def _getStorageName(self) -> str:
+    """
+    The '_getStorageName' method returns the name under which each
+    instance stores the value of this field: the private name from
+    'getPrivateName', followed by the lower-case name of the box class
+    and '_field_object__'. An 'AttriBox' named 'fooBar' stores at
+    '__foo_bar__attribox_field_object__' and a 'FixBox' of that name at
+    '__foo_bar__fixbox_field_object__', so anyone who meets the name
+    can tell what put it there. The double underscore inside sets the
+    name apart from every name written in the '__snake_case__' style, so
+    the stored value never lands on a dunder Python uses, on the state
+    'Object' keeps, or on a private class attribute of the owner, such
+    as the '__foo_bar__' of the 'Field' pattern.
+    """
+    boxName = type(self).__name__.lower()
+    return '%s%s_field_object__' % (self.getPrivateName(), boxName)
 
   def _resolve(self, *args, **kwargs) -> T:
     """
@@ -343,7 +378,8 @@ class AttriBox(BaseDescriptor[T]):
     ------
     TypeException
         If neither the cast nor the field-type constructor accepts the
-        arguments.
+        arguments, or if the constructor returns something that is not
+        an instance of the field type.
     """
     fieldType = self.getFieldType()
     fieldObject = None
@@ -371,6 +407,11 @@ class AttriBox(BaseDescriptor[T]):
         name = 'value'
         badValue = args[0] if args else None
         raise TypeException(name, badValue, fieldType) from exception
+      if not isinstance(fieldObject, fieldType):
+        #  A constructor may return anything at all. Storing what it
+        #  returned would break the rule that the field always holds an
+        #  instance of its field type.
+        raise TypeException(self.getFieldName(), fieldObject, fieldType)
     try:
       setattr(fieldObject, '__field_name__', self.getFieldName())
       setattr(fieldObject, '__field_owner__', self.getFieldOwner())
@@ -386,7 +427,7 @@ class AttriBox(BaseDescriptor[T]):
     field-type instance on the first read and caching it under the
     private name.
     """
-    pvtName = self.getPrivateName()
+    pvtName = self._getStorageName()
     try:
       value = getattr(instance, pvtName)
     except AttributeError as attributeError:
@@ -409,7 +450,7 @@ class AttriBox(BaseDescriptor[T]):
     contract.
     """
     fieldType = self.getFieldType()
-    pvtName = self.getPrivateName()
+    pvtName = self._getStorageName()
     if isinstance(value, fieldType) or kwargs.get('_root', False):
       return setattr(instance, pvtName, value)
     #  Catch recursion
@@ -444,7 +485,7 @@ class AttriBox(BaseDescriptor[T]):
     instance by storing the 'DELETED' sentinel under the private
     attribute name, which a later read translates into 'MissingVariable'.
     """
-    pvtName = self.getPrivateName()
+    pvtName = self._getStorageName()
     setattr(instance, pvtName, DELETED)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

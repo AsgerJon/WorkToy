@@ -114,6 +114,26 @@ class RepeatedVariadic(BaseObject):
   f = overload(int, *ARGS[int])(_sharedVariadic)  # noqa: F811
 
 
+class ExplicitPosition(BaseObject):
+  """ExplicitPosition declares a variadic over 'object', then an explicit
+  'int', then an explicit 'object' displacing the expansion '(object,)'.
+  The displacing declaration takes the place its own declaration gives
+  it, after 'int', rather than the earlier place of the expansion it
+  displaces."""
+
+  @overload(object, *ARGS[object])
+  def f(self, *items: object) -> str:
+    return 'variadic'
+
+  @overload(int)
+  def f(self, n: int) -> str:
+    return 'int'
+
+  @overload(object)
+  def f(self, item: object) -> str:
+    return 'object'
+
+
 class Root(BaseObject):
   """Root declares the overload that the inheritance fixtures below
   receive, merge, and override."""
@@ -174,6 +194,35 @@ class TestVariadicPrefixOverlap(OverloadTest):
         def f(self, n: int, *tail: int) -> str:
           return 'ints'  # pragma: no cover
 
+  def test_settling_one_ambiguity_keeps_others(self) -> None:
+    """
+    Testing that an explicit declaration settles only the ambiguity of
+    its own name. Both 'f' and 'g' leave the prefix-only signature
+    ambiguous, and only 'g' receives an explicit declaration of it, so
+    class creation still raises 'DuplicateSignature' for 'f'.
+    """
+    with self.assertRaises(DuplicateSignature):
+      class HalfSettled(BaseObject):
+        @overload(int, *ARGS[str])
+        def f(self, n: int, *tail: str) -> str:
+          return 'strs'  # pragma: no cover
+
+        @overload(int, *ARGS[int])
+        def f(self, n: int, *tail: int) -> str:
+          return 'ints'  # pragma: no cover
+
+        @overload(int, *ARGS[str])
+        def g(self, n: int, *tail: str) -> str:
+          return 'strs'  # pragma: no cover
+
+        @overload(int, *ARGS[int])
+        def g(self, n: int, *tail: int) -> str:
+          return 'ints'  # pragma: no cover
+
+        @overload(int)
+        def g(self, n: int) -> str:
+          return 'explicit'  # pragma: no cover
+
   def test_explicit_settles_regardless_of_order(self) -> None:
     """
     Testing that an explicit declaration of the contested signature
@@ -185,6 +234,18 @@ class TestVariadicPrefixOverlap(OverloadTest):
       self.assertEqual(obj.f(1), 'explicit')
       self.assertEqual(obj.f(1, 'x'), 'strs')
       self.assertEqual(obj.f(1, 2), 'ints')
+
+  def test_explicit_takes_declaration_position(self) -> None:
+    """
+    Testing that an explicit declaration displacing an expanded
+    signature is tried at its own place in declaration order. A 'bool'
+    matches both 'int' and 'object' only through 'isinstance', and
+    'int' was declared first, so it receives the call.
+    """
+    obj = ExplicitPosition()
+    self.assertEqual(obj.f(True), 'int')
+    self.assertEqual(obj.f('x'), 'object')
+    self.assertEqual(obj.f(1, 2), 'variadic')
 
   def test_stacked_variadics_share_function(self) -> None:
     """

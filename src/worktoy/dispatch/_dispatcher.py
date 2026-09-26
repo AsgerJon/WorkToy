@@ -79,6 +79,17 @@ class Dispatcher(Object):
   signature you want to match first; any later, broader signature
   becomes a fallback for what the earlier ones did not catch.
 
+  When 'BaseSpace' builds a 'Dispatcher' for a class, it registers the
+  class body's own signatures first, followed by those inherited from
+  the classes in its method resolution order, nearest first, each with
+  its distance from the class. FASTEST and FAST try them in that order,
+  so an override wins every type match it competes in, including a
+  'THIS' signature that a further subclass matches only through
+  'isinstance'. SLOW tries the greatest distance first instead: a
+  signature added in a subclass then only receives the calls none of
+  the inherited signatures could take through a cast, and never
+  redirects a call its parent already handled.
+
   Performance contract
   --------------------
   FASTEST is roughly one or two orders of magnitude faster than FAST
@@ -100,7 +111,9 @@ class Dispatcher(Object):
 
   #  Private Variables
   __sig_funcs__ = None
+  __sig_distances__ = None
   __variadic_funcs__ = None
+  __variadic_distances__ = None
   __fallback_func__ = None
   __field_name__ = None
   __field_owner__ = None
@@ -119,6 +132,45 @@ class Dispatcher(Object):
 
   def _getVariadicFuncs(self) -> SigFuncList:
     return maybe(self.__variadic_funcs__, [])
+
+  def _getSigDistances(self) -> list[int]:
+    return maybe(self.__sig_distances__, [])
+
+  def _getVariadicDistances(self) -> list[int]:
+    return maybe(self.__variadic_distances__, [])
+
+  @staticmethod
+  def _getCastOrder(
+      sigFuncs: SigFuncList,
+      distances: list[int],
+  ) -> SigFuncList:
+    """
+    The '_getCastOrder' method returns the order in which the cast passes
+    try the registrations: the greatest distance first, and registration
+    order among equal distances. 'distances' lists the distance of each
+    pair in 'sigFuncs', position by position. A signature inherited from
+    a parent is therefore cast to before a signature its subclass added,
+    so adding a signature in a subclass never redirects a call the parent
+    already handled through a cast.
+
+    Parameters
+    ----------
+    sigFuncs : SigFuncList
+        Spells out to 'list[tuple[TypeSig, Method]]'. The registrations
+        in registration order.
+    distances : list[int]
+        The distance of each registration, in the same order.
+
+    Returns
+    -------
+    SigFuncList
+        The same registrations in the order the cast passes try them.
+    """
+    #  Indexing rather than zipping raises 'IndexError' should the two
+    #  lists ever fall out of step, where 'zip' would silently drop the
+    #  unmatched registrations from the cast passes.
+    positions = sorted(range(len(sigFuncs)), key=lambda i: -distances[i])
+    return [sigFuncs[i] for i in positions]
 
   def _getFallbackFunction(self) -> Optional[Method]:
     return self.__fallback_func__
@@ -169,12 +221,15 @@ class Dispatcher(Object):
       raise MissingVariable(self, '__field_owner__', type)
     return fieldOwner
 
-  def _getCachedKey(self, ) -> str:
-    return '__bound_dispatch_%s__' % self._getFieldName()
-
   def _createCachedFunction(self) -> None:
     sigFuncMap = self._getSigFuncMap()
     variadicFuncs = self._getVariadicFuncs()
+    castFuncs = self._getCastOrder(
+        self._getSigFuncList(), self._getSigDistances(),
+    )
+    castVariadics = self._getCastOrder(
+        variadicFuncs, self._getVariadicDistances(),
+    )
     fallback = self._getFallbackFunction()
     finalizer = self._getFinalizerFunction()
     dispatcher = self
@@ -216,7 +271,7 @@ class Dispatcher(Object):
           if matched:
             return func(instance, *args, **kwargs)
         #  SLOW
-        for sig, func in sigFuncMap.items():
+        for sig, func in castFuncs:
           castArgs = []
           if not sig.__allow_flex__:
             continue
@@ -235,7 +290,7 @@ class Dispatcher(Object):
           else:
             return func(instance, *castArgs, **kwargs)
         #  SLOW (variadic)
-        for sig, func in variadicFuncs:
+        for sig, func in castVariadics:
           if not sig.__allow_flex__:
             continue
           rawTypes = sig.getRawTypes()
@@ -299,7 +354,12 @@ class Dispatcher(Object):
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def addSigFunc(self, sig: TypeSig, func: Method) -> Method:
+  def addSigFunc(
+      self,
+      sig: TypeSig,
+      func: Method,
+      distance: int = 0,
+  ) -> Method:
     """
     The 'addSigFunc' method adds a signature-function pair to the
     internal signature-function map.
@@ -311,6 +371,12 @@ class Dispatcher(Object):
     func : Method
         The function to register. 'Method' expands to
         'Callable[[Any, ...], Any]'.
+    distance : int, optional
+        How far from the owning class the registration comes: 0 for the
+        owning class itself, 1 for the nearest class it inherits the
+        registration from, and so on. The exact-type and isinstance
+        passes ignore it and try registrations in registration order.
+        The cast passes try the greatest distance first. Defaults to 0.
 
     Returns
     -------
@@ -328,10 +394,16 @@ class Dispatcher(Object):
       if existingSig == sig:
         raise DuplicateSignature(sig, existingFunc, func)
     self.__sig_funcs__ = [*existing, (sig, func,)]
+    self.__sig_distances__ = [*self._getSigDistances(), distance]
     self.__compiled_func__ = None
     return func
 
-  def addVariadicSigFunc(self, sig: TypeSig, func: Method) -> Method:
+  def addVariadicSigFunc(
+      self,
+      sig: TypeSig,
+      func: Method,
+      distance: int = 0,
+  ) -> Method:
     """
     The 'addVariadicSigFunc' method registers a '(variadicSig, func)'
     pair on this dispatcher. Unlike 'addSigFunc', it does not reject
@@ -350,6 +422,9 @@ class Dispatcher(Object):
     func : Method
         The function to register. 'Method' expands to
         'Callable[[Any, ...], Any]'.
+    distance : int, optional
+        How far from the owning class the registration comes, with the
+        same meaning as in 'addSigFunc'. Defaults to 0.
 
     Returns
     -------
@@ -359,6 +434,7 @@ class Dispatcher(Object):
     """
     existing = self._getVariadicFuncs()
     self.__variadic_funcs__ = [*existing, (sig, func,)]
+    self.__variadic_distances__ = [*self._getVariadicDistances(), distance]
     self.__compiled_func__ = None
     return func
 
@@ -434,7 +510,7 @@ class Dispatcher(Object):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __get__(self, instance: Any, owner: type, **kwargs) -> Callable:
+  def __get__(self, instance: Any, owner: type) -> Callable:
     """
     The '__get__' method is the descriptor protocol entry point. It
     always returns a callable suitable for dispatching against the
@@ -447,11 +523,14 @@ class Dispatcher(Object):
     argument. The compiled function is built lazily by
     '_getCachedFunction' and cached on the 'Dispatcher' itself.
 
-    Instance-level access ('obj.attr') returns a bound 'MethodType'
-    wrapping that compiled function. The bound object is created on
-    first access and cached on the instance under a reserved key
-    derived from '_getCachedKey', so subsequent accesses on the
-    same instance return the same bound object.
+    Instance-level access ('obj.attr') returns a fresh bound
+    'MethodType' wrapping that compiled function on every access, just
+    as Python does for a plain method. Nothing is stored on the
+    instance. A bound method stored there would be found again by
+    whichever 'Dispatcher' of the same name reads the instance next,
+    such as the parent's 'Dispatcher' reached through 'super'. It would
+    also be carried along by 'copy.copy', still bound to the original,
+    and it would keep the instance alive through a reference cycle.
 
     The live 'Dispatcher' is no longer reachable through normal
     attribute access on the owning class. Reach it through
@@ -474,24 +553,7 @@ class Dispatcher(Object):
     """
     if instance is None:
       return self._getCachedFunction()
-    key = self._getCachedKey()
-    try:
-      boundCache = getattr(instance, key)
-    except AttributeError as attributeError:
-      if kwargs.get('_recursion', False):
-        raise RecursionError from attributeError
-      unboundCache = self._getCachedFunction()
-      boundCache = MethodType(unboundCache, instance)
-      try:
-        setattr(instance, key, boundCache)
-      except AttributeError:
-        #  An instance refusing attribute creation, such as a frozen
-        #  enumeration member, cannot host the per-instance cache. The
-        #  bound method is then rebuilt on every access instead.
-        return boundCache
-      return self.__get__(instance, owner, _recursion=True)
-    else:
-      return boundCache
+    return MethodType(self._getCachedFunction(), instance)
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
     """
@@ -544,8 +606,8 @@ class Dispatcher(Object):
   def clone(self, ) -> Self:
     """
     The 'clone' method builds a copy of this 'Dispatcher' carrying the
-    same registered signature/function pairs (including variadic ones),
-    the same fallback, and the same finalizer.
+    same registered signature/function pairs (including variadic ones)
+    with their distances, the same fallback, and the same finalizer.
 
     Returns
     -------
@@ -556,9 +618,11 @@ class Dispatcher(Object):
     """
     newLoad = type(self)()
     newLoad.__sig_funcs__ = self._getSigFuncList()
+    newLoad.__sig_distances__ = self._getSigDistances()
     variadicFuncs = self._getVariadicFuncs()
     if variadicFuncs:
       newLoad.__variadic_funcs__ = [*variadicFuncs, ]
+      newLoad.__variadic_distances__ = [*self._getVariadicDistances(), ]
     fallback = self._getFallbackFunction()
     if fallback is not None:
       newLoad.__fallback_func__ = fallback

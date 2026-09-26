@@ -44,6 +44,19 @@ class AliasCalc(BaseObject):
   area = compute
 
 
+class AliasInherited(AliasCalc):
+  """AliasInherited adds a 'float' signature to the 'compute' it inherits
+  from 'AliasCalc' and aliases the result as 'volume'. The alias must
+  carry the inherited signatures along with the new one, just as
+  'compute' itself does."""
+
+  @overload(float)
+  def compute(self, value: float) -> float:
+    return value * 2
+
+  volume = compute
+
+
 class AliasFull(BaseObject):
   """AliasFull registers a concrete signature, a variadic signature, a
   fallback and a finalizer under 'compute', then aliases the lot as
@@ -84,6 +97,16 @@ class TestShadowReads(MCLSTest):
     self.assertEqual(calc.area('hi'), 'HI')
     self.assertEqual(calc.compute(1), 2)
     self.assertEqual(calc.compute('hi'), 'HI')
+
+  def test_alias_includes_inherited_signatures(self) -> None:
+    """
+    Testing that an alias of an overloaded name receives the signatures
+    the name inherits as well as those the class body adds.
+    """
+    shape = AliasInherited()
+    self.assertEqual(shape.volume(1), 2)
+    self.assertEqual(shape.volume('hi'), 'HI')
+    self.assertEqual(shape.volume(1.5), 3.0)
 
   def test_alias_beats_global_decoy(self) -> None:
     """

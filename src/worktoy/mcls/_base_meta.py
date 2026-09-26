@@ -24,8 +24,8 @@ class BaseMeta(AbstractMetaclass):
 
   This metaclass introduces no behavior of its own beyond switching the
   namespace class to 'BaseSpace'. 'BaseSpace' adds 'LoadSpaceHook' and
-  inherits 'NamespaceHook', 'ReservedNamespaceHook', and 'FlexCallHook'
-  from 'AbstractNamespace'.
+  inherits 'NamespaceHook' and 'ReservedNamespaceHook' from
+  'AbstractNamespace'.
 
   It serves as a ready-to-use entry point for classes that require
   hook-driven behavior during class construction without writing a custom

@@ -41,18 +41,47 @@ def isFlex(func: FunctionType) -> bool:
     return True
 
 
+def _missingNames(
+    requiredNames: tuple[str, ...],
+    received: int,
+    kwargs: dict,
+) -> tuple[str, ...]:
+  """
+  The '_missingNames' function returns the names of the required
+  positional parameters that a call leaves without a value.
+  'requiredNames' lists those parameters in order, and the first
+  'received' of them took their values by position. Each later one is
+  missing unless 'kwargs' names it. A positional-only parameter named in
+  'kwargs' counts as supplied here, and the wrapped function then refuses
+  it with its own 'TypeError', which says what went wrong.
+  """
+  out = []
+  for name in requiredNames[received:]:
+    if name not in kwargs:
+      out.append(name)
+  return (*out,)
+
+
 def flexCall(func: FunctionType) -> FunctionType:
   """Wrap 'func' with truncating positional-argument dispatch.
+
+  The descriptor notification callbacks of 'BaseDescriptor' are wrapped
+  this way, since a descriptor passes each of them the same arguments
+  however few it declares. So is every plain function in the body of a
+  class whose namespace declares 'FlexCallHook'. An ordinary method is
+  otherwise left as it was written.
 
   The returned wrapper:
   - silently drops positional args beyond the wrapped function's
     declared positional arity,
-  - raises TypeError when fewer than the required number of
-    positional-or-keyword arguments is supplied (parameters with
+  - raises TypeError when a required positional parameter receives no
+    value, neither by position nor by keyword (parameters with
     defaults are not counted as required); a missing required
-    keyword-only argument is not checked here and surfaces as the
-    wrapped function's own TypeError,
+    keyword-only argument, or a positional-only parameter named by
+    keyword, is not checked here and surfaces as the wrapped
+    function's own TypeError,
   - passes keyword args through unchanged,
+  - carries the attributes set on the wrapped function,
   - caches arity at wrap time; per-call cost is one length check,
     one comparison, and a slice only when truncation fires.
 
@@ -100,22 +129,25 @@ def flexCall(func: FunctionType) -> FunctionType:
   #  re-introspected per call.
   maxPos: int = code.co_argcount
   minPos: int = code.co_argcount - len(func.__defaults__ or ())
-  posNames: tuple[str, ...] = code.co_varnames[:maxPos]
+  requiredNames: tuple[str, ...] = code.co_varnames[:minPos]
 
   def wrapper(*args, **kwargs) -> Any:
     n: int = len(args)
     if n < minPos:
-      missing: tuple[str, ...] = posNames[n:minPos]
-      infoSpec: str = """Function '%s' requires at least '%d' positional 
-      arguments but received only '%d', missing arguments: (%s)!"""
-      missingStr = joinWords(*missing, )
-      info = infoSpec % (name, minPos, n, missingStr)
-      raise TypeError(textFmt(info))
+      missing = _missingNames(requiredNames, n, kwargs)
+      if missing:
+        infoSpec: str = """Function '%s' requires at least '%d' positional
+        arguments but received only '%d', missing arguments: (%s)!"""
+        missingStr = joinWords(*missing, )
+        info = infoSpec % (name, minPos, n, missingStr)
+        raise TypeError(textFmt(info))
     if n > maxPos:
       args = args[:maxPos]
     return func(*args, **kwargs)
 
-  #  Manual metadata copy: explicit, dependency-free.
+  #  Manual metadata copy: explicit, dependency-free. The attributes set
+  #  on 'func' come first, so the ones the wrapper sets below win.
+  wrapper.__dict__.update(func.__dict__)
   wrapper.__name__ = func.__name__
   wrapper.__qualname__ = func.__qualname__
   wrapper.__module__ = func.__module__

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from ..utilities import maybe, textFmt, resolveMRO
 from ..waitaminute import TypeException
 from ..waitaminute.meta import HookException, DuplicateHook
-from .space_hooks import NamespaceHook, ReservedNamespaceHook, FlexCallHook
+from .space_hooks import NamespaceHook, ReservedNamespaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator, Union, Self
@@ -73,7 +73,6 @@ class AbstractNamespace(dict):
   #  Public Variables
   reservedNameHook = ReservedNamespaceHook()
   nameHook = NamespaceHook()
-  flexCallHook = FlexCallHook()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

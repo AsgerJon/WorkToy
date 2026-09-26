@@ -63,7 +63,9 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   canonical name. Subscripting and calling are order- and
   case-insensitive: 'cls["EXECUTE_READ"]', 'cls["execute_read"]', and
   'cls["READ", "EXECUTE"]' all resolve to the same member, a repeated name
-  collapses, and an unknown name raises 'KeyError'.
+  collapses, and an unknown name raises 'KeyError'. Since '_' joins the
+  flag names in a canonical name, a flag name may not contain '_' itself;
+  declaring one raises 'KeeFlagNameError' in the class body.
 
   Entries must be integer valued.
 

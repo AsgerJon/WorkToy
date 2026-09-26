@@ -199,13 +199,6 @@ class TestField(DescTest):
       del foo.v
     e = context.exception
 
-    with self.assertRaises(AttributeError) as context:
-      foo.v = 'lol'
-      setattr(foo, '__deleter_keys__', None)
-      del foo.v
-      del foo.v
-    e = context.exception
-
     with self.assertRaises(Secret) as context:
       foo.v = 'lol'
       setattr(foo, '_v', 'raise')
@@ -213,7 +206,6 @@ class TestField(DescTest):
     e = context.exception
 
     with self.assertRaises(ReadOnlyError) as context:
-      setattr(foo, '__delete_keys__', None)
       setattr(foo, '_y', 'readonly')
       del foo.y
     e = context.exception

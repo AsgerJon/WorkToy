@@ -219,9 +219,16 @@ class KeeFlagsMeta(BaseMeta):
     raise KeeResolveError(cls, index)
 
   def _resolveName(cls, name: str) -> KeeFlags:
-    identifier = frozenset(name.upper().split('_'))
+    """
+    The '_resolveName' method resolves a member from a name that matches
+    the canonical name of a member ignoring case, as 'null' matches
+    'NULL', or that lists the flags of a member separated by '_', in any
+    order and any case.
+    """
+    upperName = name.upper()
+    identifier = frozenset(upperName.split('_'))
     for member in cls:
-      if member.name == name or member.names == identifier:
+      if member.name.upper() == upperName or member.names == identifier:
         return member
     infoSpec = """KeeFlags class '%s' has no member with name: '%s'!"""
     info = infoSpec % (cls.__name__, name,)

@@ -11,6 +11,8 @@ from ._extra_positional_exception import ExtraPositionalException
 from ._kw_only_exception import KwargsOnlyException
 from ._incomplete_field_exception import IncompleteFieldException
 from ._reserved_field_error import ReservedFieldError
+from ._class_field_error import ClassFieldError
+from ._reserved_method_error import ReservedMethodError
 
 __all__ = [
   'DuplicateError',
@@ -18,4 +20,6 @@ __all__ = [
   'KwargsOnlyException',
   'IncompleteFieldException',
   'ReservedFieldError',
+  'ClassFieldError',
+  'ReservedMethodError',
 ]

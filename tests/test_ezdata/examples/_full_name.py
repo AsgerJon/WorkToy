@@ -15,8 +15,8 @@ class FullName(EZData, ordered=True):
   person's full name, with family name first and given names second.
   """
 
-  givenNames = EZField[str]()
   familyName = EZField[str]()
+  givenNames = EZField[str]()
 
   def __str__(self, ) -> str:
     infoSpec = "%s, %s"

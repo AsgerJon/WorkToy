@@ -57,16 +57,16 @@ class TestFullName(EZExamplesTest):
     arguments.
     """
     name = FullName()
+    self.assertFalse(name.familyName)
     self.assertFalse(name.givenNames)
-    self.assertFalse(name.familyName)
 
-    name = FullName('Rick')
-    self.assertEqual(name.givenNames, 'Rick')
-    self.assertFalse(name.familyName)
-
-    name = FullName('Rick', 'Astley')
-    self.assertEqual(name.givenNames, 'Rick')
+    name = FullName('Astley')
     self.assertEqual(name.familyName, 'Astley')
+    self.assertFalse(name.givenNames)
+
+    name = FullName('Astley', 'Rick')
+    self.assertEqual(name.familyName, 'Astley')
+    self.assertEqual(name.givenNames, 'Rick')
 
   def test_order(self, ) -> None:
     """
@@ -148,22 +148,23 @@ class TestFullName(EZExamplesTest):
   def test_alphabetical_order(self, ) -> None:
     """
     This method tests that 'FullName' instances sort into a strict
-    alphabetical sequence by '(givenNames, familyName)'. The order
+    alphabetical sequence by '(familyName, givenNames)'. The order
     produced by 'sorted' on the squad tuple is compared to the order
     produced by Python's native string-tuple sort on the same pairs;
     the two must match for every position, not just at the endpoints.
     """
     ezSorted = sorted(self.agf2026)
-    pairs = [(fn.givenNames, fn.familyName) for fn in self.agf2026]
+    pairs = [(fn.familyName, fn.givenNames) for fn in self.agf2026]
     expected = sorted(pairs)
-    actual = [(fn.givenNames, fn.familyName) for fn in ezSorted]
+    actual = [(fn.familyName, fn.givenNames) for fn in ezSorted]
     self.assertEqual(actual, expected)
 
   def test_str(self, ) -> None:
     """
-    This method tests the string representation of 'FullName' instances.
-    The string is formatted as '<FullName: field1=value1, field2=value2>'.
+    This method tests the string representation of 'FullName' instances,
+    which 'FullName' defines itself as 'familyName, givenNames'.
     """
+    self.assertEqual(str(FullName('Hansen', 'Jesper')), 'Hansen, Jesper')
     for mester in self.agf2026:
       strMester = str(mester)
       self.assertIn(mester.familyName, strMester)

@@ -330,7 +330,10 @@ class TestKeeFlagsMeta(KeeTest):
     - index 7: LEFT_RIGHT_MIDDLE with value 30
 
     """
-
+    primes = [PrimeValued.indexPrime(index) for index in range(6)]
+    self.assertEqual(primes, [2, 3, 5, 7, 11, 13])
+    expected = [1, 2, 3, 6, 5, 10, 15, 30]
+    self.assertEqual([member.value for member in MouseButton], expected)
     for member in MouseButton:
       for high in member.highs:
         self.assertFalse(member.value % PrimeValued.indexPrime(high.index))

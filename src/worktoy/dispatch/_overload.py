@@ -56,10 +56,10 @@ class overload:  # NOQA
   matches in three kinds of pass (see 'Dispatcher' docstring):
   exact-type hash lookup, then isinstance iteration, then 'typeCast'
   iteration. Only the first is constant-time; the other two scan
-  every registered overload in registration order and return the
-  first match.
+  every registered overload in order and return the first match.
+  Within one class body that order is the declaration order.
 
-  Two consequences for how you stack '@overload' decorators:
+  Three consequences for how you stack '@overload' decorators:
 
   1. Register against the exact concrete types callers will pass.
      '@overload(int)' for a caller that supplies 'int' values keeps
@@ -75,6 +75,14 @@ class overload:  # NOQA
      Order your decorators to match the dispatch you want; treat
      overlapping isinstance coverage as deliberate, not as a bug
      for the dispatcher to second-guess.
+
+  3. A subclass overloading an inherited name keeps the inherited
+     overloads and adds its own. Its own come first in the exact-type
+     and isinstance passes, so an override wins wherever it matches,
+     and an equal signature replaces the inherited one outright. The
+     'typeCast' pass tries the inherited overloads first, so a
+     signature the subclass adds never takes a call its parent
+     already handled through a cast.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

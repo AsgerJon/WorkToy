@@ -104,10 +104,10 @@ class TestEZData(EZTest):
     'EZField' instances.
     """
     for example in self.examples:
-      slotNames = example.__slots__
+      fieldNames = example.__ez_fields__
       for field in example.fields:
         self.assertIs(field.fieldOwner, example)
-        self.assertIn(field.fieldName, slotNames)
+        self.assertIn(field.fieldName, fieldNames)
 
   def test_incomplete_field_missing_type(self) -> None:
     """

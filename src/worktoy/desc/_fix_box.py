@@ -42,7 +42,7 @@ class FixBox(AttriBox[T]):
     'AttributeError' rather than 'is None', so an explicit assignment of
     'None' still counts as the one write.
     """
-    pvtName = self.getPrivateName()
+    pvtName = self._getStorageName()
     try:
       oldValue = object.__getattribute__(instance, pvtName)
     except AttributeError:

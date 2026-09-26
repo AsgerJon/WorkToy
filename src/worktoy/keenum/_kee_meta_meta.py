@@ -102,7 +102,6 @@ class KeeMetaMeta(MetaType):
       num = """%sNum""" % (mcls.__name__,)
       name = 'KeeNum' if mcls.__name__ == 'KeeMeta' else num
       numSpace = KSpace(mcls, name, (KeeBase,), _root=True)
-      numSpace['__root_class__'] = True
       numSpace['__doc__'] = KeeBase.__doc__
       # noinspection PyTypeChecker
       num = mcls.__new__(mcls, name, (KeeBase,), numSpace, _root=True)

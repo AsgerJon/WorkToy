@@ -33,6 +33,7 @@ class KeeBox(AttriBox):
 
   The KeeBox makes the following attempts at resolving arguments to a member
   of the enumeration:
+  0: Single member of the enumeration received, returned as it is.
   1: Single 'str' object received
   1a: The string matches the 'name' of a member of the enumeration.
   1b: The string matches the 'value' of a member of the enumeration.
@@ -42,9 +43,10 @@ class KeeBox(AttriBox):
   3: Single argument received of the 'valueType' type of the enumeration.
   3a: The argument matches the 'value' of a member of the enumeration.
   4: Any number of arguments received
-  4a: If the enumeration class is a 'KeeFlags' class instead. Then for each
-  argument, it attempts to resolve it to a flag member. If all succeed,
-  it returns the member having those flags high.
+  4a: If the enumeration class is a 'KeeFlags' class instead, each
+  argument is resolved the way subscripting the class resolves it, so a
+  member, a name in any case and order, or an index all work. The result
+  is the member having every flag high that any of those members has.
 
   The above process applies to both instantiation and setting. Please note
   that 'KeeBox' will never attempt to instantiate the 'valueType' of the
@@ -79,7 +81,7 @@ class KeeBox(AttriBox):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    pvtName = self.getPrivateName()
+    pvtName = self._getStorageName()
     try:
       return getattr(instance, pvtName)
     except AttributeError as attributeError:
@@ -93,14 +95,28 @@ class KeeBox(AttriBox):
       return self.__instance_get__(instance, owner, _recursion=True)
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
-    pvtName = self.getPrivateName()
-    if isinstance(value, self.fieldType):
+    pvtName = self._getStorageName()
+    if self._isMember(value):
       return setattr(instance, pvtName, value)
     if kwargs.get('_recursion', False):
       raise RecursionError
     return self.__instance_set__(
       instance, self._resolve(value, ), _recursion=True
     )
+
+  def _isMember(self, value: Any) -> bool:
+    """
+    The '_isMember' method reports whether 'value' is a member of the
+    field enumeration, a subclass enumeration included. For a 'KeeNum'
+    field the instance check compares 'value' with every member through
+    '==', which hands the decision to the '__eq__' of 'value' itself, and
+    such a method may raise on a member. Only a member of some
+    enumeration can be a member of this one, so any other value is
+    refused before that comparison.
+    """
+    if not isinstance(type(value), (KeeMeta, KeeFlagsMeta)):
+      return False
+    return True if isinstance(value, self.fieldType) else False
 
   def _resolve(self, *args, **kwargs) -> Any:
     fieldNum = self.fieldType
@@ -117,6 +133,8 @@ class KeeBox(AttriBox):
     fieldNum = self.fieldType
     valueType = fieldNum.valueType
     if len(args) == 1:
+      if self._isMember(args[0]):
+        return args[0]
       if isinstance(args[0], str):
         for member in fieldNum:
           if args[0] == member.name:
@@ -151,15 +169,19 @@ class KeeBox(AttriBox):
     to the captured constructor arguments when called without any. A
     lone container argument counts as several flag identifiers, since
     the descriptor protocol delivers an assigned tuple as one object.
+    Each identifier is resolved by subscripting the flags class, so the
+    box accepts and refuses exactly what the class itself does, and the
+    result is the member having every flag high that any of the
+    resolved members has.
     """
     args = args or self.getPosArgs()
     if len(args) == 1 and isinstance(args[0], (tuple, list, set, frozenset)):
       args = (*args[0],)
-    highs = []
+    fieldNum = self.fieldType
+    names = set()
     for arg in args:
-      highs.append(self._resolveNum(arg, ))
-    names = frozenset((*(h.name for h in highs),), )
-    return self.fieldType.memberDict[names]
+      names.update(fieldNum[arg].names)
+    return fieldNum.memberDict[frozenset(names)]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

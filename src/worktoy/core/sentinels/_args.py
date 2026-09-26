@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from . import SentinelMeta
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Iterator, Optional
+  from typing import Any, Self, Iterator, Optional
 
 
 class _MetaARGS(SentinelMeta):
@@ -38,6 +38,11 @@ class ARGS(metaclass=_MetaARGS):
   """
   ARGS uses a Sentinel metaclass and provides a placeholder for a starred
   argument in an overload signature.
+
+  Each subscript builds a new instance, so two signatures written the same
+  way hold two distinct instances. Instances therefore compare and hash by
+  their inner type, which lets a variadic signature in a subclass be
+  recognized as equal to the one it overrides.
   """
 
   def __iter__(self) -> Iterator[Self]:
@@ -45,6 +50,25 @@ class ARGS(metaclass=_MetaARGS):
     ARGS is iterable and yields itself.
     """
     yield from (self,)
+
+  def __eq__(self, other: Any) -> bool:
+    if not isinstance(other, ARGS):
+      return NotImplemented
+    return True if self.__inner_type__ is other.__inner_type__ else False
+
+  def __hash__(self) -> int:
+    return hash((type(self).__name__, self.__inner_type__))
+
+  def __str__(self) -> str:
+    """
+    The rendering follows the subscript that created the instance, for
+    example 'ARGS[int]'.
+    """
+    innerType = self.__inner_type__
+    innerName = getattr(innerType, '__name__', None) or str(innerType)
+    return '%s[%s]' % (type(self).__name__, innerName)
+
+  __repr__ = __str__
 
   @classmethod
   def __class_getitem__(cls, type_: type) -> Self:

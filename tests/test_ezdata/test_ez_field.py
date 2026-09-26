@@ -195,8 +195,10 @@ class TestEZField(EZTest):
     first, second = g.defaultValue, g.defaultValue
     self.assertEqual(first, [])
     self.assertIsNot(first, second)
-    h = EZField[FullName]('Doe', givenName='John')
+    h = EZField[FullName]('Doe', givenNames='John')
     self.assertIsInstance(h.defaultValue, FullName)
+    self.assertEqual(h.defaultValue.familyName, 'Doe')
+    self.assertEqual(h.defaultValue.givenNames, 'John')
 
   def test_str_repr(self, ) -> None:
     """
@@ -205,7 +207,7 @@ class TestEZField(EZTest):
 
     class Foo(EZData):
       z = EZField[complex](69, 420)
-      name = EZField[FullName]('Doe', givenName='John')
+      name = EZField[FullName]('Doe', givenNames='John')
       bar = EZField[str]()
       circle = EZField[Circle](center=Point2D(69, 420), radius=1337)
 
@@ -217,13 +219,14 @@ class TestEZField(EZTest):
     actualRepr = repr(Foo.__ez_fields__['z'])
     self.assertEqual(expectedRepr, actualRepr)
 
-    expectedStr = """Foo.name: FullName('Doe', givenName='John')"""
+    expectedStr = """Foo.name: FullName('Doe', givenNames='John')"""
     actualStr = str(Foo.__ez_fields__['name'])
     self.assertEqual(expectedStr, actualStr)
 
-    expectedRepr = """EZField[FullName]('Doe', givenName='John')"""
+    expectedRepr = """EZField[FullName]('Doe', givenNames='John')"""
     actualRepr = repr(Foo.__ez_fields__['name'])
     self.assertEqual(expectedRepr, actualRepr)
+    self.assertEqual(str(Foo().name), 'Doe, John')
 
     expectedStr = """Foo.bar: str()"""
     actualStr = str(Foo.__ez_fields__['bar'])

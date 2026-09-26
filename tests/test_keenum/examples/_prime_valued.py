@@ -34,7 +34,7 @@ class PrimeValued(KeeFlags):
   @classmethod
   def nextPrime(cls, p0: int) -> int:
     p = p0 + (2 if p0 % 2 else 1)
-    while cls.isPrime(p):
+    while not cls.isPrime(p):
       p += 2
     return p
 

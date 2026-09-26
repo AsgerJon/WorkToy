@@ -8,7 +8,7 @@ from __future__ import annotations
 from inspect import currentframe
 from typing import TYPE_CHECKING
 
-from ..core.sentinels import THIS, OWNER
+from ..core.sentinels import THIS, OWNER, ARGS
 from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -26,8 +26,11 @@ class TypeSig:
   A 'TypeSig' represents the positional-argument type signature of a
   single overload. Equality and hashing are by type identity in the
   declared order, so 'TypeSig(int, str)' and 'TypeSig(str, int)' are
-  distinct keys. The signature is iterable and supports 'len' and
-  'in', the latter using identity comparison.
+  distinct keys. The one exception is a trailing 'ARGS' entry, which
+  compares by its inner type: every 'ARGS[int]' subscript builds a new
+  instance, and two variadic signatures written the same way must still
+  be equal. The signature is iterable and supports 'len' and 'in', the
+  latter using identity comparison.
 
   The class-level flag '__allow_flex__' (default True) controls
   whether the SLOW path of the dispatcher is allowed to attempt
@@ -106,6 +109,17 @@ class TypeSig:
 
   def getRawTypes(self) -> RawTypes:
     return self.__raw_types__
+
+  @staticmethod
+  def _getTypeName(rawType: HASHABLE) -> str:
+    """
+    The '_getTypeName' method renders one entry of a signature as it is
+    written in an '@overload' declaration: a class by its name, and a
+    trailing 'ARGS' entry in its subscript form, such as 'ARGS[int]'.
+    """
+    if isinstance(rawType, ARGS):
+      return str(rawType)
+    return rawType.__name__
 
   @classmethod
   def _findActiveNamespace(cls) -> MaybeCtx:
@@ -204,19 +218,22 @@ class TypeSig:
     if len(self) != len(other):
       return False
     for this, that in zip(self, other):
-      if this is not that:
-        return False
+      if this is that:
+        continue
+      if isinstance(this, ARGS) and this == that:
+        continue
+      return False
     return True
 
   def __str__(self) -> str:
     infoSpec = """<%s: %s>"""
-    typeStr = '[%s]' % ', '.join(t.__name__ for t in self)
+    typeStr = '[%s]' % ', '.join(self._getTypeName(t) for t in self)
     clsName = type(self).__name__
     return textFmt(infoSpec % (clsName, typeStr))
 
   def __repr__(self) -> str:
     infoSpec = """%s(%s)"""
-    typeStr = ', '.join(t.__name__ for t in self)
+    typeStr = ', '.join(self._getTypeName(t) for t in self)
     return textFmt(infoSpec % (type(self).__name__, typeStr))
 
   def __call__(self, this: object = None, owner: type = None) -> Self:

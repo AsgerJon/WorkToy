@@ -73,8 +73,50 @@ class EZField(BaseObject, Generic[T]):
         labels = EZField[dict]()       # default to a fresh {}
 
       class Person(EZData):
-        name = EZField[FullName]('Doe', givenName='John')
+        name = EZField[FullName]('Doe', givenNames='John')
   """
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  STATIC METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @staticmethod
+  def _construct(fieldType: type, name: str, args: tuple, kwargs: dict) -> T:
+    """
+    The '_construct' method calls 'fieldType' with 'args' and 'kwargs'
+    and returns the result, provided it is an instance of 'fieldType',
+    possibly of a subclass. A field always holds an instance of its field
+    type, and a class whose constructor returns anything else would break
+    that, so such a result raises 'TypeException' naming the field. Both
+    'defaultValue' and the default recipes of the generated '__init__'
+    build their values here.
+
+    Parameters
+    ----------
+    fieldType : type
+      The field type to call.
+    name : str
+      The field name, for the exception.
+    args : tuple
+      The positional arguments for the call.
+    kwargs : dict
+      The keyword arguments for the call.
+
+    Returns
+    -------
+    T
+      What 'fieldType' returned, an instance of it.
+
+    Raises
+    ------
+    TypeException
+      If the call returns something that is not an instance of
+      'fieldType'.
+    """
+    value = fieldType(*args, **kwargs)
+    if isinstance(value, fieldType):
+      return value
+    raise TypeException(name, value, fieldType)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -246,8 +288,12 @@ class EZField(BaseObject, Generic[T]):
       If the field is missing its type or its construction
       arguments. The Field getters consulted here surface those
       conditions as 'MissingVariable'.
+    TypeException
+      If the field type returns something that is not an instance of
+      it; see '_construct'.
     """
-    return self.fieldType(*self.posArgs, **self.keyArgs)
+    name = maybe(self.__field_name__, 'defaultValue')
+    return self._construct(self.fieldType, name, self.posArgs, self.keyArgs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

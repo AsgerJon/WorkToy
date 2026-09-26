@@ -30,6 +30,12 @@ class BaseDescriptor(Object, Generic[T]):
   original. Registering the same method name twice records it twice and
   fires it twice.
 
+  A callback may declare fewer parameters than the descriptor passes it,
+  and the positional arguments it does not declare are dropped. Each
+  decorator returns the callback wrapped by 'flexCall' for this, so the
+  wrapping happens once as the class body runs, and an override that was
+  never decorated is wrapped as it is called.
+
   The following example illustrates an exhaustively decorated descriptor
   in a class body:
 
@@ -155,32 +161,32 @@ class BaseDescriptor(Object, Generic[T]):
   def preGet(self, callback: Func) -> Func:
     existing = self._getPreGetKeys()
     self.__pre_get_keys__ = (*existing, callback.__name__)
-    return callback
+    return flexCall(callback)
 
   def onGet(self, callback: Func) -> Func:
     existing = self._getOnGetKeys()
     self.__on_get_keys__ = (*existing, callback.__name__)
-    return callback
+    return flexCall(callback)
 
   def preSet(self, callback: Func) -> Func:
     existing = self._getPreSetKeys()
     self.__pre_set_keys__ = (*existing, callback.__name__)
-    return callback
+    return flexCall(callback)
 
   def onSet(self, callback: Func) -> Func:
     existing = self._getOnSetKeys()
     self.__on_set_keys__ = (*existing, callback.__name__)
-    return callback
+    return flexCall(callback)
 
   def preDelete(self, callback: Func) -> Func:
     existing = self._getPreDeleteKeys()
     self.__pre_delete_keys__ = (*existing, callback.__name__)
-    return callback
+    return flexCall(callback)
 
   def onDelete(self, callback: Func) -> Func:
     existing = self._getOnDeleteKeys()
     self.__on_delete_keys__ = (*existing, callback.__name__)
-    return callback
+    return flexCall(callback)
 
   def setName(self, callback: Func) -> Func:
     existing = self._getSetNameKeys()

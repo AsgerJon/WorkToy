@@ -10,7 +10,7 @@ from collections.abc import Callable
 
 from ..mcls import BaseSpace
 from ..utilities import maybe
-from ..waitaminute.keenum import KeeFlagDuplicate
+from ..waitaminute.keenum import KeeFlagDuplicate, KeeFlagNameError
 from . import KeeFlag, KeeFlagsHook
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -68,6 +68,14 @@ class KeeFlagsSpace(BaseSpace):
     self.__base_flags__ = existing
 
   def addKeeFlag(self, name: str, keeFlag: KeeFlag, **_) -> None:
+    """
+    The 'addKeeFlag' method records a flag declared in the class body.
+    A name containing '_' raises 'KeeFlagNameError', since the name of a
+    combined member joins its flag names with '_', and a name already
+    declared in the body or inherited raises 'KeeFlagDuplicate'.
+    """
+    if '_' in name:
+      raise KeeFlagNameError(self.getClassName(), name)
     baseFlags = self._getBaseFlags()
     keeFlags = self.getKeeFlags()
     if name in maybe(self.__kee_flags__, dict()):

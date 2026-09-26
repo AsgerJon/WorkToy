@@ -175,8 +175,9 @@ def typeCast(target: type, arg: Any, **kwargs) -> Any:
   - 'dict' : accepts anything that splats with '{**arg}'.
   - 'type' : only succeeds if 'arg' is already a class.
   - any other target : the target's constructor is called on
-    'arg'. Suppress this fallback with
-    'allowInstantiation=False'.
+    'arg', and what it returns must be an instance of the
+    target, though possibly of a subclass. Suppress this
+    fallback with 'allowInstantiation=False'.
 
   Parameters
   ----------
@@ -221,7 +222,12 @@ def typeCast(target: type, arg: Any, **kwargs) -> Any:
     return _castContainer(target, arg)
   if kwargs.get('allowInstantiation', True):
     try:
-      return target(arg)
+      out = target(arg)
     except Exception as exception:
       raise _exc(target, arg) from exception
+    else:
+      #  A constructor may return anything at all, and only an instance
+      #  of the target is a cast to it.
+      if isinstance(out, target):
+        return out
   raise _exc(target, arg)

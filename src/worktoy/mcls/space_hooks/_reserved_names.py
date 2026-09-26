@@ -40,4 +40,8 @@ class ReservedNames:
       '__qualname__',
       '__firstlineno__',
       '__static_attributes__',
+      '__classcell__',
+      '__classdictcell__',
+      '__orig_bases__',
+      '__type_params__',
     )

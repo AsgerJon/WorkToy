@@ -5,7 +5,7 @@ LoremSampler draws random lorem ipsum text.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...desc import Field
+from ...desc import Field, AttriBox
 from ...lorem_ipsum import Sentence
 from . import BaseSampler
 from ...waitaminute.control_flow import SkipSet
@@ -14,9 +14,11 @@ from ...waitaminute.control_flow import SkipSet
 class LoremSampler(BaseSampler):
   """
   LoremSampler draws random lorem ipsum sentences, each realized from a
-  'Sentence' of the configured 'charCount'. The backing 'Sentence' is
-  reset after every draw, so successive samples are independent rather
-  than repeating one frozen sentence.
+  'Sentence' of the configured 'charCount'. Each sampler holds a
+  'Sentence' of its own, so setting 'charCount' on one sampler leaves
+  every other at its own length. The backing 'Sentence' is reset after
+  every draw, so successive samples are independent rather than
+  repeating one frozen sentence.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -30,7 +32,7 @@ class LoremSampler(BaseSampler):
   #  Private Variables
 
   #  Public Variables
-  sentence = Sentence()
+  sentence = AttriBox[Sentence]()
 
   #  Virtual Variables
   charCount: Field[int] = Field()

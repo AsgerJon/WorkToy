@@ -44,7 +44,23 @@ class TestClassHash(MCLSTest):
 
   def test_class_hash(self):
     """
-    Tests that the class hash is called correctly.
+    Tests that the class hash is called correctly: 'hash(cls)' goes
+    through the metaclass to the '__class_hash__' of the class.
     """
     self.assertEqual(Christiania.__class_hash__(), 69)
     self.assertEqual(TupleEq.__class_hash__(), 420)
+    self.assertEqual(hash(Christiania), 69)
+    self.assertEqual(hash(TupleEq), 420)
+
+  def test_default_class_hash(self):
+    """
+    A class without '__class_hash__' hashes by its name, the names of its
+    bases, and the name of its metaclass, as 'AbstractMetaclass'
+    documents.
+    """
+
+    class Plain(metaclass=AbstractMetaclass):
+      pass
+
+    expected = hash(('Plain', 'object', 'AbstractMetaclass'))
+    self.assertEqual(hash(Plain), expected)

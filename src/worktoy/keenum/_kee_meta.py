@@ -44,6 +44,9 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   by a public Field with a '_recursion=True' guard to detect
   population failure. After this, '__allow_instantiation__' is False
   and direct construction routes through '_resolveMember' instead.
+  Last, '__init__' hands over to the inherited '__init__', which runs a
+  '__class_init__' hook, now able to see the members, and notifies each
+  base through '__subclasshook__'.
 
   Member resolution
   -----------------
@@ -133,10 +136,19 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     return cls.__name_space__
 
   def _createBase(cls, ) -> None:
-    if cls.__name__ == 'KeeNum':
+    """
+    The '_createBase' method finds the base enumeration of 'cls'. The
+    root of the metaclass, the class its 'keeNum' descriptor builds, is
+    its own base, and so is every enumeration derived directly from that
+    root. Any other enumeration has the enumeration it derives from as
+    its base. The root is recognised by identity, never by name, since
+    each subclass of 'KeeMeta' builds a root of its own name.
+    """
+    mcls = type(cls)
+    root = mcls.keeNum
+    if cls is root:
       cls.__base_class__ = cls
     else:
-      mcls = type(cls)
       bases = [b for b in cls.space.__base_classes__ if isinstance(b, mcls)]
       if len(bases) != 1:
         if bases:
@@ -152,7 +164,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
           info = infoSpec % (mcls.__name__,)
         raise ValueError(textFmt(info))
       base = bases[0]
-      cls.__base_class__ = cls if base.__name__ == 'KeeNum' else base
+      cls.__base_class__ = cls if base is root else base
 
   @base.GET
   def _getBase(cls, **kwargs) -> KeeMeta:
@@ -426,7 +438,13 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     # noinspection PyTypeChecker
     return super().__new__(mcls, name, bases, space, **kw)
 
-  def __init__(cls, name: str, *__, **_) -> None:
+  def __init__(cls, name: str, bases: Bases, space: KSpace, **kw) -> None:
+    """
+    The '__init__' method builds the members of the enumeration and then
+    hands over to the inherited '__init__', which runs '__class_init__'
+    and notifies each base through '__subclasshook__'. Coming last, the
+    hook sees the finished members.
+    """
     cls.__class_name__ = name
     cls._createSpace()
     cls._createBase()
@@ -434,6 +452,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     cls._createNamedMembers()
     cls._createValuedMembers()
     cls._validateClassResolve()
+    BaseMeta.__init__(cls, name, bases, space, **kw)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # #

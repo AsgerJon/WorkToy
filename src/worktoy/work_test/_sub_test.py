@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 from unittest import TestCase
 
 from ..desc import Field
+from ..utilities import textFmt
 from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -28,6 +29,11 @@ class SubTest(TestCase):
   each block as passed, failed (AssertionError), or errored (any other
   Exception). 'BaseTest.tearDown' then fails the test if any sub-test
   failed or errored. It is not itself a runnable, discovered test class.
+
+  A block is labelled by calling the sub-test first, as in
+  'with self.subTest(target=x):'. A block entered without the call, as in
+  'with self.subTest:', is labelled '<sub test>' instead. Nested blocks
+  chain their labels with ' -> '.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -49,6 +55,9 @@ class SubTest(TestCase):
   __test_passed__: Optional[tuple[str, ...]] = None
   __owning_test__: Optional[Type[BaseTest]] = None
   __owning_instance__: Optional[BaseTest] = None
+  #  Raised by '__call__' and lowered by the '__enter__' that follows, so
+  #  an '__enter__' finding it low knows no call pushed a label.
+  __label_pending__: bool = False
 
   #  Public Variables
   fails: Field[tuple[AssertionError, ...]] = Field()
@@ -119,7 +128,9 @@ class SubTest(TestCase):
 
   def _popCurrent(self, ) -> None:
     if self.__current_tests__ is None:
-      raise RuntimeError
+      infoSpec = """'%s' has no label to remove: '__exit__' ran without a
+      matching '__enter__'!"""
+      raise RuntimeError(textFmt(infoSpec % type(self).__name__))
     if len(self.__current_tests__) == 1:
       self.__current_tests__ = None
     else:
@@ -187,9 +198,20 @@ class SubTest(TestCase):
     kwargStr = str.join(', ', ('%s=%s' % (k, v) for k, v in kwargs.items()))
     info = str.join(', ', (a for a in (argStr, kwargStr) if a))
     self.current = info
+    self.__label_pending__ = True
     return self
 
   def __enter__(self, ) -> Self:
+    """
+    A block entered right after a call keeps the label the call pushed.
+    A block entered without one pushes the fallback label, so that the
+    '__exit__' ending the block removes that label and leaves the labels
+    of any enclosing blocks in place.
+    """
+    if self.__label_pending__:
+      self.__label_pending__ = False
+    else:
+      self.current = self.__fallback_current__
     return self
 
   def __exit__(self, _, exception: BaseException, __) -> bool:

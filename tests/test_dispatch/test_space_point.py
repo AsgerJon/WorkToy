@@ -6,8 +6,10 @@ TestSpacePoint tests overloaded methods on subclasses as exposed by the
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.dispatch import TypeSig
+
 from . import DispatcherTest
-from .examples import SpacePoint
+from .examples import SpacePoint, PlanePoint
 
 
 class TestSpacePoint(DispatcherTest):
@@ -28,7 +30,18 @@ class TestSpacePoint(DispatcherTest):
     self.assertAlmostEqual(p.z, 5.0)
 
   def test_dispatcher(self, ) -> None:
-    """Testing the dispatcher functionality of the 'SpacePoint' class."""
+    """Testing the dispatcher functionality of the 'SpacePoint' class.
+    The dispatcher cloned from 'PlanePoint' keeps the signatures of the
+    parent and adds those declared on 'SpacePoint', with 'THIS' resolved
+    to 'SpacePoint', so its copy constructor copies all three
+    coordinates into a new point."""
     d = SpacePoint.__dict__['__init__'].__sig_funcs__
+    sigs = [sig for sig, _ in d]
+    self.assertIn(TypeSig(float, float), sigs)
+    self.assertIn(TypeSig(PlanePoint), sigs)
+    self.assertIn(TypeSig(float, float, float), sigs)
+    self.assertIn(TypeSig(SpacePoint), sigs)
     s = SpacePoint(1, 2, 3)
     s2 = SpacePoint(s)
+    self.assertIsNot(s2, s)
+    self.assertEqual((s2.x, s2.y, s2.z), (1.0, 2.0, 3.0))
