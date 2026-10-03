@@ -9,7 +9,8 @@ from inspect import currentframe
 from typing import TYPE_CHECKING
 
 from ..core.sentinels import THIS, OWNER, ARGS
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
+from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Self, Iterator, Union, Optional
@@ -20,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
   MaybeCtx: TypeAlias = Optional[ActiveCtx]
 
 
-class TypeSig:
+class TypeSig(NoPickle):
   """Hashable, ordered tuple of types used as a dispatch key.
 
   A 'TypeSig' represents the positional-argument type signature of a
@@ -180,6 +181,50 @@ class TypeSig:
     """
     return cls(*[type(arg) for arg in args], )
 
+  @classmethod
+  def validateTypes(cls, *types, **kwargs) -> None:
+    """
+    The 'validateTypes' classmethod refuses every entry of a declared
+    signature that is not a class, with 'TypeException' naming its
+    position. Every entry is matched with 'isinstance' at dispatch, which
+    raises its own 'TypeError' for anything else, such as 'list[int]' or
+    a 'typing.Union'. The last entry may instead be an 'ARGS' of a class,
+    marking the variadic tail, unless 'variadic=False' is passed, as the
+    flexible declarations do, since they rearrange their entries. 'THIS'
+    is a class and stands for the class itself. 'OWNER' is a class too,
+    but plays no role in overload signatures, and raises 'TypeError'. The
+    class test is that the type of the entry is a metaclass, since
+    'isinstance(entry, type)' answers 'True' for 'list[int]' on Python
+    3.9 and 3.10.
+
+    Parameters
+    ----------
+    *types : type
+        The declared entries, in order.
+    **kwargs
+        variadic : bool, optional
+            Whether the last entry may be an 'ARGS'. Defaults to 'True'.
+
+    Raises
+    ------
+    TypeException
+        If an entry, or the inner type of a final 'ARGS', is not a class.
+    TypeError
+        If an entry, or the inner type of a final 'ARGS', is 'OWNER'.
+    """
+    variadic = kwargs.get('variadic', True)
+    last = len(types) - 1
+    for index, entry in enumerate(types):
+      if variadic and index == last and isinstance(entry, ARGS):
+        entry = entry.__inner_type__
+      if not issubclass(type(entry), type):
+        raise TypeException('types[%d]' % index, entry, type)
+      if entry is OWNER:
+        infoSpec = """The entry at position %d of the signature is 'OWNER',
+        which has no meaning in an overload signature. 'THIS' stands for
+        the class the overload belongs to."""
+        raise TypeError(textFmt(infoSpec % index))
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -280,7 +325,9 @@ class TypeSig:
     """
     The 'swapTHIS' method replaces the THIS sentinel in the raw types
     with 'thisType' in place, called once the enclosing class exists so
-    that '@overload(THIS)' resolves to the finished class.
+    that '@overload(THIS)' resolves to the finished class. A trailing
+    'ARGS[THIS]' is rebuilt as 'ARGS' of the class, so a variadic
+    signature over the class matches calls of any length.
 
     Parameters
     ----------
@@ -291,6 +338,8 @@ class TypeSig:
     for rawType in self.getRawTypes():
       if rawType is THIS:
         newTypes.append(thisType)
+      elif isinstance(rawType, ARGS) and rawType.__inner_type__ is THIS:
+        newTypes.append(ARGS[thisType])
       else:
         newTypes.append(rawType)
     self.__raw_types__ = (*newTypes,)

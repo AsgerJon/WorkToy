@@ -7,10 +7,10 @@ type or its construction arguments.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class IncompleteFieldException(TypeError):
+class IncompleteFieldException(NoPickle, TypeError):
   """
   IncompleteFieldException is raised at class construction time when
   an EZData subclass body contains an EZField that is missing either

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload, Generic, TypeVar
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Union, Self
 
@@ -16,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 NamespaceT = TypeVar('NamespaceT')
 
 
-class SpaceDesc(Generic[NamespaceT]):
+class SpaceDesc(NoPickle, Generic[NamespaceT]):
   """
   SpaceDesc provides a descriptor class for 'AbstractSpaceHook' objects,
   exposing it to the namespace object.

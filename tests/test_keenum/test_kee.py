@@ -4,11 +4,6 @@ comes *after* reimplement 'Kee' as a subclass of 'AttriBox'. It is
 sufficiently different from 'AttriBox' to not be covered by the same test
 case as it. Further, 'Kee' now implements certain functionalities not used
 by 'KeeNum' classes directly after class creation.
-
-To avoid contrived or pedantic test coverage gymnastic as much as possible
-the test case centers on the example class 'Ugedag' (weekday in Danish).
-This class uses a custom class as the value type for the purpose of
-testing the lazy instantiation.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -27,11 +22,6 @@ class TestKee(KeeTest):
   sufficiently different from 'AttriBox' to not be covered by the same test
   case as it. Further, 'Kee' now implements certain functionalities not used
   by 'KeeNum' classes directly after class creation.
-
-  To avoid contrived or pedantic test coverage gymnastic as much as possible
-  the test case centers on the example class 'Ugedag' (weekday in Danish).
-  This class uses a custom class as the value type for the purpose of
-  testing the lazy instantiation.
   """
 
   def test_index_bad_get(self) -> None:

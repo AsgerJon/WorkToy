@@ -39,15 +39,15 @@ class TestHTTPStatusResolve(KeeTest):
     """
     Integers in the index range but not matching any value raise.
 
-    Without '__class_resolve__', 'HTTPStatus(0)' would return the
+    Without '__class_resolve__', 'HTTPStatus[0]' would return the
     member at index 0 (CONTINUE). The custom resolver prevents this.
     """
     with self.assertRaises(KeeResolveError):
-      _ = HTTPStatus(0)
+      _ = HTTPStatus[0]
     with self.assertRaises(KeeResolveError):
-      _ = HTTPStatus(1)
+      _ = HTTPStatus[1]
     with self.assertRaises(KeeResolveError):
-      _ = HTTPStatus(5)
+      _ = HTTPStatus[5]
 
   def test_unknownStatusCodeRaises(self) -> None:
     """Integers outside any status range raise 'KeeResolveError'."""

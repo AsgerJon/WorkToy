@@ -55,8 +55,8 @@ class TestKeeFlagsInheritance(KeeTest):
 
   def testParentNotCorruptedByChild(self) -> None:
     """Building a child must not mutate the parent's flag set. The
-    'getKeeFlags' getter merges into the base-flags dict, so this guards
-    against that merge leaking back onto the parent class."""
+    namespace of the child merges the inherited flags with its own, and
+    this guards against that merge leaking back onto the parent class."""
 
     class Base(KeeFlags):
       A = KeeFlag()

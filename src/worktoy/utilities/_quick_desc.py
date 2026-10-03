@@ -7,21 +7,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload, TypeVar, Generic
 
-from . import textFmt
+from . import textFmt, NoPickle
 
 T = TypeVar('T')
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Self, Any, Union, Optional
+  from typing import Self, Any, Union, Optional, Never
 
 
-class QuickDesc(Generic[T]):
+class QuickDesc(NoPickle, Generic[T]):
   """Read-only descriptor exposing a named private slot.
 
   Constructed with the name of a private attribute (typically
   dunder-prefixed), 'QuickDesc' reads that attribute on access
-  and refuses writes and deletions. This is enough for the
-  descriptor needs internal to the foundation packages.
+  and refuses writes with 'ReadOnlyError' and deletions with
+  'ProtectedError', as every other read-only descriptor in 'worktoy'
+  does; both are 'AttributeError's. This is enough for the descriptor
+  needs internal to the foundation packages.
 
   'QuickDesc' is intentionally minimal. Project authors using
   'worktoy' should prefer the descriptors in 'worktoy.desc':
@@ -69,19 +71,15 @@ class QuickDesc(Generic[T]):
       raise MissingVariable(self, '__private_key__', str)
     return getattr(instance, self.__private_key__)
 
-  def __set__(self, instance: Any, value: Any) -> None:
-    cls = type(instance).__name__
-    name = self.__field_name__ or '<unbound>'
-    infoSpec = """Cannot set attribute '%s' on '%s' object:
-    QuickDesc is read-only."""
-    raise AttributeError(textFmt(infoSpec % (name, cls)))
+  def __set__(self, instance: Any, value: Any) -> Never:
+    #  Local import, as in '__get__': 'worktoy.waitaminute' loads after
+    #  'worktoy.utilities'.
+    from ..waitaminute.desc import ReadOnlyError
+    raise ReadOnlyError(instance, self, value)
 
-  def __delete__(self, instance: Any) -> None:
-    cls = type(instance).__name__
-    name = self.__field_name__ or '<unbound>'
-    infoSpec = """Cannot delete attribute '%s' on '%s' object:
-    QuickDesc is read-only."""
-    raise AttributeError(textFmt(infoSpec % (name, cls)))
+  def __delete__(self, instance: Any) -> Never:
+    from ..waitaminute.desc import ProtectedError
+    raise ProtectedError(instance, self)
 
   def __set_name__(self, owner: type, name: str) -> None:
     if self.__private_key__ == name:

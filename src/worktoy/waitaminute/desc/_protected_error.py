@@ -14,13 +14,15 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class ProtectedError(DescriptorException):
+class ProtectedError(DescriptorException, AttributeError):
   """
   ProtectedError is raised on an attempt to delete a protected attribute.
   The default 'Object.__instance_delete__' raises it, as does any
-  descriptor whose protocol forbids deletion. It subclasses
-  'DescriptorException' (and so 'Exception'); it is a deliberately specific
-  type rather than a bare 'TypeError' or 'AttributeError'.
+  descriptor whose protocol forbids deletion, 'QuickDesc' included. It
+  subclasses 'DescriptorException' and 'AttributeError', as 'AccessError'
+  does: a specific type caught by its own name, which code catching
+  'AttributeError' for a refused deletion, as Python raises for one,
+  catches as well.
 
   Attributes
   ----------

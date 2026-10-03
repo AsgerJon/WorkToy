@@ -41,7 +41,7 @@ class TestReservedMethod(EZTest):
         def __setattr__(self, key: str, value: Any) -> None: ...
     e = context.exception
     self.assertIsInstance(e, AttributeError)
-    self.assertEqual(e.name, '__setattr__')
+    self.assertEqual(e.methodName, '__setattr__')
     self.assertEqual(e.space.getClassName(), 'Holder')
     self.assertIn('Holder', str(e))
     self.assertIn('__setattr__', str(e))

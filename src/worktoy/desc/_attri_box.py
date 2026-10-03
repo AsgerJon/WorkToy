@@ -6,15 +6,14 @@ AttriBox is a lazily built, strongly typed attribute descriptor.
 from __future__ import annotations
 
 from copy import deepcopy
+from enum import Enum
 from typing import TYPE_CHECKING, TypeVar
-import typing
 
-from . import Field, BaseDescriptor
+from . import _RootAlias, Field, BaseDescriptor
 from ..core import Object
 from ..core.sentinels import DELETED
-from ..utilities import typeCast
+from ..utilities import typeCast, castRule, textFmt
 from ..waitaminute import TypeException, MissingVariable
-from ..waitaminute.desc import PhantomBoxError
 from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -24,102 +23,16 @@ if TYPE_CHECKING:  # pragma: no cover
 
 T = TypeVar('T')
 
-
-class _RootAlias(typing._GenericAlias, _root=True):
-  """
-  This class is returned when AttriBox is used as a 'TypeVar' or 'Generic'.
-
-  The generic machinery hands back a plain 'typing._GenericAlias', which
-  is the object a class body actually stores when a subscript is written
-  without the trailing call. Its type carries no '__get__', so reading
-  such an attribute quietly returns the alias itself. Re-clothing the
-  alias in this subclass puts a '__get__' on the stored object, which is
-  the only hook the descriptor protocol consults for it.
-  """
-
-  @classmethod
-  def fromAlias(cls, alias: typing._GenericAlias) -> _RootAlias:
-    """
-    The 'fromAlias' constructor rebuilds 'alias' as an instance of this
-    class, carrying over the origin, the arguments, and the two display
-    settings that decide how the alias renders and whether it may be
-    instantiated.
-
-    Cloning through 'copy_with' does not work here: that method builds
-    'self.__class__(...)', and 'self' is the plain alias the generic
-    machinery returned, so the copy comes back the same plain class no
-    matter which class the method is looked up on.
-
-    Parameters
-    ----------
-    alias : typing._GenericAlias
-        The alias handed back by the generic machinery.
-
-    Returns
-    -------
-    _RootAlias
-        A faithful copy of 'alias' whose type supplies '__get__'.
-    """
-    return cls(
-        alias.__origin__,
-        alias.__args__,
-        name=alias._name,
-        inst=alias._inst,
-    )
-
-  def copy_with(self, args: tuple) -> _RootAlias:
-    """
-    The 'copy_with' method keeps this class through the copies the
-    generic machinery makes internally, for instance while substituting
-    a 'TypeVar'. Without the override those copies fall back to the
-    plain alias class and silently lose '__get__' again.
-
-    The name is snake_case because it overrides a CPython 'typing'
-    internal, not because the surrounding convention changed.
-
-    Parameters
-    ----------
-    args : tuple
-        The replacement arguments for the copy.
-
-    Returns
-    -------
-    _RootAlias
-        A copy carrying 'args' and this class.
-    """
-    return type(self)(
-        self.__origin__,
-        args,
-        name=self._name,
-        inst=self._inst,
-    )
-
-  def __set_name__(self, owner: type, name: str) -> Never:
-    """
-    Binding this alias to a name in a class body is refused as the class
-    is created, which is the earliest moment the mistake is unambiguous.
-    The subscript alone cannot be judged, since 'class Sub(AttriBox[T])'
-    legitimately asks for the very same alias; a base-class entry is not
-    a namespace value, so that declaration never reaches here.
-
-    The interpreter looks '__set_name__' up on the type of each value in
-    the class body, and the type of a stored alias is this class, so a
-    plain method is all the hook requires.
-
-    Note that Python 3.7 through 3.11 re-raise anything from
-    '__set_name__' wrapped in a 'RuntimeError', with the original left
-    on '__cause__'. From 3.12 onward it propagates unchanged.
-    """
-    raise PhantomBoxError(self, owner, name)
-
-  def __get__(self, instance: Any, owner: type = None) -> Never:
-    """
-    Reading an attribute that holds this alias is refused as well. The
-    class-body route is already closed by '__set_name__', so what
-    reaches here is an alias installed after the fact, by 'setattr' on a
-    finished class, where no name was ever assigned to report.
-    """
-    raise PhantomBoxError(self, owner)
+#  The builtin containers take one iterable rather than their elements as
+#  separate arguments. Text is refused for them rather than iterated, since
+#  a 'str' would split into characters and 'bytes' into integers. A field
+#  of one of the text types takes a single value through 'resolveText'.
+_CONTAINERS = (list, tuple, set, frozenset, dict)
+_TEXT_TYPES = (str, bytes, bytearray)
+#  The number types, whose constructors round: 'int(2.5)' is '2' and
+#  'bool(2)' is 'True'. A field of one of them, or of a subclass keeping its
+#  constructor, takes a single value through 'resolveNumber'.
+_NUMBER_TYPES = (bool, int, float, complex)
 
 
 class AttriBox(BaseDescriptor[T]):
@@ -155,19 +68,39 @@ class AttriBox(BaseDescriptor[T]):
   'TypeException'. Assigning a value:
 
   - a value already of type 'T' is stored unchanged;
+  - if 'T' is a text type, 'str', 'bytes' or 'bytearray', or based on
+    one, the value goes to 'resolveText', which defers to 'typeCast':
+    text converts between the three as UTF-8, and anything else raises
+    'TypeException', since the constructors of the text types accept
+    almost anything ('str(None)' is 'None', 'bytes(5)' five zero
+    bytes). A single default argument takes the same route;
   - otherwise a lossless 'typeCast(T, value)' is tried with no
     construction; on success the cast result is stored;
-  - if 'T' is 'bool', 'int', 'float', or 'complex', the cast is
-    authoritative: a refused non-tuple value raises (the chained
+  - if 'T' is 'bool', 'int', 'float', or 'complex', or a subclass of
+    one that keeps its constructor, the cast is
+    authoritative: a refused value raises (the chained
     'OverflowError' when an int is too large for the float,
     otherwise 'TypeException') instead of being forced through
-    'T(value)', which would silently round. Stupid args, stupid
-    prizes;
+    'T(value)', which would silently round. A single default
+    argument, and an assigned tuple of one value, go to
+    'resolveNumber', which defers to the same cast. Stupid args,
+    stupid prizes;
   - for any other 'T', a failed cast falls back to the field-type
     constructor ('T(value)', or 'T(*value)' when 'value' is a
     tuple; see '_resolve' for the splat rules);
+  - a builtin container field type ('list', 'tuple', 'set', 'frozenset'
+    or 'dict') refuses a 'str', 'bytes' or 'bytearray' with
+    'TypeException' rather than splitting it into characters or
+    integers, for the deferred default as for an assignment;
   - if construction also fails, 'TypeException' is raised, chained
     from the cast failure.
+
+  A field type based on a builtin follows 'castRule', as 'typeCast' and
+  the overload dispatch do. A subclass that keeps the constructor of its
+  builtin is held to the rule of that builtin, and the field holds an
+  instance of the subclass built from the cast value. A subclass with a
+  constructor of its own, such as an 'IntEnum', is trusted: its
+  constructor decides.
 
   Notes
   -----
@@ -210,6 +143,15 @@ class AttriBox(BaseDescriptor[T]):
   '__x__attribox_field_object__'. Declaring two such fields on one
   class, the same name once in each spelling, leaves them sharing one
   storage, and the behaviour is then undefined.
+
+  An object the box creates, as a default or through the field-type
+  constructor on assignment, is tagged with '__field_box__',
+  '__field_name__' and '__field_owner__', naming the box that created it.
+  An object assigned already of the field type is not. '_applyTags'
+  lists the objects left untagged, and a class keeps its instances
+  untagged by declaring '__no_box_tag__' as true. A box is its own copy,
+  shallow and deep, so a copy of a tagged object, or of the instance
+  owning the field, names the same box; see '__deepcopy__'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -259,6 +201,12 @@ class AttriBox(BaseDescriptor[T]):
     the given arguments. It does *not* retrieve arguments from 'self',
     but requires them to be passed in, because it is used both when
     setting and getting.
+
+    For a text field type, 'str', 'bytes' or 'bytearray', a single
+    argument without keywords goes to 'resolveText' rather than to the
+    constructor, and for a number field type, 'bool', 'int', 'float' or
+    'complex', to 'resolveNumber'; see there. The rules below apply to
+    every other build.
 
     A lone argument that is already an instance of the field type is
     deep-copied rather than rebuilt, so each instance owns its default
@@ -319,7 +267,10 @@ class AttriBox(BaseDescriptor[T]):
     each element of the tuple must itself be a tuple of length 2, with the
     first element being hashable. For 'set' and 'frozenset', every element
     must be hashable. The final exception is that in the presence of
-    keyword arguments, the 'tuple' is not unpacked.
+    keyword arguments, the 'tuple' is not unpacked. A single argument
+    for a container is converted as a whole, so 'AttriBox[list](range(3))'
+    holds '[0, 1, 2]', except that a 'str', 'bytes' or 'bytearray' is
+    refused rather than split into characters or integers.
 
     Why a tuple splats, and why the builtins are exempt
     ---------------------------------------------------
@@ -371,8 +322,8 @@ class AttriBox(BaseDescriptor[T]):
     Returns
     -------
     T
-        The freshly built field-type instance, tagged with its field
-        name, owner, and owning box.
+        The field-type instance, tagged by '_applyTags' with this box,
+        its field name and its owner when this box created it.
 
     Raises
     ------
@@ -382,9 +333,12 @@ class AttriBox(BaseDescriptor[T]):
         an instance of the field type.
     """
     fieldType = self.getFieldType()
-    fieldObject = None
+    #  A flag rather than 'None' marks a value not built yet, since 'None'
+    #  is the very value 'AttriBox[object](None)' copies.
+    copied = False
     if not self.hasSentinelArgs() and len(args) == 1 and not kwargs:
       if isinstance(args[0], fieldType):
+        copied = True
         #  A lone argument already of the field type is deep-copied so
         #  that each instance owns its default rather than sharing the
         #  single object captured in the class body. Atomic immutables
@@ -397,65 +351,276 @@ class AttriBox(BaseDescriptor[T]):
           fieldObject = deepcopy(args[0])
         except Exception:  # un-copyable: share rather than raise
           fieldObject = args[0]
-    if fieldObject is None:
-      try:
-        if fieldType in (list, set, frozenset, dict, tuple) and not kwargs:
-          fieldObject = fieldType(args)
-        else:
-          fieldObject = fieldType(*args, **kwargs)
-      except (TypeError, ValueError) as exception:
-        name = 'value'
-        badValue = args[0] if args else None
-        raise TypeException(name, badValue, fieldType) from exception
+    if not copied:
+      if self._isTextField() and len(args) == 1 and not kwargs:
+        fieldObject = self.resolveText(args[0])
+      elif self._isLoneNumber(args, kwargs):
+        fieldObject = self.resolveNumber(args[0])
+      else:
+        fieldObject = self._callFieldType(*args, **kwargs)
       if not isinstance(fieldObject, fieldType):
         #  A constructor may return anything at all. Storing what it
         #  returned would break the rule that the field always holds an
         #  instance of its field type.
         raise TypeException(self.getFieldName(), fieldObject, fieldType)
-    try:
-      setattr(fieldObject, '__field_name__', self.getFieldName())
-      setattr(fieldObject, '__field_owner__', self.getFieldOwner())
-      setattr(fieldObject, '__field_box__', self)
-    except AttributeError:
-      pass
+    self._applyTags(fieldObject, *args)
     return fieldObject
+
+  def _isTextField(self) -> bool:
+    """
+    The '_isTextField' method reports whether the field type is one of
+    the text types, 'str', 'bytes' or 'bytearray', or a subclass of one.
+    Their constructors accept almost anything, so a single value for such
+    a field goes through 'resolveText' instead.
+    """
+    fieldType = self.getFieldType()
+    return True if issubclass(fieldType, _TEXT_TYPES) else False
+
+  def _isNumberField(self) -> bool:
+    """
+    The '_isNumberField' method reports whether the field type is one of
+    the number types, 'bool', 'int', 'float' or 'complex', or a subclass
+    keeping the constructor of one, by 'castRule'. Their constructors
+    round, so a single value for such a field goes through
+    'resolveNumber' instead.
+    """
+    return True if castRule(self.getFieldType()) in _NUMBER_TYPES else False
+
+  def _isLoneNumber(self, args: tuple, kwargs: dict) -> bool:
+    """
+    The '_isLoneNumber' method reports whether a build from the given
+    arguments is a single value for a number field: one positional
+    argument, no keyword, and no contextual sentinel among the captured
+    arguments, since a sentinel is rebuilt through the constructor
+    whatever it resolved to, as the class docstring says.
+    """
+    if len(args) != 1 or kwargs or self.hasSentinelArgs():
+      return False
+    return self._isNumberField()
+
+  def resolveNumber(self, value: Any) -> Any:
+    """
+    The 'resolveNumber' method turns a single value into the value of a
+    number field, one whose field type is 'bool', 'int', 'float' or
+    'complex', or a subclass keeping the constructor of one. It defers to
+    'typeCast', which converts a number or a numeric string without loss
+    and refuses anything else, rather than calling the field type, whose
+    constructor rounds: 'int(2.5)' is '2', and 'bool(2)' is 'True'. An
+    'int' too large for a 'float' raises the 'OverflowError' of the cast,
+    as an assignment does.
+
+    A default given as a single argument without keywords comes here, and
+    so does an assigned tuple of one value, as in 'foo.n = (2.5,)', which
+    the cast of '__instance_set__' leaves to the build. Several
+    arguments, as in 'AttriBox[int]('ff', 16)', and keyword arguments
+    still go to the constructor, and so does a contextual sentinel.
+
+    The method exists to be replaced, as 'resolveText' does. A subclass
+    of 'AttriBox' that wants its number fields rounded, or converted some
+    other way, replaces it, and every number field of that box class
+    follows. What it returns must still be an instance of the field type,
+    or the box raises 'TypeException'.
+
+    Parameters
+    ----------
+    value : Any
+      The single value to turn into the value of the field.
+
+    Returns
+    -------
+    Any
+      An instance of the field type.
+
+    Raises
+    ------
+    TypeException
+      If 'typeCast' refuses the value, chained from the
+      'TypeCastException' it raised.
+    OverflowError
+      If the value is an 'int' too large for a 'float' field.
+    """
+    fieldType = self.getFieldType()
+    try:
+      return typeCast(fieldType, value)
+    except TypeCastException as typeCastException:
+      cause = typeCastException.__cause__
+      if isinstance(cause, OverflowError):
+        raise cause
+      fieldName = self.getFieldName()
+      raise TypeException(fieldName, value, fieldType) from typeCastException
+
+  def resolveText(self, value: Any) -> Any:
+    """
+    The 'resolveText' method turns a single value into the value of a
+    text field, one whose field type is 'str', 'bytes' or 'bytearray'. It
+    defers to 'typeCast', which converts between the three text types as
+    UTF-8 and refuses anything else, rather than calling the field type,
+    whose constructor accepts almost anything: 'str(None)' is 'None', and
+    'bytes(5)' is five zero bytes.
+
+    A value assigned to a text field comes here unless it is already of
+    the field type, and so does a default given as a single argument
+    without keywords. Several arguments, as in 'AttriBox[str](b'ab',
+    'latin-1')', still go to the constructor.
+
+    The method exists to be replaced. A subclass of 'AttriBox' that wants
+    its text fields more lenient, stricter, or converted some other way
+    altogether replaces it, and every text field of that box class
+    follows. What it returns must still be an instance of the field type,
+    or the box raises 'TypeException'.
+
+    Parameters
+    ----------
+    value : Any
+      The single value to turn into the value of the field.
+
+    Returns
+    -------
+    Any
+      An instance of the field type.
+
+    Raises
+    ------
+    TypeException
+      If 'typeCast' refuses the value, chained from the
+      'TypeCastException' it raised.
+    """
+    fieldType = self.getFieldType()
+    try:
+      return typeCast(fieldType, value)
+    except TypeCastException as typeCastException:
+      fieldName = self.getFieldName()
+      raise TypeException(fieldName, value, fieldType) from typeCastException
+
+  def _callFieldType(self, *args, **kwargs) -> Any:
+    """
+    The '_callFieldType' method builds a value by calling the field type
+    with the given arguments, under the rules '_resolve' describes for
+    the builtin containers: a single argument is converted as a whole,
+    several arguments become the elements, and text is refused rather
+    than split.
+    """
+    fieldType = self.getFieldType()
+    container = True if fieldType in _CONTAINERS and not kwargs else False
+    single = True if len(args) == 1 else False
+    if container and single and isinstance(args[0], _TEXT_TYPES):
+      raise TypeException('value', args[0], fieldType)
+    try:
+      if container and single:
+        return fieldType(args[0])
+      if container:
+        return fieldType(args)
+      return fieldType(*args, **kwargs)
+    except (TypeError, ValueError) as exception:
+      name = 'value'
+      badValue = args[0] if args else None
+      raise TypeException(name, badValue, fieldType) from exception
+
+  def _assignedArgs(self, value: Any) -> tuple:
+    """
+    The '_assignedArgs' method turns an assigned value into the arguments
+    '_resolve' builds from, substituting the contextual sentinels. An
+    assigned 'tuple' is the argument list, as '_resolve' explains, except
+    for a container field type, which takes the tuple whole as its one
+    iterable.
+    """
+    if isinstance(value, tuple):
+      args = (*(self.filterSentinels(arg) for arg in value),)
+      if self.getFieldType() in _CONTAINERS:
+        return (args,)
+      return args
+    return (self.filterSentinels(value),)
+
+  def _applyTags(self, fieldObject: Any, *args) -> None:
+    """
+    The '_applyTags' method writes three tags onto an object this box
+    created, so the object can find the box that made it:
+    '__field_name__', '__field_owner__' and '__field_box__'. The tags name
+    the box that created the object, not a box that holds it: an object
+    assigned to the field already of the field type is stored as it is,
+    and keeps whatever tags it has. The tags are written with
+    'object.__setattr__', past any '__setattr__' of the object's class, so
+    a frozen or otherwise guarded object is tagged like any other.
+
+    The objects this box did not create, or cannot tag, are left as they
+    are:
+
+    - one of 'args', the arguments the object was built from, handed back
+      as it was, such as a default that refuses to be copied or copies to
+      itself;
+    - a class, whose tags would become class attributes read by all its
+      instances and subclasses;
+    - an instance of a class declaring '__no_box_tag__' as true, which
+      is how the enumeration members of 'KeeNum' and 'KeeFlags' opt out,
+      and how any other class may;
+    - a member of an 'Enum', a shared singleton of the standard library;
+    - an object without an instance dict, such as an instance of a class
+      with '__slots__' only, or of a builtin such as 'int'.
+    """
+    if any(fieldObject is arg for arg in args):
+      return
+    if isinstance(fieldObject, type):
+      return
+    if getattr(type(fieldObject), '__no_box_tag__', False):
+      return
+    if isinstance(fieldObject, Enum):
+      return
+    try:
+      object.__getattribute__(fieldObject, '__dict__')
+    except AttributeError:
+      return
+    object.__setattr__(fieldObject, '__field_name__', self.getFieldName())
+    object.__setattr__(fieldObject, '__field_owner__', self.getFieldOwner())
+    object.__setattr__(fieldObject, '__field_box__', self)
 
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> T:
     """
     The '__instance_get__' method returns the stored field value for the
     given instance, building the deferred default with a fresh
     field-type instance on the first read and caching it under the
-    private name.
+    private name. A read passing '_deleting=True', which 'Object.__delete__'
+    makes to report the old value, answers from the storage alone and
+    raises 'AttributeError' for an unset field instead of building.
     """
     pvtName = self._getStorageName()
     try:
-      value = getattr(instance, pvtName)
+      #  Not 'getattr', whose miss an owner's '__getattr__' could answer.
+      value = object.__getattribute__(instance, pvtName)
     except AttributeError as attributeError:
+      if kwargs.get('_deleting', False):
+        raise attributeError
       if kwargs.get('_recursion', False):
         raise RecursionError from attributeError
       args = self.getPosArgs()
       kwargs = self.getKeyArgs()
       fieldObject = self._resolve(*args, **kwargs)
-      setattr(instance, pvtName, fieldObject)
+      #  Not 'setattr', which an owner's '__setattr__' could refuse.
+      object.__setattr__(instance, pvtName, fieldObject)
       return self.__instance_get__(instance, owner, _recursion=True)
     else:
       return value
 
-  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> T:
     """
     The '__instance_set__' method stores 'value' for the given instance.
     A value already of the field type is stored unchanged; otherwise a
     lossless 'typeCast' is tried, and only failing that does the field
     type constructor run. See the class docstring for the full coercion
-    contract.
+    contract. It returns the value stored, which the 'onSet' callbacks
+    receive.
     """
     fieldType = self.getFieldType()
     pvtName = self._getStorageName()
-    if isinstance(value, fieldType) or kwargs.get('_root', False):
-      return setattr(instance, pvtName, value)
+    if isinstance(value, fieldType):
+      object.__setattr__(instance, pvtName, value)
+      return value
     #  Catch recursion
     if kwargs.get('_recursion', False):
       raise RecursionError
+    if self._isTextField():
+      #  Text skips the cast below, so that 'resolveText' alone decides.
+      fieldObject = self._resolve(*self._assignedArgs(value), **kwargs)
+      return self.__instance_set__(instance, fieldObject, _recursion=True)
     #  Attempt to 'typeCast' without instantiation
     try:
       cast = typeCast(fieldType, value, allowInstantiation=False)
@@ -463,15 +628,11 @@ class AttriBox(BaseDescriptor[T]):
       cause = typeCastExc.__cause__
       if isinstance(cause, OverflowError):
         raise cause
-      if fieldType in (bool, int, float, complex):
+      if self._isNumberField():
         if not isinstance(value, tuple):
           raise TypeException('value', value, fieldType) from typeCastExc
-      if isinstance(value, tuple):
-        args = (*(self.filterSentinels(arg) for arg in value),)
-      else:
-        args = (self.filterSentinels(value),)
       try:
-        fieldObject = self._resolve(*args, **kwargs)
+        fieldObject = self._resolve(*self._assignedArgs(value), **kwargs)
       except Exception as exception:
         raise exception from typeCastExc
       else:
@@ -486,7 +647,7 @@ class AttriBox(BaseDescriptor[T]):
     attribute name, which a later read translates into 'MissingVariable'.
     """
     pvtName = self._getStorageName()
-    setattr(instance, pvtName, DELETED)
+    object.__setattr__(instance, pvtName, DELETED)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -513,13 +674,47 @@ class AttriBox(BaseDescriptor[T]):
         raise MissingVariable(self, '__field_type__', type)
     return super().__get__(instance, owner)
 
+  def __copy__(self) -> Self:
+    """
+    The '__copy__' method returns the box itself, so 'copy.copy' of a box
+    is the box. See '__deepcopy__' for the reason, which applies to both.
+    """
+    return self
+
+  def __deepcopy__(self, memo: dict) -> Self:
+    """
+    The '__deepcopy__' method returns the box itself, so 'copy.deepcopy'
+    of a box is the box, whether the box is copied directly or reached
+    while copying another object. It replaces the copying 'NoPickle'
+    provides, which would build a new box holding deep copies of every
+    attribute, the captured default arguments included.
+
+    A box is part of the class it is declared on, as a method or a
+    property is, and is shared by every instance of that class. A copy of
+    it would be a descriptor installed on no class. Copying reaches a box
+    mostly through the tags of '_applyTags': an object this box created
+    refers to it through '__field_box__', so a deep copy of that object,
+    or of an object holding it, such as the instance owning the field,
+    reaches the box through the tag. Returning the box itself keeps the
+    '__field_box__' of the copy naming the box declared on the class, as
+    the original does, and leaves the captured default arguments of the
+    box uncopied. The copy of the object itself is made as before.
+
+    'FixBox', 'Kee' and 'KeeBox' inherit this. A separate box is made by
+    subscripting and calling the box class again, and a separate 'Kee'
+    with 'Kee.clone'. 'FastBox' creates no tags and keeps the copying of
+    'NoPickle'.
+    """
+    return self
+
   @classmethod
   def __class_getitem__(cls, fieldType: FieldType) -> Self:
     """
     The '__class_getitem__' method captures the field type from the
-    'AttriBox[T]' subscript. A 'TypeVar' is forwarded to the generic
-    machinery; a concrete type produces a fresh 'AttriBox' parametrized
-    with it.
+    'AttriBox[T]' subscript. A plain class produces a fresh 'AttriBox'
+    parametrized with it. Anything else, a 'TypeVar' or a parametrized
+    generic such as 'list[int]', is forwarded to the generic machinery,
+    and a class body binding the resulting alias raises 'PhantomBoxError'.
 
     Parameters
     ----------
@@ -540,7 +735,12 @@ class AttriBox(BaseDescriptor[T]):
         If 'fieldType' is not a 'type' or 'TypeVar'.
 
     """
-    if isinstance(fieldType, type):
+    #  'isinstance(fieldType, type)' reads '__class__', which a builtin
+    #  parametrized generic such as 'list[int]' forwards to its origin on
+    #  Python 3.9 and 3.10, answering 'True'. The type of the subscript is
+    #  a metaclass exactly when the subscript is a plain class, on every
+    #  version, without an attribute lookup a class-level hook could answer.
+    if issubclass(type(fieldType), type):
       self = object.__new__(cls)
       self.__field_type__ = fieldType
       return self  # noqa
@@ -563,12 +763,23 @@ class AttriBox(BaseDescriptor[T]):
     'Object.__init__' (which routes them through 'getPosArgs' /
     'getKeyArgs'); the field type is not instantiated here.
 
+    A box already placed on a class refuses the call with 'TypeError'.
+    Read through its class, as in 'Holder.n', a box gives itself, and the
+    call would replace the default of every instance yet to read the
+    field.
+
     Returns
     -------
     Self
         'self', so the call site can chain straight into a class-body
         assignment, for example 'x = AttriBox[int](42)'.
     """
+    if self.__field_owner__ is not None:
+      infoSpec = """The box at '%s.%s' took the arguments of its default as
+      its class was created, and cannot take new ones."""
+      ownerName = self.__field_owner__.__name__
+      info = infoSpec % (ownerName, self.__field_name__)
+      raise TypeError(textFmt(info))
     Object.__init__(self, *args, **kwargs)
     return self
 

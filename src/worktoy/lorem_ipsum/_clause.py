@@ -7,11 +7,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.core.sentinels import THIS
-from worktoy.dispatch import overload
-from worktoy.desc import Field, AttriBox
+from ..core.sentinels import THIS
+from ..dispatch import overload
+from ..desc import Field, AttriBox
+from ..utilities import textFmt
 from . import StochasticWord, BaseGenerator
-from worktoy.utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Optional, Self, Iterator
@@ -104,10 +104,9 @@ class Clause(BaseGenerator):
     """
     The '_buildWordsLengths' method partitions 'charCount' into word
     lengths drawn from 'stochWord' and caches them. When 'isFirst' is set,
-    the leading slots
-    are pinned to the character lengths of '__lead_in__' so 'Lorem ipsum'
-    (or whatever the subclass configures) fits exactly, and only the
-    remaining words are sampled. A first clause shorter than
+    the leading slots are pinned to the character lengths of '__lead_in__'
+    so 'Lorem ipsum' (or whatever the subclass configures) fits exactly,
+    and only the remaining words are sampled. A first clause shorter than
     '__dotted_below__' falls back to a placeholder, whose lengths are read
     back from the realized words.
 
@@ -148,9 +147,8 @@ class Clause(BaseGenerator):
     """
     The '_buildWordsArray' method realizes each cached length into a
     concrete word and caches the resulting word list. The leading slots are
-    taken from '__lead_in__'
-    when 'isFirst' is set. A first clause too short to hold the lead-in and
-    one word is filled with a placeholder instead.
+    taken from '__lead_in__' when 'isFirst' is set. A first clause too short
+    to hold the lead-in and one word is filled with a placeholder instead.
     """
     leadIn = self.__lead_in__ if self.isFirst else ()
     if leadIn and self.charCount < self.__dotted_below__:
@@ -178,8 +176,9 @@ class Clause(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @overload(THIS)
-  def __init__(self, other: Self, **kwargs) -> None:
+  def __init__(self, other: Self) -> None:
     self.charCount = other.charCount
+    self.__is_first__ = other.__is_first__
     if other.__words_lengths__ is not None:
       self.__words_lengths__ = [*other.__words_lengths__, ]
     if other.__words_array__ is not None:

@@ -11,6 +11,7 @@ from collections.abc import Callable
 from ..mcls import BaseSpace
 from ..utilities import maybe
 from ..waitaminute.keenum import KeeFlagDuplicate, KeeFlagNameError
+from ..waitaminute.keenum import KeeCaseException
 from . import KeeFlag, KeeFlagsHook
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -25,8 +26,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeFlagsSpace(BaseSpace):
   """
-  KeeFlagsSpace subclasses KeeSpace from the worktoy.keenum package
-  providing the namespace object required for KeeFlags.
+  KeeFlagsSpace subclasses 'BaseSpace' from the 'worktoy.mcls' package and
+  provides the namespace object required for 'KeeFlags'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -48,11 +49,17 @@ class KeeFlagsSpace(BaseSpace):
     return maybe(self.__base_flags__, dict())
 
   def getKeeFlags(self, ) -> dict[str, KeeFlag]:
-    baseFlags = self._getBaseFlags()
-    keeFlags = maybe(self.__kee_flags__, dict())
-    for name, keeFlag in keeFlags.items():
-      baseFlags[name] = keeFlag
-    return baseFlags
+    """
+    The 'getKeeFlags' method returns a new mapping of the inherited flags
+    followed by the flags the class body declared, leaving both of those
+    mappings as they are.
+    """
+    out = dict()
+    for name, keeFlag in self._getBaseFlags().items():
+      out[name] = keeFlag
+    for name, keeFlag in maybe(self.__kee_flags__, dict()).items():
+      out[name] = keeFlag
+    return out
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -71,16 +78,20 @@ class KeeFlagsSpace(BaseSpace):
     """
     The 'addKeeFlag' method records a flag declared in the class body.
     A name containing '_' raises 'KeeFlagNameError', since the name of a
-    combined member joins its flag names with '_', and a name already
-    declared in the body or inherited raises 'KeeFlagDuplicate'.
+    combined member joins its flag names with '_', and so does the name
+    'NULL', which the member with no flag high takes; a name that is not
+    upper case raises 'KeeCaseException', as a 'KeeNum' member name does,
+    and a name already declared in the body or inherited raises
+    'KeeFlagDuplicate'.
     """
-    if '_' in name:
+    if '_' in name or name == 'NULL':
       raise KeeFlagNameError(self.getClassName(), name)
+    if not name.isupper():
+      raise KeeCaseException(name)
     baseFlags = self._getBaseFlags()
-    keeFlags = self.getKeeFlags()
-    if name in maybe(self.__kee_flags__, dict()):
-      oldFlag = self.__kee_flags__[name]
-      raise KeeFlagDuplicate(name, oldFlag, keeFlag)
+    keeFlags = maybe(self.__kee_flags__, dict())
+    if name in keeFlags:
+      raise KeeFlagDuplicate(name, keeFlags[name], keeFlag)
     if name in baseFlags:
       raise KeeFlagDuplicate(name, baseFlags[name], keeFlag)
     #  The bit index is assigned later by 'getKeeFlags', which clones
@@ -96,9 +107,19 @@ class KeeFlagsSpace(BaseSpace):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, mcls: KFMType, name: str, bases: Bases, **kw) -> None:
+    """
+    The '__init__' method records the flags of every flags class among
+    the bases. Only a class built by 'KeeFlagsMeta' has flags; a plain
+    mixin with an attribute named 'flags' contributes none.
+    """
     BaseSpace.__init__(self, mcls, name, bases, **kw)
-    if name != 'KeeFlags':
+    #  Local import: 'KeeFlagsMeta' loads after this file in the package.
+    from . import KeeFlagsMeta
+    #  The root is marked by the '_root' keyword, never by its name.
+    if not kw.get('_root', False):
       for base in bases:
+        if not isinstance(base, KeeFlagsMeta):
+          continue
         try:
           flags = getattr(base, 'flags')
         except AttributeError:
@@ -138,7 +159,7 @@ class KeeFlagsSpace(BaseSpace):
     unchanged.
     """
     namespace = BaseSpace.postCompile(self, namespace)
-    if self.getClassName() == 'KeeFlags':
+    if self.getKwargs().get('_root', False):
       return namespace
     namespace['__kee_flags__'] = self.getKeeFlags()
     flagsFactory = cast(Callable, self._getKeeFlagsFactory())

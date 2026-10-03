@@ -10,8 +10,8 @@ from worktoy.keenum import KeeNum, Kee
 
 class Compass(KeeNum):
   """Compass enumeration."""
-  NULL = Kee[complex](0 + 0j)  # Falsy because of name being 'NULL'
-  ALSO_NULL = Kee[complex](0 + 0j)  # Falsy because of value
+  NULL = Kee[complex](0 + 0j)  # A member is truthy whatever its name
+  ALSO_NULL = Kee[complex](0 + 0j)  # or its value; values may repeat
   EAST = Kee[complex](1 + 0j)
   NORTH = Kee[complex](0 + 1j)
   WEST = Kee[complex](-1 + 0j)

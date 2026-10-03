@@ -1,11 +1,10 @@
 """
-TestLoadARGS exercises the variadic '*ARGS[T]' overload syntax. The
-'@overload(...)' decorator expands a trailing 'ARGS' sentinel into
-concrete signatures for lengths 0 through
-'overload.__variadic_fastpath_limit__', plus a single variadic entry
-that the dispatcher consults via list iteration when the call length
-exceeds the expansion limit. These tests cover both tiers and the
-interaction with explicit overrides.
+TestLoadARGS exercises the variadic '*ARGS[T]' overload syntax. A trailing
+'ARGS' sentinel makes the signature a variadic declaration, which the
+dispatcher holds once and matches at any length: by exact type first, the
+prefix and the one type the trailing arguments share as a hash key, then
+through 'isinstance', then through casts. These tests cover calls of
+every length and the interaction with explicit declarations.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -36,10 +35,9 @@ class PrefixedCollector(BaseObject):
 
 
 class MixedCollector(BaseObject):
-  """Variadic plus an explicit override for the 2-int case. The
-  explicit override is registered after the variadic, so it
-  overwrites the '(str, int, int)' entry that the variadic
-  expansion would otherwise have populated."""
+  """Variadic plus an explicit declaration for the 2-int case, a call
+  the variadic accepts as well. The explicit declaration takes that
+  call, since a concrete signature is matched first."""
 
   @overload(str, *ARGS[int])
   def __init__(self, name: str, *nums: int) -> None:
@@ -65,13 +63,13 @@ class StrictCollector(BaseObject):
 
 
 class DualVariadic(BaseObject):
-  """Two variadic overloads stacked under the same method name.
-  The second '@overload' registration finds 'collect' already in
-  the namespace's variadic map and appends to the existing list
-  rather than creating a new entry. Both variadics accept the empty
-  call, so the explicit '@overload()' declaration settles which
-  function receives it; without it, class creation raises
-  'DuplicateSignature' for the ambiguous empty signature."""
+  """Two variadic overloads under the same method name. The second
+  '@overload' registration finds 'collect' already in the namespace's
+  variadic map and appends to the existing list rather than creating a
+  new entry. Both variadics accept the empty call, so the explicit
+  '@overload()' declaration settles which function receives it;
+  without it, class creation raises 'DuplicateSignature' for the
+  ambiguous empty signature."""
 
   @overload(*ARGS[int])
   def collect(self, *nums: int) -> str:
@@ -103,48 +101,46 @@ class ChildOfParentVariadic(ParentWithVariadic):
 
 class TestLoadARGS(OverloadTest):
   """
-  TestLoadARGS covers the FASTEST-tier expansion of '*ARGS[T]' and the
-  FAST/SLOW-tier list iteration that picks up calls beyond the
-  expansion limit.
+  TestLoadARGS covers the exact-type matching of '*ARGS[T]' at every
+  length and the 'isinstance' and cast passes that pick up the calls
+  exact type does not match.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  FASTEST-tier expansion: lengths 0..5  # # # # # # # # # # # # # # # # #
+  #  Exact type, short calls  # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def test_empty(self) -> None:
-    """A variadic-only overload matches a zero-arg call via the
-    expanded 'TypeSig()' entry."""
+    """A variadic-only overload matches a zero-arg call."""
     collector = IntCollector()
     self.assertEqual(collector.nums, ())
 
   def test_one_int(self) -> None:
-    """A single-arg call matches the expanded 'TypeSig(int)' entry."""
+    """A single-arg call matches."""
     collector = IntCollector(69)
     self.assertEqual(collector.nums, (69,))
 
   def test_three_ints(self) -> None:
-    """A three-arg call within the expansion limit hits FASTEST."""
+    """A three-arg call matches."""
     collector = IntCollector(1, 2, 3)
     self.assertEqual(collector.nums, (1, 2, 3))
 
   def test_five_ints(self) -> None:
-    """A call at the exact expansion limit (5) still hits FASTEST."""
+    """A five-arg call matches."""
     collector = IntCollector(1, 2, 3, 4, 5)
     self.assertEqual(collector.nums, (1, 2, 3, 4, 5))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  FAST-tier variadic catcher: lengths beyond the limit  # # # # # # # # #
+  #  Exact type, long calls  # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def test_six_ints(self) -> None:
-    """A six-arg call exceeds the expansion; the FAST variadic
-    iteration picks it up."""
+    """A six-arg call matches as the shorter ones do."""
     collector = IntCollector(1, 2, 3, 4, 5, 6)
     self.assertEqual(collector.nums, (1, 2, 3, 4, 5, 6))
 
   def test_ten_ints(self) -> None:
-    """A ten-arg call demonstrates the variadic catcher handles
+    """A ten-arg call demonstrates that the one signature handles
     arbitrarily long tails."""
     args = tuple(range(10))
     collector = IntCollector(*args)
@@ -155,42 +151,38 @@ class TestLoadARGS(OverloadTest):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def test_prefix_only(self) -> None:
-    """The prefix-only call matches the expanded 'TypeSig(str)'
-    entry - the zero-tail expansion of '(str, *ARGS[int])'."""
+    """The prefix-only call matches, with nothing after the prefix."""
     collector = PrefixedCollector('alpha')
     self.assertEqual(collector.name, 'alpha')
     self.assertEqual(collector.nums, ())
 
   def test_prefix_with_ints(self) -> None:
-    """Prefix plus a short int tail hits FASTEST via the expansion."""
+    """Prefix plus a short int tail matches."""
     collector = PrefixedCollector('beta', 10, 20, 30)
     self.assertEqual(collector.name, 'beta')
     self.assertEqual(collector.nums, (10, 20, 30))
 
   def test_prefix_with_long_tail(self) -> None:
-    """Prefix plus an int tail exceeding the expansion limit falls
-    into the variadic catcher."""
+    """Prefix plus a long int tail matches as well."""
     collector = PrefixedCollector('gamma', 1, 2, 3, 4, 5, 6, 7)
     self.assertEqual(collector.name, 'gamma')
     self.assertEqual(collector.nums, (1, 2, 3, 4, 5, 6, 7))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Explicit override of an expanded entry  # # # # # # # # # # # # # # # #
+  #  Explicit declaration of a call the variadic accepts  # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def test_override_two_int_case(self) -> None:
-    """A subsequent explicit '@overload(str, int, int)' overwrites
-    the '(str, int, int)' entry the variadic expansion populated.
-    The two-int call therefore routes to the explicit overload, not
-    to the variadic function."""
+    """An explicit '@overload(str, int, int)' takes the two-int call,
+    which the variadic accepts as well, since a concrete signature is
+    matched first."""
     collector = MixedCollector('delta', 7, 8)
     self.assertEqual(collector.kind, 'pair')
     self.assertEqual(collector.nums, (7, 8))
 
   def test_other_lengths_still_variadic(self) -> None:
-    """Lengths the explicit override does not cover still resolve
-    to the variadic function - both within the FASTEST expansion
-    and via the variadic catcher."""
+    """Lengths the explicit declaration does not cover still resolve
+    to the variadic function, short and long alike."""
     one = MixedCollector('eps', 1)
     three = MixedCollector('zeta', 1, 2, 3)
     seven = MixedCollector('eta', 1, 2, 3, 4, 5, 6, 7)
@@ -203,17 +195,15 @@ class TestLoadARGS(OverloadTest):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def test_wrong_type_in_tail_raises(self) -> None:
-    """A non-int in the tail position breaks the variadic match
-    (and the FASTEST/FAST tiers have no matching signature), so the
-    dispatcher falls through to FALLBACK or raises
+    """A non-int in the tail position breaks the variadic match in every
+    pass, so the dispatcher falls through to FALLBACK or raises
     'DispatchException'."""
     with self.assertRaises(DispatchException):
       _ = IntCollector(1, 2, 'three', 4)
 
   def test_wrong_prefix_type_raises(self) -> None:
-    """A non-str in the prefix position breaks both the FASTEST
-    expansion (no '(int, int)' entry) and the variadic catcher
-    (prefix isinstance fails)."""
+    """A non-str in the prefix position breaks the variadic match by
+    exact type and by 'isinstance' alike."""
     with self.assertRaises(DispatchException):
       _ = PrefixedCollector(123, 4, 5, 6, 7, 8, 9)
 
@@ -223,9 +213,8 @@ class TestLoadARGS(OverloadTest):
 
   def test_bool_matches_int_variadic(self) -> None:
     """'bool' is a subclass of 'int', so a 'True' in the variadic
-    tail passes 'isinstance(arg, int)' and matches. Within the
-    expansion limit, this still goes through FAST (since
-    'TypeSig(bool)' is not in the FASTEST dict)."""
+    tail passes 'isinstance(arg, int)' and matches, through the FAST
+    pass, since 'bool' is not 'int' by exact type."""
     collector = IntCollector(True, False, True)
     self.assertEqual(collector.nums, (True, False, True))
 
@@ -235,10 +224,9 @@ class TestLoadARGS(OverloadTest):
 
   def test_prefix_too_short_raises(self) -> None:
     """A prefixed variadic overload with prefix length 1 cannot
-    match a zero-arg call: every concrete expansion entry has
-    length at least 1, and both the FAST and SLOW variadic loops
-    short-circuit via 'len(args) < len(prefix)'. With no fallback,
-    the call must raise 'DispatchException'."""
+    match a zero-arg call: every pass short-circuits on a call shorter
+    than the prefix. With no fallback, the call must raise
+    'DispatchException'."""
     with self.assertRaises(DispatchException):
       _ = PrefixedCollector()
 
@@ -256,19 +244,18 @@ class TestLoadARGS(OverloadTest):
 
   def test_strict_variadic_rejects_cast(self) -> None:
     """A strict variadic overload ('strict=True') has
-    '__allow_flex__ = False' on every expansion entry and on the
-    variadic sig itself. A call with arg types that would only
-    match via 'typeCast' is rejected at the SLOW variadic tier
-    (the 'not sig.__allow_flex__' continue), since the strict flag
-    forbids coercion."""
+    '__allow_flex__ = False' on its signature. A call with arg types
+    that would only match via 'typeCast' is rejected at the SLOW
+    variadic tier (the 'not sig.__allow_flex__' continue), since the
+    strict flag forbids coercion."""
     with self.assertRaises(DispatchException):
       _ = StrictCollector('1', '2', '3')
 
   def test_strict_variadic_accepts_exact_types(self) -> None:
     """A strict variadic still dispatches correctly when the
-    arguments are exact-type matches. The strict flag only blocks
-    'typeCast' coercion in the SLOW tier; FASTEST and FAST
-    isinstance matching continue to work."""
+    arguments are exact-type matches, short and long. The strict flag
+    only blocks 'typeCast' coercion in the SLOW tier; the exact-type
+    and 'isinstance' matching continue to work."""
     short = StrictCollector(1, 2, 3)
     long_ = StrictCollector(1, 2, 3, 4, 5, 6, 7)
     self.assertEqual(short.nums, (1, 2, 3))

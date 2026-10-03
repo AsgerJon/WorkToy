@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..utilities import NoPickle
 from ..waitaminute import MissingVariable
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Optional
 
 
-class EZStore:
+class EZStore(NoPickle):
   """
   EZStore is the data descriptor an 'EZData' class places at the name of
   a field when a data descriptor of the same name sits further along its

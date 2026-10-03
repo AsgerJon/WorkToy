@@ -33,7 +33,7 @@ class TestSymbolicSampler(SamplerTest):
     self.assertEqual(intSampler.wordCount, 4)
     kwargSampler = SymbolicSampler(wordCount=5)
     self.assertEqual(kwargSampler.wordCount, 5)
-    intKwargSampler = SymbolicSampler(6, lmao=True)
+    intKwargSampler = SymbolicSampler(6, numWords=6)
     self.assertEqual(intKwargSampler.wordCount, 6)
     defaultSampler = SymbolicSampler()
     expectedCount = SymbolicSampler.__fallback_count__

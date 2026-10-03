@@ -112,9 +112,9 @@ class StochasticVariable(BaseObject):
     """
     The '__class_init__' method rejects a concrete subclass that left a
     statistics getter on the abstract base, or that bound something not
-    callable to one. The
-    base class subclasses 'BaseObject' directly and declares those empty
-    getters, so it is exempt, while its subclasses are reached up the MRO.
+    callable to one. The base class subclasses 'BaseObject' directly and
+    declares those empty getters, so it is exempt, while its subclasses
+    are reached up the MRO.
 
     Parameters
     ----------
@@ -179,9 +179,8 @@ class StochasticVariable(BaseObject):
     """
     The '_settle' method distributes the difference between 'target' and the
     sum of 'values' across the values in random order, clamping each to the
-    bounds.
-    It runs one pass, so it cannot spin, and an unreachable target lands as
-    near as the bounds allow.
+    bounds. It runs one pass, so it cannot spin, and an unreachable target
+    lands as near as the bounds allow.
 
     Parameters
     ----------
@@ -210,11 +209,11 @@ class StochasticVariable(BaseObject):
     """
     The 'partition' method produces a list of integers summing to 'target',
     each one a sample from the distribution. It draws a count of samples
-    taken from the
-    mean, finds the single difference between their sum and 'target', then
-    distributes that difference across the values in random order, clamping
-    each to the bounds. One pass settles the sum, so an unreachable target
-    lands as near as the bounds allow rather than spinning in a loop.
+    taken from the mean, finds the single difference between their sum and
+    'target', then distributes that difference across the values in random
+    order, clamping each to the bounds. One pass settles the sum, so an
+    unreachable target lands as near as the bounds allow rather than
+    spinning in a loop.
 
     Parameters
     ----------
@@ -235,12 +234,11 @@ class StochasticVariable(BaseObject):
     """
     The 'partitionSpaced' method mirrors 'partition' but reserves one extra
     slot per integer, as a word followed by a single separator does, so that
-    the sum of the
-    integers plus their count equals 'target'. A list joined by one
-    character separators therefore reaches 'target' characters exactly. Each
-    integer costs its value plus that one slot, so the count is taken from
-    'mean + 1' and the values are settled to sum to 'target' minus the
-    count.
+    the sum of the integers plus their count equals 'target'. A list joined
+    by one character separators therefore reaches 'target' characters
+    exactly. Each integer costs its value plus that one slot, so the count
+    is taken from 'mean + 1' and the values are settled to sum to 'target'
+    minus the count.
 
     Parameters
     ----------

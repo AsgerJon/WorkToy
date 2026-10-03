@@ -60,6 +60,11 @@ class KeeBase(Object, ):
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  #  Class Variables
+  #  A member is a shared singleton, which no box creates, so a box
+  #  holding one leaves it untagged; see 'AttriBox._applyTags'.
+  __no_box_tag__ = True
+
   #  Private Variables
   __field_value__: Optional[Any] = None
   __frozen_state__: MaybeBool = None

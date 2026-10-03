@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..desc import Field
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
 from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute.keenum import KeeWriteOnceError
 from . import KeeFlag, KeeFlagsMeta
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterator, Never, Self
 
 
-class KeeFlags(metaclass=KeeFlagsMeta):
+class KeeFlags(NoPickle, metaclass=KeeFlagsMeta, _root=True):
   """
   Base class for bitmask-flag enumerations. Each KeeFlags subclass
   declares 'KeeFlag()' fields in its body, one per single-bit flag;
@@ -63,11 +63,10 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   canonical name. Subscripting and calling are order- and
   case-insensitive: 'cls["EXECUTE_READ"]', 'cls["execute_read"]', and
   'cls["READ", "EXECUTE"]' all resolve to the same member, a repeated name
-  collapses, and an unknown name raises 'KeyError'. Since '_' joins the
+  collapses, and an unknown name raises 'KeeResolveError', as an unknown
+  index or value does and as a 'KeeNum' miss does. Since '_' joins the
   flag names in a canonical name, a flag name may not contain '_' itself;
   declaring one raises 'KeeFlagNameError' in the class body.
-
-  Entries must be integer valued.
 
   Like 'KeeNum' members, the members are write-once constants: once
   'KeeFlagsMeta.__new__' has stamped a member, any attempt to set or
@@ -83,6 +82,11 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   #  Class Variables (type hints)
   __member_list__: list[Self]
   __member_dict__: dict[frozenset[str], Self]
+
+  #  Class Variables
+  #  A member is a shared singleton, which no box creates, so a box
+  #  holding one leaves it untagged; see 'AttriBox._applyTags'.
+  __no_box_tag__ = True
 
   #  Private Variables
   #  '__field_owner__' and '__field_name__' are set on each instance
@@ -227,7 +231,7 @@ class KeeFlags(metaclass=KeeFlagsMeta):
     underlying bitmask."""
     return True if self.__member_index__ else False
 
-  def __iter__(self) -> Iterator[Self]:
+  def __iter__(self) -> Iterator[KeeFlag]:
     yield from self.highs
 
   def __str__(self, ) -> str:
@@ -248,9 +252,12 @@ class KeeFlags(metaclass=KeeFlagsMeta):
   def __hash__(self, ) -> int:
     return hash((hash(type(self)), *self.highs))
 
+  #  The operators take members of the very same class: a member of a
+  #  derived class passes 'isinstance', but holds flags this class lacks.
+
   def __or__(self, other: Self) -> Self:
     cls = type(self)
-    if not isinstance(other, cls):
+    if type(other) is not cls:
       return NotImplemented
     highs = (*self.highs, *other.highs,)
     names = frozenset((f.name for f in highs), )
@@ -258,7 +265,7 @@ class KeeFlags(metaclass=KeeFlagsMeta):
 
   def __and__(self, other: Self) -> Self:
     cls = type(self)
-    if not isinstance(other, cls):
+    if type(other) is not cls:
       return NotImplemented
     highs = (f for f in self.highs if f in other.highs)
     names = frozenset((f.name for f in highs), )
@@ -266,7 +273,7 @@ class KeeFlags(metaclass=KeeFlagsMeta):
 
   def __xor__(self, other: Self) -> Self:
     cls = type(self)
-    if not isinstance(other, cls):
+    if type(other) is not cls:
       return NotImplemented
     ors = self | other
     ands = self & other

@@ -8,13 +8,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..core import MetaType
-from ..core.sentinels import METACALL
+from ..core.sentinels import METACALL, SentinelMeta
 from ..utilities import maybe
 from ..waitaminute import MissingVariable
 from . import AbstractNamespace as ASpace
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias
+  from typing import Any, TypeAlias, Type, Union
+
+  from . import AbstractMetaclass
+
+  AMeta: TypeAlias = Union[MetaType, AbstractMetaclass, type]
 
   Base: TypeAlias = tuple[type, ...]
 
@@ -65,7 +69,10 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   but are more general. The metaclass dispatches the corresponding
   builtin operation to the class-level hook when present, falling back
   to the default 'type' behavior otherwise. Hooks are detected by
-  comparison against the 'METACALL' sentinel.
+  comparison against the 'METACALL' sentinel. A metaclass based on this
+  one that implements an operation itself, as 'KeeMeta' implements
+  '__len__', takes it over from the hook, and 'NamespaceHook' refuses
+  that hook in the body of its classes with 'ShadowedClassHook'.
 
   Supported class-level hooks:
 
@@ -97,9 +104,9 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
         metaName = type(cls).__name__
         return hash((cls.__name__, *baseNames, metaName))
 
-    Note: the 'overload' protocol in worktoy.dispatch expects this
-    exact default. Overriding '__class_hash__' prevents the dispatcher
-    from fast-path recognizing the class.
+    The namespace hashes the same tuple as the stand-in 'TypeSig' gives
+    'THIS' while the class body runs, but nothing depends on the two
+    being equal; see 'TypeSig'.
   - '__class_init__(cls, name, bases, space, **kw) -> None'
     Invoked after the class body has been fully executed.
   - '__class_setitem__(cls, item, value) -> None'
@@ -134,11 +141,11 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   - '__class_getattribute__' is not implemented (cognito hazard).
   """
 
-  __abstract_metaclass__ = True
-  __class_getattr__ = METACALL
-  __class_setattr__ = METACALL
-  __class_delattr__ = METACALL
-  __class_call__ = METACALL
+  __abstract_metaclass__: bool = True
+  __class_getattr__: SentinelMeta = METACALL
+  __class_setattr__: SentinelMeta = METACALL
+  __class_delattr__: SentinelMeta = METACALL
+  __class_call__: SentinelMeta = METACALL
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Base, **kwargs) -> ASpace:
@@ -152,21 +159,33 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     Also, this method removes nothing from the 'bases' tuple. Subclasses
     should also remove nothing from the 'bases' tuple.
     """
+    # noinspection PyTypeChecker
     return ASpace(mcls, name, bases, **kwargs)
 
-  def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> type:
-    if isinstance(space, ASpace):
-      namespace = space.compile()
-    else:
-      namespace = mcls.__prepare__(name, bases, **kw)
-      for key, val in dict.items(space):
-        namespace[key] = val
-      namespace = namespace.compile()
-    cls = MetaType.__new__(mcls, name, bases, namespace, **kw)
-    if hasattr(space, 'getHooks'):
-      for hook in space.getHooks():
-        setattr(hook, '__space_object__', space)
-        cls = maybe(hook.newClassPhase(cls), cls)
+  def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> AMeta:
+    """
+    The '__new__' method compiles the namespace and builds the class from
+    it, then hands the class to the 'newClassPhase' of every hook. Called
+    directly with a plain dict, as in 'BaseMeta(name, bases, {...})', it
+    first copies the dict into a namespace of its own, and the hooks of
+    that namespace run. The class keywords the namespace and its hooks
+    read, such as 'trustMeBro', stay with the namespace; every other
+    keyword goes on to 'type.__new__' and so down the '__init_subclass__'
+    chain of the bases, where a base takes it or 'object' refuses it; see
+    'AbstractNamespace.getConsumedKeywords' and 'MetaType.takesKeywords'.
+    """
+    if not isinstance(space, ASpace):
+      plain = space
+      space = mcls.__prepare__(name, bases, **kw)
+      for key, val in dict.items(plain):
+        space[key] = val
+    namespace = space.compile()
+    consumed = space.getConsumedKeywords()
+    passed = {key: val for key, val in kw.items() if key not in consumed}
+    cls: AMeta = MetaType.__new__(mcls, name, bases, namespace, **passed)
+    for hook in space.getHooks():
+      setattr(hook, '__space_object__', space)
+      cls = maybe(hook.newClassPhase(cls), cls)
     return cls
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
@@ -300,11 +319,11 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls.__class_delitem__(item)
 
   def __getattr__(cls, name: str) -> Any:
-    """Do not use the 'dot' operator to access class attributes during
-    this method! Instead, the clunky 'object.__getattribute__' must be
-    used to avoid infinite recursion. This is not an edge case, if you
-    bring the 'dot' operator into an implementation here, it is recursion
-    time!"""
+    """A miss on the class comes here, so the dot operator is safe in
+    this method only for names the metaclass itself defines, such as
+    '__class_getattr__', which never miss. Any other name read with it
+    comes back here, so those take the clunky 'type.__getattribute__',
+    or it is recursion time!"""
     if cls.__class_getattr__ is METACALL:
       raise MissingVariable(cls, name)
     return cls.__class_getattr__(name, )
@@ -340,7 +359,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return type.__getattribute__(cls, '__namespace__', )
 
   @classmethod
-  def getNamespaceClass(mcls) -> type:
+  def getNamespaceClass(mcls) -> Type[ASpace]:
     """
     The 'getNamespaceClass' classmethod returns the namespace type this
     metaclass uses, obtained by inspecting the object '__prepare__'

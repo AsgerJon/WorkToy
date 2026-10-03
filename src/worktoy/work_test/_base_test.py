@@ -17,7 +17,7 @@ from .samplers import SymbolicSampler, WordSampler, LoremSampler
 from ..desc import Field, AttriBox, SymbolicName
 from ..lorem_ipsum import StochasticWord, Sentence
 from ..mcls import BaseMeta
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Iterator, Optional
@@ -44,16 +44,16 @@ except AttributeError:  # pragma: no cover
   class _Temp(TestCase):
     def assertIsSubclass(self, cls: type, base: type, msg=None) -> None:
       """Asserts that 'cls' is a subclass of 'base'."""
-      self.assertTrue(issubclass(cls, base))
+      self.assertTrue(issubclass(cls, base), msg)
 
     def assertNotIsSubclass(self, cls: type, base: type, msg=None) -> None:
       """Asserts that 'cls' is not a subclass of 'base'."""
-      self.assertFalse(issubclass(cls, base))
+      self.assertFalse(issubclass(cls, base), msg)
 else:  # version >= 3.14
   _Temp = TestCase
 
 
-class BaseTest(_Temp, metaclass=BaseMeta):
+class BaseTest(NoPickle, _Temp, metaclass=BaseMeta):
   """
   BaseTest provides a base class shared by the testing classes in the
   tests package. It implements module unloading in the 'tearDownClass'
@@ -147,9 +147,10 @@ class BaseTest(_Temp, metaclass=BaseMeta):
     """
     The 'argReport' method builds a string report of the given arguments,
     used in the test cases to provide informative error messages when a
-    test fails. The report includes the type and a truncated string
-    representation of each argument. A representation longer than 48
-    characters is truncated to 45 characters followed by an ellipsis.
+    test fails. The report puts each argument on a line of its own as
+    '<type: value>'. A line of 48 characters or more, a limit the 'chars'
+    keyword replaces, is cut to three characters fewer and closed with an
+    ellipsis.
     """
     lineLength: int = kwargs.get('chars', cls.__fallback_line_length__)
     newLine: str = kwargs.get('newLine', cls.__fallback_new_line__)

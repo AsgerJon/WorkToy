@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeResolveError(Exception):
+class KeeResolveError(NoPickle, Exception):
   """
   Raised when an enumeration cannot resolve an identifier to one of its
   members. It is the terminal signal of the resolution machinery: every
@@ -22,7 +22,9 @@ class KeeResolveError(Exception):
   hook, positional index, and value) has been tried and none produced a
   member. A '__class_resolve__' hook declines by returning
   'NotImplemented', not by raising this; the machinery then raises it
-  once the remaining tiers also miss.
+  once the remaining tiers also miss. A 'KeeFlags' class raises it for
+  every miss as well, by name, index or value, so one 'except' clause
+  covers both enumerations.
 
   Attributes
   ----------

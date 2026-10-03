@@ -14,6 +14,8 @@ if TYPE_CHECKING:  # pragma: no cover
   SlotInts: TypeAlias = dict[Any, tuple[int, ...]]
   SlotMap: TypeAlias = dict[Any, int]
 
+_NO_MATCH = 'No assignment gives every slot a distinct index'
+
 
 def bipartiteMatching(slots: list[tuple[int, ...]]) -> list[int]:
   """Solve bipartite matching by recursive backtracking.
@@ -37,7 +39,9 @@ def bipartiteMatching(slots: list[tuple[int, ...]]) -> list[int]:
   Raises
   ------
   ValueError
-      If no consistent assignment exists.
+      If no consistent assignment exists. The message names no slot,
+      since a failed matching is a property of the slots together rather
+      than of any one of them.
 
   Examples
   --------
@@ -51,7 +55,7 @@ def bipartiteMatching(slots: list[tuple[int, ...]]) -> list[int]:
   # Step 1: fail if any empty
   for opts in slots:
     if not opts:
-      raise ValueError('No valid assignment for slot')
+      raise ValueError(_NO_MATCH)
 
   # Step 2: pick slot with fewest options
   idx, opts = min(enumerate(slots), key=lambda x: len(x[1]))
@@ -73,4 +77,4 @@ def bipartiteMatching(slots: list[tuple[int, ...]]) -> list[int]:
     result = result[:idx] + [value] + result[idx:]
     return result
 
-  raise ValueError('No valid assignment for slot %d' % idx)
+  raise ValueError(_NO_MATCH)

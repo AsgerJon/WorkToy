@@ -9,7 +9,7 @@ from __future__ import annotations
 from types import FunctionType as Func
 from types import MethodType
 
-from worktoy.waitaminute import TypeException, VariableNotNone
+from worktoy.waitaminute import TypeException
 from worktoy.dispatch import Dispatcher, TypeSig, overload
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
 from worktoy.waitaminute.dispatch import DuplicateSignature
@@ -87,6 +87,29 @@ class TestDispatchUmbrella(DispatcherTest):
     self.assertIs(e.duplicate, second)
     self.assertIn(str(sig), str(e))
 
+  def test_second_callback_names_both(self) -> None:
+    """Testing that a second, different fallback or finalizer raises
+    'DuplicateSignature' naming the one already set and the one
+    refused."""
+
+    def first() -> None:
+      """first"""
+
+    def second() -> None:
+      """second"""
+
+    for role in ('fallback', 'finalizer'):
+      dispatcher = Dispatcher()
+      setter = getattr(dispatcher, 'set%sFunction' % role.capitalize())
+      setter(first)
+      with self.subTest(role=role):
+        with self.assertRaises(DuplicateSignature) as context:
+          setter(second)
+        e = context.exception
+        self.assertEqual(e.sig, role)
+        self.assertIs(e.existing, first)
+        self.assertIs(e.duplicate, second)
+
   def test_callback_setter(self) -> None:
     """Testing the callback setter"""
     dispatcher = Dispatcher()
@@ -108,19 +131,21 @@ class TestDispatchUmbrella(DispatcherTest):
     # noinspection PyTypeChecker
     dispatcher.setFinalizerFunction(breh)
 
-    with self.assertRaises(VariableNotNone) as context:
+    with self.assertRaises(DuplicateSignature) as context:
       # noinspection PyTypeChecker
       dispatcher.setFallbackFunction(breh)
     e = context.exception
-    self.assertEqual(e.name, '__fallback_func__')
-    self.assertIs(e.value, breh)
+    self.assertEqual(e.sig, 'fallback')
+    self.assertIs(e.existing, breh)
+    self.assertIs(e.duplicate, breh)
 
-    with self.assertRaises(VariableNotNone) as context:
+    with self.assertRaises(DuplicateSignature) as context:
       # noinspection PyTypeChecker
       dispatcher.setFinalizerFunction(breh)
     e = context.exception
-    self.assertEqual(e.name, '__finalizer_func__')
-    self.assertIs(e.value, breh)
+    self.assertEqual(e.sig, 'finalizer')
+    self.assertIs(e.existing, breh)
+    self.assertIs(e.duplicate, breh)
 
     with self.assertRaises(TypeException) as context:
       # noinspection PyTypeChecker

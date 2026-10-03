@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..utilities import textFmt, joinWords
+from ..utilities import textFmt, joinWords, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class TypeException(TypeError):
+class TypeException(NoPickle, TypeError):
   """
   TypeException is a custom exception raised on a type mismatch. It is the
   most widely raised exception in 'worktoy', used wherever a value reaches
@@ -48,7 +48,9 @@ class TypeException(TypeError):
   def __str__(self) -> str:
     infoSpec = """Expected object at name '%s' to be an instance of %s, 
     but received object: '%s' of type '%s'!"""
-    typeNames = [t.__name__ for t in self.expectedTypes]
+    #  A 'typing' alias, such as 'typing.Callable' before Python 3.10,
+    #  has no '__name__' and renders as itself.
+    typeNames = [getattr(t, '__name__', str(t)) for t in self.expectedTypes]
     typeStr = joinWords(*["""'%s'""" % name for name in typeNames], sep='or')
     objStr = repr(self.actualObject)
     if len(objStr) > 50:

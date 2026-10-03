@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class WriteOnceError(TypeError):
+class WriteOnceError(NoPickle, TypeError):
   """
   WriteOnceError is raised on a second write to a write-once attribute,
   such as a 'FixBox' field that already holds a value or a 'Permuter'

@@ -7,9 +7,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from worktoy.core import Object
-from worktoy.desc import AttriBox
-from worktoy.waitaminute.desc import WriteOnceError
+from ..core import Object
+from ..waitaminute.desc import WriteOnceError
+from . import AttriBox
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -35,12 +35,13 @@ class FixBox(AttriBox[T]):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> Any:
     """
     The '__instance_set__' method stores the value once; a subsequent
     assignment raises 'WriteOnceError'. The unset state is detected via
     'AttributeError' rather than 'is None', so an explicit assignment of
-    'None' still counts as the one write.
+    'None' still counts as the one write. It returns the value stored, as
+    'AttriBox' does.
     """
     pvtName = self._getStorageName()
     try:
@@ -49,7 +50,7 @@ class FixBox(AttriBox[T]):
       pass
     else:
       raise WriteOnceError(self, oldValue, value)
-    AttriBox.__instance_set__(self, instance, value, **kwargs)
+    return AttriBox.__instance_set__(self, instance, value, **kwargs)
 
   def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
     """

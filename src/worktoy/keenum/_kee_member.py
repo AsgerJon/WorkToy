@@ -28,7 +28,7 @@ class Kee(AttriBox[T]):
   contributes one member, with the following defining properties:
 
     - name: The name of the member, taken from the class-body
-      assignment via '__set_name__'. Names must be unique within an
+      assignment by 'KeeSpace.addNum'. Names must be unique within an
       enumeration and must be uppercase. The uppercase rule is
       enforced: assigning a 'Kee' to a non-uppercase name (lowercase or
       mixed case) raises 'KeeCaseException' when the class is created. A
@@ -88,7 +88,7 @@ class Kee(AttriBox[T]):
 
   @name.GET
   def _getName(self) -> str:
-    """Set by 'Object.__set_name__' when the enumeration is created."""
+    """Set by 'KeeSpace.addNum' when the enumeration is created."""
     if self.__num_name__ is None:
       raise MissingVariable(self, '__num_name__', str)
     if isinstance(self.__num_name__, str):

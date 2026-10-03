@@ -6,10 +6,10 @@ SubTest is a per-instance accumulator and context manager for sub-tests.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
-from unittest import TestCase
+from unittest import TestCase, SkipTest
 
 from ..desc import Field
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
 from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   TestRun: TypeAlias = Optional[BaseTest]
 
 
-class SubTest(TestCase):
+class SubTest(NoPickle, TestCase):
   """
   SubTest subclasses 'unittest.TestCase' (for its assertion methods),
   not 'BaseTest'. It is a per-instance accumulator and context manager:
@@ -215,10 +215,19 @@ class SubTest(TestCase):
     return self
 
   def __exit__(self, _, exception: BaseException, __) -> bool:
+    """
+    A block that raised nothing is recorded as passed, an
+    'AssertionError' as a fail and any other exception as an error, each
+    kept from going further. 'unittest.SkipTest' is no failure: it leaves
+    the block as itself, so a test calling 'skipTest' inside a block is
+    skipped. So does a 'BaseException' that is not an 'Exception'.
+    """
     try:
       if exception is None:
         self._addPassed(self.current)
         return True
+      if isinstance(exception, SkipTest):
+        return False
       if isinstance(exception, AssertionError):
         self._addFail(exception)
         return True

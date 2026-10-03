@@ -38,6 +38,11 @@ class EZMeta(BaseMeta):
   equality, so a 'FrozenComplex(EZComplex)' instance can
   compare equal to its non-frozen parent's instances.
 
+  Iteration, length and membership of a class run over its fields and
+  are the metaclass's own, so an EZData body binding '__class_iter__',
+  '__class_len__' or '__class_contains__' is refused with
+  'ShadowedClassHook'; the other class hooks work as on any class.
+
   Attributes
   ----------
   fields : tuple[EZField, ...]
@@ -127,8 +132,8 @@ class EZMeta(BaseMeta):
     """
     The 'isOrdered' getter returns the resolved 'ordered' build-option
     flag set during 'EZHook.postCompilePhase'. It is truthy when the
-    class was declared with any of the 'ordered', 'sortable', or
-    'comparable' synonyms.
+    class was declared with any of the 'ordered', 'order', 'sortable',
+    or 'comparable' synonyms.
 
     Returns
     -------
@@ -144,8 +149,9 @@ class EZMeta(BaseMeta):
     set during 'EZHook.postCompilePhase'. It is truthy when the class
     was declared with any of the 'kwOnly', 'keywordOnly', or 'kw_only'
     synonyms; it controls whether '__init__' accepts positional
-    arguments and whether '__match_args__' is the full field tuple or
-    empty.
+    arguments and whether a generated '__match_args__' is the full
+    field tuple or empty. A '__match_args__' set in the class body is
+    kept whatever the flag.
 
     Returns
     -------
@@ -168,6 +174,31 @@ class EZMeta(BaseMeta):
       An iterator over the fields of this class, in declaration order.
     """
     yield from cls.fields
+
+  def __len__(cls, ) -> int:
+    """
+    The length of an 'EZData' class is the number of its fields, own and
+    inherited, which is what iterating it yields.
+
+    Returns
+    -------
+    int
+      The number of fields of this class.
+    """
+    return len(cls.fields)
+
+  def __contains__(cls, item: Any) -> bool:
+    """
+    An 'EZData' class contains its fields: 'item in cls' is True when
+    'item' is one of them. A field is recognised by identity, so the
+    '__eq__' of 'item' is never asked.
+
+    Returns
+    -------
+    bool
+      True if 'item' is a field of this class.
+    """
+    return True if any(field is item for field in cls.fields) else False
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -198,6 +229,8 @@ class EZMeta(BaseMeta):
     EZSpace
       A fresh namespace ready to receive the class body.
     """
+    if TYPE_CHECKING:  # pragma: no cover
+      assert isinstance(mcls, EZMeta)
     return EZSpace(mcls, name, bases, **kw)
 
   def __init__(cls, name: str, bases: Bases, space: EZSpace, **kw) -> None:
@@ -206,7 +239,9 @@ class EZMeta(BaseMeta):
     built it. It walks every field on the class (own and inherited) and
     binds its '__field_owner__' to this class, so later access through
     'field.fieldOwner' returns the most-derived class that declared or
-    inherited the field.
+    inherited the field. The owners are bound before the inherited
+    '__init__' runs, since that is what runs a '__class_init__' hook,
+    which may read them.
 
     Parameters
     ----------
@@ -220,9 +255,9 @@ class EZMeta(BaseMeta):
     **kw
       The class keyword arguments captured at '__prepare__' time.
     """
-    super().__init__(name, bases, space, **kw)
     for field in cls.fields:
       setattr(field, '__field_owner__', cls)
+    super().__init__(name, bases, space, **kw)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

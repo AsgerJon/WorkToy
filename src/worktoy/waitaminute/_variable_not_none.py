@@ -5,10 +5,10 @@ VariableNotNone is raised when a write-once slot already holds a value.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
 
 
-class VariableNotNone(Exception):
+class VariableNotNone(NoPickle, Exception):
   """VariableNotNone is raised when a variable expected to still be 'None'
   already holds a value. It guards write-once initialisation: a slot that
   must be assigned exactly once raises this exception on the second

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import maybe
-from ...waitaminute.meta import IllegalInstantiation
+from ...waitaminute.meta import IllegalInstantiation, DuplicateSentinel
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Never
@@ -20,8 +20,11 @@ if TYPE_CHECKING:  # pragma: no cover
 class SentinelMeta(type):
   """
   SentinelMeta is the metaclass for sentinel classes. It registers each
-  sentinel by name, returns the existing sentinel when a name is reused,
-  and prevents its classes from being instantiated.
+  sentinel by name, refuses a second class statement at a registered name
+  with 'DuplicateSentinel', and prevents its classes from being
+  instantiated. A sentinel defines one concept for the whole process, so
+  the registry holds one sentinel per name wherever it was declared, and
+  the existing one is the one to import.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -44,7 +47,8 @@ class SentinelMeta(type):
   @classmethod
   def _getNamedSentinel(mcls, sentinelName: str, ) -> Self:
     """
-    Returns registered sentinel having this name.
+    Returns the registered sentinel having this name, or raises 'KeyError'
+    when none has it.
     """
     existing = mcls._getRegisteredSentinels()
     for existingSentinel in existing:
@@ -58,9 +62,9 @@ class SentinelMeta(type):
 
   @classmethod
   def _registerSentinel(mcls, sentinel: Self) -> None:
-    """Records 'sentinel' in the registry, so a later class statement reusing
-    its name receives the existing sentinel instead of building a second one
-    of the same name."""
+    """Records 'sentinel' in the registry, so a later class statement at
+    its name is refused instead of building a second sentinel of the
+    name."""
     existing = mcls._getRegisteredSentinels()
     mcls.__registered_sentinels__ = [*existing, sentinel]
 
@@ -69,19 +73,19 @@ class SentinelMeta(type):
     return dict()
 
   def __new__(mcls, name: str, bases: Bases, space: dict, **kwargs) -> Self:
-    """Returns the sentinel class for 'name', building and registering it on
-    first use and handing back the already-registered class whenever the name
-    is reused."""
+    """Builds and registers the sentinel class for 'name'. A name a
+    sentinel already holds is refused with 'DuplicateSentinel', naming the
+    existing sentinel and the module of the refused class statement, since
+    a sentinel defines one concept for the whole process."""
     try:
-      cls = mcls._getNamedSentinel(name)
-    except KeyError as keyError:
-      if kwargs.get('_recursion', False):
-        raise keyError from RecursionError
-      cls = super().__new__(mcls, name, bases, space, **kwargs)
-      mcls._registerSentinel(cls)
-      return mcls.__new__(mcls, name, (), {}, _recursion=True)
+      existing = mcls._getNamedSentinel(name)
+    except KeyError:
+      pass
     else:
-      return cls
+      raise DuplicateSentinel(name, existing, space.get('__module__', None))
+    cls = super().__new__(mcls, name, bases, space, **kwargs)
+    mcls._registerSentinel(cls)
+    return cls
 
   def __call__(cls, *__, **_) -> Never:
     """
@@ -107,5 +111,7 @@ class Sentinel(metaclass=SentinelMeta):
   """
   Sentinel is the base class for all sentinel objects in the
   'worktoy.core.sentinels' package. It prevents instantiation and ensures
-  that only one sentinel of each name exists.
+  that only one sentinel of each name exists: a sentinel defines one
+  concept for the whole process, and a second class statement at a
+  registered name raises 'DuplicateSentinel'.
   """

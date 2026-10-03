@@ -153,15 +153,12 @@ class TestNumMRO(KeeTest):
   def test_call_empty(self, ) -> None:
     """
     This method tests that calling a KeeNum with no arguments raises
-    'TypeException'.
+    Python's 'TypeError', saying that an identifier is required.
     """
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(TypeError) as context:
       _ = RGBNum()  # noqa
-    e = context.exception
-    self.assertEqual(e.varName, 'identifier')
-    self.assertIsNone(e.actualObject)
-    self.assertIs(e.actualType, type(None))
-    self.assertIn(object, e.expectedTypes)
+    self.assertIs(type(context.exception), TypeError)
+    self.assertIn('exactly one argument', str(context.exception))
 
   def test_contains(self, ) -> None:
     """

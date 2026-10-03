@@ -10,9 +10,9 @@ from types import FunctionType
 from typing import TYPE_CHECKING
 
 from ..core.sentinels import ARGS
-from ..utilities import maybe, textFmt
+from ..utilities import maybe, textFmt, NoPickle
 from ..utilities.combinatorics import Arrangements
-from ..waitaminute import MissingVariable
+from ..waitaminute import MissingVariable, TypeException
 from . import TypeSig, PermuterMethod
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Order: TypeAlias = tuple[int, ...]
 
 
-class overload:  # NOQA
+class overload(NoPickle):  # NOQA
   """User-facing decorator that registers a type signature against a
   function so 'BaseMeta' can wire it into a 'Dispatcher' during
   class construction.
@@ -49,6 +49,17 @@ class overload:  # NOQA
   Class methods 'overload.flex', 'overload.fallback', and
   'overload.finalize' provide the same hooks as the corresponding
   'Dispatcher' methods.
+
+  Decorators stacked on one function each add a role for that function,
+  in any order. '@overload(str)' above '@overload.fallback' makes the
+  function both the 'str' overload and the fallback, and '@overload(str)'
+  above '@overload.flex(str, int)' registers the function for a lone
+  'str' beside both orders of 'str' and 'int':
+
+  >>> class Label(BaseObject):
+  ...   @overload(str)
+  ...   @overload.flex(str, int)
+  ...   def __init__(self, text: str, size: int = 12) -> None: pass
 
   Performance and ordering
   ------------------------
@@ -93,9 +104,6 @@ class overload:  # NOQA
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Class Variables
-  __variadic_fastpath_limit__ = 5
-
   #  Private Variables
   __sig_func_dict__ = None
   __variadic_sig_func_list__ = None
@@ -116,9 +124,9 @@ class overload:  # NOQA
     """
     The 'getVariadics' method returns the list of '(variadicSig, func)'
     pairs registered on this overload. Each variadicSig has a trailing
-    'ARGS' instance as its last raw type, which the dispatcher uses to
-    match calls whose length exceeds what the FASTEST-tier expansion
-    covers.
+    'ARGS' instance as its last raw type, and the dispatcher matches a
+    call of any length against it, the prefix by type and every trailing
+    argument against the inner type of the 'ARGS'.
 
     Returns
     -------
@@ -160,13 +168,12 @@ class overload:  # NOQA
   def _addSigFunc(self, sig: TypeSig, func: Method) -> None:
     """
     The '_addSigFunc' method registers a '(TypeSig, func)' pair on this
-    overload. If 'sig' ends in an 'ARGS' sentinel instance (a variadic
-    overload), the registration is expanded: the dispatcher's FASTEST
-    tier gets concrete 'TypeSig' entries for every length from the
-    prefix-only form up through prefix+N copies of the 'ARGS' inner type,
-    where N is 'cls.__variadic_fastpath_limit__'. A single variadic entry
-    is also recorded in '__variadic_sig_func_list__' so the dispatcher
-    can match calls whose length exceeds the FASTEST expansion.
+    overload. A signature ending in an 'ARGS' sentinel instance, a
+    variadic declaration, is recorded once in
+    '__variadic_sig_func_list__', as written, and the dispatcher matches
+    calls of any length against it. Every other signature is recorded in
+    the concrete mapping, where an equal signature stacked again keeps
+    the place it first took.
 
     Parameters
     ----------
@@ -179,21 +186,6 @@ class overload:  # NOQA
     """
     raw = sig.getRawTypes()
     if raw and isinstance(raw[-1], ARGS):
-      argsInst = raw[-1]
-      innerType = argsInst.__inner_type__
-      prefix = raw[:-1]
-      existing = self._getSigFuncDict()
-      limit = type(self).__variadic_fastpath_limit__
-      for n in range(limit + 1):
-        concreteTypes = (*prefix, *([innerType] * n))
-        concrete = TypeSig(*concreteTypes)
-        concrete.__allow_flex__ = sig.__allow_flex__
-        #  Marks the signature as an expansion artifact, ranking it
-        #  below explicit declarations when equal signatures collide
-        #  during registration on the namespace.
-        concrete.__expanded_from_variadic__ = True
-        existing[concrete] = func
-      self.__sig_func_dict__ = existing
       variadics = self.getVariadics()
       self.__variadic_sig_func_list__ = [*variadics, (sig, func,)]
     else:
@@ -230,16 +222,31 @@ class overload:  # NOQA
     ----------
     *types : type
         The positional-argument types of the signature.
+    **kwargs
+        strict : bool, optional
+            Whether the signature refuses casts: a strict signature
+            matches a call by exact type or 'isinstance' alone, and the
+            cast passes of the 'Dispatcher' skip it. Defaults to False.
 
     Returns
     -------
     Decorator
         A decorator registering its function and returning the 'overload'
         instance. 'Decorator' expands to 'Callable[[Method], Any]'.
+
+    Raises
+    ------
+    TypeException
+        If an entry is not a class, or an 'ARGS' of one at the end; see
+        'TypeSig.validateTypes'.
+    TypeError
+        If a keyword is any other than 'strict'.
     """
 
     if kwargs.get('_root', False):
       return super(overload, cls).__new__(cls)
+    cls._refuseKeywords(**kwargs)
+    TypeSig.validateTypes(*types)
 
     def decorator(func: Method) -> Self:
       sig = TypeSig(*types, )
@@ -247,6 +254,7 @@ class overload:  # NOQA
       if isinstance(func, cls):
         func._extendLatest(sig)
         return func
+      cls._refuseMethodKinds(func)
       self = super(overload, cls).__new__(cls)
       self._addSigFunc(sig, func)
       return self
@@ -281,17 +289,27 @@ class overload:  # NOQA
     Decorator
         A decorator registering its function and returning the 'overload'
         instance. 'Decorator' expands to 'Callable[[Method], Any]'.
+
+    Raises
+    ------
+    TypeException
+        If an entry is not a class; an 'ARGS' is refused too, since the
+        entries are rearranged.
     """
+    TypeSig.validateTypes(*types, variadic=False)
 
     def decorator(func: Method) -> Self:
-      self = cls(_root=True)
+      self, function = cls._stackOn(func)
       for arrangement in Arrangements(*types):
         sig = TypeSig(*arrangement.values)
         sig.__allow_flex__ = False
         if TYPE_CHECKING:  # pragma: no cover
-          assert isinstance(func, FunctionType)
-        load = PermuterMethod(func, arrangement)
+          assert isinstance(function, FunctionType)
+        load = PermuterMethod(function, arrangement)
         self._addSigFunc(sig, load)
+      #  A decorator stacked above registers the function itself, not the
+      #  wrapper of the last arrangement.
+      self.__latest_func__ = function
       return self
 
     return decorator
@@ -310,10 +328,11 @@ class overload:  # NOQA
     Returns
     -------
     Self
-        A new 'overload' carrying the fallback.
+        The 'overload' carrying the fallback: the one from a decorator
+        below in the same stack, or a new one.
     """
-    self = cls(_root=True)
-    self.__fallback_func__ = func
+    self, function = cls._stackOn(func)
+    self.__fallback_func__ = function
     return self
 
   @classmethod
@@ -330,11 +349,55 @@ class overload:  # NOQA
     Returns
     -------
     Self
-        A new 'overload' carrying the finalizer.
+        The 'overload' carrying the finalizer: the one from a decorator
+        below in the same stack, or a new one.
     """
-    self = cls(_root=True)
-    self.__finalizer_func__ = func
+    self, function = cls._stackOn(func)
+    self.__finalizer_func__ = function
     return self
+
+  @classmethod
+  def _stackOn(cls, func: Any) -> tuple[Self, Method]:
+    """
+    The '_stackOn' method returns the 'overload' a role decorator, 'flex',
+    'fallback' or 'finalize', adds its role to, with the function the role
+    is for. Given an 'overload' from a decorator below in the same stack,
+    it returns that one, with the function the stack decorates, so every
+    decorator of the stack registers one function. Given the function
+    itself, it returns a new 'overload' decorating it, after refusing a
+    staticmethod or a classmethod.
+    """
+    if isinstance(func, cls):
+      return func, func._getLatestFunc()
+    cls._refuseMethodKinds(func)
+    self = cls(_root=True)
+    self.__latest_func__ = func
+    return self, func
+
+  @staticmethod
+  def _refuseKeywords(**kwargs) -> None:
+    """
+    The '_refuseKeywords' method raises the 'TypeError' Python raises for
+    an unexpected keyword argument, for any keyword the decorator does not
+    take. A misspelled 'strict' would otherwise leave the signature open
+    to casts without a word.
+    """
+    for key in kwargs:
+      if key != 'strict':
+        infoSpec = """overload() got an unexpected keyword argument '%s'"""
+        raise TypeError(infoSpec % key)
+
+  @staticmethod
+  def _refuseMethodKinds(func: Any) -> None:
+    """
+    The '_refuseMethodKinds' method raises 'TypeException' for a
+    staticmethod or a classmethod. The 'Dispatcher' an overload builds
+    calls every function with the instance first, which neither kind
+    takes: a staticmethod would receive the instance as its first
+    argument, and a classmethod is not callable at all before Python 3.10.
+    """
+    if isinstance(func, (staticmethod, classmethod)):
+      raise TypeException('func', func, FunctionType)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -357,8 +420,9 @@ class overload:  # NOQA
 
   def __iter__(self, ) -> Iterator[tuple[TypeSig, Method]]:
     """
-    Iterating an 'overload' yields each '(TypeSig, function)' pair
-    registered on it.
+    Iterating an 'overload' yields each concrete '(TypeSig, function)'
+    pair registered on it; the variadic pairs are read from
+    'getVariadics'.
 
     Yields
     ------
@@ -374,30 +438,23 @@ class overload:  # NOQA
 
   def __str__(self, ) -> str:
     """
-    The string representation names the overloaded function and lists the
-    registered type signatures. An instance carrying only a fallback or
-    only a finalizer has no signature and function pair yet, so it renders
-    a short note naming that function instead of raising.
+    The string representation names the function the overload decorates
+    and lists each role it registers the function in: every type
+    signature, the variadic ones after the concrete, then the fallback
+    and the finalizer, as a stack of decorators may combine them. An
+    instance with no function yet renders a short note instead of
+    raising.
     """
     if self.__latest_func__ is None:
-      if self.isFallback():
-        infoSpec = """overload with only a fallback function: '%s'
-        registered so far"""
-        return textFmt(infoSpec % (self.getFallback().__name__,))
-      if self.isFinalizer():
-        infoSpec = """overload with only a finalizer function: '%s'
-        registered so far"""
-        return textFmt(infoSpec % (self.getFinalizer().__name__,))
       return textFmt("""overload with no function registered so far""")
-    latestFunc = self._getLatestFunc()
-    infoSpec = """overload of function: '%s', supporting type signatures:
-    <br><tab>%s"""
-    sigLines = []
-    for sig, _ in self._getSigFuncDict().items():
-      sigLines.append(str(sig))
-    sigStr = '<br><tab>'.join(sigLines)
-    name = latestFunc.__name__
-    info = infoSpec % (name, sigStr)
-    return textFmt(info)
+    roles = [str(sig) for sig, _ in self._getSigFuncDict().items()]
+    roles += [str(sig) for sig, _ in self.getVariadics()]
+    if self.isFallback():
+      roles.append('the fallback')
+    if self.isFinalizer():
+      roles.append('the finalizer')
+    infoSpec = """overload of function: '%s', registered as:<br><tab>%s"""
+    name = self._getLatestFunc().__name__
+    return textFmt(infoSpec % (name, '<br><tab>'.join(roles)))
 
   __repr__ = __str__

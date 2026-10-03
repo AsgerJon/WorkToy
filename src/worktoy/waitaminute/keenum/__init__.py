@@ -17,6 +17,7 @@ from ._kee_type_exception import KeeTypeException
 from ._kee_write_once_error import KeeWriteOnceError
 from ._kee_resolve_error import KeeResolveError
 from ._kee_flag_name_error import KeeFlagNameError
+from ._kee_member_name_error import KeeMemberNameError
 
 __all__ = [
   'KeeBoxTypeError',
@@ -30,4 +31,5 @@ __all__ = [
   'KeeWriteOnceError',
   'KeeResolveError',
   'KeeFlagNameError',
+  'KeeMemberNameError',
 ]

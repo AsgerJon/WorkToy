@@ -1,15 +1,15 @@
 """
 UnboundClassHook is raised when a class body binds a routed
-'__class_*__' hook name to a plain function instead of a classmethod.
+'__class_*__' hook name to a function that is not a classmethod.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class UnboundClassHook(SyntaxError):
+class UnboundClassHook(NoPickle, SyntaxError):
   """
   UnboundClassHook is raised when a class body binds one of the routed
   '__class_*__' hook names to a plain function or a staticmethod. The
@@ -25,7 +25,7 @@ class UnboundClassHook(SyntaxError):
   className : str
     The name of the class under construction.
   hookName : str
-    The routed hook name bound to a plain function.
+    The routed hook name bound to a plain function or a staticmethod.
   """
 
   __slots__ = ('className', 'hookName',)
@@ -34,11 +34,13 @@ class UnboundClassHook(SyntaxError):
     self.className = className
     self.hookName = hookName
     SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
-    spec = """The class body of '%s' binds '%s' to a plain function!
-    The metaclass invokes the class hooks as bound classmethods, so
-    the definition requires the '@classmethod' decorator."""
+    spec = """The class body of '%s' binds '%s' to a function without
+    the '@classmethod' decorator! The metaclass invokes the class hooks
+    as bound classmethods, so the definition requires it."""
     info = spec % (self.className, self.hookName)
     return textFmt(info)
 

@@ -9,7 +9,7 @@ import typing
 from typing import TYPE_CHECKING
 
 from ..desc import Field
-from ..utilities import textFmt, maybe
+from ..utilities import textFmt, maybe, NoPickle
 from ..waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from ..keenum import KeeFlagsMeta
 
 
-class KeeFlag:
+class KeeFlag(NoPickle):
   """
   KeeFlag declares one single-bit flag inside a 'KeeFlags' class body.
   Despite the name it is not itself an enumeration; the 'KeeFlags'
@@ -37,8 +37,8 @@ class KeeFlag:
 
   Attributes (on the 'KeeFlag' itself, describing the single flag, not
   the wrapped 'KeeFlags' member):
-  - name: The flag's name, set from the class-body assignment via
-    '__set_name__'.
+  - name: The flag's name, set from the class-body assignment by
+    'KeeFlagsSpace.addKeeFlag'.
   - index: The flag's bit index, the number of flags declared before
     it. Assigned by the metaclass before the 'KeeFlags' class exists.
   - args: Positional arguments passed to the 'KeeFlag()' constructor.

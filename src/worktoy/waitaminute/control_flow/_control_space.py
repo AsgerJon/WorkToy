@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import maybe
+from ...utilities import maybe, NoPickle
 from . import ControlClassError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,18 +20,22 @@ if TYPE_CHECKING:  # pragma: no cover
   Meta: TypeAlias = Type[MetaFlow]
 
 
-class ControlSpace(dict):
+class ControlSpace(NoPickle, dict):
   """
   ControlSpace provides the namespace object for the control flow
   exceptions.
   """
 
+  #  The interpreter binds '__classcell__' when a method uses 'super()',
+  #  and '__classdictcell__' as well from Python 3.14.
   __white_list__ = (
     '__firstlineno__',
     '__str__',
     '__repr__',
     '__namespace__',
     '__static_attributes__',
+    '__classcell__',
+    '__classdictcell__',
   )
 
   __is_root__ = None

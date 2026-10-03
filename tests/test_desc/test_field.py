@@ -193,26 +193,34 @@ class TestField(DescTest):
     self.assertIs(e.desc, Foo.y)
     self.assertEqual(str(e), repr(e))
 
-    with self.assertRaises(AttributeError) as context:
-      foo.v = 'lol'
+    #  The deleter stores 'DELETED', which the getter then answers, so a
+    #  second 'del' raises as a read does.
+    foo.v = 'lol'
+    del foo.v
+    with self.assertRaises(AttributeError):
       del foo.v
-      del foo.v
-    e = context.exception
+    with self.assertRaises(AttributeError):
+      _ = foo.v
 
-    with self.assertRaises(Secret) as context:
-      foo.v = 'lol'
-      setattr(foo, '_v', 'raise')
-      del foo.v
-    e = context.exception
+    #  A getter that raises does not stop the deleter.
+    foo.v = 'lol'
+    setattr(foo, '_v', 'raise')
+    with self.assertRaises(Secret):
+      _ = foo.v
+    del foo.v
+    self.assertIs(getattr(foo, '_v'), DELETED)
 
+    setattr(foo, '_y', 'readonly')
     with self.assertRaises(ReadOnlyError) as context:
-      setattr(foo, '_y', 'readonly')
-      del foo.y
+      _ = foo.y
     e = context.exception
     self.assertIs(e.instance, foo)
     self.assertIs(e.desc, Foo.y)
     self.assertEqual(str(e), repr(e))
     self.assertEqual(e.newVal, 'imma write lol!', )
+    with self.assertRaises(ProtectedError) as context:
+      del foo.y
+    self.assertIsNone(context.exception.oldVal)
 
   def test_bad_delete(self) -> None:
     """Testing that 'Field' raises 'AttributeError' when delete fails."""
@@ -236,17 +244,20 @@ class TestField(DescTest):
         self.x = (*args, self.__x_fallback__)[0]
 
     foo = Foo69420()
+    self.assertEqual(foo.x, 0)
     with self.assertRaises(ProtectedError) as context:
       del foo.x
     e = context.exception
     self.assertIs(e.instance, foo)
     self.assertIs(e.desc, Foo69420.x)
     self.assertEqual(str(e), repr(e))
+    #  The getter reports the old value.
     self.assertEqual(e.oldVal, 0)
 
     setattr(foo, '__x_value__', DELETED)
+    with self.assertRaises(AttributeError):
+      _ = foo.x
 
-    #  Here, during the failing 'deletion', the 'oldVal' is set to 'None'
     with self.assertRaises(ProtectedError) as context:
       del foo.x
     e = context.exception

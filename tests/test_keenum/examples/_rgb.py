@@ -1,4 +1,4 @@
-"""RGB provides an EZData class representation of the RGB color space."""
+"""RGB represents the RGB color space with three 'AttriBox' fields."""
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
@@ -12,7 +12,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class RGB:
-  """RGB provides an EZData class representation of the RGB color space."""
+  """RGB represents the RGB color space with three 'AttriBox' fields."""
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

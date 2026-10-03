@@ -5,17 +5,27 @@ EZField is the per-field descriptor declared in an 'EZData' class body.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from copy import copy
 from typing import TYPE_CHECKING, TypeVar, Generic
 
 from ..desc import Field
 from ..mcls import BaseObject
-from ..utilities import maybe
+from ..utilities import maybe, typeCast, castRule
 from ..waitaminute import MissingVariable, TypeException
+from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Union, Optional, Self, Type
 
 T = TypeVar('T')
+
+#  The builtin containers, the text types and the number types, as
+#  'AttriBox' names them: a container field type refuses a lone text default
+#  rather than splitting it into characters or integers, and a text or
+#  number type casts a lone default rather than calling its constructor.
+_CONTAINERS = (list, tuple, set, frozenset, dict)
+_TEXT_TYPES = (str, bytes, bytearray)
+_NUMBER_TYPES = (bool, int, float, complex)
 
 
 class EZField(BaseObject, Generic[T]):
@@ -25,9 +35,9 @@ class EZField(BaseObject, Generic[T]):
   'EZField[T](*args, **kwargs)', where the subscript sets the
   field type via '__class_getitem__' and the call binds the
   construction arguments. Default values are recipes, not cached
-  objects: 'field.defaultValue' constructs a fresh
-  'fieldType(*posArgs, **keyArgs)' on every read, so mutable
-  defaults are not shared between EZData instances.
+  objects: 'field.defaultValue' constructs a fresh value on every read,
+  by the rules of '_construct', so mutable defaults are not shared
+  between EZData instances.
 
   Attributes
   ----------
@@ -44,17 +54,20 @@ class EZField(BaseObject, Generic[T]):
   keyArgs : dict
     The keyword arguments used when materializing a default.
   defaultValue : T
-    A fresh default value computed as
-    'fieldType(*posArgs, **keyArgs)'. Re-evaluated on every
-    read so mutable defaults are not shared between instances.
+    A fresh default value, built by the rules of '_construct'.
+    Re-evaluated on every read so mutable defaults are not shared between
+    instances.
 
   Construction shapes accepted:
 
-  - 'EZField[T](value)' : type 'T', default 'T(value)'.
+  - 'EZField[T](value)' : type 'T', default a copy of 'value' when it
+    already is a 'T', the cast of 'value' when 'T' is a text or a number
+    type, and 'T(value)' otherwise, which a builtin container refuses
+    for text.
   - 'EZField[T]()' : type 'T', default 'T()'.
   - 'EZField[T](*args, **kwargs)' : type 'T', default
     'T(*args, **kwargs)'.
-  - 'EZField.fromValue(v)' : type 'type(v)', default 'type(v)(v)'.
+  - 'EZField.fromValue(v)' : type 'type(v)', default a copy of 'v'.
     Used internally by 'EZHook' to wrap bare class-body values.
 
   Shapes rejected at class-body time with 'IncompleteFieldException':
@@ -91,6 +104,20 @@ class EZField(BaseObject, Generic[T]):
     'defaultValue' and the default recipes of the generated '__init__'
     build their values here.
 
+    A lone argument, without keywords, follows the rules 'AttriBox' has
+    for its default. One already an instance of 'fieldType' is copied,
+    with 'copy.copy': calling the field type on it is no copy for every
+    type, as 'Point(Point(1, 2))' shows, while the copy gives each
+    instance an object of its own, and an enumeration member copies to
+    itself. For a text type, 'str', 'bytes' or 'bytearray' or a subclass
+    of one, it goes through 'typeCast', as an argument to the field does,
+    since the constructors of the text types accept almost anything, and
+    so does one for a number type, 'bool', 'int', 'float' or 'complex' or
+    a subclass keeping the constructor of one, since those constructors
+    round: 'int(2.5)' is '2'. A builtin container, 'list', 'tuple', 'set',
+    'frozenset' or 'dict', refuses it when it is text, rather than split
+    it into characters or integers.
+
     Parameters
     ----------
     fieldType : type
@@ -111,12 +138,35 @@ class EZField(BaseObject, Generic[T]):
     ------
     TypeException
       If the call returns something that is not an instance of
-      'fieldType'.
+      'fieldType', if a text or a number type refuses its lone argument,
+      or if a builtin container receives lone text.
     """
+    if len(args) == 1 and not kwargs:
+      value = args[0]
+      if isinstance(value, fieldType):
+        return copy(value)
+      if issubclass(fieldType, _TEXT_TYPES):
+        return EZField._castValue(fieldType, name, value)
+      if castRule(fieldType) in _NUMBER_TYPES:
+        return EZField._castValue(fieldType, name, value)
+      if fieldType in _CONTAINERS and isinstance(value, _TEXT_TYPES):
+        raise TypeException(name, value, fieldType)
     value = fieldType(*args, **kwargs)
     if isinstance(value, fieldType):
       return value
     raise TypeException(name, value, fieldType)
+
+  @staticmethod
+  def _castValue(fieldType: type, name: str, value: Any) -> Any:
+    """
+    The '_castValue' method casts the lone default of a text or a number
+    type through 'typeCast', as an argument to the field is cast, and
+    raises 'TypeException' naming the field when the cast refuses.
+    """
+    try:
+      return typeCast(fieldType, value)
+    except TypeCastException as typeCastException:
+      raise TypeException(name, value, fieldType) from typeCastException
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -269,11 +319,11 @@ class EZField(BaseObject, Generic[T]):
   @defaultValue.GET
   def _getDefaultValue(self, ) -> T:
     """
-    The 'defaultValue' getter constructs a fresh default value by
-    invoking the field type with the stored positional and keyword
-    arguments. Each call builds a new top-level object, so two instances
-    do not share the same mutable container ('list', 'dict', 'set',
-    ...). This is a shallow construction, though: a mutable object
+    The 'defaultValue' getter constructs a fresh default value from the
+    stored positional and keyword arguments, by the rules of
+    '_construct'. Each call builds a new top-level object, so two
+    instances do not share the same mutable container ('list', 'dict',
+    'set', ...). This is a shallow construction, though: a mutable object
     nested inside the stored arguments is shared across instances,
     so mutating that nested object leaks between them.
 
@@ -302,8 +352,8 @@ class EZField(BaseObject, Generic[T]):
   def __init__(self, *args, **kwargs) -> None:
     """
     The '__init__' method stores the positional and keyword arguments
-    that will later be used to build the field's default value via
-    'fieldType(*args, **kwargs)'. The field type itself is set
+    that will later be used to build the field's default value; see
+    '_construct'. The field type itself is set
     separately, either by '__class_getitem__' (for the 'EZField[T](...)'
     shape) or by 'fromValue' (for the bare-value class-body shape).
 
@@ -340,7 +390,17 @@ class EZField(BaseObject, Generic[T]):
       construction arguments before it is used as a class-body
       field; otherwise 'EZSpace.registerEZField' raises
       'IncompleteFieldException' at class-body time.
+
+    Raises
+    ------
+    TypeException
+      If 'type_' is not a class, such as 'list[int]' or a 'TypeVar'. The
+      test is that the type of 'type_' is a metaclass, as the boxes judge
+      their subscripts, since 'isinstance(list[int], type)' answers
+      'True' on Python 3.9 and 3.10.
     """
+    if not issubclass(type(type_), type):
+      raise TypeException('fieldType', type_, type)
     self = cls.__new__(cls)
     setattr(self, '__field_type__', type_)
     return self

@@ -28,16 +28,6 @@ class TestSentinels(CoreTest):
       THIS, OWNER, DESC, METACALL, DELETED,
     ]
 
-  def test_recursion(self, ) -> None:
-    """
-    Tests the recursion protection
-    """
-
-    with self.assertRaises(KeyError) as context:
-      _ = SentinelMeta.__new__(SentinelMeta, 'breh', (), {}, _recursion=True)
-    e = context.exception
-    self.assertEqual(str(e), str(KeyError('breh')))
-
   def test_str_repr(self) -> None:
     """
     Tests the string representation of a Sentinel
@@ -65,17 +55,6 @@ class TestSentinels(CoreTest):
     for sentinel in (Sentinel, *self.sentinels):
       self.assertIsNotNone(sentinel.__doc__)
       self.assertIn(sentinel.__name__, sentinel.__doc__)
-
-  def test_registry_singleton(self) -> None:
-    """
-    A class statement reusing the name of a registered sentinel receives
-    the existing sentinel instead of building a second one.
-    """
-
-    class THIS(Sentinel):  # noqa: F811
-      pass
-
-    self.assertIs(THIS, self.sentinels[0])
 
   def test_no_instantiation(self) -> None:
     """

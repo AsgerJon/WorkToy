@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
 
-class ReservedFieldError(AttributeError):
+class ReservedFieldError(NoPickle, AttributeError):
   """
   ReservedFieldError subclasses 'AttributeError' and is raised
   when an EZData class body declares an EZField at a name that
@@ -22,17 +24,20 @@ class ReservedFieldError(AttributeError):
 
   Attributes
   ----------
-  name : str
-    The reserved name the user attempted to bind an EZField to.
+  fieldName : str
+    The reserved name the user attempted to bind an EZField to. It is not
+    kept at 'name', which an 'AttributeError' reads as the name of a
+    missing attribute, and which tracebacks from Python 3.12 on answer
+    with a suggestion.
   space : EZSpace
     The namespace under construction; carries the class name and
     the reserved-name list.
   """
 
-  __slots__ = ('name', 'space')
+  __slots__ = ('fieldName', 'space')
 
-  def __init__(self, name: str, space: EZSpace) -> None:
-    self.name = name
+  def __init__(self, fieldName: str, space: EZSpace) -> None:
+    self.fieldName = fieldName
     self.space = space
     AttributeError.__init__(self, )
 
@@ -47,6 +52,6 @@ class ReservedFieldError(AttributeError):
     reserved = ', '.join(
       repr(n) for n in self.space.__reserved_ez_names__
     )
-    return infoSpec % (clsName, self.name, reserved)
+    return infoSpec % (clsName, self.fieldName, reserved)
 
   __repr__ = __str__

@@ -8,10 +8,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from ...dispatch import overload
-from ...utilities import maybe
+from ...utilities import maybe, typeCast
 from ...desc import Field, Alias
 from ...mcls import BaseObject
 from ...waitaminute import TypeException
+from ...waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Optional, Iterator
@@ -116,6 +117,14 @@ class BaseSampler(BaseObject, ABC):
 
   @overload()
   def __init__(self, **kwargs) -> None:
+    """
+    The keyword constructor sets each setting from the first of its
+    synonyms present, cast to the type of the setting without loss, as
+    the setters do, so an 'int' bound suits a float sampler. A keyword
+    naming no setting raises the 'TypeError' Python raises for an
+    unexpected keyword argument.
+    """
+    self._refuseUnknown(**kwargs)
     defaults = self.__key_defaults__
     valTypes = self.__key_types__
     keys = (*(k for k, v in self.__key_groups__.items()),)
@@ -136,13 +145,32 @@ class BaseSampler(BaseObject, ABC):
       default = existing[name]
       for key in keys:
         if key in kwargs:
-          value = kwargs[key]
-          if not isinstance(value, type_):
-            raise TypeException(name, value, type_)
-          setattr(self, name, value)
+          setattr(self, name, self._castSetting(name, kwargs[key], type_))
           break
       else:
         setattr(self, name, default)
+
+  def _refuseUnknown(self, **kwargs) -> None:
+    """
+    The '_refuseUnknown' method raises 'TypeError' for a keyword that is
+    none of the synonyms of any setting, such as a misspelled one.
+    """
+    accepted = [key for keys in self.__key_groups__.values() for key in keys]
+    for key in kwargs:
+      if key not in accepted:
+        infoSpec = """%s() got an unexpected keyword argument '%s'"""
+        raise TypeError(infoSpec % (type(self).__name__, key))
+
+  @staticmethod
+  def _castSetting(name: str, value: Any, type_: type) -> Any:
+    """
+    The '_castSetting' method casts 'value' to 'type_' through 'typeCast',
+    raising 'TypeException' naming the setting when the cast refuses.
+    """
+    try:
+      return typeCast(type_, value)
+    except TypeCastException as typeCastException:
+      raise TypeException(name, value, type_) from typeCastException
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  REQUIRED METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # #

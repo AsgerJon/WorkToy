@@ -1,14 +1,14 @@
 """
 TestVariadicPrefixOverlap pins the collision semantics for overload
-registrations of equal signatures. Two variadic declarations sharing a
-prefix both expand a concrete signature for the prefix-only call, and
-with nothing settling which function receives that call, class
-creation raises 'DuplicateSignature'. An explicit declaration of the
-contested signature settles the ambiguity regardless of declaration
-order, a plain method definition overrides the name entirely, two
-explicit declarations of the same signature with different functions
-raise immediately, and inherited registrations always lose to the
-class body's own.
+registrations accepting one call. Two variadic declarations sharing a
+prefix both accept the prefix-only call by exact type, and with nothing
+settling which function receives that call, class creation raises
+'DuplicateSignature'. An explicit declaration of the contested signature
+settles the ambiguity regardless of declaration order, a plain method
+definition of the same name in the same class body raises
+'OverloadConflict' rather than settling it, two explicit declarations of
+the same signature with different functions raise immediately, and
+inherited registrations always lose to the class body's own.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -18,6 +18,7 @@ from worktoy.core.sentinels import ARGS
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute.dispatch import DuplicateSignature
+from worktoy.waitaminute.meta import OverloadConflict
 from . import OverloadTest
 
 
@@ -64,30 +65,13 @@ class ExplicitBetween(BaseObject):
 
 class StackedVariadics(BaseObject):
   """StackedVariadics stacks two variadic declarations on one
-  function, so their overlapping expansions agree and no ambiguity
+  function, so the call both accept has one receiver and no ambiguity
   arises."""
 
   @overload(int, *ARGS[str])
   @overload(int, *ARGS[int])
   def f(self, n: int, *tail) -> str:
     return 'both'
-
-
-class PlainOverridesAmbiguity(BaseObject):
-  """PlainOverridesAmbiguity declares two ambiguous variadics and then
-  overrides the name with a plain definition, which drops every
-  overload registration along with the ambiguity."""
-
-  @overload(int, *ARGS[str])
-  def f(self, n: int, *tail: str) -> str:
-    return 'strs'  # pragma: no cover
-
-  @overload(int, *ARGS[int])
-  def f(self, n: int, *tail: int) -> str:
-    return 'ints'  # pragma: no cover
-
-  def f(self, *args) -> str:  # noqa: F811
-    return 'plain'
 
 
 class RepeatedExplicit(BaseObject):
@@ -100,15 +84,15 @@ class RepeatedExplicit(BaseObject):
 
 def _sharedVariadic(self, n: int, *tail) -> str:
   """Module-level function bound through two separate variadic
-  wrappers in 'RepeatedVariadic', so their colliding prefix-only
-  expansions agree on the receiving function."""
+  wrappers in 'RepeatedVariadic', so the prefix-only call both accept
+  has one receiving function."""
   return 'shared-variadic'
 
 
 class RepeatedVariadic(BaseObject):
   """RepeatedVariadic registers the same function object through two
-  variadic wrappers whose expansions collide on the prefix-only
-  signature. Agreeing on the function, the collision raises nothing."""
+  variadic wrappers both accepting the prefix-only call. Agreeing on
+  the function, the overlap raises nothing."""
 
   f = overload(int, *ARGS[str])(_sharedVariadic)
   f = overload(int, *ARGS[int])(_sharedVariadic)  # noqa: F811
@@ -116,10 +100,9 @@ class RepeatedVariadic(BaseObject):
 
 class ExplicitPosition(BaseObject):
   """ExplicitPosition declares a variadic over 'object', then an explicit
-  'int', then an explicit 'object' displacing the expansion '(object,)'.
-  The displacing declaration takes the place its own declaration gives
-  it, after 'int', rather than the earlier place of the expansion it
-  displaces."""
+  'int', then an explicit 'object', a call the variadic accepts as well.
+  The explicit declaration takes the place its own declaration gives
+  it, after 'int', rather than the earlier place of the variadic."""
 
   @overload(object, *ARGS[object])
   def f(self, *items: object) -> str:
@@ -174,8 +157,8 @@ class OverrideChild(Root):
 class TestVariadicPrefixOverlap(OverloadTest):
   """
   TestVariadicPrefixOverlap provides tests for the collision semantics
-  of equal overload signatures across variadic expansions, explicit
-  declarations, plain overrides, and inheritance.
+  of overload signatures accepting one call, across variadic
+  declarations, explicit declarations, plain overrides, and inheritance.
   """
 
   def test_ambiguous_prefix_raises(self) -> None:
@@ -237,10 +220,10 @@ class TestVariadicPrefixOverlap(OverloadTest):
 
   def test_explicit_takes_declaration_position(self) -> None:
     """
-    Testing that an explicit declaration displacing an expanded
-    signature is tried at its own place in declaration order. A 'bool'
-    matches both 'int' and 'object' only through 'isinstance', and
-    'int' was declared first, so it receives the call.
+    Testing that an explicit declaration of a call a variadic
+    declaration accepts as well is tried at its own place in declaration
+    order. A 'bool' matches both 'int' and 'object' only through
+    'isinstance', and 'int' was declared first, so it receives the call.
     """
     obj = ExplicitPosition()
     self.assertEqual(obj.f(True), 'int')
@@ -250,23 +233,32 @@ class TestVariadicPrefixOverlap(OverloadTest):
   def test_stacked_variadics_share_function(self) -> None:
     """
     Testing that stacking two variadic declarations on one function
-    raises nothing, since the overlapping expansions agree on the
-    receiving function.
+    raises nothing, since the call both accept has one receiving
+    function.
     """
     obj = StackedVariadics()
     self.assertEqual(obj.f(1), 'both')
     self.assertEqual(obj.f(1, 'x'), 'both')
     self.assertEqual(obj.f(1, 2), 'both')
 
-  def test_plain_definition_overrides(self) -> None:
+  def test_plain_definition_refused(self) -> None:
     """
-    Testing that a plain definition of the name drops the ambiguous
-    registrations entirely, so the class creates and the plain
-    definition receives every call.
+    Testing that a plain definition of a name the class body has
+    overloaded does not settle an ambiguity by dropping the overloads,
+    but raises 'OverloadConflict' at the plain definition.
     """
-    obj = PlainOverridesAmbiguity()
-    self.assertEqual(obj.f(1), 'plain')
-    self.assertEqual(obj.f(1, 'x', 2.5), 'plain')
+    with self.assertRaises(OverloadConflict):
+      class PlainAfterAmbiguity(BaseObject):
+        @overload(int, *ARGS[str])
+        def f(self, n: int, *tail: str) -> str:
+          return 'strs'  # pragma: no cover
+
+        @overload(int, *ARGS[int])
+        def f(self, n: int, *tail: int) -> str:
+          return 'ints'  # pragma: no cover
+
+        def f(self, *args) -> str:  # noqa: F811
+          return 'plain'  # pragma: no cover
 
   def test_repeated_explicit_same_function(self) -> None:
     """
@@ -279,8 +271,8 @@ class TestVariadicPrefixOverlap(OverloadTest):
   def test_repeated_variadic_same_function(self) -> None:
     """
     Testing that two variadic wrappers around the same function object
-    collide on the prefix-only signature without raising, since both
-    name the same receiver.
+    accept the prefix-only call alike without raising, since both name
+    the same receiver.
     """
     obj = RepeatedVariadic()
     self.assertEqual(obj.f(1), 'shared-variadic')

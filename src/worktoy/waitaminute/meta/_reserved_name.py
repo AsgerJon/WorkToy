@@ -6,10 +6,10 @@ interpreter or the metaclass system.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class ReservedName(Exception):
+class ReservedName(NoPickle, Exception):
   """
   ReservedName is raised when a class body assigns a name that the
   interpreter or the metaclass system reserves and populates automatically,

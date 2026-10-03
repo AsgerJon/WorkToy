@@ -23,10 +23,10 @@ class TestIntSampler(SamplerTest):
     having the following overload signatures:
 
 
-    @overload(int, int, strict=True)
+    @overload(int, int)
     def __init__(self, minVal: int, maxVal: int, **kw) -> None: ...
 
-    @overload(int, strict=True)
+    @overload(int)
     def __init__(self, val: int, **kw) -> None: ...
 
     @overload()
@@ -42,7 +42,7 @@ class TestIntSampler(SamplerTest):
     )
     kwargsTuple = (
       dict(),
-      dict(lmao=True),
+      dict(maximum=420),
       dict(),
       dict(maxVal=420),
       dict(minVal=42, maxVal=69),

@@ -30,6 +30,11 @@ def replaceFlex(text: str, old: str, new: str, n: int = None) -> str:
       The text with one occurrence rewritten, or the unchanged
       input if fewer than 'n' occurrences exist.
 
+  Raises
+  ------
+  ValueError
+      If 'n' is below one, since occurrences count from one.
+
   Examples
   --------
   >>> replaceFlex('foo bar foo baz foo', 'foo', 'X', 2)
@@ -38,6 +43,9 @@ def replaceFlex(text: str, old: str, new: str, n: int = None) -> str:
   'abc'
   """
   n = maybe(n, 1)
+  if n < 1:
+    infoSpec = """Occurrences count from one, but received n=%d."""
+    raise ValueError(infoSpec % n)
   i = -1
   for _ in range(n):
     i = text.find(old, i + 1)

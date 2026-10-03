@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class WithoutException(RuntimeError):
+class WithoutException(NoPickle, RuntimeError):
   """
   WithoutException is raised when a context-only descriptor method is used
   outside any active descriptor context. 'Object' raises it when

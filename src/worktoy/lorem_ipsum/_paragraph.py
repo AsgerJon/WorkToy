@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.core.sentinels import THIS
-from worktoy.dispatch import overload
-from worktoy.desc import AttriBox, Field
-from worktoy.utilities import textFmt
+from ..core.sentinels import THIS
+from ..dispatch import overload
+from ..desc import AttriBox, Field
+from ..utilities import textFmt
 from . import Sentence, BaseGenerator, GaussianLengths
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -108,11 +108,17 @@ class Paragraph(BaseGenerator):
 
   @overload(THIS)
   def __init__(self, other: Self) -> None:
+    """
+    The copy constructor copies the first-word flag and the layout, each
+    sentence copied in turn, so the copy holds sentences of its own.
+    """
     self.charCount = other.charCount
+    self.__is_first__ = other.__is_first__
     if other.__sentences_lengths__ is not None:
       self.__sentences_lengths__ = [*other.__sentences_lengths__, ]
     if other.__sentences_array__ is not None:
-      self.__sentences_array__ = [*other.__sentences_array__, ]
+      copies = [Sentence(s) for s in other.__sentences_array__]
+      self.__sentences_array__ = copies
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

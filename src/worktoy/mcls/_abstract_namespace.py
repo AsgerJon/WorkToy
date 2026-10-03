@@ -7,14 +7,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..utilities import maybe, textFmt, resolveMRO
+from ..utilities import maybe, textFmt, resolveMRO, NoPickle
 from ..waitaminute import TypeException
-from ..waitaminute.meta import HookException, DuplicateHook
+from ..waitaminute.meta import HookException, DuplicateHook, ClaimedName
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Iterator, Union, Self
+  from typing import Any, TypeAlias, Iterator, Union, Self, Optional
   from .space_hooks import AbstractSpaceHook
+  from . import AbstractMetaclass as AMeta
 
   Base: TypeAlias = tuple[type, ...]
   Bases: TypeAlias = tuple[Self, ...]
@@ -23,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
   TypeName: TypeAlias = Union[str, type]
 
 
-class AbstractNamespace(dict):
+class AbstractNamespace(NoPickle, dict):
   """
   AbstractNamespace defines the custom execution environment used by
   AbstractMetaclass during class construction. It provides a controlled
@@ -33,9 +34,8 @@ class AbstractNamespace(dict):
   The core feature of AbstractNamespace is its support for modular
   hook-based behavior. Hooks are instances of subclasses of
   AbstractSpaceHook, declared directly within the body of the namespace
-  class. Upon
-  declaration, each hook registers itself with the namespace via the
-  descriptor protocol.
+  class. Upon declaration, each hook registers itself with the namespace
+  via the descriptor protocol.
 
   These hooks allow interception and transformation of key events during
   class construction, including symbol access, assignment, and final
@@ -55,9 +55,12 @@ class AbstractNamespace(dict):
 
   #  Class Variables
   __owner_hooks_list_name__: str = '__hook_objects__'
+  #  The class keywords the namespace reads off the class statement itself;
+  #  its hooks name theirs in their own '__consumed_keys__'.
+  __consumed_keys__: tuple[str, ...] = ('_strictMRO',)
 
   #  Private Variables
-  __metaclass__ = None
+  __metaclass__: Optional[AMeta] = None
   __class_name__ = None
   __base_classes__ = None
   __class_mro__ = None
@@ -69,6 +72,7 @@ class AbstractNamespace(dict):
   __class_annotations__ = None
   __global_scope__ = None
   __shadow_space__ = None
+  __claimed_deletions__ = None
 
   #  Public Variables
   reservedNameHook = ReservedNamespaceHook()
@@ -100,17 +104,26 @@ class AbstractNamespace(dict):
     """
     return maybe(self.__shadow_space__, dict())
 
+  def getClaimedDeletions(self, ) -> tuple[str, ...]:
+    """
+    The 'getClaimedDeletions' method returns the names the class body
+    deleted after a hook had claimed them, in the order deleted; see
+    '__delitem__'.
+    """
+    return maybe(self.__claimed_deletions__, ())
+
   def deepGetItem(self, item: str, ) -> Any:
     """
     The 'deepGetItem' method looks up 'item' in the namespace itself,
     then in the combined MRO namespace if absent, raising 'KeyError'
-    when neither holds it.
+    when neither holds it. A value found in the MRO namespace is the list
+    of the values the classes along it contribute; see 'getMROSpace'.
     """
-    for key, val in dict.items(self, ):
-      if key == item:
-        return val
-    if item in self.getMROSpace():
-      return self.getMROSpace()[item]
+    if dict.__contains__(self, item):
+      return dict.__getitem__(self, item)
+    mroSpace = self.getMROSpace()
+    if item in mroSpace:
+      return mroSpace[item]
     raise KeyError(item)
 
   @classmethod
@@ -142,7 +155,9 @@ class AbstractNamespace(dict):
           out.append(hook)
     return out
 
-  def getMetaclass(self, ) -> type:
+  def getMetaclass(self, ) -> AMeta:
+    if TYPE_CHECKING:  # pragma: no cover
+      assert isinstance(self.__metaclass__, AMeta)
     return self.__metaclass__
 
   def getClassName(self, ) -> str:
@@ -151,16 +166,53 @@ class AbstractNamespace(dict):
   def getKwargs(self, ) -> dict:
     return {**self.__key_args__, **dict()}
 
+  def getConsumedKeywords(self, ) -> tuple[str, ...]:
+    """
+    The 'getConsumedKeywords' method names the class keywords that this
+    namespace and its hooks read off the class statement: '_strictMRO' for
+    the namespace itself, 'trustMeBro' for 'NamespaceHook' and the option
+    spellings of 'EZData' for 'EZHook'. 'AbstractMetaclass' keeps these out
+    of the call to 'type.__new__', and so out of the '__init_subclass__'
+    chain of the bases, since they were read here and
+    'object.__init_subclass__' would refuse them. Every other keyword goes
+    down that chain, for a base to take or 'object' to refuse.
+    """
+    out = [*self.__consumed_keys__]
+    for hook in self.classGetHooks():
+      out.extend(hook.__consumed_keys__)
+    return (*out,)
+
   def getMRO(self, ) -> list[type]:
     return self.__class_mro__
+
+  def _getLookupOrder(self, ) -> list[type]:
+    """
+    The '_getLookupOrder' method returns the classes after the class under
+    construction in its method resolution order. A namespace created with
+    '_strictMRO=False' for bases admitting no consistent order has none,
+    and falls back to each base's own order, bases left to right, with
+    repeated classes kept at their first position.
+    """
+    mro: Optional[list[type]] = self.getMRO()
+    if mro is not None:
+      return [*mro, ]
+    out = []
+    for base in self.getBases():
+      for cls in base.__mro__:
+        if cls not in out:
+          out.append(cls)
+    return out
 
   def getMROSpace(self, ) -> MROSpace:
     """
     The 'getMROSpace' method combines the compiled namespaces of every
     base in the MRO into one dict, where each key maps to the list of
-    values contributed for it across the MRO.
+    values contributed for it across the MRO. It follows the lookup order
+    of '_getLookupOrder', so a namespace without a resolved order still
+    answers.
     """
-    mroClasses = [b for b in self.getMRO() if hasattr(b, '__namespace__')]
+    lookupOrder = self._getLookupOrder()
+    mroClasses = [b for b in lookupOrder if hasattr(b, '__namespace__')]
     mroSpaces = [getattr(b, '__namespace__', ) for b in mroClasses]
     compiledSpaces = []
     for space in mroSpaces:
@@ -204,11 +256,13 @@ class AbstractNamespace(dict):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, mcls: type, name: str, bases: Base, **kwargs) -> None:
+  def __init__(self, mcls: AMeta, name: str, bases: Base, **kwargs) -> None:
     """
     Please note that setting the '_strictMRO' keyword argument to 'False'
-    allows inconsistent MROs. In such cases, it is the responsibility of
-    the caller to ensure consistency by alternative means.
+    allows bases admitting no consistent method resolution order. This
+    serves a namespace built directly alone, since no class can be
+    created from such bases: 'getMRO' is then None, and the lookup order
+    falls back to the own order of each base; see '_getLookupOrder'.
     """
     self.__metaclass__ = mcls
     self.__class_name__ = name
@@ -242,6 +296,9 @@ class AbstractNamespace(dict):
     shadow space resolves to its shadow value: the class body can
     read back a name even after a hook has claimed the assignment.
     """
+    #  The miss is kept apart from the value, which a class body may well
+    #  bind to a 'KeyError' of its own.
+    missing = None
     try:
       val = dict.__getitem__(self, key)
     except KeyError as keyError:
@@ -249,17 +306,16 @@ class AbstractNamespace(dict):
       if key in shadow:
         val = shadow[key]
       else:
-        val = keyError
+        val = missing = keyError
     for hook in self.getHooks():
       setattr(hook, '__space_object__', self)
       try:
         hook.getItemPhase(key, val)
       except Exception as exception:
         raise HookException(exception, self, key, val, hook)
-    else:
-      if isinstance(val, KeyError):
-        raise val
-      return val
+    if missing is not None:
+      raise missing
+    return val
 
   def __setitem__(self, key: str, val: Any, **kwargs) -> None:
     """
@@ -282,6 +338,43 @@ class AbstractNamespace(dict):
         break  # Breaks out of the loop if handled by hook.
     else:  # If no 'break', the 'else' block is executed.
       dict.__setitem__(self, key, val)
+
+  def __delitem__(self, key: str, **kwargs) -> None:
+    """
+    The '__delitem__' method runs 'del' in the class body. The name is
+    removed from the namespace and from the shadow space alike, so a later
+    read in the class body no longer finds it, as in a plain class. A name
+    the class body never bound raises 'KeyError', which the interpreter
+    reports as a 'NameError'.
+
+    A name whose latest binding a hook claimed cannot be deleted, since
+    the hook registered the value as it was bound. The deletion is
+    recorded instead, and 'compile' raises 'ClaimedName' for it as the
+    class is created. Raising here would be lost: the interpreter replaces
+    any exception a deletion in a class body raises with its own
+    'NameError', saying that the name is not defined.
+    """
+    shadow = self.getShadowSpace()
+    if key not in shadow and not dict.__contains__(self, key):
+      raise KeyError(key)
+    if self._isClaimed(key):
+      self.__claimed_deletions__ = (*self.getClaimedDeletions(), key)
+    shadow.pop(key, None)
+    if dict.__contains__(self, key):
+      dict.__delitem__(self, key)
+
+  def _isClaimed(self, key: str) -> bool:
+    """
+    The '_isClaimed' method reports whether a hook claimed the latest
+    binding of 'key' in the class body: the shadow space records every
+    binding, while the namespace holds only those no hook claimed, so the
+    two disagree exactly when the latest one was claimed.
+    """
+    shadow = self.getShadowSpace()
+    if not dict.__contains__(self, key):
+      return True if key in shadow else False
+    value = dict.__getitem__(self, key)
+    return True if shadow.get(key, value) is not value else False
 
   def __str__(self, ) -> str:
     bases = self.getBases()
@@ -310,7 +403,7 @@ class AbstractNamespace(dict):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def preCompile(self, namespace: dict = None) -> dict:
+  def preCompile(self, namespace: Optional[dict] = None) -> dict:
     """
     The 'preCompile' method runs each hook's 'preCompilePhase' over the
     starting namespace dict (a fresh dict when none is given) and returns
@@ -326,14 +419,18 @@ class AbstractNamespace(dict):
       namespace = hook.preCompilePhase(namespace)
     return namespace
 
-  def compile(self, namespace: dict = None) -> dict:
+  def compile(self, namespace: Optional[dict] = None) -> dict:
     """
     The 'compile' method builds the final namespace passed to
     'type.__new__': it runs 'preCompile', merges in the class-body names,
     runs 'postCompile', and records the metaclass, namespace, and
     keyword arguments. Subclasses may reimplement 'preCompile' or
-    'postCompile' as needed, but must not reimplement this method.
+    'postCompile' as needed, but must not reimplement this method. A
+    class body that deleted a name a hook claimed raises 'ClaimedName'
+    here, before anything is compiled; see '__delitem__'.
     """
+    for key in self.getClaimedDeletions():
+      raise ClaimedName(self.getClassName(), key)
     namespace = self.preCompile(namespace)
     for (key, val) in dict.items(self, ):
       namespace[key] = val

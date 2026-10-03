@@ -2,10 +2,10 @@
 TestFrozenCopy subclasses 'EZTest' from the 'tests.test_ezdata' package
 and pins that frozen 'EZData' instances survive 'copy' and 'deepcopy'. A
 frozen class rejects every assignment through its generated '__setattr__',
-so the default reconstruction (build a blank instance, then set each
-slot) raises. The generated '__copy__' and '__deepcopy__' write the
-field values through 'object.__setattr__' instead, so a frozen instance
-clones faithfully, matching the behaviour of a frozen dataclass.
+but the copy protocol never assigns: it builds a blank instance and fills
+its '__dict__' directly, where every field value lives. A frozen instance
+therefore clones faithfully, matching the behaviour of a frozen
+dataclass.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen

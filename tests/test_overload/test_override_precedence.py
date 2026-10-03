@@ -2,11 +2,11 @@
 TestOverridePrecedence subclasses 'OverloadTest' and pins that an overload
 declared in a subclass takes precedence over the overload it overrides in
 a parent class. Precedence must not depend on which dispatch pass happens
-to match the call. A long call to a variadic overload is matched by
-walking the variadic signatures rather than by an exact lookup. A call
+to match the call. A call to a variadic overload is matched by exact type
+at any length, and through 'isinstance' when the types differ. A call
 whose argument is an instance of a further subclass is matched by
 'isinstance' rather than by an exact lookup. The override must win in
-both cases, just as it wins the exact lookup.
+every case, just as it wins the exact lookup of a concrete signature.
 
 Casting is the one place the parent goes first. When no signature
 matches without a cast, inherited signatures are tried before the ones
@@ -152,27 +152,24 @@ class TestOverridePrecedence(OverloadTest):
 
   def setUp(self) -> None:
     """
-    The long call exceeds the number of variadic lengths the overload
-    decorator expands into exact signatures, so it can only be matched
-    by walking the variadic signatures.
+    The long call is longer than any other call the tests make, so the
+    variadic signatures decide it at a length nothing else covers.
     """
     super().setUp()
-    self.longCall = (*range(overload.__variadic_fastpath_limit__ + 2),)
+    self.longCall = (*range(7),)
 
   def test_variadic_override_short_call(self) -> None:
     """
-    Testing that a short call reaches the variadic override. Short calls
-    are matched by the exact signatures the decorator expanded, which
-    the override already displaces.
+    Testing that a short call reaches the variadic override, which
+    displaces the equal signature of the parent.
     """
     self.assertEqual(Reader().read(1, 2), 'reader')
     self.assertEqual(Scanner().read(1, 2), 'scanner')
 
   def test_variadic_override_long_call(self) -> None:
     """
-    Testing that a call too long for the expanded signatures still
-    reaches the variadic override rather than the overridden parent
-    version.
+    Testing that a long call reaches the variadic override rather than
+    the overridden parent version as well.
     """
     self.assertEqual(Reader().read(*self.longCall), 'reader')
     self.assertEqual(Scanner().read(*self.longCall), 'scanner')
@@ -230,10 +227,8 @@ class TestOverridePrecedence(OverloadTest):
     """
     Testing that 'int' values, which match no variadic signature without
     a cast, reach the 'float' signature 'Ledger' inherits rather than the
-    'complex' one it added. This holds for short calls, matched through
-    the expanded signatures, and for long calls, matched by walking the
-    variadic signatures. 'complex' values still reach the added
-    signature directly.
+    'complex' one it added. This holds for short calls and for long calls
+    alike. 'complex' values still reach the added signature directly.
     """
     self.assertEqual(Ledger().add(1, 2), 'tally')
     self.assertEqual(Ledger().add(*self.longCall), 'tally')

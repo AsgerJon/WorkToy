@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.utilities import textFmt
-from worktoy.core.sentinels import THIS
-from worktoy.dispatch import overload
-from worktoy.desc import AttriBox, Field
+from ..utilities import textFmt
+from ..core.sentinels import THIS
+from ..dispatch import overload
+from ..desc import AttriBox, Field
 from . import BaseGenerator, Clause, GaussianLengths
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -31,6 +31,13 @@ class Sentence(BaseGenerator):
   terminated by a period, summing to a target character count. Clause
   lengths are drawn from a Gaussian 'clauseDist'; the sentence's first word
   is capitalized and its last is given the closing period.
+
+  A sentence of fewer than '__truncate_below__' characters is too short
+  for a clause the distribution can draw, so it holds one clause of the
+  words of the 'Lorem Ipsum...' placeholder, exactly 'charCount'
+  characters long, as a short first 'Clause' holds its own placeholder.
+  Rendering, length, 'repr()', iteration and 'clausesArray' therefore all
+  show the same text.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -56,8 +63,12 @@ class Sentence(BaseGenerator):
     """
     The '_buildClauseLengths' method partitions 'charCount' into clause
     lengths drawn from 'clauseDist' and caches them. The target leaves room
-    for the ', ' between clauses and the closing period.
+    for the ', ' between clauses and the closing period. A short sentence
+    holds the placeholder as its one clause, of 'charCount' characters.
     """
+    if self.charCount < self.__truncate_below__:
+      self.__clause_lengths__ = [self.charCount, ]
+      return
     lengths = self.clauseDist.partitionSpaced(self.charCount + 1)
     target = self.charCount - 2 * (len(lengths) - 1) - 1
     self.__clause_lengths__ = self.clauseDist._settle(lengths, target)
@@ -71,12 +82,30 @@ class Sentence(BaseGenerator):
       return self._getClauseLengths(_recursion=True)
     return self.__clause_lengths__
 
+  def _placeholderClause(self, ) -> Clause:
+    """
+    The '_placeholderClause' method builds the one clause of a short
+    sentence, holding the words of the placeholder text, so that the
+    clause renders as the sentence does. The clause is given its words
+    and their lengths directly, since the distribution cannot lay out so
+    few characters.
+    """
+    clause = Clause(self.charCount)
+    words = self._shortText().split(' ')
+    clause.__words_array__ = [*words, ]
+    clause.__words_lengths__ = [len(word) for word in words]
+    return clause
+
   def _buildClausesArray(self, ) -> None:
     """
     The '_buildClausesArray' method materializes a 'Clause' for each cached
     length, capitalizes the sentence's first word, and appends a period to
-    its last word.
+    its last word. A short sentence receives the placeholder clause
+    instead, which is capitalized and terminated already.
     """
+    if self.charCount < self.__truncate_below__:
+      self.__clause_array__ = [self._placeholderClause(), ]
+      return
     clauses = []
     for length in self.clausesLengths:
       if not clauses and self.isFirst:
@@ -102,11 +131,16 @@ class Sentence(BaseGenerator):
 
   @overload(THIS)
   def __init__(self, other: Self) -> None:
+    """
+    The copy constructor copies the first-word flag and the layout, each
+    clause copied in turn, so the copy holds clauses of its own.
+    """
     self.charCount = other.charCount
+    self.__is_first__ = other.__is_first__
     if other.__clause_lengths__ is not None:
       self.__clause_lengths__ = [*other.__clause_lengths__, ]
     if other.__clause_array__ is not None:
-      self.__clause_array__ = [*other.__clause_array__, ]
+      self.__clause_array__ = [Clause(c) for c in other.__clause_array__]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -144,8 +178,6 @@ class Sentence(BaseGenerator):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __str__(self, ) -> str:
-    if self.charCount < self.__truncate_below__:
-      return self._shortText()
     return textFmt(str.join(', ', [*(str(c) for c in self.clausesArray)]))
 
   def __repr__(self, ) -> str:

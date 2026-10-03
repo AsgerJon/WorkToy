@@ -8,15 +8,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic, overload
 
+from . import _RootAlias
+from ..utilities import NoPickle, typeCast, castRule
 from ..waitaminute import TypeException, MissingVariable
+from ..waitaminute.dispatch import TypeCastException
 
 T = TypeVar('T')
+
+#  The builtin containers, the text types and the number types, as
+#  'AttriBox' names them: a container field type refuses a lone text default
+#  rather than splitting it into characters or integers, and a number field
+#  type casts a lone default rather than rounding it.
+_CONTAINERS = (list, tuple, set, frozenset, dict)
+_TEXT_TYPES = (str, bytes, bytearray)
+_NUMBER_TYPES = (bool, int, float, complex)
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Optional, Union
 
 
-class FastBox(Generic[T]):
+class FastBox(NoPickle, Generic[T]):
   """
   FastBox is a lean, type-enforced attribute descriptor that trades the
   ergonomics of 'AttriBox' for speed. It carries no descriptor context,
@@ -35,6 +46,11 @@ class FastBox(Generic[T]):
   reads the 'instance' parameter rather than shared descriptor state, so
   re-entrant access to the same descriptor lives on the call stack. The
   owning instance must have a '__dict__' (no '__slots__'-only owners).
+
+  Deleting the field removes its value from the instance dict, so the
+  next read builds a fresh default, where the other boxes raise
+  'MissingVariable' for a deleted field. Deleting a field that holds no
+  value, never read or already deleted, raises 'MissingVariable'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -65,9 +81,11 @@ class FastBox(Generic[T]):
   def __class_getitem__(cls, fieldType: Union[type, TypeVar]) -> FastBox:
     """
     The '__class_getitem__' method captures the field type from the
-    'FastBox[T]' subscript. A 'TypeVar' is forwarded to the generic
-    machinery, so 'class Sub(FastBox[T])' declares a generic subclass;
-    a concrete type produces a fresh 'FastBox' parametrized with it.
+    'FastBox[T]' subscript. A plain class produces a fresh 'FastBox'
+    parametrized with it. Anything else is forwarded to the generic
+    machinery: a 'TypeVar', so 'class Sub(FastBox[T])' declares a generic
+    subclass, or a parametrized generic such as 'list[int]', whose alias
+    raises 'PhantomBoxError' when a class body binds it.
 
     Parameters
     ----------
@@ -79,12 +97,29 @@ class FastBox(Generic[T]):
     FastBox
         A new 'FastBox' carrying 'fieldType', ready for the deferred
         '__call__'.
+
+    Raises
+    ------
+    TypeException
+        If 'fieldType' is neither a class nor anything the generic
+        machinery accepts.
     """
-    if isinstance(fieldType, TypeVar):
-      return super().__class_getitem__(fieldType)  # noqa
-    self = cls.__new__(cls)
-    self.__field_type__ = fieldType
-    return self
+    #  'isinstance(fieldType, type)' reads '__class__', which a builtin
+    #  parametrized generic such as 'list[int]' forwards to its origin on
+    #  Python 3.9 and 3.10, answering 'True'. The type of the subscript is
+    #  a metaclass exactly when the subscript is a plain class, on every
+    #  version, without an attribute lookup a class-level hook could answer.
+    if issubclass(type(fieldType), type):
+      self = cls.__new__(cls)
+      self.__field_type__ = fieldType
+      return self
+    try:
+      out = super().__class_getitem__(fieldType)  # noqa
+    except Exception as exception:
+      name, value = 'fieldType', fieldType
+      raise TypeException(name, value, type, TypeVar) from exception
+    else:
+      return _RootAlias.fromAlias(out)
 
   def __call__(self, *args, **kwargs) -> Self:
     """
@@ -107,6 +142,15 @@ class FastBox(Generic[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __set_name__(self, owner: type, name: str) -> None:
+    """
+    A box that never captured a field type, written 'FastBox()' or
+    produced by calling the alias of a generic subscript, is refused as
+    the class is created, since '__class_getitem__' is the only place a
+    field type is ever assigned. Python 3.7 through 3.11 re-raise the
+    exception wrapped in a 'RuntimeError'.
+    """
+    if self.__field_type__ is None:
+      raise MissingVariable(self, '__field_type__', type)
     self.__field_name__ = name
     self.__private_name__ = '__fast_%s__' % name
 
@@ -145,7 +189,13 @@ class FastBox(Generic[T]):
   def _build(self) -> Any:
     """
     The '_build' method constructs a fresh default value from the
-    captured arguments.
+    captured arguments. It follows three rules of 'AttriBox': a builtin
+    container field type refuses a lone 'str', 'bytes' or 'bytearray'
+    rather than splitting it, a number field type, 'bool', 'int', 'float'
+    or 'complex' or a subclass keeping the constructor of one, casts a
+    lone value through 'typeCast' rather than rounding it, and what the
+    field type returns must be an instance of it. It runs once per
+    instance and field, on the first read.
 
     Returns
     -------
@@ -156,8 +206,34 @@ class FastBox(Generic[T]):
     ------
     MissingVariable
         If no field type has been captured.
+    TypeException
+        If a container field type receives a lone text argument, a number
+        field type a lone value the cast refuses, or the field type
+        returns something that is not an instance of it.
     """
-    if self.__field_type__ is None:
+    fieldType = self.__field_type__
+    if fieldType is None:
       raise MissingVariable(self, '__field_type__', type)
-    kwargs = self.__default_kwargs__ or {}
-    return self.__field_type__(*self.__default_args__, **kwargs)
+    args, kwargs = self.__default_args__, self.__default_kwargs__ or {}
+    if len(args) == 1 and not kwargs:
+      if fieldType in _CONTAINERS and isinstance(args[0], _TEXT_TYPES):
+        raise TypeException(self.__field_name__, args[0], fieldType)
+      if castRule(fieldType) in _NUMBER_TYPES:
+        return self._castNumber(args[0])
+    value = fieldType(*args, **kwargs)
+    if isinstance(value, fieldType):
+      return value
+    raise TypeException(self.__field_name__, value, fieldType)
+
+  def _castNumber(self, value: Any) -> Any:
+    """
+    The '_castNumber' method casts the lone default of a number field
+    through 'typeCast', and raises 'TypeException' naming the field when
+    the cast refuses.
+    """
+    fieldType = self.__field_type__
+    try:
+      return typeCast(fieldType, value)
+    except TypeCastException as typeCastException:
+      name = self.__field_name__
+      raise TypeException(name, value, fieldType) from typeCastException

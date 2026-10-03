@@ -242,6 +242,15 @@ class TestKeeMetaResolve(KeeTest):
         resolved = num.__class_resolve__(datum)  # noqa
         self.assertIs(resolved, NotImplemented)
 
+  def test_class_resolve_miss(self, ) -> None:
+    """
+    A name matching no planet goes on to the '__class_resolve__' hook of
+    'PlanetNum', where 'PlanetData.__eq__' declines to compare with a
+    string, and the lookup ends in 'KeeResolveError'.
+    """
+    with self.assertRaises(KeeResolveError):
+      PlanetNum('pluto')
+
   def test_bad_str(self, ) -> None:
     """
     This method applies 'str' resolution testing to all example

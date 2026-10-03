@@ -8,13 +8,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
   from ...keenum import Kee
 
 
-class KeeNameConflict(ValueError):
+class KeeNameConflict(NoPickle, ValueError):
   """
   KeeNameConflict provides a custom exception raised to indicate that a
   'KeeNum' enumeration received a 'Kee' member reservation already named,
@@ -36,8 +38,7 @@ class KeeNameConflict(ValueError):
   def __str__(self, ) -> str:
     infoSpec = """Name conflict for Kee member object '%s': existing
     name '%s' versus new name '%s'!"""
-    keeName = getattr(self.member, '__name__', 'Unknown')
-    info = infoSpec % (keeName, self.oldName, self.newName,)
+    info = infoSpec % (self.member, self.oldName, self.newName,)
     from ...utilities import textFmt
     return textFmt(info)
 

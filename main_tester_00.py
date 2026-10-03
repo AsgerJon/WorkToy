@@ -12,8 +12,10 @@ Pyright reports no problems. PyCharm flags the marked line with:
 #  Copyright (c) 2026 Asger Jon Vistisen
 
 from __future__ import annotations
+from typing import TYPE_CHECKING, TypeVar, Generic
 
-from typing import Any, Generic, Self, TypeVar, Optional
+if TYPE_CHECKING:  # pragma: no cover
+  from typing import Any, Self, Optional
 
 T = TypeVar('T')
 

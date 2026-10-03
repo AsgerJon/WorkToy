@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
 
   from ...keenum import KeeBox
 
 
-class KeeBoxTypeError(TypeError):
+class KeeBoxTypeError(NoPickle, TypeError):
   """
   KeeBoxTypeError is a custom exception class raised to indicate that a
   given 'KeeBox' descriptor could not resolve given arguments to member of

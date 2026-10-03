@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Union
@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
   #  objects, but that is not visible to type checkers.
 
 
-class DispatchException(TypeError):
+class DispatchException(NoPickle, TypeError):
   """
   DispatchException is raised when a 'Dispatcher' fails to resolve the
   given arguments to a matching function.
@@ -57,9 +57,10 @@ class DispatchException(TypeError):
       '<%s %s>' % (type(a).__name__, repr(a)) for a in self.posArgs
     )
     argSig = str(TypeSig.fromArgs(*self.posArgs))
-    available = '<br><tab><tab>'.join(
-      str(sig) for sig, _ in self.dispatch.__sig_funcs__
-    )
+    #  A variadic declaration shows as itself, not as the concrete
+    #  signatures expanded from it for short calls.
+    sigs = self.dispatch._getDeclaredSigs()
+    available = '<br><tab><tab>'.join(str(sig) for sig in sigs)
     lines = [
       """no overload of '%s' accepts these arguments:""" % name,
       """<tab>received:<br><tab><tab>%s""" % received,

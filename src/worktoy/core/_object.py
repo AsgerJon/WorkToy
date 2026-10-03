@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from ..utilities import Directory, maybe
+from ..utilities import Directory, maybe, NoPickle
 from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.desc import WithoutException, ReadOnlyError
 from ..waitaminute.desc import ProtectedError
@@ -17,19 +17,14 @@ from .sentinels import THIS, DESC, OWNER, DELETED, Sentinel
 from . import ContextInstance, MetaType, ContextOwner
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Self, Optional, Type, TypeAlias
-  from types import TracebackType
-
-  ExcType: TypeAlias = Optional[Type[Exception]]
-  ExcVal: TypeAlias = Optional[Exception]
-  Trace: TypeAlias = Optional[TracebackType]
+  from typing import Any, Self, Optional, Type
 
 #  Compiled once at import. 'getPrivateName' sits on the hot path of
 #  every descriptor access, so the pattern must not be rebuilt per call.
 _PRIVATE_KEY_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
 
 
-class Object(metaclass=MetaType):
+class Object(NoPickle, metaclass=MetaType):
   """The fundamental base class for objects in the 'worktoy' library.
 
   'Object' provides a contextually aware descriptor protocol so that
@@ -46,7 +41,9 @@ class Object(metaclass=MetaType):
   - '__instance_get__(self, instance, owner, **kw)': define how
     the descriptor reads. Defaults to returning 'self'.
   - '__instance_set__(self, instance, value, **kw)': define how
-    the descriptor writes. Defaults to raising 'ReadOnlyError'.
+    the descriptor writes, and return the value stored, which
+    'hookOnSet' receives; returning None reports the value as
+    assigned. Defaults to raising 'ReadOnlyError'.
   - '__instance_delete__(self, instance, old, **kw)': define how
     the descriptor deletes. Defaults to raising 'ProtectedError'.
 
@@ -228,9 +225,10 @@ class Object(metaclass=MetaType):
 
   def __init__(self, *args, **kwargs) -> None:
     object.__init__(self)
-    self.__pos_args__ = args
-    self.__key_args__ = kwargs
-    self.__call_chain__ = []
+    #  The bookkeeping bypasses any '__setattr__' of a subclass.
+    object.__setattr__(self, '__pos_args__', args)
+    object.__setattr__(self, '__key_args__', kwargs)
+    object.__setattr__(self, '__call_chain__', [])
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -240,8 +238,8 @@ class Object(metaclass=MetaType):
     """Records the owning class and attribute name, then invokes
     'hookSetName' so subclasses can react without overriding this
     method."""
-    self.__field_owner__ = owner
-    self.__field_name__ = name
+    object.__setattr__(self, '__field_owner__', owner)
+    object.__setattr__(self, '__field_name__', name)
     self.hookSetName(owner, name, **kwargs)
 
   def __get__(self, instance: Any, owner: type, ) -> Any:
@@ -266,8 +264,11 @@ class Object(metaclass=MetaType):
   def __set__(self, instance: Any, newValue: Any, **kwargs) -> None:
     """Pushes a context frame, invokes 'hookPreSet', and (unless the
     hook raises 'SkipSet' to abort) calls '__instance_set__' followed
-    by 'hookOnSet'. The context frame is popped on the way out
-    regardless of whether the hooks raise."""
+    by 'hookOnSet'. 'hookPreSet' receives the value as assigned, and
+    'hookOnSet' the value as stored, which '__instance_set__' reports by
+    returning it; one reporting nothing hands 'hookOnSet' the value as
+    assigned. The context frame is popped on the way out regardless of
+    whether the hooks raise."""
     self.createContext(instance, type(instance))
     try:
       try:
@@ -275,8 +276,8 @@ class Object(metaclass=MetaType):
       except SkipSet:
         pass
       else:
-        self.__instance_set__(instance, newValue, **kwargs)
-        self.hookOnSet(instance, newValue, **kwargs)
+        storedValue = self.__instance_set__(instance, newValue, **kwargs)
+        self.hookOnSet(instance, maybe(storedValue, newValue), **kwargs)
     finally:
       self.exitContext()
 
@@ -285,12 +286,17 @@ class Object(metaclass=MetaType):
     the attribute already raised), invokes 'hookPreDelete', calls
     '__instance_delete__' with the old value, and finally invokes
     'hookOnDelete'. Subclasses signal deletion by storing the
-    'DELETED' sentinel in their backing storage."""
+    'DELETED' sentinel in their backing storage. The read passes
+    '_deleting=True', telling '__instance_get__' that the value is only
+    reported, so it must not build or store one; a deletion that is
+    refused then leaves the attribute exactly as it was."""
     owner = type(instance)
     self.createContext(instance, owner)
     try:
       try:
-        oldVal = self.__instance_get__(instance, owner, **kwargs)
+        oldVal = self.__instance_get__(
+            instance, owner, _deleting=True, **kwargs
+        )
       except AttributeError:
         oldVal = None
       else:
@@ -300,12 +306,6 @@ class Object(metaclass=MetaType):
       self.hookOnDelete(instance, **kwargs)
     finally:
       self.exitContext()
-
-  def __init_subclass__(cls, **kwargs) -> None:
-    """Accepts arbitrary class keyword arguments so the worktoy metaclass
-    machinery can forward them on to the space hooks without
-    'object.__init_subclass__' rejecting them."""
-    super().__init_subclass__()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -323,13 +323,15 @@ class Object(metaclass=MetaType):
     """
     return self
 
-  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> Any:
     """Instance-specific setter for this descriptor.
 
     Inside this method, 'self.instance' resolves to the currently
     active instance. Subclasses should override to define attribute
-    assignment logic. The default raises 'ReadOnlyError'. See
-    'Object' for a full example.
+    assignment logic, and return the value stored, since a box may store
+    a cast or built value in place of the one assigned; 'hookOnSet'
+    receives what is returned, or the value as assigned when it is None.
+    The default raises 'ReadOnlyError'. See 'Object' for a full example.
     """
     raise ReadOnlyError(instance, self, value)
 
@@ -351,12 +353,13 @@ class Object(metaclass=MetaType):
   def createContext(self, instance: Any, owner: type, ) -> Self:
     """
     Pushes a new '(instance, owner)' pair onto the descriptor's
-    context stack and returns 'self' so the descriptor can be used as
-    a context manager. The stack makes the protocol safe under
-    re-entrant access to the same descriptor.
+    context stack and returns 'self', so calls can be chained. The
+    stack makes the protocol safe under re-entrant access to the same
+    descriptor.
     """
     existing: list[tuple[Any, type]] = maybe(self.__call_chain__, [])
-    self.__call_chain__ = [*existing, (instance, owner), ]
+    updated: list[tuple[Any, type]] = [*existing, (instance, owner), ]
+    object.__setattr__(self, '__call_chain__', updated)
     return self
 
   def exitContext(self) -> Self:
@@ -368,7 +371,8 @@ class Object(metaclass=MetaType):
     """
     if not self.__call_chain__:
       raise WithoutException(self)
-    self.__call_chain__.pop()
+    updated: list[tuple[Any, type]] = self.__call_chain__[:-1]
+    object.__setattr__(self, '__call_chain__', updated)
     return self
 
   def _deletedGuard(self, instance: Any, value: Any, ) -> Any:
@@ -391,8 +395,9 @@ class Object(metaclass=MetaType):
     if self.__private_name__ is None:
       if self.__field_name__ is None:
         raise MissingVariable(self, '__field_name__', str)
-      snake = _PRIVATE_KEY_PATTERN.sub('_', self.__field_name__).lower()
-      self.__private_name__ = '__%s__' % snake
+      spec = _PRIVATE_KEY_PATTERN.sub('_', self.__field_name__).lower()
+      snake = '__%s__' % spec
+      object.__setattr__(self, '__private_name__', snake)
     if isinstance(self.__private_name__, str):
       return self.__private_name__
     raise TypeException('__private_name__', self.__private_name__, str)
@@ -438,12 +443,13 @@ class Object(metaclass=MetaType):
   def hookOnSet(self, instance: Any, value: Any, **kwargs, ) -> None:
     """
     A hook that is called *after* the value is set on the instance. The
-    given value is the value just set by '__set__'.
+    given value is the value as stored, which may be a cast of the value
+    assigned, as '__instance_set__' reported it.
 
     Parameters
     ----------
     instance: The instance the descriptor is bound to.
-    value: The value just set by '__set__'.
+    value: The value as stored.
 
     Returns
     -------

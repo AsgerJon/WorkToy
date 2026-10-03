@@ -1,10 +1,44 @@
 # Release candidate: the stabilising button. Publishes the next release
-# candidate (X.Y.Z-rcN) to PyPI as a pre-release. Manual trigger only.
+# candidate (X.Y.Z-rcN) to PyPI as a pre-release. Manual trigger only, and
+# guarded: a release candidate closes the dev window of its version for
+# good, so it runs only when 'bin/release_tooling/rc.safety' read 'ALLOW'
+# in the commit the button was pressed on; see the 'safety' job.
 on:
   workflow_dispatch:
 
 jobs:
+  safety:
+    # The guard. It reads 'rc.safety' as committed in the commit the
+    # button was pressed on, locks every safety back to 'STOP', pushes the
+    # lock, and only then fails or lets the test matrix start. A refused
+    # run therefore still leaves every safety locked in the repository,
+    # and an arming is spent by the press of the button whatever the run
+    # does next.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the locked safeties
+    steps:
+      # The default checkout is the commit the button was pressed on, so
+      # the state of the safety at that moment decides.
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Decide and lock
+        run: python bin/release_tooling/safety_check.py rc SAFETY_VERDICT
+      - name: Push the lock
+        run: |
+          git config user.name "Asger Jon Vistisen"
+          git config user.email "asgerjon2@gmail.com"
+          git add bin/release_tooling/*.safety
+          git diff --cached --quiet || git commit -m "rc: safeties locked, verdict ${SAFETY_VERDICT}"
+          git push origin HEAD:${{ github.ref }}
+      - name: Enforce the verdict
+        run: test "$SAFETY_VERDICT" = "ALLOW"
+
   test:
+    needs: safety
     strategy:
       matrix:
         include:
@@ -54,7 +88,12 @@ jobs:
       id-token: write   # trusted publishing (OIDC) to PyPI
       contents: write   # push the version bump and cut the release
     steps:
+      # The branch tip rather than the commit the button was pressed on:
+      # the version commit below has to sit on top of the lock commit the
+      # 'safety' job pushed.
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

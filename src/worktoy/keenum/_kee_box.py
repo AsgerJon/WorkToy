@@ -38,19 +38,23 @@ class KeeBox(AttriBox):
   1a: The string matches the 'name' of a member of the enumeration.
   1b: The string matches the 'value' of a member of the enumeration.
   2: Single 'int' object received
-  2a: The integer matches the 'index' of a member of the enumeration.
-  2b: The integer matches the 'value' of a member of the enumeration.
+  2a: The integer is the 'index' of a member of the enumeration. No member
+  has a negative index, so a negative integer is never read as a position
+  counted from the end.
+  2b: The integer matches the 'value' of a member of the enumeration,
+  provided it is an instance of the 'valueType' of the enumeration.
   3: Single argument received of the 'valueType' type of the enumeration.
   3a: The argument matches the 'value' of a member of the enumeration.
   4: Any number of arguments received
-  4a: If the enumeration class is a 'KeeFlags' class instead, each
-  argument is resolved the way subscripting the class resolves it, so a
-  member, a name in any case and order, or an index all work. The result
-  is the member having every flag high that any of those members has.
+  4a: For a 'KeeNum' class, the arguments build an instance of its
+  'valueType', which must equal the 'value' of a member. This is how '-1'
+  finds a member whose value is '-1.0'.
+  4b: For a 'KeeFlags' class, each argument is resolved the way
+  subscripting the class resolves it, so a member, a name in any case and
+  order, or an index all work. The result is the member having every flag
+  high that any of those members has.
 
-  The above process applies to both instantiation and setting. Please note
-  that 'KeeBox' will never attempt to instantiate the 'valueType' of the
-  enumeration.
+  The above process applies to both instantiation and setting.
 
   Examples:
 
@@ -83,21 +87,31 @@ class KeeBox(AttriBox):
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     pvtName = self._getStorageName()
     try:
-      return getattr(instance, pvtName)
+      #  Not 'getattr', whose miss an owner's '__getattr__' could answer.
+      return object.__getattribute__(instance, pvtName)
     except AttributeError as attributeError:
+      #  A read made before deleting only reports; it must not build.
+      if kwargs.get('_deleting', False):
+        raise attributeError
       if kwargs.get('_recursion', False):
         raise RecursionError from attributeError
       try:
         fieldObject = self._resolve()
       except Exception as exception:
         raise exception from attributeError
-      setattr(instance, pvtName, fieldObject)
+      #  Not 'setattr', which an owner's '__setattr__' could refuse.
+      object.__setattr__(instance, pvtName, fieldObject)
       return self.__instance_get__(instance, owner, _recursion=True)
 
-  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
+  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> Any:
+    """
+    The '__instance_set__' method stores the member 'value' resolves to,
+    and returns it, so the 'onSet' callbacks receive the member.
+    """
     pvtName = self._getStorageName()
     if self._isMember(value):
-      return setattr(instance, pvtName, value)
+      object.__setattr__(instance, pvtName, value)
+      return value
     if kwargs.get('_recursion', False):
       raise RecursionError
     return self.__instance_set__(
@@ -107,15 +121,9 @@ class KeeBox(AttriBox):
   def _isMember(self, value: Any) -> bool:
     """
     The '_isMember' method reports whether 'value' is a member of the
-    field enumeration, a subclass enumeration included. For a 'KeeNum'
-    field the instance check compares 'value' with every member through
-    '==', which hands the decision to the '__eq__' of 'value' itself, and
-    such a method may raise on a member. Only a member of some
-    enumeration can be a member of this one, so any other value is
-    refused before that comparison.
+    field enumeration, a member of an enumeration derived from it
+    included.
     """
-    if not isinstance(type(value), (KeeMeta, KeeFlagsMeta)):
-      return False
     return True if isinstance(value, self.fieldType) else False
 
   def _resolve(self, *args, **kwargs) -> Any:
@@ -128,8 +136,17 @@ class KeeBox(AttriBox):
       raise KeeBoxException(self, self.getPosArgs())
 
   def _resolveNum(self, *args, ) -> Any:
-    args = args or self.getPosArgs()
-    kwargs = self.getKeyArgs()
+    """
+    The '_resolveNum' method resolves to a member of a 'KeeNum' field
+    type, falling back to the captured constructor arguments when called
+    without any. The captured keyword arguments belong to those, and so
+    build the default alone: an assigned value is resolved from the value
+    only.
+    """
+    if args:
+      kwargs = dict()
+    else:
+      args, kwargs = self.getPosArgs(), self.getKeyArgs()
     fieldNum = self.fieldType
     valueType = fieldNum.valueType
     if len(args) == 1:
@@ -142,13 +159,9 @@ class KeeBox(AttriBox):
         for member in fieldNum:  # Case-insensitive match
           if str.lower(args[0]) == str.lower(str(member.name)):
             return member
-      if isinstance(args[0], int):
-        if args[0] < len(fieldNum):
-          return fieldNum[args[0]]
-        for member in fieldNum:
-          if args[0] == member.value:
-            return member
-      elif isinstance(args[0], valueType):
+      if isinstance(args[0], int) and 0 <= args[0] < len(fieldNum):
+        return fieldNum[args[0]]
+      if isinstance(args[0], valueType):
         for member in fieldNum:
           if args[0] == member.value:
             return member

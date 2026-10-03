@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Type, TypeAlias
   from . import ControlSpace, MetaFlow
@@ -15,13 +17,15 @@ if TYPE_CHECKING:  # pragma: no cover
   Meta: TypeAlias = Type[MetaFlow]
 
 
-class ControlClassError(TypeError):
+class ControlClassError(NoPickle, TypeError):
   """
   ControlClassError is raised when a 'ControlFlow' subclass defines a
   disallowed attribute. Only '__str__' and '__repr__' may be defined in
-  the class body; the interpreter-set dunders '__firstlineno__',
-  '__namespace__', and '__static_attributes__' are also permitted. Any
-  other attribute raises this exception.
+  the class body; the dunders '__firstlineno__', '__namespace__',
+  '__static_attributes__', '__classcell__' and '__classdictcell__' are
+  also permitted, and so is any name 'Exception' holds as an attribute
+  that is not callable, such as '__doc__' and '__module__'. Any other
+  attribute raises this exception.
   """
 
   __slots__ = ('space', 'badKey')

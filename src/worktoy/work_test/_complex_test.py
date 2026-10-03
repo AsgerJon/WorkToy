@@ -7,6 +7,7 @@ dunders.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest import SkipTest
 
 from ._base_test import BaseTest
 from ._complex_mixin import ComplexMixin
@@ -34,6 +35,27 @@ class ComplexTest(BaseTest):
 
   #  Class Variables
   targets: tuple[Type[ComplexMixin], ...] = ()
+
+  def setUp(self) -> None:
+    """
+    A class without targets skips each of its tests. 'ComplexTest' is
+    collected as a test wherever it is imported, and would otherwise run
+    every test against nothing. The check waits for 'setUp', since a
+    subclass may set its targets in 'setUpClass'.
+    """
+    super().setUp()
+    if not self.targets:
+      raise SkipTest('%s has no targets' % type(self).__name__)
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    """
+    A class without targets leaves the files loaded. That of
+    'BaseTest' unloads the file of the class, which for 'ComplexTest'
+    itself is this file of the library.
+    """
+    if cls.targets:
+      super().tearDownClass()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  UNARY OPERATORS  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

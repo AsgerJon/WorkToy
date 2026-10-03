@@ -1,6 +1,6 @@
 """
-TestBaseSampler tests the 'BaseSampler' class of the 'worktoy.markwork'
-package.
+TestBaseSampler tests the 'BaseSampler' class of the
+'worktoy.work_test.samplers' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -21,8 +21,8 @@ class FooSampler(BaseSampler):
 
 class TestBaseSampler(SamplerTest):
   """
-  TestBaseSampler tests the 'BaseSampler' class of the 'worktoy.markwork'
-  package.
+  TestBaseSampler tests the 'BaseSampler' class of the
+  'worktoy.work_test.samplers' package.
   """
 
   def test_dev_null(self, ) -> None:

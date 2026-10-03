@@ -16,13 +16,16 @@ from .space_hooks import LoadSpaceHook
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Callable, Any, Optional
 
+  from ..dispatch import overload
+
   SigFunc: TypeAlias = tuple[TypeSig, Callable[..., Any]]
   SigFuncList: TypeAlias = list[SigFunc]
   OverloadMap: TypeAlias = dict[str, SigFuncList]
   FuncMap: TypeAlias = dict[str, Callable[..., Any]]
-  Ambiguity: TypeAlias = tuple[str, TypeSig, Callable, Callable]
+  Overlap: TypeAlias = tuple[TypeSig, TypeSig, TypeSig, Callable, Callable]
   Collected: TypeAlias = tuple[TypeSig, Callable[..., Any], int]
   CollectedList: TypeAlias = list[Collected]
+  Claim: TypeAlias = tuple[overload, str]
 
 
 class BaseSpace(AbstractNamespace):
@@ -75,7 +78,8 @@ class BaseSpace(AbstractNamespace):
   __variadic_overload_map__: Optional[OverloadMap] = None
   __fallback_map__: Optional[FuncMap] = None
   __finalizer_map__: Optional[FuncMap] = None
-  __ambiguous_overloads__: Optional[list[Ambiguity]] = None
+  __plain_names__: Optional[tuple[str, ...]] = None
+  __claimed_overloads__: Optional[tuple[Claim, ...]] = None
 
   #  Public Variables
   loadSpaceHook = LoadSpaceHook()
@@ -88,9 +92,8 @@ class BaseSpace(AbstractNamespace):
     """
     The 'getOverloads' method returns the concrete signatures the class
     body registered itself, as a mapping from each overloaded name to its
-    list of '(TypeSig, function)' pairs in registration order. The
-    concrete signatures expanded from a variadic declaration are
-    included. Inherited registrations are not; see 'collectOverloads'.
+    list of '(TypeSig, function)' pairs in registration order. Inherited
+    registrations are not included; see 'collectOverloads'.
     """
     return maybe(self.__overload_map__, dict())
 
@@ -118,34 +121,118 @@ class BaseSpace(AbstractNamespace):
     """
     return maybe(self.__finalizer_map__, dict())
 
-  def getAmbiguousOverloads(self, ) -> list[Ambiguity]:
+  @staticmethod
+  def sharedCall(first: TypeSig, second: TypeSig) -> Optional[TypeSig]:
     """
-    The 'getAmbiguousOverloads' method returns the signatures that two
-    variadic declarations in the class body both expanded, for different
-    functions. Each entry is a '(name, sig, oldFunc, newFunc)' tuple. An
-    entry remains only while no explicit declaration of the signature has
-    settled the ambiguity; 'LoadSpaceHook.postCompilePhase' raises for any
-    entry still present when the class compiles.
-    """
-    return maybe(self.__ambiguous_overloads__, [])
+    The 'sharedCall' method returns the signature of the shortest call
+    that two variadic declarations both accept by exact type, or None
+    when no call does. With the shorter prefix of the two as 'P1' and the
+    longer as 'P2', the declarations share a call exactly when 'P1' opens
+    'P2' and the rest of 'P2' holds nothing but the inner type of the
+    declaration of 'P1'; that call is 'P2' itself, with nothing after it.
+    Two declarations of one prefix share the call of the prefix alone,
+    and two without a prefix share the empty call.
 
-  def _getLookupOrder(self, ) -> list[type]:
+    Parameters
+    ----------
+    first: TypeSig
+      A variadic declaration, ending in an 'ARGS'.
+    second: TypeSig
+      Another variadic declaration, ending in an 'ARGS'.
+
+    Returns
+    -------
+    Optional[TypeSig]
+      The shortest call both accept by exact type, or None.
     """
-    The '_getLookupOrder' method returns the classes after the class under
-    construction in its method resolution order. A namespace created with
-    '_strictMRO=False' for bases admitting no consistent order has none,
-    and falls back to each base's own order, bases left to right, with
-    repeated classes kept at their first position.
+    shorter, longer = sorted((first, second), key=len)
+    shortTypes, longTypes = shorter.getRawTypes(), longer.getRawTypes()
+    prefix, inner = shortTypes[:-1], shortTypes[-1].__inner_type__
+    longPrefix = longTypes[:-1]
+    for this, that in zip(prefix, longPrefix):
+      if this is not that:
+        return None
+    for type_ in longPrefix[len(prefix):]:
+      if type_ is not inner:
+        return None
+    return TypeSig(*longPrefix)
+
+  @staticmethod
+  def _sameInner(first: TypeSig, second: TypeSig) -> bool:
     """
-    mro = self.getMRO()
-    if mro is not None:
-      return [*mro, ]
+    The '_sameInner' method reports whether two variadic declarations
+    take the same inner type. Two such declarations sharing a call share
+    every longer call as well, so no explicit declaration settles them.
+    """
+    firstInner = first.getRawTypes()[-1].__inner_type__
+    secondInner = second.getRawTypes()[-1].__inner_type__
+    return True if firstInner is secondInner else False
+
+  def getVariadicOverlaps(self, name: str) -> list[Overlap]:
+    """
+    The 'getVariadicOverlaps' method returns the pairs of variadic
+    declarations the class body registered under 'name', of different
+    functions, that accept one call by exact type with nothing settling
+    which function receives it. Each entry is a '(firstSig, secondSig,
+    sharedSig, firstFunc, secondFunc)' tuple, in registration order,
+    'sharedSig' being the shortest call both accept; see 'sharedCall'. An
+    explicit declaration of that call in the class body settles the pair,
+    since the explicit declaration takes it, unless the two declarations
+    take the same inner type and so share every longer call as well.
+    'LoadSpaceHook.postCompilePhase' raises 'VariadicOverlap' for the
+    first entry when the class compiles.
+    """
+    pairs = self.getVariadics().get(name, [])
+    explicit = [sig for sig, _ in self.getOverloads().get(name, [])]
     out = []
-    for base in self.getBases():
-      for cls in base.__mro__:
-        if cls not in out:
-          out.append(cls)
+    for index, (firstSig, firstFunc) in enumerate(pairs):
+      for secondSig, secondFunc in pairs[index + 1:]:
+        if firstFunc is secondFunc:
+          continue
+        shared = self.sharedCall(firstSig, secondSig)
+        if shared is None:
+          continue
+        settled = shared in explicit
+        if settled and not self._sameInner(firstSig, secondSig):
+          continue
+        out.append((firstSig, secondSig, shared, firstFunc, secondFunc))
     return out
+
+  def getPlainNames(self, ) -> tuple[str, ...]:
+    """
+    The 'getPlainNames' method returns the names the class body bound to
+    something other than an 'overload', in the order first bound. A value
+    another hook claims, such as an 'EZField', is among them, since it
+    never reaches the namespace itself.
+    """
+    return maybe(self.__plain_names__, ())
+
+  def getClaimedName(self, ov: overload) -> Optional[str]:
+    """
+    The 'getClaimedName' method returns the name under which the class
+    body first bound the 'overload' object 'ov', or None when the class
+    body has not bound it. The record belongs to the namespace, so a
+    second class binding the same object starts without one.
+    """
+    for claimed, name in maybe(self.__claimed_overloads__, ()):
+      if claimed is ov:
+        return name
+    return None
+
+  def hasOverloads(self, name: str) -> bool:
+    """
+    The 'hasOverloads' method reports whether the class body registered
+    anything under 'name': a concrete or variadic signature, a fallback
+    or a finalizer. Registrations inherited from other classes do not
+    count.
+    """
+    registries = (
+      self.getOverloads(),
+      self.getVariadics(),
+      self.getFallbacks(),
+      self.getFinalizers(),
+    )
+    return True if any(name in registry for registry in registries) else False
 
   @staticmethod
   def _definesPlainly(cls: type, name: str) -> bool:
@@ -304,15 +391,10 @@ class BaseSpace(AbstractNamespace):
   def addOverload(self, name: str, sig: TypeSig, func: Callable) -> None:
     """
     The 'addOverload' method records a concrete signature the class body
-    registers under the overloaded name.
-
-    Colliding registrations of equal signatures resolve by kind. An
-    explicit declaration displaces a concrete signature expanded from a
-    variadic declaration, two such expanded signatures from different
-    functions mark the signature as ambiguous (resolved later unless an
-    explicit declaration arrives), and two explicit declarations of the
-    same signature with different functions raise 'DuplicateSignature' on
-    the spot.
+    registers under the overloaded name. The same function registered
+    again under an equal signature, as when an overload is bound again
+    under its own name, changes nothing, and a different function under an
+    equal signature raises 'DuplicateSignature' on the spot.
 
     Parameters
     ----------
@@ -327,105 +409,53 @@ class BaseSpace(AbstractNamespace):
     Raises
     ------
     DuplicateSignature
-      If the class body explicitly declares the same signature twice
-      under this name with different functions.
+      If the class body declares the same signature twice under this name
+      with different functions.
     """
     existing = self.getOverloads()
     sigFuncs = existing.get(name, [])
-    for index, (oldSig, oldFunc) in enumerate(sigFuncs):
+    for oldSig, oldFunc in sigFuncs:
       if oldSig == sig:
-        self._resolveCollision(name, sigFuncs, index, sig, func)
+        if oldFunc is not func:
+          raise DuplicateSignature(sig, oldFunc, func)
         break
     else:
       sigFuncs.append((sig, func,))
     existing[name] = sigFuncs
     self.__overload_map__ = existing
 
-  def _resolveCollision(
-      self,
-      name: str,
-      sigFuncs: SigFuncList,
-      index: int,
-      sig: TypeSig,
-      func: Callable,
-  ) -> None:
-    """
-    The '_resolveCollision' method settles two registrations of equal
-    signatures in the class body. Signatures expanded from a variadic
-    declaration carry the '__expanded_from_variadic__' marking and rank
-    below explicit declarations: an explicit declaration displaces an
-    expanded one, an expanded one never displaces anything, and two
-    expanded ones from different functions mark the signature ambiguous
-    until an explicit declaration settles it. Two explicit declarations
-    with different functions raise 'DuplicateSignature' immediately.
-
-    Parameters
-    ----------
-    name: str
-      The overloaded name under which the collision occurred.
-    sigFuncs: SigFuncList
-      Spells out to 'list[tuple[TypeSig, Callable]]'. The live list of
-      registrations for 'name', mutated in place.
-    index: int
-      The position in 'sigFuncs' of the registration already stored.
-    sig: TypeSig
-      The arriving signature object, equal to the stored one.
-    func: Callable
-      The arriving function object.
-
-    Raises
-    ------
-    DuplicateSignature
-      If both registrations are explicit declarations of different
-      functions.
-    """
-    oldSig, oldFunc = sigFuncs[index]
-    newArtifact = getattr(sig, '__expanded_from_variadic__', False)
-    oldArtifact = getattr(oldSig, '__expanded_from_variadic__', False)
-    if newArtifact and oldArtifact:
-      if oldFunc is not func:
-        ambiguous = self.getAmbiguousOverloads()
-        ambiguous.append((name, sig, oldFunc, func,))
-        self.__ambiguous_overloads__ = ambiguous
-      return
-    if newArtifact:
-      #  An explicit declaration already holds the slot.
-      return
-    if oldArtifact:
-      #  The explicit declaration takes the place of the expanded one at
-      #  the end of the list, and settles any ambiguity recorded for it.
-      del sigFuncs[index]
-      sigFuncs.append((sig, func,))
-      self._settleAmbiguity(name, sig)
-      return
-    if oldFunc is not func:
-      raise DuplicateSignature(sig, oldFunc, func)
-
-  def _settleAmbiguity(self, name: str, sig: TypeSig) -> None:
-    """
-    The '_settleAmbiguity' method removes the ambiguity entries recorded
-    for 'sig' under 'name', once an explicit declaration has claimed the
-    signature.
-    """
-    ambiguous = self.getAmbiguousOverloads()
-    remaining = []
-    for entry in ambiguous:
-      if entry[0] == name and entry[1] == sig:
-        continue
-      remaining.append(entry)
-    self.__ambiguous_overloads__ = remaining
-
   def addVariadic(self, name: str, sig: TypeSig, func: Callable) -> None:
     """
     The 'addVariadic' method registers a variadic '(TypeSig, func)' pair
     under 'name'. The 'TypeSig' must carry a trailing 'ARGS' sentinel as
-    its last raw type. The dispatcher matches variadic signatures by
-    walking them in order rather than by hash lookup, and the first
-    registered one wins.
+    its last raw type. The dispatcher matches a call against the variadic
+    signatures by exact type first, the prefix and the trailing type as
+    a hash key, then through 'isinstance' in registration order, and the
+    first registered wins a call several accept. Two declarations of
+    different functions that accept one call by exact type are refused as
+    the class compiles; see 'getVariadicOverlaps'.
     """
     existing = self.getVariadics()
     existing[name] = [*existing.get(name, []), (sig, func,)]
     self.__variadic_overload_map__ = existing
+
+  def addPlainName(self, name: str) -> None:
+    """
+    The 'addPlainName' method records that the class body bound 'name' to
+    something other than an 'overload'.
+    """
+    existing = self.getPlainNames()
+    if name not in existing:
+      self.__plain_names__ = (*existing, name)
+
+  def addClaimedName(self, ov: overload, name: str) -> None:
+    """
+    The 'addClaimedName' method records that the class body bound the
+    'overload' object 'ov' under 'name', the name a later binding of the
+    same object in this class body is read as an alias of.
+    """
+    existing = maybe(self.__claimed_overloads__, ())
+    self.__claimed_overloads__ = (*existing, (ov, name))
 
   def addFallback(self, name: str, func: Callable) -> None:
     """
@@ -442,8 +472,19 @@ class BaseSpace(AbstractNamespace):
       The function object to be dispatched when given arguments that do
       not match any of the type signatures assigned to the overload at the
       given name.
+
+    Raises
+    ------
+    DuplicateSignature
+      If the class body already registered a different fallback under
+      this name, as for two explicit declarations of one signature. A
+      fallback inherited from another class is not on record here, so a
+      subclass may replace it.
     """
     existing = self.getFallbacks()
+    oldFunc = existing.get(name, None)
+    if oldFunc is not None and oldFunc is not func:
+      raise DuplicateSignature('fallback', oldFunc, func)
     existing[name] = func
     self.__fallback_map__ = existing
 
@@ -460,7 +501,17 @@ class BaseSpace(AbstractNamespace):
     func: Callable
       The function object to be dispatched as a final step by the overload
       system when dispatching the overload at the given name.
+
+    Raises
+    ------
+    DuplicateSignature
+      If the class body already registered a different finalizer under
+      this name. A finalizer inherited from another class may be
+      replaced.
     """
     existing = self.getFinalizers()
+    oldFunc = existing.get(name, None)
+    if oldFunc is not None and oldFunc is not func:
+      raise DuplicateSignature('finalizer', oldFunc, func)
     existing[name] = func
     self.__finalizer_map__ = existing

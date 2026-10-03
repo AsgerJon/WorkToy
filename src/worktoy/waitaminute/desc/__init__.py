@@ -3,7 +3,9 @@ by the descriptor protocol in 'worktoy.desc' and 'worktoy.core'.
 
 'AccessError', 'ProtectedError', 'ReadOnlyError', and 'PhantomBoxError'
 share the 'DescriptorException' base, so a single
-'except DescriptorException' catches all four. 'WriteOnceError' (a
+'except DescriptorException' catches all four. The first three are
+'AttributeError's as well, as Python's own refusals of a read, a write and
+a deletion are, so 'except AttributeError' catches them. 'WriteOnceError' (a
 'TypeError') and 'WithoutException' (a 'RuntimeError') are collected
 here too but do not inherit that base.
 """

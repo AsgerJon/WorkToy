@@ -6,8 +6,10 @@ matches no member of its enumeration.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ...utilities import NoPickle
 
-class KeeBoxValueError(ValueError):
+
+class KeeBoxValueError(NoPickle, ValueError):
   """
   KeeBoxValueError is raised when a value given to a 'KeeBox' is of the
   enumeration's value type but does not equal the 'value' of any member of

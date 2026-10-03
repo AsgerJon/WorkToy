@@ -6,16 +6,16 @@ strict mode.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
 
 
-class UnpackException(ValueError):
+class UnpackException(NoPickle, ValueError):
   """
   UnpackException is raised when an unpacking operation finds no argument
   requiring unpacking. It is raised by the 'unpack' function in the
   'worktoy.utilities' package when strict mode is enabled (the default) and
-  no iterable is found among the arguments. 'unpack' does not treat 'str'
-  or 'bytes' as unpackable iterables.
+  no iterable is found among the arguments. 'unpack' does not treat 'str',
+  'bytes' or 'bytearray' as unpackable iterables.
 
   Attributes
   ----------
@@ -31,10 +31,10 @@ class UnpackException(ValueError):
     ValueError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """'unpack' found no iterable argument from: \n'%s'\nand is 
-    running in strict mode (default). Change this by setting keyword 
+    infoSpec = """'unpack' found no iterable argument from:<br><tab>%s<br>
+    and is running in strict mode (default). Change this by setting keyword
     argument 'strict' to False."""
-    argStr = '\n  '.join([str(arg) for arg in self.posArgs])
+    argStr = '<br><tab>'.join([str(arg) for arg in self.posArgs])
     info = infoSpec % argStr
     return textFmt(info)
 

@@ -6,10 +6,10 @@ name, such as '__set_item__' for '__setitem__'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class QuestionableSyntax(SyntaxError):
+class QuestionableSyntax(NoPickle, SyntaxError):
   """
   QuestionableSyntax is raised when a class body defines a name that is a
   near-miss for a real dunder, such as '__set_item__' for '__setitem__' or
@@ -31,6 +31,8 @@ class QuestionableSyntax(SyntaxError):
     self.derpName = derpName
     self.realName = realName
     SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
     spec = """Received name '%s' which is similar enough to '%s' to be

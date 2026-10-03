@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeTypeException(TypeError):
+class KeeTypeException(NoPickle, TypeError):
   """
   Raised when a 'KeeNum' member's value type does not match the value
   type established by the enumeration's first member; all members must

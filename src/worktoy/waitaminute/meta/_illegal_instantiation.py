@@ -6,15 +6,15 @@ conditions that forbid it.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class IllegalInstantiation(TypeError):
+class IllegalInstantiation(NoPickle, TypeError):
   """
   IllegalInstantiation is raised when a class is instantiated under
-  conditions that forbid it, such as calling a 'Sentinel' subclass (meant
-  to be used as a singleton type, never instantiated) or the
-  un-instantiable 'ValidSlice' validator. It subclasses 'TypeError'.
+  conditions that forbid it, such as calling a 'Sentinel' subclass, which
+  is meant to be used as a singleton type and never instantiated. It
+  subclasses 'TypeError'.
 
   Attributes
   ----------

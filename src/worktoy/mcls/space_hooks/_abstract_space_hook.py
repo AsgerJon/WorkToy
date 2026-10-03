@@ -8,10 +8,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from . import SpaceDesc
-from ...core import Object
+from ...core import Object, MetaType
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Type, Union, Optional
+  from .. import AbstractMetaclass
   from .. import AbstractNamespace as ASpace
 
   AccessorHook = Callable[[ASpace, str, Any], Any]
@@ -19,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Space: TypeAlias = Type[ASpace]
   Desc: TypeAlias = Union[ASpace, SpaceDesc]
   MaybeSpace: TypeAlias = Optional[ASpace]
-  Meta: TypeAlias = Type[type]
+  Meta: TypeAlias = Union[MetaType, AbstractMetaclass, type]
   from .. import AbstractNamespace
 
 
@@ -95,11 +96,23 @@ class AbstractSpaceHook(Object):
   The 'addHook' method of the namespace class is automatically invoked
   during registration via '__set_name__'. Hook authors do not need to
   call it manually.
+
+  A hook that reads a class keyword off the class statement, as
+  'NamespaceHook' reads 'trustMeBro', names it in '__consumed_keys__'. The
+  metaclass keeps those keywords out of the '__init_subclass__' chain of
+  the bases, since 'object.__init_subclass__' refuses every keyword; see
+  'AbstractNamespace.getConsumedKeywords'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+  #  The class keywords this hook reads off the class statement, which the
+  #  metaclass keeps out of the '__init_subclass__' chain of the bases; see
+  #  'AbstractNamespace.getConsumedKeywords'.
+  __consumed_keys__: tuple[str, ...] = ()
 
   #  Private variables
   __space_object__: Optional[AbstractNamespace] = None
@@ -163,16 +176,19 @@ class AbstractSpaceHook(Object):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __set_name__(self, owner: Space, name: str, **kwargs) -> None:
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
     """
     The '__set_name__' method runs the 'Object' registration and then
     registers this hook with the owning namespace class via 'addHook',
     so hook authors never call 'addHook' by hand.
     """
     super().__set_name__(owner, name, )
+    if TYPE_CHECKING:  # pragma: no cover
+      assert isinstance(owner, type)
+      assert issubclass(owner, AbstractNamespace)
     owner.addHook(self)
 
-  def __get__(self, instance: ASpace, owner: Space, **kwargs) -> Any:
+  def __get__(self, instance: MaybeSpace, owner: type, **kwargs) -> Any:
     """
     Accessed on a namespace instance, '__get__' binds
     '__space_object__' to that instance and returns the hook, so the

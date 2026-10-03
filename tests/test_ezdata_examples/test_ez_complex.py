@@ -8,6 +8,7 @@ share the 'ComplexMixin' from the same package.
 from __future__ import annotations
 
 from worktoy.waitaminute.ezdata import ExtraPositionalException
+from worktoy.waitaminute.ezdata import RepeatedFieldException
 from worktoy.work_test import ComplexTest
 from worktoy.waitaminute import TypeException
 from worktoy.ezdata import EZData, EZField
@@ -191,10 +192,10 @@ class TestEZComplex(ComplexTest):
     self.assertEqual(z.REAL, 3.0)
     self.assertEqual(z.IMAG, 4.0)
 
-  def test_kwarg_overrides_positional(self, ) -> None:
-    """A keyword argument overrides a positional one for a field."""
-    z = EZComplex(1, REAL=9)
-    self.assertEqual(z.REAL, 9.0)
+  def test_kwarg_repeating_positional(self, ) -> None:
+    """A keyword argument repeating a positional one is refused."""
+    with self.assertRaises(RepeatedFieldException):
+      EZComplex(1, REAL=9)
 
   def test_frozen_iterable(self, ) -> None:
     """A frozen instance is still iterable over its field values."""

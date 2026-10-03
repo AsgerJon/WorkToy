@@ -166,11 +166,11 @@ class TestKeeFlagsMeta(KeeTest):
       self.assertIn(expectedMessage, actualMessage)
 
   def testEqualityOperatorTrue(self, ) -> None:
-    """Tests that the equality operator works as intended."""
+    """Tests that flags classes compare by identity: each equals itself
+    and no other, a subclass included."""
     for left in self.exampleFlags:
       for right in self.exampleFlags:
-        if not issubclass(left, right):
-          self.assertIsNot(KeeFlagsMeta.__eq__(left, right), NotImplemented)
+        self.assertIs(left == right, left is right)
 
   def testInBodyDuplicateFlag(self, ) -> None:
     """Declaring the same flag name twice in one class body raises."""
@@ -277,36 +277,24 @@ class TestKeeFlagsMeta(KeeTest):
 
   def testNotImplementedEqualOperator(self, ) -> None:
     """
-    Tests that the '__eq__' operator correctly returns NotImplemented
-    when comparing with an object of a different type allowing it a chance
-    to provide an implementation.
+    Tests that comparing a flags class with an object of a different type
+    hands the decision to that object, and is otherwise decided by
+    identity, without the other operand ever being hashed.
     """
 
-    class OtherNotImplemented:
-      __hash_value__ = None
-
-      def __init__(self, hashValue: int) -> None:
-        self.__hash_value__ = hashValue
-
-      def __hash__(self, ) -> int:
-        return self.__hash_value__
-
-    class OtherImplemented(OtherNotImplemented):
+    class OtherImplemented:
       def __eq__(self, other: object) -> bool:
         return True
 
-      __hash__ = None
-
-    class Breh(OtherImplemented):
       def __hash__(self, ) -> int:
-        raise TypeError('all your base are belong to us')
+        raise TypeError('all your base are belong to us')  # pragma: no cover
+
+    class OtherNotImplemented:
+      pass
 
     for cls in self.exampleFlags:
-      self.assertEqual(cls, OtherImplemented(hash(cls)))
-      self.assertNotEqual(cls, OtherNotImplemented(hash(cls)))
-      with self.assertRaises(TypeError) as context:
-        _ = cls == Breh(69)
-      self.assertIn('all your base are belong to us', str(context.exception))
+      self.assertEqual(cls, OtherImplemented())
+      self.assertNotEqual(cls, OtherNotImplemented())
 
   def testPrimeValued(self, ) -> None:
     """

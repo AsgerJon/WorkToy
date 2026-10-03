@@ -11,17 +11,17 @@ from . import unpack
 def joinWords(*words, **kwargs) -> str:
   """Join words with commas and a trailing separator.
 
-  Iterable arguments (other than 'str' and 'bytes') are flattened
-  recursively via 'unpack' before joining, so any mix of plain
-  words, lists, and tuples is accepted in source order.
+  Iterable arguments (other than 'str', 'bytes' and 'bytearray') are
+  flattened recursively via 'unpack' before joining, so any mix of
+  plain words, lists, and tuples is accepted in source order.
 
   Parameters
   ----------
   *words
       The words to join. Any 'list' or 'tuple' among the arguments
       is flattened into the surrounding sequence; nesting is
-      collapsed all the way down. 'str' and 'bytes' are treated as
-      atomic.
+      collapsed all the way down. 'str', 'bytes' and 'bytearray' are
+      treated as atomic.
   **kwargs
       sep : str, optional
           Connector before the final word. Defaults to 'and'; pass

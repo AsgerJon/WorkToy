@@ -305,11 +305,12 @@ class TestKeeFlags(KeeTest):
 
   def testResolveBadName(self, ) -> None:
     """
-    Tests that '_resolveName' raises 'KeyError' when given a bad name.
+    Tests that '_resolveName' raises 'KeeResolveError' when given a bad
+    name.
     """
-    expectedMessage = """has no member with name"""
+    expectedMessage = """could not resolve the identifier"""
     for cls in self.exampleFlags:
-      with self.assertRaises(KeyError) as context:
+      with self.assertRaises(KeeResolveError) as context:
         _ = cls._resolveName("""Bro, it's me, lemme in!""")
       self.assertIn(expectedMessage, str(context.exception))
 
@@ -554,9 +555,10 @@ class TestKeeFlags(KeeTest):
 
   def test_bad_names(self, ) -> None:
     """
-    Tests that bad names raise 'KeyError' when passed to '_resolveNames'.
+    Tests that bad names raise 'KeeResolveError' when passed to
+    '_resolveNames'.
     """
     for cls in self.exampleFlags:
-      with self.assertRaises(KeyError) as context:
+      with self.assertRaises(KeeResolveError) as context:
         _ = cls._resolveNames("""Bro, it's me, lemme in!""")
-      self.assertIn("""has no member with name""", str(context.exception))
+      self.assertIn("""could not resolve the identifier""", str(context.exception))

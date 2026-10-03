@@ -8,7 +8,9 @@ Contents:
   - Sentinel: Base class for all sentinels. It is built by the
   'SentinelMeta' metaclass, which prevents instantiation and duplication.
   - SentinelMeta: The metaclass behind 'Sentinel', exposed so new sentinel
-  families can build on it directly.
+  families can build on it directly. It keeps one sentinel per name for
+  the whole process, and refuses a second class statement at a registered
+  name with 'DuplicateSentinel'.
   - DELETED: Sentinel used to indicate that an element has been deleted.
   Used by custom descriptors to implement deletion semantics: to 'delete'
   a custom descriptor from an instance, the descriptor 'sets' the value

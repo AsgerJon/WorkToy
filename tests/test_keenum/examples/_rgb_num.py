@@ -1,6 +1,6 @@
 """
 RGBNum provides a root KeeNum class enumerating colors in the RGB color
-space as implemented by the RGB EZData class.
+space as implemented by the RGB class.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -13,7 +13,7 @@ from . import RGB
 class RootRGB(KeeNum):
   """
   RootRGB provides a root KeeNum class enumerating colors in the RGB color
-  space as implemented by the RGB EZData class.
+  space as implemented by the RGB class.
   """
 
   RED = Kee[RGB](255, 0, 0)
@@ -24,7 +24,7 @@ class RootRGB(KeeNum):
 class MoreRGB(RootRGB):
   """
   MoreRGB provides a KeeNum class enumerating more colors in the RGB color
-  space as implemented by the RGB EZData class.
+  space as implemented by the RGB class.
   """
 
   CYAN = Kee[RGB](0, 255, 255)
@@ -35,7 +35,7 @@ class MoreRGB(RootRGB):
 class EvenMoreRGB(MoreRGB):
   """
   EvenMoreRGB provides a KeeNum class enumerating even more colors in the RGB
-  color space as implemented by the RGB EZData class.
+  color space as implemented by the RGB class.
   """
 
   ORANGE = Kee[RGB](255, 165, 0)
@@ -49,7 +49,7 @@ class EvenMoreRGB(MoreRGB):
 class RGBNum(EvenMoreRGB):
   """
   RGBNum provides a KeeNum class enumerating colors in the RGB color space as
-  implemented by the RGB EZData class.
+  implemented by the RGB class.
   """
 
   WHITE = Kee[RGB](255, 255, 255)

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic
 
-from .. import QuickDesc, textFmt
+from .. import QuickDesc, textFmt, NoPickle
 
 T = TypeVar('T')
 ItemTypeT = TypeVar('ItemTypeT')
@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
   MaybeItems: TypeAlias = Optional[Items[T]]
 
 
-class Arrangement(Generic[ItemTypeT]):
+class Arrangement(NoPickle, Generic[ItemTypeT]):
   """A single permutation of a ground tuple of items.
 
   Holds two index recipes that are inverses of each other as
@@ -66,9 +66,14 @@ class Arrangement(Generic[ItemTypeT]):
 
   def __init__(self, items: Items, forward: Indices) -> None:
     if len(forward) != len(items):
-      infoSpec = """'forward' recipe of length '%d' does not match 
+      infoSpec = """'forward' recipe of length '%d' does not match
       'items' tuple of length '%d'"""
       info = infoSpec % (len(forward), len(items))
+      raise ValueError(textFmt(info))
+    if sorted(forward) != [*range(len(items))]:
+      infoSpec = """'forward' recipe %s is not a permutation of the
+      positions 0 to %d of the items."""
+      info = infoSpec % (str(tuple(forward)), len(items) - 1)
       raise ValueError(textFmt(info))
     self.__ground_items__ = items
     self.__forward_indices__ = forward
@@ -105,11 +110,12 @@ class Arrangement(Generic[ItemTypeT]):
     return infoSpec % (clsName, orderStr)
 
   def __repr__(self) -> str:
-    infoSpec = '%s(%s, %s)'
+    """The repr is the call building the arrangement, as in
+    "Arrangement(('a', 'b'), (1, 0))", which keeps the items and the
+    recipe apart."""
+    infoSpec = '%s(%r, %r)'
     clsName = type(self).__name__
-    itemsStr = ', '.join(str(item) for item in self.items)
-    forwardStr = ', '.join(str(index) for index in self.forward)
-    return infoSpec % (clsName, itemsStr, forwardStr)
+    return infoSpec % (clsName, self.items, self.forward)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

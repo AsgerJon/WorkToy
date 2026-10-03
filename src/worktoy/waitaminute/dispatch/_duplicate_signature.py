@@ -8,25 +8,29 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Callable, TypeAlias
+  from typing import Any, Callable, TypeAlias, Union
 
   from worktoy.dispatch import TypeSig
 
   Method: TypeAlias = Callable[..., Any]
 
 
-class DuplicateSignature(TypeError):
+class DuplicateSignature(NoPickle, TypeError):
   """
   DuplicateSignature is raised when a 'Dispatcher' receives a second
-  function registration under a 'TypeSig' it already has on file.
+  function registration under a 'TypeSig' it already has on file. A
+  second fallback or a second finalizer raises it too, whether a class
+  body registers it under one name or it is set on a 'Dispatcher' by
+  hand, with the role in place of the signature, since neither has one.
 
   Attributes
   ----------
-  sig: TypeSig
-    The signature that was registered twice.
+  sig: TypeSig or str
+    The signature that was registered twice, or the role, 'fallback' or
+    'finalizer', registered twice.
   existing: Callable
     The function already registered under 'sig'.
   duplicate: Callable
@@ -36,7 +40,7 @@ class DuplicateSignature(TypeError):
   __slots__ = ('sig', 'existing', 'duplicate')
 
   def __init__(
-      self, sig: TypeSig, existing: Method, duplicate: Method,
+      self, sig: Union[TypeSig, str], existing: Method, duplicate: Method,
   ) -> None:
     self.sig = sig
     self.existing = existing
@@ -44,6 +48,14 @@ class DuplicateSignature(TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
+    if isinstance(self.sig, str):
+      infoSpec = """'Dispatcher' already has a %s function registered:
+      <br>existing function: <br><tab>%s<br>rejected duplicate:
+      <br><tab>%s"""
+      existingStr = str(self.existing)
+      duplicateStr = str(self.duplicate)
+      info = infoSpec % (self.sig, existingStr, duplicateStr)
+      return textFmt(info)
     infoSpec = """'Dispatcher' already has a function registered under
     type signature: <br><tab>%s<br>existing function: <br><tab>%s<br>
     rejected duplicate: <br><tab>%s"""

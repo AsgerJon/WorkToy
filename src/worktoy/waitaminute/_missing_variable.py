@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class MissingVariable(AttributeError):
+class MissingVariable(NoPickle, AttributeError):
   """
   MissingVariable subclasses 'AttributeError' and provides a custom
   exception raised to indicate that a variable was expected to have been
@@ -23,7 +23,8 @@ class MissingVariable(AttributeError):
   Attributes
   ----------
   instance: Any
-    The instance that the variable was expected to be assigned to.
+    The instance that the variable was expected to be assigned to. The
+    message names its type, or the instance itself when it is a class.
   varName: str
     The name of the variable that was expected to be assigned a value
     other than 'None'.
@@ -66,17 +67,23 @@ class MissingVariable(AttributeError):
     AttributeError.__init__(self, )
 
   def __str__(self) -> str:
-    owner = type(self.instance).__name__
+    #  A variable missing on a class is named after the class, where the
+    #  type of the class would be its metaclass.
+    if isinstance(self.instance, type):
+      owner = self.instance.__name__
+    else:
+      owner = type(self.instance).__name__
     infoSpec = """Missing '%s.%s: %s'!"""
-    if not self.expectedTypes:
+    #  A 'typing' alias, such as 'typing.Callable' before Python 3.10,
+    #  has no '__name__' and renders as itself.
+    names = [getattr(t, '__name__', str(t)) for t in self.expectedTypes]
+    if not names:
       typeStr = ''
       infoSpec = """Missing '%s.%s%s'!"""
-    elif len(self.expectedTypes) == 1:
-      typeStr = self.expectedTypes[0].__name__
+    elif len(names) == 1:
+      typeStr = names[0]
     else:
-      typeSpec = """Union[%s]"""
-      typeNames = ', '.join(cls.__name__ for cls in self.expectedTypes)
-      typeStr = typeSpec % typeNames
+      typeStr = """Union[%s]""" % ', '.join(names)
     info = infoSpec % (owner, self.varName, typeStr)
     return textFmt(info)
 

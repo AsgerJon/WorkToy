@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...keenum import KeeFlag
 
 
-class KeeFlagDuplicate(Exception):
+class KeeFlagDuplicate(NoPickle, Exception):
   """
   Raised on a flag name collision in a 'KeeFlags' enumeration: either a
   class body that declares the same 'KeeFlag' name twice, or a subclass

@@ -32,13 +32,13 @@ class TestFloatSampler(SamplerTest):
     def __init__(self, **kw) -> None: ...
     """
 
-    floatFloatKwarg = FloatSampler(69., 420., lmao=True)
+    floatFloatKwarg = FloatSampler(69., 420., maximum=420.)
     self.assertEqual(floatFloatKwarg.minVal, 69.)
     self.assertEqual(floatFloatKwarg.maxVal, 420.)
     floatFloatSampler = FloatSampler(69., 420.)
     self.assertEqual(floatFloatSampler.minVal, 69.)
     self.assertEqual(floatFloatSampler.maxVal, 420.)
-    floatKwarg = FloatSampler(69., breh=False)
+    floatKwarg = FloatSampler(69., minimum=0.)
     self.assertEqual(floatKwarg.minVal, 0.)
     self.assertEqual(floatKwarg.maxVal, 69.)
     floatSampler = FloatSampler(69.)

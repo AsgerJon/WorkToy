@@ -8,8 +8,9 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, cast
 
-from worktoy.desc import Field
-from worktoy.waitaminute import TypeException
+from ..desc import Field
+from ..utilities import NoPickle
+from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Union, Self, Optional, Iterator
@@ -19,7 +20,7 @@ else:
   NotImpType = object
 
 
-class ComplexMixin:
+class ComplexMixin(NoPickle):
   """
   ComplexMixin is a mixin class for the purpose of complex number
   implementations.
@@ -100,6 +101,11 @@ class ComplexMixin:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, *args, ) -> None:
+    if len(args) > 2:
+      infoSpec = """%s takes at most two components, the real and the
+      imaginary part, but received %d."""
+      info = infoSpec % (type(self).__name__, len(args))
+      raise TypeError(' '.join(info.split()))
     if len(args) == 1:
       if isinstance(args[0], complex):
         self._setReal(args[0].real)
@@ -108,7 +114,7 @@ class ComplexMixin:
         other = complex(args[0])
         self._setReal(other.real)
         self._setImag(other.imag)
-    elif len(args) >= 2:
+    elif len(args) == 2:
       self._setReal(float(args[0]))
       self._setImag(float(args[1]))
 
@@ -195,9 +201,15 @@ class ComplexMixin:
     return True if abs(self) > sys.float_info.epsilon else False
 
   def __eq__(self, other: Any) -> bool:
-    resolved = self._resolveOther(other)
-    if resolved is NotImplemented:
+    """
+    An instance equals another implementation, or a number, of the same
+    parts. Unlike the arithmetic, equality takes no tuple or text, since
+    the hash is that of the builtin 'complex', with which those would hash
+    apart while comparing equal.
+    """
+    if not isinstance(other, (ComplexMixin, int, float, complex)):
       return NotImplemented
+    resolved = self._resolveOther(other)
     real, imag = resolved
     if self.REAL == real and self.IMAG == imag:
       return True
@@ -260,15 +272,15 @@ class ComplexMixin:
       return NotImplemented
     x, y = resolved
     factor = (x ** 2 + y ** 2)
-    if abs(factor) < sys.float_info.epsilon:
+    #  Only a zero divisor is refused; a small one divides as 'complex'
+    #  does.
+    if not factor:
       raise ZeroDivisionError('complex division by zero')
     newX = self.REAL * x + self.IMAG * y
     newY = self.IMAG * x - self.REAL * y
     return cast(Self, type(self)(newX / factor, newY / factor))
 
   def __rtruediv__(self, other: Any) -> Union[NotImpType, Self]:
-    if not self:
-      raise ZeroDivisionError
     resolved = self._resolveOther(other)
     if resolved is NotImplemented:
       return NotImplemented

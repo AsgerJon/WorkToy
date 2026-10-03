@@ -13,7 +13,7 @@ from ..waitaminute import MissingVariable, TypeException
 from . import Field
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional, Union, Iterator
+  from typing import TypeAlias, Optional, Union, Iterator, Any
 
   StrTuple: TypeAlias = tuple[str, ...]
   StrTupleStr: TypeAlias = Union[str, StrTuple]
@@ -37,6 +37,13 @@ class SymbolicName(Object):
   - 'camelCase': The words are concatenated without any separators, the
     first character of the first word is lowercase, and the first
     character of each subsequent word is uppercase.
+
+  Two names of the same words compare equal and hash alike, ignoring
+  case, since every rendering normalises case: 'SymbolicName('Font',
+  'Size')' renders exactly as 'SymbolicName('font', 'size')' does, and the
+  two are one key in a dict or a set. The order of the words counts.
+  Compared with anything but a 'SymbolicName', a name answers
+  'NotImplemented'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -152,3 +159,18 @@ class SymbolicName(Object):
 
   def __contains__(self, item: str) -> bool:
     return True if item in self.words else False
+
+  def _getKey(self) -> StrTuple:
+    """
+    The '_getKey' method returns the words in lower case, which equality
+    and hashing compare, since every rendering normalises case.
+    """
+    return (*(word.lower() for word in self.words),)
+
+  def __eq__(self, other: Any) -> bool:
+    if not isinstance(other, SymbolicName):
+      return NotImplemented
+    return True if self._getKey() == other._getKey() else False
+
+  def __hash__(self) -> int:
+    return hash(self._getKey())

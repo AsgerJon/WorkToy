@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class DelException(SyntaxError):
+class DelException(NoPickle, SyntaxError):
   """
   DelException is raised when a class body defines '__del__' without the
   'trustMeBro=True' class keyword. A stray '__del__' is almost always a
@@ -34,21 +34,21 @@ class DelException(SyntaxError):
   def __init__(self, *args) -> None:
     self.mcls, self.name, self.bases, self.space = args
     SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
-    infoSpec = """When attempting to derive a class named '%s' from the 
-    metaclass '%s', the '__del__' method was found in the namespace! This 
-    is almost always a typo, but if not this error can be suppressed by 
+    infoSpec = """When attempting to derive a class named '%s' from the
+    metaclass '%s'%s, the '__del__' method was found in the namespace! This
+    is almost always a typo, but if not this error can be suppressed by
     passing the keyword argument 'trustMeBro=True' during class creation. """
     if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(self.bases, tuple)
+    basesInfo = ''
     if self.bases:
-      mclsSpec = """%s with bases: (%s)"""
-    else:
-      mclsSpec = """%s%s"""
-    basesStr = ', '.join(base.__name__ for base in self.bases)
-    mclsName = mclsSpec % (self.mcls.__name__, basesStr)
-    info = infoSpec % (self.name, mclsName)
+      basesStr = ', '.join(base.__name__ for base in self.bases)
+      basesInfo = """ with bases: (%s)""" % basesStr
+    info = infoSpec % (self.name, self.mcls.__name__, basesInfo)
     return textFmt(info, )
 
   __repr__ = __str__

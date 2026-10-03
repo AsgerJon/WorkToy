@@ -90,16 +90,18 @@ class PhantomBoxError(DescriptorException):
 
   def __str__(self) -> str:
     infoSpec = """The declaration '%s'%s produced a type alias rather
-    than a '%s', because a box claims its subscript only when the
+    than %s '%s', because a box claims its subscript only when the
     subscript names a plain 'type'. An attribute needs the completed
     form, for example '%s%s[int](0)'."""
     boxName = self._getBoxName()
+    article = 'an' if boxName[0] in 'AEIOUaeiou' else 'a'
     subscript = self._getSubscript()
     binding = '' if self.fieldName is None else '%s = ' % (self.fieldName,)
     ownerName = getattr(self.owner, '__name__', None)
     ownerStr = '' if ownerName is None else """ in class '%s'""" % ownerName
     info = infoSpec % (
-        '%s%s' % (binding, subscript), ownerStr, boxName, binding, boxName,
+        '%s%s' % (binding, subscript), ownerStr, article, boxName, binding,
+        boxName,
     )
     return textFmt(info)
 

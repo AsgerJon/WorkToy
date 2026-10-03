@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from . import EZHook
 from ..mcls import BaseSpace
+from ..mcls import AbstractMetaclass as AMeta
 from ..utilities import maybe
 from ..waitaminute.ezdata import DuplicateError, ReservedFieldError
 
@@ -32,7 +33,8 @@ class EZSpace(BaseSpace):
   Subclasses of EZSpace can extend '__reserved_ez_names__' to
   reserve additional names; the guard in 'registerEZField'
   consults that tuple unmodified. The same holds for
-  '__reserved_ez_methods__', consulted by 'EZHook.setItemPhase'.
+  '__reserved_ez_methods__' and '__reserved_ez_attributes__', consulted
+  by 'EZHook.setItemPhase'.
 
   Attributes
   ----------
@@ -44,9 +46,18 @@ class EZSpace(BaseSpace):
     be used as EZField names. Method overrides at these names
     are still allowed; only EZField declarations are rejected.
   __reserved_ez_methods__ : tuple[str, ...]
-    Names of generated methods that EZData keeps for itself. A
-    class body binding one of them raises 'ReservedMethodError',
-    whatever the value.
+    Names of generated methods that EZData keeps for itself, the ones
+    installed after the class body is merged, which a class-body
+    definition could not replace anyway. A class body binding one of
+    them raises 'ReservedMethodError', whatever the value. A plain base
+    may define them, and the generated methods take precedence.
+  __reserved_ez_attributes__ : tuple[str, ...]
+    Names of the attributes EZData keeps for itself: those it sets on
+    every class, the fields and the options the class keywords resolve
+    to, and '__key_args__', under which 'Object' keeps the keyword
+    arguments of its constructor. A class body binding one of them raises
+    'ReservedAttributeError', whatever the value, where the binding would
+    otherwise become a field of that name.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -65,7 +76,25 @@ class EZSpace(BaseSpace):
     'replace',
   )
   __reserved_ez_methods__: tuple = (
+    '__init__',
+    '__iter__',
+    '__len__',
+    '__eq__',
+    '__hash__',
+    '__lt__',
+    '__le__',
+    '__gt__',
+    '__ge__',
     '__setattr__',
+    '__delattr__',
+  )
+  __reserved_ez_attributes__: tuple = (
+    '__ez_fields__',
+    '__key_args__',
+    '__is_frozen__',
+    '__is_ordered__',
+    '__kw_only__',
+    '__ez_generated__',
   )
 
   #  Private Variables
@@ -203,7 +232,7 @@ class EZSpace(BaseSpace):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, mcls: type, name: str, bases: Bases, **kw) -> None:
+  def __init__(self, mcls: AMeta, name: str, bases: Bases, **kw) -> None:
     """
     The '__init__' method builds the namespace for an 'EZData' subclass
     under construction. After 'BaseSpace.__init__' sets up the standard
@@ -232,9 +261,8 @@ class EZSpace(BaseSpace):
       'EZHook.postCompilePhase'.
     """
     BaseSpace.__init__(self, mcls, name, bases, **kw)
-    cls = type(self)
     for base in reversed(self._getLookupOrder()):
       space = base.__dict__.get('__namespace__', None)
-      if isinstance(space, cls):
+      if isinstance(space, EZSpace):
         for key, field in space.getEZFields().items():
           self.registerBaseField(key, field)

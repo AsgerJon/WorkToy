@@ -6,10 +6,10 @@ base class.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..utilities import textFmt
+from ..utilities import textFmt, NoPickle
 
 
-class SubclassException(TypeError):
+class SubclassException(NoPickle, TypeError):
   """
   SubclassException subclasses 'TypeError' and provides a custom exception
   raised to indicate that a given subclass was not a subclass of a given
@@ -27,17 +27,17 @@ class SubclassException(TypeError):
   >>> from typing import TypeAlias, Type
   >>> Number: TypeAlias = Type[int]
   >>> class Fraction:
-  >>>  __slots__ = ('numerator', 'denominator', )
-  >>>
-  >>>  def __init__(self, numerator: Number, denominator: Number) -> None:
-  >>>    if not isinstance(numerator, int):
-  >>>      raise SubclassException(type(numerator), int)
-  >>>    if not isinstance(denominator, int):
-  >>>      raise SubclassException(type(denominator), int)
-  >>>    if not denominator:
-  >>>      raise ZeroDivisionError('Received zero denominator!')
-  >>>    self.numerator = numerator
-  >>>    self.denominator = denominator
+  ...   __slots__ = ('numerator', 'denominator', )
+  ...
+  ...   def __init__(self, numerator: Number, denominator: Number) -> None:
+  ...     if not isinstance(numerator, int):
+  ...       raise SubclassException(type(numerator), int)
+  ...     if not isinstance(denominator, int):
+  ...       raise SubclassException(type(denominator), int)
+  ...     if not denominator:
+  ...       raise ZeroDivisionError('Received zero denominator!')
+  ...     self.numerator = numerator
+  ...     self.denominator = denominator
   >>> try:
   ...   fraction = Fraction(69, '420')  # type: ignore[arg-type]
   ... except SubclassException as subclassException:

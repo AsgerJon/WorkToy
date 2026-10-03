@@ -8,24 +8,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...mcls import AbstractNamespace
   from ...mcls.space_hooks import AbstractSpaceHook
 
 
-class HookException(Exception):
+class HookException(NoPickle, Exception):
   """
   HookException wraps any exception raised by a namespace hook so it cannot
   be mistaken for the 'KeyError' that the metacall system uses as a control
-  signal during '__getitem__'. 'AbstractNamespace' catches a hook exception
-  and re-raises it from this one:
+  signal during '__getitem__'. 'AbstractNamespace' catches an exception
+  raised by the 'getItemPhase' of a hook and raises this one in its place,
+  which keeps the original at 'initialException' and as its context:
 
       try:
-        hook(self, key, val)
+        hook.getItemPhase(key, val)
       except Exception as exception:
-        raise HookException(exception, ...) from exception
+        raise HookException(exception, self, key, val, hook)
 
   Attributes
   ----------

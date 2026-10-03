@@ -6,15 +6,15 @@ calls to the matching one.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import sys
 from types import FunctionType as Func
 from types import MethodType
 from typing import TYPE_CHECKING
 
 from ..core import Object
+from ..core.sentinels import ARGS
 from ..utilities import maybe, typeCast, textFmt
 from ..utilities.combinatorics import Arrangements
-from ..waitaminute import TypeException, VariableNotNone, MissingVariable
+from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.dispatch import DispatchException, DuplicateSignature
 from . import TypeSig, PermuterMethod
@@ -27,6 +27,20 @@ if TYPE_CHECKING:  # pragma: no cover
   Decorator: TypeAlias = Callable[[Method], Dispatcher]
   SigFuncList: TypeAlias = list[tuple[TypeSig, Method]]
   SigFuncMap: TypeAlias = dict[TypeSig, Method]
+
+
+def _uniformType(types: tuple) -> Optional[type]:
+  """
+  The '_uniformType' function returns the one type every entry of 'types'
+  is, or None when the entries differ. The trailing arguments of a call
+  match a variadic signature by exact type only when they share one type,
+  the inner type of its 'ARGS'.
+  """
+  first = types[0]
+  for type_ in types:
+    if type_ is not first:
+      return None
+  return first
 
 
 class Dispatcher(Object):
@@ -42,16 +56,24 @@ class Dispatcher(Object):
   ('ARGS'-terminated) signatures:
 
   1. FASTEST - a single 'dict.get' on the exact concrete-type
-     signature of the call. This is the only pass that runs when the
-     argument types are an exact match for a registered overload
-     (e.g. 'f(69, 420)' against '@overload(int, int)'). Cost is one
-     hash and one dict lookup. Use it by registering overloads whose
+     signature of the call and, when that misses, one 'dict.get' per
+     distinct prefix length among the variadic signatures, keyed by the
+     prefix types and the one type every trailing argument shares. This
+     is the only pass that runs when the argument types are an exact
+     match for a registered overload (e.g. 'f(69, 420)' against
+     '@overload(int, int)', or 'f(1, 2, 3, 4, 5, 6, 7)' against
+     '@overload(ARGS[int])'), at any length. Cost is one hash and one
+     dict lookup for each. Use it by registering overloads whose
      'TypeSig' matches the exact concrete types the caller supplies.
+     Among exact matches the nearest registration wins: a variadic
+     signature of a subclass takes a call an explicit signature of a
+     parent also matches exactly, while a signature the subclass
+     declares explicitly keeps its call.
 
   2. FAST - isinstance-checks each argument against a signature and
      returns the first match, in registration order: first the
      concrete signatures, then the variadic ones (a variadic matches
-     when the call is longer than its fixed prefix). Cost is O(N) in
+     when the call is at least as long as its fixed prefix). Cost is O(N) in
      the number of registered overloads. Runs only when FASTEST
      misses, i.e. the call relies on subclass-via-isinstance matching.
 
@@ -119,6 +141,9 @@ class Dispatcher(Object):
   __field_owner__ = None
   __finalizer_func__ = None
   __compiled_func__ = None
+  #  The function the last of the decorators was given, which a decorator
+  #  stacked above it registers; see '_stackedFunction'.
+  __latest_func__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -138,6 +163,83 @@ class Dispatcher(Object):
 
   def _getVariadicDistances(self) -> list[int]:
     return maybe(self.__variadic_distances__, [])
+
+  def _getDeclaredSigs(self) -> list[TypeSig]:
+    """
+    The '_getDeclaredSigs' method returns the signatures as they were
+    declared: the concrete ones, then the variadic ones.
+    """
+    out = [sig for sig, _ in self._getSigFuncList()]
+    out += [sig for sig, _ in self._getVariadicFuncs()]
+    return out
+
+  @staticmethod
+  def _coversExactly(sig: TypeSig, types: tuple) -> bool:
+    """
+    The '_coversExactly' method reports whether the variadic signature
+    'sig' accepts a call of exactly 'types' by exact type: the prefix by
+    identity, and every type after it the inner type of the 'ARGS'.
+    """
+    raw = sig.getRawTypes()
+    prefix, inner = raw[:-1], raw[-1].__inner_type__
+    if len(types) < len(prefix):
+      return False
+    for this, that in zip(types, prefix):
+      if this is not that:
+        return False
+    for type_ in types[len(prefix):]:
+      if type_ is not inner:
+        return False
+    return True
+
+  def _getExactFuncMap(self) -> SigFuncMap:
+    """
+    The '_getExactFuncMap' method returns the mapping the exact-type pass
+    reads, from each concrete signature to the function it dispatches to.
+    That is the registered function, unless a variadic signature from a
+    nearer class accepts the same call by exact type; the nearer
+    registration then wins, as it would in the 'isinstance' passes, so a
+    variadic override in a subclass takes every call it accepts, the ones
+    a parent declared explicitly included. A variadic signature of the
+    same distance never displaces an explicit one.
+    """
+    variadicFuncs = self._getVariadicFuncs()
+    variadics = [*zip(variadicFuncs, self._getVariadicDistances())]
+    out = dict()
+    sigFuncs = self._getSigFuncList()
+    for (sig, func), distance in zip(sigFuncs, self._getSigDistances()):
+      types = sig.getRawTypes()
+      for (variadic, nearerFunc), nearerDistance in variadics:
+        if nearerDistance >= distance:
+          continue
+        if self._coversExactly(variadic, types):
+          func = nearerFunc
+          break
+      out[sig] = func
+    return out
+
+  def _getExactVariadics(self) -> tuple[dict, dict, tuple[int, ...]]:
+    """
+    The '_getExactVariadics' method returns the tables the exact-type pass
+    reads for the variadic signatures: one keyed by the prefix length,
+    the prefix types and the inner type, for a call with trailing
+    arguments, and one keyed by the prefix length and the prefix types
+    alone, for a call of the prefix and nothing more, which every variadic
+    signature of that prefix accepts whatever its inner type. Each entry
+    holds the registration index and the function, so that of several
+    signatures accepting one call the first registered wins. The distinct
+    prefix lengths come last, ascending.
+    """
+    tailed, empty, lengths = dict(), dict(), []
+    for index, (sig, func) in enumerate(self._getVariadicFuncs()):
+      raw = sig.getRawTypes()
+      prefix, inner = raw[:-1], raw[-1].__inner_type__
+      prefixLen = len(prefix)
+      tailed.setdefault((prefixLen, prefix, inner), (index, func))
+      empty.setdefault((prefixLen, prefix), (index, func))
+      if prefixLen not in lengths:
+        lengths.append(prefixLen)
+    return tailed, empty, (*sorted(lengths),)
 
   @staticmethod
   def _getCastOrder(
@@ -222,7 +324,8 @@ class Dispatcher(Object):
     return fieldOwner
 
   def _createCachedFunction(self) -> None:
-    sigFuncMap = self._getSigFuncMap()
+    sigFuncMap = self._getExactFuncMap()
+    tailed, empty, prefixLens = self._getExactVariadics()
     variadicFuncs = self._getVariadicFuncs()
     castFuncs = self._getCastOrder(
         self._getSigFuncList(), self._getSigDistances(),
@@ -234,10 +337,40 @@ class Dispatcher(Object):
     finalizer = self._getFinalizerFunction()
     dispatcher = self
 
+    def exactVariadic(argTypes: tuple) -> Optional[Method]:
+      """The function of the variadic signature accepting the call of
+      'argTypes' by exact type, the first registered of those that do, or
+      None when none does."""
+      best = None
+      for prefixLen in prefixLens:
+        if len(argTypes) < prefixLen:
+          break
+        prefix, tail = argTypes[:prefixLen], argTypes[prefixLen:]
+        if tail:
+          inner = _uniformType(tail)
+          key = (prefixLen, prefix, inner)
+          hit = None if inner is None else tailed.get(key)
+        else:
+          hit = empty.get((prefixLen, prefix))
+        if hit is not None and (best is None or hit[0] < best[0]):
+          best = hit
+      return None if best is None else best[1]
+
     def dispatch(instance: Any, *args, **kwargs) -> Any:
+      #  The exception of the call itself, for the finalizer to chain
+      #  from. 'sys.exc_info' would also report an exception the caller
+      #  is handling, when the call raised nothing.
+      raised = None
       try:
         argSig = TypeSig.fromArgs(*args, )
-        func = sigFuncMap.get(argSig, None)
+        try:
+          func = sigFuncMap.get(argSig, None)
+          if func is None and prefixLens:
+            func = exactVariadic(argSig.getRawTypes())
+        except TypeError:
+          #  An argument whose class cannot be hashed misses the exact-type
+          #  lookups and goes on to the 'isinstance' passes.
+          func = None
         #  FASTEST
         if func is not None:
           return func(instance, *args, **kwargs)
@@ -326,15 +459,17 @@ class Dispatcher(Object):
         if callable(fallback):
           return fallback(instance, *args, **kwargs)
         raise DispatchException(dispatcher, args, )
+      except BaseException as callException:
+        raised = callException
+        raise
       finally:
         if callable(finalizer):
-          _, exception, __ = sys.exc_info()
           try:
             finalizer(instance, *args, **kwargs)
           except Exception as finalException:
-            if exception is None:
+            if raised is None:
               raise finalException
-            raise finalException from exception
+            raise finalException from raised
 
     fieldName = self._getFieldName()
     ownerName = self._getFieldOwner().__name__
@@ -408,11 +543,13 @@ class Dispatcher(Object):
     The 'addVariadicSigFunc' method registers a '(variadicSig, func)'
     pair on this dispatcher. Unlike 'addSigFunc', it does not reject
     duplicates: a repeated variadic signature is appended, and the
-    first-registered one wins at dispatch. The dispatcher matches calls
-    against the variadic list in the FAST and SLOW passes when no
-    concrete sig matches, isinstance-checking the prefix raw types
-    against the first '(len(sig) - 1)' call arguments and every
-    remaining argument against the 'ARGS' inner type.
+    first-registered one wins at dispatch. The dispatcher matches a call
+    against the variadic signatures by exact type in the FASTEST pass,
+    the prefix types and the one type the trailing arguments share as
+    the key, and in the FAST and SLOW passes when no concrete signature
+    matches, isinstance-checking the prefix raw types against the first
+    '(len(sig) - 1)' call arguments and every remaining argument against
+    the 'ARGS' inner type.
 
     Parameters
     ----------
@@ -459,13 +596,14 @@ class Dispatcher(Object):
     ------
     TypeException
         If 'func' is not callable.
-    VariableNotNone
-        If a fallback is already set.
+    DuplicateSignature
+        If a fallback is already set, with 'fallback' in place of the
+        signature, as for a second registration of one signature.
     """
     if not callable(func):
       raise TypeException('__fallback_func__', func, Func, MethodType)
     if self.__fallback_func__ is not None:
-      raise VariableNotNone('__fallback_func__', self.__fallback_func__)
+      raise DuplicateSignature('fallback', self.__fallback_func__, func)
     self.__fallback_func__ = func
     self.__compiled_func__ = None
     return func
@@ -495,13 +633,14 @@ class Dispatcher(Object):
     ------
     TypeException
         If 'func' is not callable.
-    VariableNotNone
-        If a finalizer is already set.
+    DuplicateSignature
+        If a finalizer is already set, with 'finalizer' in place of the
+        signature.
     """
     if not callable(func):
       raise TypeException('__finalizer_func__', func, Func, MethodType)
     if self.__finalizer_func__ is not None:
-      raise VariableNotNone('__finalizer_func__', self.__finalizer_func__)
+      raise DuplicateSignature('finalizer', self.__finalizer_func__, func)
     self.__finalizer_func__ = func
     self.__compiled_func__ = None
     return func
@@ -590,9 +729,7 @@ class Dispatcher(Object):
     infoSpec = """Dispatcher at '%s.%s' for 'TypeSig' objects:<br><tab>%s"""
     ownerName = self.getFieldOwner().__name__
     fieldName = self.getFieldName()
-    sigLines = []
-    for sig, _ in self._getSigFuncList():
-      sigLines.append(str(sig))
+    sigLines = [str(sig) for sig in self._getDeclaredSigs()]
     sigStr = '<br><tab>'.join(sigLines)
     info = infoSpec % (ownerName, fieldName, sigStr)
     return textFmt(info)
@@ -603,11 +740,24 @@ class Dispatcher(Object):
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  @staticmethod
+  def _copySig(sig: TypeSig) -> TypeSig:
+    """
+    The '_copySig' method returns a copy of 'sig' holding the same types
+    and the same '__allow_flex__' flag. '__set_name__' rewrites 'THIS' in
+    the signatures of a dispatcher in place, so a clone holding the
+    signatures of the original would fix 'THIS' for both.
+    """
+    return sig()
+
   def clone(self, ) -> Self:
     """
     The 'clone' method builds a copy of this 'Dispatcher' carrying the
     same registered signature/function pairs (including variadic ones)
     with their distances, the same fallback, and the same finalizer.
+
+    The signatures are copies, see '_copySig', so placing the clone on a
+    class resolves 'THIS' in its own signatures alone.
 
     Returns
     -------
@@ -617,11 +767,13 @@ class Dispatcher(Object):
         placed on a class and its '__set_name__' fires.
     """
     newLoad = type(self)()
-    newLoad.__sig_funcs__ = self._getSigFuncList()
-    newLoad.__sig_distances__ = self._getSigDistances()
+    sigFuncs = self._getSigFuncList()
+    newLoad.__sig_funcs__ = [(self._copySig(s), f) for s, f in sigFuncs]
+    newLoad.__sig_distances__ = [*self._getSigDistances(), ]
     variadicFuncs = self._getVariadicFuncs()
     if variadicFuncs:
-      newLoad.__variadic_funcs__ = [*variadicFuncs, ]
+      copies = [(self._copySig(s), f) for s, f in variadicFuncs]
+      newLoad.__variadic_funcs__ = copies
       newLoad.__variadic_distances__ = [*self._getVariadicDistances(), ]
     fallback = self._getFallbackFunction()
     if fallback is not None:
@@ -635,13 +787,38 @@ class Dispatcher(Object):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def _stackedFunction(self, func: Any) -> Method:
+    """
+    The '_stackedFunction' method returns the function a decorator of this
+    dispatcher registers. Each decorator returns the dispatcher, so one
+    stacked above another receives the dispatcher itself, and registers
+    the function the decorator below it was given instead: a stack
+    decorates one function, and each decorator in it adds one role for
+    that function, in any order. Given a function, it records it for the
+    decorators above.
+
+    Raises
+    ------
+    MissingVariable
+        If the dispatcher is given itself before any function.
+    """
+    if func is self:
+      if self.__latest_func__ is None:
+        raise MissingVariable(self, '__latest_func__', Func)
+      return self.__latest_func__
+    self.__latest_func__ = func
+    return func
+
   def overload(self, *types: type) -> Decorator:
     """
     The 'overload' method builds a decorator that registers the
     decorated function under the given positional-argument type
     signature. The decorator returns the dispatcher itself, so
     successive '@dispatcher.overload(...)' layers stack on the same
-    instance.
+    instance, each registering the one function of the stack; see
+    '_stackedFunction'. A signature ending in an 'ARGS' is registered as a
+    variadic one, through 'addVariadicSigFunc', so it takes calls of any
+    length from its fixed prefix on.
 
     Parameters
     ----------
@@ -654,21 +831,35 @@ class Dispatcher(Object):
         A decorator registering its function and returning this
         dispatcher. 'Decorator' expands to
         'Callable[[Method], Dispatcher]'.
+
+    Raises
+    ------
+    TypeException
+        If an entry is not a class, or an 'ARGS' of one at the end; see
+        'TypeSig.validateTypes'.
     """
+    TypeSig.validateTypes(*types)
 
     def decorator(func: Method) -> Self:
-      self.addSigFunc(TypeSig(*types), func)
+      func = self._stackedFunction(func)
+      sig = TypeSig(*types)
+      if types and isinstance(types[-1], ARGS):
+        self.addVariadicSigFunc(sig, func)
+      else:
+        self.addSigFunc(sig, func)
       return self
 
     return decorator
 
-  def finalize(self, func: Method) -> Decorator:
+  def finalize(self, func: Method) -> Self:
     """
     The 'finalize' method registers 'func' as the finalizer. It runs in
     the 'finally' block of every dispatched call, after the body returns
     or raises. If the finalizer itself raises, its exception propagates
     in place of a normal return and is chained from any in-flight
     dispatch exception. Only one finalizer is allowed per dispatcher.
+    Stacked on another decorator of this dispatcher, it registers the
+    function of the stack; see '_stackedFunction'.
 
     Parameters
     ----------
@@ -678,22 +869,22 @@ class Dispatcher(Object):
 
     Returns
     -------
-    Decorator
-        This dispatcher, so the decorator form returns the same
-        instance. 'Decorator' expands to
-        'Callable[[Method], Dispatcher]'.
+    Self
+        This dispatcher, so used as a decorator it binds the decorated
+        name to the same instance.
     """
-    self.setFinalizerFunction(func)
+    self.setFinalizerFunction(self._stackedFunction(func))
     return self
 
-  def fallback(self, func: Method) -> Decorator:
+  def fallback(self, func: Method) -> Self:
     """
     The 'fallback' method registers 'func' as the fallback. It runs
     after every pass has missed: not only on a type mismatch but also on
     a length mismatch, a coercion-disabled signature, or arguments only
     a keyword could satisfy (matching is positional and by length, and
     keyword arguments are not type-matched). Only one fallback is allowed
-    per dispatcher.
+    per dispatcher. Stacked on another decorator of this dispatcher, it
+    registers the function of the stack; see '_stackedFunction'.
 
     Parameters
     ----------
@@ -703,12 +894,11 @@ class Dispatcher(Object):
 
     Returns
     -------
-    Decorator
-        This dispatcher, so the decorator form returns the same
-        instance. 'Decorator' expands to
-        'Callable[[Method], Dispatcher]'.
+    Self
+        This dispatcher, so used as a decorator it binds the decorated
+        name to the same instance.
     """
-    self.setFallbackFunction(func)
+    self.setFallbackFunction(self._stackedFunction(func))
     return self
 
   def flex(self, *types: type, ) -> Decorator:
@@ -720,7 +910,9 @@ class Dispatcher(Object):
     in the FAST pass, never via 'typeCast'), and a 'PermuterMethod'
     restores the canonical argument order before calling the function.
     This is not a catch-all and not the fallback: only permutations of
-    'types' match. See 'fallback' for the no-match catch-all.
+    'types' match. See 'fallback' for the no-match catch-all. Stacked on
+    another decorator of this dispatcher, it registers the function of
+    the stack; see '_stackedFunction'.
 
     Parameters
     ----------
@@ -734,9 +926,17 @@ class Dispatcher(Object):
         A decorator registering its function and returning this
         dispatcher. 'Decorator' expands to
         'Callable[[Method], Dispatcher]'.
+
+    Raises
+    ------
+    TypeException
+        If an entry is not a class; an 'ARGS' is refused too, since the
+        entries are rearranged.
     """
+    TypeSig.validateTypes(*types, variadic=False)
 
     def decorator(func: Method) -> Self:
+      func = self._stackedFunction(func)
       for arrangement in Arrangements(*types):
         sig = TypeSig(*arrangement.values)
         sig.__allow_flex__ = False

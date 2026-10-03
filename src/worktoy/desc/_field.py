@@ -42,7 +42,12 @@ class Field(BaseDescriptor[T]):
   in response to __set__
 
   @DELETE - Decorate any number of methods as deleters. Optionally, implement
-  by setting the value to the 'DELETED' sentinel object.
+  by setting the value to the 'DELETED' sentinel object. On 'del' the
+  getter is asked once for the old value, which 'ProtectedError' reports
+  when there is no deleter, and which, being 'DELETED' after such a
+  deleter ran, makes a second 'del' raise 'MissingVariable' as a read does.
+  A getter that raises stops nothing: the deleters run, and no old value is
+  reported; see '_peekValue'.
 
   Notes
   -----
@@ -68,8 +73,6 @@ class Field(BaseDescriptor[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __prototype_object__: Optional[Self] = None
-
   # -- Accessor Keys
   __get_key__ = None
   __set_keys__ = None
@@ -172,11 +175,36 @@ class Field(BaseDescriptor[T]):
     'isinstance(instance, self.getFieldOwner())', the field owner is the
     class where the descriptor was instantiated. For this reason the
     decorated method is retrieved by name from the owner of the instance
-    received, so a subclass override is honoured.
+    received, so a subclass override is honoured. The getter is called as
+    'method(self)'.
+
+    A read passing '_deleting=True', which 'Object.__delete__' makes to
+    report the old value, is answered by '_peekValue', which asks the
+    getter but lets nothing it raises stop the deletion.
     """
+    if kwargs.get('_deleting', False):
+      return self._peekValue(instance, owner)
     getterKey = self._getGetterKey()
     getterFunc = getattr(owner, getterKey)
-    return getterFunc(instance, **kwargs)
+    return getterFunc(instance)
+
+  def _peekValue(self, instance: Any, owner: type) -> Any:
+    """
+    The '_peekValue' method reports the value the getter answers, for a
+    deletion to report as the old value, or None when there is no getter
+    or the getter raises. The getter answering 'DELETED', as it does once
+    a deleter stored it, makes 'Object.__delete__' raise 'MissingVariable'
+    for the second deletion, as a read raises. A getter that raises, as
+    one for a value not ready yet may, must not stop the deleters from
+    running, so its exception is dropped here, and only here: a read
+    raises it as ever.
+    """
+    try:
+      getterKey = self._getGetterKey()
+      getterFunc = getattr(owner, getterKey)
+      return getterFunc(instance)
+    except Exception:
+      return None
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
@@ -193,21 +221,23 @@ class Field(BaseDescriptor[T]):
       setterFunc = getattr(owner, key, )
       setterFunc(instance, value, )
 
-  def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
+  def __instance_delete__(
+      self,
+      instance: Any,
+      old: Any = None,
+      **kwargs,
+  ) -> None:
     """
     The '__instance_delete__' method retrieves every decorated deleter
     by name in the same fashion as the getter and calls each in
     registration order. With no deleter registered, deletion raises
-    'ProtectedError'.
+    'ProtectedError', which reports the old value '_peekValue' read, or
+    None when the getter raised.
     """
     deleterKeys = self._getDeleterKeys()
     owner = type(instance)
     if not deleterKeys:
-      try:
-        oldVal = self.__instance_get__(instance, owner, **kwargs)
-      except AttributeError:
-        oldVal = None
-      raise ProtectedError(instance, self, oldVal)
+      raise ProtectedError(instance, self, old)
     for key in deleterKeys:
       deleterFunc = getattr(owner, key, )
       deleterFunc(instance, **kwargs)
@@ -219,7 +249,6 @@ class Field(BaseDescriptor[T]):
   def __init__(self, other: Self = None) -> None:
     BaseDescriptor.__init__(self, other)
     if isinstance(other, Field):
-      self.__prototype_object__ = other
       self.__get_key__ = other.__get_key__
       keyGroups = (
         '__pre_get_keys__',
@@ -228,6 +257,7 @@ class Field(BaseDescriptor[T]):
         '__on_set_keys__',
         '__pre_delete_keys__',
         '__on_delete_keys__',
+        '__set_name_keys__',
         '__set_keys__',
         '__delete_keys__',
       )

@@ -6,8 +6,6 @@ TestStochasticWord tests the 'StochasticWord' class from the
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import os.path
-
 from worktoy.lorem_ipsum import StochasticWord
 from . import LoremIpsumTest
 
@@ -18,37 +16,10 @@ class TestStochasticWord(LoremIpsumTest):
   the 'worktoy.lorem_ipsum' package.
   """
 
-  @classmethod
-  def setUpClass(cls) -> None:
-    super().setUpClass()
-    cls.dataDir = os.environ.get('WORKTOY_DATA_DIR')
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    super().tearDownClass()
-    if cls.dataDir is not None:  # pragma: no cover
-      os.environ['WORKTOY_DATA_DIR'] = cls.dataDir
-    else:  # pragma: no cover
-      try:
-        del os.environ['WORKTOY_DATA_DIR']
-      except KeyError:
-        pass
-
   def setUp(self) -> None:
     super().setUp()
-    self.dataDir = os.environ.get('WORKTOY_DATA_DIR')
     self.stochasticWord: StochasticWord = StochasticWord()
     self.stochasticWord.realize()  # Preload the data
-
-  def tearDown(self, ) -> None:
-    super().tearDown()
-    if self.dataDir is not None:  # pragma: no cover
-      os.environ['WORKTOY_DATA_DIR'] = self.dataDir
-    else:  # pragma: no cover
-      try:
-        del os.environ['WORKTOY_DATA_DIR']
-      except KeyError:
-        pass
 
   def test_realize(self) -> None:
     """

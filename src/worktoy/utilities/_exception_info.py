@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import textFmt, QuickDesc
+from . import textFmt, QuickDesc, NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Type, Self, Optional, TypeAlias
@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 _NO_EXC = 'No Exception'
 
 
-class ExceptionInfo:
+class ExceptionInfo(NoPickle):
   """Context manager for capturing and inspecting exceptions.
 
   Wrap a block of code that is expected to raise. The expected
@@ -114,6 +114,13 @@ class ExceptionInfo:
     else:
       info = """'expExc' must be a 'BaseException' subclass or
       instance; got '%s'""" % type(expExc).__name__
+      raise TypeError(textFmt(info))
+    if expectedCls is not None and not issubclass(expectedCls, Exception):
+      #  Such an exception always propagates from the block, so it could
+      #  never be caught as expected.
+      info = """'ExceptionInfo' cannot expect '%s', a 'BaseException'
+      that is not an 'Exception', since those always propagate from the
+      block.""" % expectedCls.__name__
       raise TypeError(textFmt(info))
     self.__expected_exception__ = expectedCls
     self.__expected_name__ = (

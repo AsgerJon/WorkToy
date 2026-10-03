@@ -13,8 +13,9 @@ def textFmt(*args, **kwargs) -> str:
 
   Joins 'args' with single spaces, replaces any run of
   whitespace (including embedded newlines from triple-quoted
-  literals) with a single space, then expands '<br>' to a
-  newline and '<tab>' to one indentation step.
+  literals) with a single space, drops the space on either side
+  of a '<br>', then expands '<br>' to a newline and '<tab>' to
+  one indentation step.
 
   Parameters
   ----------
@@ -70,5 +71,8 @@ def textFmt(*args, **kwargs) -> str:
   text = ' '.join(str(part) for part in parts)
   #  Replace multiple spaces with a single space
   text = ' '.join(text.split())
+  #  A space next to a line break belongs to neither line
+  text = text.replace(' %s' % newTemp, newTemp)
+  text = text.replace('%s ' % newTemp, newTemp)
   #  Replace newlines and tabs with the appropriate symbols
   return text.replace(newTemp, nLOut).replace(tabTemp, tabOut)

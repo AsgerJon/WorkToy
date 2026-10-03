@@ -11,11 +11,11 @@ from types import FunctionType
 
 from ...core.sentinels import METACALL
 from ...waitaminute.meta import QuestionableSyntax, DelException
-from ...waitaminute.meta import UnboundClassHook
+from ...waitaminute.meta import UnboundClassHook, ShadowedClassHook
 from . import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias
+  from typing import Any, TypeAlias, Optional
 
   NearMiss: TypeAlias = tuple[str, str]
 
@@ -50,6 +50,19 @@ class NamespaceHook(AbstractSpaceHook):
   raise any errors directly. Instead, they silently fail to participate
   in expected behaviors or override builtin methods.
 
+  Shadowed class hooks
+  --------------------
+  'AbstractMetaclass' calls each routed '__class_*__' hook from its own
+  implementation of the operation, '__class_len__' from '__len__'. A
+  metaclass based on it that implements the operation again takes it
+  over, so the hook would never run: 'KeeMeta' measures, iterates and
+  searches its members itself, and 'EZMeta' its fields. A class body
+  binding such a hook raises 'ShadowedClassHook' at the line binding it,
+  naming the metaclass and the method that take the operation over.
+  '__class_init__' is exempt, since it is not called from an operation:
+  every metaclass '__init__' hands over to the inherited one, which
+  calls it.
+
   Usage
   -----
   To use 'NamespaceHook', declare it in your namespace class:
@@ -57,6 +70,14 @@ class NamespaceHook(AbstractSpaceHook):
       class Space(AbstractNamespace):
         nameHook = NamespaceHook()
   """
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  #  Class Variables
+  #  'trustMeBro' is read by '_validateDel' and goes no further.
+  __consumed_keys__ = ('trustMeBro',)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -120,6 +141,50 @@ class NamespaceHook(AbstractSpaceHook):
     ]
 
   @classmethod
+  def _getChainedHooks(cls) -> list[str]:
+    """
+    The '_getChainedHooks' method returns the class hooks that no
+    metaclass method takes over: '__class_init__' is called by
+    'AbstractMetaclass.__init__', which every metaclass '__init__' hands
+    over to, rather than from an operation a metaclass may implement
+    itself.
+    """
+    return ['__class_init__']
+
+  @staticmethod
+  def _getOperation(hookName: str) -> str:
+    """
+    The '_getOperation' method returns the name of the operation a
+    routed hook is called from, '__len__' for '__class_len__'.
+    """
+    return '__%s__' % hookName[len('__class_'):-2]
+
+  def _getShadowingMetaclass(self, hookName: str) -> Optional[type]:
+    """
+    The '_getShadowingMetaclass' method returns the metaclass that
+    implements the operation of 'hookName' itself, so that the hook would
+    never be called, or None when the operation is left to
+    'AbstractMetaclass', which calls the hook. The metaclass building the
+    class and its bases before 'AbstractMetaclass' are searched, since a
+    metaclass derived from 'KeeMeta' inherits its '__len__'. A metaclass
+    not based on 'AbstractMetaclass' calls no hook, and takes none over.
+    """
+    if hookName in self._getChainedHooks():
+      return None
+    #  Local import: 'AbstractMetaclass' loads after the hooks, which its
+    #  namespace declares.
+    from .. import AbstractMetaclass
+    mcls = self.space.getMetaclass()
+    mro = getattr(mcls, '__mro__', ())
+    if AbstractMetaclass not in mro:
+      return None
+    operation = self._getOperation(hookName)
+    for klass in mro[:mro.index(AbstractMetaclass)]:
+      if operation in klass.__dict__:
+        return klass
+    return None
+
+  @classmethod
   def _validateName(cls, name: str) -> bool:
     """
     The '_validateName' method compares 'name' against the near-miss
@@ -173,6 +238,9 @@ class NamespaceHook(AbstractSpaceHook):
     ------
     DelException
         If '__del__' is defined without the 'trustMeBro' keyword.
+    ShadowedClassHook
+        If 'key' is a routed '__class_*__' hook name whose operation the
+        metaclass implements itself, so the hook would never be called.
     UnboundClassHook
         If 'key' is a routed '__class_*__' hook name bound to a plain
         function or staticmethod rather than a classmethod.
@@ -187,6 +255,11 @@ class NamespaceHook(AbstractSpaceHook):
       bases = self.space.getBases()
       raise DelException(mcls, name, bases, self.space)
     if key in self._getClassDunders():
+      shadowing = self._getShadowingMetaclass(key)
+      if shadowing is not None:
+        clsName = self.space.getClassName()
+        operation = self._getOperation(key)
+        raise ShadowedClassHook(clsName, key, shadowing.__name__, operation)
       if isinstance(val, (FunctionType, staticmethod)):
         #  The metaclass invokes these hooks as bound classmethods. A
         #  plain function receives no class binding: most hooks fail
@@ -200,9 +273,10 @@ class NamespaceHook(AbstractSpaceHook):
   def preCompilePhase(self, compiledSpace: dict) -> dict:
     """
     The 'preCompilePhase' method seeds the class-dunder hook names with
-    the 'METACALL' sentinel, but only where the class body has not
-    already supplied its own. This is what lets 'AbstractMetaclass'
-    route '__class_len__', '__class_iter__', and the rest to its own
+    the 'METACALL' sentinel, but only where neither the class body nor a
+    class along the method resolution order supplies one, a plain mixin
+    included. This is what lets 'AbstractMetaclass' route
+    '__class_len__', '__class_iter__', and the rest to its own
     implementations.
 
     Parameters
@@ -217,12 +291,11 @@ class NamespaceHook(AbstractSpaceHook):
         class-dunder name.
     """
     dunderNames = self._getClassDunders()
+    mro = self.space._getLookupOrder()
     for name in dunderNames:
-      try:
-        _ = self.space.deepGetItem(name)
-      except KeyError:
-        compiledSpace[name] = METACALL
+      if dict.__contains__(self.space, name):
         continue
-      else:
+      if any(name in cls.__dict__ for cls in mro):
         continue
+      compiledSpace[name] = METACALL
     return compiledSpace

@@ -14,12 +14,15 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class ReadOnlyError(DescriptorException):
+class ReadOnlyError(DescriptorException, AttributeError):
   """
   ReadOnlyError is raised on an attempt to assign to a read-only
-  attribute. It subclasses 'DescriptorException' (and so 'Exception'). The
-  default 'Object.__instance_set__' raises it, as does any descriptor
-  whose protocol forbids writes.
+  attribute. It subclasses 'DescriptorException' and 'AttributeError', as
+  'AccessError' does: Python refuses a write to a read-only attribute,
+  such as a property without a setter, with 'AttributeError', so code
+  catching that to skip what cannot be set skips a worktoy attribute the
+  same way. The default 'Object.__instance_set__' raises it, as does any
+  descriptor whose protocol forbids writes, 'QuickDesc' included.
 
   Attributes
   ----------

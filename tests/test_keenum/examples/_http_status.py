@@ -1,11 +1,11 @@
 """
 HTTPStatus enumerates the standard HTTP response status codes.
 
-This enumeration uses 'int' values that fall outside the index range of
-the enumeration itself, which would normally cause the byIndex resolver
-to win over the byValue resolver. The '__class_resolve__' method is
-implemented to ensure that 'int' identifiers are always interpreted as
-status codes, never as indices.
+This enumeration uses 'int' values, and a subscript reads an 'int' as a
+position before it compares values, so 'HTTPStatus[0]' would be the first
+member. The '__class_resolve__' method is implemented to ensure that
+'int' identifiers are always interpreted as status codes, never as
+indices.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -69,8 +69,8 @@ class HTTPStatus(KeeNum):
     """
     Resolves 'int' identifiers as status codes rather than indices.
 
-    Without this resolver, 'HTTPStatus(0)' would return the member at
-    index 0 (CONTINUE), and 'HTTPStatus(1)' would return the member at
+    Without this resolver, 'HTTPStatus[0]' would return the member at
+    index 0 (CONTINUE), and 'HTTPStatus[1]' would return the member at
     index 1 (SWITCHING_PROTOCOLS). With this resolver, both raise
     'KeeResolveError' because no member has value 0 or 1.
 

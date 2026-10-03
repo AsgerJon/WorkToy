@@ -40,7 +40,7 @@ class TestEZData(EZTest):
         name = EZField[float](0.0)
         name = EZField[float](0.0)  # noqa: F811
     e = context.exception
-    self.assertEqual(e.name, 'name')
+    self.assertEqual(e.fieldName, 'name')
     expectedClassName = 'Sus'
     actualClassName = e.space.getClassName()
     self.assertEqual(actualClassName, expectedClassName)
@@ -266,7 +266,7 @@ class TestEZData(EZTest):
       class Sus(EZData):  # noqa: F841
         asDict = EZField[int](0)
     e = context.exception
-    self.assertEqual(e.name, 'asDict')
+    self.assertEqual(e.fieldName, 'asDict')
     self.assertEqual(e.space.getClassName(), 'Sus')
     self.assertEqual(str(e), repr(e))
 

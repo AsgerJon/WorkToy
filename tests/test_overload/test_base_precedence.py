@@ -149,12 +149,11 @@ class TestBasePrecedence(OverloadTest):
 
   def setUp(self) -> None:
     """
-    The long call exceeds the number of variadic lengths the overload
-    decorator expands into exact signatures, so it can only be matched
-    by walking the variadic signatures.
+    The long call is longer than any other call the tests make, so the
+    variadic signatures decide it at a length nothing else covers.
     """
     super().setUp()
-    self.longCall = (*range(overload.__variadic_fastpath_limit__ + 2),)
+    self.longCall = (*range(7),)
 
   def test_distinct_signatures_merge(self) -> None:
     """
@@ -175,8 +174,8 @@ class TestBasePrecedence(OverloadTest):
   def test_first_base_wins_every_variadic_length(self) -> None:
     """
     Testing that the first base wins an equal variadic signature for
-    short calls and for calls too long for the expanded signatures
-    alike, so the winner does not change with the length of the call.
+    short calls and for long calls alike, so the winner does not change
+    with the length of the call.
     """
     self.assertEqual(Both().total(1, 2), 'left')
     self.assertEqual(Both().total(*self.longCall), 'left')

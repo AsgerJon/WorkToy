@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeWriteOnceError(AttributeError):
+class KeeWriteOnceError(NoPickle, AttributeError):
   """
   KeeWriteOnceError provides a custom exception raised to indicate attempt
   to modify a KeeNum enumeration member. All such members are write-once,

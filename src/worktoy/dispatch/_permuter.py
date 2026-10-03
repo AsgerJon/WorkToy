@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, overload
 from ..dispatch import CallMeMaybe
 from ..utilities import textFmt, QuickDesc
 from ..utilities.combinatorics import Arrangement
-from ..waitaminute import TypeException
+from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.desc import WriteOnceError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -58,6 +58,20 @@ class Permuter(CallMeMaybe):
 
   #  Public Variables
   arrangement: QuickDesc[Arrangement] = QuickDesc('__arg_arrangement__')
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def _getArrangement(self) -> Arrangement:
+    """
+    The '_getArrangement' method returns the 'Arrangement' the call
+    restores the arguments through, raising 'MissingVariable' when none
+    was set.
+    """
+    if self.__arg_arrangement__ is None:
+      raise MissingVariable(self, '__arg_arrangement__', Arrangement)
+    return self.__arg_arrangement__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -208,4 +222,4 @@ class Permuter(CallMeMaybe):
     Any
         Whatever 'func' returns.
     """
-    return func(*self.arrangement.restoreFrom(*args), **kwargs)
+    return func(*self._getArrangement().restoreFrom(*args), **kwargs)

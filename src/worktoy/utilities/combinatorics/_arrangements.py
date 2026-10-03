@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar, Generic
 
 from . import Arrangement, indexPermutations
-from .. import QuickDesc
+from .. import QuickDesc, NoPickle
 
 T = TypeVar('T')
 ItemTypeT = TypeVar('ItemTypeT')
@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
   MaybeBool: TypeAlias = Optional[bool]
 
 
-class Arrangements(Generic[ItemTypeT]):
+class Arrangements(NoPickle, Generic[ItemTypeT]):
   """All unique arrangements of a ground tuple of items.
 
   Iterating yields 'Arrangement' instances. The set is

@@ -1,20 +1,24 @@
 """
-KeeCaseException is raised when a 'KeeNum' member name is not upper-case.
+KeeCaseException is raised when the name of a 'KeeNum' member or a
+'KeeFlags' flag is not upper case.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ...utilities import NoPickle
 
-class KeeCaseException(ValueError):
+
+class KeeCaseException(NoPickle, ValueError):
   """
-  Raised when a 'KeeNum' member name is not upper-case (the check is
-  'name.isupper()'); lowercase or mixed-case names are rejected.
+  Raised when the name of a 'KeeNum' member or of a 'KeeFlags' flag is
+  not upper case (the check is 'name.isupper()'); lowercase or mixed-case
+  names are rejected. Lookups by call or subscript ignore case.
 
   Attributes
   ----------
   name : str
-    The member name that failed the upper-case check.
+    The name that failed the upper-case check.
   """
 
   __slots__ = ('name',)
@@ -24,8 +28,8 @@ class KeeCaseException(ValueError):
     ValueError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """KeeNum members must have upper case names, but received: 
-    '%s'"""
+    infoSpec = """The members of an enumeration, and the flags of a
+    'KeeFlags' class, must have upper case names, but received: '%s'"""
     from ...utilities import textFmt
     return textFmt(infoSpec % self.name)
 

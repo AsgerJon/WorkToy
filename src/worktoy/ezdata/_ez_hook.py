@@ -8,34 +8,30 @@ from __future__ import annotations
 
 import operator
 from collections.abc import Callable
-from copy import deepcopy
-from types import FunctionType
+from types import FunctionType, BuiltinFunctionType
 from typing import TYPE_CHECKING
 
 from . import EZField, EZStore
+from ..core import Object, MetaType
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import typeCast, textFmt
 from ..waitaminute import TypeException
 from ..waitaminute.dispatch import TypeCastException
 from ..waitaminute.ezdata import ExtraPositionalException, \
   KwargsOnlyException, IncompleteFieldException, ClassFieldError, \
-  ReservedMethodError
+  ReservedMethodError, ClassKeywordError, ExtraKeywordException, \
+  RepeatedFieldException, ReservedAttributeError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator
   from . import EZSpace
 
+  Keys: TypeAlias = tuple[str, ...]
+
   INIT: TypeAlias = Callable[..., None]
   ITER: TypeAlias = Callable[..., Iterator]
   BOOL: TypeAlias = Callable[..., bool]
   SETATTR: TypeAlias = Callable[..., None]
-
-_DESCRIPTOR_KEYS: tuple[str, ...] = (
-  '__get__',
-  '__set__',
-  '__delete__',
-  '__set_name__',
-)
 
 
 def _unorderable(self: Any, other: Any) -> Any:
@@ -56,23 +52,30 @@ class EZHook(AbstractSpaceHook):
   intercepts class-body assignments through 'setItemPhase' to
   capture EZField declarations, fail-fasts on incomplete fields
   via '_assertCompleteField', and synthesizes every generated
-  method on the class through 'preCompilePhase' and
-  'postCompilePhase'.
+  method on the class through 'postCompilePhase'.
 
   Every code-generation factory lives on EZHook as a
   '@classmethod' rather than in separate per-method files. The
-  factories that return user-overridable helpers ('__repr__',
-  '__str__', '__field_pairs__', 'asDict', 'asTuple', 'replace')
-  are wired in 'preCompilePhase' so a class-body method
-  definition of the same name wins; the rest are wired
-  unconditionally in 'postCompilePhase'.
+  generated names come in two kinds. The reserved methods, such as
+  '__init__' and '__iter__', are installed on every class; an EZData
+  class body may not define them, and a plain base may, but gives way.
+  The optional names, '__field_pairs__', 'asDict', 'asTuple',
+  'replace', '__repr__', '__str__' and '__match_args__', are generated
+  only where neither the class body nor a base supplies one, an EZData
+  base and a plain base alike; see '_settleOptional'.
 
   The three class-level synonym tuples ('__frozen_keys__',
   '__ordered_keys__', '__kw_only_keys__') hold the accepted
   spellings for the three build-option flags. A subclass of
   EZHook can extend these to accept additional spellings;
   'parseKwargs' (inherited from 'Object') picks the first
-  spelling present in the class kwargs.
+  spelling present in the class kwargs. They are the keywords the
+  hook consumes, named in '__consumed_keys__', and the metaclass
+  keeps them out of the '__init_subclass__' chain of the bases. Any
+  other class keyword goes down that chain when a base has an
+  '__init_subclass__' of its own to take it; when none has,
+  'preparePhase' refuses it with 'ClassKeywordError', since nothing
+  could read it.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -83,9 +86,21 @@ class EZHook(AbstractSpaceHook):
   space: EZSpace
 
   #  Class Variables
-  __frozen_keys__: tuple[str] = ('frozen', 'immutable', 'hashable',)
-  __ordered_keys__: tuple[str] = ('ordered', 'sortable', 'comparable',)
-  __kw_only_keys__: tuple[str] = ('kwOnly', 'keywordOnly', 'kw_only',)
+  __frozen_keys__: Keys = ('frozen', 'immutable', 'hashable')
+  __ordered_keys__: Keys = ('ordered', 'order', 'sortable', 'comparable')
+  __kw_only_keys__: Keys = ('kwOnly', 'keywordOnly', 'kw_only')
+  #  The class keywords 'EZHook' reads off the class statement, every
+  #  spelling of the three options, which the metaclass keeps out of the
+  #  '__init_subclass__' chain of the bases; see
+  #  'AbstractNamespace.getConsumedKeywords'.
+  __consumed_keys__: Keys = (
+    *__frozen_keys__, *__ordered_keys__, *__kw_only_keys__,
+  )
+  #  The methods 'postCompilePhase' installs on every class.
+  __installed__: Keys = (
+    '__init__', '__iter__', '__len__', '__eq__', '__hash__', '__lt__',
+    '__le__', '__gt__', '__ge__', '__setattr__', '__delattr__',
+  )
 
   #  Public Variables
   reservedNames = ReservedNames()
@@ -94,19 +109,40 @@ class EZHook(AbstractSpaceHook):
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def preparePhase(self, space: EZSpace) -> None:
+    """
+    The 'preparePhase' method refuses a class keyword that nothing could
+    read, such as 'frozn=True', with 'ClassKeywordError' listing the
+    accepted spellings, so a misspelled option fails at the class
+    statement before the class body runs. A base with an
+    '__init_subclass__' of its own may take any keyword, so with one among
+    the bases nothing is refused here: every keyword the namespace and its
+    hooks did not read goes down the '__init_subclass__' chain, where that
+    base takes it or 'object' refuses it; see 'MetaType.takesKeywords'.
+    """
+    if MetaType.takesKeywords(space.getBases()):
+      return
+    accepted = space.getConsumedKeywords()
+    for key in space.getKwargs():
+      if key not in accepted:
+        raise ClassKeywordError(space.getClassName(), key, *accepted)
+
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
     The 'setItemPhase' method intercepts class-body assignments. An
     EZField value is routed to 'EZSpace.registerEZField' after passing
-    '_assertCompleteField'; a function value falls through to the
-    namespace untouched; any other value is wrapped through
-    'EZField.fromValue' and registered. A bare 'None' value is
+    '_assertCompleteField'; a function value, written in Python or a
+    builtin such as 'len', falls through to the namespace untouched, as
+    do bound methods, which are descriptors; any other value is wrapped
+    through 'EZField.fromValue' and registered. A bare 'None' value is
     rejected outright, since no field type can be inferred from it,
-    and so is a class object, whose rebuilt default would be its
-    metaclass. The names the interpreter writes into a class body on
+    and so is a class object, which would become a field of type 'type'.
+    The names the interpreter writes into a class body on
     its own, listed by 'ReservedNames', pass through untouched, while
     a method EZData generates and keeps for itself, listed in
-    'EZSpace.__reserved_ez_methods__', may not be bound at all.
+    'EZSpace.__reserved_ez_methods__', and an attribute EZData sets on
+    every class itself, listed in 'EZSpace.__reserved_ez_attributes__',
+    may not be bound at all.
 
     Parameters
     ----------
@@ -148,37 +184,57 @@ class EZHook(AbstractSpaceHook):
     ReservedMethodError
       If 'key' names a method EZData generates and keeps for itself,
       such as '__setattr__'.
+    ReservedAttributeError
+      If 'key' names an attribute EZData keeps for itself, such as
+      '__kw_only__'.
     """
     if key in self.space.__reserved_ez_methods__:
       raise ReservedMethodError(key, self.space)
+    if key in self.space.__reserved_ez_attributes__:
+      raise ReservedAttributeError(key, self.space)
     if key in self.reservedNames:
       return False
     if isinstance(val, EZField):
       self._assertCompleteField(key, val)
       self.space.registerEZField(key, val)
       return True
-    if isinstance(val, FunctionType):
+    if isinstance(val, (FunctionType, BuiltinFunctionType)):
       return False
     if isinstance(val, type):
       raise ClassFieldError(self.space.getClassName(), key, val)
-    valType: type = type(val)
-    for descriptorKey in _DESCRIPTOR_KEYS:
-      try:
-        _ = getattr(valType, descriptorKey)
-      except AttributeError:
-        continue
-      else:
-        break
-    else:
-      if val is None:
-        clsName = self.space.getClassName()
-        missing = 'a bare None default cannot infer a field type'
-        raise IncompleteFieldException(clsName, key, missing)
-      # noinspection PyTypeChecker
-      valField = EZField.fromValue(val)
-      self.space.registerEZField(key, valField)
-      return True
-    return False
+    if self._isDescriptor(val):
+      return False
+    if val is None:
+      clsName = self.space.getClassName()
+      missing = 'a bare None default cannot infer a field type'
+      raise IncompleteFieldException(clsName, key, missing)
+    # noinspection PyTypeChecker
+    valField = EZField.fromValue(val)
+    self.space.registerEZField(key, valField)
+    return True
+
+  @staticmethod
+  def _isDescriptor(value: Any) -> bool:
+    """
+    The '_isDescriptor' method decides whether a class-body value is a
+    descriptor, left in place as a class attribute, or a value, which
+    becomes a field. A value not deriving from 'Object' is a descriptor
+    when its type implements '__get__' or '__set__'. Every 'Object'
+    implements both, members, EZData instances and 'SymbolicName'
+    included, so an 'Object' is a descriptor only when its type
+    overrides '__instance_get__' or '__instance_set__', which is where a
+    descriptor built on 'Object' does its work.
+    """
+    valueType = type(value)
+    if isinstance(value, Object):
+      instanceGet = getattr(valueType, '__instance_get__')
+      instanceSet = getattr(valueType, '__instance_set__')
+      ownGet = instanceGet is not Object.__instance_get__
+      ownSet = instanceSet is not Object.__instance_set__
+      return True if ownGet or ownSet else False
+    hasGet = hasattr(valueType, '__get__')
+    hasSet = hasattr(valueType, '__set__')
+    return True if hasGet or hasSet else False
 
   def _assertCompleteField(self, key: str, field: EZField) -> None:
     """
@@ -212,34 +268,84 @@ class EZHook(AbstractSpaceHook):
       missing = 'no construction arguments were given'
       raise IncompleteFieldException(clsName, key, missing)
 
-  def preCompilePhase(self, compiledSpace: dict) -> dict:
+  def _optionalFactories(
+      self,
+      ezFields: dict[str, EZField],
+      isKwOnly: bool,
+  ) -> dict[str, Callable[[], Any]]:
     """
-    The 'preCompilePhase' method installs the dunder methods and
-    conversion helpers that 'EZData' subclasses are allowed to overwrite
-    ('__repr__', '__str__', '__field_pairs__', 'asDict', 'asTuple',
-    'replace'). Each entry is installed before the class body is merged
-    in, so a class-body method definition with the same name wins. The
-    reserved-name guard in 'EZSpace.registerEZField' prevents these
-    names from being used as field names while still permitting method
-    overrides.
+    The '_optionalFactories' method maps each optional name, one EZData
+    generates only where neither the class body nor a base supplies it,
+    to a callable generating it: '__field_pairs__', 'asDict', 'asTuple',
+    'replace', '__repr__', '__str__' and '__match_args__'.
+    """
+    return {
+      '__field_pairs__': self.fieldPairsFactory,
+      'asDict'         : self.asDictFactory,
+      'asTuple'        : self.asTupleFactory,
+      'replace'        : self.replaceFactory,
+      '__repr__'       : self.reprFactory,
+      '__str__'        : self.strFactory,
+      '__match_args__' : lambda: self.matchArgsFactory(ezFields, isKwOnly),
+    }
 
-    Parameters
-    ----------
-    compiledSpace : dict
-      The class namespace being assembled. Mutated in place.
+  @staticmethod
+  def _findHandWritten(name: str, lookupOrder: list[type]) -> tuple:
+    """
+    The '_findHandWritten' method looks along 'lookupOrder' for the first
+    class holding 'name' in its own namespace as something EZData did not
+    generate, an EZData base and a plain base alike. It skips 'object',
+    whose defaults such as '__repr__' are no one's choice, and the names
+    an EZData class lists in its '__ez_generated__'.
 
     Returns
     -------
-    dict
-      'compiledSpace' with the overridable helpers installed.
+    tuple[bool, Any]
+      '(True, value)' for the hand-written value found, or
+      '(False, None)' when the bases supply none.
     """
-    compiledSpace['__field_pairs__'] = self.fieldPairsFactory()
-    compiledSpace['asDict'] = self.asDictFactory()
-    compiledSpace['asTuple'] = self.asTupleFactory()
-    compiledSpace['replace'] = self.replaceFactory()
-    compiledSpace['__repr__'] = self.reprFactory()
-    compiledSpace['__str__'] = self.strFactory()
-    return compiledSpace
+    for klass in lookupOrder:
+      if klass is object:
+        continue
+      own = vars(klass)
+      if name not in own:
+        continue
+      if name in own.get('__ez_generated__', ()):
+        continue
+      return True, own[name]
+    return False, None
+
+  @classmethod
+  def _settleOptional(
+      cls,
+      compiledSpace: dict,
+      factories: dict[str, Callable[[], Any]],
+      lookupOrder: list[type],
+  ) -> frozenset:
+    """
+    The '_settleOptional' method settles each optional name in
+    'compiledSpace'. The class body's own entry wins, as does a
+    'Dispatcher' its '@overload' declarations built; failing that, the
+    first hand-written one along the bases is installed; failing that,
+    EZData generates one.
+
+    Returns
+    -------
+    frozenset[str]
+      The names EZData generated, which the class records in
+      '__ez_generated__' so that its subclasses look past them.
+    """
+    generated = []
+    for name, factory in factories.items():
+      if name in compiledSpace:
+        continue
+      found, value = cls._findHandWritten(name, lookupOrder)
+      if found:
+        compiledSpace[name] = value
+        continue
+      compiledSpace[name] = factory()
+      generated.append(name)
+    return frozenset(generated)
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:
     """
@@ -251,12 +357,12 @@ class EZHook(AbstractSpaceHook):
     field in '__ez_fields__' is guaranteed complete by the time
     this phase runs.
 
-    The phase performs three jobs:
+    The phase performs four jobs:
 
-    1. Records bookkeeping data on the class: '__ez_fields__'
-       (the ordered name-to-'EZField' mapping) and '__key_args__'
-       (the class keyword arguments captured at '__prepare__'
-       time).
+    1. Records '__ez_fields__' on the class, the ordered
+       name-to-'EZField' mapping. The class keyword arguments are
+       on the class already, at '__keyword_arguments__', where the
+       namespace puts them for every worktoy class.
 
     2. Resolves the three build-option flags ('__is_frozen__',
        '__is_ordered__', '__kw_only__') from the class keyword
@@ -266,14 +372,24 @@ class EZHook(AbstractSpaceHook):
        truthy-coerced. Each flag defaults to 'False' when none
        of its synonyms is present.
 
-    3. Installs the auto-generated dunder methods. '__match_args__',
-       '__init__', '__iter__', '__eq__', '__delattr__', and
-       '__setattr__' are installed unconditionally;
-       '__match_args__' is the empty tuple for keyword-only
-       classes, since those have no positional construction
-       shape and so no positional pattern can bind. '__delattr__'
-       always raises because the EZData contract guarantees every
-       declared field carries a value of the declared type;
+    3. Settles the optional names, '__field_pairs__', 'asDict',
+       'asTuple', 'replace', '__repr__', '__str__' and
+       '__match_args__', through '_settleOptional': the class body's
+       own wins, then the first hand-written one along the bases,
+       then a generated one. The generated names are recorded in
+       '__ez_generated__', so that a subclass looks past them to a
+       hand-written one further along. The generated '__match_args__'
+       is empty for keyword-only classes, since those have no
+       positional construction shape and so no positional pattern can
+       bind.
+
+    4. Installs the auto-generated dunder methods. '__init__',
+       '__iter__', '__len__', '__eq__', '__delattr__', and
+       '__setattr__' are installed unconditionally, on the class
+       itself, so they take precedence over a plain base defining any
+       of them. '__delattr__' always raises because the EZData
+       contract guarantees every declared field carries a value of the
+       declared type;
        deletion would break the guarantee. For the same reason the
        '__setattr__' of a non-frozen class casts each field
        assignment through 'castField', while that of a frozen class
@@ -288,19 +404,17 @@ class EZHook(AbstractSpaceHook):
        still blocking inheritance of an ordered base class's
        ordering dunders.
 
+    Every method generated here is named after the class and itself,
+    as 'Point.asDict', through '_qualify'.
+
     The class declares no '__slots__': field values live in the
     instance '__dict__', which is what lets several EZData classes
     with fields combine as bases. A field whose name a data
     descriptor further along the method resolution order would take
     over receives an 'EZStore' through 'storeFactory'.
 
-    The conversion helpers 'asDict', 'asTuple', and 'replace',
-    plus the display dunders '__repr__'/'__str__' and the
-    '__field_pairs__' helper, are installed in 'preCompilePhase'
-    so a class body can replace them with method definitions of
-    the same name. The reserved-name guard in
-    'EZSpace.registerEZField' prevents the same names from being
-    used as fields.
+    The reserved-name guard in 'EZSpace.registerEZField' prevents
+    the optional helper names from being used as fields.
 
     Parameters
     ----------
@@ -315,7 +429,6 @@ class EZHook(AbstractSpaceHook):
     ezFields = self.space.getFields()
     kwargs = self.space.getKwargs()
     compiledSpace['__ez_fields__'] = ezFields
-    compiledSpace['__key_args__'] = {**kwargs, }
 
     isFrozen, _ = self.parseKwargs(*self.__frozen_keys__, **kwargs)
     isOrdered, _ = self.parseKwargs(*self.__ordered_keys__, **kwargs)
@@ -324,20 +437,19 @@ class EZHook(AbstractSpaceHook):
     compiledSpace['__is_ordered__'] = True if isOrdered else False
     compiledSpace['__kw_only__'] = True if isKwOnly else False
 
-    compiledSpace['__match_args__'] = self.matchArgsFactory(
-      ezFields, compiledSpace['__kw_only__']
-    )
+    lookupOrder = self.space._getLookupOrder()
+    factories = self._optionalFactories(ezFields, compiledSpace['__kw_only__'])
+    generated = self._settleOptional(compiledSpace, factories, lookupOrder)
+    compiledSpace['__ez_generated__'] = generated
     compiledSpace['__init__'] = self.initFactory(ezFields)
     compiledSpace['__iter__'] = self.iterFactory()
+    compiledSpace['__len__'] = self.lenFactory()
     compiledSpace['__eq__'] = self.eqFactory()
     compiledSpace['__delattr__'] = self.badDelAttrFactory()
-    lookupOrder = self.space._getLookupOrder()
     compiledSpace.update(self.storeFactory(ezFields, lookupOrder))
     if compiledSpace['__is_frozen__']:
       compiledSpace['__hash__'] = self.hashFactory()
       compiledSpace['__setattr__'] = self.badSetAttrFactory()
-      compiledSpace['__copy__'] = self.copyFactory()
-      compiledSpace['__deepcopy__'] = self.deepCopyFactory()
     else:
       compiledSpace['__hash__'] = None
       compiledSpace['__setattr__'] = self.setAttrFactory(ezFields)
@@ -351,7 +463,23 @@ class EZHook(AbstractSpaceHook):
       compiledSpace['__le__'] = _unorderable
       compiledSpace['__gt__'] = _unorderable
       compiledSpace['__ge__'] = _unorderable
+    owner = compiledSpace.get('__qualname__', self.space.getClassName())
+    self._qualify(compiledSpace, owner, *generated, *self.__installed__)
     return compiledSpace
+
+  @staticmethod
+  def _qualify(compiledSpace: dict, owner: str, *names: str) -> None:
+    """
+    The '_qualify' method names each generated method among 'names' after
+    'owner', the qualified name of the class, and after itself, as a
+    method written in the class body is named. A traceback through one
+    then reads 'Point.asDict' rather than the factory that made it. The
+    comparison every unordered class shares keeps its own name.
+    """
+    for name in names:
+      method = compiledSpace.get(name, None)
+      if isinstance(method, FunctionType) and method is not _unorderable:
+        method.__qualname__ = '%s.%s' % (owner, name)
 
   @staticmethod
   def _isDataDescriptor(value: Any) -> bool:
@@ -482,13 +610,20 @@ class EZHook(AbstractSpaceHook):
       isKwOnly: bool,
   ) -> tuple[str, ...]:
     """
-    Computes the '__match_args__' tuple for the 'EZData' subclass
-    under construction. Returns the field names in declaration
-    order, or an empty tuple when the class is keyword-only and
-    therefore not constructible by a positional pattern. Mirrors
-    the behavior of 'dataclasses.dataclass' for the 'kw_only'
-    flag: keyword-only fields are excluded from '__match_args__'
-    so 'case Cls(a, b):' patterns do not bind against them.
+    Computes the generated '__match_args__' tuple for the 'EZData'
+    subclass under construction: the field names in declaration order,
+    or an empty tuple when the class is keyword-only and therefore not
+    constructible by a positional pattern. Mirrors the behavior of
+    'dataclasses.dataclass' for the 'kw_only' flag: keyword-only fields
+    are excluded from '__match_args__' so 'case Cls(a, b):' patterns do
+    not bind against them.
+
+    '__match_args__' is one of the optional names, so the tuple built
+    here is used only where neither the class body nor a base sets one;
+    see '_settleOptional'. A tuple set by hand is kept as it is,
+    unchecked, as 'dataclasses', 'attrs' and 'typing.NamedTuple' keep
+    one, and a subclass whose body sets none uses the one its parent set
+    by hand.
 
     Parameters
     ----------
@@ -501,7 +636,7 @@ class EZHook(AbstractSpaceHook):
     Returns
     -------
     tuple[str, ...]
-      The '__match_args__' tuple. Empty when 'isKwOnly' is True.
+      The field names, empty when 'isKwOnly' is True.
     """
     if isKwOnly:
       return ()
@@ -513,13 +648,14 @@ class EZHook(AbstractSpaceHook):
     Creates the '__init__' method for the 'EZData' subclass under
     construction. When 'kwOnly' is False, the returned '__init__'
     assigns positional arguments to the fields in declaration order,
-    then assigns keyword arguments by name, overriding any positional
-    value given for the same field. When 'kwOnly' is True, the
+    then assigns keyword arguments by name. When 'kwOnly' is True, the
     '__init__' rejects positional arguments and every field is set by
-    keyword. Either way, every field still left unset finally receives
-    its default value. A field counts as unset when the instance
-    '__dict__' holds no value under its name; a class attribute of the
-    same name, on a mixin for example, does not count.
+    keyword. Either way, a keyword naming none of the fields raises
+    'ExtraKeywordException', a field given both by position and by
+    keyword raises 'RepeatedFieldException', and every field still left
+    unset finally receives its default value. A field counts as unset when
+    the instance '__dict__' holds no value under its name; a class
+    attribute of the same name, on a mixin for example, does not count.
 
     Field metadata is resolved once, here at class creation: each
     field's type and a fresh-default recipe are captured so the
@@ -561,10 +697,21 @@ class EZHook(AbstractSpaceHook):
       specs.append((key, fieldType, makeDefault))
     specs = (*specs,)
     fieldCount = len(specs)
+    fieldNames = (*(key for key, _, __ in specs),)
     castField = cls.castField
 
     def _assignField(self: Any, key: str, val: Any, type_: type) -> None:
       object.__setattr__(self, key, castField(key, val, type_))
+
+    def _refuseUnknown(self: Any, **kwargs) -> None:
+      for key in kwargs:
+        if key not in fieldNames:
+          raise ExtraKeywordException(type(self), key, *fieldNames)
+
+    def _refuseRepeated(self: Any, argCount: int, **kwargs) -> None:
+      for key in fieldNames[:argCount]:
+        if key in kwargs:
+          raise RepeatedFieldException(type(self), key)
 
     def _applyKwargs(self: Any, **kwargs) -> None:
       for key, type_, _ in specs:
@@ -588,6 +735,8 @@ class EZHook(AbstractSpaceHook):
         _applyArgs(self, *args)
       elif args:
         raise KwargsOnlyException(type(self), len(args))
+      _refuseUnknown(self, **kwargs)
+      _refuseRepeated(self, len(args), **kwargs)
       _applyKwargs(self, **kwargs)
       _applyDefaults(self)
       postInit = getattr(type(self), '__post_init__', None)
@@ -617,6 +766,26 @@ class EZHook(AbstractSpaceHook):
         yield getattr(self, name)
 
     return __iter__
+
+  @classmethod
+  def lenFactory(cls, ) -> Callable[..., int]:
+    """
+    Creates the '__len__' method for the 'EZData' subclass under
+    construction. The returned '__len__' gives the number of fields, own
+    and inherited, which is the number of values '__iter__' yields, so
+    'len(instance)' equals 'len(instance.asTuple())'. A class without a
+    '__bool__' of its own is then truthy exactly when it has fields.
+
+    Returns
+    -------
+    Callable[..., int]: (self) -> int
+      The '__len__' method for the 'EZData' subclass under construction.
+    """
+
+    def __len__(self: Any) -> int:
+      return len(self.__ez_fields__)
+
+    return __len__
 
   @classmethod
   def asDictFactory(cls, ) -> Callable[..., dict]:
@@ -670,13 +839,9 @@ class EZHook(AbstractSpaceHook):
     Mirrors 'dataclasses.replace' and is the canonical way to
     derive a modified copy of a frozen instance.
 
-    Unlike the generated '__init__' (which silently ignores
-    kwargs not matching any field, to support orthogonal kwarg
-    injection in multi-base classes), 'replace' raises
-    'TypeError' on any keyword that is not the name of a
-    declared field. The user's intent with 'replace' is always
-    'modify this field', so an unrecognized name is a mistake
-    rather than a deliberate forward.
+    Like the generated '__init__', 'replace' raises 'TypeError'
+    on any keyword that is not the name of a declared field, so a
+    misspelled name is reported rather than dropped.
 
     Returns
     -------
@@ -909,55 +1074,3 @@ class EZHook(AbstractSpaceHook):
       raise AttributeError(textFmt(infoSpec % (clsName, key)))
 
     return __delattr__
-
-  @classmethod
-  def copyFactory(cls, ) -> Callable[..., Any]:
-    """
-    Creates the '__copy__' method for a frozen 'EZData' subclass. A
-    frozen class rejects every assignment through its generated
-    '__setattr__', so the default 'copy.copy' reconstruction (build a
-    blank instance, then set each slot) raises. The returned '__copy__'
-    instead builds a fresh instance and writes the field values straight
-    through 'object.__setattr__', the same bypass '__init__' uses, so a
-    frozen instance copies as a faithful shallow clone.
-
-    Returns
-    -------
-    Callable[..., Any]: (self) -> Self
-      The '__copy__' method for the frozen 'EZData' subclass.
-    """
-
-    def __copy__(self: Any) -> Any:
-      newSelf = type(self).__new__(type(self))
-      for name in self.__ez_fields__:
-        object.__setattr__(newSelf, name, getattr(self, name))
-      return newSelf
-
-    return __copy__
-
-  @classmethod
-  def deepCopyFactory(cls, ) -> Callable[..., Any]:
-    """
-    Creates the '__deepcopy__' method for a frozen 'EZData' subclass,
-    the deep counterpart of 'copyFactory'. Each field value is deep
-    copied (threading the 'memo' dict so shared and cyclic references
-    are preserved) and written through 'object.__setattr__' to sidestep
-    the frozen guard. The new instance is registered in 'memo' before
-    its fields are filled, so a value that refers back to the instance
-    resolves to the same clone.
-
-    Returns
-    -------
-    Callable[..., Any]: (self, memo) -> Self
-      The '__deepcopy__' method for the frozen 'EZData' subclass.
-    """
-
-    def __deepcopy__(self: Any, memo: Any) -> Any:
-      newSelf = type(self).__new__(type(self))
-      memo[id(self)] = newSelf
-      for name in self.__ez_fields__:
-        value = deepcopy(getattr(self, name), memo)
-        object.__setattr__(newSelf, name, value)
-      return newSelf
-
-    return __deepcopy__

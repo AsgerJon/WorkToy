@@ -17,11 +17,17 @@ descriptor-context machinery.
 - AttriBox
 - FixBox
 - SymbolicName
+
+Private, importable but not intended for public use:
+
+- _RootAlias
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+#  Private, and imported first, since 'FastBox' and 'AttriBox' both need it
+from ._root_alias import _RootAlias
 from ._fast_box import FastBox
 from ._base_descriptor import BaseDescriptor
 from ._alias import Alias

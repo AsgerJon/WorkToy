@@ -15,18 +15,22 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def indexPermutations(n: int) -> Iterator[Indices]:
-  """Yield every permutation of '(0, 1, ..., n - 1)'.
+  """Return an iterator over every permutation of '(0, 1, ..., n - 1)'.
+
+  The count is checked as the function is called, before anything is
+  drawn from the iterator.
 
   Parameters
   ----------
   n : int
       The number of positions. Must be non-negative.
 
-  Yields
-  ------
-  ordering : tuple of int
-      A permutation of '(0, 1, ..., n - 1)'. There are 'n!' of them,
-      yielded in lexicographic order.
+  Returns
+  -------
+  Iterator[Indices]
+      An iterator over the permutations, each an 'Indices', which spells
+      out to 'tuple[int, ...]'. There are 'n!' of them, yielded in
+      lexicographic order.
 
   Raises
   ------
@@ -50,4 +54,4 @@ def indexPermutations(n: int) -> Iterator[Indices]:
       for recursive in _go(sub):
         yield (t, *recursive)
 
-  yield from _go((*range(n),))
+  return _go((*range(n),))

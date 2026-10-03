@@ -5,9 +5,11 @@ KeeSpaceHook collects the 'Kee' descriptors from a 'KeeNum' class body.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from types import FunctionType
 from typing import TYPE_CHECKING
 
 from ..mcls.space_hooks import AbstractSpaceHook
+from ..waitaminute.meta import UnboundClassHook
 from . import Kee
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -37,8 +39,13 @@ class KeeSpaceHook(AbstractSpaceHook):
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
     Routes 'Kee' objects to the 'addNum' method of the present namespace
-    object.
+    object. A '__class_resolve__' that is a plain function or a
+    staticmethod raises 'UnboundClassHook', as a routed '__class_*__'
+    hook does: the lookups call the hook bound to the class.
     """
+    if key == '__class_resolve__':
+      if isinstance(val, (FunctionType, staticmethod)):
+        raise UnboundClassHook(self.space.getClassName(), key)
     if isinstance(val, Kee):
       self.space.addNum(key, val)
       return True

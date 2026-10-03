@@ -224,11 +224,7 @@ class TestDispatcher(DispatcherTest):
     """Tests that 'overload' created intermediate objects correctly raises
     TypeError when called."""
 
-    def func() -> None:
-      """Placeholder function."""
-
-    sig = TypeSig(int, int)
-    load = overload(sig, func)
+    load = overload(int, int)
 
     with self.assertRaises(TypeError):
       _ = load(69, 420)  # NOQA, it's okay pycharm, 'unreachable' i kno.

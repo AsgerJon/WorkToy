@@ -1,10 +1,36 @@
 # Dev: the frequent dev-release button. Publishes the next dev version
-# (X.Y.Z-devN) to PyPI as a pre-release. Manual trigger only.
+# (X.Y.Z-devN) to PyPI as a pre-release. Manual trigger only. No safety
+# guards it, but like every button it locks every safety before anything
+# else; see the 'safety' job.
 on:
   workflow_dispatch:
 
 jobs:
+  safety:
+    # No safety answers to a dev release, but every press of any button
+    # spends every arming: the job locks all four safeties back to 'STOP'
+    # and pushes the lock before the test matrix starts.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the locked safeties
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Lock every safety
+        run: python bin/release_tooling/safety_lock.py
+      - name: Push the lock
+        run: |
+          git config user.name "Asger Jon Vistisen"
+          git config user.email "asgerjon2@gmail.com"
+          git add bin/release_tooling/*.safety
+          git diff --cached --quiet || git commit -m "dev: safeties locked"
+          git push origin HEAD:${{ github.ref }}
+
   test:
+    needs: safety
     strategy:
       matrix:
         include:
@@ -54,7 +80,12 @@ jobs:
       id-token: write   # trusted publishing (OIDC) to PyPI
       contents: write   # push the version bump and cut the release
     steps:
+      # The branch tip rather than the commit the button was pressed on:
+      # the version commit below has to sit on top of the lock commit the
+      # 'safety' job pushed.
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref_name }}
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

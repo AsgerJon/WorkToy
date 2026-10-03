@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, cast
 
 from ..core import MetaType
 from ..desc import Field
-from . import KeeSpace as KSpace
 from . import KeeBase
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -23,8 +22,10 @@ class KeeMetaMeta(MetaType):
   """
   KeeMetaMeta hosts the 'keeNum' descriptor: the answer to the
   question "what root class should an enumeration of this metaclass
-  inherit from?" 'KeeMeta' is the only metaclass the library ships,
-  and 'worktoy.keenum.KeeNum' is exactly 'KeeMeta.keeNum', cached.
+  inherit from?" Of the metaclasses the library ships, 'KeeMeta' alone
+  derives from 'KeeMetaMeta', and 'worktoy.keenum.KeeNum' is exactly
+  'KeeMeta.keeNum', cached; 'KeeFlagsMeta' builds its root, 'KeeFlags',
+  by a class statement.
   The descriptor sits on the meta-metaclass rather than on
   'KeeMeta' itself so that any subclass of 'KeeMeta' gets its own
   distinct root class, built through its own machinery rather than
@@ -69,8 +70,8 @@ class KeeMetaMeta(MetaType):
       ... etc.
 
   'FontMeta.keeNum' triggers '_getKeeNum' on 'FontMeta', which
-  calls 'FontMeta.__new__(FontMeta, ...)' to build a fresh root
-  class through 'FontMeta' (carrying every customization
+  builds a fresh root class through the '__prepare__', '__new__'
+  and '__init__' of 'FontMeta' (carrying every customization
   'FontMeta' introduced) and caches the result. 'FontFamilyNum'
   then inherits that root and benefits from the customizations.
 
@@ -96,15 +97,24 @@ class KeeMetaMeta(MetaType):
 
   @keeNum.GET
   def _getKeeNum(mcls, **kwargs) -> KeeMeta:  # noqa N805
+    """
+    The 'keeNum' getter builds the root of the metaclass on first access,
+    as a class statement would: the namespace comes from '__prepare__',
+    and the class from '__new__' and then '__init__'. The root is cached
+    between the two, since '__init__' recognises the root by comparing
+    the class with 'keeNum'.
+    """
     if mcls.__kee_num__ is None:
       if kwargs.get('_recursion', False):
         raise RecursionError
       num = """%sNum""" % (mcls.__name__,)
       name = 'KeeNum' if mcls.__name__ == 'KeeMeta' else num
-      numSpace = KSpace(mcls, name, (KeeBase,), _root=True)
+      bases = (KeeBase,)
+      numSpace = mcls.__prepare__(name, bases, _root=True)
       numSpace['__doc__'] = KeeBase.__doc__
       # noinspection PyTypeChecker
-      num = mcls.__new__(mcls, name, (KeeBase,), numSpace, _root=True)
+      num = mcls.__new__(mcls, name, bases, numSpace, _root=True)
       mcls.__kee_num__ = cast(KeeMeta, num)
+      mcls.__init__(num, name, bases, numSpace, _root=True)
       return mcls._getKeeNum(_recursion=True, )
     return mcls.__kee_num__

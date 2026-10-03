@@ -6,17 +6,18 @@ class object.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class ClassFieldError(TypeError):
+class ClassFieldError(NoPickle, TypeError):
   """
   ClassFieldError is raised at class construction time when an 'EZData'
   class body binds a name to a class object, either through a nested
   class statement or through an assignment such as 'kind = int'. A bare
-  class-body value becomes a field whose default is rebuilt as
-  'type(value)(value)', which for a class is its metaclass, so the field
-  would quietly default to 'type' itself. The class body fails at the
+  class-body value becomes a field of the type of the value, so a class
+  would become a field of type 'type' with the class as its default, and
+  a nested class statement would quietly add a field to the constructor,
+  the equality and the conversions. The class body fails at the
   offending line instead.
 
   Attributes

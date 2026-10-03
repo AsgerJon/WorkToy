@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..utilities import NoPickle
+
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class ContextInstance:
+class ContextInstance(NoPickle):
   """Descriptor that returns the currently active instance.
 
   When accessed on a class, returns the descriptor itself. When
@@ -31,7 +33,7 @@ class ContextInstance:
     return instance.getContextInstance()
 
 
-class ContextOwner:
+class ContextOwner(NoPickle):
   """Descriptor that returns the currently active owner class.
 
   When accessed on a class, returns the descriptor itself. When

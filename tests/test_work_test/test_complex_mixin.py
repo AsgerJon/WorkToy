@@ -1,7 +1,6 @@
 """
 TestComplexMixin subclasses 'ComplexTest' from the 'worktoy.work_test'
-package and provides tests for 'ComplexMixin' from the
-'worktoy.work_test.mixins' package.
+package and provides tests for 'ComplexMixin' from the same package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -20,8 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class TestComplexMixin(ComplexTest):
   """
   TestComplexMixin subclasses 'ComplexTest' from the 'worktoy.work_test'
-  package and provides tests for 'ComplexMixin' from the
-  'worktoy.work_test.mixins' package.
+  package and provides tests for 'ComplexMixin' from the same package.
   """
 
   targets: tuple[Type[ComplexMixin], ...] = (SimpleComplex,)

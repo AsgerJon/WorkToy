@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import NoPickle
 from . import SentinelMeta
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -34,7 +35,7 @@ class _MetaARGS(SentinelMeta):
     return self
 
 
-class ARGS(metaclass=_MetaARGS):
+class ARGS(NoPickle, metaclass=_MetaARGS):
   """
   ARGS uses a Sentinel metaclass and provides a placeholder for a starred
   argument in an overload signature.

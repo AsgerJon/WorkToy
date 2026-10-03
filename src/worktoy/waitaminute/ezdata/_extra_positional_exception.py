@@ -6,15 +6,15 @@ positional arguments than it has fields.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class ExtraPositionalException(TypeError):
+class ExtraPositionalException(NoPickle, TypeError):
   """
   Raised when an EZData subclass receives more positional arguments
-  than it has fields. Unknown keyword arguments are silently ignored
-  to support orthogonal kwarg injection, but extra positional
-  arguments almost always indicate a caller mistake.
+  than it has fields. Its keyword counterpart is
+  'ExtraKeywordException', raised for a keyword argument that names none
+  of the fields.
 
   Attributes
   ----------
@@ -36,9 +36,13 @@ class ExtraPositionalException(TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """EZData subclass '%s' has %d fields but received %d
-    positional arguments. """
-    info = infoSpec % (self.cls.__name__, self.fieldCount, self.argCount)
+    infoSpec = """EZData subclass '%s' has %d %s but received %d
+    positional %s. """
+    fields = 'field' if self.fieldCount == 1 else 'fields'
+    arguments = 'argument' if self.argCount == 1 else 'arguments'
+    clsName = self.cls.__name__
+    counts = (self.fieldCount, fields, self.argCount, arguments)
+    info = infoSpec % (clsName, *counts)
     return textFmt(info, )
 
   __repr__ = __str__

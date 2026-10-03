@@ -9,14 +9,44 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any
+  from typing import Any, Iterator, Optional
+
+
+def _iterate(arg: Any) -> Optional[Iterator]:
+  """Return an iterator over 'arg', or None when 'arg' does not iterate.
+  An object may claim to be iterable and still refuse: every worktoy
+  class does, since its metaclass defines '__iter__' for the
+  '__class_iter__' hook, and iterating one without the hook raises
+  'TypeError', as 'iter' does for anything not iterable."""
+  if not isinstance(arg, Iterable):
+    return None
+  try:
+    return iter(arg)
+  except TypeError:
+    return None
+
+
+def _flatten(arg: Any, items: Iterator) -> list[Any]:
+  """Flatten the 'items' of 'arg' recursively. An item that is 'arg'
+  itself, as an 'ARGS' yields and a list holding itself contains, is
+  kept whole, since unpacking it again would never end."""
+  out = []
+  for item in items:
+    if item is arg:
+      out.append(item)
+      continue
+    out.extend(unpack(item, shallow=False, strict=False))
+  return out
 
 
 def unpack(*args, **kwargs) -> tuple[Any, ...]:
   """Flatten nested iterables in positional arguments.
 
-  Iterables are expanded recursively; 'str' and 'bytes' are treated
-  as atomic and never split into their characters/bytes.
+  Iterables are expanded recursively; the text types 'str', 'bytes' and
+  'bytearray' are treated as atomic and never split into their
+  characters or integers. An object that claims to be iterable but
+  refuses iteration, such as a worktoy class without a '__class_iter__'
+  hook, is kept whole.
 
   Parameters
   ----------
@@ -60,14 +90,15 @@ def unpack(*args, **kwargs) -> tuple[Any, ...]:
   out = []
   iterableFound = False
   for arg in args:
-    if isinstance(arg, (str, bytes,)):
+    if isinstance(arg, (str, bytes, bytearray,)):
       out.append(arg)
       continue
-    if isinstance(arg, Iterable):
+    items = _iterate(arg)
+    if items is not None:
       if kwargs.get('shallow', False):
-        out.extend(arg)
+        out.extend(items)
       else:
-        out = [*out, *unpack(*arg, shallow=False, strict=False)]
+        out.extend(_flatten(arg, items))
       iterableFound = True
       continue
     out.append(arg)

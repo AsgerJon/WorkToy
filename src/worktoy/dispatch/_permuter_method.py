@@ -44,4 +44,5 @@ class PermuterMethod(Permuter):
     Any
         Whatever 'func' returns.
     """
-    return func(instance, *self.arrangement.restoreFrom(*args), **kwargs)
+    arrangement = self._getArrangement()
+    return func(instance, *arrangement.restoreFrom(*args), **kwargs)

@@ -183,8 +183,10 @@ class TestArrangement(TestCase):
     self.assertEqual(str(a), '<Arrangement: C, A, B>')
 
   def test_repr_shows_items_and_forward(self) -> None:
+    """The repr is the call building the arrangement, so the items and the
+    recipe stay apart."""
     a = Arrangement(('A', 'B', 'C'), (2, 0, 1))
-    self.assertEqual(repr(a), 'Arrangement(A, B, C, 2, 0, 1)')
+    self.assertEqual(repr(a), "Arrangement(('A', 'B', 'C'), (2, 0, 1))")
 
   #  ================================================================
   #  |

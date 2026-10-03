@@ -6,10 +6,10 @@ KwargsOnlyException is raised when an EZData subclass declared with
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt
+from ...utilities import textFmt, NoPickle
 
 
-class KwargsOnlyException(TypeError):
+class KwargsOnlyException(NoPickle, TypeError):
   """
   Raised when an EZData subclass declared with 'kwOnly=True' (or a
   synonym such as 'keywordOnly' or 'kw_only') is called with positional
@@ -26,9 +26,10 @@ class KwargsOnlyException(TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """EZData subclass '%s' was declared with 'kw_only=True'
-    but received %d positional arguments. """
-    info = infoSpec % (self.cls.__name__, self.argCount)
+    infoSpec = """EZData subclass '%s' was declared with 'kwOnly=True'
+    but received %d positional %s. """
+    arguments = 'argument' if self.argCount == 1 else 'arguments'
+    info = infoSpec % (self.cls.__name__, self.argCount, arguments)
     return textFmt(info, )
 
   __repr__ = __str__

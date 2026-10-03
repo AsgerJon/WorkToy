@@ -34,13 +34,13 @@ class TestGaussianSampler(SamplerTest):
     def __init__(self, **kw) -> None: ...
     """
 
-    floatFloatKwarg = GaussianSampler(69., 420., lmao=True)
+    floatFloatKwarg = GaussianSampler(69., 420., stdDeviation=420.)
     self.assertEqual(floatFloatKwarg.mean, 69.)
     self.assertEqual(floatFloatKwarg.stdDev, 420.)
     floatFloatSampler = GaussianSampler(69., 420.)
     self.assertEqual(floatFloatSampler.mean, 69.)
     self.assertEqual(floatFloatSampler.stdDev, 420.)
-    floatKwarg = GaussianSampler(69., breh=False)
+    floatKwarg = GaussianSampler(69., std_dev=1.)
     self.assertEqual(floatKwarg.mean, 69.)
     self.assertEqual(floatKwarg.stdDev, 1.)
     floatSampler = GaussianSampler(69.)

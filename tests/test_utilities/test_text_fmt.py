@@ -23,7 +23,7 @@ class TestMonoSpace(UtilitiesTest):
   def test_lineBreak(self) -> None:
     """Tests if textFmt correctly inserts line breaks """
     sample = """This is the first line, <br>and this is the second line."""
-    expected = """This is the first line, \nand this is the second line."""
+    expected = """This is the first line,\nand this is the second line."""
     actual = textFmt(sample)
     self.assertEqual(expected, actual)
 
