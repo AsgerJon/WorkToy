@@ -6,10 +6,10 @@ whose name contains an underscore, or a flag named 'NULL'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class KeeFlagNameError(NoPickle, ValueError):
+class KeeFlagNameError(ValueError):
   """
   KeeFlagNameError is raised at class construction time when a
   'KeeFlags' class body declares a flag whose name contains an

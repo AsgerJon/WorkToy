@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from unittest import TestCase, SkipTest
 
 from ..desc import Field
-from ..utilities import textFmt, NoPickle
+from ..utilities import textFmt
 from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   TestRun: TypeAlias = Optional[BaseTest]
 
 
-class SubTest(NoPickle, TestCase):
+class SubTest(TestCase):
   """
   SubTest subclasses 'unittest.TestCase' (for its assertion methods),
   not 'BaseTest'. It is a per-instance accumulator and context manager:

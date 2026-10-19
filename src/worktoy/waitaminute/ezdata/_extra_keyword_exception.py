@@ -6,10 +6,10 @@ keyword argument that names none of its fields.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class ExtraKeywordException(NoPickle, TypeError):
+class ExtraKeywordException(TypeError):
   """
   ExtraKeywordException is raised when an 'EZData' class is called with a
   keyword argument that names none of its fields, such as 'givenName' for

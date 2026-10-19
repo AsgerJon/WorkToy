@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload, TypeVar, Generic
 
-from . import textFmt, NoPickle
+from . import textFmt
 
 T = TypeVar('T')
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Any, Union, Optional, Never
 
 
-class QuickDesc(NoPickle, Generic[T]):
+class QuickDesc(Generic[T]):
   """Read-only descriptor exposing a named private slot.
 
   Constructed with the name of a private attribute (typically

@@ -72,8 +72,9 @@ exclude_patterns = ["_build", "rst.txt"]
 html_theme = "furo"
 
 #  Custom CSS / JS.
-#    custom.css  : highlights the source line a '#line-N' link jumped
-#                  to, and styles the version switcher box.
+#    custom.css  : styles the version switcher box. The line-jump
+#                  highlight and the link underlines ship with
+#                  markwork in its own markwork.css.
 #    versions.js : the version switcher. On the multi-version GitHub
 #                  Pages build it reads versions.json and shows a
 #                  dropdown; on a local single-version build it finds

@@ -6,10 +6,10 @@ hook claimed.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class ClaimedName(NoPickle, SyntaxError):
+class ClaimedName(SyntaxError):
   """
   ClaimedName is raised when a class body deletes a name whose latest
   binding a namespace hook claimed, such as an 'overload', an 'EZField'

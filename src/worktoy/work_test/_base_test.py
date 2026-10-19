@@ -17,7 +17,7 @@ from .samplers import SymbolicSampler, WordSampler, LoremSampler
 from ..desc import Field, AttriBox, SymbolicName
 from ..lorem_ipsum import StochasticWord, Sentence
 from ..mcls import BaseMeta
-from ..utilities import textFmt, NoPickle
+from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Iterator, Optional
@@ -53,7 +53,7 @@ else:  # version >= 3.14
   _Temp = TestCase
 
 
-class BaseTest(NoPickle, _Temp, metaclass=BaseMeta):
+class BaseTest(_Temp, metaclass=BaseMeta):
   """
   BaseTest provides a base class shared by the testing classes in the
   tests package. It implements module unloading in the 'tearDownClass'

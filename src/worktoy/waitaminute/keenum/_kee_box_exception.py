@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeBoxException(NoPickle, Exception):
+class KeeBoxException(Exception):
   """
   KeeBoxException is a custom exception class raised to indicate that a
   'KeeBox' object failed to resolve to the underlying member.

@@ -6,10 +6,10 @@ value for the same field both by position and by keyword.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class RepeatedFieldException(NoPickle, TypeError):
+class RepeatedFieldException(TypeError):
   """
   RepeatedFieldException is raised when an 'EZData' class is called with a
   value for the same field both by position and by keyword, as in

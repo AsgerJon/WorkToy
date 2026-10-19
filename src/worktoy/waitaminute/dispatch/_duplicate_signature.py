@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Union
@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Method: TypeAlias = Callable[..., Any]
 
 
-class DuplicateSignature(NoPickle, TypeError):
+class DuplicateSignature(TypeError):
   """
   DuplicateSignature is raised when a 'Dispatcher' receives a second
   function registration under a 'TypeSig' it already has on file. A

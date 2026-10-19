@@ -6,10 +6,10 @@ overloads and to a plain definition.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class OverloadConflict(NoPickle, SyntaxError):
+class OverloadConflict(SyntaxError):
   """
   OverloadConflict is raised when one class body binds a name both to
   overloads and to a plain definition, which is any binding that is not

@@ -6,10 +6,10 @@ base class.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ..utilities import textFmt, NoPickle
+from ..utilities import textFmt
 
 
-class SubclassException(NoPickle, TypeError):
+class SubclassException(TypeError):
   """
   SubclassException subclasses 'TypeError' and provides a custom exception
   raised to indicate that a given subclass was not a subclass of a given

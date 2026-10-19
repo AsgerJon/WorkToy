@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeVar, Generic, overload
 
 from . import _RootAlias
-from ..utilities import NoPickle, typeCast, castRule
+from ..utilities import typeCast, castRule
 from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.dispatch import TypeCastException
 
@@ -27,7 +27,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Optional, Union
 
 
-class FastBox(NoPickle, Generic[T]):
+class FastBox(Generic[T]):
   """
   FastBox is a lean, type-enforced attribute descriptor that trades the
   ergonomics of 'AttriBox' for speed. It carries no descriptor context,

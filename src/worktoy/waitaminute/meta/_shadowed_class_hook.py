@@ -7,10 +7,10 @@ itself, so the hook would never be called.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class ShadowedClassHook(NoPickle, SyntaxError):
+class ShadowedClassHook(SyntaxError):
   """
   ShadowedClassHook is raised when a class body binds one of the routed
   '__class_*__' hook names under a metaclass that implements the

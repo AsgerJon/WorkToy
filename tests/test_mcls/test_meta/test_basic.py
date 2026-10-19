@@ -296,7 +296,7 @@ class TestBasicMeta(MCLSTest):
       Bar is a class with BaseMeta as its metaclass.
       """
 
-    expectedHash = hash(('Bar', 'object', 'BaseMeta'))
+    expectedHash = hash(('Bar', 'BaseMeta'))
     self.assertEqual(hash(Bar), expectedHash)
 
   def test_good_del(self) -> None:

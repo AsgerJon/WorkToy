@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from ..utilities import Directory, maybe, NoPickle
+from ..utilities import Directory, maybe
 from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.desc import WithoutException, ReadOnlyError
 from ..waitaminute.desc import ProtectedError
@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
 _PRIVATE_KEY_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
 
 
-class Object(NoPickle, metaclass=MetaType):
+class Object(metaclass=MetaType):
   """The fundamental base class for objects in the 'worktoy' library.
 
   'Object' provides a contextually aware descriptor protocol so that
@@ -47,11 +47,15 @@ class Object(NoPickle, metaclass=MetaType):
   - '__instance_delete__(self, instance, old, **kw)': define how
     the descriptor deletes. Defaults to raising 'ProtectedError'.
 
-  Do not override '__get__', '__set__', or '__delete__'. Those are
-  the context-managing entry points and are expected to stay as
-  implemented here. They push a new '(instance, owner)' frame onto
+  The entry points '__get__', '__set__' and '__delete__' are best left
+  as implemented here. They push a new '(instance, owner)' frame onto
   the descriptor's context stack, dispatch to the corresponding
-  '__instance_*' hook, and pop the frame on the way out.
+  '__instance_*' hook, and pop the frame on the way out. A subclass that
+  needs none of that may override them, as 'Dispatcher' in
+  'worktoy.dispatch', 'Alias' in 'worktoy.desc' and 'AbstractSpaceHook'
+  in 'worktoy.mcls' do; such a subclass uses 'Object' for the field name
+  and owner that '__set_name__' records, and the context stack and the
+  notification hooks are out of play for it.
 
   Context machinery
   -----------------
@@ -501,6 +505,10 @@ class Object(NoPickle, metaclass=MetaType):
     present, returns '(None, kwargs)' unchanged. If no types are
     given, the type of the value is ignored. Raises 'TypeException'
     if a key is present but its value matches none of the given types.
+    A number type given admits the narrower number types as well,
+    'float' an 'int' and 'complex' both, and a 'bool' passes as an
+    'int'. The value is returned as it was given, not cast to the type
+    that admitted it.
     """
     typeArgs, keys = [], []
     for arg in args:

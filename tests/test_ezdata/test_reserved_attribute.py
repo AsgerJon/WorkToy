@@ -2,7 +2,8 @@
 TestReservedAttribute subclasses 'EZTest' from the 'tests.test_ezdata'
 package and pins that an 'EZData' class body may not bind any of the
 attributes EZData keeps for itself: '__ez_fields__', '__key_args__',
-'__is_frozen__', '__is_ordered__', '__kw_only__' and '__ez_generated__'.
+'__is_frozen__', '__is_ordered__', '__kw_only__', '__ez_generated__' and
+'__slots__'.
 The class body fails at the offending line with 'ReservedAttributeError'
 instead of turning the binding into a field.
 """
@@ -24,6 +25,7 @@ _RESERVED = (
   ('__is_ordered__', True),
   ('__kw_only__', True),
   ('__ez_generated__', frozenset()),
+  ('__slots__', ()),
 )
 
 

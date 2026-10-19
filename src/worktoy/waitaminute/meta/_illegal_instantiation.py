@@ -6,10 +6,10 @@ conditions that forbid it.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class IllegalInstantiation(NoPickle, TypeError):
+class IllegalInstantiation(TypeError):
   """
   IllegalInstantiation is raised when a class is instantiated under
   conditions that forbid it, such as calling a 'Sentinel' subclass, which

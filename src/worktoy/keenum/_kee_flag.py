@@ -9,7 +9,7 @@ import typing
 from typing import TYPE_CHECKING
 
 from ..desc import Field
-from ..utilities import textFmt, maybe, NoPickle
+from ..utilities import textFmt, maybe
 from ..waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from ..keenum import KeeFlagsMeta
 
 
-class KeeFlag(NoPickle):
+class KeeFlag:
   """
   KeeFlag declares one single-bit flag inside a 'KeeFlags' class body.
   Despite the name it is not itself an enumeration; the 'KeeFlags'

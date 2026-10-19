@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..utilities import maybe, textFmt, resolveMRO, NoPickle
+from ..utilities import maybe, textFmt, resolveMRO
 from ..waitaminute import TypeException
 from ..waitaminute.meta import HookException, DuplicateHook, ClaimedName
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
   TypeName: TypeAlias = Union[str, type]
 
 
-class AbstractNamespace(NoPickle, dict):
+class AbstractNamespace(dict):
   """
   AbstractNamespace defines the custom execution environment used by
   AbstractMetaclass during class construction. It provides a controlled
@@ -47,6 +47,12 @@ class AbstractNamespace(NoPickle, dict):
   separated into reusable components. By defining a namespace subclass
   with the desired combination of hooks, users can tailor the behavior of
   class construction without modifying the core metaclass logic.
+
+  A class keeps the namespace that built it under '__namespace__', with
+  the compiled dict the namespace records, so a subclass can collect the
+  registrations it inherits. Everything the class body bound, the
+  'overload' objects a hook claimed included, therefore stays alive with
+  the class for the life of the process.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -55,9 +61,6 @@ class AbstractNamespace(NoPickle, dict):
 
   #  Class Variables
   __owner_hooks_list_name__: str = '__hook_objects__'
-  #  The class keywords the namespace reads off the class statement itself;
-  #  its hooks name theirs in their own '__consumed_keys__'.
-  __consumed_keys__: tuple[str, ...] = ('_strictMRO',)
 
   #  Private Variables
   __metaclass__: Optional[AMeta] = None
@@ -65,12 +68,7 @@ class AbstractNamespace(NoPickle, dict):
   __base_classes__ = None
   __class_mro__ = None
   __key_args__ = None
-  __hash_value__ = None
   __compiled_space__ = None
-  __deferred_annotations__ = None
-  __type_annotations__ = None
-  __class_annotations__ = None
-  __global_scope__ = None
   __shadow_space__ = None
   __claimed_deletions__ = None
 
@@ -166,22 +164,6 @@ class AbstractNamespace(NoPickle, dict):
   def getKwargs(self, ) -> dict:
     return {**self.__key_args__, **dict()}
 
-  def getConsumedKeywords(self, ) -> tuple[str, ...]:
-    """
-    The 'getConsumedKeywords' method names the class keywords that this
-    namespace and its hooks read off the class statement: '_strictMRO' for
-    the namespace itself, 'trustMeBro' for 'NamespaceHook' and the option
-    spellings of 'EZData' for 'EZHook'. 'AbstractMetaclass' keeps these out
-    of the call to 'type.__new__', and so out of the '__init_subclass__'
-    chain of the bases, since they were read here and
-    'object.__init_subclass__' would refuse them. Every other keyword goes
-    down that chain, for a base to take or 'object' to refuse.
-    """
-    out = [*self.__consumed_keys__]
-    for hook in self.classGetHooks():
-      out.extend(hook.__consumed_keys__)
-    return (*out,)
-
   def getMRO(self, ) -> list[type]:
     return self.__class_mro__
 
@@ -268,8 +250,6 @@ class AbstractNamespace(NoPickle, dict):
     self.__class_name__ = name
     self.__base_classes__ = [*bases, ]
     self.__key_args__ = kwargs or {}
-    baseNames = tuple(b.__name__ for b in bases)
-    self.__hash_value__ = hash((name, *baseNames, mcls.__name__))
     try:
       self.__class_mro__ = resolveMRO(*bases, )
     except TypeError as typeError:

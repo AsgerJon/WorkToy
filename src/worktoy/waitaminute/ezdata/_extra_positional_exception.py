@@ -6,10 +6,10 @@ positional arguments than it has fields.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class ExtraPositionalException(NoPickle, TypeError):
+class ExtraPositionalException(TypeError):
   """
   Raised when an EZData subclass receives more positional arguments
   than it has fields. Its keyword counterpart is

@@ -207,3 +207,4 @@ docs/_source/
 #  Local docs-preview build artifacts (build_docs.sh)
 etc/docs_build/
 /bin/dev_tooling/audits/
+/archive/

@@ -6,10 +6,10 @@ holds a different hook.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class DuplicateHook(NoPickle, Exception):
+class DuplicateHook(Exception):
   """
   DuplicateHook is raised when a hook is registered on a namespace at a
   name that already holds a different hook. Re-registering the same hook

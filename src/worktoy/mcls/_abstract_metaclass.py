@@ -103,10 +103,6 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
         baseNames = [b.__name__ for b in cls.__bases__]
         metaName = type(cls).__name__
         return hash((cls.__name__, *baseNames, metaName))
-
-    The namespace hashes the same tuple as the stand-in 'TypeSig' gives
-    'THIS' while the class body runs, but nothing depends on the two
-    being equal; see 'TypeSig'.
   - '__class_init__(cls, name, bases, space, **kw) -> None'
     Invoked after the class body has been fully executed.
   - '__class_setitem__(cls, item, value) -> None'
@@ -168,11 +164,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     it, then hands the class to the 'newClassPhase' of every hook. Called
     directly with a plain dict, as in 'BaseMeta(name, bases, {...})', it
     first copies the dict into a namespace of its own, and the hooks of
-    that namespace run. The class keywords the namespace and its hooks
-    read, such as 'trustMeBro', stay with the namespace; every other
-    keyword goes on to 'type.__new__' and so down the '__init_subclass__'
-    chain of the bases, where a base takes it or 'object' refuses it; see
-    'AbstractNamespace.getConsumedKeywords' and 'MetaType.takesKeywords'.
+    that namespace run.
     """
     if not isinstance(space, ASpace):
       plain = space
@@ -180,9 +172,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
       for key, val in dict.items(plain):
         space[key] = val
     namespace = space.compile()
-    consumed = space.getConsumedKeywords()
-    passed = {key: val for key, val in kw.items() if key not in consumed}
-    cls: AMeta = MetaType.__new__(mcls, name, bases, namespace, **passed)
+    cls: AMeta = MetaType.__new__(mcls, name, bases, namespace, **kw)
     for hook in space.getHooks():
       setattr(hook, '__space_object__', space)
       cls = maybe(hook.newClassPhase(cls), cls)
@@ -277,9 +267,20 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     info = infoSpec % cls.__name__
     raise TypeError(info)
 
+  @staticmethod
+  def _skipHash(cls) -> bool:
+    """
+    The '_skipHash' method checks if the class has a '__skip_hash__'
+    attribute set to True. This is used to determine if the class should
+    skip custom hash computation.
+    """
+    return getattr(cls, '__skip_hash__', False)
+
   def __hash__(cls) -> int:
     if cls.__class_hash__ is METACALL:
-      baseNames = [b.__name__ for b in cls.__bases__]
+      bases = (*(b for b in cls.__bases__ if not cls._skipHash(b)),)
+      bases = (*(b for b in bases if b is not object),)
+      baseNames = [b.__name__ for b in bases]
       metaName = type(cls).__name__
       nameTuple = (cls.__name__, *baseNames, metaName)
       return hash(nameTuple)  # NOQA

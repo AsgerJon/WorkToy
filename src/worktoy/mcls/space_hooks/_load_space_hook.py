@@ -34,8 +34,10 @@ class LoadSpaceHook(AbstractSpaceHook):
     """
     The 'setItemPhase' method records each binding of the class body. An
     'overload' is claimed and its registrations are stored on the
-    namespace; anything else is a plain definition, whose name is noted
-    and which the namespace stores as usual. One class body may not give
+    namespace, each signature as a copy, so that the 'overload' object
+    keeps 'THIS' and may be bound in another class body; anything else
+    is a plain definition, whose name is noted and which the namespace
+    stores as usual. One class body may not give
     a name both, in either order, so the second of the two raises
     'OverloadConflict'. The hook runs ahead of the hooks of the namespace
     subclasses, so it also notes a plain value one of them then claims,
@@ -75,10 +77,13 @@ class LoadSpaceHook(AbstractSpaceHook):
       self.space.addFallback(key, val.getFallback())
     if val.isFinalizer():
       self.space.addFinalizer(key, val.getFinalizer())
+    #  Copies, since naming the class rewrites 'THIS' in a registered
+    #  signature in place: an 'overload' bound in two class bodies would
+    #  otherwise hand the second class the signatures the first fixed.
     for sig, func in val:
-      self.space.addOverload(key, sig, func)
+      self.space.addOverload(key, sig(), func)
     for sig, func in val.getVariadics():
-      self.space.addVariadic(key, sig, func)
+      self.space.addVariadic(key, sig(), func)
     return True
 
   def postCompilePhase(self, compiledSpace) -> dict:

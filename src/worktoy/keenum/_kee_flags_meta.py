@@ -123,9 +123,8 @@ class KeeFlagsMeta(BaseMeta):
     all 2 ** N flag combinations as members, populating 'memberList' and
     'memberDict'.
     """
-    #  The root is marked by the '_root' keyword, never by its name, and
-    #  the keyword goes no further than here.
-    isRoot = True if kw.pop('_root', False) else False
+    #  The root is marked by the '_root' keyword, never by its name.
+    isRoot = True if kw.get('_root', False) else False
     cls: KFMeta = BaseMeta.__new__(mcls, name, bases, space, **kw)
     if isRoot:
       setattr(cls, '__kee_bases__', bases)

@@ -10,6 +10,11 @@ Accessed through an instance, it runs the accessor appropriate for
 that instance. See 'Object' in 'worktoy.core' for the full
 descriptor-context machinery.
 
+Pickling is not supported. A box is a class attribute and has no
+'__reduce__', so pickling a box, or an object whose fields a box created,
+may give undefined behaviour. Copying is supported; see
+'AttriBox.__deepcopy__'.
+
 - FastBox
 - BaseDescriptor
 - Alias

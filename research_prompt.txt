@@ -1,0 +1,42 @@
+Read the central non-leaf packages of the worktoy source very
+carefully. In order of dependency, they are:
+
+1. core
+2. dispatch
+3. desc
+4. mcls
+
+Within each package, follow the import order in its __init__.py.
+
+Support packages are the utilities and waitaminute (custom
+exceptions) packages. These are to be inspected ad hoc as they are
+referenced during the read of the non-leaf packages.
+
+Read every line of each module yourself. Do not skim, grep,
+summarize from headers, or delegate to subagents. If a read is
+truncated, continue with offset until the end of the file.
+
+For each item inspected, add an entry to research_notes.md in the
+project root describing both the item and its interaction with the
+rest of the non-leaf packages. Append each entry as soon as the item
+has been inspected, before moving on to the next.
+
+If you resume after an interruption, read research_notes.md and
+continue with the first item that has no entry.
+
+Upon completion, create a visual map of the structure of the
+non-leaf packages: a single file, structure_map.html, that opens in
+a browser without a server and shows an interactive graph. Only
+items from core, dispatch, desc and mcls appear as nodes. Items from
+utilities and waitaminute never appear as nodes or edges; where a
+non-leaf item relies on them, mention it in that item's details
+instead. Clicking an item highlights its connections and shows its
+entry from research_notes.md. Draw the edges from research_notes.md,
+not from the imports: each edge is an actual use of one item by another,
+labeled with a short verb phrase, with one or two sentences on what the use
+is for shown on hover. Distinguish a class based on another class, a class
+derived from a metaclass, and other uses, and group items by
+package.
+
+Do not modify any file other than research_notes.md and
+structure_map.html.

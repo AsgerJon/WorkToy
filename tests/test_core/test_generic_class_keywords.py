@@ -1,11 +1,7 @@
 """
 TestGenericClassKeywords subclasses 'CoreTest' and pins that a class
 deriving from a worktoy metaclass takes class keywords when its only base
-with an '__init_subclass__' of its own is 'typing.Generic'. That one
-hands every keyword on to 'object.__init_subclass__', which refuses them,
-but 'MetaType' counted it as accepting keywords, so
-'class Holder(Generic[T], metaclass=BaseMeta, trustMeBro=True)' raised
-'TypeError'.
+with an '__init_subclass__' of its own is 'typing.Generic'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen

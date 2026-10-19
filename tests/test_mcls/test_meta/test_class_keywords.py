@@ -18,11 +18,10 @@ class TestClassKeywords(MCLSTest):
   TestClassKeywords tests the class keywords of classes built by a
   'worktoy' metaclass. The namespace records them and its hooks read them,
   as 'trustMeBro' is read by 'NamespaceHook', '__class_init__' receives
-  them, and so does the '__init_subclass__' of a base defining one.
-  'MetaType' keeps them only from 'object.__init_subclass__', which refuses
-  every keyword, so a class deriving from a 'worktoy' metaclass without
-  being based on 'Object', such as a 'KeeFlags' class, a 'BaseTest' class
-  or a class declaring only 'metaclass=BaseMeta', takes the keywords as a
+  them, and so does the '__init_subclass__' of a base defining one. A
+  class deriving from a 'worktoy' metaclass without being based on
+  'Object', such as a 'KeeFlags' class, a 'BaseTest' class or a class
+  declaring only 'metaclass=BaseMeta', takes the keywords as a
   'BaseObject' does.
   """
 
@@ -135,8 +134,7 @@ class TestClassKeywords(MCLSTest):
   def test_object_takes_keywords(self) -> None:
     """
     Testing that a class based on 'Object' and built by 'MetaType' takes
-    a class keyword, since none of its bases has an '__init_subclass__' to
-    hand it to 'object'; see 'MetaType.takesKeywords'.
+    a class keyword.
     """
 
     class Desc(Object, flavour='vanilla'):

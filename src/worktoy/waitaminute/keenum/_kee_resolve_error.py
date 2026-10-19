@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeResolveError(NoPickle, Exception):
+class KeeResolveError(Exception):
   """
   Raised when an enumeration cannot resolve an identifier to one of its
   members. It is the terminal signal of the resolution machinery: every

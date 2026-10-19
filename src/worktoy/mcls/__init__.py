@@ -20,6 +20,10 @@ the class; it can only reject the class by raising an exception from
 '__subclasshook__'. Finally, the metaclass returns the created class
 object.
 
+A base built by 'abc.ABCMeta', such as 'abc.ABC', cannot be combined with
+these metaclasses: 'ABCMeta' is outside the 'MetaType' family, so the
+class statement raises Python's metaclass conflict.
+
 - space_hooks
 - AbstractNamespace
 - AbstractMetaclass

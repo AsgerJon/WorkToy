@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import NoPickle
 from . import SentinelMeta
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -17,14 +16,13 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class _MetaARGS(SentinelMeta):
   """
-  Metaclass for the 'ARGS' sentinel.
+  Metaclass for the 'ARGS' sentinel. It registers 'ARGS' with
+  'SentinelMeta' as any sentinel, so a second class statement at the name
+  is refused, and overrides '__call__' alone, so that 'ARGS' can be
+  instantiated where the other sentinels cannot.
   """
 
   __inner_type__: Optional[type] = None
-
-  def __new__(mcls, *args, **kwargs) -> _MetaARGS:
-    # noinspection PyTypeChecker
-    return type.__new__(mcls, *args, **kwargs)
 
   def __call__(cls, type_: type) -> _MetaARGS:
     """
@@ -35,7 +33,7 @@ class _MetaARGS(SentinelMeta):
     return self
 
 
-class ARGS(NoPickle, metaclass=_MetaARGS):
+class ARGS(metaclass=_MetaARGS):
   """
   ARGS uses a Sentinel metaclass and provides a placeholder for a starred
   argument in an overload signature.

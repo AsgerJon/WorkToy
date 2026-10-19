@@ -14,6 +14,7 @@ from ..core import Object
 from ..core.sentinels import DELETED
 from ..utilities import typeCast, castRule, textFmt
 from ..waitaminute import TypeException, MissingVariable
+from ..waitaminute.desc import MissingInstanceDict, StorageCollision
 from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -141,8 +142,11 @@ class AttriBox(BaseDescriptor[T]):
   though: 'fooBar' and 'foo_bar' both store at
   '__foo_bar__attribox_field_object__', as do 'X' and 'x' at
   '__x__attribox_field_object__'. Declaring two such fields on one
-  class, the same name once in each spelling, leaves them sharing one
-  storage, and the behaviour is then undefined.
+  class, the same name once in each spelling, is refused with
+  'StorageCollision' as the class is created, since the two would share
+  one storage. The value is stored in the instance dict, so an owner
+  whose instances have none, a class declaring '__slots__' without
+  '__dict__', is refused with 'MissingInstanceDict' at the first access.
 
   An object the box creates, as a default or through the field-type
   constructor on assignment, is tagged with '__field_box__',
@@ -573,6 +577,42 @@ class AttriBox(BaseDescriptor[T]):
     object.__setattr__(fieldObject, '__field_owner__', self.getFieldOwner())
     object.__setattr__(fieldObject, '__field_box__', self)
 
+  def _store(self, instance: Any, value: Any) -> None:
+    """
+    The '_store' method writes 'value' under the storage name on
+    'instance' with 'object.__setattr__', past any '__setattr__' of the
+    owner, and raises 'MissingInstanceDict' when the instance has no
+    instance dict to hold it, as an instance of a class declaring
+    '__slots__' without '__dict__' has none. The bare 'AttributeError'
+    of the failed store used to escape, which the attribute protocol
+    reads as the attribute being absent.
+    """
+    try:
+      object.__setattr__(instance, self._getStorageName(), value)
+    except AttributeError as attributeError:
+      fieldName = self.getFieldName()
+      raise MissingInstanceDict(instance, fieldName) from attributeError
+
+  def _refuseStorageCollision(self, owner: type) -> None:
+    """
+    The '_refuseStorageCollision' method raises 'StorageCollision' when
+    another box of the same class as this one, declared earlier in the
+    body of 'owner', stores at the storage name this box derives, as a
+    box named 'fooBar' and one named 'foo_bar' do. The earlier box has
+    its name by the time this one is named, and the later box has none
+    yet when the earlier one is checked, so the second of the two is
+    the one refused.
+    """
+    storageName = self._getStorageName()
+    for name, value in owner.__dict__.items():
+      if value is self or not isinstance(value, AttriBox):
+        continue
+      if value.getFieldName() is None:
+        continue
+      if value._getStorageName() == storageName:
+        fieldName = self.getFieldName()
+        raise StorageCollision(owner, fieldName, name, storageName)
+
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> T:
     """
     The '__instance_get__' method returns the stored field value for the
@@ -594,8 +634,7 @@ class AttriBox(BaseDescriptor[T]):
       args = self.getPosArgs()
       kwargs = self.getKeyArgs()
       fieldObject = self._resolve(*args, **kwargs)
-      #  Not 'setattr', which an owner's '__setattr__' could refuse.
-      object.__setattr__(instance, pvtName, fieldObject)
+      self._store(instance, fieldObject)
       return self.__instance_get__(instance, owner, _recursion=True)
     else:
       return value
@@ -612,7 +651,7 @@ class AttriBox(BaseDescriptor[T]):
     fieldType = self.getFieldType()
     pvtName = self._getStorageName()
     if isinstance(value, fieldType):
-      object.__setattr__(instance, pvtName, value)
+      self._store(instance, value)
       return value
     #  Catch recursion
     if kwargs.get('_recursion', False):
@@ -646,8 +685,7 @@ class AttriBox(BaseDescriptor[T]):
     instance by storing the 'DELETED' sentinel under the private
     attribute name, which a later read translates into 'MissingVariable'.
     """
-    pvtName = self._getStorageName()
-    object.__setattr__(instance, pvtName, DELETED)
+    self._store(instance, DELETED)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -685,9 +723,9 @@ class AttriBox(BaseDescriptor[T]):
     """
     The '__deepcopy__' method returns the box itself, so 'copy.deepcopy'
     of a box is the box, whether the box is copied directly or reached
-    while copying another object. It replaces the copying 'NoPickle'
-    provides, which would build a new box holding deep copies of every
-    attribute, the captured default arguments included.
+    while copying another object. Without it the default protocol would
+    build a new box holding deep copies of every attribute, the captured
+    default arguments included.
 
     A box is part of the class it is declared on, as a method or a
     property is, and is shared by every instance of that class. A copy of
@@ -702,8 +740,13 @@ class AttriBox(BaseDescriptor[T]):
 
     'FixBox', 'Kee' and 'KeeBox' inherit this. A separate box is made by
     subscripting and calling the box class again, and a separate 'Kee'
-    with 'Kee.clone'. 'FastBox' creates no tags and keeps the copying of
-    'NoPickle'.
+    with 'Kee.clone'. 'FastBox' creates no tags and copies by the default
+    protocol.
+
+    Pickling is not covered. A box has no '__reduce__', so 'pickle'
+    rebuilds a box from its state, and an unpickled field object names
+    that new box in its tags rather than the box declared on the class.
+    Pickling a box, or an object a box tagged, is undefined behaviour.
     """
     return self
 
@@ -818,3 +861,4 @@ class AttriBox(BaseDescriptor[T]):
     if self.__pos_args__ is None:
       BaseDescriptor.__init__(self)
     super().__set_name__(owner, name, **kwargs)
+    self._refuseStorageCollision(owner)

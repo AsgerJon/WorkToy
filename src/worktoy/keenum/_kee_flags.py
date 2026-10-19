@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..desc import Field
-from ..utilities import textFmt, NoPickle
+from ..utilities import textFmt
 from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute.keenum import KeeWriteOnceError
 from . import KeeFlag, KeeFlagsMeta
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Iterator, Never, Self
 
 
-class KeeFlags(NoPickle, metaclass=KeeFlagsMeta, _root=True):
+class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   """
   Base class for bitmask-flag enumerations. Each KeeFlags subclass
   declares 'KeeFlag()' fields in its body, one per single-bit flag;

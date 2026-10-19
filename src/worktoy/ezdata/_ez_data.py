@@ -21,12 +21,7 @@ class EZData(Object, metaclass=EZMeta):
   'EZField[T](...)' instances, optionally pass build-option
   keywords ('frozen=True', 'ordered=True', 'kwOnly=True' or any
   of their synonyms), and optionally define '__post_init__' for
-  validation or derived state. A class keyword that is none of the
-  options goes down the '__init_subclass__' chain to the bases, as in
-  'class Point(EZData, Tagged, tag='hello')' where 'Tagged' takes 'tag';
-  with no base having an '__init_subclass__' of its own, such a keyword,
-  a misspelled option for instance, raises 'ClassKeywordError' at the
-  class statement.
+  validation or derived state.
 
   In return the class receives auto-generated '__init__',
   '__iter__', '__len__', '__eq__', '__setattr__', '__delattr__',

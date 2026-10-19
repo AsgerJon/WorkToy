@@ -82,7 +82,10 @@ class Dispatcher(Object):
      signatures that allow coercion ('__allow_flex__'). Cost is O(N)
      plus a cast attempt per signature per argument. Runs only when
      FAST produced no match, i.e. the call relies on flexible type
-     coercion ('@overload(int)' matching '"42"' via cast).
+     coercion ('@overload(int)' matching '"42"' via cast). In an
+     '__init__' the only argument of a call is never cast by calling
+     the owning class, since that would repeat the very call being
+     dispatched; an argument among several still is.
 
   The full order is FASTEST, FAST-concrete, FAST-variadic,
   SLOW-concrete, SLOW-variadic, then the fallback (if registered),
@@ -336,6 +339,21 @@ class Dispatcher(Object):
     fallback = self._getFallbackFunction()
     finalizer = self._getFinalizerFunction()
     dispatcher = self
+    fieldName = self._getFieldName()
+    owner = self._getFieldOwner()
+    ownClass = owner if fieldName == '__init__' else None
+
+    def castArg(type_: type, arg: Any, soleArg: bool) -> Any:
+      """'arg' cast to 'type_' for the cast passes, 'soleArg' telling
+      whether 'arg' is the only argument of the call. A constructor does
+      not cast its only argument to its own class, since that calls the
+      class on the same argument, which is the call being dispatched: it
+      could only fail the same way again, one level deeper each time. An
+      argument among several casts as any other, since calling the class
+      on it alone is a call of its own."""
+      repeatsCall = True if soleArg and type_ is ownClass else False
+      allowInstantiation = False if repeatsCall else True
+      return typeCast(type_, arg, allowInstantiation=allowInstantiation)
 
     def exactVariadic(argTypes: tuple) -> Optional[Method]:
       """The function of the variadic signature accepting the call of
@@ -404,6 +422,7 @@ class Dispatcher(Object):
           if matched:
             return func(instance, *args, **kwargs)
         #  SLOW
+        soleArg = True if len(args) == 1 else False
         for sig, func in castFuncs:
           castArgs = []
           if not sig.__allow_flex__:
@@ -415,7 +434,7 @@ class Dispatcher(Object):
               castArgs.append(arg)
               continue
             try:
-              castedArg = typeCast(type_, arg)
+              castedArg = castArg(type_, arg, soleArg)
             except (ValueError, TypeError):
               break
             else:
@@ -438,7 +457,7 @@ class Dispatcher(Object):
               castArgs.append(arg)
               continue
             try:
-              castArgs.append(typeCast(type_, arg))
+              castArgs.append(castArg(type_, arg, soleArg))
             except (ValueError, TypeError):
               matched = False
               break
@@ -449,7 +468,7 @@ class Dispatcher(Object):
               castArgs.append(arg)
               continue
             try:
-              castArgs.append(typeCast(innerType, arg))
+              castArgs.append(castArg(innerType, arg, soleArg))
             except (ValueError, TypeError):
               matched = False
               break
@@ -471,8 +490,7 @@ class Dispatcher(Object):
               raise finalException
             raise finalException from raised
 
-    fieldName = self._getFieldName()
-    ownerName = self._getFieldOwner().__name__
+    ownerName = owner.__name__
     dispatch.__name__ = fieldName
     dispatch.__qualname__ = '%s.%s' % (ownerName, fieldName)
     self.__compiled_func__ = dispatch
@@ -524,6 +542,7 @@ class Dispatcher(Object):
     DuplicateSignature
         If a function is already registered under 'sig'.
     """
+    self._resolveTHIS(sig)
     existing = self._getSigFuncList()
     for existingSig, existingFunc in existing:
       if existingSig == sig:
@@ -569,11 +588,23 @@ class Dispatcher(Object):
         The same 'func', so the method can sit at the end of a
         registration chain.
     """
+    self._resolveTHIS(sig)
     existing = self._getVariadicFuncs()
     self.__variadic_funcs__ = [*existing, (sig, func,)]
     self.__variadic_distances__ = [*self._getVariadicDistances(), distance]
     self.__compiled_func__ = None
     return func
+
+  def _resolveTHIS(self, sig: TypeSig) -> None:
+    """
+    The '_resolveTHIS' method rewrites 'THIS' in 'sig' to the owning
+    class when this dispatcher is already placed on one, so a signature
+    registered after '__set_name__' resolves as one registered before.
+    A dispatcher not yet placed leaves the sentinel for '__set_name__'.
+    """
+    owner = self.__field_owner__
+    if owner is not None:
+      sig.swapTHIS(owner)
 
   def setFallbackFunction(self, func: Method) -> Method:
     """
@@ -676,6 +707,11 @@ class Dispatcher(Object):
     'Owner.__dict__[name]' for introspection, post-hoc registration,
     or cloning.
 
+    A dispatcher installed on a finished class with 'setattr' never
+    receives '__set_name__'. The first read through that class adopts
+    the class holding it and the name it is held under; see
+    '_adoptOwner'.
+
     Parameters
     ----------
     instance : Any
@@ -690,9 +726,27 @@ class Dispatcher(Object):
         On class-level access, the compiled dispatch function; on
         instance-level access, a bound 'MethodType' wrapping it.
     """
+    self._adoptOwner(owner if owner is not None else type(instance))
     if instance is None:
       return self._getCachedFunction()
     return MethodType(self._getCachedFunction(), instance)
+
+  def _adoptOwner(self, owner: type) -> None:
+    """
+    The '_adoptOwner' method names this dispatcher, when nothing has yet,
+    after the class along the resolution order of 'owner' that holds it
+    and the name it is held under, by running '__set_name__' as the class
+    statement would have. A dispatcher installed with 'setattr' is the
+    one this serves; a placed dispatcher is left as it is, and one no
+    class holds is left unnamed, to be refused as before.
+    """
+    if self.__field_owner__ is not None:
+      return
+    for cls in getattr(owner, '__mro__', (owner,)):
+      for name, value in cls.__dict__.items():
+        if value is self:
+          self.__set_name__(cls, name)
+          return
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
     """
@@ -743,12 +797,17 @@ class Dispatcher(Object):
   @staticmethod
   def _copySig(sig: TypeSig) -> TypeSig:
     """
-    The '_copySig' method returns a copy of 'sig' holding the same types
-    and the same '__allow_flex__' flag. '__set_name__' rewrites 'THIS' in
-    the signatures of a dispatcher in place, so a clone holding the
-    signatures of the original would fix 'THIS' for both.
+    The '_copySig' method returns a copy of 'sig' holding the same types,
+    the same declared types and the same '__allow_flex__' flag.
+    '__set_name__' rewrites 'THIS' in the signatures of a dispatcher in
+    place, so a clone holding the signatures of the original would fix
+    'THIS' for both. The copy keeps the declared types so that
+    'restoreTHIS' can put the sentinel back on the clone.
     """
-    return sig()
+    copied = type(sig)(*sig.getDeclaredTypes())
+    copied.__raw_types__ = sig.getRawTypes()
+    copied.__allow_flex__ = sig.__allow_flex__
+    return copied
 
   def clone(self, ) -> Self:
     """
@@ -757,7 +816,12 @@ class Dispatcher(Object):
     with their distances, the same fallback, and the same finalizer.
 
     The signatures are copies, see '_copySig', so placing the clone on a
-    class resolves 'THIS' in its own signatures alone.
+    class resolves 'THIS' in its own signatures alone. A clone of a
+    placed dispatcher carries the class of the original in place of
+    'THIS', as the original does, so a subclass may add a 'THIS' overload
+    of its own beside the inherited one; 'restoreTHIS' on the clone puts
+    the sentinel back before placement, so the clone resolves 'THIS' to
+    the class it is placed on instead.
 
     Returns
     -------
@@ -809,7 +873,7 @@ class Dispatcher(Object):
     self.__latest_func__ = func
     return func
 
-  def overload(self, *types: type) -> Decorator:
+  def overload(self, *types: type, **kwargs) -> Decorator:
     """
     The 'overload' method builds a decorator that registers the
     decorated function under the given positional-argument type
@@ -824,6 +888,11 @@ class Dispatcher(Object):
     ----------
     *types : type
         The positional-argument types of the signature.
+    **kwargs
+        strict : bool, optional
+            Whether the signature refuses casts, as for 'overload'.
+            Defaults to True for a signature naming 'THIS' and to False
+            otherwise.
 
     Returns
     -------
@@ -843,6 +912,10 @@ class Dispatcher(Object):
     def decorator(func: Method) -> Self:
       func = self._stackedFunction(func)
       sig = TypeSig(*types)
+      strict = kwargs.get('strict', None)
+      if strict is None:
+        strict = TypeSig.namesTHIS(*types)
+      sig.__allow_flex__ = False if strict else True
       if types and isinstance(types[-1], ARGS):
         self.addVariadicSigFunc(sig, func)
       else:
@@ -947,6 +1020,20 @@ class Dispatcher(Object):
       return self
 
     return decorator
+
+  def restoreTHIS(self) -> None:
+    """
+    The 'restoreTHIS' method puts 'THIS' back in every registered
+    signature that was declared with it, concrete and variadic, undoing
+    'swapAllTHIS', and invalidates the compiled-function cache. On a
+    clone made from a placed dispatcher this lets the clone resolve
+    'THIS' to the class it is placed on next.
+    """
+    for sig, func in self._getSigFuncList():
+      sig.restoreTHIS()
+    for sig, func in self._getVariadicFuncs():
+      sig.restoreTHIS()
+    self.__compiled_func__ = None
 
   def swapAllTHIS(self, thisType: type) -> None:
     """

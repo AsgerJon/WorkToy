@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from . import textFmt, QuickDesc, NoPickle
+from . import textFmt, QuickDesc
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Type, Self, Optional, TypeAlias
@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 _NO_EXC = 'No Exception'
 
 
-class ExceptionInfo(NoPickle):
+class ExceptionInfo:
   """Context manager for capturing and inspecting exceptions.
 
   Wrap a block of code that is expected to raise. The expected

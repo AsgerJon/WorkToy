@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import maybe, NoPickle
+from ...utilities import maybe
 from . import ControlClassError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,7 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Meta: TypeAlias = Type[MetaFlow]
 
 
-class ControlSpace(NoPickle, dict):
+class ControlSpace(dict):
   """
   ControlSpace provides the namespace object for the control flow
   exceptions.

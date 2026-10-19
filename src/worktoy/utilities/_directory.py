@@ -9,13 +9,12 @@ import sys
 import os
 from typing import TYPE_CHECKING
 
-from . import NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Never, Optional
 
 
-class Directory(NoPickle):
+class Directory:
   """Read-only descriptor returning the owner's source directory.
 
   On instance access, resolves the module of the instance's class

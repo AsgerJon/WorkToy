@@ -41,8 +41,10 @@ class SentinelMeta(type):
   @classmethod
   def _getRegisteredSentinels(mcls) -> list[Self]:
     """The sentinel classes registered so far, or an empty list when none
-    have been registered yet."""
-    return maybe(mcls.__registered_sentinels__, [])
+    have been registered yet. The registry is the one of 'SentinelMeta'
+    itself, whichever subclass of it asks, so a sentinel family built on
+    a subclass shares it with plain 'Sentinel'."""
+    return maybe(SentinelMeta.__registered_sentinels__, [])
 
   @classmethod
   def _getNamedSentinel(mcls, sentinelName: str, ) -> Self:
@@ -66,7 +68,7 @@ class SentinelMeta(type):
     its name is refused instead of building a second sentinel of the
     name."""
     existing = mcls._getRegisteredSentinels()
-    mcls.__registered_sentinels__ = [*existing, sentinel]
+    SentinelMeta.__registered_sentinels__ = [*existing, sentinel]
 
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kwargs) -> dict:

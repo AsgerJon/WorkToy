@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Type, TypeAlias
@@ -17,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Meta: TypeAlias = Type[MetaFlow]
 
 
-class ControlClassError(NoPickle, TypeError):
+class ControlClassError(TypeError):
   """
   ControlClassError is raised when a 'ControlFlow' subclass defines a
   disallowed attribute. Only '__str__' and '__repr__' may be defined in

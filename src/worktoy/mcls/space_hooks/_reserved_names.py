@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from ...utilities import NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, TypeAlias, Union
@@ -15,7 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Names: TypeAlias = tuple[str, ...]
 
 
-class ReservedNames(NoPickle):
+class ReservedNames:
   """
   ReservedNames provides a list of reserved names that are set
   automatically by the interpreter.

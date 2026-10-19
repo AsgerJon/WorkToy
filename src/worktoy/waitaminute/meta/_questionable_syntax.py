@@ -6,10 +6,10 @@ name, such as '__set_item__' for '__setitem__'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class QuestionableSyntax(NoPickle, SyntaxError):
+class QuestionableSyntax(SyntaxError):
   """
   QuestionableSyntax is raised when a class body defines a name that is a
   near-miss for a real dunder, such as '__set_item__' for '__setitem__' or

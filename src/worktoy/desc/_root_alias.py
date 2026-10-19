@@ -10,14 +10,13 @@ from typing import TYPE_CHECKING
 # noinspection PyUnresolvedReferences, PyProtectedMember
 from typing import _GenericAlias as GenAlias
 
-from ..utilities import NoPickle
 from ..waitaminute.desc import PhantomBoxError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Never, Optional
 
 
-class _RootAlias(NoPickle, GenAlias, _root=True):
+class _RootAlias(GenAlias, _root=True):
   """
   This class is returned when a box, 'AttriBox' or 'FastBox', is
   subscripted with anything but a plain class: a 'TypeVar', as in

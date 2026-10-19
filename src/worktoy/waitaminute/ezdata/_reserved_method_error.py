@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
 
-class ReservedMethodError(NoPickle, AttributeError):
+class ReservedMethodError(AttributeError):
   """
   ReservedMethodError subclasses 'AttributeError' and is raised when an
   EZData class body defines a method that EZData generates for every

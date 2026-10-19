@@ -11,6 +11,7 @@ from types import FunctionType as Func
 from ..utilities import maybe
 from ..core import Object
 from ..dispatch import flexCall
+from ..waitaminute.desc import NamelessCallback
 
 T = TypeVar('T', )
 
@@ -34,7 +35,14 @@ class BaseDescriptor(Object, Generic[T]):
   and the positional arguments it does not declare are dropped. Each
   decorator returns the callback wrapped by 'flexCall' for this, so the
   wrapping happens once as the class body runs, and an override that was
-  never decorated is wrapped as it is called.
+  never decorated is wrapped as it is called. An override that is a
+  classmethod is unwrapped to the function behind the bound method, as
+  'hookSetName' does with the '@classmethod' it requires, and that
+  function is then called as the plain method would be, the instance
+  first; a bound method used to be refused by 'flexCall' on every
+  access. A callback without a name of its own, a lambda or a callable
+  with no '__name__', could never be found by name, so each decorator
+  refuses one with 'NamelessCallback'.
 
   The following example illustrates an exhaustively decorated descriptor
   in a class body:
@@ -159,44 +167,77 @@ class BaseDescriptor(Object, Generic[T]):
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def _getCallbackName(self, role: str, callback: Any) -> str:
+    """
+    The '_getCallbackName' method returns the name a decorator records
+    for 'callback', the name the hooks look it up by on the class of the
+    instance, and raises 'NamelessCallback' for a callback that has none
+    of its own: a lambda, named '<lambda>', or a callable with no
+    '__name__'. 'role' is the name of the decorator, for the message.
+    """
+    name = getattr(callback, '__name__', None)
+    if name is None or name == '<lambda>':
+      raise NamelessCallback(self, role, callback)
+    return name
+
   def preGet(self, callback: Func) -> Func:
     existing = self._getPreGetKeys()
-    self.__pre_get_keys__ = (*existing, callback.__name__)
+    name = self._getCallbackName('preGet', callback)
+    self.__pre_get_keys__ = (*existing, name)
     return flexCall(callback)
 
   def onGet(self, callback: Func) -> Func:
     existing = self._getOnGetKeys()
-    self.__on_get_keys__ = (*existing, callback.__name__)
+    name = self._getCallbackName('onGet', callback)
+    self.__on_get_keys__ = (*existing, name)
     return flexCall(callback)
 
   def preSet(self, callback: Func) -> Func:
     existing = self._getPreSetKeys()
-    self.__pre_set_keys__ = (*existing, callback.__name__)
+    name = self._getCallbackName('preSet', callback)
+    self.__pre_set_keys__ = (*existing, name)
     return flexCall(callback)
 
   def onSet(self, callback: Func) -> Func:
     existing = self._getOnSetKeys()
-    self.__on_set_keys__ = (*existing, callback.__name__)
+    name = self._getCallbackName('onSet', callback)
+    self.__on_set_keys__ = (*existing, name)
     return flexCall(callback)
 
   def preDelete(self, callback: Func) -> Func:
     existing = self._getPreDeleteKeys()
-    self.__pre_delete_keys__ = (*existing, callback.__name__)
+    name = self._getCallbackName('preDelete', callback)
+    self.__pre_delete_keys__ = (*existing, name)
     return flexCall(callback)
 
   def onDelete(self, callback: Func) -> Func:
     existing = self._getOnDeleteKeys()
-    self.__on_delete_keys__ = (*existing, callback.__name__)
+    name = self._getCallbackName('onDelete', callback)
+    self.__on_delete_keys__ = (*existing, name)
     return flexCall(callback)
 
   def setName(self, callback: Func) -> Func:
     existing = self._getSetNameKeys()
-    self.__set_name_keys__ = (*existing, callback.__name__)
+    name = self._getCallbackName('setName', callback)
+    self.__set_name_keys__ = (*existing, name)
     return flexCall(callback)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @staticmethod
+  def _getCallback(owner: type, key: str) -> Func:
+    """
+    The '_getCallback' method returns the callback registered under
+    'key' as 'owner' holds it, wrapped by 'flexCall'. A bound method, as
+    a classmethod gives, is unwrapped to the function behind it, as
+    'hookSetName' does, so an override of that kind is called as the
+    plain method would be.
+    """
+    callback = getattr(owner, key)
+    callback = getattr(callback, '__func__', callback)
+    return flexCall(callback)
 
   def hookPreGet(self, instance: Any, **kwargs) -> None:
     keys = self._getPreGetKeys()
@@ -204,7 +245,7 @@ class BaseDescriptor(Object, Generic[T]):
       return
     owner = type(instance)
     for key in keys:
-      flexCall(getattr(owner, key))(instance, **kwargs)
+      self._getCallback(owner, key)(instance, **kwargs)
 
   def hookOnGet(self, instance: Any, value: Any, **kwargs) -> None:
     keys = self._getOnGetKeys()
@@ -212,7 +253,7 @@ class BaseDescriptor(Object, Generic[T]):
       return
     owner = type(instance)
     for key in keys:
-      flexCall(getattr(owner, key))(instance, value, **kwargs)
+      self._getCallback(owner, key)(instance, value, **kwargs)
 
   def hookPreSet(self, instance: Any, value: Any, **kwargs) -> None:
     keys = self._getPreSetKeys()
@@ -220,7 +261,7 @@ class BaseDescriptor(Object, Generic[T]):
       return
     owner = type(instance)
     for key in keys:
-      flexCall(getattr(owner, key))(instance, value, **kwargs)
+      self._getCallback(owner, key)(instance, value, **kwargs)
 
   def hookOnSet(self, instance: Any, value: Any, **kwargs) -> None:
     keys = self._getOnSetKeys()
@@ -228,7 +269,7 @@ class BaseDescriptor(Object, Generic[T]):
       return
     owner = type(instance)
     for key in keys:
-      flexCall(getattr(owner, key))(instance, value, **kwargs)
+      self._getCallback(owner, key)(instance, value, **kwargs)
 
   def hookPreDelete(self, instance: Any, **kwargs) -> None:
     keys = self._getPreDeleteKeys()
@@ -236,7 +277,7 @@ class BaseDescriptor(Object, Generic[T]):
       return
     owner = type(instance)
     for key in keys:
-      flexCall(getattr(owner, key))(instance, **kwargs)
+      self._getCallback(owner, key)(instance, **kwargs)
 
   def hookOnDelete(self, instance: Any, **kwargs) -> None:
     keys = self._getOnDeleteKeys()
@@ -244,7 +285,7 @@ class BaseDescriptor(Object, Generic[T]):
       return
     owner = type(instance)
     for key in keys:
-      flexCall(getattr(owner, key))(instance, **kwargs)
+      self._getCallback(owner, key)(instance, **kwargs)
 
   def hookSetName(self, owner: type, name: str, **kwargs) -> None:
     for key in self._getSetNameKeys():

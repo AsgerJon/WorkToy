@@ -480,8 +480,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __new__(mcls, name: str, bases: Bases, space: KSpace, **kw) -> T:
-    if '_root' in kw:
-      del kw['_root']
     # noinspection PyTypeChecker
     return super().__new__(mcls, name, bases, space, **kw)
 

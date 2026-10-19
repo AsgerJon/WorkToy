@@ -12,14 +12,14 @@ from types import FunctionType, BuiltinFunctionType
 from typing import TYPE_CHECKING
 
 from . import EZField, EZStore
-from ..core import Object, MetaType
+from ..core import Object
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import typeCast, textFmt
 from ..waitaminute import TypeException
 from ..waitaminute.dispatch import TypeCastException
 from ..waitaminute.ezdata import ExtraPositionalException, \
   KwargsOnlyException, IncompleteFieldException, ClassFieldError, \
-  ReservedMethodError, ClassKeywordError, ExtraKeywordException, \
+  ReservedMethodError, ExtraKeywordException, \
   RepeatedFieldException, ReservedAttributeError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -69,13 +69,7 @@ class EZHook(AbstractSpaceHook):
   spellings for the three build-option flags. A subclass of
   EZHook can extend these to accept additional spellings;
   'parseKwargs' (inherited from 'Object') picks the first
-  spelling present in the class kwargs. They are the keywords the
-  hook consumes, named in '__consumed_keys__', and the metaclass
-  keeps them out of the '__init_subclass__' chain of the bases. Any
-  other class keyword goes down that chain when a base has an
-  '__init_subclass__' of its own to take it; when none has,
-  'preparePhase' refuses it with 'ClassKeywordError', since nothing
-  could read it.
+  spelling present in the class kwargs.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -89,13 +83,6 @@ class EZHook(AbstractSpaceHook):
   __frozen_keys__: Keys = ('frozen', 'immutable', 'hashable')
   __ordered_keys__: Keys = ('ordered', 'order', 'sortable', 'comparable')
   __kw_only_keys__: Keys = ('kwOnly', 'keywordOnly', 'kw_only')
-  #  The class keywords 'EZHook' reads off the class statement, every
-  #  spelling of the three options, which the metaclass keeps out of the
-  #  '__init_subclass__' chain of the bases; see
-  #  'AbstractNamespace.getConsumedKeywords'.
-  __consumed_keys__: Keys = (
-    *__frozen_keys__, *__ordered_keys__, *__kw_only_keys__,
-  )
   #  The methods 'postCompilePhase' installs on every class.
   __installed__: Keys = (
     '__init__', '__iter__', '__len__', '__eq__', '__hash__', '__lt__',
@@ -108,24 +95,6 @@ class EZHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def preparePhase(self, space: EZSpace) -> None:
-    """
-    The 'preparePhase' method refuses a class keyword that nothing could
-    read, such as 'frozn=True', with 'ClassKeywordError' listing the
-    accepted spellings, so a misspelled option fails at the class
-    statement before the class body runs. A base with an
-    '__init_subclass__' of its own may take any keyword, so with one among
-    the bases nothing is refused here: every keyword the namespace and its
-    hooks did not read goes down the '__init_subclass__' chain, where that
-    base takes it or 'object' refuses it; see 'MetaType.takesKeywords'.
-    """
-    if MetaType.takesKeywords(space.getBases()):
-      return
-    accepted = space.getConsumedKeywords()
-    for key in space.getKwargs():
-      if key not in accepted:
-        raise ClassKeywordError(space.getClassName(), key, *accepted)
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """

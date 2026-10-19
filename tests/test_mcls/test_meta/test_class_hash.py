@@ -62,5 +62,5 @@ class TestClassHash(MCLSTest):
     class Plain(metaclass=AbstractMetaclass):
       pass
 
-    expected = hash(('Plain', 'object', 'AbstractMetaclass'))
+    expected = hash(('Plain', 'AbstractMetaclass'))
     self.assertEqual(hash(Plain), expected)

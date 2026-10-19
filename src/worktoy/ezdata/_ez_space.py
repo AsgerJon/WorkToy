@@ -54,10 +54,11 @@ class EZSpace(BaseSpace):
   __reserved_ez_attributes__ : tuple[str, ...]
     Names of the attributes EZData keeps for itself: those it sets on
     every class, the fields and the options the class keywords resolve
-    to, and '__key_args__', under which 'Object' keeps the keyword
-    arguments of its constructor. A class body binding one of them raises
-    'ReservedAttributeError', whatever the value, where the binding would
-    otherwise become a field of that name.
+    to, '__key_args__', under which 'Object' keeps the keyword
+    arguments of its constructor, and '__slots__', since the field values
+    live in the instance '__dict__'. A class body binding one of them
+    raises 'ReservedAttributeError', whatever the value, where the binding
+    would otherwise become a field of that name.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -95,6 +96,7 @@ class EZSpace(BaseSpace):
     '__is_ordered__',
     '__kw_only__',
     '__ez_generated__',
+    '__slots__',
   )
 
   #  Private Variables

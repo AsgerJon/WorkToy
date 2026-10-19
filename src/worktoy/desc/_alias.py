@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..core import Object
+from ..waitaminute.desc import ProtectedError, ReadOnlyError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type
@@ -46,6 +47,12 @@ class Alias(Object):
   'inspect.getattr_static' finds it; see '_getRealObject'. A staticmethod
   therefore stays a staticmethod, and a classmethod binds to the class it
   is read from.
+
+  A target that is no descriptor, a plain value supplied after the class
+  exists, is handed back as it is by a read, as Python hands back a
+  plain class attribute, while a write through the alias raises
+  'ReadOnlyError' and a deletion 'ProtectedError'. A read used to ask
+  the value for '__get__', which an 'int' does not have.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -95,15 +102,24 @@ class Alias(Object):
 
   def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
     realObject = self._getRealObject(owner)
-    return realObject.__get__(instance, owner, )
+    get = getattr(type(realObject), '__get__', None)
+    if get is None:
+      return realObject
+    return get(realObject, instance, owner, )
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> None:
     realObject = self._getRealObject(type(instance))
-    return realObject.__set__(instance, value)
+    set_ = getattr(type(realObject), '__set__', None)
+    if set_ is None:
+      raise ReadOnlyError(instance, self, value)
+    return set_(realObject, instance, value)
 
   def __delete__(self, instance: Any, **kwargs) -> None:
     realObject = self._getRealObject(type(instance))
-    return realObject.__delete__(instance)
+    delete = getattr(type(realObject), '__delete__', None)
+    if delete is None:
+      raise ProtectedError(instance, self)
+    return delete(realObject, instance)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

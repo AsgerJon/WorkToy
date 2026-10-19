@@ -235,6 +235,10 @@ class TestArithmetic(DescTest):
       self.assertAlmostEqual(z1.IM, z.imag)
       self.assertAlmostEqual(z2.RE, x + z.real)
       self.assertAlmostEqual(z2.IM, z.imag)
+      z3 = Z(z1)
+      self.assertIsNot(z3, z1)
+      self.assertAlmostEqual(z3.RE, z1.RE)
+      self.assertAlmostEqual(z3.IM, z1.IM)
 
   def test_flex(self) -> None:
     """Testing the ComflexMeta constructor"""

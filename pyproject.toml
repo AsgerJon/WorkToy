@@ -40,9 +40,11 @@ test = [
     'pytest>=9.0.2',
     'pytest-cov>=7.0.0',
 ]
+#  The same packages as docs/requirements.txt. markwork brings Pygments.
 docs = [
     'sphinx>=7.0.0',
-    'pygments>=2.19.2',
+    'furo>=2024.1',
+    'markwork>=0.1.0',
 ]
 dev = [
     'icecream>=2.1.8',

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, Generic
 
-from .. import QuickDesc, textFmt, NoPickle
+from .. import QuickDesc, textFmt
 
 T = TypeVar('T')
 ItemTypeT = TypeVar('ItemTypeT')
@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
   MaybeItems: TypeAlias = Optional[Items[T]]
 
 
-class Arrangement(NoPickle, Generic[ItemTypeT]):
+class Arrangement(Generic[ItemTypeT]):
   """A single permutation of a ground tuple of items.
 
   Holds two index recipes that are inverses of each other as

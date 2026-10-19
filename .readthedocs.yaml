@@ -3,9 +3,10 @@
 # RTD reads this from the repo root, builds docs/conf.py with the
 # given Python, and hosts the result with per-tag versioning.
 #
-# The build does NOT install worktoy: the docs only read the source
-# files as text and render them to HTML with Pygments, so the
-# toolchain is just Sphinx + the theme.
+# The build does NOT install worktoy: markwork, the Sphinx extension
+# that generates the pages, reads the source files as text and never
+# imports the package. The toolchain is Sphinx, the furo theme and
+# markwork, all installed from docs/requirements.txt.
 
 version: 2
 

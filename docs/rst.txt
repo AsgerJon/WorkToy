@@ -19,12 +19,12 @@ THE THREE BUILDING BLOCKS
 
 Everything in rST is one of three things:
 
-1. Paragraphs        — plain text, separated by blank lines.
-2. Directives        — block-level commands.
-3. Roles             — inline commands.
+1. Paragraphs:       plain text, separated by blank lines.
+2. Directives:       block-level commands.
+3. Roles:            inline commands.
 
 Directives and roles are extensible: Sphinx extensions add new
-ones. That is the whole point of rST over Markdown — the
+ones. That is the whole point of rST over Markdown: the
 grammar is open.
 
 
@@ -55,7 +55,7 @@ In the example:
     - "python" is the directive's positional argument (here,
       the language for syntax highlighting).
     - ":linenos:" and ":caption:" are options. The colons
-      around the option name are literal — that is the
+      around the option name are literal; that is the
       syntax. "linenos" is the option name, no value because
       it's a flag. "caption" is the option name and "Example
       function" is its value.
@@ -65,7 +65,7 @@ In the example:
 Option value forms:
 
     rST itself does not define how multi-valued options are
-    delimited — each directive defines its own value-parsing
+    delimited: each directive defines its own value-parsing
     rules. The directive's documentation will say. Three
     forms cover almost everything:
 
@@ -115,7 +115,7 @@ In the example:
       available roles). The colons around "class" are
       literal.
     - "`worktoy.desc.AttriBox`" is the text the role acts on.
-      The backticks are literal — single backticks here.
+      The backticks are literal, single backticks here.
     - Result in HTML: the words "worktoy.desc.AttriBox"
       become a clickable link to that class's doc page.
 
@@ -227,7 +227,7 @@ INLINE FORMATTING
     ``inline code``        → monospaced fixed-width text
 
 Note: DOUBLE backticks for inline code. Single backticks mean
-"default role" — usually safe to avoid them.
+"default role", usually safe to avoid them.
 
 
 LINKS
@@ -291,8 +291,8 @@ project, depending on what you mean by "import":
                       with ".. |<NAME>| replace:: <TEXT>",
                       reference it inline anywhere as |<NAME>|.
 
-INCLUDE — inlining another file's content
------------------------------------------
+INCLUDE: inlining another file's content
+----------------------------------------
 
 Form:
 
@@ -334,8 +334,8 @@ Useful options:
     :encoding: <ENCODING>     file encoding (default: utf-8)
 
 
-SUBSTITUTIONS — like macros
----------------------------
+SUBSTITUTIONS: like macros
+--------------------------
 
 Define once:
 

@@ -1,22 +1,13 @@
 """
 TestInitSubclassKeyword subclasses 'EZTest' and pins what an 'EZData'
-class statement does with a class keyword that is none of its options.
-With a base that has an '__init_subclass__' of its own, the keyword goes
-down the '__init_subclass__' chain, where that base takes it or 'object'
-refuses it: 'class Point(EZData, Tagged, tag='hello')', where 'Tagged'
-takes 'tag', used to raise 'ClassKeywordError'. With no such base nothing
-could read the keyword, and 'ClassKeywordError' refuses it at the class
-statement, listing the accepted spellings, so a misspelled option still
-fails loudly.
+class statement does with a class keyword that is none of its options: a
+keyword that a base's own '__init_subclass__' takes reaches that base.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from types import new_class
-
 from worktoy.ezdata import EZData, EZField
-from worktoy.waitaminute.ezdata import ClassKeywordError
 
 from . import EZTest
 
@@ -71,7 +62,7 @@ class TestInitSubclassKeyword(EZTest):
 
   def test_with_an_option(self) -> None:
     """The keyword of the base and an option of 'EZData' go together,
-    each to its reader, the option never entering the chain."""
+    each to its reader."""
 
     class Point(EZData, Tagged, tag='frozen point', frozen=True):
       x = EZField[int](0)
@@ -98,28 +89,6 @@ class TestInitSubclassKeyword(EZTest):
 
     self.assertEqual(Point.received, {'extra': 1})
     self.assertEqual(Point(2).x, 2)
-
-  def test_misspelled_refused_without_reader(self) -> None:
-    """With no base having an '__init_subclass__' of its own, a keyword
-    that is no option is refused at the class statement, and the refusal
-    lists the accepted spellings. The class is built through 'new_class',
-    since the refusal comes before the body of a class statement would
-    run."""
-    body = lambda namespace: namespace.update(x=EZField[int](0))
-    with self.assertRaises(ClassKeywordError) as context:
-      new_class('Point', (EZData,), dict(frozn=True), body)
-    self.assertEqual(context.exception.keyword, 'frozn')
-    self.assertIn('frozen', context.exception.accepted)
-    self.assertIn('trustMeBro', context.exception.accepted)
-
-  def test_misspelled_refused_by_object(self) -> None:
-    """With a base passing keywords on, a misspelled keyword goes down the
-    chain and 'object' refuses it, as in a plain class."""
-    with self.assertRaises(TypeError) as context:
-      class Point(EZData, Tagged, tg='hello'):
-        x = EZField[int](0)
-    self.assertNotIsInstance(context.exception, ClassKeywordError)
-    self.assertIn('takes no keyword arguments', str(context.exception))
 
   def test_base_before_ez_data(self) -> None:
     """The base may come before 'EZData' as well."""

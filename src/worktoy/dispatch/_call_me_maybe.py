@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 from collections.abc import Callable
 
-from ..utilities import textFmt, QuickDesc, NoPickle
+from ..utilities import textFmt, QuickDesc
 from ..waitaminute import MissingVariable, TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -33,7 +33,7 @@ class _Wrapped(QuickDesc, Generic[T]):
     raise TypeException('funcTuple', funcTuple, tuple)
 
 
-class CallMeMaybe(NoPickle):
+class CallMeMaybe:
   """
   Holds a reference to a function and forwards calls to it via '__call__'.
 

@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...keenum import Kee
 
 
-class KeeDuplicate(NoPickle, Exception):
+class KeeDuplicate(Exception):
   """
   Raised on a member name collision in a 'KeeNum' enumeration: either a
   class body that declares the same name twice, or a subclass that

@@ -6,10 +6,10 @@ class object.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class ClassFieldError(NoPickle, TypeError):
+class ClassFieldError(TypeError):
   """
   ClassFieldError is raised at class construction time when an 'EZData'
   class body binds a name to a class object, either through a nested

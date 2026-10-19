@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
 
-class ReservedFieldError(NoPickle, AttributeError):
+class ReservedFieldError(AttributeError):
   """
   ReservedFieldError subclasses 'AttributeError' and is raised
   when an EZData class body declares an EZField at a name that

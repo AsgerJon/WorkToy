@@ -7,10 +7,9 @@ exceptions 'AccessError', 'ProtectedError', 'ReadOnlyError' and
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import NoPickle
 
 
-class DescriptorException(NoPickle, Exception):
+class DescriptorException(Exception):
   """
   Base class for the descriptor protocol exceptions 'AccessError',
   'ProtectedError', 'ReadOnlyError' and 'PhantomBoxError'; catching this

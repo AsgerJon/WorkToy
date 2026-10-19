@@ -6,10 +6,10 @@ that one of its members takes.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class KeeMemberNameError(NoPickle, SyntaxError):
+class KeeMemberNameError(SyntaxError):
   """
   KeeMemberNameError is raised as a 'KeeFlags' class is created when its
   class body binds a name that one of its members takes: 'NULL', or the

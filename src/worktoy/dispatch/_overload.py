@@ -10,7 +10,7 @@ from types import FunctionType
 from typing import TYPE_CHECKING
 
 from ..core.sentinels import ARGS
-from ..utilities import maybe, textFmt, NoPickle
+from ..utilities import maybe, textFmt
 from ..utilities.combinatorics import Arrangements
 from ..waitaminute import MissingVariable, TypeException
 from . import TypeSig, PermuterMethod
@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
   Order: TypeAlias = tuple[int, ...]
 
 
-class overload(NoPickle):  # NOQA
+class overload:  # NOQA
   """User-facing decorator that registers a type signature against a
   function so 'BaseMeta' can wire it into a 'Dispatcher' during
   class construction.
@@ -226,7 +226,11 @@ class overload(NoPickle):  # NOQA
         strict : bool, optional
             Whether the signature refuses casts: a strict signature
             matches a call by exact type or 'isinstance' alone, and the
-            cast passes of the 'Dispatcher' skip it. Defaults to False.
+            cast passes of the 'Dispatcher' skip it. Defaults to True
+            for a signature naming 'THIS', as an entry or as the inner
+            type of a trailing 'ARGS', since a cast to the class calls
+            the class on the argument, and a class without a
+            constructor of its own accepts anything; otherwise to False.
 
     Returns
     -------
@@ -250,7 +254,10 @@ class overload(NoPickle):  # NOQA
 
     def decorator(func: Method) -> Self:
       sig = TypeSig(*types, )
-      sig.__allow_flex__ = False if kwargs.get('strict', False) else True
+      strict = kwargs.get('strict', None)
+      if strict is None:
+        strict = TypeSig.namesTHIS(*types)
+      sig.__allow_flex__ = False if strict else True
       if isinstance(func, cls):
         func._extendLatest(sig)
         return func
@@ -391,12 +398,15 @@ class overload(NoPickle):  # NOQA
   def _refuseMethodKinds(func: Any) -> None:
     """
     The '_refuseMethodKinds' method raises 'TypeException' for a
-    staticmethod or a classmethod. The 'Dispatcher' an overload builds
-    calls every function with the instance first, which neither kind
-    takes: a staticmethod would receive the instance as its first
-    argument, and a classmethod is not callable at all before Python 3.10.
+    staticmethod or a classmethod, and for anything that cannot be
+    called, such as a 'property' stacked below the decorator or a bare
+    value. The 'Dispatcher' an overload builds calls every function with
+    the instance first, which neither kind takes: a staticmethod would
+    receive the instance as its first argument, and a classmethod is not
+    callable at all before Python 3.10. An object that cannot be called
+    used to be registered all the same and fail at the first call.
     """
-    if isinstance(func, (staticmethod, classmethod)):
+    if isinstance(func, (staticmethod, classmethod)) or not callable(func):
       raise TypeException('func', func, FunctionType)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import NoPickle
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -16,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from ...keenum import Kee
 
 
-class KeeNameConflict(NoPickle, ValueError):
+class KeeNameConflict(ValueError):
   """
   KeeNameConflict provides a custom exception raised to indicate that a
   'KeeNum' enumeration received a 'Kee' member reservation already named,

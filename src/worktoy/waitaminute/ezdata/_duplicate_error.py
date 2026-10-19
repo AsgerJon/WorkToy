@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
 
-class DuplicateError(NoPickle, AttributeError):
+class DuplicateError(AttributeError):
   """
   DuplicateError subclasses 'AttributeError' and provides a custom exception
   raised to indicate that a variable was attempted to be defined more than

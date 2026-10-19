@@ -60,7 +60,9 @@ class Field(BaseDescriptor[T]):
 
   The consequence is that a subclass overrides any decorated accessor
   just by redefining a method of the same name, with no need to decorate
-  it again: the name lookup finds the override. A subclass that redefines
+  it again: the name lookup finds the override. An accessor without a
+  name of its own, a lambda, could never be found, so the decorators
+  refuse one with 'NamelessCallback'. A subclass that redefines
   an inherited '_getValue' as a plain method changes what the inherited
   'Field' returns, because the parent never captured the decorated method,
   only its name. The sampler hierarchy in 'worktoy.work_test' relies on
@@ -116,7 +118,7 @@ class Field(BaseDescriptor[T]):
         The same method, unchanged, so the name stays bound in the
         class body.
     """
-    self.__get_key__ = callMeMaybe.__name__
+    self.__get_key__ = self._getCallbackName('GET', callMeMaybe)
     return callMeMaybe
 
   def SET(self, callMeMaybe: Callable) -> Callable:
@@ -138,7 +140,8 @@ class Field(BaseDescriptor[T]):
         class body.
     """
     existing = maybe(self.__set_keys__, ())
-    self.__set_keys__ = (*existing, callMeMaybe.__name__,)
+    name = self._getCallbackName('SET', callMeMaybe)
+    self.__set_keys__ = (*existing, name,)
     return callMeMaybe
 
   def DELETE(self, callMeMaybe: Callable) -> Callable:
@@ -160,7 +163,8 @@ class Field(BaseDescriptor[T]):
         class body.
     """
     existing = maybe(self.__delete_keys__, ())
-    self.__delete_keys__ = (*existing, callMeMaybe.__name__,)
+    name = self._getCallbackName('DELETE', callMeMaybe)
+    self.__delete_keys__ = (*existing, name,)
     return callMeMaybe
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

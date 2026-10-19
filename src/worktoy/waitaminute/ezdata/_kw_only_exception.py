@@ -6,10 +6,10 @@ KwargsOnlyException is raised when an EZData subclass declared with
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class KwargsOnlyException(NoPickle, TypeError):
+class KwargsOnlyException(TypeError):
   """
   Raised when an EZData subclass declared with 'kwOnly=True' (or a
   synonym such as 'keywordOnly' or 'kw_only') is called with positional

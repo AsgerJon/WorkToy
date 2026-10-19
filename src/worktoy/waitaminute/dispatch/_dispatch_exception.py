@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Union
@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
   #  objects, but that is not visible to type checkers.
 
 
-class DispatchException(NoPickle, TypeError):
+class DispatchException(TypeError):
   """
   DispatchException is raised when a 'Dispatcher' fails to resolve the
   given arguments to a matching function.

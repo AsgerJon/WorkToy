@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Optional
 
 
-class DuplicateSentinel(NoPickle, TypeError):
+class DuplicateSentinel(TypeError):
   """
   DuplicateSentinel is raised when a class statement declares a sentinel
   at a name that a sentinel already holds. A sentinel defines one concept

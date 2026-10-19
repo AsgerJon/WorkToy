@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...utilities import textFmt, NoPickle
+from ...utilities import textFmt
 
 
-class DelException(NoPickle, SyntaxError):
+class DelException(SyntaxError):
   """
   DelException is raised when a class body defines '__del__' without the
   'trustMeBro=True' class keyword. A stray '__del__' is almost always a

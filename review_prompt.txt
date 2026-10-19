@@ -1,0 +1,4 @@
+Conduct a thorough code review of the core, dispatch, desc and mcls
+packages. Record the outcome of each line of reasoning in review_notes.md
+along with outcome, explanations and recommendations.Do not modify the
+project's source or tests.

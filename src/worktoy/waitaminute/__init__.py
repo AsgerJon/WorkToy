@@ -19,7 +19,6 @@ from ._variable_not_none import VariableNotNone
 from ._unpack_exception import UnpackException
 from ._subclass_exception import SubclassException
 from ._missing_variable import MissingVariable
-from ._pickle_exception import PickleException
 from . import desc
 from . import meta
 from . import dispatch
@@ -33,7 +32,6 @@ __all__ = [
   'UnpackException',
   'SubclassException',
   'MissingVariable',
-  'PickleException',
   'desc',
   'meta',
   'dispatch',

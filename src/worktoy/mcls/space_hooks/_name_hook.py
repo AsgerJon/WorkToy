@@ -72,14 +72,6 @@ class NamespaceHook(AbstractSpaceHook):
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Class Variables
-  #  'trustMeBro' is read by '_validateDel' and goes no further.
-  __consumed_keys__ = ('trustMeBro',)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -277,7 +269,9 @@ class NamespaceHook(AbstractSpaceHook):
     class along the method resolution order supplies one, a plain mixin
     included. This is what lets 'AbstractMetaclass' route
     '__class_len__', '__class_iter__', and the rest to its own
-    implementations.
+    implementations. A hook a plain base supplies is held to the rule
+    'setItemPhase' applies to the class body, see
+    '_validateInheritedHook'.
 
     Parameters
     ----------
@@ -295,7 +289,24 @@ class NamespaceHook(AbstractSpaceHook):
     for name in dunderNames:
       if dict.__contains__(self.space, name):
         continue
-      if any(name in cls.__dict__ for cls in mro):
-        continue
-      compiledSpace[name] = METACALL
+      for cls in mro:
+        if name in cls.__dict__:
+          self._validateInheritedHook(cls, name)
+          break
+      else:
+        compiledSpace[name] = METACALL
     return compiledSpace
+
+  def _validateInheritedHook(self, base: type, hookName: str) -> None:
+    """
+    The '_validateInheritedHook' method holds a routed hook that 'base'
+    supplies to the rule 'setItemPhase' applies to the class body: a
+    plain function or a staticmethod raises 'UnboundClassHook' naming the
+    base. A base built by a worktoy metaclass passed that rule as it was
+    created, so only a plain base can still supply such a hook, which
+    used to be inherited unchecked and fail at the first call.
+    """
+    value = base.__dict__[hookName]
+    if isinstance(value, (FunctionType, staticmethod)):
+      clsName = self.space.getClassName()
+      raise UnboundClassHook(clsName, hookName, base.__name__)

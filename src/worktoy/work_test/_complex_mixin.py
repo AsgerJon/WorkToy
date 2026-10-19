@@ -9,7 +9,6 @@ import sys
 from typing import TYPE_CHECKING, cast
 
 from ..desc import Field
-from ..utilities import NoPickle
 from ..waitaminute import TypeException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -20,7 +19,7 @@ else:
   NotImpType = object
 
 
-class ComplexMixin(NoPickle):
+class ComplexMixin:
   """
   ComplexMixin is a mixin class for the purpose of complex number
   implementations.
