@@ -7,9 +7,10 @@ positional arguments than it has fields.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class ExtraPositionalException(TypeError):
+class ExtraPositionalException(WorkToyException, TypeError):
   """
   Raised when an EZData subclass receives more positional arguments
   than it has fields. Its keyword counterpart is

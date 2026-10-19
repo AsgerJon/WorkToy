@@ -9,12 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class MissingInstanceDict(TypeError):
+class MissingInstanceDict(WorkToyException, TypeError):
   """
   MissingInstanceDict is raised when a box, an 'AttriBox' or a class
   based on it, must store the value of its field on an instance that has

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import sys
 
 from worktoy.desc import AttriBox, Field, Alias
-from worktoy.waitaminute.control_flow import SkipSet
+from worktoy.core.control_flow import SkipSet
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Iterator

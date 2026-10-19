@@ -7,15 +7,17 @@ interpreter or the metaclass system.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class ReservedName(Exception):
+class ReservedName(WorkToyException, SyntaxError):
   """
   ReservedName is raised when a class body assigns a name that the
   interpreter or the metaclass system reserves and populates automatically,
   such as '__dict__', '__module__', '__qualname__', or '__match_args__'.
   The guard fires only on reassignment, so deferred initialisation of such
-  a name is still allowed.
+  a name is still allowed. It subclasses 'SyntaxError', as the other
+  refusals of a class-body line do.
 
   Attributes
   ----------
@@ -27,8 +29,9 @@ class ReservedName(Exception):
 
   def __init__(self, name: str) -> None:
     self.resName = name
-    info = """Attempted to use reserved name: '%s'!"""
-    Exception.__init__(self, info % name)
+    SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
     infoSpec = """Attempted to use reserved name: '%s'!"""

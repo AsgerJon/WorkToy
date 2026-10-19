@@ -7,9 +7,10 @@ name, such as '__set_item__' for '__setitem__'.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class QuestionableSyntax(SyntaxError):
+class QuestionableSyntax(WorkToyException, SyntaxError):
   """
   QuestionableSyntax is raised when a class body defines a name that is a
   near-miss for a real dunder, such as '__set_item__' for '__setitem__' or

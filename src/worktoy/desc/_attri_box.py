@@ -5,6 +5,7 @@ AttriBox is a lazily built, strongly typed attribute descriptor.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import copyreg
 from copy import deepcopy
 from enum import Enum
 from typing import TYPE_CHECKING, TypeVar
@@ -743,12 +744,27 @@ class AttriBox(BaseDescriptor[T]):
     with 'Kee.clone'. 'FastBox' creates no tags and copies by the default
     protocol.
 
-    Pickling is not covered. A box has no '__reduce__', so 'pickle'
-    rebuilds a box from its state, and an unpickled field object names
-    that new box in its tags rather than the box declared on the class.
-    Pickling a box, or an object a box tagged, is undefined behaviour.
+    Pickling goes the same way through '__reduce__': a placed box pickles
+    by reference to the box declared on its owner, so an unpickled field
+    object names that box in its tags, as the original does.
     """
     return self
+
+  def __reduce__(self) -> tuple:
+    """
+    The '__reduce__' method pickles a placed box by reference, as the
+    descriptor its owner holds under the field name, which class-level
+    access returns; 'pickle' then gives back the very box, and an object
+    the box tagged keeps naming it after a round trip. A box no class
+    holds yet has no owner to be found through, and pickles as before, by
+    the default protocol, which rebuilds a new box from its state.
+    """
+    owner, name = self.__field_owner__, self.__field_name__
+    if owner is None or name is None:
+      #  The default protocol, spelled out: 'object.__reduce_ex__' would
+      #  call back into this method.
+      return copyreg.__newobj__, (type(self),), self.__dict__
+    return getattr, (owner, name)
 
   @classmethod
   def __class_getitem__(cls, fieldType: FieldType) -> Self:

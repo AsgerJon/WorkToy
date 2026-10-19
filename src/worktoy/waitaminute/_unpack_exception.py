@@ -7,9 +7,10 @@ strict mode.
 from __future__ import annotations
 
 from ..utilities import textFmt
+from . import WorkToyException
 
 
-class UnpackException(ValueError):
+class UnpackException(WorkToyException, ValueError):
   """
   UnpackException is raised when an unpacking operation finds no argument
   requiring unpacking. It is raised by the 'unpack' function in the

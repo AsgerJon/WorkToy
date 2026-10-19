@@ -9,12 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Optional
 
 
-class UnboundClassHook(SyntaxError):
+class UnboundClassHook(WorkToyException, SyntaxError):
   """
   UnboundClassHook is raised when a class body binds one of the routed
   '__class_*__' hook names to a plain function or a staticmethod. The

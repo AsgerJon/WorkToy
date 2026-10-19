@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.desc import AttriBox, Field
 from worktoy.utilities import maybe
-from worktoy.waitaminute.control_flow import ControlFlow
+from worktoy.core.control_flow import ControlFlow
 from . import DescTest
 
 if TYPE_CHECKING:  # pragma: no cover

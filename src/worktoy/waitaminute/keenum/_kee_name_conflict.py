@@ -7,6 +7,7 @@ different from its existing one.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -15,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from ...keenum import Kee
 
 
-class KeeNameConflict(ValueError):
+class KeeNameConflict(WorkToyException, ValueError):
   """
   KeeNameConflict provides a custom exception raised to indicate that a
   'KeeNum' enumeration received a 'Kee' member reservation already named,

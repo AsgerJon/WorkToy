@@ -8,9 +8,10 @@ itself, so the hook would never be called.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class ShadowedClassHook(SyntaxError):
+class ShadowedClassHook(WorkToyException, SyntaxError):
   """
   ShadowedClassHook is raised when a class body binds one of the routed
   '__class_*__' hook names under a metaclass that implements the

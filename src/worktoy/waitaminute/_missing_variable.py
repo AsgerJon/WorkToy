@@ -9,12 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..utilities import textFmt
+from . import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class MissingVariable(AttributeError):
+class MissingVariable(WorkToyException, AttributeError):
   """
   MissingVariable subclasses 'AttributeError' and provides a custom
   exception raised to indicate that a variable was expected to have been

@@ -7,13 +7,14 @@ its enumeration.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeBoxException(Exception):
+class KeeBoxException(WorkToyException, Exception):
   """
   KeeBoxException is a custom exception class raised to indicate that a
   'KeeBox' object failed to resolve to the underlying member.

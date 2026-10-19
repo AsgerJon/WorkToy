@@ -7,9 +7,10 @@ conditions that forbid it.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class IllegalInstantiation(TypeError):
+class IllegalInstantiation(WorkToyException, TypeError):
   """
   IllegalInstantiation is raised when a class is instantiated under
   conditions that forbid it, such as calling a 'Sentinel' subclass, which

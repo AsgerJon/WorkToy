@@ -26,6 +26,8 @@ by the package.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._black_listed_types import _BLACK_LISTED_TYPES
+
 from ._ez_field import EZField
 from ._ez_store import EZStore
 from ._ez_hook import EZHook

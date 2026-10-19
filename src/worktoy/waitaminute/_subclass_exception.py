@@ -7,9 +7,10 @@ base class.
 from __future__ import annotations
 
 from ..utilities import textFmt
+from . import WorkToyException
 
 
-class SubclassException(TypeError):
+class SubclassException(WorkToyException, TypeError):
   """
   SubclassException subclasses 'TypeError' and provides a custom exception
   raised to indicate that a given subclass was not a subclass of a given

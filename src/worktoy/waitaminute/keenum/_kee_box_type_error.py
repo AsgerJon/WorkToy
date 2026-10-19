@@ -7,6 +7,7 @@ the value type of its enumeration.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -14,7 +15,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from ...keenum import KeeBox
 
 
-class KeeBoxTypeError(TypeError):
+class KeeBoxTypeError(WorkToyException, TypeError):
   """
   KeeBoxTypeError is a custom exception class raised to indicate that a
   given 'KeeBox' descriptor could not resolve given arguments to member of

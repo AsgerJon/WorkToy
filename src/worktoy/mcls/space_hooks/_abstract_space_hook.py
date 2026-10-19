@@ -76,7 +76,7 @@ class AbstractSpaceHook(Object):
     Called immediately before the finalized namespace is handed off to
     the metaclass. Used for final transformations or validation.
 
-  - 'newClassPhase(self, cls) -> type'
+  - 'newClassPhase(self, clsName) -> type'
     Called after the metaclass has created the new class object, but
     before returning it.
 

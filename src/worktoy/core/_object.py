@@ -12,7 +12,7 @@ from ..utilities import Directory, maybe
 from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.desc import WithoutException, ReadOnlyError
 from ..waitaminute.desc import ProtectedError
-from ..waitaminute.control_flow import SkipSet
+from .control_flow import SkipSet
 from .sentinels import THIS, DESC, OWNER, DELETED, Sentinel
 from . import ContextInstance, MetaType, ContextOwner
 
@@ -74,7 +74,9 @@ class Object(metaclass=MetaType):
   outer frame's instance is restored.
 
   Reading 'self.instance' or 'self.owner' outside any active
-  context raises 'WithoutException'. Calling 'exitContext' on an
+  context raises 'WithoutException' on a placed descriptor, and a plain
+  'AttributeError' on a value no class holds, so 'hasattr' and
+  'inspect.getmembers' answer on a value. Calling 'exitContext' on an
   empty stack raises 'WithoutException' as well, since that
   indicates an unpaired 'createContext' / 'exitContext' call.
 
@@ -94,6 +96,22 @@ class Object(metaclass=MetaType):
 
   'worktoy' descriptors are intended for single-threaded synchronous
   code. If you need thread- or task-local safety, layer it on top.
+
+  A value in a class body
+  -----------------------
+  Every 'Object' is a data descriptor, so a worktoy value placed in a
+  class body, an instance of 'BaseObject' or of an 'EZData' class, a
+  'KeeNum' member or a 'SymbolicName', is a shared, read-only class
+  attribute: reads through the class and through instances give the
+  object itself, while a write through an instance raises
+  'ReadOnlyError' and a deletion 'ProtectedError'. That is deliberate.
+  An instance has no business replacing a class variable, and a value
+  shared by every instance is rarely meant to be swapped out by one of
+  them. A value held per instance, with a class-level default, is what
+  'AttriBox' declares. The protection covers access through an instance
+  alone: the descriptor protocol never sees a write or a deletion made
+  through the class, which the metaclass handles as 'type' does, so
+  'del Owner.value' removes the class attribute without a word.
 
   Deletion semantics
   ------------------
@@ -201,19 +219,31 @@ class Object(metaclass=MetaType):
     return False
 
   def getContextInstance(self) -> Any:
-    """Returns the contextual instance or raises 'WithoutException'"""
+    """Returns the contextual instance, or raises 'AttributeError' on a
+    value no class holds and 'WithoutException' on a placed descriptor.
+    """
     if self.hasContext():
       if self.__call_chain__ is None:
         raise MissingVariable(self, '__call_chain__', tuple)
       return self.__call_chain__[-1][0]
+    if self.__field_name__ is None:
+      infoSpec: str = """'%s' object has no attribute 'instance'"""
+      info: str = infoSpec % type(self).__name__
+      raise AttributeError(info)
     raise WithoutException(self)
 
   def getContextOwner(self) -> Optional[type]:
-    """Returns the contextual owner or raises 'WithoutException'"""
+    """Returns the contextual owner, or raises 'AttributeError' on a
+    value no class holds and 'WithoutException' on a placed descriptor.
+    """
     if self.hasContext():
       if self.__call_chain__ is None:
         raise MissingVariable(self, '__call_chain__', tuple)
       return self.__call_chain__[-1][1]
+    if self.__field_name__ is None:
+      infoSpec: str = """'%s' object has no attribute 'owner'"""
+      info: str = infoSpec % type(self).__name__
+      raise AttributeError(info)
     raise WithoutException(self)
 
   def hasContext(self) -> bool:

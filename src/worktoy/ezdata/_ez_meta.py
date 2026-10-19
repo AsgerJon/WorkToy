@@ -189,7 +189,7 @@ class EZMeta(BaseMeta):
 
   def __contains__(cls, item: Any) -> bool:
     """
-    An 'EZData' class contains its fields: 'item in cls' is True when
+    An 'EZData' class contains its fields: 'item in clsName' is True when
     'item' is one of them. A field is recognised by identity, so the
     '__eq__' of 'item' is never asked.
 
@@ -283,7 +283,7 @@ class EZMeta(BaseMeta):
     -------
     bool
       True if 'other' is a same-line 'EZData' class whose field-type
-      signature equals that of 'cls'.
+      signature equals that of 'clsName'.
     """
     mcls = type(cls)
     if not isinstance(other, mcls):

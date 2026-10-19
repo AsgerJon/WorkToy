@@ -7,9 +7,10 @@ name derives a storage name another box of the class already uses.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class StorageCollision(SyntaxError):
+class StorageCollision(WorkToyException, SyntaxError):
   """
   StorageCollision is raised when a class body declares a box, an
   'AttriBox' or a class based on it, whose field name derives a storage

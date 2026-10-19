@@ -9,12 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
 
-class ReservedMethodError(AttributeError):
+class ReservedMethodError(WorkToyException, AttributeError):
   """
   ReservedMethodError subclasses 'AttributeError' and is raised when an
   EZData class body defines a method that EZData generates for every

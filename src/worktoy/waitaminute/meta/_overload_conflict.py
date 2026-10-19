@@ -7,9 +7,10 @@ overloads and to a plain definition.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class OverloadConflict(SyntaxError):
+class OverloadConflict(WorkToyException, SyntaxError):
   """
   OverloadConflict is raised when one class body binds a name both to
   overloads and to a plain definition, which is any binding that is not

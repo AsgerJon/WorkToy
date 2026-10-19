@@ -6,9 +6,10 @@ VariableNotNone is raised when a write-once slot already holds a value.
 from __future__ import annotations
 
 from ..utilities import textFmt
+from . import WorkToyException
 
 
-class VariableNotNone(Exception):
+class VariableNotNone(WorkToyException, Exception):
   """VariableNotNone is raised when a variable expected to still be 'None'
   already holds a value. It guards write-once initialisation: a slot that
   must be assigned exactly once raises this exception on the second

@@ -76,43 +76,43 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   Supported class-level hooks:
 
-  - '__class_call__(cls, *args, **kw) -> Any'
+  - '__class_call__(clsName, *args, **kw) -> Any'
     Called when the class is invoked. Overrides instance construction.
-  - '__class_instancecheck__(cls, obj) -> bool'
-    Called during 'isinstance(obj, cls)'.
-  - '__class_subclasscheck__(cls, sub) -> bool'
-    Called during 'issubclass(sub, cls)'.
-  - '__class_str__(cls) -> str'
-    Called when 'str(cls)' is invoked.
-  - '__class_repr__(cls) -> str'
-    Called when 'repr(cls)' is invoked.
-  - '__class_iter__(cls) -> Iterator'
-    Called when 'iter(cls)' is invoked.
-  - '__class_next__(cls) -> Any'
-    Called when 'next(cls)' is invoked.
-  - '__class_bool__(cls) -> bool'
-    Called when 'bool(cls)' is invoked. If absent, falls back to
+  - '__class_instancecheck__(clsName, obj) -> bool'
+    Called during 'isinstance(obj, clsName)'.
+  - '__class_subclasscheck__(clsName, sub) -> bool'
+    Called during 'issubclass(sub, clsName)'.
+  - '__class_str__(clsName) -> str'
+    Called when 'str(clsName)' is invoked.
+  - '__class_repr__(clsName) -> str'
+    Called when 'repr(clsName)' is invoked.
+  - '__class_iter__(clsName) -> Iterator'
+    Called when 'iter(clsName)' is invoked.
+  - '__class_next__(clsName) -> Any'
+    Called when 'next(clsName)' is invoked.
+  - '__class_bool__(clsName) -> bool'
+    Called when 'bool(clsName)' is invoked. If absent, falls back to
     '__class_len__' or '__class_iter__'.
-  - '__class_contains__(cls, item) -> bool'
+  - '__class_contains__(clsName, item) -> bool'
     Called for membership checks. Falls back to iteration if absent.
-  - '__class_len__(cls) -> int'
-    Called when 'len(cls)' is invoked.
-  - '__class_hash__(cls) -> int'
-    Called when 'hash(cls)' is invoked. The default implementation is:
+  - '__class_len__(clsName) -> int'
+    Called when 'len(clsName)' is invoked.
+  - '__class_hash__(clsName) -> int'
+    Called when 'hash(clsName)' is invoked. The default implementation is:
 
-        baseNames = [b.__name__ for b in cls.__bases__]
-        metaName = type(cls).__name__
-        return hash((cls.__name__, *baseNames, metaName))
-  - '__class_init__(cls, name, bases, space, **kw) -> None'
+        baseNames = [b.__name__ for b in clsName.__bases__]
+        metaName = type(clsName).__name__
+        return hash((clsName.__name__, *baseNames, metaName))
+  - '__class_init__(clsName, name, bases, space, **kw) -> None'
     Invoked after the class body has been fully executed.
-  - '__class_setitem__(cls, item, value) -> None'
-    Called when 'cls[item] = value' is invoked.
-  - '__class_delitem__(cls, item) -> None'
-    Called when 'del cls[item]' is invoked.
-  - '__class_getattr__(cls, name) -> Any'
+  - '__class_setitem__(clsName, item, value) -> None'
+    Called when 'clsName[item] = value' is invoked.
+  - '__class_delitem__(clsName, item) -> None'
+    Called when 'del clsName[item]' is invoked.
+  - '__class_getattr__(clsName, name) -> Any'
     Called when an undefined attribute is accessed on the class.
-  - '__class_setattr__(cls, name, value) -> None'
-  - '__class_delattr__(cls, name) -> None'
+  - '__class_setattr__(clsName, name, value) -> None'
+  - '__class_delattr__(clsName, name) -> None'
 
   Note on '__class_getitem__': as of Python 3.7 the interpreter
   dispatches subscript on a class straight to '__class_getitem__' when
@@ -354,7 +354,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   def getNamespace(cls) -> ASpace:
     """
     The 'getNamespace' method returns the namespace object that built
-    'cls', read directly off '__namespace__' to bypass the class-level
+    'clsName', read directly off '__namespace__' to bypass the class-level
     attribute hooks.
     """
     return type.__getattribute__(cls, '__namespace__', )

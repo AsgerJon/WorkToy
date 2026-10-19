@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...dispatch import overload, Dispatcher
-from ...waitaminute.dispatch import VariadicOverlap
 from ...waitaminute.meta import OverloadConflict
 from . import AbstractSpaceHook
 
@@ -95,10 +94,9 @@ class LoadSpaceHook(AbstractSpaceHook):
     first. Each registration reaches the 'Dispatcher' together with its
     distance, which decides the order of the cast passes.
 
-    Two variadic declarations of different functions that both accept
-    one call by exact type, with no explicit declaration settling it,
-    raise 'VariadicOverlap' here, naming the two declarations; see
-    'BaseSpace.getVariadicOverlaps'.
+    Two variadic declarations that both accept one call by exact type
+    are no conflict: the most recent declaration of the nearest class
+    takes the call, as 'Dispatcher' documents.
 
     A name that the class body bound to a plain (non-'overload')
     definition gets no 'Dispatcher': that explicit definition overrides
@@ -112,9 +110,6 @@ class LoadSpaceHook(AbstractSpaceHook):
     gets no 'Dispatcher' either, leaving that plain definition to be
     found through the method resolution order.
     """
-    for name in self.space.getVariadics():
-      for overlap in self.space.getVariadicOverlaps(name):
-        raise VariadicOverlap(name, *overlap)
     for name in self.space.getOverloadNames():
       if dict.__contains__(self.space, name):
         continue

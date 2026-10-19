@@ -7,13 +7,14 @@ after initialization.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeWriteOnceError(AttributeError):
+class KeeWriteOnceError(WorkToyException, AttributeError):
   """
   KeeWriteOnceError provides a custom exception raised to indicate attempt
   to modify a KeeNum enumeration member. All such members are write-once,

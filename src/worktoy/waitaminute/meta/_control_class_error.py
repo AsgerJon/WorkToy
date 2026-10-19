@@ -7,16 +7,17 @@ disallowed attribute.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Type, TypeAlias
-  from . import ControlSpace, MetaFlow
+  from ...core.control_flow import ControlSpace, MetaFlow
 
   Meta: TypeAlias = Type[MetaFlow]
 
 
-class ControlClassError(TypeError):
+class ControlClassError(WorkToyException, TypeError):
   """
   ControlClassError is raised when a 'ControlFlow' subclass defines a
   disallowed attribute. Only '__str__' and '__repr__' may be defined in
@@ -24,7 +25,8 @@ class ControlClassError(TypeError):
   '__static_attributes__', '__classcell__' and '__classdictcell__' are
   also permitted, and so is any name 'Exception' holds as an attribute
   that is not callable, such as '__doc__' and '__module__'. Any other
-  attribute raises this exception.
+  attribute raises this exception. It subclasses 'TypeError'; the
+  signals it guards live in 'worktoy.core.control_flow'.
   """
 
   __slots__ = ('space', 'badKey')

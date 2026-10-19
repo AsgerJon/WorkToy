@@ -1,5 +1,5 @@
 """
-TestControlFlow tests the 'worktoy.waitaminute.control_flow' package.
+TestControlFlow tests the 'worktoy.core.control_flow' package.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests.test_waitaminute import WaitAMinuteTest
+from . import CoreTest
 from worktoy.waitaminute import VariableNotNone
-from worktoy.waitaminute.control_flow import ControlClassError, ControlFlow
-from worktoy.waitaminute.control_flow import ControlSpace, SkipSet
+from worktoy.waitaminute.meta import ControlClassError
+from worktoy.core.control_flow import ControlFlow
+from worktoy.core.control_flow import ControlSpace, SkipSet
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
@@ -20,9 +21,9 @@ class ChillOut(ControlFlow):
   """Just a chill control flow."""
 
 
-class TestControlFlow(WaitAMinuteTest):
+class TestControlFlow(CoreTest):
   """
-  TestControlFlow tests the 'worktoy.waitaminute.control_flow' package.
+  TestControlFlow tests the 'worktoy.core.control_flow' package.
   """
 
   def test_not_white_listed(self, ) -> None:

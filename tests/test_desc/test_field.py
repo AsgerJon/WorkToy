@@ -13,7 +13,7 @@ from worktoy.core.sentinels import DELETED
 from worktoy.desc import Field
 from worktoy.utilities import maybe
 from worktoy.waitaminute import TypeException
-from worktoy.waitaminute.control_flow import SkipSet
+from worktoy.core.control_flow import SkipSet
 from worktoy.waitaminute.desc import (ProtectedError, ReadOnlyError,
                                       AccessError)
 from . import DescTest

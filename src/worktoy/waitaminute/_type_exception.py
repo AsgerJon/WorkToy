@@ -8,12 +8,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..utilities import textFmt, joinWords
+from . import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class TypeException(TypeError):
+class TypeException(WorkToyException, TypeError):
   """
   TypeException is a custom exception raised on a type mismatch. It is the
   most widely raised exception in 'worktoy', used wherever a value reaches

@@ -9,12 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
 
-class DuplicateError(AttributeError):
+class DuplicateError(WorkToyException, AttributeError):
   """
   DuplicateError subclasses 'AttributeError' and provides a custom exception
   raised to indicate that a variable was attempted to be defined more than

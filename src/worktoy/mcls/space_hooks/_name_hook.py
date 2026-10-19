@@ -114,7 +114,7 @@ class NamespaceHook(AbstractSpaceHook):
       #
       #  This behaviour is opposite to the other hooks, as they
       #  are implemented here. 'AbstractMetaclass' provides
-      #  implementations of the dunder methods, such that derived
+      #  implementations of the dunder methods, such that its classes
       #  may implement the methods to achieve behaviour otherwise
       #  requiring metaclass reimplementation.
     ]
@@ -158,7 +158,7 @@ class NamespaceHook(AbstractSpaceHook):
     never be called, or None when the operation is left to
     'AbstractMetaclass', which calls the hook. The metaclass building the
     class and its bases before 'AbstractMetaclass' are searched, since a
-    metaclass derived from 'KeeMeta' inherits its '__len__'. A metaclass
+    metaclass based on 'KeeMeta' inherits its '__len__'. A metaclass
     not based on 'AbstractMetaclass' calls no hook, and takes none over.
     """
     if hookName in self._getChainedHooks():

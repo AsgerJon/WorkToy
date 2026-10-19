@@ -10,6 +10,7 @@ from random import randint
 
 from worktoy.lorem_ipsum import BaseGenerator, Clause, Sentence, Paragraph
 from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.dispatch import DispatchException
 from . import LoremIpsumTest
 
 
@@ -18,8 +19,10 @@ class TestGeneratorKeywords(LoremIpsumTest):
   TestGeneratorKeywords tests the keyword arguments of the constructors of
   'BaseGenerator', 'Clause', 'Sentence' and 'Paragraph'. The target
   character count may be given as the 'charCount' keyword, just as it may
-  be given by position, while any other keyword is refused with the
-  'TypeError' Python raises for an unexpected keyword argument, which is
+  be given by position, while any other keyword is refused by the
+  dispatcher with 'DispatchException', a 'TypeError' naming the keywords
+  received, since a keyword call binds the parameter names of the
+  registrations and one naming no parameter binds none. That is
   also what the positional form has always raised.
   """
 
@@ -83,7 +86,7 @@ class TestGeneratorKeywords(LoremIpsumTest):
   def test_unknown_keyword_refused(self) -> None:
     """
     Testing that a keyword other than 'charCount', a misspelling such as
-    'chars' included, is refused with Python's own 'TypeError' naming the
+    'chars' included, is refused with 'DispatchException' naming the
     keyword, rather than dropped. That holds beside 'charCount' as well,
     and through 'first'.
     """
@@ -97,14 +100,15 @@ class TestGeneratorKeywords(LoremIpsumTest):
         with self.subTest(generator=generator.__name__, call=index):
           with self.assertRaises(TypeError) as context:
             call(generator)
-          self.assertIs(type(context.exception), TypeError)
+          self.assertIs(type(context.exception), DispatchException)
           self.assertIn('chars', str(context.exception))
 
   def test_positional_form_refuses_keywords(self) -> None:
     """
     Testing that the positional form refuses keywords as it always has:
     'charCount' given both by position and by keyword, and any other
-    keyword beside the position, while the position alone is stored.
+    keyword beside the position, while the position alone is stored. The
+    refusal is the dispatcher's, naming the keyword.
     """
     for generator in self.generators:
       with self.subTest(generator=generator.__name__):
@@ -112,14 +116,14 @@ class TestGeneratorKeywords(LoremIpsumTest):
         for key in ('charCount', 'chars'):
           with self.assertRaises(TypeError) as context:
             generator(69, **{key: 30})
-          self.assertIs(type(context.exception), TypeError)
+          self.assertIs(type(context.exception), DispatchException)
           self.assertIn(key, str(context.exception))
 
   def test_copy_refuses_keywords(self) -> None:
     """
     Testing that the copy constructors take no keywords: a 'Clause',
     'Sentence' or 'Paragraph' built from another one refuses 'charCount'
-    and any other keyword alike, with Python's own 'TypeError'.
+    and any other keyword alike, with 'DispatchException'.
     """
     for generator in (Clause, Sentence, Paragraph):
       other = generator(69)
@@ -127,5 +131,5 @@ class TestGeneratorKeywords(LoremIpsumTest):
         with self.subTest(generator=generator.__name__, key=key):
           with self.assertRaises(TypeError) as context:
             generator(other, **{key: 30})
-          self.assertIs(type(context.exception), TypeError)
+          self.assertIs(type(context.exception), DispatchException)
           self.assertIn(key, str(context.exception))

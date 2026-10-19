@@ -7,13 +7,14 @@ match the value type established by the enumeration's first member.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class KeeTypeException(TypeError):
+class KeeTypeException(WorkToyException, TypeError):
   """
   Raised when a 'KeeNum' member's value type does not match the value
   type established by the enumeration's first member; all members must

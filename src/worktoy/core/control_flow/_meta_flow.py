@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .. import VariableNotNone
+from ...waitaminute import VariableNotNone
+from .. import MetaType
 from . import ControlSpace
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -18,10 +19,13 @@ if TYPE_CHECKING:  # pragma: no cover
   STR: TypeAlias = Callable[[Self], str]
 
 
-class MetaFlow(type):
+class MetaFlow(MetaType, metaclass=MetaType):
   """
   MetaFlow provides the metaclass for the control flow exception classes. It
-  prevents these classes from having any sort of attributes.
+  prevents these classes from having any sort of attributes. It
+  subclasses 'MetaType' and derives from it, as 'AbstractMetaclass' does,
+  so a signal declared with a class keyword has the keyword absorbed by
+  '_Chill'; the '_root' keyword is read by '__prepare__' before that.
   """
 
   __is_root__: bool
@@ -48,7 +52,7 @@ class MetaFlow(type):
     return space
 
   def __new__(mcls, name: str, bases: Bases, space: Space, **kw) -> Self:
-    cls = type.__new__(mcls, name, bases, space)
+    cls = super().__new__(mcls, name, bases, space, **kw)
     if cls.__is_root__:
       mcls._registerRoot(cls)
     return cls

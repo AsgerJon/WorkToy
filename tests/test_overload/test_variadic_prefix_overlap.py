@@ -163,48 +163,49 @@ class TestVariadicPrefixOverlap(OverloadTest):
 
   def test_ambiguous_prefix_raises(self) -> None:
     """
-    Testing that two variadic declarations sharing a prefix with no
-    explicit declaration of the contested signature raise
-    'DuplicateSignature' at class creation.
+    Testing that two variadic declarations sharing a prefix build, and
+    that the most recent takes the contested call.
     """
-    with self.assertRaises(DuplicateSignature):
-      class Ambiguous(BaseObject):
-        @overload(int, *ARGS[str])
-        def f(self, n: int, *tail: str) -> str:
-          return 'strs'  # pragma: no cover
+    class Ambiguous(BaseObject):
+      @overload(int, *ARGS[str])
+      def f(self, n: int, *tail: str) -> str:
+        return 'strs'
 
-        @overload(int, *ARGS[int])
-        def f(self, n: int, *tail: int) -> str:
-          return 'ints'  # pragma: no cover
+      @overload(int, *ARGS[int])
+      def f(self, n: int, *tail: int) -> str:
+        return 'ints'
+
+    self.assertEqual(Ambiguous().f(1), 'ints')
+    self.assertEqual(Ambiguous().f(1, 'x'), 'strs')
 
   def test_settling_one_ambiguity_keeps_others(self) -> None:
     """
-    Testing that an explicit declaration settles only the ambiguity of
-    its own name. Both 'f' and 'g' leave the prefix-only signature
-    ambiguous, and only 'g' receives an explicit declaration of it, so
-    class creation still raises 'DuplicateSignature' for 'f'.
+    Testing that an explicit declaration takes the shared call of its
+    own name, while a name without one goes to its most recent variadic.
     """
-    with self.assertRaises(DuplicateSignature):
-      class HalfSettled(BaseObject):
-        @overload(int, *ARGS[str])
-        def f(self, n: int, *tail: str) -> str:
-          return 'strs'  # pragma: no cover
+    class HalfSettled(BaseObject):
+      @overload(int, *ARGS[str])
+      def f(self, n: int, *tail: str) -> str:
+        return 'strs'
 
-        @overload(int, *ARGS[int])
-        def f(self, n: int, *tail: int) -> str:
-          return 'ints'  # pragma: no cover
+      @overload(int, *ARGS[int])
+      def f(self, n: int, *tail: int) -> str:
+        return 'ints'
 
-        @overload(int, *ARGS[str])
-        def g(self, n: int, *tail: str) -> str:
-          return 'strs'  # pragma: no cover
+      @overload(int, *ARGS[str])
+      def g(self, n: int, *tail: str) -> str:
+        return 'strs'
 
-        @overload(int, *ARGS[int])
-        def g(self, n: int, *tail: int) -> str:
-          return 'ints'  # pragma: no cover
+      @overload(int, *ARGS[int])
+      def g(self, n: int, *tail: int) -> str:
+        return 'ints'
 
-        @overload(int)
-        def g(self, n: int) -> str:
-          return 'explicit'  # pragma: no cover
+      @overload(int)
+      def g(self, n: int) -> str:
+        return 'explicit'
+
+    self.assertEqual(HalfSettled().f(1), 'ints')
+    self.assertEqual(HalfSettled().g(1), 'explicit')
 
   def test_explicit_settles_regardless_of_order(self) -> None:
     """

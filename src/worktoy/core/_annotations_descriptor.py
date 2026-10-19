@@ -18,14 +18,24 @@ if TYPE_CHECKING:
 
   Annotations: TypeAlias = Optional[dict[str, Any]]
 
-typeAnnDesc: GSD = type.__dict__['__annotations__']
+#  'type' carries a descriptor for '__annotations__' from Python 3.10 on;
+#  before that 'cls.__annotations__' is a plain lookup through the class's
+#  own resolution order, falling through to a base for every class, and
+#  'MetaType' installs nothing.
+typeAnnDesc: Any = type.__dict__.get('__annotations__', None)
+HAS_TYPE_ANNOTATIONS: bool = True if typeAnnDesc is not None else False
 
 
 class _AnnotationsDescriptor:
   """
   _AnnotationsDescriptor is a private class for the 'worktoy.core' package
   used by 'MetaType' to ensure compatibility with the behaviour of the
-  'type.__dict__['__annotations__'].__get__' method.
+  'type.__dict__['__annotations__'].__get__' method. 'MetaType.__new__'
+  installs it on every metaclass whose body carries annotations, in
+  place of the eager dict the future import leaves there: read on a
+  class it defers to the descriptor of 'type', so the class answers for
+  itself, and read on the metaclass it answers the metaclass's own
+  annotations, which 'type' honours by calling '__get__' with no class.
   """
 
   __meta_annotations__: Annotations = None

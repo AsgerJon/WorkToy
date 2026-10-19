@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import maybe
-from . import ControlClassError
+from ...waitaminute.meta import ControlClassError
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Type, TypeAlias

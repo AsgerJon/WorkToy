@@ -16,6 +16,7 @@ from ._reserved_method_error import ReservedMethodError
 from ._extra_keyword_exception import ExtraKeywordException
 from ._repeated_field_exception import RepeatedFieldException
 from ._reserved_attribute_error import ReservedAttributeError
+from ._black_listed_type import BlackListedType
 
 __all__ = [
   'DuplicateError',
@@ -28,4 +29,5 @@ __all__ = [
   'ExtraKeywordException',
   'RepeatedFieldException',
   'ReservedAttributeError',
+  'BlackListedType',
 ]

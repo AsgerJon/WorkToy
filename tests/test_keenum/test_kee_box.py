@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from worktoy.desc import AttriBox
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import TypeException
-from worktoy.waitaminute.control_flow import SkipSet
+from worktoy.core.control_flow import SkipSet
 from worktoy.waitaminute.dispatch import DispatchException
 from worktoy.waitaminute.keenum import KeeBoxException, \
   KeeBoxValueError, KeeBoxTypeError

@@ -7,9 +7,10 @@ class object.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class ClassFieldError(TypeError):
+class ClassFieldError(WorkToyException, TypeError):
   """
   ClassFieldError is raised at class construction time when an 'EZData'
   class body binds a name to a class object, either through a nested

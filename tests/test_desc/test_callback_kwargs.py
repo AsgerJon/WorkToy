@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from worktoy.desc import AttriBox
-from worktoy.waitaminute.control_flow import ControlFlow, SkipSet
+from worktoy.core.control_flow import ControlFlow, SkipSet
 from . import DescTest
 
 

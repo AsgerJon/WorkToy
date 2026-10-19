@@ -11,7 +11,7 @@ from collections.abc import Callable
 from types import FunctionType, BuiltinFunctionType
 from typing import TYPE_CHECKING
 
-from . import EZField, EZStore
+from . import EZField, EZStore, _BLACK_LISTED_TYPES
 from ..core import Object
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import typeCast, textFmt
@@ -20,7 +20,7 @@ from ..waitaminute.dispatch import TypeCastException
 from ..waitaminute.ezdata import ExtraPositionalException, \
   KwargsOnlyException, IncompleteFieldException, ClassFieldError, \
   ReservedMethodError, ExtraKeywordException, \
-  RepeatedFieldException, ReservedAttributeError
+  RepeatedFieldException, ReservedAttributeError, BlackListedType
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias, Iterator
@@ -77,7 +77,8 @@ class EZHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Annotations
-  space: EZSpace
+  if TYPE_CHECKING:  # pragma: no cover
+    space: EZSpace
 
   #  Class Variables
   __frozen_keys__: Keys = ('frozen', 'immutable', 'hashable')
@@ -157,6 +158,8 @@ class EZHook(AbstractSpaceHook):
       If 'key' names an attribute EZData keeps for itself, such as
       '__kw_only__'.
     """
+    if isinstance(val, _BLACK_LISTED_TYPES):
+      raise BlackListedType(self.space.getClassName(), key, val)
     if key in self.space.__reserved_ez_methods__:
       raise ReservedMethodError(key, self.space)
     if key in self.space.__reserved_ez_attributes__:
@@ -407,7 +410,10 @@ class EZHook(AbstractSpaceHook):
     compiledSpace['__kw_only__'] = True if isKwOnly else False
 
     lookupOrder = self.space._getLookupOrder()
-    factories = self._optionalFactories(ezFields, compiledSpace['__kw_only__'])
+    factories = self._optionalFactories(
+        ezFields,
+        compiledSpace['__kw_only__']
+    )
     generated = self._settleOptional(compiledSpace, factories, lookupOrder)
     compiledSpace['__ez_generated__'] = generated
     compiledSpace['__init__'] = self.initFactory(ezFields)

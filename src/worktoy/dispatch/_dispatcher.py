@@ -11,7 +11,7 @@ from types import MethodType
 from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..core.sentinels import ARGS
+from ..core.sentinels import ARGS, THIS
 from ..utilities import maybe, typeCast, textFmt
 from ..utilities.combinatorics import Arrangements
 from ..waitaminute import TypeException, MissingVariable
@@ -91,6 +91,23 @@ class Dispatcher(Object):
   SLOW-concrete, SLOW-variadic, then the fallback (if registered),
   else 'DispatchException'. With no variadic overloads registered the
   two variadic passes are empty and dispatch behaves as three tiers.
+
+  Keyword arguments
+  -----------------
+  A call carrying keyword arguments binds them to the parameter names
+  of each concrete registration: the positional arguments fill the
+  first parameters, the keywords fill the rest by name, and a
+  registration is a candidate when every parameter of its signature is
+  filled once, with any further keyword taken by a parameter beyond the
+  signature or by '**kwargs'. Among the candidates the best type match
+  wins, by exact type first, then 'isinstance', then the cast where the
+  signature allows it, in registration order within each tier. So
+  'Point(x=69, y=420)' reaches '@overload(int, int)' declared on
+  '(self, x, y)'. A 'flex' registration binds the names of the wrapped
+  function in its canonical order; variadic registrations take their
+  tail by position and are not bound by keyword. A keyword call that
+  binds nothing goes to the fallback, else 'DispatchException', which
+  lists the keywords received.
 
   Match selection in FAST and SLOW is first-registered-wins. The
   dispatcher does not rank candidates by "specificity" - it cannot,
@@ -229,17 +246,29 @@ class Dispatcher(Object):
     arguments, and one keyed by the prefix length and the prefix types
     alone, for a call of the prefix and nothing more, which every variadic
     signature of that prefix accepts whatever its inner type. Each entry
-    holds the registration index and the function, so that of several
-    signatures accepting one call the first registered wins. The distinct
-    prefix lengths come last, ascending.
+    holds a rank and the function, the rank being the distance of the
+    class that declared it and then the declaration order reversed, so
+    that of several signatures accepting one call the most recent one of
+    the nearest class wins. The distinct prefix lengths come last,
+    ascending.
     """
     tailed, empty, lengths = dict(), dict(), []
+    distances = self._getVariadicDistances()
     for index, (sig, func) in enumerate(self._getVariadicFuncs()):
       raw = sig.getRawTypes()
       prefix, inner = raw[:-1], raw[-1].__inner_type__
       prefixLen = len(prefix)
-      tailed.setdefault((prefixLen, prefix, inner), (index, func))
-      empty.setdefault((prefixLen, prefix), (index, func))
+      #  Nearest class first, and within a class the most recent
+      #  declaration, so a later declaration takes a call an earlier one
+      #  accepts as well.
+      rank = (distances[index], -index)
+      for table, key in (
+          (tailed, (prefixLen, prefix, inner)),
+          (empty, (prefixLen, prefix)),
+      ):
+        held = table.get(key)
+        if held is None or rank < held[0]:
+          table[key] = (rank, func)
       if prefixLen not in lengths:
         lengths.append(prefixLen)
     return tailed, empty, (*sorted(lengths),)
@@ -276,6 +305,22 @@ class Dispatcher(Object):
     #  unmatched registrations from the cast passes.
     positions = sorted(range(len(sigFuncs)), key=lambda i: -distances[i])
     return [sigFuncs[i] for i in positions]
+
+  def _getVariadicOrder(self, nearestFirst: bool) -> SigFuncList:
+    """
+    The '_getVariadicOrder' method returns the variadic registrations in
+    the order the 'isinstance' pass tries them, the nearest class first,
+    or the cast passes, the farthest first, and within one class the
+    most recent declaration first either way, so a later declaration
+    takes a call an earlier one accepts as well.
+    """
+    pairs = self._getVariadicFuncs()
+    distances = self._getVariadicDistances()
+    sign = 1 if nearestFirst else -1
+    positions = sorted(
+        range(len(pairs)), key=lambda i: (sign * distances[i], -i),
+    )
+    return [pairs[i] for i in positions]
 
   def _getFallbackFunction(self) -> Optional[Method]:
     return self.__fallback_func__
@@ -326,22 +371,57 @@ class Dispatcher(Object):
       raise MissingVariable(self, '__field_owner__', type)
     return fieldOwner
 
+  def _getKeywordBindings(self, owner: type) -> list:
+    """
+    The '_getKeywordBindings' method returns what a keyword call binds
+    against, one entry per concrete registration whose function has
+    readable parameter names: the names the signature covers, the names
+    beyond it that a keyword may still fill, whether the function takes
+    '**kwargs', the types of the signature, the function to call and
+    whether the signature allows the cast. A 'flex' registration is
+    listed once, with the names and canonical types of the function it
+    wraps, since a keyword call names canonical parameters.
+    """
+    out, seen = [], []
+    for sig, func in self._getSigFuncList():
+      target, types = func, sig.getRawTypes()
+      if isinstance(func, PermuterMethod):
+        target = func.__wrapped__
+        items = func.arrangement.items
+        types = (*(owner if t is THIS else t for t in items),)
+      if any(target is known for known in seen):
+        continue
+      code = getattr(target, '__code__', None)
+      if code is None:
+        continue
+      count = code.co_argcount
+      positional = code.co_varnames[1:count]
+      if len(positional) < len(types):
+        continue
+      names = positional[:len(types)]
+      kwOnly = code.co_varnames[count:count + code.co_kwonlyargcount]
+      optional = (*positional[len(types):], *kwOnly)
+      takesExtra = True if code.co_flags & 0x08 else False
+      seen.append(target)
+      allowFlex = sig.__allow_flex__
+      out.append((names, optional, takesExtra, types, target, allowFlex))
+    return out
+
   def _createCachedFunction(self) -> None:
     sigFuncMap = self._getExactFuncMap()
     tailed, empty, prefixLens = self._getExactVariadics()
-    variadicFuncs = self._getVariadicFuncs()
+    variadicFuncs = self._getVariadicOrder(True)
     castFuncs = self._getCastOrder(
         self._getSigFuncList(), self._getSigDistances(),
     )
-    castVariadics = self._getCastOrder(
-        variadicFuncs, self._getVariadicDistances(),
-    )
+    castVariadics = self._getVariadicOrder(False)
     fallback = self._getFallbackFunction()
     finalizer = self._getFinalizerFunction()
     dispatcher = self
     fieldName = self._getFieldName()
     owner = self._getFieldOwner()
     ownClass = owner if fieldName == '__init__' else None
+    bindings = self._getKeywordBindings(owner)
 
     def castArg(type_: type, arg: Any, soleArg: bool) -> Any:
       """'arg' cast to 'type_' for the cast passes, 'soleArg' telling
@@ -374,12 +454,76 @@ class Dispatcher(Object):
           best = hit
       return None if best is None else best[1]
 
+    def bindKeywords(args: tuple, kwargs: dict, binding: tuple) -> Any:
+      """The arguments of 'binding' filled from 'args' by position and
+      from 'kwargs' by name, with the keywords left to pass through, or
+      None when the call does not fill the names exactly once."""
+      names, optional, takesExtra = binding[:3]
+      if len(args) > len(names):
+        return None
+      bound = [*args]
+      for name in names[len(args):]:
+        if name not in kwargs:
+          return None
+        bound.append(kwargs[name])
+      passed = dict()
+      for key, value in kwargs.items():
+        if key in names:
+          if key in names[:len(args)]:
+            return None
+          continue
+        if key in optional or takesExtra:
+          passed[key] = value
+          continue
+        return None
+      return (*bound,), passed
+
+    def keywordDispatch(args: tuple, kwargs: dict) -> Any:
+      """The function, bound arguments and keywords to pass for a
+      keyword call, chosen by the best type match among the
+      registrations the call binds, or None when none binds or
+      matches."""
+      candidates = []
+      for binding in bindings:
+        bound = bindKeywords(args, kwargs, binding)
+        if bound is not None:
+          candidates.append((*binding[3:], *bound))
+      for types, target, _, bound, passed in candidates:
+        if all(type(a) is t for a, t in zip(bound, types)):
+          return target, bound, passed
+      for types, target, _, bound, passed in candidates:
+        if all(isinstance(a, t) for a, t in zip(bound, types)):
+          return target, bound, passed
+      for types, target, allowFlex, bound, passed in candidates:
+        if not allowFlex:
+          continue
+        castArgs = []
+        for a, t in zip(bound, types):
+          if isinstance(a, t):
+            castArgs.append(a)
+            continue
+          try:
+            castArgs.append(castArg(t, a, len(bound) == 1))
+          except (ValueError, TypeError):
+            break
+        else:
+          return target, (*castArgs,), passed
+      return None
+
     def dispatch(instance: Any, *args, **kwargs) -> Any:
       #  The exception of the call itself, for the finalizer to chain
       #  from. 'sys.exc_info' would also report an exception the caller
       #  is handling, when the call raised nothing.
       raised = None
       try:
+        if kwargs:
+          found = keywordDispatch(args, kwargs)
+          if found is not None:
+            target, bound, passed = found
+            return target(instance, *bound, **passed)
+          if callable(fallback):
+            return fallback(instance, *args, **kwargs)
+          raise DispatchException(dispatcher, args, kwargs)
         argSig = TypeSig.fromArgs(*args, )
         try:
           func = sigFuncMap.get(argSig, None)
@@ -493,7 +637,24 @@ class Dispatcher(Object):
     ownerName = owner.__name__
     dispatch.__name__ = fieldName
     dispatch.__qualname__ = '%s.%s' % (ownerName, fieldName)
+    dispatch.__module__ = owner.__module__
+    documented = self._getDocumentedFunction()
+    dispatch.__doc__ = getattr(documented, '__doc__', None)
     self.__compiled_func__ = dispatch
+
+  def _getDocumentedFunction(self) -> Optional[Method]:
+    """
+    The '_getDocumentedFunction' method returns the function whose
+    docstring the compiled dispatch carries: the first concrete
+    registration, else the first variadic one, else the fallback, else
+    None. The owner's module is the dispatch's module, so 'help' and the
+    documentation tools see the method where the author wrote it.
+    """
+    for _, func in self._getSigFuncList():
+      return func
+    for _, func in self._getVariadicFuncs():
+      return func
+    return self._getFallbackFunction()
 
   def _getCachedFunction(self, **kwargs) -> Callable:
     if self.__compiled_func__ is None:
@@ -561,8 +722,9 @@ class Dispatcher(Object):
     """
     The 'addVariadicSigFunc' method registers a '(variadicSig, func)'
     pair on this dispatcher. Unlike 'addSigFunc', it does not reject
-    duplicates: a repeated variadic signature is appended, and the
-    first-registered one wins at dispatch. The dispatcher matches a call
+    duplicates: a repeated variadic signature is appended, and of several
+    accepting one call the most recent of the nearest class wins at
+    dispatch. The dispatcher matches a call
     against the variadic signatures by exact type in the FASTEST pass,
     the prefix types and the one type the trailing arguments share as
     the key, and in the FAST and SLOW passes when no concrete signature
@@ -953,9 +1115,8 @@ class Dispatcher(Object):
     """
     The 'fallback' method registers 'func' as the fallback. It runs
     after every pass has missed: not only on a type mismatch but also on
-    a length mismatch, a coercion-disabled signature, or arguments only
-    a keyword could satisfy (matching is positional and by length, and
-    keyword arguments are not type-matched). Only one fallback is allowed
+    a length mismatch, a coercion-disabled signature, or a keyword call
+    binding no registration. Only one fallback is allowed
     per dispatcher. Stacked on another decorator of this dispatcher, it
     registers the function of the stack; see '_stackedFunction'.
 

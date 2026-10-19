@@ -32,8 +32,9 @@ class AccessError(DescriptorException, AttributeError):
     infoSpec = """The '%s' descriptor at '%s.%s' failed to retrieve a 
     value!"""
     descTypeName = type(self.desc).__name__
-    ownerName = self.desc.__field_owner__.__name__
-    fieldName = self.desc.__field_name__
+    owner = getattr(self.desc, '__field_owner__', None)
+    ownerName = getattr(owner, '__name__', 'object')
+    fieldName = getattr(self.desc, '__field_name__', None) or 'object'
     info = infoSpec % (descTypeName, ownerName, fieldName)
     return textFmt(info)
 

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from ...utilities import maybe
 from ...waitaminute.meta import IllegalInstantiation, DuplicateSentinel
+from .. import MetaType
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Self, Never
@@ -17,14 +18,17 @@ if TYPE_CHECKING:  # pragma: no cover
   Bases = tuple[type, ...]
 
 
-class SentinelMeta(type):
+class SentinelMeta(MetaType, metaclass=MetaType):
   """
   SentinelMeta is the metaclass for sentinel classes. It registers each
   sentinel by name, refuses a second class statement at a registered name
   with 'DuplicateSentinel', and prevents its classes from being
   instantiated. A sentinel defines one concept for the whole process, so
   the registry holds one sentinel per name wherever it was declared, and
-  the existing one is the one to import.
+  the existing one is the one to import. It subclasses 'MetaType' and
+  derives from it, as 'AbstractMetaclass' does, so a sentinel declared
+  with a class keyword has the keyword absorbed by '_Chill' instead of
+  reaching the refusal of 'object.__init_subclass__'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

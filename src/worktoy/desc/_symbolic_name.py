@@ -112,6 +112,9 @@ class SymbolicName(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, *words: str) -> None:
+    for word in words:
+      if not isinstance(word, str):
+        raise TypeException('word', word, str)
     self.__part_words__ = words
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

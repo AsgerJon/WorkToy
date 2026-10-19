@@ -7,9 +7,10 @@ holds a different hook.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class DuplicateHook(Exception):
+class DuplicateHook(WorkToyException, Exception):
   """
   DuplicateHook is raised when a hook is registered on a namespace at a
   name that already holds a different hook. Re-registering the same hook

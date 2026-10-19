@@ -139,7 +139,7 @@ class overload:  # NOQA
   def _getLatestFunc(self) -> Method:
     if self.__latest_func__ is None:
       raise RuntimeError(
-        "no function has been registered on this 'overload' yet"
+          "no function has been registered on this 'overload' yet"
       )
     return self.__latest_func__
 
@@ -414,9 +414,8 @@ class overload:  # NOQA
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __getattr__(self, key: str) -> Any:
-    funcs = [f for _, f in self._getSigFuncDict().items()]
-    if funcs:
-      func = funcs[0]
+    if self.__latest_func__ is not None:
+      func = self.__latest_func__
     elif self.isFallback():
       func = self.getFallback()
     else:

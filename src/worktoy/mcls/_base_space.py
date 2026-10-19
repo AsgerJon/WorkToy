@@ -22,7 +22,6 @@ if TYPE_CHECKING:  # pragma: no cover
   SigFuncList: TypeAlias = list[SigFunc]
   OverloadMap: TypeAlias = dict[str, SigFuncList]
   FuncMap: TypeAlias = dict[str, Callable[..., Any]]
-  Overlap: TypeAlias = tuple[TypeSig, TypeSig, TypeSig, Callable, Callable]
   Collected: TypeAlias = tuple[TypeSig, Callable[..., Any], int]
   CollectedList: TypeAlias = list[Collected]
   Claim: TypeAlias = tuple[overload, str]
@@ -121,83 +120,6 @@ class BaseSpace(AbstractNamespace):
     """
     return maybe(self.__finalizer_map__, dict())
 
-  @staticmethod
-  def sharedCall(first: TypeSig, second: TypeSig) -> Optional[TypeSig]:
-    """
-    The 'sharedCall' method returns the signature of the shortest call
-    that two variadic declarations both accept by exact type, or None
-    when no call does. With the shorter prefix of the two as 'P1' and the
-    longer as 'P2', the declarations share a call exactly when 'P1' opens
-    'P2' and the rest of 'P2' holds nothing but the inner type of the
-    declaration of 'P1'; that call is 'P2' itself, with nothing after it.
-    Two declarations of one prefix share the call of the prefix alone,
-    and two without a prefix share the empty call.
-
-    Parameters
-    ----------
-    first: TypeSig
-      A variadic declaration, ending in an 'ARGS'.
-    second: TypeSig
-      Another variadic declaration, ending in an 'ARGS'.
-
-    Returns
-    -------
-    Optional[TypeSig]
-      The shortest call both accept by exact type, or None.
-    """
-    shorter, longer = sorted((first, second), key=len)
-    shortTypes, longTypes = shorter.getRawTypes(), longer.getRawTypes()
-    prefix, inner = shortTypes[:-1], shortTypes[-1].__inner_type__
-    longPrefix = longTypes[:-1]
-    for this, that in zip(prefix, longPrefix):
-      if this is not that:
-        return None
-    for type_ in longPrefix[len(prefix):]:
-      if type_ is not inner:
-        return None
-    return TypeSig(*longPrefix)
-
-  @staticmethod
-  def _sameInner(first: TypeSig, second: TypeSig) -> bool:
-    """
-    The '_sameInner' method reports whether two variadic declarations
-    take the same inner type. Two such declarations sharing a call share
-    every longer call as well, so no explicit declaration settles them.
-    """
-    firstInner = first.getRawTypes()[-1].__inner_type__
-    secondInner = second.getRawTypes()[-1].__inner_type__
-    return True if firstInner is secondInner else False
-
-  def getVariadicOverlaps(self, name: str) -> list[Overlap]:
-    """
-    The 'getVariadicOverlaps' method returns the pairs of variadic
-    declarations the class body registered under 'name', of different
-    functions, that accept one call by exact type with nothing settling
-    which function receives it. Each entry is a '(firstSig, secondSig,
-    sharedSig, firstFunc, secondFunc)' tuple, in registration order,
-    'sharedSig' being the shortest call both accept; see 'sharedCall'. An
-    explicit declaration of that call in the class body settles the pair,
-    since the explicit declaration takes it, unless the two declarations
-    take the same inner type and so share every longer call as well.
-    'LoadSpaceHook.postCompilePhase' raises 'VariadicOverlap' for the
-    first entry when the class compiles.
-    """
-    pairs = self.getVariadics().get(name, [])
-    explicit = [sig for sig, _ in self.getOverloads().get(name, [])]
-    out = []
-    for index, (firstSig, firstFunc) in enumerate(pairs):
-      for secondSig, secondFunc in pairs[index + 1:]:
-        if firstFunc is secondFunc:
-          continue
-        shared = self.sharedCall(firstSig, secondSig)
-        if shared is None:
-          continue
-        settled = shared in explicit
-        if settled and not self._sameInner(firstSig, secondSig):
-          continue
-        out.append((firstSig, secondSig, shared, firstFunc, secondFunc))
-    return out
-
   def getPlainNames(self, ) -> tuple[str, ...]:
     """
     The 'getPlainNames' method returns the names the class body bound to
@@ -232,7 +154,8 @@ class BaseSpace(AbstractNamespace):
       self.getFallbacks(),
       self.getFinalizers(),
     )
-    return True if any(name in registry for registry in registries) else False
+    present = any(name in registry for registry in registries)
+    return True if present else False
 
   @staticmethod
   def _definesPlainly(cls: type, name: str) -> bool:
@@ -430,10 +353,8 @@ class BaseSpace(AbstractNamespace):
     under 'name'. The 'TypeSig' must carry a trailing 'ARGS' sentinel as
     its last raw type. The dispatcher matches a call against the variadic
     signatures by exact type first, the prefix and the trailing type as
-    a hash key, then through 'isinstance' in registration order, and the
-    first registered wins a call several accept. Two declarations of
-    different functions that accept one call by exact type are refused as
-    the class compiles; see 'getVariadicOverlaps'.
+    a hash key, then through 'isinstance', and of several accepting one
+    call the most recent declaration of the nearest class wins.
     """
     existing = self.getVariadics()
     existing[name] = [*existing.get(name, []), (sig, func,)]

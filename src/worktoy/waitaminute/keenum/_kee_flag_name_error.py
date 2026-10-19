@@ -7,9 +7,10 @@ whose name contains an underscore, or a flag named 'NULL'.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class KeeFlagNameError(ValueError):
+class KeeFlagNameError(WorkToyException, ValueError):
   """
   KeeFlagNameError is raised at class construction time when a
   'KeeFlags' class body declares a flag whose name contains an

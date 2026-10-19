@@ -7,9 +7,10 @@ value for the same field both by position and by keyword.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class RepeatedFieldException(TypeError):
+class RepeatedFieldException(WorkToyException, TypeError):
   """
   RepeatedFieldException is raised when an 'EZData' class is called with a
   value for the same field both by position and by keyword, as in

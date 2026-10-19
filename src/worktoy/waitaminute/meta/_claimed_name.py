@@ -7,9 +7,10 @@ hook claimed.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class ClaimedName(SyntaxError):
+class ClaimedName(WorkToyException, SyntaxError):
   """
   ClaimedName is raised when a class body deletes a name whose latest
   binding a namespace hook claimed, such as an 'overload', an 'EZField'

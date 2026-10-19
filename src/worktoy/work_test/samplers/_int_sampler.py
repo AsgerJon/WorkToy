@@ -13,7 +13,7 @@ from ...utilities import typeCast
 from ...desc import Field
 from . import BaseSampler
 from ...waitaminute import TypeException
-from ...waitaminute.control_flow import SkipSet
+from ...core.control_flow import SkipSet
 from ...waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover

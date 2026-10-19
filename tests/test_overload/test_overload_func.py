@@ -33,7 +33,7 @@ class TestOverloadFunc(OverloadTest):
   overload consists of a function.
   """
 
-  def test_overload_func(self) -> Self:
+  def test_overload_func(self) -> None:
     """Tests the overload with a function type signature."""
 
     def sampleFunc():

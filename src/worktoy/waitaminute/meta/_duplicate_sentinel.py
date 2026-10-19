@@ -9,12 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Optional
 
 
-class DuplicateSentinel(TypeError):
+class DuplicateSentinel(WorkToyException, TypeError):
   """
   DuplicateSentinel is raised when a class statement declares a sentinel
   at a name that a sentinel already holds. A sentinel defines one concept

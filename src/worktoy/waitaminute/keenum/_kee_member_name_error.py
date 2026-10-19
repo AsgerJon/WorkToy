@@ -7,9 +7,10 @@ that one of its members takes.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class KeeMemberNameError(SyntaxError):
+class KeeMemberNameError(WorkToyException, SyntaxError):
   """
   KeeMemberNameError is raised as a 'KeeFlags' class is created when its
   class body binds a name that one of its members takes: 'NULL', or the

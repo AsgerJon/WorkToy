@@ -19,7 +19,6 @@ from __future__ import annotations
 from worktoy.core.sentinels import ARGS
 from worktoy.dispatch import overload, TypeSig
 from worktoy.mcls import BaseObject
-from worktoy.waitaminute.dispatch import VariadicOverlap
 
 from . import OverloadTest
 
@@ -164,11 +163,13 @@ class TestVariadicExactPass(OverloadTest):
     self.assertEqual(bag.put(), 'empty')
 
   def test_isinstance_match_unchanged(self) -> None:
-    """A call matching no declaration by exact type still goes to the
-    first declared that matches through 'isinstance', at any length."""
+    """A call matching no declaration by exact type goes to the most
+    recent declaration that matches through 'isinstance', at any length:
+    bools match both 'ARGS[int]' and 'ARGS[object]', and 'ARGS[int]' was
+    declared later; mixed items match 'ARGS[object]' alone."""
     bag = Bag()
-    self.assertEqual(bag.put(True, False), 'objects')
-    self.assertEqual(bag.put(*([True] * 7)), 'objects')
+    self.assertEqual(bag.put(True, False), 'ints')
+    self.assertEqual(bag.put(*([True] * 7)), 'ints')
     self.assertEqual(bag.put('a', 1), 'objects')
     self.assertEqual(bag.put(1, 'a'), 'objects')
     self.assertEqual(bag.put(1, 2, 3, 4, 5, 6, 'a'), 'objects')
@@ -242,14 +243,17 @@ class TestVariadicExactPass(OverloadTest):
 
   def test_same_inner_overlap_unsettleable(self) -> None:
     """Two variadic declarations of one inner type whose prefixes share a
-    call share every longer call too, so an explicit declaration of the
-    shared call settles nothing, and the class body is refused."""
-    with self.assertRaises(VariadicOverlap) as context:
-      class Totals(BaseObject):
-        add = overload(ARGS[int])(_first)
-        add = overload(int, ARGS[int])(_second)  # noqa: F811
-        add = overload(int)(_second)  # noqa: F811
-    self.assertEqual(context.exception.sig, TypeSig(int))
+    call share every longer call too; the class builds, and the most
+    recent declaration takes the calls they share."""
+    class Totals(BaseObject):
+      add = overload(ARGS[int])(_first)
+      add = overload(int, ARGS[int])(_second)  # noqa: F811
+      add = overload(int)(_second)  # noqa: F811
+
+    totals = Totals()
+    self.assertEqual(totals.add(1), _second(totals, 1))
+    self.assertEqual(totals.add(1, 2), _second(totals, 1, 2))
+    self.assertEqual(totals.add(), _first(totals))
 
   def test_unhashable_class_in_call(self) -> None:
     """An argument whose class cannot be hashed misses the exact passes

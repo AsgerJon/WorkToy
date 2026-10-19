@@ -7,13 +7,14 @@ at a name reserved for a generated method.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...ezdata import EZSpace
 
 
-class ReservedFieldError(AttributeError):
+class ReservedFieldError(WorkToyException, AttributeError):
   """
   ReservedFieldError subclasses 'AttributeError' and is raised
   when an EZData class body declares an EZField at a name that

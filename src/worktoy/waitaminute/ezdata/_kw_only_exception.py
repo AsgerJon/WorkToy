@@ -7,9 +7,10 @@ KwargsOnlyException is raised when an EZData subclass declared with
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class KwargsOnlyException(TypeError):
+class KwargsOnlyException(WorkToyException, TypeError):
   """
   Raised when an EZData subclass declared with 'kwOnly=True' (or a
   synonym such as 'keywordOnly' or 'kw_only') is called with positional

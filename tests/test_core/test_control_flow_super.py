@@ -1,5 +1,5 @@
 """
-TestControlFlowSuper subclasses 'WaitAMinuteTest' and pins that a
+TestControlFlowSuper subclasses 'CoreTest' and pins that a
 'ControlFlow' subclass may use 'super()' in its '__str__'. 'super()'
 makes the interpreter bind '__classcell__' in the class body, and on
 Python 3.14 '__classdictcell__' as well, and 'ControlSpace' refused both
@@ -9,12 +9,13 @@ as attributes the class may not have.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.waitaminute.control_flow import ControlFlow, ControlClassError
+from worktoy.core.control_flow import ControlFlow
+from worktoy.waitaminute.meta import ControlClassError
 
-from . import WaitAMinuteTest
+from . import CoreTest
 
 
-class TestControlFlowSuper(WaitAMinuteTest):
+class TestControlFlowSuper(CoreTest):
   """
   TestControlFlowSuper provides tests for 'super()' in a 'ControlFlow'
   subclass.

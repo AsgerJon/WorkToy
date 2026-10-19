@@ -9,12 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class NamelessCallback(SyntaxError):
+class NamelessCallback(WorkToyException, SyntaxError):
   """
   NamelessCallback is raised when a callback decorator of a descriptor,
   one of the notification decorators of 'BaseDescriptor' or the accessor

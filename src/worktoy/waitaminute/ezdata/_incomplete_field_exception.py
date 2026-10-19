@@ -8,9 +8,10 @@ type or its construction arguments.
 from __future__ import annotations
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 
-class IncompleteFieldException(TypeError):
+class IncompleteFieldException(WorkToyException, TypeError):
   """
   IncompleteFieldException is raised at class construction time when
   an EZData subclass body contains an EZField that is missing either

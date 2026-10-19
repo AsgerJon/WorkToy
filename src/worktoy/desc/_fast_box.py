@@ -42,6 +42,10 @@ class FastBox(Generic[T]):
   - set-time coercion: a write must already be an instance of the field
     type, the numeric tower is not applied ('x: float' rejects an int).
 
+  A default for a builtin container follows the rule of 'AttriBox':
+  several arguments are its elements, one argument is converted as a
+  whole, and a lone string is refused rather than split; see '_build'.
+
   Nesting is still correct without any context machinery: '__get__'
   reads the 'instance' parameter rather than shared descriptor state, so
   re-entrant access to the same descriptor lives on the call stack. The
@@ -189,13 +193,15 @@ class FastBox(Generic[T]):
   def _build(self) -> Any:
     """
     The '_build' method constructs a fresh default value from the
-    captured arguments. It follows three rules of 'AttriBox': a builtin
+    captured arguments. It follows four rules of 'AttriBox': a builtin
     container field type refuses a lone 'str', 'bytes' or 'bytearray'
     rather than splitting it, a number field type, 'bool', 'int', 'float'
     or 'complex' or a subclass keeping the constructor of one, casts a
-    lone value through 'typeCast' rather than rounding it, and what the
-    field type returns must be an instance of it. It runs once per
-    instance and field, on the first read.
+    lone value through 'typeCast' rather than rounding it, a builtin
+    container refused the arguments as separate takes them as its one
+    iterable instead, see '_callFieldType', and what the field type
+    returns must be an instance of it. It runs once per instance and
+    field, on the first read.
 
     Returns
     -------
@@ -208,8 +214,9 @@ class FastBox(Generic[T]):
         If no field type has been captured.
     TypeException
         If a container field type receives a lone text argument, a number
-        field type a lone value the cast refuses, or the field type
-        returns something that is not an instance of it.
+        field type a lone value the cast refuses, the field type refuses
+        the arguments, or it returns something that is not an instance
+        of it.
     """
     fieldType = self.__field_type__
     if fieldType is None:
@@ -220,10 +227,45 @@ class FastBox(Generic[T]):
         raise TypeException(self.__field_name__, args[0], fieldType)
       if castRule(fieldType) in _NUMBER_TYPES:
         return self._castNumber(args[0])
-    value = fieldType(*args, **kwargs)
+    value = self._callFieldType(fieldType, args, kwargs)
     if isinstance(value, fieldType):
       return value
     raise TypeException(self.__field_name__, value, fieldType)
+
+  def _callFieldType(
+      self,
+      fieldType: type,
+      args: tuple,
+      kwargs: dict,
+  ) -> Any:
+    """
+    The '_callFieldType' method calls the field type on the arguments as
+    separate, which is what every value constructor takes, and when that
+    call is refused and the field type is a builtin container, calls it
+    once more with the arguments as its one iterable, which is what the
+    containers take, so 'FastBox[tuple](1, 2)' holds '(1, 2)'. The
+    second call is made for the builtin containers alone: a constructor
+    of any other class refusing the arguments has refused them, and the
+    refusal is raised as 'TypeException' naming the field.
+    """
+    try:
+      return fieldType(*args, **kwargs)
+    except TypeError as typeError:
+      if fieldType not in _CONTAINERS or kwargs:
+        raise self._refusal(args, fieldType) from typeError
+    try:
+      return fieldType(args)
+    except (TypeError, ValueError) as exception:
+      raise self._refusal(args, fieldType) from exception
+
+  def _refusal(self, args: tuple, fieldType: type) -> TypeException:
+    """
+    The '_refusal' method builds the 'TypeException' for arguments the
+    field type refused, naming the field and the one argument or the
+    whole tuple.
+    """
+    badValue = args[0] if len(args) == 1 else args
+    return TypeException(self.__field_name__, badValue, fieldType)
 
   def _castNumber(self, value: Any) -> Any:
     """

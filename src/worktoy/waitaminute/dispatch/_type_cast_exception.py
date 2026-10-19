@@ -7,13 +7,14 @@ target type without loss.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from .. import WorkToyException
 
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class TypeCastException(TypeError):
+class TypeCastException(WorkToyException, TypeError):
   """
   TypeCastException is raised by the 'typeCast' function in the
   'worktoy.utilities' package when a value cannot be cast to the target

@@ -8,7 +8,7 @@ from __future__ import annotations
 from ...desc import Field, AttriBox
 from ...lorem_ipsum import Sentence
 from . import BaseSampler
-from ...waitaminute.control_flow import SkipSet
+from ...core.control_flow import SkipSet
 
 
 class LoremSampler(BaseSampler):

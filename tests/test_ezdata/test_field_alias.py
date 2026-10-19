@@ -12,6 +12,7 @@ scope.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.desc import Alias
 from worktoy.ezdata import EZData, EZField
 from . import EZTest
 

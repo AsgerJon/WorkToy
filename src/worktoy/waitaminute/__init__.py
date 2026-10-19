@@ -1,19 +1,28 @@
 """The 'worktoy.waitaminute' package collects every custom exception in
 the library. Exceptions are grouped into subpackages by the layer that
-raises them ('desc', 'meta', 'dispatch', 'keenum', 'ezdata', and
-'control_flow'), with a handful of cross-cutting exceptions
+raises them ('desc', 'meta', 'dispatch', 'keenum' and 'ezdata'), with a
+handful of cross-cutting exceptions
 ('TypeException', 'MissingVariable', and others) defined at the top level.
 
 The guiding philosophy is fail-fast: 'worktoy' raises a specific, typed
 exception rather than falling back silently or returning a sentinel a
 caller might overlook. Each exception subclasses the built-in that best
 matches its meaning ('TypeError', 'ValueError', 'AttributeError', and so
-on) so existing 'except' clauses keep working.
+on) so existing 'except' clauses keep working. Every exception but the
+control-flow signals is also a 'WorkToyException', the common base that
+gives them 'pickle' and 'copy' support in one place; an argument that
+cannot be pickled travels as a 'Detached' stand-in.
+
+The 'control_flow' subpackage is a thin re-export kept for the 1.x
+releases: the control-flow signals moved to 'worktoy.core.control_flow',
+beside the sentinels, and 'ControlClassError' to 'meta'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from ._detached import Detached
+from ._work_toy_exception import WorkToyException
 from ._type_exception import TypeException
 from ._variable_not_none import VariableNotNone
 from ._unpack_exception import UnpackException
@@ -27,6 +36,8 @@ from . import ezdata
 from . import control_flow
 
 __all__ = [
+  'Detached',
+  'WorkToyException',
   'TypeException',
   'VariableNotNone',
   'UnpackException',

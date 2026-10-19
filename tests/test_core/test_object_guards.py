@@ -141,6 +141,7 @@ class TestObjectGuards(CoreTest):
     above sit behind.
     """
     obj = Object()
+    setattr(obj, '__field_name__', 'bar')
     self.assertFalse(obj.hasContext())
     for name in ('getContextInstance', 'getContextOwner'):
       with self.assertRaises(WithoutException):

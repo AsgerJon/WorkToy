@@ -30,6 +30,13 @@ def _exc(target: type, arg: Any) -> Exception:
 def _castSlice(arg: Any) -> Slice:
   if isinstance(arg, ValidSlice):
     return arg
+  #  'slice(None)' is the full slice, but 'None' alone has no single
+  #  meaning as a subscript (a list refuses it, a dict takes it as a key,
+  #  NumPy reads it as a new axis), so the cast picks none of them; a
+  #  class that wants one declares '@overload(type(None))'. Inside a list
+  #  'None' keeps its open-end meaning.
+  if arg is None:
+    raise _exc(slice, arg)
   if isinstance(slice(arg), ValidSlice):
     return slice(arg)
   if isinstance(arg, (list, tuple)) and arg:
@@ -297,8 +304,10 @@ def typeCast(target: type, arg: Any, **kwargs) -> Any:
   - 'slice' : accepts a 'slice', a single index, or a
     'list' / 'tuple' of up to three values that yield a valid
     slice, read as the arguments of 'slice' are, so a single
-    value is the stop; more than three values fail. Validated
-    via 'ValidSlice'.
+    value is the stop; more than three values fail. A lone
+    'None' is refused, having no single meaning as a subscript,
+    while 'None' inside the list keeps its open-end meaning.
+    Validated via 'ValidSlice'.
   - 'str' : accepts 'bytes' / 'bytearray' (UTF-8 decoded);
     arbitrary objects are *not* stringified.
   - 'bytes' / 'bytearray' : accept 'str' (UTF-8 encoded) and

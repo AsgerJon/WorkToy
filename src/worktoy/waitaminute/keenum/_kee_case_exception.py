@@ -6,9 +6,11 @@ KeeCaseException is raised when the name of a 'KeeNum' member or a
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from .. import WorkToyException
 
 
-class KeeCaseException(ValueError):
+
+class KeeCaseException(WorkToyException, ValueError):
   """
   Raised when the name of a 'KeeNum' member or of a 'KeeFlags' flag is
   not upper case (the check is 'name.isupper()'); lowercase or mixed-case

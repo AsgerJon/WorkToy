@@ -9,13 +9,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...utilities import textFmt
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from ...mcls import AbstractNamespace
   from ...mcls.space_hooks import AbstractSpaceHook
 
 
-class HookException(Exception):
+class HookException(WorkToyException, Exception):
   """
   HookException wraps any exception raised by a namespace hook so it cannot
   be mistaken for the 'KeyError' that the metacall system uses as a control

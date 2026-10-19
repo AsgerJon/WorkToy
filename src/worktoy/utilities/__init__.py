@@ -6,8 +6,8 @@ This package collects small, standalone helpers with no
 ('unpack', 'maybe'), slicing ('sliceLen', 'ValidSlice'),
 type/MRO helpers ('typeCast', 'castRule', 'resolveMRO'), descriptor
 support ('QuickDesc'), filesystem ('Directory'), exception
-inspection ('ExceptionInfo'), the 'combinatorics' subpackage, and a handful of
-orphans ('argsCount', 'bipartiteMatching', 'replaceFlex',
+inspection ('ExceptionInfo'), the 'combinatorics' subpackage, and a
+handful of orphans ('argsCount', 'bipartiteMatching', 'replaceFlex',
 'ClassBodyTemplate')."""
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
