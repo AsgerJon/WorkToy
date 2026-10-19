@@ -59,6 +59,13 @@ class KeeSpace(BaseSpace):
     member = self.typeGuard(member)
     self.__enumeration_members__[name] = member
 
+  def hasNum(self, name: str) -> bool:
+    """
+    The 'hasNum' method reports whether a member, declared in this body
+    or inherited, is registered under 'name'.
+    """
+    return True if name in self.__enumeration_members__ else False
+
   def typeGuard(self, member: Kee) -> Kee:
     """
     The 'typeGuard' method pins the enumeration to the value type of its

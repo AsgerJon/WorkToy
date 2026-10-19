@@ -46,7 +46,7 @@ class ReadOnlyError(DescriptorException, AttributeError):
     infoSpec = """Attempted to overwrite read-only attribute '%s' with 
     new value: '%s'!"""
     ownerName = type(self.instance).__name__
-    fieldName = getattr(self.desc, '__field_name__', 'object')
+    fieldName = self._fieldName(self.instance, self.desc)
     fieldId = '%s.%s' % (ownerName, fieldName)
     newValue = str(self.newVal)
     info = infoSpec % (fieldId, newValue)

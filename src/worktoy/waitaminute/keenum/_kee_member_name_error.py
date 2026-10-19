@@ -1,5 +1,5 @@
 """
-KeeMemberNameError is raised when a 'KeeFlags' class body binds a name
+KeeMemberNameError is raised when an enumeration class body binds a name
 that one of its members takes.
 """
 #  Apache-2.0 license
@@ -12,19 +12,28 @@ from .. import WorkToyException
 
 class KeeMemberNameError(WorkToyException, SyntaxError):
   """
-  KeeMemberNameError is raised as a 'KeeFlags' class is created when its
-  class body binds a name that one of its members takes: 'NULL', or the
-  names of some of its flags joined by '_' in the order they were
-  declared, as in 'READ_WRITE = 'rw'' beside the flags 'READ' and
-  'WRITE'. The member would replace the attribute without a word. It is
-  raised as the class is created, since the flags that make up the name
-  may be declared after the attribute. It subclasses 'SyntaxError', as
-  the other refusals of a class-body line do.
+  KeeMemberNameError is raised when an enumeration class body binds a
+  name that one of its members takes, and the member would replace the
+  attribute without a word.
+
+  For a 'KeeFlags' class the name is 'NULL', or the names of some of its
+  flags joined by '_' in the order they were declared, as in
+  'READ_WRITE = 'rw'' beside the flags 'READ' and 'WRITE'. It is raised
+  as the class is created, since the flags that make up the name may be
+  declared after the attribute.
+
+  For a 'KeeNum' class the name is that of a 'Kee' declared in the body
+  or inherited, bound to a plain value before or after the member, as in
+  'RED = 'plain'' beside 'RED = Kee[int](1)'. It is raised at the second
+  binding, in the class body.
+
+  It subclasses 'SyntaxError', as the other refusals of a class-body
+  line do.
 
   Attributes
   ----------
   clsName : str
-    The name of the 'KeeFlags' class under construction.
+    The name of the enumeration class under construction.
   memberName : str
     The name the class body binds, which a member takes.
   """
@@ -39,8 +48,8 @@ class KeeMemberNameError(WorkToyException, SyntaxError):
     self.msg = str(self)
 
   def __str__(self) -> str:
-    infoSpec = """The class body of KeeFlags class '%s' binds '%s', but a
-    member of the class takes that name."""
+    infoSpec = """The class body of enumeration class '%s' binds '%s',
+    but a member of the class takes that name."""
     info = infoSpec % (self.clsName, self.memberName)
     return textFmt(info)
 

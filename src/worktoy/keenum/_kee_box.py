@@ -99,8 +99,7 @@ class KeeBox(AttriBox):
         fieldObject = self._resolve()
       except Exception as exception:
         raise exception from attributeError
-      #  Not 'setattr', which an owner's '__setattr__' could refuse.
-      object.__setattr__(instance, pvtName, fieldObject)
+      self._store(instance, fieldObject)
       return self.__instance_get__(instance, owner, _recursion=True)
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> Any:
@@ -108,9 +107,8 @@ class KeeBox(AttriBox):
     The '__instance_set__' method stores the member 'value' resolves to,
     and returns it, so the 'onSet' callbacks receive the member.
     """
-    pvtName = self._getStorageName()
     if self._isMember(value):
-      object.__setattr__(instance, pvtName, value)
+      self._store(instance, value)
       return value
     if kwargs.get('_recursion', False):
       raise RecursionError

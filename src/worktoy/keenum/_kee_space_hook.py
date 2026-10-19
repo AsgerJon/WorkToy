@@ -9,6 +9,7 @@ from types import FunctionType
 from typing import TYPE_CHECKING
 
 from ..mcls.space_hooks import AbstractSpaceHook
+from ..waitaminute.keenum import KeeMemberNameError
 from ..waitaminute.meta import UnboundClassHook
 from . import Kee
 
@@ -42,11 +43,21 @@ class KeeSpaceHook(AbstractSpaceHook):
     object. A '__class_resolve__' that is a plain function or a
     staticmethod raises 'UnboundClassHook', as a routed '__class_*__'
     hook does: the lookups call the hook bound to the class.
+
+    A name bound both to a 'Kee' and to a plain value, in either order,
+    raises 'KeeMemberNameError': the member would replace the attribute
+    without a word, as the 'Kee' is routed past the namespace while the
+    plain value is stored in it. Two 'Kee' objects of one name raise
+    'KeeDuplicate' from 'addNum', as before.
     """
     if key == '__class_resolve__':
       if isinstance(val, (FunctionType, staticmethod)):
         raise UnboundClassHook(self.space.getClassName(), key)
     if isinstance(val, Kee):
+      if dict.__contains__(self.space, key):
+        raise KeeMemberNameError(self.space.getClassName(), key)
       self.space.addNum(key, val)
       return True
+    if self.space.hasNum(key):
+      raise KeeMemberNameError(self.space.getClassName(), key)
     return False

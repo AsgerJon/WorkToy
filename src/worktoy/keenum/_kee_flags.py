@@ -225,6 +225,15 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     the canonical member."""
     return self
 
+  def __reduce__(self) -> tuple:
+    """
+    A member pickles as a lookup of its canonical name on its class, so
+    it unpickles as the member itself. The default protocol rebuilt a
+    fresh instance from the member's state, a phantom that was not the
+    member, so an 'is' check against it failed.
+    """
+    return getattr, (type(self), self.name)
+
   def __bool__(self) -> bool:
     """The NULL member (no flags HIGH) is falsy. Any member with at
     least one flag HIGH is truthy, mirroring the truthiness of the

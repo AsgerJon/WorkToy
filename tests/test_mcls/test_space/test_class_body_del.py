@@ -88,10 +88,10 @@ class TestClassBodyDel(MCLSTest):
         del x
 
   def test_claimed_member_refused(self) -> None:
-    """Deleting the name of a 'Kee' member raises 'ClaimedName', also
-    after an earlier plain binding of the same name."""
+    """Deleting the name of a 'Kee' member raises 'ClaimedName'. A plain
+    binding of the name before the member is refused at the member, by
+    'KeeSpaceHook', so the deletion is never reached in that case."""
     with self.assertRaises(ClaimedName):
       class Foo(KeeNum):
-        A = 'plain'
         A = Kee[int](1)
         del A

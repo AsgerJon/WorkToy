@@ -46,7 +46,7 @@ class ProtectedError(DescriptorException, AttributeError):
     oldValue = self.oldVal
     desc = self.desc
     ownerName = type(self.instance).__name__
-    fieldName = getattr(desc, '__field_name__', 'object')
+    fieldName = self._fieldName(self.instance, desc)
     infoSpec = """Attempted to delete protected attribute '%s.%s'
       with value: '%s'"""
     info = infoSpec % (ownerName, fieldName, str(oldValue))

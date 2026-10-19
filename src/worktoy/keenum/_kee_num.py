@@ -174,6 +174,15 @@ class KeeBase(Object, ):
     than a clone that matches nothing."""
     return self
 
+  def __reduce__(self) -> tuple:
+    """
+    A member pickles as a lookup of its name on its class, so it
+    unpickles as the member itself. The default protocol rebuilt a fresh
+    instance from the member's state, a phantom that was not the member
+    and compared unequal to it, since equality is identity.
+    """
+    return getattr, (type(self), self.name)
+
   def __int__(self) -> int:
     return self.index
 

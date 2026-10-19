@@ -55,6 +55,7 @@ class Kee(AttriBox[T]):
 
   #  Private Variables
   __field_value__ = None
+  __value_built__ = False
   __num_index__ = None
   __num_name__ = None
 
@@ -73,13 +74,17 @@ class Kee(AttriBox[T]):
     The 'getValue' getter realizes the member's value through the
     'AttriBox' lazy instantiation mechanism, building it from the captured
     constructor arguments on first access and type-checking it thereafter.
+    A flag beside the value records that it was built, since the value
+    itself may be 'None', as 'Kee[object](None)' declares. A value
+    written directly is honoured, built or not.
     """
-    if self.__field_value__ is None:
+    if self.__field_value__ is None and not self.__value_built__:
       if kwargs.get('_recursion', False):
         raise RecursionError
       args = self.getPosArgs()
       keyArgs = self.getKeyArgs()
       self.__field_value__ = self._resolve(*args, **keyArgs)
+      self.__value_built__ = True
       return self.getValue(_recursion=True)
     fieldType = self.getFieldType()
     if isinstance(self.__field_value__, fieldType):
