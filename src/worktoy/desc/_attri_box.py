@@ -15,7 +15,7 @@ from ..core import Object
 from ..core.sentinels import DELETED
 from ..utilities import typeCast, castRule, textFmt
 from ..waitaminute import TypeException, MissingVariable
-from ..waitaminute.desc import MissingInstanceDict, StorageCollision
+from ..waitaminute.desc import MissingInstanceDict
 from ..waitaminute.dispatch import TypeCastException
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -132,22 +132,20 @@ class AttriBox(BaseDescriptor[T]):
   from the 'TypeError' that 'object.__init__' raises, rather than
   silently handing back the owner.
 
-  Each instance stores the value of a field under the private name that
-  'Object.getPrivateName' derives from the field name, followed by the
-  lower-case name of the box class and '_field_object__', so an
-  'AttriBox' named 'fooBar' stores at
-  '__foo_bar__attribox_field_object__'. The double underscore inside
-  keeps the storage apart from dunders Python uses and from private
-  class attributes such as '__foo_bar__'. Names that differ only in how
-  their words are joined or capitalised derive the same private name,
-  though: 'fooBar' and 'foo_bar' both store at
-  '__foo_bar__attribox_field_object__', as do 'X' and 'x' at
-  '__x__attribox_field_object__'. Declaring two such fields on one
-  class, the same name once in each spelling, is refused with
-  'StorageCollision' as the class is created, since the two would share
-  one storage. The value is stored in the instance dict, so an owner
-  whose instances have none, a class declaring '__slots__' without
-  '__dict__', is refused with 'MissingInstanceDict' at the first access.
+  Each instance stores the value of a field under the field name as
+  written, wrapped in double underscores and followed by the lower-case
+  name of the box class and '_field_object__', so an 'AttriBox' named
+  'fooBar' stores at '__fooBar__attribox_field_object__'. The double
+  underscore inside keeps the storage apart from dunders Python uses and
+  from private class attributes such as '__foo_bar__'. Two different
+  field names can never derive one storage name, so 'fooBar' and
+  'foo_bar', or 'X' and 'x', on one class or across a class and its
+  subclass, are two fields with two slots, as plain Python has them. A
+  subclass redeclaring a field of the same name derives the same storage
+  name and takes the field over. The value is stored in the instance
+  dict, so an owner whose instances have none, a class declaring
+  '__slots__' without '__dict__', is refused with 'MissingInstanceDict'
+  at the first access.
 
   An object the box creates, as a default or through the field-type
   constructor on assignment, is tagged with '__field_box__',
@@ -186,19 +184,25 @@ class AttriBox(BaseDescriptor[T]):
   def _getStorageName(self) -> str:
     """
     The '_getStorageName' method returns the name under which each
-    instance stores the value of this field: the private name from
-    'getPrivateName', followed by the lower-case name of the box class
-    and '_field_object__'. An 'AttriBox' named 'fooBar' stores at
-    '__foo_bar__attribox_field_object__' and a 'FixBox' of that name at
-    '__foo_bar__fixbox_field_object__', so anyone who meets the name
-    can tell what put it there. The double underscore inside sets the
-    name apart from every name written in the '__snake_case__' style, so
-    the stored value never lands on a dunder Python uses, on the state
-    'Object' keeps, or on a private class attribute of the owner, such
-    as the '__foo_bar__' of the 'Field' pattern.
+    instance stores the value of this field: the field name as written,
+    wrapped in double underscores and followed by the lower-case name of
+    the box class and '_field_object__'. An 'AttriBox' named 'fooBar'
+    stores at '__fooBar__attribox_field_object__' and a 'FixBox' of that
+    name at '__fooBar__fixbox_field_object__', so anyone who meets the
+    name can tell what put it there. The name is taken as written, not
+    snake-cased, so two different field names can never derive one
+    storage name. The double underscore inside sets the name apart from
+    every name written in the '__snake_case__' style, so the stored value
+    never lands on a dunder Python uses, on the state 'Object' keeps, or
+    on a private class attribute of the owner, such as the '__foo_bar__'
+    of the 'Field' pattern. A box not yet placed on a class has no field
+    name and raises 'MissingVariable'.
     """
+    fieldName = self.getFieldName()
+    if fieldName is None:
+      raise MissingVariable(self, '__field_name__', str)
     boxName = type(self).__name__.lower()
-    return '%s%s_field_object__' % (self.getPrivateName(), boxName)
+    return '__%s__%s_field_object__' % (fieldName, boxName)
 
   def _resolve(self, *args, **kwargs) -> T:
     """
@@ -594,26 +598,6 @@ class AttriBox(BaseDescriptor[T]):
       fieldName = self.getFieldName()
       raise MissingInstanceDict(instance, fieldName) from attributeError
 
-  def _refuseStorageCollision(self, owner: type) -> None:
-    """
-    The '_refuseStorageCollision' method raises 'StorageCollision' when
-    another box of the same class as this one, declared earlier in the
-    body of 'owner', stores at the storage name this box derives, as a
-    box named 'fooBar' and one named 'foo_bar' do. The earlier box has
-    its name by the time this one is named, and the later box has none
-    yet when the earlier one is checked, so the second of the two is
-    the one refused.
-    """
-    storageName = self._getStorageName()
-    for name, value in owner.__dict__.items():
-      if value is self or not isinstance(value, AttriBox):
-        continue
-      if value.getFieldName() is None:
-        continue
-      if value._getStorageName() == storageName:
-        fieldName = self.getFieldName()
-        raise StorageCollision(owner, fieldName, name, storageName)
-
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> T:
     """
     The '__instance_get__' method returns the stored field value for the
@@ -877,4 +861,3 @@ class AttriBox(BaseDescriptor[T]):
     if self.__pos_args__ is None:
       BaseDescriptor.__init__(self)
     super().__set_name__(owner, name, **kwargs)
-    self._refuseStorageCollision(owner)

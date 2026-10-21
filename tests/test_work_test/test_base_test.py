@@ -30,18 +30,6 @@ class TestBaseTest(BaseTest):
         self.assertLessEqual(len(str.strip(line)), chars)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  generators   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def test_stoch_word_attached(self) -> None:
-    """The class declares a 'stochWord' generator for its tests."""
-    self.assertTrue(hasattr(type(self), 'stochWord'))
-
-  def test_lorem_sentence_attached(self) -> None:
-    """The class declares a 'loremSentence' generator for its tests."""
-    self.assertTrue(hasattr(type(self), 'loremSentence'))
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Field getters  # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 

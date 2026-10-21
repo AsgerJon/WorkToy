@@ -1,66 +1,39 @@
 """
-LoremSampler draws random lorem ipsum text.
+LoremSampler draws random lorem ipsum sentences.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ...desc import Field, AttriBox
-from ...lorem_ipsum import Sentence
-from . import BaseSampler
-from ...core.control_flow import SkipSet
+from ...desc import AttriBox
+from . import BaseSampler, loremSentence
 
 
 class LoremSampler(BaseSampler):
   """
-  LoremSampler draws random lorem ipsum sentences, each realized from a
-  'Sentence' of the configured 'charCount'. Each sampler holds a
-  'Sentence' of its own, so setting 'charCount' on one sampler leaves
-  every other at its own length. The backing 'Sentence' is reset after
-  every draw, so successive samples are independent rather than
-  repeating one frozen sentence.
+  LoremSampler draws random lorem ipsum sentences, each of exactly
+  'charCount' characters, forty unless set otherwise, built by
+  'loremSentence' from 'LOREM_WORDS'. Each sampler holds a 'charCount' of
+  its own, so narrowing one leaves every other at its own count. A count
+  below one is refused with 'ValueError' as it is assigned.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Class Variables
-
-  #  Fallback Variables
-
-  #  Private Variables
-
   #  Public Variables
-  sentence = AttriBox[Sentence]()
-
-  #  Virtual Variables
-  charCount: Field[int] = Field()
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @charCount.GET
-  def _getCharCount(self, ) -> int:
-    return self.sentence.charCount
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @charCount.SET
-  def _setCharCount(self, value: int, ) -> None:
-    self.sentence.charCount = value
+  charCount = AttriBox[int](40)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   @charCount.preSet
-  def _preSetCharCount(self, value: int, ) -> None:
-    if self.charCount == value:
-      raise SkipSet
+  def _refuseCharCount(self, value: int) -> None:
+    if value < 1:
+      infoSpec = """Character count must be a positive integer, not %r!"""
+      raise ValueError(infoSpec % (value,))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -71,10 +44,6 @@ class LoremSampler(BaseSampler):
 
   def _getItem(self, *args, **kwargs) -> str:
     """
-    The '_getItem' method realizes one sentence from the backing
-    'Sentence', resetting it afterward so the next draw is independent.
+    The '_getItem' method draws one sentence of 'charCount' characters.
     """
-    try:
-      return str(self.sentence)
-    finally:
-      self.sentence.reset()
+    return loremSentence(self.charCount)

@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING
 
 from ...desc import Field, SymbolicName
 from ...dispatch import overload
-from ...lorem_ipsum import StochasticWord
-from . import BaseSampler
+from . import BaseSampler, randomWord
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias, Optional, Union
@@ -23,7 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class SymbolicSampler(BaseSampler):
   """
   SymbolicSampler draws 'SymbolicName' values, each built from
-  'wordCount' stochastically generated words (default three, and never
+  'wordCount' random words of 'LOREM_WORDS' (default three, and never
   fewer than one). A 'SymbolicName' then renders in any of the case
   formats, so this sampler is the source of random identifier-like test
   data.
@@ -59,7 +58,6 @@ class SymbolicSampler(BaseSampler):
 
   #  Public Variables
   wordCount: Field[int] = Field()
-  stochWord = StochasticWord()
 
   #  Virtual Variables
 
@@ -97,7 +95,7 @@ class SymbolicSampler(BaseSampler):
     return SymbolicName
 
   def _getItem(self, *args, **kwargs) -> SymbolicName:
-    words = (*(self.stochWord.realize() for _ in range(self.wordCount)),)
+    words = (*(randomWord() for _ in range(self.wordCount)),)
     return SymbolicName(*words)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

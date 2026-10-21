@@ -4,14 +4,12 @@ pins that every test gets random-data samplers of its own. 'unittest'
 builds one instance of a test class per test method, and a sampler held
 by that instance lives exactly as long as its test. A test that narrows
 'randomInteger' in its 'setUp' therefore leaves every other test with the
-default range, whichever class that test belongs to. The same holds for
-the 'stochWord' and 'loremSentence' generators.
+default range, whichever class that test belongs to.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.lorem_ipsum import StochasticWord, Sentence
 from worktoy.work_test import BaseTest
 from worktoy.work_test.samplers import IntSampler, FloatSampler
 from worktoy.work_test.samplers import GaussianSampler, SymbolicSampler
@@ -24,8 +22,6 @@ _GENERATORS = (
   ('randomSymbolicName', SymbolicSampler),
   ('randomWord', WordSampler),
   ('randomLorem', LoremSampler),
-  ('stochWord', StochasticWord),
-  ('loremSentence', Sentence),
 )
 
 

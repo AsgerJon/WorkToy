@@ -19,8 +19,8 @@ from . import ContextInstance, MetaType, ContextOwner
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Optional, Type
 
-#  Compiled once at import. 'getPrivateName' sits on the hot path of
-#  every descriptor access, so the pattern must not be rebuilt per call.
+#  Compiled once at import rather than rebuilt on every 'getPrivateName'
+#  call.
 _PRIVATE_KEY_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
 
 
@@ -424,8 +424,8 @@ class Object(metaclass=MetaType):
     descriptor's field name. 'camelCase' is converted to
     'snake_case' and wrapped in double underscores. For example, a
     descriptor named 'fooBar' returns '__foo_bar__'. The result is
-    cached on first use: the field name is fixed once '__set_name__'
-    has run, and this sits on the hot path of every access."""
+    cached on first use, since the field name is fixed once
+    '__set_name__' has run."""
     if self.__private_name__ is None:
       if self.__field_name__ is None:
         raise MissingVariable(self, '__field_name__', str)

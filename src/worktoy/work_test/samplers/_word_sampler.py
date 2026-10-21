@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...lorem_ipsum import StochasticWord
-from . import BaseSampler
+from . import BaseSampler, randomWord
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import TypeAlias
@@ -19,24 +18,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class WordSampler(BaseSampler):
   """
-  WordSampler draws single random words, each realized from the
-  'StochasticWord' distribution shared with 'lorem_ipsum'.
+  WordSampler draws single random words from 'LOREM_WORDS', the
+  vocabulary of the 'worktoy.work_test.samplers' package.
   """
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Class Variables
-
-  #  Fallback Variables
-
-  #  Private Variables
-
-  #  Public Variables
-  stochWord = StochasticWord()
-
-  #  Virtual Variables
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -47,7 +31,6 @@ class WordSampler(BaseSampler):
 
   def _getItem(self, *args, **kwargs) -> str:
     """
-    The '_getItem' method realizes one random word from the
-    'StochasticWord' distribution.
+    The '_getItem' method draws one random word.
     """
-    return self.stochWord.realize()
+    return randomWord()

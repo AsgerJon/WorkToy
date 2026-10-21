@@ -1,0 +1,27 @@
+Begin by creating a file called design_notes_[TIMESTAMP].md in the project
+root.
+
+Then read the central non-leaf packages of the worktoy source, *but* read
+*only* the docstrings and comments. Do not look at the implementation
+itself, but only at the intentions. What this module is expected to do, not
+what it actually does.
+
+The non-leaf packages are, in order of dependency:
+
+1. core
+2. dispatch
+3. desc
+4. mcls
+
+Within each package, follow the import order in its __init__.py.
+
+Support packages are the utilities and waitaminute (custom
+exceptions) packages. These are to be inspected ad hoc as they are
+referenced during the read of the non-leaf packages.
+
+For each item inspected, add an entry to design_notes_[TIMESTAMP].md in the
+project root describing both the item and its interaction with the
+rest of the non-leaf packages. Append each entry as soon as the item
+has been inspected, before moving on to the next.
+
+Do not modify any file other than research_notes_[TIMESTAMP].md.

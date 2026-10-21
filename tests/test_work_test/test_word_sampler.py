@@ -6,8 +6,7 @@ TestWordSampler subclasses 'SamplerTest' and provides tests for
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.lorem_ipsum import COMMON_WORDS, UNCOMMON_WORDS, RARE_WORDS
-from worktoy.work_test.samplers import WordSampler
+from worktoy.work_test.samplers import LOREM_WORDS, WordSampler
 from . import SamplerTest
 
 
@@ -26,11 +25,10 @@ class TestWordSampler(SamplerTest):
   def test_get_item(self, ) -> None:
     """
     This method tests that '_getItem' realizes a single word, drawn from
-    the word collections of 'worktoy.lorem_ipsum'.
+    the vocabulary of 'worktoy.work_test.samplers'.
     """
-    words = {*COMMON_WORDS, *UNCOMMON_WORDS, *RARE_WORDS}
     sampler = WordSampler()
     for _ in range(32):
       word = sampler._getItem()
       self.assertIsInstance(word, str)
-      self.assertIn(word, words)
+      self.assertIn(word, LOREM_WORDS)

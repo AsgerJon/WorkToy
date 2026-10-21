@@ -1,4 +1,26 @@
+Create a file named review_notes_[TIMESTAMP].md in the project root. We will
+refer to this file as "notes".
+
+To show that you understand the instructions, please print out a description
+of how you understand them before you begin the review.
+
 Conduct a thorough code review of the core, dispatch, desc and mcls
-packages. Record the outcome of each line of reasoning in review_notes.md
-along with outcome, explanations and recommendations.Do not modify the
-project's source or tests.
+packages based on your research of them present in your context window.
+
+For every line of inquiry, write an entry into notes that begins with a
+classification between the following:
+
+- No Concern
+- Cosmetic
+- Minor
+- Major
+- Critical
+
+Then include an explanation of the finding, what it touches and what
+recommendations you may have. If your recommendation includes multiple
+options, label them clearly.
+
+You must append findings to the notes file *incrementally* and on an ad hoc
+basis. Write your first entry before moving deeper into a package.
+
+Do not modify the project's source or tests.

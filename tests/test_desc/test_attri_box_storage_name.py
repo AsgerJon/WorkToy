@@ -1,13 +1,15 @@
 """
 TestAttriBoxStorageName subclasses 'DescTest' from the 'tests.test_desc'
 package and pins where the box descriptors store the value of a field:
-under the private name of the field, followed by the lower-case name of
-the box class and '_field_object__', so an 'AttriBox' named 'fooBar'
-stores at '__foo_bar__attribox_field_object__'. The storage name says
-what put it there, and the double underscore inside keeps it apart from
-every name written in the '__snake_case__' style, so a box field never
-reads or overwrites a dunder Python uses, the state 'Object' keeps, or a
-private class attribute of the owner.
+under the field name as written, wrapped in double underscores and
+followed by the lower-case name of the box class and '_field_object__',
+so an 'AttriBox' named 'fooBar' stores at
+'__fooBar__attribox_field_object__'. The storage name says what put it
+there, and the double underscore inside keeps it apart from every name
+written in the '__snake_case__' style, so a box field never reads or
+overwrites a dunder Python uses, the state 'Object' keeps, or a private
+class attribute of the owner. Two different field names can never derive
+one storage name.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -16,6 +18,7 @@ from __future__ import annotations
 from worktoy.desc import AttriBox, FixBox
 from worktoy.keenum import KeeNum, Kee, KeeBox
 from worktoy.mcls import BaseObject
+from worktoy.waitaminute import MissingVariable
 
 from . import DescTest
 
@@ -27,15 +30,15 @@ class TestAttriBoxStorageName(DescTest):
   """
 
   def test_storage_name(self) -> None:
-    """A box stores at its private name followed by the lower-case name
-    of its class and '_field_object__'."""
+    """A box stores at its field name, wrapped in double underscores,
+    followed by the lower-case name of its class and '_field_object__'."""
 
     class Owner:
       fooBar = AttriBox[int](1)
 
     owner = Owner()
     self.assertEqual(owner.fooBar, 1)
-    expected = {'__foo_bar__attribox_field_object__': 1}
+    expected = {'__fooBar__attribox_field_object__': 1}
     self.assertEqual(vars(owner), expected)
 
   def test_names_python_uses(self) -> None:
@@ -94,3 +97,16 @@ class TestAttriBoxStorageName(DescTest):
       '__dict__keebox_field_object__',
     }
     self.assertEqual(set(vars(owner)), expected)
+
+  def test_unplaced_box_has_no_storage_name(self) -> None:
+    """A box no class holds has no field name to derive a storage name
+    from, so a read through it raises 'MissingVariable' naming the field
+    name, instead of storing under a name derived from 'None'."""
+
+    class Thing:
+      pass
+
+    box = AttriBox[int](1)
+    with self.assertRaises(MissingVariable) as context:
+      box.__get__(Thing(), Thing)
+    self.assertEqual(context.exception.varName, '__field_name__')

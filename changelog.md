@@ -82,6 +82,42 @@ whenever a descriptor is used without having gone through a class body.
 The deleted-value guard likewise reports a missing field name rather
 than naming the deleted attribute `None`.
 
+### Box storage names are the field name as written
+
+A box stores the value of a field on each instance under a name derived
+from the field name. That name used to be the snake-cased private name
+of the field, so `fooBar` and `foo_bar`, or `X` and `x`, derived one
+storage name and shared one slot; such a pair was refused with
+`StorageCollision` as the class was created, and a subclass redeclaring a
+field its parent exposed under a second name through `Alias` was refused
+by the same guard, wrongly, since the guard met the parent's box under the
+alias name and compared it with itself.
+
+The storage name now takes the field name as written, wrapped in double
+underscores and followed by the lower-case name of the box class and
+`_field_object__`: an `AttriBox` named `fooBar` stores at
+`__fooBar__attribox_field_object__`. Two different field names can never
+derive one storage name, so two near names are two fields with two slots,
+as plain Python has them, the guard is gone, and `StorageCollision` with
+it. An instance pickled by an earlier release holds its values under the
+old storage names; loaded under this one, those fields rebuild their
+defaults on the first read.
+
+### The testing support no longer depends on lorem_ipsum
+
+`worktoy.work_test` drew its random text from `worktoy.lorem_ipsum`: the
+word and symbolic-name samplers from `StochasticWord`, the lorem sampler
+from a `Sentence` of its own, and `BaseTest` exposed both generators as
+`stochWord` and `loremSentence`. The samplers now draw from a small
+vocabulary of their own, `LOREM_WORDS` in `worktoy.work_test.samplers`,
+through `randomWord` and `loremSentence`, which builds a sentence of
+exactly the requested number of characters. `LoremSampler.charCount` is a
+plain per-sampler setting, forty by default, refusing a count below one;
+the `sentence` attribute is gone, and so are `BaseTest.stochWord` and
+`BaseTest.loremSentence`. `work_test` therefore depends on the central
+packages alone, which a test pins by reading the import statements of
+every module in the package.
+
 ## [1.0.0] - 2026 May 29
 
 First stable release. The public API is frozen for the 1.0 series.
