@@ -20,6 +20,16 @@ Contents:
   body. In a deferred 'AttriBox' argument it is replaced by the
   'instance' passed to '__get__'; in an '@overload' signature it stands
   for the class itself, matching instances of it (like 'typing.Self').
+  'THIS[Parent].name' is a deferred reference to the descriptor 'name'
+  that 'Parent' holds, as the class being built will hold it, so
+  '@THIS[Parent].name.onGet' in the body of a subclass of 'Parent'
+  expands on the inherited descriptor without touching the base's; on
+  Python 3.7 and 3.8 the decoration is written as a call after the
+  method, 'f = THIS[Parent].name.onGet(f)', inside that same class body
+  and only there. 'THIS[GrandParent].name' is 'THIS[Parent].name' for a
+  'name' that 'Parent' inherits. No other subclass of the class holding
+  'name' may be created before the body ends, a nested class included,
+  since the next one created receives the clone.
   - OWNER: Placeholder for the 'owner' class passed to '__get__'. Used
   in deferred 'AttriBox' arguments. Unlike THIS, it has no role in
   overload signatures.

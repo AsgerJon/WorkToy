@@ -1,6 +1,6 @@
 """
 TestMultipleBases subclasses 'EZTest' from the 'tests.test_ezdata' package
-and pins that an 'EZData' class may derive from several 'EZData' classes
+and pins that an 'EZData' class may subclass several 'EZData' classes
 that each declare fields. The combined class gathers the fields of every
 base in the order 'dataclasses' uses, which walks the method resolution
 order from the far end, so a base listed further right contributes its
@@ -135,7 +135,9 @@ class TestMultipleBases(EZTest):
     self.assertEqual(tagField.fieldName, 'tag')
     self.assertIs(tagField.fieldType, int)
     self.assertEqual(Tagged().tag, 1)
-    self.assertEqual(Tagged('2').tag, 2)
+    tagged = Tagged(2.0)
+    self.assertEqual(tagged.tag, 2)
+    self.assertIs(type(tagged.tag), int)
 
   def test_diamond(self) -> None:
     """

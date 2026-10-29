@@ -1,6 +1,6 @@
 """
-TestClassInit tests the '__class_init__' dunder hook for classes derived
-from 'AbstractMetaclass' and subclasses of it from the 'worktoy.mcls'
+TestClassInit tests the '__class_init__' dunder hook for instances of
+'AbstractMetaclass' and of subclasses of it from the 'worktoy.mcls'
 module.
 """
 #  Apache-2.0 license
@@ -47,8 +47,8 @@ class NoInit(BaseObject, metaclass=AbstractMetaclass):
 
 class TestClassInit(MCLSTest):
   """
-  TestClassInit tests the '__class_init__' dunder hook for classes derived
-  from 'AbstractMetaclass' and subclasses of it from the 'worktoy.mcls'
+  TestClassInit tests the '__class_init__' dunder hook for instances of
+  'AbstractMetaclass' and of subclasses of it from the 'worktoy.mcls'
   module.
   """
 

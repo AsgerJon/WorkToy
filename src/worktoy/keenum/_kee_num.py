@@ -12,7 +12,7 @@ from ..desc import Field
 from ..utilities import textFmt
 from ..waitaminute import MissingVariable
 from ..waitaminute.desc import ReadOnlyError, ProtectedError
-from ..waitaminute.keenum import KeeWriteOnceError
+from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
 from . import Kee
 
 T = TypeVar('T')
@@ -124,6 +124,25 @@ class KeeBase(Object, ):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @classmethod
+  def __cast_as__(cls, value: Any) -> Any:
+    """
+    The '__cast_as__' hook lets 'typeCast' resolve a value to the member
+    holding it, as calling the enumeration does: a member passes, a name
+    resolves, '__class_resolve__' is consulted, and a value of the value
+    type resolves to the first member holding it. An identifier no step
+    resolves is refused with 'NotImplemented', so 'typeCast' raises its
+    own refusal and an 'AttriBox' over the enumeration, or an overload
+    naming it, moves on. While the class statement still instantiates
+    members, nothing is resolved.
+    """
+    if cls.__allow_instantiation__:
+      return NotImplemented
+    try:
+      return cls(value)
+    except KeeResolveError:
+      return NotImplemented
 
   def __setattr__(self, name: str, value: Any) -> None:
     """

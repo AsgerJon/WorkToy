@@ -1,5 +1,5 @@
 """
-TestClassAttributeAccess tests that classes derived from 'AbstractMetaclass'
+TestClassAttributeAccess tests that instances of 'AbstractMetaclass'
 can implement attribute access hooks:
   - __class_getattr__
   - __class_setattr__

@@ -15,6 +15,7 @@ from worktoy.desc._attri_box import _RootAlias  # noqa
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import TypeException, MissingVariable
+from worktoy.waitaminute.dispatch import TypeCastException
 from worktoy.waitaminute.desc import PhantomBoxError
 from . import DescTest
 from .geometry import Circle, Point2D
@@ -74,7 +75,7 @@ class TestAttriBox(DescTest):
     with self.assertRaises(TypeException) as context:
       point2D.x = _1337() or _1337
     e = context.exception
-    self.assertEqual(e.varName, 'value')
+    self.assertEqual(e.varName, 'x')
     self.assertEqual(e.actualObject, _1337)
     self.assertEqual(e.actualType, type(_1337))
     self.assertEqual(e.expectedTypes, (float,))
@@ -139,10 +140,10 @@ class TestAttriBox(DescTest):
       Bar.foo.exitContext()
 
     class Spam:
-      eggList = AttriBox[list](69, 420, 1337)
-      eggSet = AttriBox[set](69, 420, 1337)
-      eggFrozenset = AttriBox[frozenset](69, 420, 1337)
-      eggTuple = AttriBox[tuple](69, 420, 1337)
+      eggList = AttriBox[list]([69, 420, 1337])
+      eggSet = AttriBox[set]({69, 420, 1337})
+      eggFrozenset = AttriBox[frozenset](frozenset((69, 420, 1337)))
+      eggTuple = AttriBox[tuple]((69, 420, 1337))
 
     spam = Spam()
     for egg, num in zip(spam.eggList, [69, 420, 1337]):
@@ -160,16 +161,20 @@ class TestAttriBox(DescTest):
 
   def test_set_tuple(self) -> None:
     """
-    Testing setting an 'AttriBox' to a tuple, where the field type needs
-    to have them unpacked.
+    Testing that a tuple assigned to a 'complex' field is refused: an
+    assigned value is cast or refused, never splatted into the
+    constructor, and the field keeps its value.
     """
 
     class Foo:
       bar = AttriBox[complex]()
 
     foo = Foo()
-
-    setattr(foo, 'bar', (69, 420))
+    with self.assertRaises(TypeException) as context:
+      setattr(foo, 'bar', (69, 420))
+    self.assertEqual(context.exception.actualObject, (69, 420))
+    self.assertEqual(foo.bar, 0j)
+    foo.bar = complex(69, 420)
     self.assertAlmostEqual(foo.bar.real, 69)
     self.assertAlmostEqual(foo.bar.imag, 420)
 
@@ -422,9 +427,10 @@ class TestAttriBox(DescTest):
 
   def test_set_overflow_int(self) -> None:
     """
-    Testing that assigning an int too large for the field type raises
-    'OverflowError' rather than masking it with the constructor
-    fallback. Stupid args, stupid prizes.
+    Testing that assigning an int too large for the field type is refused
+    with 'TypeException' naming the field, chained from the
+    'TypeCastException' of the cast, chained from the 'OverflowError'.
+    Stupid args, stupid prizes.
     """
     for box in [float, complex]:
       class Foo:
@@ -432,8 +438,12 @@ class TestAttriBox(DescTest):
         bar = AttriBox[box](box(0))
 
       foo = Foo()
-      with self.assertRaises(OverflowError):
+      with self.assertRaises(TypeException) as context:
         foo.bar = 2 ** 2000
+      e = context.exception
+      self.assertEqual(e.varName, 'bar')
+      self.assertIsInstance(e.__cause__, TypeCastException)
+      self.assertIsInstance(e.__cause__.__cause__, OverflowError)
 
   def test_set_exact_large_int(self) -> None:
     """
@@ -468,24 +478,20 @@ class TestAttriBox(DescTest):
       with self.assertRaises(TypeException):
         foo.bar = value
 
-  def test_set_tuple_splat_survives(self) -> None:
+  def test_set_number_cast(self) -> None:
     """
-    Testing that the constructor fallback still serves the tuple-splat
-    path for a numeric field type, so 'complex(re, im)' construction is
-    not caught by the scalar guard.
+    Testing that a number assigned to a 'complex' field arrives through
+    the lossless cast of the number family.
     """
 
     class Foo:
       bar = AttriBox[complex]()
 
     foo = Foo()
-    foo.bar = 69, 420
-    # noinspection PyUnresolvedReferences
+    foo.bar = 69
+    self.assertIs(type(foo.bar), complex)
     self.assertAlmostEqual(foo.bar.real, 69)
-    # noinspection PyUnresolvedReferences
-    self.assertAlmostEqual(foo.bar.imag, 420)
-    if TYPE_CHECKING:  # pragma: no cover
-      assert isinstance(foo.bar, complex)
+    self.assertAlmostEqual(foo.bar.imag, 0)
 
   def test_bad_resolve(self) -> None:
     """
@@ -510,49 +516,31 @@ class TestAttriBox(DescTest):
       # noinspection PyTypeChecker
       foo.bar = susValue
     e = context.exception
-    self.assertEqual(e.varName, 'value')
+    self.assertEqual(e.varName, 'bar')
     self.assertEqual(e.actualObject, susValue)
     self.assertIs(e.actualType, str)
     self.assertIn(Wessel, e.expectedTypes)
 
   def test_this_builds_through_constructor(self) -> None:
     """
-    Testing that a 'THIS' captured in the deferred default goes through
-    the field-type constructor even when the owning instance is already
-    an instance of the field type. The earlier passthrough returned the
-    owner itself because 'isinstance(child, Parent)' held, which the
-    sentinel guard now suppresses.
+    This method tests that reading 'branch.leaf' neither returns 'branch'
+    itself nor a deep copy of it, although 'branch' is a 'Node'. The
+    correct behaviour is to call 'Node(branch)' and store the new 'Node'
+    that call returns. A Qt window needs exactly this:
+    'AttriBox[QWidget](THIS)' on a window must build 'QWidget(window)'.
     """
 
-    class Ancestor(BaseObject):
-      """Ancestor can be built from any object, recording its origin."""
+    class Node:
+      def __init__(self, parent: object = None) -> None:
+        self.parent = parent
 
-      source = AttriBox[object]()
+    class Branch(Node):
+      leaf = AttriBox[Node](THIS)
 
-      @overload(object)
-      def __init__(self, source: object) -> None:
-        self.source = source
-
-      @overload()
-      def __init__(self) -> None:
-        pass
-
-    class Heir(Ancestor):
-      """Heir builds a separate 'Ancestor' from itself, not itself."""
-
-      mom = AttriBox[Ancestor](THIS)
-      dad = AttriBox[Ancestor](THIS)
-
-    heir = Heir()
-    self.assertIsNot(heir.mom, heir)
-    self.assertIsInstance(heir.mom, Ancestor)
-    self.assertIs(heir.mom.source, heir)
-    #  Each box builds its own field, and the owner is never passed through
-    self.assertIsNot(heir.mom, heir.dad)
-    #  A second owner gets its own freshly built field
-    other = Heir()
-    self.assertIsNot(other.mom, heir.mom)
-    self.assertIs(other.mom.source, other)
+    branch = Branch()
+    self.assertIsNot(branch.leaf, branch)  # not 'branch' itself
+    self.assertIs(type(branch.leaf), Node)  # not a copy of 'branch'
+    self.assertIs(branch.leaf.parent, branch)  # built by 'Node(branch)'
 
   def test_prebuilt_value_is_copied_per_instance(self) -> None:
     """
@@ -580,29 +568,6 @@ class TestAttriBox(DescTest):
     self.assertIsInstance(a.held, Ancestor)
     self.assertIsNot(a.held, seed)
     self.assertIsNot(a.held, b.held)
-
-  def test_this_requires_compatible_constructor(self) -> None:
-    """
-    Testing that a 'THIS' default whose field type cannot accept the owner
-    raises 'TypeException', chained from the underlying 'TypeError', rather
-    than silently passing the owner through. A bare field type falls back
-    to 'object.__init__', which rejects the extra argument.
-    """
-
-    class Plain:
-      """Plain has no constructor that accepts an argument."""
-
-    class Sub(Plain):
-      """Sub captures itself as the default of an incompatible box."""
-
-      parent = AttriBox[Plain](THIS)
-
-    sub = Sub()
-    with self.assertRaises(TypeException) as context:
-      _ = sub.parent
-    e = context.exception
-    self.assertIs(e.expectedTypes[0], Plain)
-    self.assertIsInstance(e.__cause__, TypeError)
 
   def test_bad_type(self, ) -> None:
     """

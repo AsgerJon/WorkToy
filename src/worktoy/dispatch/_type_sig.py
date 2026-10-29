@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..core.sentinels import THIS, OWNER, ARGS
+from ..core.sentinels import Sentinel, THIS, OWNER, ARGS
 from ..utilities import textFmt
 from ..waitaminute import TypeException
 
@@ -29,18 +29,6 @@ class TypeSig:
   instance, and two variadic signatures written the same way must still
   be equal. The signature is iterable and supports 'len' and 'in', the
   latter using identity comparison.
-
-  The class-level flag '__allow_flex__' (default True) controls
-  whether the SLOW path of the dispatcher is allowed to attempt
-  'typeCast' conversions against this signature. 'overload.flex' and
-  'Dispatcher.flex' set it to False on their generated signatures,
-  since the permutation machinery already covers the flexibility
-  they need. 'overload' and 'Dispatcher.overload' set it to False as
-  well on a signature naming 'THIS', as an entry or as the inner type of
-  a trailing 'ARGS', unless 'strict=False' asks for the cast: a cast to
-  the class calls the class on the argument, and a class accepting any
-  argument, as one without a constructor of its own does, would take
-  every call there is.
 
   A signature keeps the types it was declared with beside the types it
   dispatches on. 'swapTHIS' rewrites the latter, and 'restoreTHIS' puts
@@ -83,7 +71,6 @@ class TypeSig:
   #  Private Variables
   __raw_types__ = None
   __declared_types__ = None
-  __allow_flex__ = True
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -98,19 +85,6 @@ class TypeSig:
     declared with, which 'swapTHIS' leaves as they are.
     """
     return self.__declared_types__
-
-  @staticmethod
-  def namesTHIS(*types: type) -> bool:
-    """
-    The 'namesTHIS' method reports whether the given entries name 'THIS',
-    as an entry or as the inner type of a trailing 'ARGS'.
-    """
-    for entry in types:
-      if entry is THIS:
-        return True
-      if isinstance(entry, ARGS) and entry.__inner_type__ is THIS:
-        return True
-    return False
 
   @staticmethod
   def _getTypeName(rawType: HASHABLE) -> str:
@@ -150,6 +124,34 @@ class TypeSig:
     """
     return cls(*[type(arg) for arg in args], )
 
+  @staticmethod
+  def starARGS(*types) -> tuple:
+    """
+    The 'starARGS' method reads a bare 'ARGS' in a declared signature as
+    '*ARGS', unpacking it as the star does, so '@overload(int, ARGS)'
+    declares what '@overload(int, *ARGS)' declares: an 'int' followed by
+    any number of arguments of any type. Every other entry is kept as
+    written. 'overload', 'overload.flex' and the 'overload' and 'flex' of
+    a 'Dispatcher' read their types through it before validating them.
+
+    Parameters
+    ----------
+    *types : type
+        The declared entries, in order.
+
+    Returns
+    -------
+    tuple
+        The entries with every bare 'ARGS' unpacked.
+    """
+    out = []
+    for entry in types:
+      if entry is ARGS:
+        out.extend(entry)
+      else:
+        out.append(entry)
+    return (*out,)
+
   @classmethod
   def validateTypes(cls, *types, **kwargs) -> None:
     """
@@ -160,9 +162,12 @@ class TypeSig:
     a 'typing.Union'. The last entry may instead be an 'ARGS' of a class,
     marking the variadic tail, unless 'variadic=False' is passed, as the
     flexible declarations do, since they rearrange their entries. 'THIS'
-    is a class and stands for the class itself. 'OWNER' is a class too,
-    but plays no role in overload signatures, and raises 'TypeError'. The
-    class test is that the type of the entry is a metaclass, since
+    is a class and stands for the class itself, and is handled first.
+    Every other sentinel, 'OWNER', 'DESC', 'DELETED', 'METACALL' and
+    'Sentinel' itself, is a class too but cannot be instantiated, so a
+    signature holding one could never match a call, and raises
+    'TypeError'. The class test is that the type of the entry is a
+    metaclass, since
     'isinstance(entry, type)' answers 'True' for 'list[int]' on Python
     3.9 and 3.10. An entry that 'isinstance' refuses, such as
     'typing.Any' or a 'Protocol' that is not runtime checkable, is a
@@ -182,8 +187,8 @@ class TypeSig:
     TypeException
         If an entry, or the inner type of a final 'ARGS', is not a class.
     TypeError
-        If an entry, or the inner type of a final 'ARGS', is 'OWNER', or
-        cannot be used with 'isinstance'.
+        If an entry, or the inner type of a final 'ARGS', is a sentinel
+        other than 'THIS', or cannot be used with 'isinstance'.
     """
     variadic = kwargs.get('variadic', True)
     last = len(types) - 1
@@ -192,11 +197,14 @@ class TypeSig:
         entry = entry.__inner_type__
       if not issubclass(type(entry), type):
         raise TypeException('types[%d]' % index, entry, type)
-      if entry is OWNER:
-        infoSpec = """The entry at position %d of the signature is 'OWNER',
-        which has no meaning in an overload signature. 'THIS' stands for
-        the class the overload belongs to."""
-        raise TypeError(textFmt(infoSpec % index))
+      if entry is THIS:
+        continue
+      if issubclass(entry, Sentinel):
+        infoSpec = """The entry at position %d of the signature is the
+        sentinel '%s', which has no meaning in an overload signature: a
+        sentinel cannot be instantiated, so no call could match. 'THIS'
+        stands for the class the overload belongs to."""
+        raise TypeError(textFmt(infoSpec % (index, entry.__name__)))
       try:
         isinstance(None, entry)
       except TypeError as typeError:
@@ -254,9 +262,11 @@ class TypeSig:
     Calling a 'TypeSig' returns a new 'TypeSig' with 'THIS' replaced by
     'this' and 'OWNER' replaced by 'owner'. Either argument can be
     omitted to leave the corresponding sentinel in place, and a call
-    with neither copies the signature, which 'Dispatcher._copySig'
-    relies on. It serves any caller wanting a substituted copy while the
-    original keeps its sentinel for 'swapTHIS' to rewrite in place.
+    with neither copies the signature, which 'LoadSpaceHook' relies on
+    to record a declared signature apart from the one the 'overload'
+    object keeps, since placement rewrites 'THIS' in place. It serves any
+    caller wanting a substituted copy while the original keeps its
+    sentinel for 'swapTHIS' to rewrite in place.
 
     Parameters
     ----------
@@ -268,8 +278,7 @@ class TypeSig:
     Returns
     -------
     Self
-        A new 'TypeSig' with the requested substitutions applied and the
-        same '__allow_flex__' flag.
+        A new 'TypeSig' with the requested substitutions applied.
     """
     newTypes = []
     for rawType in self.getRawTypes():
@@ -280,7 +289,6 @@ class TypeSig:
       else:
         newTypes.append(rawType)
     new = type(self)(*newTypes)
-    new.__allow_flex__ = self.__allow_flex__
     # noinspection PyTypeChecker
     return new
 

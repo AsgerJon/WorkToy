@@ -6,7 +6,7 @@ in the class body.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, Callable, Any
 
 from . import BaseDescriptor
 from ..utilities import maybe
@@ -14,9 +14,11 @@ from ..waitaminute import TypeException
 from ..waitaminute.desc import ProtectedError, ReadOnlyError, AccessError
 
 T = TypeVar('T')
+#  A decorated accessor keeps its own type for a checker.
+F = TypeVar('F', bound=Callable[..., Any])
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Any, Callable, Optional
+  from typing import TypeAlias, Optional
   from typing import Self
 
   MaybeStr: TypeAlias = Optional[str]
@@ -53,10 +55,15 @@ class Field(BaseDescriptor[T]):
   -----
   The accessors are stored by name, not as captured function objects. A
   decorator such as 'GET' records 'callMeMaybe.__name__', and at access
-  time '__instance_get__' looks that name up with 'getattr(owner, key)',
-  where 'owner' is the type of the instance being accessed rather than
-  the class in which the 'Field' was declared. Setters and deleters
-  resolve the same way.
+  time '__instance_get__' looks that name up with
+  'type.__getattribute__(owner, key)', where 'owner' is the type of the
+  instance being accessed rather than the class in which the 'Field' was
+  declared. Setters and deleters resolve the same way. A private
+  accessor, written '__getX', is recorded under the name the class body
+  stores it at, '_Owner__getX'. The lookup is
+  'type.__getattribute__' rather than 'getattr', so no '__getattr__',
+  '__class_getattr__' or reimplemented '__getattribute__' of the owner
+  can answer in place of the accessor.
 
   The consequence is that a subclass overrides any decorated accessor
   just by redefining a method of the same name, with no need to decorate
@@ -101,7 +108,7 @@ class Field(BaseDescriptor[T]):
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def GET(self, callMeMaybe: Callable) -> Callable:
+  def GET(self, callMeMaybe: F) -> F:
     """
     The 'GET' decorator marks the getter, called as 'method(self)'.
     Only one getter is kept: a second '@GET' silently replaces the
@@ -121,7 +128,7 @@ class Field(BaseDescriptor[T]):
     self.__get_key__ = self._getCallbackName('GET', callMeMaybe)
     return callMeMaybe
 
-  def SET(self, callMeMaybe: Callable) -> Callable:
+  def SET(self, callMeMaybe: F) -> F:
     """
     The 'SET' decorator marks a setter. Any number may be registered;
     each is called as 'method(self, value)' in registration order on
@@ -144,7 +151,7 @@ class Field(BaseDescriptor[T]):
     self.__set_keys__ = (*existing, name,)
     return callMeMaybe
 
-  def DELETE(self, callMeMaybe: Callable) -> Callable:
+  def DELETE(self, callMeMaybe: F) -> F:
     """
     The 'DELETE' decorator marks a deleter. Any number may be
     registered; each is called as 'method(self)' in registration order
@@ -189,7 +196,7 @@ class Field(BaseDescriptor[T]):
     if kwargs.get('_deleting', False):
       return self._peekValue(instance, owner)
     getterKey = self._getGetterKey()
-    getterFunc = getattr(owner, getterKey)
+    getterFunc = type.__getattribute__(owner, getterKey)
     return getterFunc(instance)
 
   def _peekValue(self, instance: Any, owner: type) -> Any:
@@ -205,7 +212,7 @@ class Field(BaseDescriptor[T]):
     """
     try:
       getterKey = self._getGetterKey()
-      getterFunc = getattr(owner, getterKey)
+      getterFunc = type.__getattribute__(owner, getterKey)
       return getterFunc(instance)
     except Exception:
       return None
@@ -222,7 +229,7 @@ class Field(BaseDescriptor[T]):
     if not setterKeys:
       raise ReadOnlyError(instance, self, value, )
     for key in setterKeys:
-      setterFunc = getattr(owner, key, )
+      setterFunc = type.__getattribute__(owner, key)
       setterFunc(instance, value, )
 
   def __instance_delete__(
@@ -243,7 +250,7 @@ class Field(BaseDescriptor[T]):
     if not deleterKeys:
       raise ProtectedError(instance, self, old)
     for key in deleterKeys:
-      deleterFunc = getattr(owner, key, )
+      deleterFunc = type.__getattribute__(owner, key)
       deleterFunc(instance, **kwargs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

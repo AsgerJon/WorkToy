@@ -1,7 +1,7 @@
 """
 The 'worktoy.work_test' package provides the testing support shared across
 the worktoy suite. 'BaseTest' is the 'unittest.TestCase' subclass every
-test class derives from, wiring in the random-data samplers and the
+test class is based on, wiring in the random-data samplers and the
 'SubTest' accumulator. 'ComplexMixin' and 'ComplexTest' are a worked
 example: a complex-number mixin and the parametrized test bank that runs
 one dunder suite against any number of its implementations.

@@ -1,6 +1,6 @@
 """
-TestClassHash tests that classes derived from 'AbstractMetaclass' that
-implement __class_hash__ are called correctly.
+TestClassHash tests that classes that are instances of
+'AbstractMetaclass' and implement __class_hash__ are called correctly.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -38,8 +38,8 @@ class TupleEq(metaclass=AbstractMetaclass):
 
 class TestClassHash(MCLSTest):
   """
-  TestClassHash tests that classes derived from 'AbstractMetaclass' that
-  implement __class_hash__ are called correctly.
+  TestClassHash tests that classes that are instances of
+  'AbstractMetaclass' and implement __class_hash__ are called correctly.
   """
 
   def test_class_hash(self):

@@ -1,6 +1,6 @@
 """
-TestClassMap tests that classes derived from 'BaseMeta' that implement
-'__class_setitem__' and '__class_getitem__' are called correctly.
+TestClassMap tests that classes that are instances of 'BaseMeta' and
+implement '__class_setitem__' and '__class_getitem__' are called correctly.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen

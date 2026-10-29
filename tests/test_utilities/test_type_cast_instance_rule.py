@@ -1,11 +1,11 @@
 """
 TestTypeCastInstanceRule subclasses 'UtilitiesTest' and pins that
-'typeCast' returns an instance of its target, or raises. For a target it
-has no rule for, 'typeCast' calls the target on the value, and a target
-whose constructor hands back something other than an instance of it is
-refused with 'TypeCastException' instead of passing that on. The rule
-asks for an instance, not for exactly the target, so a value already of
-a subclass, or a constructor returning one, passes.
+'typeCast' returns an instance of its target, or raises. A class without
+'__cast_as__' is refused whatever its constructor would do with the value,
+and a '__cast_as__' handing back something other than an instance is
+refused the same way. The rule asks for an instance, not for exactly the
+target, so a value already of a subclass, or a hook returning one,
+passes.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -29,13 +29,12 @@ class TestTypeCastInstanceRule(UtilitiesTest):
   """
 
   def test_shifty_constructor_refused(self) -> None:
-    """A target whose constructor returns something other than an
-    instance of it raises 'TypeCastException', naming the target and the
-    value given."""
+    """A target without '__cast_as__' raises 'TypeCastException' naming
+    the target and the value, and its constructor is never asked."""
 
     class Shifty:
       def __new__(cls, *args: Any) -> Any:
-        return 42
+        raise AssertionError('constructor called')  # pragma: no cover
 
     with self.assertRaises(TypeCastException) as context:
       typeCast(Shifty, 'x')
@@ -43,12 +42,13 @@ class TestTypeCastInstanceRule(UtilitiesTest):
     self.assertIs(e.type_, Shifty)
     self.assertEqual(e.arg, 'x')
 
-  def test_constructor_returning_subclass(self) -> None:
-    """A target whose constructor returns an instance of a subclass
-    passes, and that instance is returned."""
+  def test_hook_returning_subclass(self) -> None:
+    """A '__cast_as__' returning an instance of a subclass passes, and
+    that instance is returned."""
 
     class Shape:
-      def __new__(cls, *args: Any) -> Any:
+      @classmethod
+      def __cast_as__(cls, value: Any) -> Any:
         return object.__new__(Square)
 
     class Square(Shape):

@@ -3,8 +3,8 @@ TestWorktoyValueFields subclasses 'EZTest' from the 'tests.test_ezdata'
 package and pins which class-body values of an EZData class become fields.
 A bare value becomes a field, and a descriptor stays a class attribute.
 'EZHook' used to count as a descriptor any value whose type defines
-'__get__', '__set__', '__delete__' or '__set_name__', and every object
-deriving from 'Object' defines all four, so an enumeration member, an
+'__get__', '__set__', '__delete__' or '__set_name__', and every
+instance of 'Object' defines all four, so an enumeration member, an
 EZData instance or a 'SymbolicName' in a class body was left out of the
 fields. Now a value that is not an 'Object' is a descriptor when its type
 implements '__get__' or '__set__', and an 'Object' is one when its type
@@ -49,7 +49,7 @@ class Point(EZData):
 
 
 class Plain:
-  """Plain is a descriptor that does not derive from 'Object'."""
+  """Plain is a descriptor that is not an 'Object'."""
 
   def __get__(self, instance: Any, owner: type) -> Any:
     return 'plain'
@@ -142,7 +142,7 @@ class TestWorktoyValueFields(EZTest):
     self.assertIs(first.color, second.color)
 
   def test_descriptors_stay_attributes(self) -> None:
-    """A descriptor not deriving from 'Object', a 'Field' and a
+    """A descriptor that is not an 'Object', a 'Field' and a
     'property' stay class attributes and work as such."""
     car = Car()
     self.assertEqual(car.plain, 'plain')

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, TypeAlias, Union
 

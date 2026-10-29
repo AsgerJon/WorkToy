@@ -96,6 +96,13 @@ every open item is fixed, closed as design, or decided. In order:
 - The most recent variadic declaration wins a shared call; do not
   re-propose a refusal.
 - Warnings: none yet; design them consistently before adding any.
+  - Candidate (2026-10-22): warn where a box default hands a lone text
+    value to a container field type, e.g. `AttriBox[list]('lol')`, which
+    `list('lol')` turns into `['l', 'o', 'l']`. With the cast rule of
+    2026-10-22 the boxes apply no container rules, so Python's answer
+    stands; a warning is the only guard worth considering there. The
+    runtime side (`obj.items = 'lol'`) is already refused, since text
+    never casts to a container.
 
 ## Open items, all in the leaf packages
 

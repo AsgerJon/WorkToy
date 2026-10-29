@@ -5,18 +5,20 @@ BaseDescriptor adds access-notification hook decorators to a descriptor.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, Generic, overload
+from typing import TYPE_CHECKING, TypeVar, Generic, overload, Callable, Any
 from types import FunctionType as Func
 
 from ..utilities import maybe
 from ..core import Object
 from ..dispatch import flexCall
-from ..waitaminute.desc import NamelessCallback
+from ..waitaminute.desc import NamelessCallback, SharedDescriptor
 
 T = TypeVar('T', )
+#  A decorated callback keeps its own type for a checker.
+F = TypeVar('F', bound=Callable[..., Any])
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, TypeAlias, Self, Union, Optional
+  from typing import TypeAlias, Self, Union, Optional
 
   Keys: TypeAlias = tuple[str, ...]
 
@@ -40,9 +42,20 @@ class BaseDescriptor(Object, Generic[T]):
   'hookSetName' does with the '@classmethod' it requires, and that
   function is then called as the plain method would be, the instance
   first; a bound method used to be refused by 'flexCall' on every
-  access. A callback without a name of its own, a lambda or a callable
-  with no '__name__', could never be found by name, so each decorator
-  refuses one with 'NamelessCallback'.
+  access. A lambda, which has no name of its own, could never be found by
+  name, so each decorator refuses one with 'NamelessCallback'; a callable
+  with no '__name__' at all fails with the 'AttributeError' of reading
+  the name. A private callback, written with
+  two leading underscores, is recorded under the name the class body
+  stores it at, '_Foo__seen' for '__seen' in 'Foo', so it is found as
+  well; like any private name it is not overridden by a subclass, whose
+  own '__seen' mangles to the subclass's name.
+
+  A descriptor is placed on one class, as that class is created, and
+  '__set_name__' decides what a second placement means for every
+  descriptor based on this class: a second name in the same class body
+  receives a clone made by 'clone', so the two names are two descriptors,
+  and another class is refused with 'SharedDescriptor'.
 
   The following example illustrates an exhaustively decorated descriptor
   in a class body:
@@ -171,73 +184,133 @@ class BaseDescriptor(Object, Generic[T]):
     """
     The '_getCallbackName' method returns the name a decorator records
     for 'callback', the name the hooks look it up by on the class of the
-    instance, and raises 'NamelessCallback' for a callback that has none
-    of its own: a lambda, named '<lambda>', or a callable with no
-    '__name__'. 'role' is the name of the decorator, for the message.
+    instance, and raises 'NamelessCallback' for a lambda, named
+    '<lambda>', which has no name of its own. A callable with no
+    '__name__' at all raises the 'AttributeError' of reading it. 'role'
+    is the name of the decorator, for the message.
+
+    A private name, two leading underscores and not two trailing, is
+    recorded as the class body stores it: '__audit' defined in 'Account'
+    as '_Account__audit'. The class is the part of the callback's
+    '__qualname__' before its own name; a private callback whose
+    qualified name names no class, one made inside another function, is
+    refused with 'NamelessCallback', since no lookup could find it.
     """
-    name = getattr(callback, '__name__', None)
-    if name is None or name == '<lambda>':
+    name: str = object.__getattribute__(callback, '__name__')
+    if name == '<lambda>':
       raise NamelessCallback(self, role, callback)
+    if str.startswith(name, '__') and not str.endswith(name, '__'):
+      qualName: str = object.__getattribute__(callback, '__qualname__')
+      qualParts = str.split(qualName, '.')
+      if len(qualParts) < 2 or qualParts[-2] == '<locals>':
+        raise NamelessCallback(self, role, callback)
+      className = str.lstrip(qualParts[-2], '_')
+      if not className:
+        #  Python mangles nothing in a class named with underscores alone.
+        return name
+      return '_%s%s' % (className, name)
     return name
 
-  def preGet(self, callback: Func) -> Func:
+  def preGet(self, callback: F) -> F:
     existing = self._getPreGetKeys()
     name = self._getCallbackName('preGet', callback)
     self.__pre_get_keys__ = (*existing, name)
     return flexCall(callback)
 
-  def onGet(self, callback: Func) -> Func:
+  def onGet(self, callback: F) -> F:
     existing = self._getOnGetKeys()
     name = self._getCallbackName('onGet', callback)
     self.__on_get_keys__ = (*existing, name)
     return flexCall(callback)
 
-  def preSet(self, callback: Func) -> Func:
+  def preSet(self, callback: F) -> F:
     existing = self._getPreSetKeys()
     name = self._getCallbackName('preSet', callback)
     self.__pre_set_keys__ = (*existing, name)
     return flexCall(callback)
 
-  def onSet(self, callback: Func) -> Func:
+  def onSet(self, callback: F) -> F:
     existing = self._getOnSetKeys()
     name = self._getCallbackName('onSet', callback)
     self.__on_set_keys__ = (*existing, name)
     return flexCall(callback)
 
-  def preDelete(self, callback: Func) -> Func:
+  def preDelete(self, callback: F) -> F:
     existing = self._getPreDeleteKeys()
     name = self._getCallbackName('preDelete', callback)
     self.__pre_delete_keys__ = (*existing, name)
     return flexCall(callback)
 
-  def onDelete(self, callback: Func) -> Func:
+  def onDelete(self, callback: F) -> F:
     existing = self._getOnDeleteKeys()
     name = self._getCallbackName('onDelete', callback)
     self.__on_delete_keys__ = (*existing, name)
     return flexCall(callback)
 
-  def setName(self, callback: Func) -> Func:
+  def setName(self, callback: F) -> F:
     existing = self._getSetNameKeys()
     name = self._getCallbackName('setName', callback)
     self.__set_name_keys__ = (*existing, name)
     return flexCall(callback)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def clone(self) -> Self:
+    """
+    The 'clone' method returns a fresh descriptor of the same class
+    carrying what this one captured, the constructor arguments, the field
+    type of a box and every registered callback name, and no owner, field
+    name or context. A class body decorating an inherited descriptor
+    through 'THIS' takes its own copy this way, so the base keeps its
+    descriptor as it was. The copy is made by hand, since a box answers
+    'copy.copy' with itself.
+    """
+    cls = type(self)
+    new = object.__new__(cls)
+    skipped = (
+      '__field_owner__',
+      '__field_name__',
+      '__private_name__',
+      '__call_chain__',
+    )
+    for key, value in vars(self).items():
+      if key in skipped:
+        continue
+      object.__setattr__(new, key, value)
+    object.__setattr__(new, '__call_chain__', [])
+    return new
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @staticmethod
+  def _findCallback(owner: type, key: str) -> Any:
+    """
+    The '_findCallback' method returns what 'owner' holds under 'key',
+    read with 'type.__getattribute__' so that no '__getattr__',
+    '__class_getattr__' or reimplemented '__getattribute__' of the owner
+    can answer in its place. A bound method, as a classmethod gives, is
+    unwrapped to the function behind it.
+    """
+    callback = type.__getattribute__(owner, key)
+    try:
+      return object.__getattribute__(callback, '__func__')
+    except AttributeError:
+      return callback
 
   @staticmethod
   def _getCallback(owner: type, key: str) -> Func:
     """
     The '_getCallback' method returns the callback registered under
-    'key' as 'owner' holds it, wrapped by 'flexCall'. A bound method, as
-    a classmethod gives, is unwrapped to the function behind it, as
-    'hookSetName' does, so an override of that kind is called as the
-    plain method would be.
+    'key' as 'owner' holds it, found by '_findCallback', wrapped by
+    'flexCall'. A bound method, as a classmethod gives, is unwrapped to
+    the function behind it, as 'hookSetName' does, so an override of that
+    kind is called as the plain method would be.
     """
-    callback = getattr(owner, key)
-    callback = getattr(callback, '__func__', callback)
-    return flexCall(callback)
+    return flexCall(BaseDescriptor._findCallback(owner, key))
 
   def hookPreGet(self, instance: Any, **kwargs) -> None:
     keys = self._getPreGetKeys()
@@ -289,13 +362,36 @@ class BaseDescriptor(Object, Generic[T]):
 
   def hookSetName(self, owner: type, name: str, **kwargs) -> None:
     for key in self._getSetNameKeys():
-      callback = getattr(owner, key)
-      callback = getattr(callback, '__func__', callback)
-      callback(owner, self, **kwargs)
+      self._findCallback(owner, key)(owner, self, **kwargs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+    """
+    The '__set_name__' method records the class and the name, as 'Object'
+    does, for a descriptor not placed yet, and decides, for every
+    descriptor based on this class, what a second placement means. Bound
+    to a second name in the same class body, as in
+    'width = height = AttriBox[int](0)', the descriptor keeps its first
+    name and places a clone of itself, made by 'clone', at the second, so
+    the two names are two descriptors. Placed on another class, as one
+    object bound in the bodies of two classes, it is refused with
+    'SharedDescriptor', since it cannot serve two classes.
+    """
+    placedOwner: Optional[type] = self.__field_owner__
+    if placedOwner is not None:
+      placedName = self.__field_name__
+      if placedOwner is not owner:
+        raise SharedDescriptor(self, placedOwner, placedName, owner, name)
+      if placedName != name:
+        #  'type.__new__' runs '__set_name__' over a copy of the class
+        #  dict, so the second name may take the clone here.
+        clone = self.clone()
+        type.__setattr__(owner, name, clone)
+        return clone.__set_name__(owner, name, **kwargs)
+    return super().__set_name__(owner, name, **kwargs)
 
   # @formatter:off
   if TYPE_CHECKING:  # pragma: no cover

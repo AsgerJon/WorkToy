@@ -69,7 +69,8 @@ class Paragraph(BaseGenerator):
       self.__sentences_lengths__ = [self.charCount, ]
       return
     self.__sentences_lengths__ = self.sentenceDist.partitionSpaced(
-        self.charCount + 1)
+        self.charCount + 1
+    )
 
   @sentenceLengths.GET
   def _getSentenceLengths(self, **kwargs) -> IntList:

@@ -72,7 +72,7 @@ class TestMemberPickle(KeeTest):
     self.assertIs(back['all'][0], Color.RED)
 
   def test_keenum_subclass_member(self) -> None:
-    """A derived enumeration shares the members of its parent and adds
+    """An enumeration subclass shares the members of its parent and adds
     its own; a member reached through either class unpickles as the one
     shared member, and an added member as itself."""
     self.assertIs(MoreRGB.RED, RootRGB.RED)

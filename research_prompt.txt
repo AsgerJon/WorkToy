@@ -1,3 +1,10 @@
+Avoid spoilers. Do this research from the code alone. Before and during
+the research, do not open the auto-memory files: do not follow the
+MEMORY.md index the session shows you at the start into the files it
+lists. Do not read earlier research_notes_*, review_notes_*, status_*,
+handoff_* or notes files either. Their findings would decide what you
+look for before you have read the code.
+
 Begin by creating a file called research_notes_[TIMESTAMP].md in the project
 root.
 

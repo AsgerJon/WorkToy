@@ -42,7 +42,7 @@ class TestCallbackWrapping(DescTest):
 
   @staticmethod
   def _buildOwner(base: type, calls: list) -> type:
-    """The '_buildOwner' method builds a class derived from 'base' with
+    """The '_buildOwner' method builds a subclass of 'base' with
     one 'AttriBox' field carrying a callback of every kind. Each callback
     declares only 'self' and records its name in 'calls'."""
 

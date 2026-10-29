@@ -41,8 +41,8 @@ class DispatchException(WorkToyException, TypeError):
   posArgs : tuple
     The positional arguments that could not be dispatched.
   keyArgs : dict
-    The keyword arguments of the call, empty when it had none. A
-    keyword call binds to the parameter names of each registration, so
+    The keyword arguments of the call, empty when it had none. They play
+    no part in matching, which goes by the positional types alone, and
     the message lists the names received where the call missed.
   """
 
@@ -65,7 +65,7 @@ class DispatchException(WorkToyException, TypeError):
     owner = self.dispatch.__field_owner__
     name = '%s.%s' % (owner.__name__, self.dispatch.__field_name__)
     received = '<br><tab><tab>'.join(
-      '<%s %s>' % (type(a).__name__, repr(a)) for a in self.posArgs
+        '<%s %s>' % (type(a).__name__, repr(a)) for a in self.posArgs
     ) or '(none)'
     argSig = str(TypeSig.fromArgs(*self.posArgs))
     #  A variadic declaration shows as itself, not as the concrete

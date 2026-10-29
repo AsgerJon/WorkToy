@@ -15,7 +15,7 @@ def resolveMRO(*bases: type, **kwargs) -> list[type]:
   Implements canonical C3: the merge operates on the
   linearizations 'L[Bi]' of each base plus an auxiliary
   '[B1, ..., Bn]' list that pins the bases' relative order.
-  The hypothetical most-derived class is *not* included in the
+  The hypothetical class having these bases is *not* included in the
   result; for 'class Foo(*bases): pass',
   'resolveMRO(*bases) == Foo.mro()[1:]'.
 

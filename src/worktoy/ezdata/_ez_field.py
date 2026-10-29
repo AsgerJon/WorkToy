@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TypeVar, Generic
 
 from ..desc import Field
 from ..mcls import BaseObject
-from ..utilities import maybe, typeCast, castRule
+from ..utilities import maybe, typeCast, hasCastRule
 from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute.dispatch import TypeCastException
 
@@ -18,14 +18,6 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Union, Optional, Self, Type
 
 T = TypeVar('T')
-
-#  The builtin containers, the text types and the number types, as
-#  'AttriBox' names them: a container field type refuses a lone text default
-#  rather than splitting it into characters or integers, and a text or
-#  number type casts a lone default rather than calling its constructor.
-_CONTAINERS = (list, tuple, set, frozenset, dict)
-_TEXT_TYPES = (str, bytes, bytearray)
-_NUMBER_TYPES = (bool, int, float, complex)
 
 
 class EZField(BaseObject, Generic[T]):
@@ -96,27 +88,23 @@ class EZField(BaseObject, Generic[T]):
   @staticmethod
   def _construct(fieldType: type, name: str, args: tuple, kwargs: dict) -> T:
     """
-    The '_construct' method calls 'fieldType' with 'args' and 'kwargs'
-    and returns the result, provided it is an instance of 'fieldType',
-    possibly of a subclass. A field always holds an instance of its field
-    type, and a class whose constructor returns anything else would break
-    that, so such a result raises 'TypeException' naming the field. Both
-    'defaultValue' and the default recipes of the generated '__init__'
-    build their values here.
-
-    A lone argument, without keywords, follows the rules 'AttriBox' has
-    for its default. One already an instance of 'fieldType' is copied,
-    with 'copy.copy': calling the field type on it is no copy for every
-    type, as 'Point(Point(1, 2))' shows, while the copy gives each
-    instance an object of its own, and an enumeration member copies to
-    itself. For a text type, 'str', 'bytes' or 'bytearray' or a subclass
-    of one, it goes through 'typeCast', as an argument to the field does,
-    since the constructors of the text types accept almost anything, and
-    so does one for a number type, 'bool', 'int', 'float' or 'complex' or
-    a subclass keeping the constructor of one, since those constructors
-    round: 'int(2.5)' is '2'. A builtin container, 'list', 'tuple', 'set',
-    'frozenset' or 'dict', refuses it when it is text, rather than split
-    it into characters or integers.
+    The '_construct' method builds the value of the field at 'name' from
+    'args' and 'kwargs', by the rule 'AttriBox' applies to its default.
+    A lone argument without keywords is a value for the field: one
+    already an instance of 'fieldType' is copied with 'copy.copy', since
+    calling the field type on it is no copy for every type, as
+    'Point(Point(1, 2))' shows, while the copy gives each instance an
+    object of its own and an enumeration member copies to itself; for a
+    field type 'typeCast' decides for, a family builtin, a subclass of
+    one or a class declaring '__cast_as__', it is cast or refused, as an
+    argument to the field is; for any other class it is the one argument
+    of the constructor. Several arguments, keywords or none call the
+    constructor. A field always holds an instance of its field type, and
+    a class whose constructor returns anything else would break that, so
+    such a result raises 'TypeException' naming the field, as does a
+    constructor raising 'TypeError' or 'ValueError'. Both 'defaultValue'
+    and the default recipes of the generated '__init__' build their
+    values here.
 
     Parameters
     ----------
@@ -137,21 +125,21 @@ class EZField(BaseObject, Generic[T]):
     Raises
     ------
     TypeException
-      If the call returns something that is not an instance of
-      'fieldType', if a text or a number type refuses its lone argument,
-      or if a builtin container receives lone text.
+      If the cast refuses the lone value, if the constructor refuses the
+      arguments, or if the call returns something that is not an
+      instance of 'fieldType'.
     """
     if len(args) == 1 and not kwargs:
       value = args[0]
       if isinstance(value, fieldType):
         return copy(value)
-      if issubclass(fieldType, _TEXT_TYPES):
+      if hasCastRule(fieldType):
         return EZField._castValue(fieldType, name, value)
-      if castRule(fieldType) in _NUMBER_TYPES:
-        return EZField._castValue(fieldType, name, value)
-      if fieldType in _CONTAINERS and isinstance(value, _TEXT_TYPES):
-        raise TypeException(name, value, fieldType)
-    value = fieldType(*args, **kwargs)
+    try:
+      value = fieldType(*args, **kwargs)
+    except (TypeError, ValueError) as exception:
+      badValue = args[0] if len(args) == 1 else args
+      raise TypeException(name, badValue, fieldType) from exception
     if isinstance(value, fieldType):
       return value
     raise TypeException(name, value, fieldType)

@@ -6,6 +6,7 @@ covered by the contextual tests in 'DescTest'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from worktoy.desc import Alias
 from worktoy.waitaminute import MissingVariable
 from . import DescTest, ComplexAlias
 
@@ -96,11 +97,18 @@ class TestAlias(DescTest):
 
   def test_identity(self, ) -> None:
     """
-    Testing 'ComplexAlias' as a valid complex number implementation.
+    Testing that each alias read from the class is the alias itself, and
+    that through an instance every name of a part gives the one object.
     """
-    self.assertIs(ComplexAlias.x, ComplexAlias.RE)
-    self.assertIs(ComplexAlias.REAL, ComplexAlias.RE)
-    self.assertIs(ComplexAlias.x, ComplexAlias.REAL)
-    self.assertIs(ComplexAlias.y, ComplexAlias.IM)
-    self.assertIs(ComplexAlias.IMAG, ComplexAlias.IM)
-    self.assertIs(ComplexAlias.y, ComplexAlias.IMAG)
+    for name in ('x', 'y', 'REAL', 'IMAG'):
+      with self.subTest(name=name):
+        alias = getattr(ComplexAlias, name)
+        self.assertIsInstance(alias, Alias)
+        self.assertIsNot(alias, ComplexAlias.RE)
+        self.assertIsNot(alias, ComplexAlias.IM)
+    for args in self.sampleArgs:
+      z = ComplexAlias(*args)
+      self.assertIs(z.x, z.RE)
+      self.assertIs(z.REAL, z.RE)
+      self.assertIs(z.y, z.IM)
+      self.assertIs(z.IMAG, z.IM)

@@ -32,7 +32,7 @@ class ReservedNamespaceHook(AbstractSpaceHook):
   '__name__'              Class name
   '__qualname__'          Fully qualified class name
   '__firstlineno__'       Source line for class definition
-  '__static_attributes__' Internal metadata used by the metaclass
+  '__static_attributes__' Names bound on 'self' in methods (3.13 and up)
   '__classcell__'         Cell behind 'super()' and '__class__'
   '__classdictcell__'     Cell behind lazy annotations (3.14 and up)
   '__orig_bases__'        Bases as written, before substitution

@@ -9,9 +9,8 @@ exception rather than falling back silently or returning a sentinel a
 caller might overlook. Each exception subclasses the built-in that best
 matches its meaning ('TypeError', 'ValueError', 'AttributeError', and so
 on) so existing 'except' clauses keep working. Every exception but the
-control-flow signals is also a 'WorkToyException', the common base that
-gives them 'pickle' and 'copy' support in one place; an argument that
-cannot be pickled travels as a 'Detached' stand-in.
+control-flow signals is also a 'WorkToyException', the common base, so
+one 'except WorkToyException' catches every exception of the library.
 
 The 'control_flow' subpackage is a thin re-export kept for the 1.x
 releases: the control-flow signals moved to 'worktoy.core.control_flow',
@@ -21,7 +20,6 @@ beside the sentinels, and 'ControlClassError' to 'meta'.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._detached import Detached
 from ._work_toy_exception import WorkToyException
 from ._type_exception import TypeException
 from ._variable_not_none import VariableNotNone
@@ -36,7 +34,6 @@ from . import ezdata
 from . import control_flow
 
 __all__ = [
-  'Detached',
   'WorkToyException',
   'TypeException',
   'VariableNotNone',

@@ -1,6 +1,6 @@
 """
 TestAttriBoxBuiltinGeneric subclasses 'DescTest' from the 'tests.test_desc'
-package and pins how 'AttriBox' and the boxes derived from it, 'FixBox'
+package and pins how 'AttriBox' and the boxes based on it, 'FixBox'
 and 'KeeBox', treat a builtin parametrized generic such as 'list[int]' in
 their subscript. Python 3.9 and 3.10 answer 'True' to
 'isinstance(list[int], type)', so a box that trusted that answer took the

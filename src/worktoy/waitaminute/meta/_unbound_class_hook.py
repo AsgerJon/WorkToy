@@ -18,12 +18,15 @@ if TYPE_CHECKING:  # pragma: no cover
 class UnboundClassHook(WorkToyException, SyntaxError):
   """
   UnboundClassHook is raised when a class body binds one of the routed
-  '__class_*__' hook names to a plain function or a staticmethod. The
-  metaclass invokes these hooks as bound classmethods, so a definition
-  without '@classmethod' receives no class binding: most hooks then
-  fail with a confusing 'TypeError' at call time, and '__class_call__'
-  silently swallows the first constructor argument as the class. This
-  exception flags the mistake loudly at the class-body line instead.
+  '__class_*__' hook names to anything but a classmethod: a plain
+  function, a staticmethod, an '@overload', a value. The metaclass
+  invokes these hooks as bound classmethods, so a definition without
+  '@classmethod' receives no class binding: most hooks then fail with a
+  confusing 'TypeError' at call time, '__class_call__' silently swallows
+  the first constructor argument as the class, and an '@overload'
+  becomes a 'Dispatcher' expecting an instance the metaclass never
+  passes. This exception flags the mistake loudly at the class-body
+  line instead.
   A hook inherited from a plain base, one no worktoy metaclass built and
   so never checked, is held to the same rule as the class is created, and
   the message then names that base. It subclasses 'SyntaxError'.
@@ -56,15 +59,16 @@ class UnboundClassHook(WorkToyException, SyntaxError):
 
   def __str__(self) -> str:
     if self.baseName is None:
-      spec = """The class body of '%s' binds '%s' to a function without
-      the '@classmethod' decorator! The metaclass invokes the class hooks
-      as bound classmethods, so the definition requires it."""
+      spec = """The class body of '%s' binds '%s' to something other
+      than a classmethod! The metaclass invokes the class hooks as bound
+      classmethods, so the definition requires the '@classmethod'
+      decorator."""
       info = spec % (self.className, self.hookName)
       return textFmt(info)
     spec = """The class '%s' inherits '%s' from its base '%s', where it
-    is a function without the '@classmethod' decorator! The metaclass
-    invokes the class hooks as bound classmethods, so the definition
-    requires it."""
+    is something other than a classmethod! The metaclass invokes the
+    class hooks as bound classmethods, so the definition requires the
+    '@classmethod' decorator."""
     info = spec % (self.className, self.hookName, self.baseName)
     return textFmt(info)
 

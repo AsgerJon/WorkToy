@@ -10,8 +10,6 @@ a class statement caught a near-miss dunder but not a reassigned
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import pickle
-
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import WorkToyException
 from worktoy.waitaminute.meta import ReservedName
@@ -43,9 +41,3 @@ class TestReservedNameSyntax(WaitAMinuteTest):
       class Owner(BaseObject):
         __module__ = 'elsewhere'
     self.assertIsInstance(context.exception, ReservedName)
-
-  def test_round_trip(self) -> None:
-    """It pickles through the common base."""
-    back = pickle.loads(pickle.dumps(ReservedName('__doc__')))
-    self.assertEqual(back.resName, '__doc__')
-    self.assertEqual(back.msg, str(back))

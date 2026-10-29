@@ -80,18 +80,6 @@ class TestDefaultUniqueness(DescTest):
     self.assertEqual(a.items, [])
     self.assertEqual(b.items, [])
 
-  def test_splatted_container_default_unique(self) -> None:
-    """The multi-argument container form ('AttriBox[list](1, 2, 3)')
-    likewise builds a fresh object per instance."""
-
-    class Bag(BaseObject):
-      items = AttriBox[list](1, 2, 3)
-
-    a, b = Bag(), Bag()
-    self.assertIsNot(a.items, b.items)
-    self.assertEqual(a.items, [1, 2, 3])
-    self.assertEqual(b.items, [1, 2, 3])
-
   def test_prebuilt_object_default_unique(self) -> None:
     """An arbitrary pre-built object passed as the default is deep-copied
     per instance, so no two instances share the captured object."""
@@ -121,20 +109,3 @@ class TestDefaultUniqueness(DescTest):
     a.items[0].append(99)
     self.assertEqual(b.items, [[1], [2]])
 
-  def test_uncopyable_default_is_shared_without_raising(self) -> None:
-    """A value that refuses to be copied is stored unchanged rather than
-    raising: receiving a value of the exact field type must never error.
-    Such a value is shared, the only alternative to raising."""
-
-    class Uncopyable:
-      def __deepcopy__(self, memo: dict) -> None:
-        raise TypeError('this value cannot be copied')
-
-    seed = Uncopyable()
-
-    class Keep(BaseObject):
-      value = AttriBox[Uncopyable](seed)
-
-    a, b = Keep(), Keep()
-    self.assertIs(a.value, seed)
-    self.assertIs(b.value, seed)

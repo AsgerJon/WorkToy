@@ -23,7 +23,7 @@ class MetaFlow(MetaType, metaclass=MetaType):
   """
   MetaFlow provides the metaclass for the control flow exception classes. It
   prevents these classes from having any sort of attributes. It
-  subclasses 'MetaType' and derives from it, as 'AbstractMetaclass' does,
+  subclasses 'MetaType' and is an instance of it, as 'AbstractMetaclass' is,
   so a signal declared with a class keyword has the keyword absorbed by
   '_Chill'; the '_root' keyword is read by '__prepare__' before that.
   """

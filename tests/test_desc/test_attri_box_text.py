@@ -44,47 +44,10 @@ class TestAttriBoxText(DescTest):
             setattr(foo, fieldName, value)
           self.assertEqual(getattr(foo, fieldName), before)
 
-  def test_default_non_text_refused(self) -> None:
-    """A default given as a single value that is not text raises
-    'TypeException' when the field is first read."""
-
-    class Foo:
-      name = AttriBox[str](5)
-      data = AttriBox[bytes](5)
-      buffer = AttriBox[bytearray](None)
-
-    foo = Foo()
-    for fieldName in ('name', 'data', 'buffer'):
-      with self.subTest(field=fieldName):
-        with self.assertRaises(TypeException):
-          getattr(foo, fieldName)
-
-  def test_text_converted(self) -> None:
-    """Each text type converts to the others as UTF-8, by default and
-    by assignment."""
-
-    class Foo:
-      name = AttriBox[str](b'abc')
-      data = AttriBox[bytes]('blåbær')
-      buffer = AttriBox[bytearray](b'abc')
-
-    foo = Foo()
-    self.assertEqual(foo.name, 'abc')
-    self.assertEqual(foo.data, 'blåbær'.encode('utf-8'))
-    self.assertEqual(foo.buffer, bytearray(b'abc'))
-    self.assertIs(type(foo.buffer), bytearray)
-    foo.name = bytearray('blåbær'.encode('utf-8'))
-    foo.data = bytearray(b'xyz')
-    foo.buffer = 'xyz'
-    self.assertEqual(foo.name, 'blåbær')
-    self.assertEqual(foo.data, b'xyz')
-    self.assertIs(type(foo.data), bytes)
-    self.assertEqual(foo.buffer, bytearray(b'xyz'))
-
   def test_several_arguments_use_the_constructor(self) -> None:
     """Several arguments, or keyword arguments, as in naming an encoding,
-    still go to the field type's constructor, for the default and for an
-    assigned tuple."""
+    still go to the field type's constructor for the default. An assigned
+    tuple is a tuple, not an argument list, and is refused."""
 
     class Foo:
       name = AttriBox[str](b'\xe6', 'latin-1')
@@ -93,8 +56,9 @@ class TestAttriBoxText(DescTest):
     foo = Foo()
     self.assertEqual(foo.name, 'æ')
     self.assertEqual(foo.word, 'å')
-    foo.name = (b'\xf8', 'latin-1')
-    self.assertEqual(foo.name, 'ø')
+    with self.assertRaises(TypeException):
+      foo.name = (b'\xf8', 'latin-1')
+    self.assertEqual(foo.name, 'æ')
 
   def test_mutable_default_owned_per_instance(self) -> None:
     """A 'bytearray' default already of the field type is still copied

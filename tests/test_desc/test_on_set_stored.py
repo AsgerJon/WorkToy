@@ -88,12 +88,13 @@ class TestOnSetStored(DescTest):
     self.assertIs(type(on), float)
     self.assertEqual(on, 2.0)
 
-  def test_built_value(self) -> None:
-    """'onSet' receives the value the field type built from an assigned
-    tuple."""
+  def test_cast_value(self) -> None:
+    """'onSet' receives the value 'typeCast' made of an assigned value,
+    not the value as assigned."""
     watched = Watched()
-    watched.z = 1, 2
-    self.assertEqual(watched.log, [('on', 1 + 2j)])
+    watched.z = 1
+    self.assertEqual(watched.log, [('on', 1 + 0j)])
+    self.assertIs(type(watched.log[0][1]), complex)
 
   def test_value_of_field_type(self) -> None:
     """A value already of the field type reaches 'onSet' itself."""

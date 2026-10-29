@@ -150,7 +150,8 @@ class TestIntSampler(SamplerTest):
 
   def test_cast_range(self, ) -> None:
     """
-    This method tests that 'minVal' and 'maxVal' can be cast to 'int'.
+    This method tests that 'minVal' and 'maxVal' take an integral float
+    cast to 'int', and refuse a numeric string, which no cast parses.
     """
     sampler = IntSampler()
     sampler.minVal = 69.0
@@ -159,7 +160,10 @@ class TestIntSampler(SamplerTest):
     self.assertEqual(sampler.maxVal, 420)
 
     sampler = IntSampler()
-    sampler.minVal = '69'
-    sampler.maxVal = '420'
-    self.assertEqual(sampler.minVal, 69)
-    self.assertEqual(sampler.maxVal, 420)
+    minBefore, maxBefore = sampler.minVal, sampler.maxVal
+    with self.assertRaises(TypeException):
+      sampler.minVal = '69'
+    with self.assertRaises(TypeException):
+      sampler.maxVal = '420'
+    self.assertEqual(sampler.minVal, minBefore)
+    self.assertEqual(sampler.maxVal, maxBefore)

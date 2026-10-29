@@ -16,10 +16,16 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class _MetaARGS(SentinelMeta):
   """
-  Metaclass for the 'ARGS' sentinel. It registers 'ARGS' with
-  'SentinelMeta' as any sentinel, so a second class statement at the name
-  is refused, and overrides '__call__' alone, so that 'ARGS' can be
-  instantiated where the other sentinels cannot.
+  Metaclass for the 'ARGS' sentinel: 'ARGS' is an instance of '_MetaARGS',
+  a subclass of 'SentinelMeta'. It registers 'ARGS' with 'SentinelMeta' as
+  any sentinel, so a second class statement at the name is refused.
+
+  It overrides '__call__', so that 'ARGS' can be instantiated where the
+  other instances of 'SentinelMeta' cannot. It also implements '__iter__'
+  to allow an expression like '@overload(int, *ARGS)' to mean any
+  signature of positional arguments beginning with an 'int'. A bare
+  'ARGS', written without the star, means the same; see
+  'TypeSig.starARGS'.
   """
 
   __inner_type__: Optional[type] = None
@@ -31,6 +37,12 @@ class _MetaARGS(SentinelMeta):
     self = type.__call__(cls, )
     self.__inner_type__ = type_
     return self
+
+  def __iter__(cls, ) -> Iterator:
+    yield from (cls[object],)
+
+  if TYPE_CHECKING:  # pragma: no cover
+    def __getitem__(cls, type_: type) -> Self:  ...
 
 
 class ARGS(metaclass=_MetaARGS):

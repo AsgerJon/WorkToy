@@ -26,7 +26,7 @@ class SentinelMeta(MetaType, metaclass=MetaType):
   instantiated. A sentinel defines one concept for the whole process, so
   the registry holds one sentinel per name wherever it was declared, and
   the existing one is the one to import. It subclasses 'MetaType' and
-  derives from it, as 'AbstractMetaclass' does, so a sentinel declared
+  is an instance of it, as 'AbstractMetaclass' is, so a sentinel declared
   with a class keyword has the keyword absorbed by '_Chill' instead of
   reaching the refusal of 'object.__init_subclass__'.
   """

@@ -2,7 +2,8 @@
 during class creation by the metaclass machinery in 'worktoy.mcls' (and
 the primitive metaclasses in 'worktoy.core'). They cover near-miss dunder
 names, illegal '__del__', reserved names, hook conflicts, a name both
-overloaded and defined plainly in one class body, the deletion of a name
+overloaded and defined plainly in one class body, an 'overload' object
+bound twice in one class body, the deletion of a name
 a hook claimed, a class hook the metaclass never calls, a second
 sentinel at a taken name, illegal instantiation, and a disallowed
 attribute in the class body of a control-flow signal.
@@ -19,6 +20,7 @@ from ._questionable_syntax import QuestionableSyntax
 from ._reserved_name import ReservedName
 from ._unbound_class_hook import UnboundClassHook
 from ._overload_conflict import OverloadConflict
+from ._rebound_overload import ReboundOverload
 from ._claimed_name import ClaimedName
 from ._shadowed_class_hook import ShadowedClassHook
 from ._duplicate_sentinel import DuplicateSentinel
@@ -33,6 +35,7 @@ __all__ = [
   'ReservedName',
   'UnboundClassHook',
   'OverloadConflict',
+  'ReboundOverload',
   'ClaimedName',
   'ShadowedClassHook',
   'DuplicateSentinel',

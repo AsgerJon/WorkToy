@@ -116,15 +116,6 @@ class TestDeletionReadsStorage(DescTest):
     self.assertEqual(context.exception.oldVal, 5)
     self.assertEqual(owner.fixed, 5)
 
-  def test_reading_builds(self) -> None:
-    """A read, unlike a deletion, does build the default: 'Counted' once,
-    while 'Broken' fails to build."""
-    before = Counted.__built__
-    _ = Owner().counted
-    self.assertEqual(Counted.__built__, before + 1)
-    with self.assertRaises(TypeError):
-      _ = Owner().broken
-
   def test_attri_box_builds_nothing(self) -> None:
     """Deleting an unset 'AttriBox' builds no default, and the field then
     reads as missing."""

@@ -119,7 +119,7 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     """
     The 'KeeFlagsMeta' metaclass provides the helpful 'flags' descriptor
     allowing inspection of all the flags available. The descriptor is then
-    available on the derived 'KeeFlags' classes, but *not* on the
+    available on the subclasses of 'KeeFlags', but *not* on the
     instances themselves. For example:
 
     class KeyboardModifier(KeeFlags):
@@ -262,7 +262,7 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     return hash((hash(type(self)), *self.highs))
 
   #  The operators take members of the very same class: a member of a
-  #  derived class passes 'isinstance', but holds flags this class lacks.
+  #  subclass passes 'isinstance', but holds flags this class lacks.
 
   def __or__(self, other: Self) -> Self:
     cls = type(self)

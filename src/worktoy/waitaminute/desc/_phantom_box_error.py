@@ -100,8 +100,8 @@ class PhantomBoxError(DescriptorException):
     ownerName = getattr(self.owner, '__name__', None)
     ownerStr = '' if ownerName is None else """ in class '%s'""" % ownerName
     info = infoSpec % (
-        '%s%s' % (binding, subscript), ownerStr, article, boxName, binding,
-        boxName,
+      '%s%s' % (binding, subscript), ownerStr, article, boxName, binding,
+      boxName,
     )
     return textFmt(info)
 

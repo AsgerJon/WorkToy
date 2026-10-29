@@ -105,7 +105,7 @@ class TestInterpreterNames(EZTest):
 
   def test_generic_base(self) -> None:
     """
-    An 'EZData' class may also derive from 'Generic[T]'. The interpreter
+    An 'EZData' class may also subclass 'Generic[T]'. The interpreter
     records the bases as written in '__orig_bases__', and 'Generic' reads
     them back while the class is created to find its type parameters.
     """

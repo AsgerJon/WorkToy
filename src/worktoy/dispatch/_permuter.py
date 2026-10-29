@@ -203,23 +203,26 @@ class Permuter(CallMeMaybe):
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def invoke(self, func: Func, *args, **kwargs) -> Any:
+  def invoke(self, *args, **kwargs) -> Any:
     """
-    The 'invoke' method forwards to 'func' after restoring the arguments
-    from arranged order back to the canonical order 'func' expects.
+    The 'invoke' method forwards to the wrapped function, given as the
+    first positional argument, after restoring the arguments after it
+    from arranged order back to the canonical order the function expects.
+    The function is taken from 'args' by position, as in 'CallMeMaybe',
+    so a keyword of the caller named 'func' goes through to it.
 
     Parameters
     ----------
-    func : FunctionType
-        The wrapped function.
     *args : Any
-        Positional arguments in arranged order.
+        The wrapped function, then the positional arguments in arranged
+        order.
     **kwargs : Any
         Keyword arguments forwarded unchanged.
 
     Returns
     -------
     Any
-        Whatever 'func' returns.
+        Whatever the function returns.
     """
+    func, args = args[0], args[1:]
     return func(*self._getArrangement().restoreFrom(*args), **kwargs)

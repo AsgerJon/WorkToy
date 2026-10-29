@@ -61,11 +61,12 @@ class TypeCastTestCase(UtilitiesTest):
 
   def testIntCast(self):
     """Casts to int. Accepts int, float (only if integer), complex (real
-    only, integer), str."""
+    only, integer); refuses str."""
     self.assertEqual(typeCast(int, 5), 5)
     self.assertEqual(typeCast(int, 7.0), 7)
     self.assertEqual(typeCast(int, complex(9, 0)), 9)
-    self.assertEqual(typeCast(int, "42"), 42)
+    with self.assertRaises(TypeCastException):
+      typeCast(int, "42")
     with self.assertRaises(TypeCastException):
       typeCast(int, 3.14)
     with self.assertRaises(TypeCastException):
@@ -74,71 +75,41 @@ class TypeCastTestCase(UtilitiesTest):
       typeCast(int, "notanumber")
 
   def testFloatCast(self):
-    """Casts to float. Accepts float, int, complex (real only), str."""
+    """Casts to float. Accepts float, int, complex (real only); refuses
+    str."""
     self.assertEqual(typeCast(float, 2.5), 2.5)
     self.assertEqual(typeCast(float, 4), 4.0)
     self.assertEqual(typeCast(float, complex(8, 0)), 8.0)
-    self.assertEqual(typeCast(float, "3.14"), 3.14)
+    with self.assertRaises(TypeCastException):
+      typeCast(float, "3.14")
     with self.assertRaises(TypeCastException):
       typeCast(float, complex(1, 1))
     with self.assertRaises(TypeCastException):
       typeCast(float, "xyz")
 
   def testComplexCast(self):
-    """Casts to complex. Accepts complex, int, float, str."""
+    """Casts to complex. Accepts complex, int, float; refuses str."""
     self.assertEqual(typeCast(complex, 3), 3.0 + 0j)
     self.assertEqual(typeCast(complex, 2.5), 2.5 + 0j)
     self.assertEqual(typeCast(complex, complex(4, 1)), 4 + 1j)
-    self.assertEqual(typeCast(complex, "1+2j"), 1 + 2j)
+    with self.assertRaises(TypeCastException):
+      typeCast(complex, "1+2j")
     with self.assertRaises(TypeCastException):
       typeCast(complex, "notcomplex")
 
-  def testListCast(self):
-    """Casts to list. Accepts list, tuple, set, frozenset, dict."""
-    self.assertEqual(typeCast(list, [1, 2]), [1, 2])
-    self.assertEqual(typeCast(list, (1, 2)), [1, 2])
-    self.assertEqual(typeCast(list, {1, 2}), [1, 2])
-    self.assertEqual(typeCast(list, frozenset([1, 2])), [1, 2])
-    d = {'a': 1, 'b': 2}
-    self.assertEqual(typeCast(list, d), [('a', 1), ('b', 2)])
-    with self.assertRaises(TypeCastException):
-      typeCast(list, 123)
-
-  def testTupleCast(self):
-    """Casts to tuple. Accepts tuple, list, set, frozenset, dict."""
-    self.assertEqual(typeCast(tuple, (1, 2)), (1, 2))
-    self.assertEqual(typeCast(tuple, [1, 2]), (1, 2))
-    self.assertEqual(typeCast(tuple, {1, 2}), tuple({1, 2}))
-    self.assertEqual(typeCast(tuple, frozenset([1, 2])), tuple([1, 2]))
-    d = {'a': 1, 'b': 2}
-    self.assertEqual(typeCast(tuple, d), (('a', 1), ('b', 2)))
-    with self.assertRaises(TypeCastException):
-      typeCast(tuple, 123)
-
-  def testSetCast(self):
-    """Casts to set. Accepts set, list, tuple, frozenset, dict."""
-    self.assertEqual(typeCast(set, {1, 2}), {1, 2})
-    self.assertEqual(typeCast(set, [1, 2]), {1, 2})
-    self.assertEqual(typeCast(set, (1, 2)), {1, 2})
-    self.assertEqual(typeCast(set, frozenset([1, 2])), {1, 2})
-    d = {'a': 1, 'b': 2}
-    self.assertEqual(typeCast(set, d), {('a', 1), ('b', 2)})
-    with self.assertRaises(TypeCastException):
-      typeCast(set, 123)
-
-  def testFrozensetCast(self):
-    """Casts to frozenset. Accepts frozenset, list, tuple, set, dict."""
-    self.assertEqual(
-      typeCast(frozenset, frozenset([1, 2])),
-      frozenset([1, 2]),
-    )
-    self.assertEqual(typeCast(frozenset, [1, 2]), frozenset([1, 2]))
-    self.assertEqual(typeCast(frozenset, (1, 2)), frozenset([1, 2]))
-    self.assertEqual(typeCast(frozenset, {1, 2}), frozenset([1, 2]))
-    d = {'a': 1, 'b': 2}
-    self.assertEqual(typeCast(frozenset, d), frozenset([('a', 1), ('b', 2)]))
-    with self.assertRaises(TypeCastException):
-      typeCast(frozenset, 123)
+  def testContainersNotCast(self):
+    """Containers are no cast targets: an instance passes, and every
+    other container, a dict's items and a scalar are refused."""
+    for target in (list, tuple, set, frozenset):
+      with self.subTest(target=target.__name__):
+        value = target((1, 2))
+        self.assertIs(typeCast(target, value), value)
+        others = ([1, 2], (1, 2), {1, 2}, frozenset([1, 2]), {'a': 1}, 123)
+        for other in others:
+          if isinstance(other, target):
+            continue
+          with self.assertRaises(TypeCastException):
+            typeCast(target, other)
 
   def testDictCast(self):
     """Casts to dict. Only other dict-like objects accepted."""
@@ -165,13 +136,13 @@ class TypeCastTestCase(UtilitiesTest):
     with self.assertRaises(TypeCastException):
       typeCast(type, 123)
 
-  def testFallback(self):
-    """Casts using the target's constructor for unsupported types."""
+  def testNoConstructorFallback(self):
+    """A class without '__cast_as__' is refused; its constructor is never
+    called on the value."""
 
     class Foo:
       def __init__(self, x):
-        self.x = x
+        raise AssertionError('constructor called')  # pragma: no cover
 
-    foo = typeCast(Foo, 5)
-    self.assertIsInstance(foo, Foo)
-    self.assertEqual(foo.x, 5)
+    with self.assertRaises(TypeCastException):
+      typeCast(Foo, 5)

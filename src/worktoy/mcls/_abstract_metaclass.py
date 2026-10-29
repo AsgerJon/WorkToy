@@ -98,11 +98,20 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   - '__class_len__(clsName) -> int'
     Called when 'len(clsName)' is invoked.
   - '__class_hash__(clsName) -> int'
-    Called when 'hash(clsName)' is invoked. The default implementation is:
+    Called when 'hash(clsName)' is invoked. The default hashes the name
+    of the class, the names of its bases other than 'object' and the
+    bases marked '__skip_hash__' ('_Chill'), and the name of its
+    metaclass:
 
-        baseNames = [b.__name__ for b in clsName.__bases__]
+        baseNames = [b.__name__ for b in bases]  # less object, _Chill
         metaName = type(clsName).__name__
         return hash((clsName.__name__, *baseNames, metaName))
+
+    The default is computed at the first hash and kept in the class's
+    own '__dict__' under '__class_hash_value__', so a class keeps its
+    hash for life, as a plain class does: renamed afterwards, it stays
+    where a dict or set holds it. A '__class_hash__' is asked at every
+    hash.
   - '__class_init__(clsName, name, bases, space, **kw) -> None'
     Invoked after the class body has been fully executed.
   - '__class_setitem__(clsName, item, value) -> None'
@@ -119,6 +128,25 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   it is defined, without going through the metaclass. This metaclass
   defines no '__getitem__', so subscripting a class that has no
   '__class_getitem__' raises 'TypeError'.
+
+  A hook is a classmethod and nothing else. 'NamespaceHook' refuses any
+  other binding at a hook name, a plain function, a staticmethod, an
+  '@overload', a value, with 'UnboundClassHook' at the class-body line;
+  an '@overload' there would become a 'Dispatcher' calling its functions
+  with an instance first, which the metaclass, calling the hook on the
+  class, never passes.
+
+  Combining metaclasses
+  ---------------------
+  '__new__', '__init__' and every default that applies when a class
+  declares no hook, those of '__call__', '__instancecheck__',
+  '__subclasscheck__', '__str__', '__repr__', '__setattr__' and
+  '__delattr__', hand over with 'super()'. A metaclass based on
+  'MetaType' and mixed in beside this one, as in
+  'class Meta(BaseMeta, OtherMeta)', therefore takes part: its own
+  versions of those methods run, in the order of the metaclass
+  resolution order. For a metaclass based on this one alone the next
+  class is 'MetaType', as it always was.
 
   Unimplemented or intentionally rejected hooks
   ---------------------------------------------
@@ -164,7 +192,8 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     it, then hands the class to the 'newClassPhase' of every hook. Called
     directly with a plain dict, as in 'BaseMeta(name, bases, {...})', it
     first copies the dict into a namespace of its own, and the hooks of
-    that namespace run.
+    that namespace run. The class itself is built by the next '__new__'
+    along the metaclass resolution order, through 'super()'.
     """
     if not isinstance(space, ASpace):
       plain = space
@@ -172,7 +201,7 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
       for key, val in dict.items(plain):
         space[key] = val
     namespace = space.compile()
-    cls: AMeta = MetaType.__new__(mcls, name, bases, namespace, **kw)
+    cls: AMeta = super().__new__(mcls, name, bases, namespace, **kw)
     for hook in space.getHooks():
       setattr(hook, '__space_object__', space)
       cls = maybe(hook.newClassPhase(cls), cls)
@@ -180,37 +209,38 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
     """Finalize the class. By now 'type.__new__' has already run
-    '__set_name__' and '__init_subclass__'. This calls
-    'MetaType.__init__', then the optional '__class_init__' hook, then
-    the subclass notification ('_notifySubclassHook')."""
-    MetaType.__init__(cls, name, bases, space, **kwargs)
+    '__set_name__' and '__init_subclass__'. This calls the next
+    '__init__' along the metaclass resolution order through 'super()',
+    then the optional '__class_init__' hook, then the subclass
+    notification ('_notifySubclassHook')."""
+    super().__init__(name, bases, space, **kwargs)
     if cls.__class_init__ is not METACALL:
       cls.__class_init__(name, bases, space, **kwargs)
-    cls._notifySubclassHook(cls, *bases)
+    type(cls)._notifySubclassHook(cls, *bases)
 
   def __call__(cls, *args, **kwargs) -> Any:
     if cls.__class_call__ is METACALL:
-      return MetaType.__call__(cls, *args, **kwargs)
+      return super().__call__(*args, **kwargs)
     return cls.__class_call__(*args, **kwargs)
 
   def __instancecheck__(cls, obj: Any) -> bool:
     if cls.__class_instancecheck__ is METACALL:
-      return MetaType.__instancecheck__(cls, obj)
+      return super().__instancecheck__(obj)
     return cls.__class_instancecheck__(obj)
 
   def __subclasscheck__(cls, subclass: type) -> bool:
     if cls.__class_subclasscheck__ is METACALL:
-      return MetaType.__subclasscheck__(cls, subclass)
+      return super().__subclasscheck__(subclass)
     return cls.__class_subclasscheck__(subclass)
 
   def __str__(cls) -> str:
     if cls.__class_str__ is METACALL:
-      return MetaType.__str__(cls)  # NOQA
+      return super().__str__()
     return cls.__class_str__()
 
   def __repr__(cls) -> str:
     if cls.__class_repr__ is METACALL:
-      return MetaType.__repr__(cls)
+      return super().__repr__()
     return cls.__class_repr__()
 
   def __iter__(cls) -> Any:
@@ -272,19 +302,34 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     """
     The '_skipHash' method checks if the class has a '__skip_hash__'
     attribute set to True. This is used to determine if the class should
-    skip custom hash computation.
+    skip custom hash computation. The flag is read with
+    'type.__getattribute__', so that no '__getattr__', '__class_getattr__'
+    or reimplemented '__getattribute__' of a base can answer for it.
     """
-    return getattr(cls, '__skip_hash__', False)
+    try:
+      return type.__getattribute__(cls, '__skip_hash__')
+    except AttributeError:
+      return False
 
   def __hash__(cls) -> int:
-    if cls.__class_hash__ is METACALL:
-      bases = (*(b for b in cls.__bases__ if not cls._skipHash(b)),)
+    """The '__class_hash__' of the class, asked at every hash, or else the
+    default, computed at the first hash and kept in the class's own
+    '__dict__' under '__class_hash_value__', so the class keeps its hash
+    for life, as a plain class does, whatever becomes of its name or
+    bases. Only the own '__dict__' is read, so a subclass computes its
+    own."""
+    if cls.__class_hash__ is not METACALL:
+      return cls.__class_hash__()
+    try:
+      return cls.__dict__['__class_hash_value__']
+    except KeyError:
+      bases = (*(b for b in cls.__bases__ if not type(cls)._skipHash(b)),)
       bases = (*(b for b in bases if b is not object),)
       baseNames = [b.__name__ for b in bases]
       metaName = type(cls).__name__
-      nameTuple = (cls.__name__, *baseNames, metaName)
-      return hash(nameTuple)  # NOQA
-    return cls.__class_hash__()
+      value = hash((cls.__name__, *baseNames, metaName))
+      type.__setattr__(cls, '__class_hash_value__', value)
+      return value
 
   #  DO NOT REMOVE THE FOLLOWING COMMENTED OUT METHODS
   # def __eq__(keeNum, other: Any) -> bool:
@@ -331,12 +376,12 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   def __setattr__(cls, name: str, value: Any) -> None:
     if cls.__class_setattr__ is METACALL:
-      return MetaType.__setattr__(cls, name, value)  # NOQA
+      return super().__setattr__(name, value)
     return cls.__class_setattr__(name, value)
 
   def __delattr__(cls, name: str) -> None:
     if cls.__class_delattr__ is METACALL:
-      return MetaType.__delattr__(cls, name)
+      return super().__delattr__(name)
     return cls.__class_delattr__(name)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

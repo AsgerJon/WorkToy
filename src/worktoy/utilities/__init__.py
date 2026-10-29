@@ -4,7 +4,7 @@ This package collects small, standalone helpers with no
 'worktoy' dependencies: text formatting ('textFmt',
 'stringList', 'joinWords', 'wordWrap'), iterable handling
 ('unpack', 'maybe'), slicing ('sliceLen', 'ValidSlice'),
-type/MRO helpers ('typeCast', 'castRule', 'resolveMRO'), descriptor
+type/MRO helpers ('typeCast', 'hasCastRule', 'resolveMRO'), descriptor
 support ('QuickDesc'), filesystem ('Directory'), exception
 inspection ('ExceptionInfo'), the 'combinatorics' subpackage, and a
 handful of orphans ('argsCount', 'bipartiteMatching', 'replaceFlex',
@@ -38,8 +38,8 @@ from ._valid_slice import ValidSlice
 from ._exception_info import ExceptionInfo
 #  Requiring 'joinWords' and 'textFmt'
 from ._resolve_mro import resolveMRO
-#  Requiring 'ValidSlice'
-from ._type_cast import typeCast, castRule
+#  Requiring no local imports
+from ._type_cast import typeCast, hasCastRule
 #  Requiring 'QuickDesc' and 'textFmt'
 from . import combinatorics
 
@@ -58,7 +58,7 @@ __all__ = [
   'wordWrap',
   'replaceFlex',
   'typeCast',
-  'castRule',
+  'hasCastRule',
   'ValidSlice',
   'ExceptionInfo',
   'resolveMRO',

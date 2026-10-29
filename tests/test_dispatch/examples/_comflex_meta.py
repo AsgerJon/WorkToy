@@ -14,10 +14,10 @@ from worktoy.dispatch import overload
 
 class ComflexMeta(ComplexMeta):
   """
-  ComplexMeta provides a complex number implementation derived from the
-  'BaseMeta' metaclass allowing it to test the 'overload' decorator. Please
-  note, that use of the 'overload' decorator is reserved for classes
-  derived from 'BaseMeta' or a subclass of 'BaseMeta'. This provides a
+  ComplexMeta provides a complex number implementation, an instance of the
+  'BaseMeta' metaclass, allowing it to test the 'overload' decorator. Please
+  note, that use of the 'overload' decorator is reserved for instances of
+  'BaseMeta' or of a subclass of 'BaseMeta'. This provides a
   syntactically cleaner overloading implementation, but requires
   customization of the metaclass, in particular customization of the
   namespace object.

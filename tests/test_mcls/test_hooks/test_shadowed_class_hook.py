@@ -74,7 +74,7 @@ class TestShadowedClassHook(MCLSTest):
     self.assertIn("'__class_len__'", str(e))
 
   def test_inherited_implementation_named(self) -> None:
-    """A metaclass derived from 'CountMeta' inherits its '__len__', and
+    """A metaclass subclassing 'CountMeta' inherits its '__len__', and
     the exception names 'CountMeta', which implements it."""
 
     class SubCountMeta(CountMeta):

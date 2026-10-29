@@ -3,9 +3,7 @@ TestDispatcherCloneSigs subclasses 'DispatcherTest' and pins that a clone
 of a 'Dispatcher' holds signatures of its own. A clone used to hold the
 'TypeSig' objects of the original, and placing a clone on a class
 rewrites 'THIS' in its signatures in place, so the first class to receive
-a clone fixed 'THIS' for the original and every other clone alike. The
-copies keep what the original signatures carry: whether the cast passes
-may coerce to them.
+a clone fixed 'THIS' for the original and every other clone alike.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -76,13 +74,11 @@ class TestDispatcherCloneSigs(DispatcherTest):
     self.assertEqual(Foo().x(Foo(), Foo()), 2)
     self.assertEqual(Bar().y(Bar(), Bar(), Bar()), 3)
 
-  def test_copies_keep_flags(self) -> None:
-    """The copied signatures, concrete and variadic, keep
-    '__allow_flex__', and are objects of their own."""
+  def test_copies_are_their_own(self) -> None:
+    """The copied signatures, concrete and variadic, equal the originals
+    and are objects of their own."""
     d = Dispatcher()
-    strict = TypeSig(int)
-    strict.__allow_flex__ = False
-    d.addSigFunc(strict, _thisLoad)
+    d.addSigFunc(TypeSig(int), _thisLoad)
     ov = overload(ARGS[str])(_manyLoad)
     for sig, func in ov.getVariadics():
       d.addVariadicSigFunc(sig, func)
@@ -95,6 +91,3 @@ class TestDispatcherCloneSigs(DispatcherTest):
     self.assertEqual(len(copies), 2)
     for original, copied in zip(originals, copies):
       self.assertIsNot(copied, original)
-      self.assertIs(copied.__allow_flex__, original.__allow_flex__)
-    self.assertFalse(copies[0].__allow_flex__)
-    self.assertTrue(copies[1].__allow_flex__)

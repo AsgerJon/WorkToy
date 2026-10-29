@@ -79,7 +79,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   Instances of KeeMeta are iterable ('for member in MyEnum'),
   length-typed ('len(MyEnum)'), and act as their own membership
   domain: 'x in MyEnum' and 'isinstance(x, MyEnum)' are True when 'x'
-  is one of the members, or a member of an enumeration derived from
+  is one of the members, or a member of a subclass of
   'MyEnum'. Members are recognised by identity, so the '__eq__' of 'x'
   is never asked. These operations, and calling, printing, attribute
   access and the instance and subclass checks, are the metaclass's own,
@@ -151,8 +151,8 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     """
     The '_createBase' method finds the base enumeration of 'cls'. The
     root of the metaclass, the class its 'keeNum' descriptor builds, is
-    its own base, and so is every enumeration derived directly from that
-    root. Any other enumeration has the enumeration it derives from as
+    its own base, and so is every enumeration that subclasses that root
+    directly. Any other enumeration has the enumeration it subclasses as
     its base. The root is recognised by identity, never by name, since
     each subclass of 'KeeMeta' builds a root of its own name.
     """
@@ -164,8 +164,8 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       bases = [b for b in cls.space.__base_classes__ if isinstance(b, mcls)]
       if len(bases) != 1:
         if bases:
-          infoSpec = """Enumerating classes derived from '%s', may not have
-          multiple bases, but received %d:<br><tab>%s"""
+          infoSpec = """Enumerating classes that are instances of '%s'
+          may not have multiple bases, but received %d:<br><tab>%s"""
           mclsName = mcls.__name__
           bases = cls.space.__base_classes__
           baseStr = '<br><tab>'.join(b.__name__ for b in bases)
@@ -428,8 +428,8 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   def __instancecheck__(cls, instance: Any) -> bool:
     """
     The '__instancecheck__' method treats 'instance' as a member when it
-    is one of the members of the enumeration, or a member of an
-    enumeration derived from it. A member is recognised by identity:
+    is one of the members of the enumeration, or a member of a
+    subclass of it. A member is recognised by identity:
     comparing with '==' would hand the decision to the '__eq__' of
     'instance', which may raise on a member or answer 'True' to anything.
     """

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
@@ -18,8 +17,10 @@ class ContextInstance:
 
   When accessed on a class, returns the descriptor itself. When
   accessed on an 'Object' instance, returns the top-of-stack
-  instance via 'Object.getContextInstance'. Raises
-  'WithoutException' if no context frame is active.
+  instance via 'Object.getContextInstance', which without a frame
+  raises 'WithoutException' on a placed descriptor and a plain
+  'AttributeError' on a value no class holds, and answers through the
+  box that made it for a value an 'AttriBox' created.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -37,8 +38,10 @@ class ContextOwner:
 
   When accessed on a class, returns the descriptor itself. When
   accessed on an 'Object' instance, returns the top-of-stack owner
-  via 'Object.getContextOwner'. Raises 'WithoutException' if no
-  context frame is active.
+  via 'Object.getContextOwner', which without a frame raises
+  'WithoutException' on a placed descriptor and a plain
+  'AttributeError' on a value no class holds, and answers through the
+  box that made it for a value an 'AttriBox' created.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

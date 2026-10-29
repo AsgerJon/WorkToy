@@ -72,7 +72,6 @@ class TestFieldAssignment(EZTest):
     """
     samples = (
       ('value', 2),
-      ('value', '3.5'),
       ('value', True),
       ('unit', b'cm'),
     )
@@ -92,6 +91,7 @@ class TestFieldAssignment(EZTest):
     """
     samples = (
       ('value', [1]),
+      ('value', '3.5'),
       ('value', None),
       ('unit', 5),
       ('unit', None),

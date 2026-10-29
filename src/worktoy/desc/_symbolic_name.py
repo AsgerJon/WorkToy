@@ -161,7 +161,14 @@ class SymbolicName(Object):
     return textFmt(infoSpec % (clsName, wordsStr))
 
   def __contains__(self, item: str) -> bool:
-    return True if item in self.words else False
+    """
+    A word is in the name ignoring case, as equality compares the words,
+    so 'Font' is in 'SymbolicName("font", "size")'. Anything but a 'str'
+    is in no name.
+    """
+    if not isinstance(item, str):
+      return False
+    return True if item.lower() in self._getKey() else False
 
   def _getKey(self) -> StrTuple:
     """

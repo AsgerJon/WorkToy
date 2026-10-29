@@ -1,5 +1,5 @@
 """
-TestClassHooksBase tests that classes derived from 'AbstractMetaclass' that
+TestClassHooksBase tests that instances of 'AbstractMetaclass' that
 implement the '__class_[HOOK]__' methods are called correctly.
 """
 #  Apache-2.0 license
@@ -81,7 +81,7 @@ class ClassLevelCalled(Exception):
 
 class ClassHooks(metaclass=AbstractMetaclass):
   """
-  Class derived from AbstractMetaclass that implements the
+  An instance of AbstractMetaclass that implements the
   '__class_[HOOK]__' methods to raise ClassLevelCalled exceptions.
   """
 
@@ -140,7 +140,7 @@ class ClassHooks(metaclass=AbstractMetaclass):
 
 class TestClassHooks(MCLSTest):
   """
-  TestClassHooks tests that classes derived from 'AbstractMetaclass' that
+  TestClassHooks tests that instances of 'AbstractMetaclass' that
   implement the '__class_[HOOK]__' methods are called correctly.
   """
 

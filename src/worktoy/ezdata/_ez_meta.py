@@ -238,7 +238,7 @@ class EZMeta(BaseMeta):
     The '__init__' method finalizes the class object after Python has
     built it. It walks every field on the class (own and inherited) and
     binds its '__field_owner__' to this class, so later access through
-    'field.fieldOwner' returns the most-derived class that declared or
+    'field.fieldOwner' returns the most specific class that declared or
     inherited the field. The owners are bound before the inherited
     '__init__' runs, since that is what runs a '__class_init__' hook,
     which may read them.
@@ -267,8 +267,8 @@ class EZMeta(BaseMeta):
     """
     Returns True if 'other' is an 'EZData' class congruent with this
     one. Two classes are congruent when they sit in the same
-    inheritance line (one is the other, a subclass of it, or a base it
-    derives from) AND declare the identical field-type signature. So a
+    inheritance line (one is the other, a subclass of it, or a base of
+    it) AND declare the identical field-type signature. So a
     subclass that adds or retypes a field is not congruent with its
     parent, and two unrelated classes that merely share a field-type
     layout are not congruent either. Only congruent classes may

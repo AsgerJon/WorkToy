@@ -64,7 +64,7 @@ class TestKeeFlagsMeta(KeeTest):
 
   def testBasicSubclassCheck(self, ) -> None:
     """
-    Tests that KeeFlagsMeta derived classes correctly identify themselves
+    Tests that instances of KeeFlagsMeta correctly identify themselves
     as subclasses of themselves.
     """
     for cls in self.exampleFlags:
@@ -72,7 +72,7 @@ class TestKeeFlagsMeta(KeeTest):
 
   def testIsSubclassCheck(self, ) -> None:
     """
-    Tests that KeeFlagsMeta derived classes correctly identify subclasses.
+    Tests that instances of KeeFlagsMeta correctly identify subclasses.
     """
     self.assertIsSubclass(SubclassExample, FlagsExample)
     self.assertIsNotSubclass(FlagsExample, SubclassExample)
@@ -95,7 +95,7 @@ class TestKeeFlagsMeta(KeeTest):
 
   def testNotSubclassCheck(self, ) -> None:
     """
-    Tests that KeeFlagsMeta derived classes correctly rejects unrelated
+    Tests that instances of KeeFlagsMeta correctly rejects unrelated
     classes as subclasses.
     """
 

@@ -9,7 +9,6 @@ from __future__ import annotations
 from .. import WorkToyException
 
 
-
 class KeeCaseException(WorkToyException, ValueError):
   """
   Raised when the name of a 'KeeNum' member or of a 'KeeFlags' flag is

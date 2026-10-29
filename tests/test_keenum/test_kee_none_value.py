@@ -61,7 +61,7 @@ class TestKeeNoneValue(KeeTest):
     self.assertIn(Maybe.NOTHING, Maybe)
 
   def test_subclass_keeps_none(self) -> None:
-    """A derived enumeration inherits the member with its 'None' value."""
+    """A subclass inherits the member with its 'None' value."""
 
     class More(Maybe):
       """More adds a member to 'Maybe'."""

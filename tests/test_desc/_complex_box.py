@@ -20,18 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 eps = sys.float_info.epsilon
 
 
-class _DeferredAlias:
-  """
-  This class has two 'alias' attributes, 'REAL' and 'IMAG' pointing to
-  'RE' and 'IM' respectively. Since it does not implement 'RE' and 'IM',
-  the '__set_name__' method of 'Alias' will defer to '__get__'.
-  """
-
-  REAL = Alias('RE')
-  IMAG = Alias('IM')
-
-
-class ComplexBox(_DeferredAlias):
+class ComplexBox:
   """ComplexBox provides a complex number implementation using the 'AttriBox'
   descriptor for real and imaginary parts.
   """
@@ -50,6 +39,9 @@ class ComplexBox(_DeferredAlias):
   #  Public Variables
   RE = AttriBox[float](0.0)
   IM = AttriBox[float](0.0)
+  #  An alias follows the name it stands for, which the class must hold.
+  REAL = Alias('RE')
+  IMAG = Alias('IM')
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

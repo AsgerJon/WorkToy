@@ -19,16 +19,24 @@ T = TypeVar('T')
 
 class FixBox(AttriBox[T]):
   """
-  FixBox subclasses 'AttriBox' and provides a descriptor for write-once
-  attributes. Two methods change: a second assignment raises
-  'WriteOnceError', and deletion is disabled (it raises 'ProtectedError').
+  FixBox is an 'AttriBox' whose attribute is written once. The class
+  docstring of 'AttriBox' explains how a box works; this one says only
+  where 'FixBox' differs: the first value an instance stores is final, a
+  later assignment raises 'WriteOnceError', and 'del' raises
+  'ProtectedError'. The first read stores the field object as well, so an
+  attribute meant to be set at runtime is assigned before anything reads
+  it.
 
-  The single write counts whatever stores the value, not only an
-  explicit assignment. Reading an unset field lazily builds and stores
-  the deferred default, and that store consumes the single write, so an
-  explicit assignment after any read raises 'WriteOnceError' with the
-  lazily built default as the old value. A field meant to receive its
-  value at runtime must therefore be written before it is first read.
+    class Config:
+      port = FixBox[int](8080)
+
+    c = Config()
+    c.port = 9090          # the one write
+    c.port = 1             # WriteOnceError
+
+    d = Config()
+    d.port                 # 8080, stored by the read
+    d.port = 9090          # WriteOnceError
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -37,11 +45,30 @@ class FixBox(AttriBox[T]):
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> Any:
     """
-    The '__instance_set__' method stores the value once; a subsequent
-    assignment raises 'WriteOnceError'. The unset state is detected via
-    'AttributeError' rather than 'is None', so an explicit assignment of
-    'None' still counts as the one write. It returns the value stored, as
-    'AttriBox' does.
+    The first assignment works as 'AttriBox.__instance_set__', conversion
+    included; any later one raises 'WriteOnceError', and so does the first
+    one after a read has stored the field object.
+
+    Parameters
+    ----------
+    instance : Any
+        The instance the attribute is assigned through.
+    value : Any
+        The assigned value.
+    **kwargs : Any
+        Passed on to 'AttriBox.__instance_set__'.
+
+    Returns
+    -------
+    T
+        The value stored, an instance of the field type.
+
+    Raises
+    ------
+    WriteOnceError
+        If the instance already holds a value for the attribute.
+    TypeException
+        If the value is not of the field type and 'typeCast' refuses it.
     """
     pvtName = self._getStorageName()
     try:
@@ -54,8 +81,25 @@ class FixBox(AttriBox[T]):
 
   def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
     """
-    Deletion is disabled on 'FixBox'. The '__instance_delete__' method
-    falls through to 'Object.__instance_delete__', which raises
-    'ProtectedError'.
+    Unlike 'AttriBox.__instance_delete__', deletion is refused: a value
+    written once stays.
+
+    Parameters
+    ----------
+    instance : Any
+        The instance the attribute is deleted from.
+    *_ : Any
+        The value being deleted, which 'Object.__delete__' passes.
+    **kwargs : Any
+        Keyword arguments of the descriptor protocol, unused.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ProtectedError
+        Always.
     """
     Object.__instance_delete__(self, instance, *_, **kwargs)

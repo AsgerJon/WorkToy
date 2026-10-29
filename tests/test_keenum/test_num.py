@@ -200,7 +200,7 @@ class TestNum(KeeTest):
 
     class Breh(KeeNum):
       FOO = Kee[int](69)
-      BAR = Kee[int]('420')
+      BAR = Kee[int](420.0)
 
     self.assertEqual(Breh.FOO.value, 69)
     self.assertEqual(Breh.BAR.value, 420)

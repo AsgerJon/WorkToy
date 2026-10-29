@@ -191,15 +191,17 @@ class AbstractNamespace(dict):
     base in the MRO into one dict, where each key maps to the list of
     values contributed for it across the MRO. It follows the lookup order
     of '_getLookupOrder', so a namespace without a resolved order still
-    answers.
+    answers. Both names are read with 'type.__getattribute__' and
+    'object.__getattribute__', so that no '__getattr__',
+    '__class_getattr__' or reimplemented '__getattribute__' of a class in
+    the lookup order can answer for them.
     """
     lookupOrder = self._getLookupOrder()
-    mroClasses = [b for b in lookupOrder if hasattr(b, '__namespace__')]
-    mroSpaces = [getattr(b, '__namespace__', ) for b in mroClasses]
     compiledSpaces = []
-    for space in mroSpaces:
+    for cls in lookupOrder:
       try:
-        compiledSpace = getattr(space, '__compiled_space__')
+        space = type.__getattribute__(cls, '__namespace__')
+        compiledSpace = object.__getattribute__(space, '__compiled_space__')
       except AttributeError:
         continue
       else:
@@ -327,6 +329,10 @@ class AbstractNamespace(dict):
     the class body never bound raises 'KeyError', which the interpreter
     reports as a 'NameError'.
 
+    Every hook's 'delItemPhase' runs first, with the name and the value
+    being removed; a hook returning True claims the deletion, and the
+    name is left alone.
+
     A name whose latest binding a hook claimed cannot be deleted, since
     the hook registered the value as it was bound. The deletion is
     recorded instead, and 'compile' raises 'ClaimedName' for it as the
@@ -337,6 +343,14 @@ class AbstractNamespace(dict):
     shadow = self.getShadowSpace()
     if key not in shadow and not dict.__contains__(self, key):
       raise KeyError(key)
+    if dict.__contains__(self, key):
+      val = dict.__getitem__(self, key)
+    else:
+      val = shadow[key]
+    for hook in self.getHooks():
+      setattr(hook, '__space_object__', self)
+      if hook.delItemPhase(key, val):
+        return
     if self._isClaimed(key):
       self.__claimed_deletions__ = (*self.getClaimedDeletions(), key)
     shadow.pop(key, None)

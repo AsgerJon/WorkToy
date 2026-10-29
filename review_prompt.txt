@@ -1,3 +1,10 @@
+Avoid spoilers. Base the review on your own research and on the settled
+and deferred items listed below, and on nothing else. Before and during
+the review, do not open the auto-memory files: do not follow the
+MEMORY.md index into the files it lists. Do not read earlier
+review_notes_*, status_* or handoff_* files either. Previous findings
+belong to the status step, which confers with them.
+
 Create a file named review_notes_[TIMESTAMP].md in the project root. We will
 refer to this file as "notes".
 
@@ -6,6 +13,64 @@ of how you understand them before you begin the review.
 
 Conduct a thorough code review of the core, dispatch, desc and mcls
 packages based on your research of them present in your context window.
+
+Before writing any entry, check it against the settled items below.
+They are decisions already made. Do not raise them as findings, and do
+not offer options that remove, narrow or replace them. Mention one only
+if the code no longer matches the decision.
+
+- '_Chill', including '__skip_hash__' and the removal of 'object' from
+  the bases in 'MetaType.__new__'.
+- The keyword-sentinel peeks ('_recursion=True', '_deleting=True') and
+  the 'DELETED' deletion semantics.
+- Sentinel names are process-wide. A sentinel captures one meaning,
+  concept or circumstance in a single object for the whole process:
+  there will never be a need for a second sentinel besides 'DELETED'
+  saying that something was deleted. A project that wants several
+  sentinels of one name misunderstands sentinels, so 'DuplicateSentinel'
+  for a taken name is correct. Sentinels that carry functionality, such
+  as 'ARGS' and 'THIS', would take new names if they were ever given
+  alternate behaviour.
+- 'WithoutException' is raised when something interacts with the call
+  chain 'Object' provides outside an access, such as reading 'instance'
+  or 'owner' on a placed descriptor or calling 'exitContext' on an empty
+  stack, whoever makes the attempt, introspection tools such as
+  'inspect.getmembers' included. The call chain is what keeps nested
+  descriptors functioning correctly.
+- 'LoadSpaceHook' claiming 'overload' objects, so the namespace never
+  stores them and one class body can bind several overloads at one
+  name.
+- The box tags '__field_box__', '__field_owner__' and '__field_name__'
+  on every value a box builds, instances of plain classes included.
+  They let a project see from a boxed value where it belongs. A class
+  whose equality or repr reads 'vars(self)' sees them by its own
+  definition; that is not a defect.
+- 'Object.directory', 'flex', 'FlexCallHook', the plain-dict branch of
+  'AbstractMetaclass.__new__', '_notifySubclassHook' and the cast tier
+  of the dispatcher.
+- 'typeCast' as the one conversion authority. The library refuses
+  rather than adding conversion rules.
+- 'THIS[GrandParent].x' is 'THIS[Parent].x': one reference, one clone.
+  Edge cases of 'THIS[...]', such as a redeclared 'x', are not raised.
+- The fix for stray 'THIS[Parent]' records known as C2 option A
+  (StrayDecoration/getCallbackNames) was rejected. Do not propose it.
+- Decorators return the function they received, possibly wrapped (as
+  'flexCall' wraps it), and never modify it.
+- A check behind an overridable predicate, such as the
+  '__call_chain__ is None' check under 'hasContext()', is a guard
+  against reimplementation, not dead code.
+- worktoy does not interfere with how Python handles annotations. Do not
+  propose annotation machinery.
+- Pickling of exceptions is not a topic.
+
+Deferred items are known issues whose decision has been postponed. Do
+not raise them as new findings.
+
+- 'Object' keeps one call chain per descriptor object, in
+  '__call_chain__', and every thread that uses the descriptor pushes and
+  pops on that same list, so the descriptor protocol is not safe under
+  threads. This is known and deferred until 'ContextVar' has been
+  studied.
 
 For every line of inquiry, write an entry into notes that begins with a
 classification between the following:
@@ -19,6 +84,34 @@ classification between the following:
 Then include an explanation of the finding, what it touches and what
 recommendations you may have. If your recommendation includes multiple
 options, label them clearly.
+
+Further: When reviewing, consider the balance between code complexity and
+what the complexity enables for a project built upon worktoy.
+
+Judge everything else by these rules:
+
+- Only behaviour inside the documented contract counts as a defect.
+- Before raising a problem, ask whether a project built on worktoy
+  would actually hit it.
+- Judge a mechanism by what it lets a project do, never by how many
+  places in 'src' use it. "Nothing in src uses it" is not a reason to
+  remove or change anything.
+- A simplification must keep every capability; at most some leniency
+  may be lost. For any proposal that changes behaviour, show a table of
+  what is kept, changed and dropped.
+- "Less library code", "more explicit" or "plain Python" does not make
+  a proposal better. Better means less for a project to write, fewer
+  ways to get it wrong, and at least as much capability.
+- A refusal of something that does not exist, or a failure that follows
+  literally from what a line of code asked for, is expected behaviour.
+- When worktoy code needs ordinary attribute lookup, it uses
+  'type.__getattribute__' on classes and 'object.__getattribute__' on
+  instances, so no '__getattr__' or '__class_getattr__' can answer. Code
+  that uses 'getattr' for this may be flagged. Plain reads of attributes
+  every class has ('__dict__', '__mro__', '__name__') are fine.
+
+When an actual problem is found, you must show code examples of what causes
+the problem.
 
 You must append findings to the notes file *incrementally* and on an ad hoc
 basis. Write your first entry before moving deeper into a package.

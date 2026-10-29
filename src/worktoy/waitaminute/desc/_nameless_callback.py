@@ -20,14 +20,18 @@ class NamelessCallback(WorkToyException, SyntaxError):
   NamelessCallback is raised when a callback decorator of a descriptor,
   one of the notification decorators of 'BaseDescriptor' or the accessor
   decorators of 'Field', receives a function without a name of its own:
-  a lambda, whose name is '<lambda>', or a callable with no '__name__'
-  at all, such as a 'functools.partial'. The descriptor records only the
+  a lambda, whose name is '<lambda>'. A callable with no '__name__' at
+  all, such as a 'functools.partial', is not refused here: reading its
+  name raises the ordinary 'AttributeError'. The descriptor records only the
   name, and looks the callback up by it on the class of the instance at
   each access, so a subclass can override it by redefining the name. A
   nameless function could never be found that way, and the first access
   used to fail with 'MissingVariable' naming '<lambda>'. The class body
-  fails at the decorator instead. It subclasses 'SyntaxError', as the
-  other refusals of a class-body line do.
+  fails at the decorator instead. A private function, its name starting
+  with two underscores, is refused the same way when its qualified name
+  names no class to mangle the name with, as for one made inside another
+  function. It subclasses 'SyntaxError', as the other refusals of a
+  class-body line do.
 
   Attributes
   ----------

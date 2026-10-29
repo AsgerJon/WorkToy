@@ -23,7 +23,7 @@ class KeeMetaMeta(MetaType):
   KeeMetaMeta hosts the 'keeNum' descriptor: the answer to the
   question "what root class should an enumeration of this metaclass
   inherit from?" Of the metaclasses the library ships, 'KeeMeta' alone
-  derives from 'KeeMetaMeta', and 'worktoy.keenum.KeeNum' is exactly
+  is an instance of 'KeeMetaMeta', and 'worktoy.keenum.KeeNum' is exactly
   'KeeMeta.keeNum', cached; 'KeeFlagsMeta' builds its root, 'KeeFlags',
   by a class statement.
   The descriptor sits on the meta-metaclass rather than on
