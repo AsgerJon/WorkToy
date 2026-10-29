@@ -52,16 +52,6 @@ class MixedCollector(BaseObject):
     self.nums = (x, y)
 
 
-class StrictCollector(BaseObject):
-  """Strict variadic. The 'strict=True' kwarg disables 'typeCast'
-  on the resulting signatures, so calls whose arg types do not
-  isinstance-match 'int' must raise rather than coerce."""
-
-  @overload(*ARGS[int], strict=True)
-  def __init__(self, *nums: int) -> None:
-    self.nums = nums
-
-
 class DualVariadic(BaseObject):
   """Two variadic overloads under the same method name. The second
   '@overload' registration finds 'collect' already in the namespace's
@@ -235,31 +225,19 @@ class TestLoadARGS(OverloadTest):
     'typeCast' to reach the variadic inner type, dispatch reaches
     the SLOW variadic tier. The prefix isinstance-true branch
     inside SLOW variadic appends the prefix args directly, and the
-    tail loop casts each string to 'int' before forwarding."""
+    tail loop casts each integral float to 'int' before forwarding."""
     collector = PrefixedCollector(
-      'alpha', '1', '2', '3', '4', '5', '6', '7',
+      'alpha', 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
     )
     self.assertEqual(collector.name, 'alpha')
     self.assertEqual(collector.nums, (1, 2, 3, 4, 5, 6, 7))
+    self.assertTrue(all(type(n) is int for n in collector.nums))
 
-  def test_strict_variadic_rejects_cast(self) -> None:
-    """A strict variadic overload ('strict=True') has
-    '__allow_flex__ = False' on its signature. A call with arg types
-    that would only match via 'typeCast' is rejected at the SLOW
-    variadic tier (the 'not sig.__allow_flex__' continue), since the
-    strict flag forbids coercion."""
+  def test_variadic_tail_strings_refused(self) -> None:
+    """A numeric string in the tail matches in no pass, since no cast
+    parses text, so the call raises 'DispatchException'."""
     with self.assertRaises(DispatchException):
-      _ = StrictCollector('1', '2', '3')
-
-  def test_strict_variadic_accepts_exact_types(self) -> None:
-    """A strict variadic still dispatches correctly when the
-    arguments are exact-type matches, short and long. The strict flag
-    only blocks 'typeCast' coercion in the SLOW tier; the exact-type
-    and 'isinstance' matching continue to work."""
-    short = StrictCollector(1, 2, 3)
-    long_ = StrictCollector(1, 2, 3, 4, 5, 6, 7)
-    self.assertEqual(short.nums, (1, 2, 3))
-    self.assertEqual(long_.nums, (1, 2, 3, 4, 5, 6, 7))
+      _ = PrefixedCollector('alpha', '1', '2', '3')
 
   def test_clone_copies_variadics(self) -> None:
     """'Dispatcher.clone' must also copy the variadic-function
@@ -301,7 +279,7 @@ class TestLoadARGS(OverloadTest):
       collect = original.clone()
 
     self.assertEqual(Host().collect(1, 2, 3), 'variadic')
-    self.assertEqual(Host().collect('1', '2', '3'), 'variadic')
+    self.assertEqual(Host().collect(1.0, 2.0, 3.0), 'variadic')
 
   def test_dual_variadic_under_same_name(self) -> None:
     """Two '@overload(*ARGS[T])' decorators on the same method name

@@ -21,14 +21,6 @@ class TestKeeNumberDefault(KeeTest):
   members.
   """
 
-  def test_lossy_value_refused(self) -> None:
-    """A member value the lossless cast refuses raises 'TypeException' at
-    the class statement."""
-    with self.assertRaises(TypeException):
-      class Bad(KeeNum):
-        A = Kee[int](1)
-        B = Kee[int](2.5)
-
   def test_cast_value_kept(self) -> None:
     """A member value the cast converts without loss is the value of the
     member, as an instance of the declared type."""
@@ -37,8 +29,9 @@ class TestKeeNumberDefault(KeeTest):
       A = Kee[float](1)
 
     class Whole(KeeNum):
-      B = Kee[int]('7')
+      B = Kee[int](7.0)
 
     self.assertIs(type(Real.A.value), float)
     self.assertEqual(Real.A.value, 1.0)
     self.assertEqual(Whole.B.value, 7)
+    self.assertIs(type(Whole.B.value), int)

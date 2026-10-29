@@ -39,10 +39,11 @@ class DelException(WorkToyException, SyntaxError):
     self.msg = str(self)
 
   def __str__(self) -> str:
-    infoSpec = """When attempting to derive a class named '%s' from the
-    metaclass '%s'%s, the '__del__' method was found in the namespace! This
-    is almost always a typo, but if not this error can be suppressed by
-    passing the keyword argument 'trustMeBro=True' during class creation. """
+    infoSpec = """When attempting to create a class named '%s' as an
+    instance of the metaclass '%s'%s, the '__del__' method was found in
+    the namespace! This is almost always a typo, but if not this error can
+    be suppressed by passing the keyword argument 'trustMeBro=True' during
+    class creation. """
     if TYPE_CHECKING:  # pragma: no cover
       assert isinstance(self.bases, tuple)
     basesInfo = ''

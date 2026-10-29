@@ -16,10 +16,9 @@ class DELETED(Sentinel):
   'MissingVariable' (an 'AttributeError' subclass) on the next read
   rather than returning 'DELETED'.
 
-  A descriptor resolves a value through up to three lookups: the value on
-  the accessing instance, a default set on the descriptor object, and a
-  fallback set on the descriptor class. Rather than thread deletion
-  through all three, it is implemented by setting the slot to 'DELETED';
-  the first lookup then finds it and signals 'Object.__get__' to raise.
+  A box resolves a value from the slot on the accessing instance, and
+  builds its default into that slot when it is empty. Rather than thread
+  a deleted state through that, deletion stores 'DELETED' in the slot;
+  the next read finds it and signals 'Object.__get__' to raise.
   """
   pass

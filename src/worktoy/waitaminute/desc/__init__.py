@@ -7,8 +7,10 @@ share the 'DescriptorException' base, so a single
 'AttributeError's as well, as Python's own refusals of a read, a write and
 a deletion are, so 'except AttributeError' catches them. 'WriteOnceError' (a
 'TypeError'), 'WithoutException' (a 'RuntimeError'), 'MissingInstanceDict'
-(a 'TypeError') and 'NamelessCallback' (a 'SyntaxError') are collected here
-too but do not inherit that base.
+(a 'TypeError'), 'NamelessCallback' (a 'SyntaxError'), 'NotADescriptor' (a
+'TypeError'), and 'NotAliasable', 'DanglingAlias' and 'SharedDescriptor'
+(all three 'SyntaxError') are collected here too but do not inherit that
+base.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -23,6 +25,10 @@ from ._write_once_error import WriteOnceError
 from ._phantom_box_error import PhantomBoxError
 from ._missing_instance_dict import MissingInstanceDict
 from ._nameless_callback import NamelessCallback
+from ._not_a_descriptor import NotADescriptor
+from ._not_aliasable import NotAliasable
+from ._dangling_alias import DanglingAlias
+from ._shared_descriptor import SharedDescriptor
 
 __all__ = [
   'DescriptorException',
@@ -34,4 +40,8 @@ __all__ = [
   'PhantomBoxError',
   'MissingInstanceDict',
   'NamelessCallback',
+  'NotADescriptor',
+  'NotAliasable',
+  'DanglingAlias',
+  'SharedDescriptor',
 ]

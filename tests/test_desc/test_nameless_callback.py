@@ -1,11 +1,12 @@
 """
 TestNamelessCallback subclasses 'DescTest' and pins that the callback
 decorators of 'BaseDescriptor' and the accessor decorators of 'Field'
-refuse a function without a name of its own, a lambda or a callable
-with no '__name__', with 'NamelessCallback' at the decorator. The hooks
-look each callback up by name on the class of the instance, so a lambda
-could never be found, and the first access used to fail with
-'MissingVariable' naming '<lambda>'.
+refuse a function without a name of its own, a lambda, with
+'NamelessCallback' at the decorator. The hooks look each callback up by
+name on the class of the instance, so a lambda could never be found,
+and the first access used to fail with 'MissingVariable' naming
+'<lambda>'. A callable with no '__name__' at all is left to the
+'AttributeError' of reading the name.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -58,12 +59,13 @@ class TestNamelessCallback(DescTest):
           getattr(field, role)(lambda self, *args: None)
         self.assertEqual(context.exception.role, role)
 
-  def test_callable_without_name_refused(self) -> None:
-    """A callable with no '__name__', such as a 'partial', is refused
-    too."""
+  def test_callable_without_name_attribute_error(self) -> None:
+    """A callable with no '__name__', such as a 'partial', raises the
+    'AttributeError' of reading the name, and leaves no key behind."""
     box = AttriBox[int](0)
-    with self.assertRaises(NamelessCallback):
+    with self.assertRaises(AttributeError):
       box.onSet(partial(_named))
+    self.assertEqual(box._getOnSetKeys(), ())
 
   def test_nothing_recorded(self) -> None:
     """A refused callback leaves no key behind."""

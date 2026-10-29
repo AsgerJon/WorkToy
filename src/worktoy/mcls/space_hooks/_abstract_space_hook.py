@@ -68,6 +68,11 @@ class AbstractSpaceHook(Object):
     it is returned. Its return value is ignored, so unlike
     'setItemPhase' it cannot veto the read; it signals only by raising.
 
+  - 'delItemPhase(self, key, value) -> bool'
+    Called when the class body deletes a name, before the namespace
+    removes it, with the value being removed. Returning True claims the
+    deletion, and the namespace then leaves the name alone.
+
   - 'preCompilePhase(self, compiled: dict) -> dict'
     Called after the class body finishes executing, but before the
     namespace is finalized. May transform or replace namespace contents.
@@ -126,6 +131,15 @@ class AbstractSpaceHook(Object):
     (unlike 'setItemPhase'); raise an exception to interrupt. The default
     does nothing.
     """
+
+  def delItemPhase(self, key: str, val: Any = None, ) -> bool:
+    """
+    The 'delItemPhase' method runs when the class body deletes a name,
+    before the namespace removes it, with the value being removed.
+    Returning True claims the deletion, and the namespace leaves the
+    name alone. The default does nothing and returns False.
+    """
+    return False
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """

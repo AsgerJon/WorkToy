@@ -1,11 +1,10 @@
 """
-TestTypeCastSliceNone subclasses 'UtilitiesTest' and pins the decided
-reading of 'None' as a slice: 'typeCast(slice, None)' is refused, since
-'None' has no single meaning as a subscript (a list refuses it, a dict
-takes it as a key, NumPy reads it as a new axis), while 'None' inside a
-list keeps its open-end meaning and a slice passes unchanged. The cast
-used to accept 'None' because 'slice(None)' is a valid slice, so an
-overloaded '__getitem__' answered 'x[None]' with everything.
+TestTypeCastSliceNone subclasses 'UtilitiesTest' and pins that 'slice'
+is no cast target: a slice passes unchanged, while 'None', an index and
+a list of components are refused, so an overloaded '__getitem__' refuses
+'x[None]' as a list does and answers a real slice. The cast used to
+accept 'None' because 'slice(None)' is a valid slice, so an overloaded
+'__getitem__' answered 'x[None]' with everything.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -52,16 +51,18 @@ class TestTypeCastSliceNone(UtilitiesTest):
     with self.assertRaises(TypeCastException):
       typeCast(slice, None)
 
-  def test_none_in_list_kept(self) -> None:
-    """'None' inside a list keeps its open-end meaning."""
-    self.assertEqual(typeCast(slice, [None, 3]), slice(None, 3))
-    self.assertEqual(typeCast(slice, (1, None)), slice(1, None))
+  def test_components_refused(self) -> None:
+    """A list or tuple of components and a lone index are refused, since
+    nothing but a slice is a slice."""
+    for value in ([None, 3], (1, None), 2):
+      with self.subTest(value=value):
+        with self.assertRaises(TypeCastException):
+          typeCast(slice, value)
 
   def test_slice_unchanged(self) -> None:
     """A slice, 'slice(None)' included, passes as it is."""
     full = slice(None)
-    self.assertEqual(typeCast(slice, full), full)
-    self.assertEqual(typeCast(slice, 2), slice(2))
+    self.assertIs(typeCast(slice, full), full)
 
   def test_subscript_refused(self) -> None:
     """An overloaded '__getitem__' refuses 'x[None]' as a list does,

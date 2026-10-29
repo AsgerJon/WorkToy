@@ -63,8 +63,10 @@ class ShadowedClassHook(WorkToyException, SyntaxError):
     spec = """The class body of '%s' binds '%s', but the metaclass '%s'
     implements '%s' itself and does not call the hook, so the binding
     would never run."""
-    names = (self.className, self.hookName, self.metaclassName,
-             self.methodName)
+    names = (
+      self.className, self.hookName, self.metaclassName,
+      self.methodName
+    )
     return textFmt(spec % names)
 
   __repr__ = __str__

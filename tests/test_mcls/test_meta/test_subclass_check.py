@@ -1,5 +1,5 @@
 """
-TestSubclassCheck checks that classes derived from the 'AbstractMetaclass'
+TestSubclassCheck checks that instances of the 'AbstractMetaclass'
 can customize the behaviour of the 'issubclass' method when testing if
 another object should be regarded as a subclass of the class. A numeric
 class could for example implement the classmethod
@@ -42,7 +42,7 @@ class Nummer(metaclass=AbstractMetaclass):
 
 class TestSubclassCheck(MCLSTest):
   """
-  TestSubclassCheck checks that classes derived from the 'AbstractMetaclass'
+  TestSubclassCheck checks that instances of the 'AbstractMetaclass'
   can customize the behaviour of the 'issubclass' method when testing if
   another object should be regarded as a subclass of the class.
   """

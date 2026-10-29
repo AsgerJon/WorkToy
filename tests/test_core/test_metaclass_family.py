@@ -1,6 +1,6 @@
 """
 TestMetaclassFamily subclasses 'CoreTest' and pins that 'SentinelMeta'
-and 'MetaFlow' both subclass 'MetaType' and derive from it, as
+and 'MetaFlow' both subclass 'MetaType' and are instances of it, as
 'AbstractMetaclass' does, so every metaclass of the library but the
 'ValidSlice' validator of 'utilities' is one family. The two used to
 subclass 'type' directly, so a sentinel or a control-flow signal declared
@@ -28,7 +28,7 @@ class TestMetaclassFamily(CoreTest):
   """
 
   def test_subclass_and_derive(self) -> None:
-    """Each metaclass subclasses 'MetaType' and derives from it."""
+    """Each metaclass subclasses 'MetaType' and is an instance of it."""
     for mcls in (SentinelMeta, _MetaARGS, MetaFlow, AbstractMetaclass):
       with self.subTest(mcls=mcls.__name__):
         self.assertTrue(issubclass(mcls, MetaType))

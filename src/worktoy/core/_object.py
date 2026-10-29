@@ -19,6 +19,8 @@ from . import ContextInstance, MetaType, ContextOwner
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Self, Optional, Type
 
+  from ..desc import AttriBox
+
 #  Compiled once at import rather than rebuilt on every 'getPrivateName'
 #  call.
 _PRIVATE_KEY_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
@@ -159,8 +161,8 @@ class Object(metaclass=MetaType):
   def getFieldOwner(self) -> Optional[type]:
     return self.__field_owner__
 
-  def getFieldName(self) -> Optional[str]:
-    return self.__field_name__
+  def getFieldName(self) -> str:
+    return maybe(self.__field_name__, '<%s>' % type(self).__name__)
 
   def getContextualSentinels(self, ) -> dict[Type[Sentinel], Any]:
     """
@@ -221,6 +223,9 @@ class Object(metaclass=MetaType):
   def getContextInstance(self) -> Any:
     """Returns the contextual instance, or raises 'AttributeError' on a
     value no class holds and 'WithoutException' on a placed descriptor.
+    A value an 'AttriBox' created answers through the box that made it
+    while that box has a frame, during the read, and as a value no class
+    holds otherwise.
     """
     if self.hasContext():
       if self.__call_chain__ is None:
@@ -230,11 +235,27 @@ class Object(metaclass=MetaType):
       infoSpec: str = """'%s' object has no attribute 'instance'"""
       info: str = infoSpec % type(self).__name__
       raise AttributeError(info)
-    raise WithoutException(self)
+    try:
+      box: AttriBox = object.__getattribute__(self, '__field_box__')
+    except AttributeError:
+      raise WithoutException(self)
+    else:
+      try:
+        boxInstance: Any = box.getContextInstance()
+      except WithoutException:
+        infoSpec: str = """'%s' object has no attribute 'instance'"""
+        clsName: str = type(self).__name__
+        info = infoSpec % clsName
+        raise AttributeError(info)
+      else:
+        return boxInstance
 
   def getContextOwner(self) -> Optional[type]:
     """Returns the contextual owner, or raises 'AttributeError' on a
     value no class holds and 'WithoutException' on a placed descriptor.
+    A value an 'AttriBox' created answers through the box that made it
+    while that box has a frame, during the read, and as a value no class
+    holds otherwise.
     """
     if self.hasContext():
       if self.__call_chain__ is None:
@@ -244,7 +265,20 @@ class Object(metaclass=MetaType):
       infoSpec: str = """'%s' object has no attribute 'owner'"""
       info: str = infoSpec % type(self).__name__
       raise AttributeError(info)
-    raise WithoutException(self)
+    try:
+      box: AttriBox = object.__getattribute__(self, '__field_box__')
+    except AttributeError:
+      raise WithoutException(self)
+    else:
+      try:
+        boxOwner: Optional[type] = box.getContextOwner()
+      except WithoutException:
+        infoSpec: str = """'%s' object has no attribute 'owner'"""
+        clsName: str = type(self).__name__
+        info = infoSpec % clsName
+        raise AttributeError(info)
+      else:
+        return boxOwner
 
   def hasContext(self) -> bool:
     """
@@ -258,20 +292,30 @@ class Object(metaclass=MetaType):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, *args, **kwargs) -> None:
-    object.__init__(self)
     #  The bookkeeping bypasses any '__setattr__' of a subclass.
     object.__setattr__(self, '__pos_args__', args)
     object.__setattr__(self, '__key_args__', kwargs)
     object.__setattr__(self, '__call_chain__', [])
+    #  The arguments belong to this class, which recorded them above. A
+    #  base after it in the resolution order, such as 'threading.Thread',
+    #  is initialized without them, as in a plain class.
+    super().__init__()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __set_name__(self, owner: type, name: str, **kwargs) -> None:
-    """Records the owning class and attribute name, then invokes
+    """
+    Records the owning class and attribute name, then invokes
     'hookSetName' so subclasses can react without overriding this
-    method."""
+    method.
+
+    Please note that on Python versions 3.6 (when '__set_name__' was
+    introduced) through 3.11, *any* 'BaseException' raised during
+    '__set_name__' is caught and a 'RuntimeError' is raised with the
+    original exception as '__cause__'.
+    """
     object.__setattr__(self, '__field_owner__', owner)
     object.__setattr__(self, '__field_name__', name)
     self.hookSetName(owner, name, **kwargs)

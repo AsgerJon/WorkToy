@@ -8,8 +8,7 @@ the other operand, like 'RGB', otherwise raises before the lookup by value
 is reached, while an object equal to everything, like 'unittest.mock.ANY',
 counts as a member and comes back from the lookup as itself. The last
 tests pin the membership that must stay as it is: the members themselves,
-including those an enumeration shares with the enumerations derived from
-it.
+including those an enumeration shares with its subclasses.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -104,7 +103,7 @@ class TestKeeMembership(KeeTest):
 
   def test_derived_enumeration(self) -> None:
     """
-    'MoreRGB' derives from 'RootRGB' and shares its members, so every
+    'MoreRGB' subclasses 'RootRGB' and shares its members, so every
     member of 'RootRGB' is a member of 'MoreRGB' as well. A member that
     'MoreRGB' adds counts as a member of 'RootRGB' too, and resolves to
     itself there.

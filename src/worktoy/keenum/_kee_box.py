@@ -113,14 +113,13 @@ class KeeBox(AttriBox):
     if kwargs.get('_recursion', False):
       raise RecursionError
     return self.__instance_set__(
-      instance, self._resolve(value, ), _recursion=True
+        instance, self._resolve(value, ), _recursion=True
     )
 
   def _isMember(self, value: Any) -> bool:
     """
     The '_isMember' method reports whether 'value' is a member of the
-    field enumeration, a member of an enumeration derived from it
-    included.
+    field enumeration, a member of a subclass of it included.
     """
     return True if isinstance(value, self.fieldType) else False
 
@@ -202,7 +201,7 @@ class KeeBox(AttriBox):
   def __class_getitem__(cls, fieldType: Any) -> Self:
     """
     The '__class_getitem__' method restricts the 'KeeBox[...]' subscript
-    to a class derived from 'KeeMeta' or 'KeeFlagsMeta', raising
+    to a class that is an instance of 'KeeMeta' or 'KeeFlagsMeta', raising
     'TypeException' otherwise, before delegating to
     'AttriBox.__class_getitem__'. The restriction simplifies the
     implementation; plain 'AttriBox' performs no such check and accepts

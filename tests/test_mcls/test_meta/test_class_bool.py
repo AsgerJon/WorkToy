@@ -1,6 +1,6 @@
 """
-TestClassBool tests the '__class_bool__' method on classes derived from
-the 'AbstractMetaclass' from the 'worktoy.mcls' module.
+TestClassBool tests the '__class_bool__' method on classes that are
+instances of the 'AbstractMetaclass' from the 'worktoy.mcls' module.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -103,8 +103,8 @@ class LenTrue(metaclass=AbstractMetaclass):
 
 
 class TestClassBool(MCLSTest):
-  """TestClassBool tests the '__class_bool__' method on classes derived from
-  the 'AbstractMetaclass' from the 'worktoy.mcls' module."""
+  """TestClassBool tests the '__class_bool__' method on classes that are
+  instances of the 'AbstractMetaclass' from the 'worktoy.mcls' module."""
 
   def test_empty_iterator(self) -> None:
     self.assertFalse(EmptyIterator)

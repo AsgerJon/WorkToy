@@ -5,6 +5,7 @@ flexCall wraps a function with truncating positional-argument dispatch.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from functools import wraps
 from types import FunctionType
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,9 @@ _FLEX_MARKER: str = '__flex_wrapped__'  # idempotency sentinel
 def isFlex(func: FunctionType) -> bool:
   """
   The 'isFlex' function returns True if 'func' has already been wrapped
-  by 'flexCall', detected by the presence of the idempotency marker.
+  by 'flexCall', detected by the presence of the idempotency marker. The
+  marker is read with 'object.__getattribute__', so that an object whose
+  class answers every name in '__getattr__' does not pass for wrapped.
 
   Parameters
   ----------
@@ -34,7 +37,7 @@ def isFlex(func: FunctionType) -> bool:
       True if 'func' carries the flex marker, otherwise False.
   """
   try:
-    _ = getattr(func, _FLEX_MARKER)
+    _ = object.__getattribute__(func, _FLEX_MARKER)
   except AttributeError:
     return False
   else:
@@ -81,7 +84,8 @@ def flexCall(func: FunctionType) -> FunctionType:
     keyword, is not checked here and surfaces as the wrapped
     function's own TypeError,
   - passes keyword args through unchanged,
-  - carries the attributes set on the wrapped function,
+  - carries the metadata and attributes of the wrapped function, as
+    'functools.wraps' copies them, and names it in '__wrapped__',
   - caches arity at wrap time; per-call cost is one length check,
     one comparison, and a slice only when truncation fires.
 
@@ -131,6 +135,7 @@ def flexCall(func: FunctionType) -> FunctionType:
   minPos: int = code.co_argcount - len(func.__defaults__ or ())
   requiredNames: tuple[str, ...] = code.co_varnames[:minPos]
 
+  @wraps(func)
   def wrapper(*args, **kwargs) -> Any:
     n: int = len(args)
     if n < minPos:
@@ -145,15 +150,6 @@ def flexCall(func: FunctionType) -> FunctionType:
       args = args[:maxPos]
     return func(*args, **kwargs)
 
-  #  Manual metadata copy: explicit, dependency-free. The attributes set
-  #  on 'func' come first, so the ones the wrapper sets below win.
-  wrapper.__dict__.update(func.__dict__)
-  wrapper.__name__ = func.__name__
-  wrapper.__qualname__ = func.__qualname__
-  wrapper.__module__ = func.__module__
-  wrapper.__doc__ = func.__doc__
-  wrapper.__annotations__ = func.__annotations__
-  wrapper.__wrapped__ = func
   setattr(wrapper, _FLEX_MARKER, True)
 
   if TYPE_CHECKING:  # pragma: no cover

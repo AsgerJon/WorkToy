@@ -1,7 +1,7 @@
 """
 TestSyntaxErrorMessage subclasses 'WaitAMinuteTest' from the
-'tests.test_waitaminute' package and pins that the exceptions deriving
-from 'SyntaxError', 'DelException', 'QuestionableSyntax',
+'tests.test_waitaminute' package and pins that the exceptions subclassing
+'SyntaxError', 'DelException', 'QuestionableSyntax',
 'UnboundClassHook' and 'ShadowedClassHook', show their message in a
 traceback. For a
 'SyntaxError' the 'traceback' module prints the 'msg' attribute rather
@@ -27,7 +27,7 @@ from . import WaitAMinuteTest
 class TestSyntaxErrorMessage(WaitAMinuteTest):
   """
   TestSyntaxErrorMessage provides tests for the message a traceback shows
-  for each of the exceptions deriving from 'SyntaxError', each raised by
+  for each of the exceptions subclassing 'SyntaxError', each raised by
   the class body it explains.
   """
 

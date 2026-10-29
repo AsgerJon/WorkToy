@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...dispatch import overload, Dispatcher
-from ...waitaminute.meta import OverloadConflict
+from ...waitaminute.meta import OverloadConflict, ReboundOverload
 from . import AbstractSpaceHook
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -40,9 +40,11 @@ class LoadSpaceHook(AbstractSpaceHook):
     a name both, in either order, so the second of the two raises
     'OverloadConflict'. The hook runs ahead of the hooks of the namespace
     subclasses, so it also notes a plain value one of them then claims,
-    such as an 'EZField'. The namespace records the name each 'overload'
-    object is first bound to, and a later binding of the same object
-    under another name in the same class body is an alias of that name.
+    such as an 'EZField'. One class body binds an 'overload' object once:
+    a second binding of it, under another name as in '__radd__ =
+    __add__' or under the same one, raises 'ReboundOverload', and the
+    second name takes a method of its own. Another class body may bind
+    the same object again.
     """
     if not isinstance(val, overload):
       if self.space.hasOverloads(key):
@@ -52,25 +54,9 @@ class LoadSpaceHook(AbstractSpaceHook):
     if key in self.space.getPlainNames():
       raise OverloadConflict(self.space.getClassName(), key, False)
     claimedName = self.space.getClaimedName(val)
-    if claimedName is None:
-      self.space.addClaimedName(val, key)
-    elif claimedName != key:
-      #  The wrapper was already claimed under another name, so this
-      #  assignment aliases that overloaded name. The wrapper alone
-      #  carries only its own declaration, the last one in the body,
-      #  so the alias instead copies every registration the source
-      #  name holds so far, inherited ones included.
-      for sig, func, _ in self.space.collectOverloads(claimedName):
-        self.space.addOverload(key, sig, func)
-      for sig, func, _ in self.space.collectVariadics(claimedName):
-        self.space.addVariadic(key, sig, func)
-      fallback = self.space.collectFallback(claimedName)
-      if fallback is not None:
-        self.space.addFallback(key, fallback)
-      finalizer = self.space.collectFinalizer(claimedName)
-      if finalizer is not None:
-        self.space.addFinalizer(key, finalizer)
-      return True
+    if claimedName is not None:
+      raise ReboundOverload(self.space.getClassName(), claimedName, key)
+    self.space.addClaimedName(val, key)
     #  A stack of decorators may give one 'overload' every role at once.
     if val.isFallback():
       self.space.addFallback(key, val.getFallback())
@@ -85,6 +71,18 @@ class LoadSpaceHook(AbstractSpaceHook):
       self.space.addVariadic(key, sig(), func)
     return True
 
+  def delItemPhase(self, key: str, val: Any = None, ) -> bool:
+    """
+    The 'delItemPhase' method forgets a plain name the class body
+    deletes, so the name may be overloaded afterwards; the record exists
+    so that one body does not give a name both a plain definition and
+    overloads, and a deleted definition is no longer one. A deleted
+    overloaded name is left to the namespace, which records the deletion
+    and refuses it as the class is created.
+    """
+    self.space.removePlainName(key)
+    return False
+
   def postCompilePhase(self, compiledSpace) -> dict:
     """Assembles one 'Dispatcher' per overloaded name and writes each
     into 'compiledSpace'. The registrations come from 'collectOverloads',
@@ -94,9 +92,13 @@ class LoadSpaceHook(AbstractSpaceHook):
     first. Each registration reaches the 'Dispatcher' together with its
     distance, which decides the order of the cast passes.
 
-    Two variadic declarations that both accept one call by exact type
-    are no conflict: the most recent declaration of the nearest class
-    takes the call, as 'Dispatcher' documents.
+    Two different variadic declarations that both accept one call by
+    exact type, such as 'ARGS[int]' and '(int, ARGS[int])', are no
+    conflict: the most recent declaration of the nearest class takes the
+    call, as 'Dispatcher' documents. Two equal ones in one class body
+    with different functions are refused at the second of them by
+    'addVariadic', as two equal concrete signatures are by
+    'addOverload'.
 
     A name that the class body bound to a plain (non-'overload')
     definition gets no 'Dispatcher': that explicit definition overrides

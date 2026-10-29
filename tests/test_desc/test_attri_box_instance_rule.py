@@ -40,10 +40,11 @@ class TestAttriBoxInstanceRule(DescTest):
 
     return Shifty
 
-  def test_default_from_shifty_constructor(self) -> None:
-    """Reading a field whose default the constructor built as something
-    other than an instance of the field type raises 'TypeException',
-    naming the field, the value and the field type."""
+  def test_field_object_from_shifty_constructor(self) -> None:
+    """This method tests that a field object the constructor returns as
+    something other than an instance of the field type does not reach the
+    field. Reading it raises 'TypeException' naming the field, the object
+    and the field type."""
     shifty = self._buildShifty()
 
     class Owner:
@@ -56,9 +57,28 @@ class TestAttriBoxInstanceRule(DescTest):
     self.assertEqual(e.actualObject, 42)
     self.assertIn(shifty, e.expectedTypes)
 
+  def test_foreign_object_with_dict_refused(self) -> None:
+    """This method tests that a foreign field object with a '__dict__'
+    does not reach the field untouched. Reading it raises
+    'TypeException'."""
+
+    class Other:
+      pass
+
+    class Shifty:
+      def __new__(cls, *args: Any) -> Any:
+        return Other()
+
+    class Owner:
+      field = AttriBox[Shifty]()
+
+    with self.assertRaises(TypeException):
+      _ = Owner().field
+
   def test_assignment_to_shifty_constructor(self) -> None:
-    """Assigning to such a field raises 'TypeException' as well, rather
-    than a bare 'RecursionError'."""
+    """Assigning a foreign value to such a field raises 'TypeException'
+    naming the value: no constructor runs on an assigned value, so the
+    constructor never gets to misbehave."""
     shifty = self._buildShifty()
 
     class Owner:
@@ -66,7 +86,7 @@ class TestAttriBoxInstanceRule(DescTest):
 
     with self.assertRaises(TypeException) as context:
       Owner().field = 'anything'
-    self.assertEqual(context.exception.actualObject, 42)
+    self.assertEqual(context.exception.actualObject, 'anything')
 
   def test_constructor_returning_subclass(self) -> None:
     """A constructor that returns an instance of a subclass, as a factory

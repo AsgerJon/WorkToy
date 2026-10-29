@@ -16,7 +16,7 @@ from worktoy.mcls import BaseMeta
 class KeeMetaSub(KeeMeta):
   """
   KeeMetaSub is a 'KeeMeta' subclass used as a fixture. Because
-  'KeeMeta' creates 'KeeNum' in an unconventional way, deriving from
+  'KeeMeta' creates 'KeeNum' in an unconventional way, subclassing
   'KeeMeta' must give this subclass its own distinct 'KeeNum'-like
   class via the 'keeNum' descriptor.
   """
@@ -27,8 +27,8 @@ class SubNum(KeeMetaSub.keeNum):
   This class demonstrates the syntax required for creating an enumerating
   class using as metaclass a subclass of 'KeeMeta' rather than 'KeeMeta'
   itself. The 'KeeNum' class is identical to the 'KeeMeta.keeNum' value.
-  To derive an enumerating class from a subclass of 'KeeMeta', set as base
-  class the 'keeNum' attribute of the custom metaclass.
+  For an enumerating class that is an instance of a subclass of 'KeeMeta',
+  set as base class the 'keeNum' attribute of the custom metaclass.
   """
 
   TOM = Kee[int](69)

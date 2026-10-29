@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class Foo(BaseObject):
+class Foo(Object):
   def __instance_get__(self, *args, **kwargs) -> Any:
     pvtName = self.getPrivateName()
     return getattr(self.instance, pvtName, 69)

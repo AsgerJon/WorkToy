@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 from ..core.sentinels import ARGS
 from ..utilities import maybe, textFmt
 from ..utilities.combinatorics import Arrangements
-from ..waitaminute import MissingVariable, TypeException
+from ..waitaminute import MissingVariable
 from . import TypeSig, PermuterMethod
+from ._dispatcher import _refuseMethodKinds
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, Callable, TypeAlias, Self, Iterator, Never
@@ -88,10 +89,13 @@ class overload:  # NOQA
      for the dispatcher to second-guess.
 
   3. A subclass overloading an inherited name keeps the inherited
-     overloads and adds its own. Its own come first in the exact-type
-     and isinstance passes, so an override wins wherever it matches,
-     and an equal signature replaces the inherited one outright. The
-     'typeCast' pass tries the inherited overloads first, so a
+     overloads and adds its own, and an equal signature replaces the
+     inherited one outright. Its own win every call they accept, by
+     exact type or through 'isinstance', before any inherited overload
+     is tried: with '@overload(int)' inherited and '@overload(object)'
+     declared, 'f(1)' and 'f(True)' both reach the override, and the
+     inherited overload keeps the calls the subclass does not accept.
+     The 'typeCast' pass tries the inherited overloads first, so a
      signature the subclass adds never takes a call its parent
      already handled through a cast.
   """
@@ -222,15 +226,6 @@ class overload:  # NOQA
     ----------
     *types : type
         The positional-argument types of the signature.
-    **kwargs
-        strict : bool, optional
-            Whether the signature refuses casts: a strict signature
-            matches a call by exact type or 'isinstance' alone, and the
-            cast passes of the 'Dispatcher' skip it. Defaults to True
-            for a signature naming 'THIS', as an entry or as the inner
-            type of a trailing 'ARGS', since a cast to the class calls
-            the class on the argument, and a class without a
-            constructor of its own accepts anything; otherwise to False.
 
     Returns
     -------
@@ -244,24 +239,21 @@ class overload:  # NOQA
         If an entry is not a class, or an 'ARGS' of one at the end; see
         'TypeSig.validateTypes'.
     TypeError
-        If a keyword is any other than 'strict'.
+        If a keyword is given; 'overload' takes none.
     """
 
     if kwargs.get('_root', False):
       return super(overload, cls).__new__(cls)
     cls._refuseKeywords(**kwargs)
+    types = TypeSig.starARGS(*types)
     TypeSig.validateTypes(*types)
 
     def decorator(func: Method) -> Self:
       sig = TypeSig(*types, )
-      strict = kwargs.get('strict', None)
-      if strict is None:
-        strict = TypeSig.namesTHIS(*types)
-      sig.__allow_flex__ = False if strict else True
       if isinstance(func, cls):
         func._extendLatest(sig)
         return func
-      cls._refuseMethodKinds(func)
+      _refuseMethodKinds(func)
       self = super(overload, cls).__new__(cls)
       self._addSigFunc(sig, func)
       return self
@@ -303,13 +295,13 @@ class overload:  # NOQA
         If an entry is not a class; an 'ARGS' is refused too, since the
         entries are rearranged.
     """
+    types = TypeSig.starARGS(*types)
     TypeSig.validateTypes(*types, variadic=False)
 
     def decorator(func: Method) -> Self:
       self, function = cls._stackOn(func)
       for arrangement in Arrangements(*types):
         sig = TypeSig(*arrangement.values)
-        sig.__allow_flex__ = False
         if TYPE_CHECKING:  # pragma: no cover
           assert isinstance(function, FunctionType)
         load = PermuterMethod(function, arrangement)
@@ -376,7 +368,7 @@ class overload:  # NOQA
     """
     if isinstance(func, cls):
       return func, func._getLatestFunc()
-    cls._refuseMethodKinds(func)
+    _refuseMethodKinds(func)
     self = cls(_root=True)
     self.__latest_func__ = func
     return self, func
@@ -385,29 +377,13 @@ class overload:  # NOQA
   def _refuseKeywords(**kwargs) -> None:
     """
     The '_refuseKeywords' method raises the 'TypeError' Python raises for
-    an unexpected keyword argument, for any keyword the decorator does not
-    take. A misspelled 'strict' would otherwise leave the signature open
-    to casts without a word.
+    an unexpected keyword argument, for any keyword at all, since the
+    decorator takes none. A misspelled keyword would otherwise go
+    unnoticed.
     """
     for key in kwargs:
-      if key != 'strict':
-        infoSpec = """overload() got an unexpected keyword argument '%s'"""
-        raise TypeError(infoSpec % key)
-
-  @staticmethod
-  def _refuseMethodKinds(func: Any) -> None:
-    """
-    The '_refuseMethodKinds' method raises 'TypeException' for a
-    staticmethod or a classmethod, and for anything that cannot be
-    called, such as a 'property' stacked below the decorator or a bare
-    value. The 'Dispatcher' an overload builds calls every function with
-    the instance first, which neither kind takes: a staticmethod would
-    receive the instance as its first argument, and a classmethod is not
-    callable at all before Python 3.10. An object that cannot be called
-    used to be registered all the same and fail at the first call.
-    """
-    if isinstance(func, (staticmethod, classmethod)) or not callable(func):
-      raise TypeException('func', func, FunctionType)
+      infoSpec = """overload() got an unexpected keyword argument '%s'"""
+      raise TypeError(infoSpec % key)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

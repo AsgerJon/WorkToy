@@ -39,6 +39,23 @@ class Doc(BaseObject):
     """Catches all."""
 
 
+class Flexible(BaseObject):
+  """Flexible declares a method flexibly, which registers a wrapper around
+  the function, ahead of a plain declaration of it, and another flexibly
+  alone."""
+
+  @overload(str)
+  @overload.flex(str, int)
+  def f(self, text: str, size: int = 12) -> str:
+    """Labels."""
+    return '%s:%d' % (text, size)
+
+  @overload.flex(int, float)
+  def g(self, a: int, b: float) -> float:
+    """Scales."""
+    return a * b
+
+
 class TestDispatchMetadata(DispatcherTest):
   """
   TestDispatchMetadata provides tests for the metadata of a compiled
@@ -60,3 +77,20 @@ class TestDispatchMetadata(DispatcherTest):
     self.assertEqual(Doc.g.__doc__, 'Sums.')
     self.assertEqual(Doc.h.__doc__, 'Catches all.')
     self.assertEqual(Doc.g.__module__, Doc.__module__)
+
+  def test_flexible_declaration(self) -> None:
+    """A flexible declaration registers a wrapper around the function,
+    and the dispatch is documented by the function, not by the class of
+    the wrapper, whether the flexible declaration comes first in a stack
+    or stands alone; the wrapper still restores the argument order."""
+    self.assertEqual(Flexible.f.__doc__, 'Labels.')
+    self.assertEqual(Flexible.g.__doc__, 'Scales.')
+    self.assertEqual(Flexible().f.__doc__, 'Labels.')
+    self.assertEqual(Flexible.f.__module__, Flexible.__module__)
+    self.assertEqual(Flexible.g.__qualname__, 'Flexible.g')
+    flexible = Flexible()
+    self.assertEqual(flexible.f('x'), 'x:12')
+    self.assertEqual(flexible.f('x', 3), 'x:3')
+    self.assertEqual(flexible.f(3, 'x'), 'x:3')
+    self.assertEqual(flexible.g(2, 1.5), 3.0)
+    self.assertEqual(flexible.g(1.5, 2), 3.0)

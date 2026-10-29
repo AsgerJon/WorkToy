@@ -92,10 +92,6 @@ class _RootAlias(GenAlias, _root=True):
     The interpreter looks '__set_name__' up on the type of each value in
     the class body, and the type of a stored alias is this class, so a
     plain method is all the hook requires.
-
-    Note that Python 3.7 through 3.11 re-raise anything from
-    '__set_name__' wrapped in a 'RuntimeError', with the original left
-    on '__cause__'. From 3.12 onward it propagates unchanged.
     """
     raise PhantomBoxError(self, owner, name)
 

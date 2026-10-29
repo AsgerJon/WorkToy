@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from worktoy.mcls import BaseObject
+from worktoy.core import Object
 
 from . import CoreTest
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
   from typing import Any
 
 
-class Guarded(BaseObject):
+class Guarded(Object):
   """Guarded is a class whose '__setattr__' refuses every private name,
   constructed through the inherited 'Object.__init__'."""
 

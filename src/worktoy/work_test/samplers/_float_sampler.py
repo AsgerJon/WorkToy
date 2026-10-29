@@ -33,12 +33,12 @@ class FloatSampler(IntSampler):
 
   #  Class Variables
   __key_defaults__: dict[str, Union[int, float]] = dict(
-    minVal=__fallback_min__,
-    maxVal=__fallback_max__,
+      minVal=__fallback_min__,
+      maxVal=__fallback_max__,
   )
   __key_types__ = dict(
-    minVal=float,
-    maxVal=float,
+      minVal=float,
+      maxVal=float,
   )
 
   #  Private Variables

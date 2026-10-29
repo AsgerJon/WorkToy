@@ -21,28 +21,31 @@ class PermuterMethod(Permuter):
   remaining positional arguments through the arrangement.
   """
 
-  def invoke(self, func, instance=None, *args, **kwargs) -> Any:
+  def invoke(self, *args, **kwargs) -> Any:
     """
     The 'invoke' method accepts the calling instance ahead of the
     reordered positional arguments, so a 'PermuterMethod' can wrap a
-    bound method: 'instance' is forwarded first, then the arguments
-    restored to canonical order.
+    bound method: the instance is forwarded first, then the arguments
+    restored to canonical order. The wrapped function and the instance
+    are taken from 'args' by position rather than named as parameters,
+    so keywords of the caller named 'func' or 'instance' go through to
+    the function.
 
     Parameters
     ----------
-    func : Callable
-        The wrapped function.
-    instance : Any, optional
-        The calling instance, forwarded as the first argument.
     *args : Any
-        Positional arguments in arranged order.
+        The wrapped function, then the calling instance, forwarded as the
+        first argument (None when the call gives none), then the
+        positional arguments in arranged order.
     **kwargs : Any
         Keyword arguments forwarded unchanged.
 
     Returns
     -------
     Any
-        Whatever 'func' returns.
+        Whatever the function returns.
     """
+    func, args = args[0], args[1:]
+    instance, args = (args[0], args[1:]) if args else (None, ())
     arrangement = self._getArrangement()
     return func(instance, *arrangement.restoreFrom(*args), **kwargs)

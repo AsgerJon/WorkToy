@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from types import FunctionType
-
 from ...core.sentinels import METACALL
 from ...waitaminute.meta import QuestionableSyntax, DelException
 from ...waitaminute.meta import UnboundClassHook, ShadowedClassHook
@@ -61,7 +59,10 @@ class NamespaceHook(AbstractSpaceHook):
   naming the metaclass and the method that take the operation over.
   '__class_init__' is exempt, since it is not called from an operation:
   every metaclass '__init__' hands over to the inherited one, which
-  calls it.
+  calls it. A hook is a classmethod and nothing else: a plain function,
+  a staticmethod, an '@overload', a value, anything but a classmethod at
+  a hook name is refused with 'UnboundClassHook'. The 'METACALL'
+  sentinel, which means the metaclass's own implementation, passes.
 
   Usage
   -----
@@ -234,8 +235,8 @@ class NamespaceHook(AbstractSpaceHook):
         If 'key' is a routed '__class_*__' hook name whose operation the
         metaclass implements itself, so the hook would never be called.
     UnboundClassHook
-        If 'key' is a routed '__class_*__' hook name bound to a plain
-        function or staticmethod rather than a classmethod.
+        If 'key' is a routed '__class_*__' hook name bound to anything
+        but a classmethod or 'METACALL'.
     QuestionableSyntax
         If 'key' is a near-miss spelling of a known dunder.
     """
@@ -252,12 +253,13 @@ class NamespaceHook(AbstractSpaceHook):
         clsName = self.space.getClassName()
         operation = self._getOperation(key)
         raise ShadowedClassHook(clsName, key, shadowing.__name__, operation)
-      if isinstance(val, (FunctionType, staticmethod)):
+      if not isinstance(val, classmethod) and val is not METACALL:
         #  The metaclass invokes these hooks as bound classmethods. A
         #  plain function receives no class binding: most hooks fail
         #  with a confusing 'TypeError' at call time, and
         #  '__class_call__' silently swallows the first constructor
-        #  argument as the class.
+        #  argument as the class. An '@overload' becomes a 'Dispatcher'
+        #  expecting an instance the metaclass never passes.
         clsName = self.space.getClassName()
         raise UnboundClassHook(clsName, key)
     return self._validateName(key)
@@ -300,13 +302,14 @@ class NamespaceHook(AbstractSpaceHook):
   def _validateInheritedHook(self, base: type, hookName: str) -> None:
     """
     The '_validateInheritedHook' method holds a routed hook that 'base'
-    supplies to the rule 'setItemPhase' applies to the class body: a
-    plain function or a staticmethod raises 'UnboundClassHook' naming the
-    base. A base built by a worktoy metaclass passed that rule as it was
-    created, so only a plain base can still supply such a hook, which
-    used to be inherited unchecked and fail at the first call.
+    supplies to the rule 'setItemPhase' applies to the class body:
+    anything but a classmethod or 'METACALL' raises 'UnboundClassHook'
+    naming the base. A base built by a worktoy metaclass passed that
+    rule as it was created, so only a plain base can still supply such a
+    hook, which used to be inherited unchecked and fail at the first
+    call.
     """
     value = base.__dict__[hookName]
-    if isinstance(value, (FunctionType, staticmethod)):
+    if not isinstance(value, classmethod) and value is not METACALL:
       clsName = self.space.getClassName()
       raise UnboundClassHook(clsName, hookName, base.__name__)

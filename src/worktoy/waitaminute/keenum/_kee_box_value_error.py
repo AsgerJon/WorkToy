@@ -9,7 +9,6 @@ from __future__ import annotations
 from .. import WorkToyException
 
 
-
 class KeeBoxValueError(WorkToyException, ValueError):
   """
   KeeBoxValueError is raised when a value given to a 'KeeBox' is of the

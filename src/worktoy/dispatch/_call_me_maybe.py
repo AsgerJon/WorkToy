@@ -169,26 +169,30 @@ class CallMeMaybe:
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def invoke(self, func: Callable, *args, **kwargs) -> Any:
+  def invoke(self, *args, **kwargs) -> Any:
     """
-    The 'invoke' method specifies how the wrapped function object 'func'
-    receives the given arguments. The default simply passes them through,
-    leaving subclasses free to customize.
+    The 'invoke' method specifies how the wrapped function object, given
+    as the first positional argument, receives the arguments after it.
+    The default simply passes them through, leaving subclasses free to
+    customize. The function is taken from 'args' by position rather than
+    named as a parameter, so a keyword of the caller named 'func' goes
+    through to the function.
 
     Parameters
     ----------
-    func : Callable
-        The wrapped function. Provided as an explicit argument so that
-        subclasses can transform, replace, or selectively invoke it
-        without reaching into instance state.
     *args : Any
-        Positional arguments forwarded from '__call__'.
+        The wrapped function first, provided as an explicit argument so
+        that subclasses can transform, replace, or selectively invoke it
+        without reaching into instance state, then the positional
+        arguments forwarded from '__call__'.
     **kwargs : Any
         Keyword arguments forwarded from '__call__'.
 
     Returns
     -------
     Any
-        Whatever 'func' returns, possibly transformed by the subclass.
+        Whatever the function returns, possibly transformed by the
+        subclass.
     """
+    func, args = args[0], args[1:]
     return func(*args, **kwargs)

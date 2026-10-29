@@ -190,7 +190,7 @@ class EZHook(AbstractSpaceHook):
     """
     The '_isDescriptor' method decides whether a class-body value is a
     descriptor, left in place as a class attribute, or a value, which
-    becomes a field. A value not deriving from 'Object' is a descriptor
+    becomes a field. A value that is not an 'Object' is a descriptor
     when its type implements '__get__' or '__set__'. Every 'Object'
     implements both, members, EZData instances and 'SymbolicName'
     included, so an 'Object' is a descriptor only when its type

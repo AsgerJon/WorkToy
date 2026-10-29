@@ -34,12 +34,21 @@ chain.
   descriptors.
 - work_test: Testing support, providing 'BaseTest' and the random-data
   samplers used across the test suite.
+
+Nested classes: 'worktoy' is designed around custom metaclasses and the
+class statements they build, not around classes nested in the body of
+another class. A nested class may well work, but some edge cases are not
+supported. One example is a nested class with the same base as the
+enclosing class: a 'THIS[Parent]' reference in the enclosing body places
+its clone on the next subclass created of the class holding the
+descriptor, 'Parent' or a base of it, which is then the nested class,
+and the enclosing class is left without the decoration.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-__version__ = '1.0.1-dev1'
+__version__ = '1.1.0-dev1'
 
 from . import utilities
 from . import waitaminute

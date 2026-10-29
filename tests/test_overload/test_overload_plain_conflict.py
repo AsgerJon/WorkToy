@@ -7,8 +7,7 @@ overloads. It now raises 'OverloadConflict' at the second binding, in
 either order. A plain definition is any binding that is not an
 'overload': a function, a 'property', a 'staticmethod', a constant, or a
 value another hook claims, such as an 'EZField'. Overloads at one name
-in one body still combine, and so do the bindings of one overload under
-two names.
+in one body still combine.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -139,9 +138,8 @@ class TestOverloadPlainConflict(OverloadTest):
           return value  # pragma: no cover
 
   def test_overloads_combine(self) -> None:
-    """Overloads at one name combine, the same overload bound again under
-    its own name changes nothing, and an overload bound under a second
-    name is an alias, not a conflict."""
+    """This method tests that two overloads at one name in one class body
+    do not conflict. Both are dispatched."""
 
     class Foo(BaseObject):
       @overload(int)
@@ -152,10 +150,6 @@ class TestOverloadPlainConflict(OverloadTest):
       def bar(self, x: str) -> str:
         return 'str'
 
-      bar = bar
-      baz = bar
-
     foo = Foo()
     self.assertEqual(foo.bar(1), 'int')
     self.assertEqual(foo.bar('a'), 'str')
-    self.assertEqual(foo.baz(1), 'int')

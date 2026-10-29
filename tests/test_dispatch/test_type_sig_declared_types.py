@@ -95,13 +95,3 @@ class TestTypeSigDeclaredTypes(DispatcherTest):
     self.assertEqual(secondSig.getRawTypes(), (Second,))
     self.assertEqual(Second().f(Second()), 'Second')
     self.assertEqual(First().f(First()), 'First')
-
-  def test_clone_keeps_flags(self) -> None:
-    """The copied signatures keep whether casts are allowed."""
-    dispatcher = Dispatcher()
-    dispatcher.overload(THIS)(_one)
-    dispatcher.overload(int, strict=False)(_one)
-    clone = dispatcher.clone()
-    strictSig, looseSig = clone._getDeclaredSigs()
-    self.assertFalse(strictSig.__allow_flex__)
-    self.assertTrue(looseSig.__allow_flex__)

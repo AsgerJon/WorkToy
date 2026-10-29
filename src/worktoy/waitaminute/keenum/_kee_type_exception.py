@@ -7,8 +7,8 @@ match the value type established by the enumeration's first member.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from .. import WorkToyException
 
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

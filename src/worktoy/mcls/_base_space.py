@@ -56,7 +56,8 @@ class BaseSpace(AbstractNamespace):
   every call that any contributing class accepts. Each collected
   registration records its distance: 0 for the class body's own, 1 for
   the nearest contributing class, and so on. The 'Dispatcher' tries the
-  nearest registrations first when matching by type and by 'isinstance',
+  nearest registrations first when matching by exact type and through
+  'isinstance', so a match of a subclass wins over any inherited one,
   and the farthest first when casting, so that a signature added in a
   subclass never redirects a call a parent already handled through a
   cast. Registrations are kept in lists rather than in dicts keyed by
@@ -132,9 +133,9 @@ class BaseSpace(AbstractNamespace):
   def getClaimedName(self, ov: overload) -> Optional[str]:
     """
     The 'getClaimedName' method returns the name under which the class
-    body first bound the 'overload' object 'ov', or None when the class
-    body has not bound it. The record belongs to the namespace, so a
-    second class binding the same object starts without one.
+    body bound the 'overload' object 'ov', or None when the class body
+    has not bound it. The record belongs to the namespace, so a second
+    class binding the same object starts without one.
     """
     for claimed, name in maybe(self.__claimed_overloads__, ()):
       if claimed is ov:
@@ -315,9 +316,9 @@ class BaseSpace(AbstractNamespace):
     """
     The 'addOverload' method records a concrete signature the class body
     registers under the overloaded name. The same function registered
-    again under an equal signature, as when an overload is bound again
-    under its own name, changes nothing, and a different function under an
-    equal signature raises 'DuplicateSignature' on the spot.
+    again under an equal signature changes nothing, and a different
+    function under an equal signature raises 'DuplicateSignature' on the
+    spot.
 
     Parameters
     ----------
@@ -351,13 +352,31 @@ class BaseSpace(AbstractNamespace):
     """
     The 'addVariadic' method registers a variadic '(TypeSig, func)' pair
     under 'name'. The 'TypeSig' must carry a trailing 'ARGS' sentinel as
-    its last raw type. The dispatcher matches a call against the variadic
-    signatures by exact type first, the prefix and the trailing type as
-    a hash key, then through 'isinstance', and of several accepting one
-    call the most recent declaration of the nearest class wins.
+    its last raw type. As in 'addOverload', the same function registered
+    again under an equal signature changes nothing, and a different
+    function under an equal signature raises 'DuplicateSignature' on the
+    spot. The dispatcher matches a call against the variadic signatures
+    by exact type first, the prefix and the trailing type as a hash key,
+    then through 'isinstance', and of several different signatures
+    accepting one call, such as 'ARGS[int]' and '(int, ARGS[int])', the
+    most recent declaration of the nearest class wins.
+
+    Raises
+    ------
+    DuplicateSignature
+      If the class body declares the same variadic signature twice under
+      this name with different functions.
     """
     existing = self.getVariadics()
-    existing[name] = [*existing.get(name, []), (sig, func,)]
+    sigFuncs = existing.get(name, [])
+    for oldSig, oldFunc in sigFuncs:
+      if oldSig == sig:
+        if oldFunc is not func:
+          raise DuplicateSignature(sig, oldFunc, func)
+        break
+    else:
+      sigFuncs.append((sig, func,))
+    existing[name] = sigFuncs
     self.__variadic_overload_map__ = existing
 
   def addPlainName(self, name: str) -> None:
@@ -369,11 +388,21 @@ class BaseSpace(AbstractNamespace):
     if name not in existing:
       self.__plain_names__ = (*existing, name)
 
+  def removePlainName(self, name: str) -> None:
+    """
+    The 'removePlainName' method forgets that the class body bound
+    'name' to something other than an 'overload', once the class body
+    has deleted it, so the name may be overloaded afterwards.
+    """
+    existing = self.getPlainNames()
+    self.__plain_names__ = (*(n for n in existing if n != name),)
+
   def addClaimedName(self, ov: overload, name: str) -> None:
     """
     The 'addClaimedName' method records that the class body bound the
-    'overload' object 'ov' under 'name', the name a later binding of the
-    same object in this class body is read as an alias of.
+    'overload' object 'ov' under 'name', so that a second binding of the
+    same object in this class body is refused with 'ReboundOverload',
+    which names 'name'.
     """
     existing = maybe(self.__claimed_overloads__, ())
     self.__claimed_overloads__ = (*existing, (ov, name))

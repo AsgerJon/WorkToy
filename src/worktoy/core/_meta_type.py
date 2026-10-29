@@ -7,9 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._annotations_descriptor import _AnnotationsDescriptor
-from ._annotations_descriptor import HAS_TYPE_ANNOTATIONS
-
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any, TypeAlias
   from . import MetaType as MType
@@ -36,20 +33,13 @@ class MetaType(type):
   """
   MetaType provides the meta-metaclass for the 'worktoy' library.
   'AbstractMetaclass', and so every metaclass based on it, both
-  subclasses 'MetaType' and derives from it, or from a subclass of it
+  subclasses 'MetaType' and is an instance of it, or of a subclass of it
   such as 'KeeMetaMeta', so combining those metaclasses does not raise a
   metaclass conflict. 'SentinelMeta' and 'MetaFlow' are built the same
   way, so a sentinel or a control-flow signal declared with a class
   keyword has its chain of '__init_subclass__' end at '_Chill' as any
   other worktoy class does. Only '_MetaSlice' in 'utilities', which
   loads before this package, subclasses 'type' directly.
-
-  A metaclass built here that annotates attributes in its own body has
-  that '__annotations__' dict replaced by '_AnnotationsDescriptor', so
-  'cls.__annotations__' on its classes answers for the class alone
-  rather than falling through to a base; see '__new__'. Before Python
-  3.10 'type' has no such descriptor and every class falls through to
-  a base, so nothing is installed there.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -68,18 +58,6 @@ class MetaType(type):
     if not isinstance(lastBase, MetaType):
       bases: tuple[type, ...] = (*bases, _Chill)
     bases: tuple[type, ...] = (*(b for b in bases if b is not object),)
-    #  A metaclass whose body carries annotations holds them as a plain
-    #  dict under '__annotations__' (every module of the library declares
-    #  'from __future__ import annotations', so the dict is eager on every
-    #  interpreter), and that dict sits ahead of 'type' in the lookup of
-    #  its classes, so a class annotating nothing would answer with the
-    #  annotations of a base. The descriptor hands a class to 'type' and
-    #  answers the metaclass's own annotations on the metaclass.
-    if HAS_TYPE_ANNOTATIONS and '__annotations__' in space:
-      if any(issubclass(base, type) for base in bases):
-        space['__annotations__'] = _AnnotationsDescriptor(
-            space['__annotations__'],
-        )
     spaceState: bool = True if '__namespace__' in space else False
     if not spaceState:
       space['__namespace__'] = space

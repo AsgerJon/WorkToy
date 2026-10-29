@@ -1,5 +1,5 @@
 """
-Alias re-exposes another descriptor under a second name.
+Alias re-exposes a descriptor under a second name.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -8,51 +8,42 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..waitaminute.desc import ProtectedError, ReadOnlyError
+from ..waitaminute import MissingVariable, TypeException
+from ..waitaminute.desc import NotADescriptor, NotAliasable
+from ..waitaminute.desc import DanglingAlias
 
 if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type
+  from typing import Any, Optional
 
 
 class Alias(Object):
   """
-  Alias is a descriptor that re-exposes another attribute under a
-  second name, typically one inherited from a parent class.
+  Alias is a descriptor that re-exposes a descriptor of its class, or of
+  a base, under a second name:
 
-  Usage:
+    class Geometry(BaseObject):
+      width = AttriBox[int](240)
+      w = Alias('width')
 
-  >>> class Parent(BaseObject):
-  ...   value = AttriBox[int](0)
-  >>> class Child(Parent):
-  ...   v = Alias('value')   # 'child.v' now reads/writes 'child.value'
+  Through an instance, the alias forwards each read, write and deletion
+  to the descriptor the real name holds on the class of that instance.
+  The descriptor is found afresh at every access, as the first class
+  dict along the resolution order holds it, with no '__get__' run on it,
+  and the alias then runs that protocol once itself. So 'g.w' is the
+  very object 'g.width' gives, and a subclass that redeclares the field
+  is served by its own box whichever name is read first. Through the
+  class, the alias is itself.
 
-  Resolution strategy
-  -------------------
-  When the class body finishes and '__set_name__' fires, 'Alias'
-  checks whether the target name ('value' in the example) already
-  resolves on the owning class. If so, it short-circuits the
-  descriptor protocol by writing the target object directly into
-  the owning class under the alias name, effectively removing
-  itself from the class. Subsequent attribute access on the alias
-  goes straight to the real descriptor with no extra indirection.
-
-  If the target name is not yet visible on the class at
-  '__set_name__' time (e.g. the parent hasn't been built yet, or
-  the name is contributed later), 'Alias' stays in place and
-  forwards each '__get__' / '__set__' / '__delete__' to the real
-  descriptor at runtime.
-
-  Either way the target is the object as a class along the method
-  resolution order holds it, before the descriptor protocol applies, as
-  'inspect.getattr_static' finds it; see '_getRealObject'. A staticmethod
-  therefore stays a staticmethod, and a classmethod binds to the class it
-  is read from.
-
-  A target that is no descriptor, a plain value supplied after the class
-  exists, is handed back as it is by a read, as Python hands back a
-  plain class attribute, while a write through the alias raises
-  'ReadOnlyError' and a deletion 'ProtectedError'. A read used to ask
-  the value for '__get__', which an 'int' does not have.
+  As the class is created, the alias is held to what it stands for. A
+  name no class along the resolution order holds is refused with
+  'DanglingAlias'; a name holding something that is not a descriptor, a
+  plain value, with 'NotADescriptor', since there is no protocol to
+  forward to, and a plain value takes a second name by assignment; and a
+  descriptor the class does not read as itself, a 'staticmethod' or a
+  'classmethod', with 'NotAliasable', since the two names would not
+  agree on what the class gives. A plain function is read as itself and
+  may be aliased. The first two refusals come again from an access,
+  should the name be removed or replaced on the class afterwards.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -60,71 +51,79 @@ class Alias(Object):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __real_name__ = None
+  __real_name__: Optional[str] = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getRealObject(self, owner: type) -> Any:
+  def _getRealName(self) -> str:
+    if self.__real_name__ is None:
+      raise MissingVariable(self, '__real_name__', str)
+    return self.__real_name__
+
+  def _getDescriptor(self, owner: type) -> Any:
     """
-    The '_getRealObject' method returns the object the alias stands for:
-    the first entry under the real name in the namespaces of the classes
-    along the method resolution order of 'owner'. Reading the name from
-    the class instead would apply the descriptor protocol first, turning
-    a staticmethod into a plain function, which then binds as a method,
-    and a classmethod into a method bound to 'owner' for good. A name no
-    class along the order holds, such as one a metaclass supplies, is
-    read from 'owner' as before, which raises 'AttributeError' when
-    nothing supplies it.
+    The '_getDescriptor' method returns the descriptor the real name holds
+    on 'owner' or a base of it, as the class dict holds it, with no
+    '__get__' run on it yet, or raises 'NotADescriptor' when the name
+    holds something else.
     """
+    name = self._getRealName()
     for cls in owner.__mro__:
-      if self.__real_name__ in cls.__dict__:
-        return cls.__dict__[self.__real_name__]
-    return getattr(owner, self.__real_name__)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __set_name__(self, owner: Type[Object], name: str) -> None:
-    try:
-      realObject = self._getRealObject(owner)
-    except AttributeError:
-      #  If the real object does not exist, '__get__' will forward at
-      #  runtime.
-      pass
+      if name in cls.__dict__:
+        descriptor = cls.__dict__[name]
+        break
     else:
-      #  Effectively makes the alias point to the real object, effectively
-      #  removing 'self' from 'owner'.
-      setattr(owner, name, realObject)
-    Object.__set_name__(self, owner, name)
-
-  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    realObject = self._getRealObject(owner)
-    get = getattr(type(realObject), '__get__', None)
-    if get is None:
-      return realObject
-    return get(realObject, instance, owner, )
-
-  def __set__(self, instance: Any, value: Any, **kwargs) -> None:
-    realObject = self._getRealObject(type(instance))
-    set_ = getattr(type(realObject), '__set__', None)
-    if set_ is None:
-      raise ReadOnlyError(instance, self, value)
-    return set_(realObject, instance, value)
-
-  def __delete__(self, instance: Any, **kwargs) -> None:
-    realObject = self._getRealObject(type(instance))
-    delete = getattr(type(realObject), '__delete__', None)
-    if delete is None:
-      raise ProtectedError(instance, self)
-    return delete(realObject, instance)
+      raise DanglingAlias(self, name, owner)
+    #  Python reads '__get__' off the type, so a value whose class answers
+    #  it only through '__getattr__', as a proxy does, is no descriptor.
+    try:
+      _ = type.__getattribute__(type(descriptor), '__get__')
+    except AttributeError:
+      raise NotADescriptor(self, name, descriptor)
+    else:
+      return descriptor
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, realName: str) -> None:
+    if not isinstance(realName, str):
+      raise TypeException('realName', realName, str)
     Object.__init__(self, realName)
     self.__real_name__ = realName
+
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __set_name__(self, owner: type, name: str, **kwargs) -> None:
+    """
+    The '__set_name__' method records the owner and the name, then holds
+    the alias to what it stands for: a name no class holds, a name
+    holding no descriptor, and a descriptor the class does not read as
+    itself are each refused.
+    """
+    Object.__set_name__(self, owner, name, **kwargs)
+    realName: str = self._getRealName()
+    expected = self._getDescriptor(owner)
+    try:
+      actual = type.__getattribute__(owner, realName)
+    except AttributeError:
+      raise DanglingAlias(self, realName, owner)
+    else:
+      if expected is not actual:
+        raise NotAliasable(self, realName, expected, actual)
+
+  def __get__(self, instance: Any, owner: type, **kwargs) -> Any:
+    if instance is None:
+      return self
+    return self._getDescriptor(owner).__get__(instance, owner)
+
+  def __set__(self, instance: Any, value: Any, **kwargs) -> None:
+    self._getDescriptor(type(instance)).__set__(instance, value)
+
+  def __delete__(self, instance: Any, **kwargs) -> None:
+    self._getDescriptor(type(instance)).__delete__(instance)

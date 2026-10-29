@@ -1,7 +1,7 @@
 """
 TestKeeFlagsMixedOperands subclasses 'KeeTest' and pins that the bitwise
 operators of 'KeeFlags' members take members of the very same class
-only. A member of a derived class passes the 'isinstance' check, so
+only. A member of a subclass passes the 'isinstance' check, so
 'Perm.READ | More.EXEC' looked up a combination 'Perm' does not have and
 raised a raw 'KeyError'; it now raises the 'TypeError' Python raises for
 unsupported operands, as the other order already did.
@@ -31,12 +31,12 @@ class More(Perm):
 class TestKeeFlagsMixedOperands(KeeTest):
   """
   TestKeeFlagsMixedOperands provides tests for operators between members
-  of a flags class and of a class derived from it.
+  of a flags class and of a subclass of it.
   """
 
   def test_mixed_classes_refused(self) -> None:
-    """Each operator raises 'TypeError' for a member of the derived
-    class, in either order."""
+    """Each operator raises 'TypeError' for a member of the
+    subclass, in either order."""
     left, right = Perm.READ, More.EXEC
     for operation in (
         lambda a, b: a | b,

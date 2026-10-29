@@ -7,8 +7,8 @@ outside any active descriptor context.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from .. import WorkToyException
 
+from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Any

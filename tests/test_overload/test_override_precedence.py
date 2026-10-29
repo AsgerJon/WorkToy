@@ -244,6 +244,6 @@ class TestOverridePrecedence(OverloadTest):
     gone from 'Scanner' altogether, even from the cast passes that try
     inherited signatures first.
     """
-    longStrings = [str(n) for n in self.longCall]
-    self.assertEqual(Scanner().read('1', '2'), 'scanner')
-    self.assertEqual(Scanner().read(*longStrings), 'scanner')
+    longFloats = [float(n) for n in self.longCall]
+    self.assertEqual(Scanner().read(1.0, 2.0), 'scanner')
+    self.assertEqual(Scanner().read(*longFloats), 'scanner')

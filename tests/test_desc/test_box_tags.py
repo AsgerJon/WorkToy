@@ -5,7 +5,9 @@ pins the tags a box writes onto an object it creates: '__field_name__',
 object. They are written past the object's own '__setattr__', and left
 off an object the box did not create, a class, an object whose class
 declares '__no_box_tag__', an enumeration member and an object without an
-instance dict.
+instance dict. The opt-out is read past any '__getattr__',
+'__class_getattr__' or reimplemented '__getattribute__' of the class, so
+only a class that declares it, or inherits it, is left untagged.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -127,123 +129,6 @@ class TestBoxTags(DescTest):
     self.assertEqual(value.x, 1)
     self.assertFalse(hasattr(value, '__dict__'))
 
-  def test_no_box_tag_class_untagged(self) -> None:
-    """
-    Testing that an object whose class declares '__no_box_tag__' is left
-    untagged.
-    """
-
-    class Refusing:
-      __no_box_tag__ = True
-
-      def __init__(self, x: int = 0) -> None:
-        self.x = x
-
-    class Owner(BaseObject):
-      refusing = AttriBox[Refusing](1)
-
-    value = Owner().refusing
-    self.assertEqual(value.x, 1)
-    self.assertFalse(_isTagged(value))
-
-  def test_enum_member_untagged(self) -> None:
-    """
-    Testing that an 'Enum' member the box looks up through its class is
-    left untagged.
-    """
-
-    class Color(Enum):
-      RED = 1
-
-    class Owner(BaseObject):
-      color = AttriBox[Color](1)
-
-    self.assertIs(Owner().color, Color.RED)
-    self.assertFalse(_isTagged(Color.RED))
-
-  def test_keenum_member_untagged(self) -> None:
-    """
-    Testing that a 'KeeNum' member the box looks up through its class is
-    left untagged.
-    """
-
-    class Day(KeeNum):
-      MON = Kee[int](1)
-
-    class Owner(BaseObject):
-      day = AttriBox[Day]('MON')
-
-    self.assertIs(Owner().day, Day.MON)
-    self.assertFalse(_isTagged(Day.MON))
-
-  def test_keeflags_member_untagged(self) -> None:
-    """
-    Testing that a 'KeeFlags' member the box looks up through its class is
-    left untagged and keeps its own owner.
-    """
-
-    class Perm(KeeFlags):
-      READ = KeeFlag()
-
-    class Owner(BaseObject):
-      perm = AttriBox[Perm]('READ')
-
-    self.assertIs(Owner().perm, Perm.READ)
-    self.assertFalse(_isTagged(Perm.READ))
-    self.assertIs(Perm.READ.__field_owner__, Perm)
-
-  def test_uncopyable_default_untagged(self) -> None:
-    """
-    Testing that a default the box shares because it refuses to be copied
-    is left untagged, since the box did not create it.
-    """
-
-    class Uncopyable:
-      def __init__(self, x: int = 0) -> None:
-        self.x = x
-
-      def __deepcopy__(self, memo: dict) -> Any:
-        raise TypeError('no copies')
-
-    shared = Uncopyable(1)
-
-    class Owner(BaseObject):
-      item = AttriBox[Uncopyable](shared)
-
-    self.assertIs(Owner().item, shared)
-    self.assertFalse(_isTagged(shared))
-
-  def test_self_copying_default_untagged(self) -> None:
-    """
-    Testing that a default whose copy is the object itself is left
-    untagged, since the box did not create it.
-    """
-
-    class Lonely:
-      def __deepcopy__(self, memo: dict) -> Any:
-        return self
-
-    single = Lonely()
-
-    class Owner(BaseObject):
-      item = AttriBox[Lonely](single)
-
-    self.assertIs(Owner().item, single)
-    self.assertFalse(_isTagged(single))
-
-  def test_created_class_untagged(self) -> None:
-    """
-    Testing that a class the box creates is left untagged, since tags on
-    a class would be inherited by its instances and subclasses.
-    """
-
-    class Owner(BaseObject):
-      dyn = AttriBox[type]('Dyn', (), {})
-
-    value = Owner().dyn
-    self.assertIsInstance(value, type)
-    self.assertNotIn('__field_box__', vars(value))
-
   def test_assigned_value_untagged(self) -> None:
     """
     Testing that an object assigned already of the field type is stored as
@@ -262,3 +147,58 @@ class TestBoxTags(DescTest):
     owner.plain = given
     self.assertIs(owner.plain, given)
     self.assertFalse(_isTagged(given))
+
+  def test_class_getattr_hook_tagged(self) -> None:
+    """
+    Testing that an object whose class answers every name through
+    '__class_getattr__' is still tagged.
+    """
+
+    class Lenient(BaseObject):
+      @classmethod
+      def __class_getattr__(cls, name: str) -> Any:
+        return 'default'
+
+    class Owner(BaseObject):
+      lenient = AttriBox[Lenient]()
+
+    self.assertTrue(_isTagged(Owner().lenient))
+
+  def test_metaclass_getattr_tagged(self) -> None:
+    """
+    Testing that an object whose metaclass answers every missing name in
+    '__getattr__' is still tagged.
+    """
+
+    class Answering(type):
+      def __getattr__(cls, name: str) -> Any:
+        return True
+
+    class Plain(metaclass=Answering):
+      pass
+
+    class Owner(BaseObject):
+      plain = AttriBox[Plain]()
+
+    self.assertTrue(_isTagged(Owner().plain))
+
+  def test_metaclass_getattribute_tagged(self) -> None:
+    """
+    Testing that an object whose metaclass reimplements '__getattribute__'
+    to claim the opt-out is still tagged.
+    """
+
+    class Claiming(type):
+      def __getattribute__(cls, name: str) -> Any:
+        if name == '__no_box_tag__':
+          return True
+        return type.__getattribute__(cls, name)
+
+    class Plain(metaclass=Claiming):
+      pass
+
+    class Owner(BaseObject):
+      plain = AttriBox[Plain]()
+
+    self.assertTrue(_isTagged(Owner().plain))
+

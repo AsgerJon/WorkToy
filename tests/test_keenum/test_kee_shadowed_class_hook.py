@@ -146,7 +146,7 @@ class TestKeeShadowedClassHook(KeeTest):
     self.assertEqual(len(Perm), 4)
 
   def test_custom_metaclass_names_kee_meta(self) -> None:
-    """An enumeration of a metaclass derived from 'KeeMeta' is refused
+    """An enumeration of a metaclass subclassing 'KeeMeta' is refused
     the same hooks, and the exception names 'KeeMeta', which implements
     the operation."""
 

@@ -80,10 +80,9 @@ class TestTypeCast(UtilitiesTest):
   def test_good_to_int(self) -> None:
     """
     Testing that 'typeCast(int, arg)' returns an int for a whole-number
-    float, an integer-valued real complex, a parseable str, and bool.
+    float, an integer-valued real complex, and bool.
     """
     self.assertEqual(typeCast(int, 3.0), 3)
-    self.assertEqual(typeCast(int, '42'), 42)
     self.assertEqual(typeCast(int, 69 + 0j), 69)
     self.assertTrue(typeCast(int, True))
     self.assertFalse(typeCast(int, False))
@@ -91,10 +90,11 @@ class TestTypeCast(UtilitiesTest):
   def test_bad_value_to_int(self) -> None:
     """
     Testing that 'typeCast(int, arg)' raises 'TypeCastException' for values
-    that cannot be converted without loss: a non-integer float, a
-    non-parseable str, and a complex with a nonzero imaginary part.
+    that cannot be converted without loss: a non-integer float, a complex
+    with a nonzero imaginary part, and any str, numeric or not, since no
+    string is parsed.
     """
-    for bad in [0.80085, 'breh', 69 + 420j, ]:
+    for bad in [0.80085, 'breh', '42', 69 + 420j, ]:
       with self.assertRaises(TypeCastException) as context:
         typeCast(int, bad)
       e = context.exception
@@ -115,19 +115,18 @@ class TestTypeCast(UtilitiesTest):
 
   def test_good_to_float(self) -> None:
     """
-    Testing that 'typeCast(float, arg)' returns a float for an int, a
-    parseable str, and a real-valued complex.
+    Testing that 'typeCast(float, arg)' returns a float for an int and a
+    real-valued complex.
     """
     self.assertEqual(typeCast(float, 3), 3.0)
-    self.assertEqual(typeCast(float, '3.14'), 3.14)
     self.assertEqual(typeCast(float, 69 + 0j), 69.0)
 
   def test_bad_value_to_float(self) -> None:
     """
-    Testing that 'typeCast(float, arg)' raises 'TypeCastException' for a
-    non-parseable str and a complex with a nonzero imaginary part.
+    Testing that 'typeCast(float, arg)' raises 'TypeCastException' for any
+    str, numeric or not, and a complex with a nonzero imaginary part.
     """
-    for bad in ['breh', 69 + 420j, ]:
+    for bad in ['breh', '3.14', 69 + 420j, ]:
       with self.assertRaises(TypeCastException) as context:
         typeCast(float, bad)
       e = context.exception
@@ -148,20 +147,18 @@ class TestTypeCast(UtilitiesTest):
 
   def test_good_to_complex(self) -> None:
     """
-    Testing that 'typeCast(complex, arg)' returns a complex for an int, a
-    float, and a parseable str (including '3+4j').
+    Testing that 'typeCast(complex, arg)' returns a complex for an int and
+    a float.
     """
     self.assertEqual(typeCast(complex, 3), 3 + 0j)
     self.assertEqual(typeCast(complex, 3.14), 3.14 + 0j)
-    self.assertEqual(typeCast(complex, '3.14'), 3.14 + 0j)
-    self.assertEqual(typeCast(complex, '3+4j'), 3 + 4j)
 
   def test_bad_value_to_complex(self) -> None:
     """
-    Testing that 'typeCast(complex, arg)' raises 'TypeCastException' for a
-    non-parseable str.
+    Testing that 'typeCast(complex, arg)' raises 'TypeCastException' for
+    any str, numeric or not.
     """
-    for bad in ['breh', ]:
+    for bad in ['breh', '3.14', '3+4j', ]:
       with self.assertRaises(TypeCastException) as context:
         typeCast(complex, bad)
       e = context.exception
@@ -317,17 +314,12 @@ class TestTypeCast(UtilitiesTest):
       self.assertEqual(out.imag, 0.0)
       self.assertEqual(int(out.real), exact)
 
-  def test_slice_from_valid_list(self) -> None:
+  def test_slice_not_cast(self) -> None:
     """
-    Testing that 'typeCast(slice, arg)' builds the matching slice from a
-    list of up to three int or None components.
+    Testing that 'slice' is no cast target: a slice passes as an
+    instance, and a list of components is refused.
     """
-    self.assertEqual(typeCast(slice, [1, 10, 2]), slice(1, 10, 2))
-
-  def test_slice_from_invalid_list(self) -> None:
-    """
-    Testing that 'typeCast(slice, arg)' raises 'TypeCastException' for a
-    list whose components do not form a valid slice.
-    """
+    full = slice(1, 10, 2)
+    self.assertIs(typeCast(slice, full), full)
     with self.assertRaises(TypeCastException):
-      typeCast(slice, ['x', 'y'])
+      typeCast(slice, [1, 10, 2])

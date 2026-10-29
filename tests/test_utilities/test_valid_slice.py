@@ -69,34 +69,20 @@ class TestValidSlice(UtilitiesTest):
     info = infoSpec % ValidSlice.__name__
     self.assertEqual(repr(ValidSlice), info)
 
-  def test_casting_bad_slice(self) -> None:
+  def test_slice_not_cast(self) -> None:
+    """'typeCast' passes a slice through as an instance, 'ValidSlice' or
+    not, and refuses every other value, since 'slice' is no cast target
+    and 'ValidSlice' is a validator alone."""
     sus = slice("""Hey, I'm a slice, trust me bro!""")
-    with self.assertRaises(TypeCastException) as context:
-      _ = typeCast(slice, sus)
-    e = context.exception
-    self.assertIs(e.arg, sus)
-    self.assertIs(e.type_, slice)
-
-    with self.assertRaises(TypeCastException) as context:
-      _ = typeCast(slice, ('never', 'gonna', 'give', 'you', 'up'))
-    e = context.exception
-    self.assertEqual(e.arg, ('never', 'gonna', 'give', 'you', 'up'))
-    self.assertIs(e.type_, slice)
-
-  def test_casting_good_slice(self, ) -> None:
-    arg = 69
-    self.assertEqual(slice(0), slice(0))
-    self.assertEqual(slice(arg), typeCast(slice, arg))
-    casted = typeCast(slice, slice(0, 10, 2))
-    self.assertIsInstance(casted, slice)
-    self.assertEqual(casted.start, 0)
-    self.assertEqual(casted.stop, 10)
-    self.assertEqual(casted.step, 2)
-    casted = typeCast(slice, (0, 1))
-    self.assertIsInstance(casted, slice)
-    self.assertEqual(casted.start, 0)
-    self.assertEqual(casted.stop, 1)
-    self.assertEqual(casted.step, None)
+    self.assertIs(typeCast(slice, sus), sus)
+    good = slice(0, 10, 2)
+    self.assertIs(typeCast(slice, good), good)
+    for value in (69, (0, 1), ('never', 'gonna', 'give', 'you', 'up')):
+      with self.subTest(value=value):
+        with self.assertRaises(TypeCastException) as context:
+          _ = typeCast(slice, value)
+        self.assertIs(context.exception.type_, slice)
+        self.assertEqual(context.exception.arg, value)
 
   def test_data_array(self) -> None:
     lines = (

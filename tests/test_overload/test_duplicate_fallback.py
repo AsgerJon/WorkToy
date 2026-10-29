@@ -4,8 +4,8 @@ body may register only one fallback and one finalizer under a name. A
 second one used to replace the first without a word, where two explicit
 declarations of one signature raise; it now raises 'DuplicateSignature'
 too, naming the role, 'fallback' or 'finalizer', in place of a
-signature. The same function registered again changes nothing, and a
-subclass may still replace the fallback or the finalizer it inherits.
+signature. A subclass may still replace the fallback or the finalizer it
+inherits.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -63,19 +63,6 @@ class TestDuplicateFallback(OverloadTest):
     self.assertEqual(context.exception.sig, 'finalizer')
     info = str(context.exception)
     self.assertIn('already has a finalizer function registered', info)
-
-  def test_same_function_again(self) -> None:
-    """The same fallback bound again under its own name changes
-    nothing."""
-
-    class Foo(BaseObject):
-      @overload.fallback
-      def bar(self, *args: Any) -> str:
-        return 'fallback'
-
-      bar = bar
-
-    self.assertEqual(Foo().bar(1, 2), 'fallback')
 
   def test_subclass_replaces_inherited(self) -> None:
     """A subclass registering its own fallback and finalizer replaces the

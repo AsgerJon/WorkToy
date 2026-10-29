@@ -44,13 +44,13 @@ class SymbolicSampler(BaseSampler):
     'word_count',
   )
   __key_groups__: dict[str, tuple[str, ...]] = dict(
-    wordCount=__count_keys__,
+      wordCount=__count_keys__,
   )
   __key_types__: dict[str, type] = dict(
-    wordCount=int,
+      wordCount=int,
   )
   __key_defaults__: dict[str, Union[int, float]] = dict(
-    wordCount=__fallback_count__,
+      wordCount=__fallback_count__,
   )
 
   #  Private Variables

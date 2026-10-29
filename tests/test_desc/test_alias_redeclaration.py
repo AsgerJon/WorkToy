@@ -1,13 +1,13 @@
 """
 TestAliasRedeclaration subclasses 'DescTest' from the 'tests.test_desc'
 package and pins that a subclass may redeclare a field its parent exposes
-under a second name through 'Alias'. The alias swaps itself for the
-parent's box as the parent is created, so the parent holds one box under
-two names. The subclass redeclaring the field is a redeclaration, not a
-collision, and on a subclass instance the alias keeps reading and writing
-the one storage name the field name derives. Such a subclass used to be
-refused with 'StorageCollision', the guard comparing the parent's box with
-itself under the alias name.
+under a second name through 'Alias'. The alias stays on the parent and
+forwards each access to the box the field name holds on the class of the
+instance, so on a subclass instance it reads and writes the subclass's
+own box, under the one storage name the field name derives. Such a
+subclass used to be refused with 'StorageCollision', and after that guard
+went the alias swapped itself for the parent's box, so a subclass
+redeclaring the field reached the parent's box through the alias.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -61,10 +61,11 @@ class TestAliasRedeclaration(DescTest):
     keys = [k for k in vars(child) if k.endswith('_field_object__')]
     self.assertEqual(keys, ['__v__attribox_field_object__'])
 
-  def test_alias_is_the_parent_box(self) -> None:
-    """The alias name on the parent holds the parent's box itself, and the
-    subclass holds its own box under the field name alone."""
+  def test_alias_stays_on_the_parent(self) -> None:
+    """The alias name on the parent holds the alias, and the subclass
+    holds its own box under the field name alone."""
     Parent, Child = self._makePair()
-    self.assertIs(Parent.__dict__['w'], Parent.__dict__['v'])
+    self.assertIsInstance(Parent.__dict__['w'], Alias)
+    self.assertIsNot(Parent.__dict__['w'], Parent.__dict__['v'])
     self.assertNotIn('w', Child.__dict__)
     self.assertIsNot(Child.__dict__['v'], Parent.__dict__['v'])

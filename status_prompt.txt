@@ -1,0 +1,38 @@
+Begin by creating a file called status_[TIMESTAMP].md in the project root.
+
+In it list each issue found in the most recent review_notes_[TIMESTAMP].md
+file ordered from most severe to least. Each entry need an identifier, a
+severity indicator, a short description of the problem, a code example and a
+recommendation.
+
+Before listing the issues, confer with everything the research and the
+review were told to avoid:
+- the auto-memory files: the MEMORY.md index and the files it lists;
+- the settled and deferred items and the judging rules in
+  review_prompt.txt;
+- the most recent handoff_* file;
+- the earlier status_* files.
+
+Leave out any issue that a memory or a rule says is settled, deferred,
+withdrawn, decided otherwise or out of scope, such as an issue in a leaf
+package while the non-leaf packages are being fixed. At the end of the
+file, name each issue left out, one line each, with the reason. Write the
+entries by the writing rules found in those memories as well.
+
+Each entry is a separate list under its own header. The header holds the
+identifier and the severity indicator. The list below the header holds the
+description, the code example and the recommendation, one item each. The
+code example is a fenced code block on the lines after 'Example:'.
+
+Example entry:
+
+### [Identifier] ([Severity])
+
+- Description: [Short description of the problem]
+- Example:
+  ```python
+  [Code example demonstrating the problem]
+  ```
+- Recommendation: [Suggested fix or improvement]
+
+Each of the above must be on separate lines.
