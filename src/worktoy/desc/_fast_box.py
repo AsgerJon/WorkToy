@@ -246,10 +246,10 @@ class FastBox(Generic[T]):
     if issubclass(type(fieldType), type) or fieldType is THIS:
       declaration = '%s[%s]' % (cls.__name__, fieldType.__name__)
       TypeSig.validateTypes(
-        fieldType,
-        variadic=False,
-        declaration=declaration
-        )
+          fieldType,
+          variadic=False,
+          declaration=declaration
+      )
       self = cls.__new__(cls)
       object.__setattr__(self, '__field_type__', fieldType)
       return self
@@ -387,6 +387,13 @@ class FastBox(Generic[T]):
     A write must cost one check and one store, and nothing is converted on
     the way.
 
+    Implementation
+    --------------
+
+    The dictionary and the name are refused before the value is looked
+    at, as '__get__' and '__delete__' do, so a misuse is never reported
+    as a type error.
+
     Parameters
     ----------
 
@@ -411,17 +418,18 @@ class FastBox(Generic[T]):
     if TYPE_CHECKING:  # pragma: no cover, no mutate
       assert isinstance(self.__field_type__, type)
       assert isinstance(self.__field_name__, str)
-    if isinstance(value, self.__field_type__):
-      try:
-        store = instance.__dict__
-      except AttributeError as attributeError:
-        fieldName = self.__field_name__
-        raise MissingInstanceDict(instance, fieldName) from attributeError
+    try:
+      store = instance.__dict__
+    except AttributeError as attributeError:
+      fieldName = self.__field_name__
+      raise MissingInstanceDict(instance, fieldName) from attributeError
+    else:
       if self.__private_name__ is None:
         raise MissingVariable(self, '__field_name__', str)
-      store[self.__private_name__] = value
-      return
-    raise TypeException(self.__field_name__, value, self.__field_type__)
+      if isinstance(value, self.__field_type__):
+        store[self.__private_name__] = value
+        return
+      raise TypeException(self.__field_name__, value, self.__field_type__)
 
   def __delete__(self, instance: Any) -> None:
     """

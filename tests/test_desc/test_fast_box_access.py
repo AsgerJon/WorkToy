@@ -18,7 +18,8 @@ class TestFastBoxAccess(DescTest):
   with no cast, and a deletion lets the next read start over. The tests
   pin the shared value and the value per instance, the strict write,
   the deletion, the refusals for an instance without a dictionary and
-  for a box never placed, and the value a factory must produce.
+  for a box never placed, which come ahead of the type check, and the
+  value a factory must produce.
   """
 
   def test_read_builds_once(self) -> None:
@@ -82,6 +83,12 @@ class TestFastBoxAccess(DescTest):
     self.assertIs(context.exception.instance, slotted)
     self.assertEqual(context.exception.fieldName, 'mass')
     self.assertEqual(context.exception.ownerName, 'Slotted')
+    #  A wrong value changes nothing: no value could be stored, so the
+    #  dictionary is refused before the value is looked at.
+    with self.assertRaises(MissingInstanceDict) as context:
+      box.__set__(slotted, 'two')
+    self.assertIs(context.exception.instance, slotted)
+    self.assertEqual(context.exception.fieldName, 'mass')
     with self.assertRaises(MissingInstanceDict) as context:
       box.__delete__(slotted)
     self.assertIs(context.exception.instance, slotted)
@@ -99,10 +106,18 @@ class TestFastBoxAccess(DescTest):
     self.assertEqual(context.exception.varName, '__field_name__')
     self.assertIs(context.exception.instance, box)
     self.assertEqual(context.exception.expectedTypes, (str,))
-    self.assertEqual(str(context.exception),
-                     "Missing 'FastBox.__field_name__: str'!")
+    self.assertEqual(
+      str(context.exception),
+      "Missing 'FastBox.__field_name__: str'!"
+      )
     with self.assertRaises(MissingVariable) as context:
       box.__set__(plain, 2)
+    self.assertEqual(context.exception.varName, '__field_name__')
+    self.assertIs(context.exception.instance, box)
+    #  A wrong value through a box without a name is refused for the
+    #  name, never as a type error naming the field 'None'.
+    with self.assertRaises(MissingVariable) as context:
+      box.__set__(plain, 'two')
     self.assertEqual(context.exception.varName, '__field_name__')
     self.assertIs(context.exception.instance, box)
     with self.assertRaises(MissingVariable) as context:

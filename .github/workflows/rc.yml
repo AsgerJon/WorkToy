@@ -20,9 +20,9 @@ jobs:
     steps:
       # The default checkout is the commit the button was pressed on, so
       # the state of the safety at that moment decides.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Decide and lock
@@ -53,9 +53,9 @@ jobs:
           - { python-version: '3.15', os: ubuntu-latest }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -65,19 +65,17 @@ jobs:
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}/src
-          RUNNING_TESTS: '1'
         run: python -m unittest discover -s tests
       - name: Coverage (3.15 only)
         if: ${{ matrix.python-version == '3.15' }}
         env:
           PYTHONPATH: ${{ github.workspace }}/src
-          RUNNING_TESTS: '1'
         run: |
           pip install pytest pytest-cov
           pytest --cov --cov-branch --cov-report=xml --cov-fail-under=100
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.15' }}
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: AsgerJon/WorkToy
@@ -92,11 +90,11 @@ jobs:
       # The branch tip rather than the commit the button was pressed on:
       # the version commit below has to sit on top of the lock commit the
       # 'safety' job pushed.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install build tooling

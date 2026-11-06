@@ -6,6 +6,19 @@ rolled into the release they lead up to.
 
 ## [1.1.0] - unreleased
 
+### A FastBox write refuses the instance and the name before the value
+
+`FastBox.__set__` checked the type of the value first and only then
+fetched the instance dict and looked for the box's own name. On an
+instance without a dict, or through a box that never learned its name,
+a value of the wrong type was therefore refused as a type error, and
+in the second case the refusal named the field `'None'`, pointing at
+the value when the box itself was the problem. The write now refuses
+the missing dict and the missing name first, as `__get__` and
+`__delete__` always did, and the type of the value last. A write
+through a placed box on an ordinary instance costs what it cost: one
+check and one store.
+
 ### The bank tells its operations from lookalikes
 
 `ComplexTest`, the bank of twenty-five tests that runs against any
