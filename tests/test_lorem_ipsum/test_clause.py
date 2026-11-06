@@ -1,110 +1,170 @@
 """
-TestClause tests the 'Clause' class from the 'worktoy.lorem_ipsum'
-package.
+TestClause tests 'Clause' from 'worktoy.lorem_ipsum'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import randint
+from worktoy.lorem_ipsum import Clause, StochasticWord
+from worktoy.work_test.samplers import IntSampler
+from . import LoremTest, Narrow, NarrowClause, Hailed
 
-from tests.test_lorem_ipsum import LoremIpsumTest
-from worktoy.lorem_ipsum import Clause
 
-
-class TestClause(LoremIpsumTest):
+class TestClause(LoremTest):
   """
-  TestClause provides tests for the 'Clause' class from the
-  'worktoy.lorem_ipsum' package.
+  A clause is words joined by single spaces at exactly the requested
+  count, with a lead-in when first and a placeholder when too short for
+  it. The tests pin the layout and its caches, the first clause and its
+  short form, the refusals, the edits the sentence makes, the copy
+  constructor, the renderings, and a word list and a lead-in of a
+  project's own.
   """
 
-  def setUp(self) -> None:
-    super().setUp()
-    self.clause: Clause = Clause()
-    self.clause.reset()
-    self.minLen: int = 30
-    self.maxLen: int = 80
+  def test_layout(self) -> None:
+    clause = Clause(30)
+    words = clause.wordsArray
+    lengths = clause.wordsLengths
+    self.assertEqual(len(clause), 30)
+    self.assertEqual(str(clause), ' '.join(words))
+    self.assertEqual(repr(clause), ' '.join(words))
+    self.assertEqual(clause.realize(), str(clause))
+    self.assertEqual([*clause], words)
+    self.assertEqual(lengths, [len(word) for word in words])
+    self.assertEqual(sum(lengths) + len(lengths) - 1, 30)
+    self.assertNotIn('  ', str(clause))
+    every = {w for ws in StochasticWord().byLengths.values() for w in ws}
+    self.assertTrue(all(word in every for word in words))
+    self.assertFalse(clause.isFirst)
+    self.assertEqual(Clause(4).wordsLengths, [4])
+    self.assertEqual(len(Clause(4).wordsArray[0]), 4)
 
-  def test_lengths(self, ) -> None:
-    """
-    Testing that 'Clause' realizes to exactly the requested character
-    count.
-    """
-    lengths = [randint(self.minLen, self.maxLen) for _ in range(16)]
-    clause = Clause(self.clause)
-    self.assertEqual(len(clause), clause.charCount)
+  def test_caches(self) -> None:
+    clause = Clause(30)
+    self.assertIsNone(clause.__words_lengths__)
+    self.assertIsNone(clause.__words_array__)
+    with self.assertRaises(RecursionError) as context:
+      clause._getWordsLengths(_recursion=True)
+    self.assertEqual(context.exception.args, ())
+    with self.assertRaises(RecursionError) as context:
+      clause._getWordsArray(_recursion=True)
+    self.assertEqual(context.exception.args, ())
+    words = clause.wordsArray
+    self.assertIs(clause.wordsArray, words)
+    self.assertIs(clause.wordsLengths, clause.wordsLengths)
     clause.clear()
-    clause = Clause(clause)
-    self.assertEqual(len(clause), clause.charCount)
-    for length in lengths:
-      clause = Clause(length)
-      self.assertIsInstance(clause, Clause)
-      self.assertEqual(len(clause), length)
+    self.assertIsNone(clause.__words_lengths__)
+    self.assertIsNone(clause.__words_array__)
+    clause.reset()
+    self.assertIsNotNone(clause.__words_array__)
+    self.assertIsNot(clause.wordsArray, words)
+    self.assertEqual(len(clause), 30)
+    clause.charCount = 50
+    self.assertIsNone(clause.__words_array__)
+    self.assertEqual(len(clause), 50)
+    clause.isFirst = True
+    self.assertIsNone(clause.__words_lengths__)
+    self.assertEqual(clause.wordsArray[:2], ['Lorem', 'ipsum'])
 
-  def test_iteration(self) -> None:
-    """
-    Testing that iterating a 'Clause' yields its words as 'str' objects.
-    """
-    clause = Clause(self.clause)
-    self.assertIsInstance(clause, Clause)
-    for word in clause:
-      self.assertIsInstance(word, str)
-
-  def test_recursion_guard(self, ) -> None:
-    """
-    Testing the 'RecursionError' guards.
-    """
-    clause = Clause(self.clause)
-    clause.clear()
-    with self.assertRaises(RecursionError):
-      _ = clause._getWordsArray(_recursion=True)
-    with self.assertRaises(RecursionError):
-      _ = clause._getWordsLengths(_recursion=True)
-
-  def test_realize(self) -> None:
-    """
-    This method tests that 'realize' matches '__str__'.
-    """
-    expectedText = str(self.clause)
-    actualText = self.clause.realize()
-    self.assertEqual(expectedText, actualText)
-
-  def test_first_placeholder(self) -> None:
-    """
-    Testing that a first clause too short for a full word sequence degrades
-    to a 'Lorem ipsum ...' placeholder of exactly the requested length,
-    covering the lead-in truncation, the empty gap, and the 'etc' prefix.
-    """
-    cases = {
-      12: 'Lorem ips...',
-      14: 'Lorem ipsum...',
-      15: 'Lorem ipsum ...',
-      16: 'Lorem ipsum e...',
-      17: 'Lorem ipsum et...',
-      18: 'Lorem ipsum etc...',
-    }
-    for length, expected in cases.items():
-      self.assertEqual(str(Clause.first(length)), expected)
-    #  A gap of four or more characters draws a real word.
-    for length in range(19, 24):
-      clause = Clause.first(length)
-      self.assertEqual(len(str(clause)), length)
-      self.assertTrue(str(clause).startswith('Lorem ipsum '))
-      self.assertTrue(str(clause).endswith('...'))
-    #  Reading the cached lengths of a placeholder reads them back from the
-    #  realized words rather than partitioning.
+  def test_first(self) -> None:
     clause = Clause.first(16)
-    for i, word in enumerate(clause):
-      self.assertEqual(len(word), clause.wordsLengths[i])
+    self.assertEqual(clause.wordsArray[:2], ['Lorem', 'ipsum'])
+    self.assertEqual(len(clause.wordsArray), 3)
+    self.assertEqual(clause.wordsLengths, [5, 5, 4])
+    self.assertEqual(len(clause), 16)
+    self.assertFalse(clause._isShortFirst())
+    long = Clause.first(40)
+    self.assertTrue(str(long).startswith('Lorem ipsum '))
+    self.assertEqual(len(long), 40)
+    self.assertFalse(Clause(40)._isShortFirst())
 
-  def test_too_short_raises(self) -> None:
-    """
-    Testing that a clause that is not a first clause refuses character
-    counts below the shortest available word with 'ValueError', while
-    a first clause degrades to a placeholder of exactly the requested
-    length at those counts.
-    """
-    for length in range(4):
-      with self.assertRaises(ValueError):
-        _ = str(Clause(length))
-      self.assertEqual(len(str(Clause.first(length))), length)
+  def test_short_first(self) -> None:
+    clause = Clause.first(15)
+    self.assertTrue(clause._isShortFirst())
+    self.assertEqual(clause.wordsArray, ['Lorem', 'ipsum....'])
+    self.assertEqual(clause.wordsLengths, [5, 9])
+    self.assertEqual(str(clause), 'Lorem ipsum....')
+    self.assertEqual(len(clause), 15)
+    self.assertEqual(Clause.first(5).wordsArray, ['Lo...'])
+    self.assertEqual(Clause.first(3).wordsArray, ['...'])
+    self.assertEqual(Clause.first(0).wordsArray, [''])
+    self.assertEqual(Clause.first(0).wordsLengths, [0])
+    self.assertEqual(str(Clause.first(0)), '')
+    self.assertEqual(len(Clause.first(0)), 0)
+    self.assertEqual(Clause.first(11).wordsArray, ['Lorem', 'ip...'])
+    self.assertEqual(Clause.first(15)._placeholderWords(),
+                     ['Lorem', 'ipsum....'])
+
+  def test_too_short_refused(self) -> None:
+    for count in (0, 3):
+      with self.subTest(count=count):
+        with self.assertRaises(ValueError) as context:
+          _ = Clause(count).wordsArray
+        self.assertIn("cannot realize fewer than 4 characters, but received "
+                      "a character count of %d" % count,
+                      str(context.exception))
+    with self.assertRaises(ValueError) as context:
+      str(Clause(2))
+    self.assertIn("A 'Clause' that is not a first clause cannot realize "
+                  "fewer than 4 characters, but received a character "
+                  "count of 2", str(context.exception))
+
+  def test_unreachable_count_refused(self) -> None:
+    with self.assertRaises(ValueError) as context:
+      _ = NarrowClause(7).wordsArray
+    self.assertIn("A 'Narrow' cannot cut 8 into values from 5 to 6, each "
+                  "with 1 more for its separator", str(context.exception))
+    self.assertEqual(NarrowClause(11).wordsLengths, [5, 5])
+    self.assertEqual(len(NarrowClause(11)), 11)
+    self.assertIsInstance(NarrowClause(11).stochWord, Narrow)
+    self.assertIsInstance(Clause().stochWord, StochasticWord)
+    self.assertEqual(NarrowClause(5).wordsLengths, [5])
+
+  def test_lead_in_of_a_subclass(self) -> None:
+    clause = Hailed.first(14)
+    self.assertEqual(clause.wordsArray[:2], ['Ave', 'mundi'])
+    self.assertEqual(clause.wordsLengths[:2], [3, 5])
+    self.assertEqual(len(clause), 14)
+    short = Hailed.first(13)
+    self.assertEqual(short.wordsArray, ['Ave', 'mundi....'])
+    self.assertEqual(short.wordsLengths, [3, 9])
+    self.assertEqual(Clause.__lead_in__, ('Lorem', 'ipsum'))
+
+  def test_edits_for_the_sentence(self) -> None:
+    clause = Clause(30)
+    words = clause.wordsArray
+    first = words[0]
+    clause.capitalizeLead()
+    self.assertIs(clause.wordsArray, words)
+    self.assertEqual(words[0], first.capitalize())
+    last = words[-1]
+    clause.terminate(',')
+    self.assertEqual(words[-1], last + ',')
+    self.assertEqual(len(clause), 31)
+    self.assertTrue(str(clause).endswith(','))
+
+  def test_copy_constructor(self) -> None:
+    blank = Clause.first(30)
+    copy = Clause(blank)
+    self.assertEqual(copy.charCount, 30)
+    self.assertTrue(copy.isFirst)
+    self.assertIsNone(copy.__words_lengths__)
+    self.assertIsNone(copy.__words_array__)
+    built = Clause(25)
+    words = built.wordsArray
+    copy = Clause(built)
+    self.assertEqual(copy.wordsArray, words)
+    self.assertIsNot(copy.wordsArray, words)
+    self.assertEqual(copy.wordsLengths, built.wordsLengths)
+    self.assertIsNot(copy.wordsLengths, built.wordsLengths)
+    self.assertFalse(copy.isFirst)
+    self.assertEqual(str(copy), str(built))
+
+  def test_random_counts(self) -> None:
+    self.randomInteger = IntSampler(4, 120, seed=self.__sampler_seed__)
+    self.randomInteger.size = 12
+    for count in self.randomInteger.row:
+      with self.subTest(count=count):
+        self.assertEqual(len(Clause(count)), count)
+        first = Clause.first(count + 12)
+        self.assertEqual(len(first), count + 12)
+        self.assertTrue(str(first).startswith('Lorem ipsum '))

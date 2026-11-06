@@ -29,7 +29,9 @@ Contents:
   and only there. 'THIS[GrandParent].name' is 'THIS[Parent].name' for a
   'name' that 'Parent' inherits. No other subclass of the class holding
   'name' may be created before the body ends, a nested class included,
-  since the next one created receives the clone.
+  since the next one created receives the clone. A body declaring
+  'name' itself decorates it directly; reaching it through 'THIS' as
+  well is refused with 'ReferenceConflict'.
   - OWNER: Placeholder for the 'owner' class passed to '__get__'. Used
   in deferred 'AttriBox' arguments. Unlike THIS, it has no role in
   overload signatures.

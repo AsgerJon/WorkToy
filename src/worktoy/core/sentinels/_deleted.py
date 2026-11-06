@@ -11,14 +11,20 @@ from . import Sentinel
 
 class DELETED(Sentinel):
   """
-  DELETED is the sentinel a descriptor stores in its backing slot to mark
-  an attribute as deleted; the 'worktoy.core' base then raises
-  'MissingVariable' (an 'AttributeError' subclass) on the next read
-  rather than returning 'DELETED'.
+  A box keeps the value of each instance in a slot, and builds its
+  default into an empty slot at the first read. Deleting the attribute
+  therefore cannot simply empty the slot: the next read would build the
+  default again, and the deletion would leave no trace. The box needs a
+  value to leave in the slot that means deleted, which no real value can
+  be mistaken for and which the read recognizes. A descriptor a project
+  writes on 'Object' needs the same.
 
-  A box resolves a value from the slot on the accessing instance, and
-  builds its default into that slot when it is empty. Rather than thread
-  a deleted state through that, deletion stores 'DELETED' in the slot;
-  the next read finds it and signals 'Object.__get__' to raise.
+  Implementation
+  --------------
+
+  'DELETED' is that value. When '__instance_get__' returns it,
+  'Object.__get__' raises 'MissingVariable', an 'AttributeError', as for
+  a deleted plain attribute, and 'Object.__delete__' raises it for a
+  second deletion.
   """
   pass

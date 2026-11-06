@@ -5,30 +5,39 @@ GaussianSampler draws normally distributed random numbers.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from cmath import isfinite
+from math import isfinite
 from typing import TYPE_CHECKING
-from random import gauss
 
-from ...desc import Field
+from ...desc import AttriBox
 from ...dispatch import overload
-from ...utilities import typeCast, textFmt
-from ...waitaminute import TypeException
-from ...waitaminute.dispatch import TypeCastException
+from ...utilities import textFmt
 from . import BaseSampler
 
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from typing import TypeAlias, Any
 
-  MaybeFloat: TypeAlias = Optional[float]
+  KeyGroups: TypeAlias = dict[str, tuple[str, ...]]
 
 
 class GaussianSampler(BaseSampler):
   """
-  GaussianSampler draws normally distributed random floats with a given
-  'mean' and 'stdDev', defaulting to the standard normal (mean 0.0,
-  standard deviation 1.0). Both parameters accept synonym spellings and
-  are validated as finite, with 'stdDev' additionally required to be
-  non-negative.
+  A test that needs numbers clustered around a value wants to name the
+  centre and the spread and nothing else. 'GaussianSampler' draws
+  normally distributed random floats with a given 'mean' and 'stdDev',
+  the standard normal unless set otherwise.
+
+  Implementation
+  --------------
+
+  'mean' and 'stdDev' are 'AttriBox[float]' with '0.0' and '1.0', each
+  with synonyms for the keyword constructor ('average', 'avg',
+  'mean_value', 'meanValue'; 'std_dev', 'stdDeviation',
+  'std_deviation', 'stdDevValue', 'std_dev_value', 'stdDeviationValue').
+  A 'preSet' notifier refuses a mean or a deviation that is not finite,
+  and a negative deviation, with 'ValueError' before the box stores it;
+  a value that is no number is left to the box, which casts or refuses
+  it. The positional constructors take the mean and the deviation, or
+  the mean alone. Each value is 'self.random.gauss'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -36,110 +45,47 @@ class GaussianSampler(BaseSampler):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
-
-  #  Fallback Variables
-  __fallback_mean__: float = 0.
-  __fallback_std_dev__: float = 1.0
-
-  #  Namespace
-  __mean_keys__ = ('mean', 'average', 'avg', 'mean_value', 'meanValue')
-  __std_dev_keys__ = (
-    'stdDev',
-    'std_dev',
-    'stdDeviation',
-    'std_deviation',
-    'stdDevValue',
-    'std_dev_value',
-    'stdDeviationValue',
+  __key_groups__: KeyGroups = dict(
+      mean=('mean', 'average', 'avg', 'mean_value', 'meanValue'),
+      stdDev=(
+        'stdDev',
+        'std_dev',
+        'stdDeviation',
+        'std_deviation',
+        'stdDevValue',
+        'std_dev_value',
+        'stdDeviationValue',
+      ),
   )
-  __key_groups__: dict[str, tuple[str, ...]] = dict(
-      mean=__mean_keys__,
-      stdDev=__std_dev_keys__,
-  )
-  __key_types__: dict[str, type] = dict(
-      mean=float,
-      stdDev=float,
-  )
-  __key_defaults__: dict[str, float] = dict(
-      mean=__fallback_mean__,
-      stdDev=__fallback_std_dev__,
-  )
-
-  #  Private Variables
-  __mean_value__: MaybeFloat = None
-  __std_dev__: MaybeFloat = None
 
   #  Public Variables
-  mean: Field[float] = Field()
-  stdDev: Field[float] = Field()
+  mean = AttriBox[float](0.0)
+  stdDev = AttriBox[float](1.0)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @mean.GET
-  def _getMean(self, **kwargs) -> float:
-    if self.__mean_value__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self.__mean_value__ = self.__fallback_mean__
-      return self._getMean(_recursion=True)
-    if isinstance(self.__mean_value__, (int, float)):
-      return self.__mean_value__
-    name, value = '__mean_value__', self.__mean_value__
-    raise TypeException(name, value, float)
-
-  @stdDev.GET
-  def _getStdDev(self, **kwargs) -> float:
-    if self.__std_dev__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self.__std_dev__ = self.__fallback_std_dev__
-      return self._getStdDev(_recursion=True)
-    if isinstance(self.__std_dev__, (int, float)):
-      return self.__std_dev__
-    name, value = '__std_dev__', self.__std_dev__
-    raise TypeException(name, value, float)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @mean.SET
-  def _setMean(self, mean: float) -> None:
-    if not isinstance(mean, (int, float)):
-      try:
-        casted = typeCast(float, mean, )
-      except TypeCastException as typeCastException:
-        raise TypeException('mean', mean, float) from typeCastException
-      else:
-        return self._setMean(casted)
-    if not isfinite(mean):
+  @mean.preSet
+  def _refuseMean(self, value: Any) -> None:
+    if isinstance(value, (int, float)) and not isfinite(value):
       infoSpec = """Mean must be a finite number, but received: '%s'!"""
-      info = infoSpec % mean
-      raise ValueError(textFmt(info))
-    return setattr(self, '__mean_value__', mean)
+      raise ValueError(textFmt(infoSpec % value))
 
-  @stdDev.SET
-  def _setStdDev(self, stdDev: float) -> None:
-    if not isinstance(stdDev, (int, float)):
-      try:
-        casted = typeCast(float, stdDev, )
-      except TypeCastException as typeCastException:
-        raise TypeException('stdDev', stdDev, float) from typeCastException
-      else:
-        return self._setStdDev(casted)
-    if not isfinite(stdDev):
+  @stdDev.preSet
+  def _refuseStdDev(self, value: Any) -> None:
+    if not isinstance(value, (int, float)):
+      #  This branch is reached by the following:
+      #  - The value is no number; the box casts or refuses it
+      return
+    if not isfinite(value):
       infoSpec = """Standard deviation must be a finite number, 
       but received: '%s'!"""
-      info = infoSpec % stdDev
-      raise ValueError(textFmt(info))
-    if stdDev < 0:
+      raise ValueError(textFmt(infoSpec % value))
+    if value < 0:
       infoSpec = """Standard deviation must be a non-negative number, 
       but received: '%s'!"""
-      info = infoSpec % stdDev
-      raise ValueError(textFmt(info))
-    return setattr(self, '__std_dev__', stdDev)
+      raise ValueError(textFmt(infoSpec % value))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -147,11 +93,6 @@ class GaussianSampler(BaseSampler):
 
   def __str__(self) -> str:
     infoSpec = """<%s (mean: %f, stdDev: %f)>"""
-    info = infoSpec % (type(self).__name__, self.mean, self.stdDev)
-    return textFmt(info)
-
-  def __repr__(self, ) -> str:
-    infoSpec = """%s(%f, %f)"""
     info = infoSpec % (type(self).__name__, self.mean, self.stdDev)
     return textFmt(info)
 
@@ -174,8 +115,7 @@ class GaussianSampler(BaseSampler):
 
   @overload()
   def __init__(self, **kwargs) -> None:
-    if kwargs:
-      BaseSampler.__init__(self, **kwargs)
+    BaseSampler.__init__(self, **kwargs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -185,8 +125,4 @@ class GaussianSampler(BaseSampler):
     return float
 
   def _getItem(self, *args, **kwargs) -> float:
-    """
-    The '_getItem' method draws one float from a normal distribution with
-    mean 'mean' and standard deviation 'stdDev'.
-    """
-    return gauss(self.mean, self.stdDev)
+    return self.random.gauss(self.mean, self.stdDev)

@@ -44,7 +44,7 @@ class DelException(WorkToyException, SyntaxError):
     the namespace! This is almost always a typo, but if not this error can
     be suppressed by passing the keyword argument 'trustMeBro=True' during
     class creation. """
-    if TYPE_CHECKING:  # pragma: no cover
+    if TYPE_CHECKING:  # pragma: no cover, no mutate
       assert isinstance(self.bases, tuple)
     basesInfo = ''
     if self.bases:

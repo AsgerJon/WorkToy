@@ -11,22 +11,23 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Optional
 
 
 class UnboundClassHook(WorkToyException, SyntaxError):
   """
   UnboundClassHook is raised when a class body binds one of the routed
-  '__class_*__' hook names to anything but a classmethod: a plain
-  function, a staticmethod, an '@overload', a value. The metaclass
-  invokes these hooks as bound classmethods, so a definition without
-  '@classmethod' receives no class binding: most hooks then fail with a
-  confusing 'TypeError' at call time, '__class_call__' silently swallows
-  the first constructor argument as the class, and an '@overload'
-  becomes a 'Dispatcher' expecting an instance the metaclass never
-  passes. This exception flags the mistake loudly at the class-body
-  line instead.
+  '__class_*__' hook names to anything but a classmethod or overloads
+  declared as classmethods: a plain function, a staticmethod, an
+  '@overload' of instance methods or of staticmethods, a value. The
+  metaclass invokes these hooks as bound classmethods, so a definition
+  without '@classmethod' receives no class binding: most hooks then fail
+  with a confusing 'TypeError' at call time, '__class_call__' silently
+  swallows the first constructor argument as the class, and an
+  '@overload' of instance methods becomes a 'Dispatcher' expecting an
+  instance the metaclass never passes. This exception flags the mistake
+  loudly at the class-body line instead.
   A hook inherited from a plain base, one no worktoy metaclass built and
   so never checked, is held to the same rule as the class is created, and
   the message then names that base. It subclasses 'SyntaxError'.

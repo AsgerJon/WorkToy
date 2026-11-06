@@ -12,7 +12,7 @@ from ..utilities import textFmt
 from ..waitaminute import MissingVariable, TypeException
 from . import Field
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Optional, Union, Iterator, Any
 
   StrTuple: TypeAlias = tuple[str, ...]
@@ -22,28 +22,32 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class SymbolicName(Object):
   """
-  SymbolicName provides different representations of an array of words. The
-  following representations are provided:
-  - 'snake_case': The words are concatenated with underscores and all
-    characters are lowercase.
-  - 'SCREAMING_SNAKE_CASE': The words are concatenated with underscores and
-    all characters are uppercase.
-  - 'kebab-case': The words are concatenated with hyphens and all characters
-    are lowercase.
-  - 'SCREAMING-KEBAB-CASE': The words are concatenated with hyphens and all
-    characters are uppercase.
-  - 'PascalCase': The words are concatenated without any separators and
-    the first character of each word is uppercase.
-  - 'camelCase': The words are concatenated without any separators, the
-    first character of the first word is lowercase, and the first
-    character of each subsequent word is uppercase.
+  One name often has to be written in several conventions, a setting
+  'fontSize' in code, 'font_size' in a file and 'FONT_SIZE' in the
+  environment, and the spellings must stay in step. The name is best
+  kept as its words, with every spelling made from them, and two names of
+  the same words must count as one name whatever their case.
 
-  Two names of the same words compare equal and hash alike, ignoring
-  case, since every rendering normalises case: 'SymbolicName('Font',
-  'Size')' renders exactly as 'SymbolicName('font', 'size')' does, and the
-  two are one key in a dict or a set. The order of the words counts.
-  Compared with anything but a 'SymbolicName', a name answers
-  'NotImplemented'.
+  Implementation
+  --------------
+
+  The words are kept as given; 'snake', 'screamingSnake', 'kebab',
+  'screamingKebab', 'pascal' and 'camel' render them. Every rendering
+  sets the case itself, and a word is capitalized as 'str.capitalize'
+  does, so 'HTTPServer' becomes 'Httpserver' in Pascal case; an acronym
+  meant to survive is given as a word of its own. Equality and hash go
+  by the lowercased words in order. A name supports 'len', iteration,
+  indexing, slicing and 'in' for a word, ignoring case. As an 'Object',
+  a 'SymbolicName' placed in a class body is a read-only class variable.
+
+  Attributes
+  ----------
+
+  words : tuple[str, ...]
+    The words as given.
+
+  snake, screamingSnake, kebab, screamingKebab, pascal, camel : str
+    The renderings.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -97,7 +101,8 @@ class SymbolicName(Object):
     first, *rest = self.words
     if not rest:
       return first.lower()
-    return """%s%s""" % (first.lower(), type(self)(*rest, ).pascal)
+    tail = str.join('', [word.capitalize() for word in rest])
+    return """%s%s""" % (first.lower(), tail)
 
   @screamingSnake.GET
   def _getScreamingSnake(self, ) -> str:
@@ -115,7 +120,7 @@ class SymbolicName(Object):
     for word in words:
       if not isinstance(word, str):
         raise TypeException('word', word, str)
-    self.__part_words__ = words
+    object.__setattr__(self, '__part_words__', words)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -162,19 +167,25 @@ class SymbolicName(Object):
 
   def __contains__(self, item: str) -> bool:
     """
-    A word is in the name ignoring case, as equality compares the words,
-    so 'Font' is in 'SymbolicName("font", "size")'. Anything but a 'str'
-    is in no name.
+    A word belongs to a name whatever its case, as equality ignores case.
+
+    Parameters
+    ----------
+
+    item : str
+      The word; anything but a string is in no name.
+
+    Returns
+    -------
+
+    bool
+      Whether a word of the name equals 'item', ignoring case.
     """
     if not isinstance(item, str):
       return False
     return True if item.lower() in self._getKey() else False
 
   def _getKey(self) -> StrTuple:
-    """
-    The '_getKey' method returns the words in lower case, which equality
-    and hashing compare, since every rendering normalises case.
-    """
     return (*(word.lower() for word in self.words),)
 
   def __eq__(self, other: Any) -> bool:

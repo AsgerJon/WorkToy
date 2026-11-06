@@ -8,19 +8,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
 class ContextInstance:
-  """Descriptor that returns the currently active instance.
+  """
+  Inside the hooks of a descriptor based on 'Object', 'self.instance'
+  must give the instance of the access in progress, the object the
+  attribute is read from, written to or deleted from. The same name read
+  through the class must give something harmless, and the descriptor
+  machinery must never depend on it, since a subclass may shadow it.
 
-  When accessed on a class, returns the descriptor itself. When
-  accessed on an 'Object' instance, returns the top-of-stack
-  instance via 'Object.getContextInstance', which without a frame
-  raises 'WithoutException' on a placed descriptor and a plain
-  'AttributeError' on a value no class holds, and answers through the
-  box that made it for a value an 'AttriBox' created.
+  Implementation
+  --------------
+
+  Through the class, the descriptor returns itself. Through an 'Object',
+  it returns 'getContextInstance()', which reads the top frame of the
+  context stack, and fails outside an access as that method describes.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -34,14 +39,16 @@ class ContextInstance:
 
 
 class ContextOwner:
-  """Descriptor that returns the currently active owner class.
+  """
+  Inside the hooks of a descriptor based on 'Object', 'self.owner' must
+  give the owning class of the access in progress.
 
-  When accessed on a class, returns the descriptor itself. When
-  accessed on an 'Object' instance, returns the top-of-stack owner
-  via 'Object.getContextOwner', which without a frame raises
-  'WithoutException' on a placed descriptor and a plain
-  'AttributeError' on a value no class holds, and answers through the
-  box that made it for a value an 'AttriBox' created.
+  Implementation
+  --------------
+
+  Through the class, the descriptor returns itself. Through an 'Object',
+  it returns 'getContextOwner()', which reads the top frame of the
+  context stack, and fails outside an access as that method describes.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

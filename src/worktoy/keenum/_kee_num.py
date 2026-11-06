@@ -11,16 +11,13 @@ from ..core import Object
 from ..desc import Field
 from ..utilities import textFmt
 from ..waitaminute import MissingVariable
-from ..waitaminute.desc import ReadOnlyError, ProtectedError
 from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
 from . import Kee
 
 T = TypeVar('T')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Never, Self, Optional, TypeAlias
-
-  from . import KeeNum
 
   MaybeInt: TypeAlias = Optional[int]
   MaybeStr: TypeAlias = Optional[str]
@@ -30,7 +27,20 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeBase(Object, ):
   """
-  Base class for all enumerating classes in the KeeNum framework.
+  An enumeration member is one object, built once as its class is
+  created, that a project passes around, compares and keys by: the days
+  of a week, the status codes of a protocol. It must know its name, its
+  position and its value, be equal to itself alone, hash wherever its
+  value hashes, read back as the very object after copying and
+  pickling, and refuse every change once built.
+
+  Implementation
+  --------------
+
+  'KeeBase' is the base of every enumeration; 'KeeNum', the root an
+  enumeration subclasses, is built from it by 'KeeMeta'. A member holds
+  the 'Kee' of its declaration and answers 'name', 'index', 'value' and
+  'valueType' through it.
 
   Equality is identity: 'MyEnum.A == MyEnum.A' is True; comparison to
   a member of a different KeeNum subclass returns NotImplemented (and
@@ -54,16 +64,20 @@ class KeeBase(Object, ):
   hashability is not required: iteration, attribute access, name and
   index resolution, equality, '__str__', and '__repr__' all behave
   normally. Only hash-keyed containers refuse them.
+
+  A member is an 'Object', so a box that builds it through its
+  constructor, as 'AttriBox[WeekDay]('MONDAY')' does, tags it with the
+  box, the class and the field name, as a box tags every 'Object' it
+  builds; the last box to build the member leaves its tags. A member
+  given as the lone default of a box is its own copy and stays untagged.
+  The tags change nothing a member promises: equality, hash, text and
+  pickling read the name, and 'instance' answers only during a read of
+  the tagging box.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Class Variables
-  #  A member is a shared singleton, which no box creates, so a box
-  #  holding one leaves it untagged; see 'AttriBox._applyTags'.
-  __no_box_tag__ = True
 
   #  Private Variables
   __field_value__: Optional[Any] = None
@@ -162,23 +176,17 @@ class KeeBase(Object, ):
     raise KeeWriteOnceError(self, name)
 
   def __set_name__(self, owner: type, name: str, **kw) -> None:
-    """This reimplementation of '__set_name__' is necessary to prevent the
-    '__setattr__' method above from raising when a class wants an
-    enumeration defined in its namespace. """
+    """
+    A member is one object shared by every class body that places it, so
+    it records no owner and no name: the placement 'Object.__set_name__'
+    would record would be the last one, and every refusal of a write or
+    a deletion through an instance would name it, whichever class the
+    instance belongs to. The refusals find the placement by identity in
+    the classes of the instance instead. The read, write and deletion of
+    a placed member are those of 'Object': the member reads back, a
+    write raises 'ReadOnlyError' and a deletion 'ProtectedError'.
+    """
     pass
-
-  def __get__(self, instance: Any, owner: type, **kw) -> KeeNum:
-    """Implementation of '__get__' is necessary for the same reason as
-    '__set_name__'. """
-    return self
-
-  def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
-    """Ensures 'ReadOnlyError' is raised instead of 'KeeWriteOnceError'."""
-    raise ReadOnlyError(instance, self, value)
-
-  def __delete__(self, instance: Any, **kwargs) -> Never:
-    """Ensures 'ProtectedError' is raised instead of 'KeeWriteOnceError'."""
-    raise ProtectedError(instance, self, self)
 
   def __copy__(self) -> Self:
     """A member is a singleton, so a copy is the member itself. Returning
@@ -235,7 +243,7 @@ class KeeBase(Object, ):
 
   __repr__ = __str__
 
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     # @formatter:off
     def __call__(self, identifier: Any) -> Self: ...
     # @formatter:on

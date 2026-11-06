@@ -12,7 +12,7 @@ from .. import QuickDesc
 
 T = TypeVar('T')
 ItemTypeT = TypeVar('ItemTypeT')
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Any, Iterator, Optional
 
   Values: TypeAlias = tuple[Any, ...]
@@ -81,7 +81,7 @@ class Arrangements(Generic[ItemTypeT]):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._createIsHashable()
-      return self.isHashable(_recursion=True)
+      return self.isHashable(_recursion=True)  # pragma: no mutate
     return self.__is_hashable__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

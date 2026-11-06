@@ -21,7 +21,7 @@ from __future__ import annotations
 from timeit import Timer
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias
 
   Seconds: TypeAlias = float
@@ -54,8 +54,10 @@ def measure(stmt: str, setup: str, **kwargs) -> float:
   return best / number
 
 
-def formatTable(rows: list[str], cols: list[str], cells: Cells,
-                baseline: str) -> str:
+def formatTable(
+    rows: list[str], cols: list[str], cells: Cells,
+    baseline: str
+    ) -> str:
   """Render the timing grid as a fixed-width table.
 
   Each cell shows nanoseconds and the ratio against the baseline row

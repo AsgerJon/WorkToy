@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
@@ -20,9 +20,10 @@ class NamelessCallback(WorkToyException, SyntaxError):
   NamelessCallback is raised when a callback decorator of a descriptor,
   one of the notification decorators of 'BaseDescriptor' or the accessor
   decorators of 'Field', receives a function without a name of its own:
-  a lambda, whose name is '<lambda>'. A callable with no '__name__' at
-  all, such as a 'functools.partial', is not refused here: reading its
-  name raises the ordinary 'AttributeError'. The descriptor records only the
+  a lambda, whose name is '<lambda>', also under '@classmethod' or
+  '@staticmethod'. A callable with no function to look up by name at
+  all, such as a 'functools.partial', is refused before its name is read,
+  with 'TypeException'. The descriptor records only the
   name, and looks the callback up by it on the class of the instance at
   each access, so a subclass can override it by redefining the name. A
   nameless function could never be found that way, and the first access

@@ -12,9 +12,16 @@ from . import Sentinel
 
 class OWNER(Sentinel):
   """
-  OWNER is a sentinel placeholder for the owning class, the 'owner'
-  argument passed to '__get__' in the descriptor protocol. In a deferred
-  'AttriBox' constructor argument it is replaced at access time by that
-  class, while THIS stands in for the accessing instance. Unlike THIS,
-  OWNER plays no role in overload signatures.
+  The arguments of an 'AttriBox' are written in the class body, before
+  the class exists, and used at the first read to build the value. One of
+  them may need to be the class the attribute is read through, which the
+  class body cannot name yet.
+
+  Implementation
+  --------------
+
+  At the first read, an argument that is 'OWNER' itself is replaced by
+  the owner passed to '__get__'. 'THIS' does the same for the instance
+  and 'DESC' for the box. Unlike 'THIS', 'OWNER' has no meaning in an
+  overload signature.
   """

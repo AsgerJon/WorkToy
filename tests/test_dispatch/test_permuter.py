@@ -1,261 +1,157 @@
 """
-TestPermuter subclasses 'DispatcherTest' from 'tests.test_dispatch' and
-provides tests for the 'Permuter' class from 'worktoy.dispatch'.
+TestPermuter tests 'Permuter' from 'worktoy.dispatch'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from types import FunctionType
 
-from worktoy.utilities.combinatorics import Arrangement
 from worktoy.dispatch import Permuter
-from worktoy.waitaminute import TypeException
+from worktoy.utilities.combinatorics import Arrangement
+from worktoy.waitaminute import TypeException, MissingVariable
 from worktoy.waitaminute.desc import WriteOnceError
-from . import DispatcherTest
-
-if TYPE_CHECKING:  # pragma: no cover
-  # @formatter:off
-  from typing import Any, Callable, Optional
-  from worktoy.dispatch._call_me_maybe import _Wrapped  # noqa
-  from worktoy.utilities import QuickDesc  # noqa
-
-  class Permuter:  # noqa
-    __function_case__: Optional[tuple[Callable]]
-    __arg_arrangement__: Optional[Arrangement]
-    __wrapped__: _Wrapped
-    arrangement: QuickDesc[Arrangement]
-    def __init__(self, *args, ) -> None: ...
-    def setArrangement(self, arrangement: Arrangement) -> None: ...
-    def __lshift__(self, arrangement: Arrangement) -> Permuter: ...
-    def __ilshift__(self, arrangement: Arrangement) -> Permuter: ...
-    def __rrshift__(self, arrangement: Arrangement) -> Permuter: ...
-  # @formatter:on
+from . import DispatchTest
 
 
-def _identity(a: Any, b: Any, c: Any) -> Any:
-  """Three-arg function returning args as a tuple - easy to assert
-  against."""
+def _triple(a: str, b: str, c: str) -> tuple:
   return a, b, c
 
 
-def _two_args(x: Any, y: Any) -> Any:
-  return x, y
+class TestPermuter(DispatchTest):
+  """
+  A flexible overload accepts its arguments in any order, so each order
+  needs a callable that puts them back in the declared order before the
+  call. 'Permuter' holds a function and an 'Arrangement' for that. The
+  tests pin the reordering, the constructor in every shape it accepts and
+  its refusals, the write-once arrangement, and the three operators.
+  """
 
+  @staticmethod
+  def _cycle() -> Arrangement:
+    """The caller gives c, a, b; the function wants a, b, c."""
+    return Arrangement(('a', 'b', 'c'), (2, 0, 1))
 
-def _arr(items: tuple, forward: tuple) -> Arrangement:
-  """Construct an Arrangement from explicit items + forward recipe.
-  Test helper, production code should iterate 'Arrangements(*items)'."""
-  return Arrangement(items, forward)
+  def test_reorders(self) -> None:
+    permuter = Permuter(_triple, self._cycle())
+    self.assertEqual(permuter('C', 'A', 'B'), ('A', 'B', 'C'))
+    self.assertIs(permuter.__wrapped__, _triple)
+    self.assertEqual(permuter.arrangement, self._cycle())
 
+  def test_keywords_pass(self) -> None:
+    def labelled(a: str, b: str, c: str, **kw) -> tuple:
+      return (a, b, c, kw)
 
-class TestPermuter(DispatcherTest):
-  """Permuter constructor and behavior."""
+    permuter = Permuter(labelled, self._cycle())
+    self.assertEqual(permuter('C', 'A', 'B', k=1), ('A', 'B', 'C', {'k': 1}))
 
-  #  ________________________________________________________________
-  #  Good construction overloads
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_init_empty(self) -> None:
-    """Permuter() leaves both func and arrangement unset."""
-    p = Permuter()
-    self.assertIsNone(p.__function_case__)
-    self.assertIsNone(p.__arg_arrangement__)
-
-  def test_init_func_only(self) -> None:
-    p = Permuter(_identity)
-    self.assertIs(p.__wrapped__, _identity)
-    self.assertIsNone(p.__arg_arrangement__)
-
-  def test_init_arrangement_only(self) -> None:
-    a = _arr(('A', 'B', 'C'), (2, 0, 1))
-    p = Permuter(a)
-    self.assertIs(p.arrangement, a)
-    self.assertIsNone(p.__function_case__)
-
-  def test_init_func_then_arrangement(self) -> None:
-    a = _arr(('A', 'B', 'C'), (2, 0, 1))
-    p = Permuter(_identity, a)
-    self.assertIs(p.__wrapped__, _identity)
-    self.assertIs(p.arrangement, a)
-
-  def test_init_arrangement_then_func(self) -> None:
-    """Argument order should not matter - dispatch is type-driven."""
-    a = _arr(('A', 'B', 'C'), (2, 0, 1))
-    p = Permuter(a, _identity)
-    self.assertIs(p.__wrapped__, _identity)
-    self.assertIs(p.arrangement, a)
-
-  #  ________________________________________________________________
-  #  Bad construction overloads
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_init_rejects_too_many_args(self) -> None:
-    a = _arr(('A', 'B'), (0, 1))
+  def test_wrong_count_refused(self) -> None:
+    permuter = Permuter(_triple, self._cycle())
     with self.assertRaises(ValueError) as context:
-      Permuter(_identity, a, _two_args)
-    msg = str(context.exception)
-    self.assertIn('Permuter', msg)
-    self.assertIn('3', msg)
-    self.assertNotIn('%s', msg)
-    self.assertNotIn('%d', msg)
+      permuter('A', 'B')
+    self.assertIn("'restoreFrom' received '2' values",
+                  str(context.exception))
 
-  def test_init_rejects_duplicate_arrangement(self) -> None:
-    a1 = _arr(('A', 'B'), (0, 1))
-    a2 = _arr(('A', 'B'), (1, 0))
+  def test_constructor_shapes(self) -> None:
+    arrangement = self._cycle()
+    self.assertIsNone(Permuter().__function_case__)
+    self.assertIs(Permuter(_triple).__wrapped__, _triple)
+    self.assertIs(Permuter(arrangement).arrangement, arrangement)
+    both = Permuter(_triple, arrangement)
+    self.assertIs(both.arrangement, arrangement)
+    swapped = Permuter(arrangement, _triple)
+    self.assertIs(swapped.__wrapped__, _triple)
+    self.assertIs(swapped.arrangement, arrangement)
+
+  def test_constructor_refusals(self) -> None:
+    arrangement = self._cycle()
     with self.assertRaises(ValueError) as context:
-      Permuter(a1, a2)
-    msg = str(context.exception)
-    self.assertIn('Permuter', msg)
-    self.assertIn('Arrangement', msg)
-    self.assertNotIn('%s', msg)
-
-  def test_init_rejects_duplicate_func(self) -> None:
+      Permuter(_triple, arrangement, _triple)
+    self.assertIn("at most two positional arguments, but received '3'",
+                  str(context.exception))
     with self.assertRaises(ValueError) as context:
-      Permuter(_identity, _two_args)
-    msg = str(context.exception)
-    self.assertIn('Permuter', msg)
-    self.assertIn('FunctionType', msg)
-    self.assertNotIn('%s', msg)
-
-  def test_init_rejects_unknown_type(self) -> None:
-    with self.assertRaises(TypeException):
-      Permuter(42)
-
-  #  ________________________________________________________________
-  #  Good Operator Usage
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_lshift_returns_new_instance(self) -> None:
-    """`p << arrangement` should not mutate p; returns a new Permuter."""
-    p = Permuter(_identity)
-    a = _arr(('A', 'B', 'C'), (2, 0, 1))
-    q = p << a
-    self.assertIsNot(p, q)
-    self.assertIsNone(p.__arg_arrangement__)
-    self.assertIs(q.arrangement, a)
-    self.assertIs(q.__wrapped__, _identity)
-
-  def test_ilshift_mutates_in_place(self) -> None:
-    p = Permuter(_identity)
-    a = _arr(('A', 'B', 'C'), (2, 0, 1))
-    q = p
-    p <<= a
-    self.assertIs(p, q)
-    self.assertIs(p.arrangement, a)
-
-  def test_rrshift_equivalent_to_lshift(self) -> None:
-    """`arrangement >> p` produces the same result as `p << arrangement`."""
-    p: Permuter = Permuter(_identity)
-    a: Arrangement = _arr(('A', 'B', 'C'), (2, 0, 1))
-    q = a >> p
-    self.assertIs(q.__wrapped__, _identity)
-    self.assertIs(q.arrangement, a)
-
-  #  ________________________________________________________________
-  #  Bad Operator - Verifying 'NotImplemented' as return value
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_not_implemented_returns(self) -> None:
-    p = Permuter(_identity)
-    self.assertIs(p.__lshift__(69), NotImplemented)  # noqa
-    self.assertIs(p.__ilshift__(420), NotImplemented)  # noqa
-
-  #  ________________________________________________________________
-  #  Bad Operator - Verifying exception
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_ilshift_again(self) -> None:
-    a1 = _arr(('A', 'B', 'C'), (0, 1, 2))
-    a2 = _arr(('A', 'B', 'C'), (2, 1, 0))
-    p = Permuter(_identity, a1)
-    with self.assertRaises(WriteOnceError) as context:
-      p <<= a2
-    e = context.exception
-    self.assertIs(e.desc, p)
-    self.assertEqual(e.oldValue, a1)
-    self.assertEqual(e.newValue, a2)
-
-  #  ________________________________________________________________
-  #  Functionality - the actual point of the class
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_invoke_reorders_positional_args(self) -> None:
-    """Caller supplies args in arranged order; func receives them in
-    canonical (items) order. With items=(A,B,C) and forward=(2,0,1),
-    the arranged values are (C,A,B). A user passing ('c','a','b')
-    expects the wrapped function to see ('a','b','c')."""
-    a = _arr(('A', 'B', 'C'), (2, 0, 1))
-    p = Permuter(_identity, a)
-    self.assertEqual(p('c', 'a', 'b'), ('a', 'b', 'c'))
-
-  def test_invoke_two_arg_swap(self) -> None:
-    a = _arr(('x', 'y'), (1, 0))
-    p = Permuter(_two_args, a)
-    self.assertEqual(p('y', 'x'), ('x', 'y'))
-
-  def test_invoke_identity_arrangement_is_passthrough(self) -> None:
-    a = _arr(('A', 'B', 'C'), (0, 1, 2))
-    p = Permuter(_identity, a)
-    self.assertEqual(p(1, 2, 3), (1, 2, 3))
-
-  def test_invoke_three_cycle(self) -> None:
-    """Regression test for the original bug: a 3-cycle (not a
-    transposition) must round-trip correctly. Items (A,B,C) with
-    forward (1,2,0) produces arranged values (B,C,A); user calls
-    with ('b','c','a') and the function must receive ('a','b','c')."""
-    a = _arr(('A', 'B', 'C'), (1, 2, 0))
-    p = Permuter(_identity, a)
-    self.assertEqual(p('b', 'c', 'a'), ('a', 'b', 'c'))
-
-  def test_invoke_passes_kwargs_through_unmodified(self) -> None:
-    """Arrangement only touches positional args; kw pass through."""
-
-    def f(a, b, *, k) -> tuple[Any, Any, Any]:
-      return a, b, k
-
-    a = _arr(('A', 'B'), (1, 0))
-    p = Permuter(f, a)
-    self.assertEqual(p('y', 'x', k='kw'), ('x', 'y', 'kw'))
-
-  #  ________________________________________________________________
-  #  Good setter
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_set_arrangement_good(self) -> None:
-    p = Permuter(_identity)
-    a = _arr(('A', 'B', 'C'), (2, 0, 1))
-    p.setArrangement(a)
-    self.assertIs(p.arrangement, a)
-
-  #  ________________________________________________________________
-  #  Bad setter - write-once
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_set_arrangement_again(self) -> None:
-    """Once arrangement is set, it cannot be changed."""
-    a1 = _arr(('A', 'B', 'C'), (0, 1, 2))
-    a2 = _arr(('A', 'B', 'C'), (2, 1, 0))
-    p = Permuter(_identity, a1)
-    with self.assertRaises(WriteOnceError) as context:
-      p.setArrangement(a2)
-    e = context.exception
-    self.assertIs(e.desc, p)
-    self.assertEqual(e.oldValue, a1)
-    self.assertEqual(e.newValue, a2)
-
-  #  ________________________________________________________________
-  #  Bad setter - type check
-  #  ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-
-  def test_set_arrangement_wrong_type(self) -> None:
-    """setArrangement should only accept Arrangement instances."""
-    p = Permuter(_identity)
-    susArrangement = """Hi, I'm an arrangement, trust me bro!"""
+      Permuter(arrangement, arrangement)
+    self.assertIn("at most one 'Arrangement'", str(context.exception))
+    with self.assertRaises(ValueError) as context:
+      Permuter(_triple, _triple)
+    self.assertIn("at most one 'FunctionType'", str(context.exception))
     with self.assertRaises(TypeException) as context:
-      p.setArrangement(susArrangement)  # noqa
-    e = context.exception
-    self.assertEqual(e.varName, 'arrangement')
-    self.assertEqual(e.actualObject, susArrangement)
-    self.assertIs(e.actualType, str)
-    self.assertIn(Arrangement, e.expectedTypes)
+      Permuter(5)
+    self.assertEqual(context.exception.varName, 'arg')
+    self.assertEqual(context.exception.actualObject, 5)
+    self.assertIs(context.exception.actualType, int)
+    self.assertEqual(context.exception.expectedTypes,
+                     (Arrangement, FunctionType))
+    self.assertIn("'Arrangement' or 'function'", str(context.exception))
+
+  def test_missing_pieces(self) -> None:
+    with self.assertRaises(MissingVariable) as context:
+      Permuter(_triple)('A', 'B', 'C')
+    self.assertEqual(context.exception.varName, '__arg_arrangement__')
+    self.assertIsInstance(context.exception.instance, Permuter)
+    self.assertEqual(context.exception.expectedTypes, (Arrangement,))
+    self.assertIn("'Permuter.__arg_arrangement__: Arrangement'",
+                  str(context.exception))
+    with self.assertRaises(MissingVariable) as context:
+      Permuter(self._cycle())('A', 'B', 'C')
+    self.assertEqual(context.exception.varName, '__function_case__')
+    self.assertIsInstance(context.exception.instance, Permuter)
+    self.assertIn("'Permuter.__function_case__", str(context.exception))
+
+  def test_arrangement_set_once(self) -> None:
+    permuter = Permuter(_triple)
+    with self.assertRaises(TypeException) as context:
+      permuter.setArrangement(5)
+    self.assertEqual(context.exception.varName, 'arrangement')
+    self.assertEqual(context.exception.actualObject, 5)
+    self.assertIs(context.exception.actualType, int)
+    self.assertEqual(context.exception.expectedTypes, (Arrangement,))
+    self.assertIn("'arrangement'", str(context.exception))
+    permuter.setArrangement(self._cycle())
+    with self.assertRaises(WriteOnceError) as context:
+      permuter.setArrangement(self._cycle())
+    self.assertIs(context.exception.desc, permuter)
+    self.assertEqual(context.exception.oldValue, self._cycle())
+    self.assertEqual(context.exception.newValue, self._cycle())
+    self.assertIn('write-once', str(context.exception))
+
+  def test_operators(self) -> None:
+    arrangement = self._cycle()
+    bare = Permuter(_triple)
+    shifted = bare << arrangement
+    self.assertIsInstance(shifted, Permuter)
+    self.assertIsNot(shifted, bare)
+    self.assertIs(shifted.__wrapped__, _triple)
+    self.assertIs(shifted.arrangement, arrangement)
+    self.assertIsNone(bare.__arg_arrangement__)
+    rshifted = arrangement >> bare
+    self.assertIs(rshifted.arrangement, arrangement)
+    self.assertIsNot(rshifted, bare)
+    inplace = bare
+    inplace <<= arrangement
+    self.assertIs(inplace, bare)
+    self.assertIs(bare.arrangement, arrangement)
+    self.assertIs(bare.__lshift__(5), NotImplemented)
+    self.assertIs(bare.__ilshift__(5), NotImplemented)
+    with self.assertRaises(TypeError):
+      _ = bare << 5
+
+  def test_new_arrangement_keeps_class(self) -> None:
+    class Sub(Permuter):
+      pass
+
+    original = Sub(_triple)
+    renewed = Sub.newArrangement(original, self._cycle())
+    self.assertIsInstance(renewed, Sub)
+    self.assertEqual(renewed('C', 'A', 'B'), ('A', 'B', 'C'))
+
+  def test_random_orders(self) -> None:
+    for n in range(2, 5):
+      forward = [*range(n)]
+      self.randomInteger.random.shuffle(forward)
+      arrangement = Arrangement((*range(n),), (*forward,))
+      self.randomWord.size = n
+      words = self.randomWord.row
+      permuter = Permuter(lambda *a: a, arrangement)
+      with self.subTest(forward=forward):
+        self.assertEqual(permuter(*arrangement.applyTo(*words)), words)

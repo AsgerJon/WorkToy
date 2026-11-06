@@ -18,7 +18,7 @@
 #  major release resets RC and DEV to zero, reopening the dev window for
 #  the next line.
 MAJOR=1
-MINOR=0
-MICRO=1
+MINOR=1
+MICRO=0
 RC=0
-DEV=2
+DEV=0

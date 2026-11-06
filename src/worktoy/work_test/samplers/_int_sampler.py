@@ -6,29 +6,45 @@ IntSampler draws random 'int' values.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from random import randint
 
 from ...dispatch import overload
-from ...utilities import typeCast
-from ...desc import Field
+from ...desc import AttriBox
 from . import BaseSampler
-from ...waitaminute import TypeException
-from ...core.control_flow import SkipSet
-from ...waitaminute.dispatch import TypeCastException
 
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional, Union
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from typing import TypeAlias, Any
 
-  MaybeInt: TypeAlias = Optional[int]
+  KeyGroups: TypeAlias = dict[str, tuple[str, ...]]
+  Settings: TypeAlias = dict[str, Any]
 
 
 class IntSampler(BaseSampler):
   """
-  IntSampler draws uniformly random 'int' values between 'minVal' and
-  'maxVal' (inclusive), defaulting to the '[0, 255]' byte range. The
-  bounds accept the usual synonym spellings ('min'/'minimum'/...,
-  'max'/'maximum'/...) and are kept ordered, so a swapped pair is
-  silently corrected.
+  A test that needs integers wants them from a range it names once, by
+  position or by any usual spelling of the bounds, and wants a swapped
+  pair corrected rather than refused. 'IntSampler' draws uniformly
+  random 'int' values between 'minVal' and 'maxVal', both included,
+  from the byte range '[0, 255]' unless set otherwise:
+
+    class TestDice(BaseTest):
+
+      def setUp(self) -> None:
+        self.randomInteger = IntSampler(1, 6, seed=7)
+
+  Implementation
+  --------------
+
+  'minVal' and 'maxVal' are 'AttriBox[int]' with the synonyms 'minimum',
+  'min', 'min_value', 'minValue' and 'maximum', 'max', 'max_value',
+  'maxValue' for the keyword constructor. '_orderBounds', an 'onSet'
+  notifier of both boxes, swaps the pair whenever the upper bound falls
+  below the lower, so a bound written by assignment, or a lone keyword
+  crossing the other bound, is corrected. A pair is written by
+  '_setBounds', with the notifier standing down until both are stored
+  so that neither is ordered against a stale value; the positional
+  constructors and '_applySettings', when both keywords are present,
+  write through it. The one-argument constructor takes the upper bound
+  with zero as the lower one. Each value is 'self.random.randint'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -36,116 +52,62 @@ class IntSampler(BaseSampler):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
-  __min_keys__ = 'minVal', 'minimum', 'min', 'min_value', 'minValue'
-  __max_keys__ = 'maxVal', 'maximum', 'max', 'max_value', 'maxValue'
-  __key_groups__: dict[str, tuple[str, ...]] = dict(
-      minVal=__min_keys__,
-      maxVal=__max_keys__,
+  __key_groups__: KeyGroups = dict(
+      minVal=('minVal', 'minimum', 'min', 'min_value', 'minValue'),
+      maxVal=('maxVal', 'maximum', 'max', 'max_value', 'maxValue'),
   )
-  __key_types__: dict[str, type] = dict(
-      minVal=int,
-      maxVal=int,
-  )
-  __key_defaults__: dict[str, Union[int, float]] = dict(
-      minVal=0,
-      maxVal=255,
-  )
-
-  #  Fallback Variables
-  __fallback_min__: int = 0
-  __fallback_max__: int = 255
 
   #  Private Variables
-  __min_value__: MaybeInt = None
-  __max_value__: MaybeInt = None
+  __bounds_pending__: bool = False
 
   #  Public Variables
-  minVal: Field[int] = Field()
-  maxVal: Field[int] = Field()
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def _createMinVal(self, ) -> None:
-    self.__min_value__ = self.__fallback_min__
-
-  def _createMaxVal(self, ) -> None:
-    self.__max_value__ = self.__fallback_max__
-
-  @minVal.GET
-  def _getMinVal(self, **kwargs) -> int:
-    if self.__min_value__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._createMinVal()
-      return self._getMinVal(_recursion=True)
-    return self.__min_value__
-
-  @maxVal.GET
-  def _getMaxVal(self, **kwargs) -> int:
-    if self.__max_value__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._createMaxVal()
-      return self._getMaxVal(_recursion=True)
-    return self.__max_value__
+  minVal = AttriBox[int](0)
+  maxVal = AttriBox[int](255)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @minVal.SET
-  def _setMinVal(self, minVal: int) -> None:
-    if not isinstance(minVal, int):
-      try:
-        casted = typeCast(int, minVal, )
-      except TypeCastException as typeCastException:
-        raise TypeException('minVal', minVal, int) from typeCastException
-      else:
-        return self._setMinVal(casted)
-    setattr(self, '__min_value__', minVal)
-    return None
+  def _setBounds(self, low: Any, high: Any) -> None:
+    """
+    The '_setBounds' method writes the two bounds as a pair, each cast
+    by its box, and orders the pair once both are stored; while it
+    writes, '_orderBounds' stands down.
+    """
+    self.__bounds_pending__ = True
+    try:
+      self.minVal = low
+      self.maxVal = high
+    finally:
+      self.__bounds_pending__ = False
+    self._orderBounds()
 
-  @maxVal.SET
-  def _setMaxVal(self, value: int) -> None:
-    if not isinstance(value, int):
-      try:
-        casted = typeCast(int, value, )
-      except TypeCastException as typeCastException:
-        raise TypeException('maxVal', value, int) from typeCastException
-      else:
-        return self._setMaxVal(casted)
-    setattr(self, '__max_value__', value)
-    return None
+  def _applySettings(self, settings: Settings) -> None:
+    """
+    The '_applySettings' method writes both bounds as a pair when the
+    keywords name both, and hands the rest to the base.
+    """
+    if 'minVal' in settings and 'maxVal' in settings:
+      self._setBounds(settings.pop('minVal'), settings.pop('maxVal'))
+    BaseSampler._applySettings(self, settings)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @minVal.preSet
-  def _preSetMinVal(self, value: int, *args) -> None:
-    if value == self.minVal:
-      raise SkipSet
-
-  @maxVal.preSet
-  def _preSetMaxVal(self, value: int, *args) -> None:
-    if value == self.maxVal:
-      raise SkipSet
-
   @minVal.onSet
   @maxVal.onSet
-  def _onSetRange(self, *args) -> None:
-    try:
-      _ = self._getMinVal(_recursion=True)
-      _ = self._getMaxVal(_recursion=True)
-    except RecursionError:
-      return None
-    else:
-      if not self.maxVal > self.minVal:
-        a, b = self.minVal, self.maxVal
-        self.__min_value__ = min(a, b)
-        self.__max_value__ = max(a, b)
+  def _orderBounds(self, *args) -> None:
+    """
+    The '_orderBounds' notifier swaps the bounds when the upper one has
+    fallen below the lower one.
+    """
+    if self.__bounds_pending__:
+      #  This branch is reached by the following:
+      #  - '_setBounds' is writing a pair and orders it once both are stored
+      return
+    if self.maxVal < self.minVal:
+      self._setBounds(self.maxVal, self.minVal)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -155,7 +117,7 @@ class IntSampler(BaseSampler):
     return int
 
   def _getItem(self, *args, **kwargs) -> int:
-    return randint(self.minVal, self.maxVal)
+    return self.random.randint(self.minVal, self.maxVal)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -163,8 +125,7 @@ class IntSampler(BaseSampler):
 
   @overload(int, int, )
   def __init__(self, minVal: int, maxVal: int, **kwargs) -> None:
-    self.minVal = min(minVal, maxVal)
-    self.maxVal = max(minVal, maxVal)
+    self._setBounds(minVal, maxVal)
     if kwargs:
       self.__init__(**kwargs)
 

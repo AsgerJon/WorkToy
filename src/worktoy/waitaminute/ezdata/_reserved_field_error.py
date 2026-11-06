@@ -10,25 +10,22 @@ from typing import TYPE_CHECKING
 
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from ...ezdata import EZSpace
 
 
-class ReservedFieldError(WorkToyException, AttributeError):
+class ReservedFieldError(WorkToyException, SyntaxError):
   """
-  ReservedFieldError subclasses 'AttributeError' and is raised
-  when an EZData class body declares an EZField at a name that
-  EZData reserves for one of its generated methods. Method
-  overrides at these names remain allowed; only EZField
-  declarations are rejected.
+  ReservedFieldError is raised when an EZData class body declares an
+  EZField at a name that EZData reserves for one of its generated
+  methods. Method overrides at these names remain allowed; only EZField
+  declarations are rejected. It subclasses 'SyntaxError', as every
+  refusal of a class-body line in worktoy does.
 
   Attributes
   ----------
   fieldName : str
-    The reserved name the user attempted to bind an EZField to. It is not
-    kept at 'name', which an 'AttributeError' reads as the name of a
-    missing attribute, and which tracebacks from Python 3.12 on answer
-    with a suggestion.
+    The reserved name the user attempted to bind an EZField to.
   space : EZSpace
     The namespace under construction; carries the class name and
     the reserved-name list.
@@ -39,7 +36,9 @@ class ReservedFieldError(WorkToyException, AttributeError):
   def __init__(self, fieldName: str, space: EZSpace) -> None:
     self.fieldName = fieldName
     self.space = space
-    AttributeError.__init__(self, )
+    SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
     infoSpec = (

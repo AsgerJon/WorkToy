@@ -15,14 +15,16 @@ metaclass passes that 'dict' to 'type.__new__'; per-name validation
 execution, through the namespace hooks. Before returning the created
 class, the metaclass calls '__subclasshook__' on each base class,
 passing the created class. The return value is ignored, so a base cannot
-modify
-the class; it can only reject the class by raising an exception from
-'__subclasshook__'. Finally, the metaclass returns the created class
-object.
+modify the class; it can only reject the class by raising an exception
+from '__subclasshook__'. Finally, the metaclass returns the created
+class object.
 
-A base built by 'abc.ABCMeta', such as 'abc.ABC', cannot be combined with
-these metaclasses: 'ABCMeta' is outside the 'MetaType' family, so the
-class statement raises Python's metaclass conflict.
+A class whose metaclass comes from another library takes a metaclass
+combined with one of these. A base built by 'abc.ABCMeta', such as
+'abc.ABC', listed beside 'BaseObject' raises Python's metaclass conflict,
+since 'ABCMeta' is outside the 'MetaType' family; a metaclass based on
+both, as 'class ABCBaseMeta(BaseMeta, ABCMeta)', builds the class, with
+its abstract methods and its overloads.
 
 - space_hooks
 - AbstractNamespace

@@ -1,196 +1,133 @@
 """
-TestExceptionInfo module tests the ExceptionInfo class.
+TestExceptionInfo tests 'ExceptionInfo' from 'worktoy.utilities'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from worktoy.utilities import ExceptionInfo
-from . import UtilitiesTest
-
-
-class _TestBaseException(BaseException):
-  """
-  This subclass of 'BaseException' is used only for testing purposes.
-  Generally speaking, 'BaseException' should not be subclassed directly
-  and it should most definitely *never* be caught in application code.
-  """
-  pass
+from . import UtilitiesTest, Interrupt
 
 
 class TestExceptionInfo(UtilitiesTest):
-  """Tests the ExceptionInfo class."""
+  """
+  'ExceptionInfo' wraps a block expected to raise, records what the
+  block raised against what was expected, and writes a report of the
+  outcome. The tests pin each of the six outcomes the docstring lists,
+  the propagation of a 'BaseException' that is no 'Exception', the two
+  refusals of the constructor, and the string forms.
+  """
 
-  def test_no_context(self, ) -> None:
-    """
-    Testing 'ExceptionInfo' outside any context manager.
-    """
-    for excType in self.exceptions:
-      info = ExceptionInfo(excType)
-      self.assertIsNone(info.actualException)
-      self.assertIs(info.expectedExcType, excType)
-      infoStr = str(info)
-      infoRepr = repr(info)
-      self.assertIn(excType.__name__, infoStr)
-      self.assertIn(excType.__name__, infoRepr)
+  def test_no_expectation_no_exception(self) -> None:
+    with ExceptionInfo() as info:
+      pass
+    self.assertFalse(info)
+    self.assertIsNone(info.expectedExcType)
+    self.assertIsNone(info.actualException)
+    self.assertIsNone(info.actualExcType)
+    self.assertEqual(info.expectedName, 'No Exception')
+    self.assertEqual(info.actualName, 'No Exception')
+    self.assertEqual(info.report, 'Exited without exception as expected!')
 
-  def test_no_exception(self, ) -> None:
-    """
-    Testing 'ExceptionInfo' when no exception is raised.
-    """
-    for excType in self.exceptions:
-      with ExceptionInfo(excType) as info:
-        pass
-      self.assertFalse(info)
-      self.assertIsNone(info.actualException)
-      self.assertIs(info.expectedExcType, excType)
-      infoStr = """<%s expected='%s' actual='%s'>"""
-      clsName = type(info).__name__
-      expectedStr = infoStr % (clsName, info.expectedName, info.actualName)
-      self.assertEqual(expectedStr, str(info))
-      expectedRepr = """%s(%s)""" % (clsName, info.expectedName)
-      self.assertEqual(expectedRepr, repr(info))
+  def test_expected_but_nothing_raised(self) -> None:
+    with ExceptionInfo(ValueError) as info:
+      pass
+    self.assertFalse(info)
+    self.assertIs(info.expectedExcType, ValueError)
+    self.assertEqual(info.expectedName, 'ValueError')
+    self.assertEqual(info.actualName, 'No Exception')
+    self.assertIn("Expected 'ValueError', but no exception", info.report)
 
-  def test_subclass_exception(self, ) -> None:
-    """
-    Testing 'ExceptionInfo' when a subclass of the expected exception is
-    raised.
-    """
-    subNames = str.split("""Never gonna give you up""")
-    info = None
-    for excType in self.exceptions:
-      for name in subNames:
-        Sub = type(str.capitalize(name), (excType,), dict())
-        try:
-          with ExceptionInfo(excType) as info:
-            raise Sub
-        finally:
-          self.assertIsInstance(info.actualException, Sub)
-          self.assertIsInstance(info.actualException, excType)
-          self.assertIs(info.expectedExcType, excType)
-          strSpec = """<%s expected='%s' actual='%s'>"""
-          clsName = type(info).__name__
-          expStr = strSpec % (clsName, info.expectedName, info.actualName)
-          reprSpec = """%s(%s)"""
-          expectedRepr = reprSpec % (clsName, info.expectedName)
-          self.assertEqual(str(info), expStr)
-          self.assertEqual(repr(info), expectedRepr)
+  def test_exact_match_suppressed(self) -> None:
+    with ExceptionInfo(ValueError) as info:
+      raise ValueError('bad value')
+    self.assertTrue(info)
+    self.assertIsInstance(info.actualException, ValueError)
+    self.assertIs(info.actualExcType, ValueError)
+    self.assertEqual(info.actualName, 'ValueError')
+    self.assertEqual(info.report,
+                     "Caught 'ValueError' as expected: bad value")
 
-  def test_expected_exception(self, ) -> None:
-    """
-    Testing 'ExceptionInfo' when the expected exception is raised.
-    """
+  def test_subclass_match_suppressed(self) -> None:
+    with ExceptionInfo(LookupError) as info:
+      raise KeyError('missing')
+    self.assertTrue(info)
+    self.assertIs(info.actualExcType, KeyError)
+    self.assertIn("'KeyError'", info.report)
+    self.assertIn("a subclass of 'LookupError'", info.report)
+    self.assertIn("'missing'", info.report)
+
+  def test_wrong_type_suppressed(self) -> None:
+    with ExceptionInfo(ValueError) as info:
+      raise TypeError('wrong kind')
+    self.assertTrue(info)
+    self.assertIs(info.actualExcType, TypeError)
+    self.assertIn("Expected 'ValueError'", info.report)
+    self.assertIn("'TypeError' instead: wrong kind", info.report)
+
+  def test_no_expectation_propagates(self) -> None:
+    info = ExceptionInfo()
+    with self.assertRaises(ValueError) as context:
+      with info:
+        raise ValueError('unexpected')
+    self.assertEqual(str(context.exception), 'unexpected')
+    self.assertTrue(info)
+    self.assertIsInstance(info.actualException, ValueError)
+    self.assertEqual(info.report, '')
+
+  def test_base_exception_propagates(self) -> None:
+    info = ExceptionInfo(ValueError)
+    with self.assertRaises(Interrupt) as context:
+      with info:
+        raise Interrupt()
+    self.assertEqual(context.exception.args, ())
+    self.assertTrue(info)
+    self.assertIs(info.actualExcType, Interrupt)
+    self.assertIn("Received BaseException of type 'Interrupt'", info.report)
+    self.assertIn('must always propagate', info.report)
+
+  def test_instance_taken_as_its_type(self) -> None:
+    info = ExceptionInfo(ValueError('from instance'))
+    self.assertIs(info.expectedExcType, ValueError)
+    self.assertEqual(info.expectedName, 'ValueError')
+
+  def test_not_an_exception_refused(self) -> None:
+    with self.assertRaises(TypeError) as context:
+      ExceptionInfo(42)
+    self.assertIn("got 'int'", str(context.exception))
+
+  def test_class_not_an_exception_refused(self) -> None:
+    with self.assertRaises(TypeError) as context:
+      ExceptionInfo(str)
+    self.assertIn("got 'type'", str(context.exception))
+
+  def test_base_exception_not_expectable(self) -> None:
+    with self.assertRaises(TypeError) as context:
+      ExceptionInfo(Interrupt)
+    self.assertIn("cannot expect 'Interrupt'", str(context.exception))
+
+  def test_typical_exceptions_all_caught(self) -> None:
     for excType in self.exceptions:
-      try:
+      with self.subTest(excType=excType):
         with ExceptionInfo(excType) as info:
-          raise excType("Test exception")
-      finally:
-        self.assertTrue(info)
-        self.assertIsInstance(info.actualException, excType)
-        self.assertIs(info.expectedExcType, excType)
-        strSpec = """<%s expected='%s' actual='%s'>"""
-        reprSpec = """%s(%s)"""
-        clsName = type(info).__name__
-        expStr = strSpec % (clsName, info.expectedName, info.actualName)
-        expRepr = reprSpec % (clsName, info.expectedName)
-        self.assertEqual(str(info), expStr)
-        self.assertEqual(repr(info), expRepr)
-
-  def test_wrong_exception_type(self, ) -> None:
-    """
-    Testing 'ExceptionInfo' when an unexpected exception is raised.
-    """
-    for expected in self.exceptions:
-      for actual in self.exceptions:
-        if issubclass(actual, expected) or issubclass(expected, actual):
-          continue
-        try:
-          with ExceptionInfo(expected) as info:
-            raise actual("Test exception")
-        finally:
-          self.assertIsInstance(info.actualException, actual)
-          strSpec = """<%s expected='%s' actual='%s'>"""
-          reprSpec = """%s(%s)"""
-          clsName = type(info).__name__
-          expStr = strSpec % (clsName, info.expectedName, info.actualName)
-          expRepr = reprSpec % (clsName, info.expectedName)
-          self.assertIs(info.expectedExcType, expected)
-          self.assertEqual(str(info), expStr)
-          self.assertEqual(repr(info), expRepr)
-          self.assertNotIsInstance(info.actualException, expected)
-
-  def test_base_exception(self, ) -> None:
-    """
-    Testing 'ExceptionInfo' when a 'BaseException' is raised.
-    """
-    for excType in self.exceptions:
-      with self.assertRaises(_TestBaseException):
-        try:
-          with ExceptionInfo(excType) as info:
-            raise _TestBaseException
-        finally:
-          self.assertIsInstance(info.actualException, BaseException)
-          self.assertIs(info.expectedExcType, excType)
-          strSpec = """<%s expected='%s' actual='%s'>"""
-          reprSpec = """%s(%s)"""
-          clsName = type(info).__name__
-          expStr = strSpec % (clsName, info.expectedName, info.actualName)
-          expRepr = reprSpec % (clsName, info.expectedName)
-          self.assertEqual(str(info), expStr)
-          self.assertEqual(repr(info), expRepr)
-
-  def test_no_expections(self, ) -> None:
-    """
-    Testing ExceptionInfo on no exceptions.
-    """
-    with ExceptionInfo() as info:
-      pass
-    self.assertIsNone(info.actualException)
-    self.assertEqual('ExceptionInfo()', repr(info))
-
-  def test_from_exception_instance(self) -> None:
-    """
-    Testing ExceptionInfo from an exception instance rather than exception
-    type.
-    """
-    for excType in self.exceptions:
-      try:
-        raise excType()
-      except Exception as exception:
-        with ExceptionInfo(exception) as info:  # noqa
-          pass
-        self.assertIsInstance(exception, excType)
-        self.assertIs(info.expectedExcType, excType)
-
-  def test_unexpected_exception(self, ) -> None:
-    """
-    Testing exceptions raised when no exception is expected.
-    """
-    for excType in self.exceptions:
-      try:
-        with ExceptionInfo() as info:
-          raise excType()
-      except Exception as exception:
-        self.assertIsInstance(exception, excType)
-        self.assertIsNone(info.__expected_exception__)
+          raise excType('typical')
         self.assertIs(info.actualExcType, excType)
-        self.assertIs(info.actualException, exception)
+        self.assertIn('as expected', info.report)
 
-  def test_well(self) -> None:
-    """
-    Testing the case where no exception is expected or raised.
-    """
-    with ExceptionInfo() as info:
-      pass
-    self.assertIsNone(info.actualException)
-    self.assertIsNone(info.__expected_exception__)
-    self.assertIn('Exited without exception as expected', info.report)
+  def test_str(self) -> None:
+    with ExceptionInfo(ValueError) as info:
+      raise KeyError('k')
+    expected = "<ExceptionInfo expected='ValueError' actual='KeyError'>"
+    self.assertEqual(str(info), expected)
+    self.assertEqual(str(ExceptionInfo()), (
+      "<ExceptionInfo expected='No Exception' actual='No Exception'>"
+    ))
 
-  def test_invalid_expected_raises_typeerror(self) -> None:
-    """
-    Passing a value that is neither a BaseException subclass nor
-    instance must raise TypeError.
-    """
-    for bad in (42, 'string', object()):
-      with self.assertRaises(TypeError):
-        ExceptionInfo(bad)
+  def test_repr(self) -> None:
+    self.assertEqual(repr(ExceptionInfo()), 'ExceptionInfo()')
+    self.assertEqual(repr(ExceptionInfo(OSError)), 'ExceptionInfo(OSError)')
+
+  def test_enter_returns_self(self) -> None:
+    info = ExceptionInfo()
+    self.assertIs(info.__enter__(), info)
+    self.assertTrue(info.__exit__(None, None, None))

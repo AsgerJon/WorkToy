@@ -13,7 +13,7 @@ from ..utilities import maybe
 from ..waitaminute import MissingVariable
 from . import AbstractNamespace as ASpace
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, TypeAlias, Type, Union
 
   from . import AbstractMetaclass
@@ -25,144 +25,73 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class AbstractMetaclass(MetaType, metaclass=MetaType):
   """
-  Abstract base for custom metaclasses that separates concerns between
-  class construction and class behavior.
+  A class is an object too, and some classes want to behave as objects
+  do: a registry class iterated over its members, a class with a
+  length, a class answering 'isinstance' its own way, a class building
+  its instances in its own way. In plain Python each of these takes a
+  metaclass of its own, and metaclasses combine badly. worktoy needs one
+  metaclass under which a class defines such behaviour itself, in its
+  own body, and leaves every operation it does not define as a plain
+  class would have it. The same metaclass must build the class from a
+  namespace whose hooks screen and transform the class body, and let a
+  base refuse a subclass.
 
-  This design delegates the initial class namespace to a custom object
-  returned by '__prepare__', while keeping class semantics within the
-  metaclass itself. The namespace object may define a method called
-  'compile()', which should return the finalized dictionary to be passed
-  to 'type.__new__'.
+  Implementation
+  --------------
 
-  Custom namespace compilation
-  ----------------------------
-  The 'AbstractNamespace' class is intended to be
-  used with '__prepare__'. It defines a 'compile()' method and an
-  '__init__()' signature compatible with the arguments passed to
-  '__prepare__'. Specifically:
+  '__prepare__' returns an 'AbstractNamespace'; '__new__' compiles it,
+  creates the class through 'MetaType', and hands it to every hook's
+  'newClassPhase'; '__init__' calls the class hook '__class_init__', if
+  defined, then '__subclasshook__' on each base with the new class, so a
+  base may refuse it by raising. Each operation on the class consults a
+  classmethod hook of the class: '__class_call__', '__class_init__',
+  '__class_instancecheck__', '__class_subclasscheck__', '__class_str__',
+  '__class_repr__', '__class_iter__', '__class_next__',
+  '__class_bool__', '__class_contains__', '__class_len__',
+  '__class_hash__', '__class_setitem__', '__class_delitem__',
+  '__class_getattr__' for a missing attribute, '__class_setattr__' and
+  '__class_delattr__'. A hook not defined holds 'METACALL', and the
+  operation then behaves as for a plain class: 'bool' answers from
+  '__class_len__' or else 'True', 'in' searches the items
+  '__class_iter__' yields, and 'len' fails. 'NamespaceHook'
+  holds every hook to being a classmethod or 'METACALL'. Equality of
+  classes stays identity; '__class_eq__', '__class_ne__' and a
+  class-level '__getitem__' are deliberately not offered, and a
+  subscript of a class goes to its '__class_getitem__' as in plain
+  Python. The defaults hand over with 'super()', so a metaclass based on
+  'MetaType' mixed in beside this one takes part.
 
-      def __prepare__(mcls, name: str, bases: Base, **kw) -> ASpace
+  Python expects one of two behaviours from an object that iterates: an
+  iterable, whose '__iter__' returns a fresh iterator at every call and
+  which iteration leaves as it was, or an iterator, whose '__iter__'
+  returns itself and whose '__next__' hands out each item once. The
+  class hooks are held to the same expectation: '__class_iter__'
+  returning a new iterator each time makes the class an iterable, and
+  '__class_iter__' returning the class itself beside a '__class_next__'
+  makes it an iterator. Hooks implemented in a way that falls outside
+  those two, as a class that iterates itself yet also counts or
+  searches itself by iterating, give undefined behaviour in some
+  circumstances. That undefined behaviour is the same as for a plain
+  class implementing '__iter__', '__next__' and '__len__' in the same
+  in-between way.
 
-  and 'AbstractNamespace' implements:
-
-      def __init__(self, mcls: type, name: str, bases: Base, **kw)
-
-  This allows the namespace object to be instantiated with full context
-  about the class being defined, while remaining isolated from the
-  behavior of the resulting class itself.
-
-  Validation hooks
-  ----------------
-  Validation of the namespace is delegated to space hooks rather than
-  performed by the metaclass itself. The 'NamespaceHook' raises
-  'QuestionableSyntax' on near-miss dunder names such as
-  '__set_item__' (intended '__setitem__') or '__setname__' (intended
-  '__set_name__'), and raises 'DelException' on plain '__del__'.
-  Pass 'trustMeBro=True' as a class keyword if a real '__del__'
-  implementation is genuinely needed.
-
-  Class-level behavior hooks
-  --------------------------
-  Once a class has been created by the metaclass system, it may define
-  its own runtime behavior by implementing special methods prefixed with
-  '__class_'. These resemble '__class_getitem__' from standard Python
-  but are more general. The metaclass dispatches the corresponding
-  builtin operation to the class-level hook when present, falling back
-  to the default 'type' behavior otherwise. Hooks are detected by
-  comparison against the 'METACALL' sentinel. A metaclass based on this
-  one that implements an operation itself, as 'KeeMeta' implements
-  '__len__', takes it over from the hook, and 'NamespaceHook' refuses
-  that hook in the body of its classes with 'ShadowedClassHook'.
-
-  Supported class-level hooks:
-
-  - '__class_call__(clsName, *args, **kw) -> Any'
-    Called when the class is invoked. Overrides instance construction.
-  - '__class_instancecheck__(clsName, obj) -> bool'
-    Called during 'isinstance(obj, clsName)'.
-  - '__class_subclasscheck__(clsName, sub) -> bool'
-    Called during 'issubclass(sub, clsName)'.
-  - '__class_str__(clsName) -> str'
-    Called when 'str(clsName)' is invoked.
-  - '__class_repr__(clsName) -> str'
-    Called when 'repr(clsName)' is invoked.
-  - '__class_iter__(clsName) -> Iterator'
-    Called when 'iter(clsName)' is invoked.
-  - '__class_next__(clsName) -> Any'
-    Called when 'next(clsName)' is invoked.
-  - '__class_bool__(clsName) -> bool'
-    Called when 'bool(clsName)' is invoked. If absent, falls back to
-    '__class_len__' or '__class_iter__'.
-  - '__class_contains__(clsName, item) -> bool'
-    Called for membership checks. Falls back to iteration if absent.
-  - '__class_len__(clsName) -> int'
-    Called when 'len(clsName)' is invoked.
-  - '__class_hash__(clsName) -> int'
-    Called when 'hash(clsName)' is invoked. The default hashes the name
-    of the class, the names of its bases other than 'object' and the
-    bases marked '__skip_hash__' ('_Chill'), and the name of its
-    metaclass:
-
-        baseNames = [b.__name__ for b in bases]  # less object, _Chill
-        metaName = type(clsName).__name__
-        return hash((clsName.__name__, *baseNames, metaName))
-
-    The default is computed at the first hash and kept in the class's
-    own '__dict__' under '__class_hash_value__', so a class keeps its
-    hash for life, as a plain class does: renamed afterwards, it stays
-    where a dict or set holds it. A '__class_hash__' is asked at every
-    hash.
-  - '__class_init__(clsName, name, bases, space, **kw) -> None'
-    Invoked after the class body has been fully executed.
-  - '__class_setitem__(clsName, item, value) -> None'
-    Called when 'clsName[item] = value' is invoked.
-  - '__class_delitem__(clsName, item) -> None'
-    Called when 'del clsName[item]' is invoked.
-  - '__class_getattr__(clsName, name) -> Any'
-    Called when an undefined attribute is accessed on the class.
-  - '__class_setattr__(clsName, name, value) -> None'
-  - '__class_delattr__(clsName, name) -> None'
-
-  Note on '__class_getitem__': as of Python 3.7 the interpreter
-  dispatches subscript on a class straight to '__class_getitem__' when
-  it is defined, without going through the metaclass. This metaclass
-  defines no '__getitem__', so subscripting a class that has no
-  '__class_getitem__' raises 'TypeError'.
-
-  A hook is a classmethod and nothing else. 'NamespaceHook' refuses any
-  other binding at a hook name, a plain function, a staticmethod, an
-  '@overload', a value, with 'UnboundClassHook' at the class-body line;
-  an '@overload' there would become a 'Dispatcher' calling its functions
-  with an instance first, which the metaclass, calling the hook on the
-  class, never passes.
-
-  Combining metaclasses
-  ---------------------
-  '__new__', '__init__' and every default that applies when a class
-  declares no hook, those of '__call__', '__instancecheck__',
-  '__subclasscheck__', '__str__', '__repr__', '__setattr__' and
-  '__delattr__', hand over with 'super()'. A metaclass based on
-  'MetaType' and mixed in beside this one, as in
-  'class Meta(BaseMeta, OtherMeta)', therefore takes part: its own
-  versions of those methods run, in the order of the metaclass
-  resolution order. For a metaclass based on this one alone the next
-  class is 'MetaType', as it always was.
-
-  Unimplemented or intentionally rejected hooks
-  ---------------------------------------------
-  - '__class_eq__' and '__class_ne__' exhibit poorly defined behavior
-    when classes participate in equality outside of identity. Not
-    implemented.
-  - '__class_get__', '__class_set__', '__class_delete__',
-    '__class_set_name__' are not implemented. Referencing other class
-    objects while a metaclass is awake (inside '__prepare__', '__new__',
-    or '__init__') can leak context: Python may route calls to the
-    wrong metaclass entirely.
-  - '__class_new__' would refer to a hook running before the class
-    exists, which is meaningless.
-  - '__class_del__' is rejected for the same reasons '__del__' is
-    rejected on instances.
-  - '__class_getattribute__' is not implemented (cognito hazard).
+  A note on 'collections.abc', for any reader puzzled by it: because
+  this metaclass implements '__iter__', '__next__', '__len__' and
+  '__contains__', so that each of its classes may opt in through the
+  hooks above, 'isinstance' reports every class it builds as an
+  'Iterable', 'Iterator', 'Sized', 'Container' and 'Collection', the
+  classes defining no hook included. That report is wrong, and the fault
+  is with 'collections.abc', not with worktoy. Those structural checks
+  never call the methods. They only look for the names in the
+  dictionary of the type of the object, which for a class is its
+  metaclass, so they cannot tell one class of a metaclass from another.
+  The one signal they honour, a name set to 'None', would switch the
+  operation off for every class of the metaclass at once, so Python
+  leaves a single class no way to answer for itself. The Python
+  documentation itself names 'iter(obj)' as the only reliable test of
+  whether an object iterates. The routing stays as it is, by decision.
+  Code that must know whether a worktoy class iterates, or has a length,
+  calls 'iter(cls)' or 'len(cls)' and catches 'TypeError'.
   """
 
   __abstract_metaclass__: bool = True
@@ -174,26 +103,55 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   @classmethod
   def __prepare__(mcls, name: str, bases: Base, **kwargs) -> ASpace:
     """
-    The __prepare__ method is invoked before the class is created. This
-    method instantiates the namespace object used to collect the class
-    body. The default implementation in 'type' returns a plain empty
-    'dict' object. Subclasses of 'AbstractMetaclass' may override this
-    method to provide a further customized namespace object.
+    The class body must run in a namespace whose hooks screen it. A
+    metaclass based on this one supplies another namespace by
+    reimplementing this method to return an instance of an
+    'AbstractNamespace' subclass, and leaves the bases as they are.
 
-    Also, this method removes nothing from the 'bases' tuple. Subclasses
-    should also remove nothing from the 'bases' tuple.
+    Returns
+    -------
+
+    AbstractNamespace
+      The namespace of the class body.
     """
     # noinspection PyTypeChecker
     return ASpace(mcls, name, bases, **kwargs)
 
   def __new__(mcls, name: str, bases: Base, space: ASpace, **kw) -> AMeta:
     """
-    The '__new__' method compiles the namespace and builds the class from
-    it, then hands the class to the 'newClassPhase' of every hook. Called
-    directly with a plain dict, as in 'BaseMeta(name, bases, {...})', it
-    first copies the dict into a namespace of its own, and the hooks of
-    that namespace run. The class itself is built by the next '__new__'
-    along the metaclass resolution order, through 'super()'.
+    The class must be created from what the hooks made of the class body,
+    and the hooks must see the finished class. A class created by calling
+    the metaclass with a plain dictionary, as 'BaseMeta(name, bases,
+    {...})', must be screened as a class body would be.
+
+    Implementation
+    --------------
+
+    A plain dictionary is replayed into a new namespace first. The
+    namespace is compiled, the class is created by the next '__new__'
+    along the metaclass order, and every hook's 'newClassPhase' may
+    replace it. Class keywords pass on and end in '_Chill'.
+
+    Parameters
+    ----------
+
+    name : str
+      The name of the class.
+
+    bases : Base
+      A 'tuple[type, ...]' of the bases.
+
+    space : ASpace
+      The namespace of the class body, or a plain dictionary.
+
+    **kw
+      Class keywords.
+
+    Returns
+    -------
+
+    AMeta
+      The new class.
     """
     if not isinstance(space, ASpace):
       plain = space
@@ -203,19 +161,27 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     namespace = space.compile()
     cls: AMeta = super().__new__(mcls, name, bases, namespace, **kw)
     for hook in space.getHooks():
-      setattr(hook, '__space_object__', space)
       cls = maybe(hook.newClassPhase(cls), cls)
     return cls
 
   def __init__(cls, name: str, bases: Base, space: ASpace, **kwargs) -> None:
-    """Finalize the class. By now 'type.__new__' has already run
-    '__set_name__' and '__init_subclass__'. This calls the next
-    '__init__' along the metaclass resolution order through 'super()',
-    then the optional '__class_init__' hook, then the subclass
-    notification ('_notifySubclassHook')."""
+    """
+    A class may need to finish itself once it exists, and a base may need
+    to accept or refuse each subclass.
+
+    Implementation
+    --------------
+
+    After the next '__init__' along the metaclass order, the class hook
+    '__class_init__' receives the name, the bases, the namespace object
+    and the keywords, and each base as written receives the class through
+    '__subclasshook__', whose answer is ignored but whose exception
+    refuses the class.
+    """
     super().__init__(name, bases, space, **kwargs)
     if cls.__class_init__ is not METACALL:
-      cls.__class_init__(name, bases, space, **kwargs)
+      namespace: dict = type.__getattribute__(cls, '__namespace__')
+      cls.__class_init__(name, bases, namespace, **kwargs)
     type(cls)._notifySubclassHook(cls, *bases)
 
   def __call__(cls, *args, **kwargs) -> Any:
@@ -244,6 +210,41 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls.__class_repr__()
 
   def __iter__(cls) -> Any:
+    """
+    A class may need to be iterable itself, as a registry of its members,
+    by defining '__class_iter__' as a classmethod returning an iterator.
+    A class without the hook must fail to iterate, as a plain class does.
+    A hook returning a fresh iterator at every call makes the class an
+    iterable; one returning the class itself, beside '__class_next__',
+    makes it an iterator. The class docstring says what Python expects
+    of each, and what falls outside the two.
+
+    A note on 'collections.abc': 'isinstance(cls, Iterable)' answers
+    'True' for every class this metaclass builds, the ones without the
+    hook included. That answer is wrong, and the fault is with
+    'collections.abc', not here. Its structural check never calls
+    '__iter__'; it only looks whether the type of the object, for a class
+    its metaclass, holds an '__iter__' in its dictionary. This metaclass
+    must hold one for any of its classes to opt in, and Python gives a
+    single class no way to tell the check otherwise: the one signal it
+    honours, '__iter__ = None', would apply to every class of the
+    metaclass at once. The Python documentation itself names 'iter(obj)'
+    as the only reliable test of whether an object iterates, so code that
+    must know whether a worktoy class iterates calls 'iter(cls)' and
+    catches 'TypeError'.
+
+    Returns
+    -------
+
+    Iterator
+      The iterator '__class_iter__' returns.
+
+    Raises
+    ------
+
+    TypeError
+      The class defines no '__class_iter__'.
+    """
     if cls.__class_iter__ is METACALL:
       infoSpec = """type object '%s' is not iterable"""
       info = infoSpec % cls.__name__
@@ -251,6 +252,24 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls.__class_iter__()
 
   def __next__(cls) -> Any:
+    """
+    A class acting as its own iterator defines '__class_next__' as a
+    classmethod, raising 'StopIteration' when done; a class without it is
+    no iterator. An iterator class has no length, and a search with 'in'
+    consumes it, as for a plain iterator; see the class docstring.
+
+    'isinstance(cls, Iterator)' from 'collections.abc' answers 'True' for
+    every class this metaclass builds, hook or not. The fault is with
+    'collections.abc', whose check only looks for '__iter__' and
+    '__next__' on the metaclass and never asks the class; see '__iter__'
+    and the class docstring.
+
+    Raises
+    ------
+
+    TypeError
+      The class defines no '__class_next__'.
+    """
     if cls.__class_next__ is METACALL:
       infoSpec = """type object '%s' is not an iterator"""
       info = infoSpec % cls.__name__
@@ -270,13 +289,46 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
       return cls.__class_bool__()
     if cls.__class_len__ is not METACALL:
       return True if cls.__class_len__() else False
-    if cls.__class_iter__ is not METACALL:
-      for _ in cls:
-        return True
-      return False
     return True  # Default behavior if no custom bool or len defined
 
   def __contains__(cls, item: Any) -> bool:
+    """
+    'item in cls' must ask '__class_contains__' when the class defines it,
+    search the items of an iterable class otherwise, and fail for a class
+    that is neither, as for a plain class.
+
+    'isinstance(cls, Container)' from 'collections.abc' answers 'True' for
+    every class this metaclass builds, hooks or not. The fault is with
+    'collections.abc', whose check only looks for '__contains__' on the
+    metaclass and never asks the class; see '__iter__' and the class
+    docstring.
+
+    Implementation
+    --------------
+
+    Without '__class_contains__', the items '__class_iter__' yields are
+    compared with '==', as Python's 'in' searches an object without
+    '__contains__' through its iterator. An iterator class is consumed
+    by the search, as a plain one is.
+
+    Parameters
+    ----------
+
+    item : Any
+      The object looked for.
+
+    Returns
+    -------
+
+    bool
+      Whether the class holds the item.
+
+    Raises
+    ------
+
+    TypeError
+      The class defines neither '__class_contains__' nor '__class_iter__'.
+    """
     if cls.__class_contains__ is not METACALL:
       return cls.__class_contains__(item)
     if cls.__class_iter__ is not METACALL:
@@ -289,10 +341,37 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     raise TypeError(info)
 
   def __len__(cls) -> int:
+    """
+    'len(cls)' must ask '__class_len__' when the class defines it, and
+    fail otherwise, as it does for a plain class without '__len__'. It
+    does not count the items of a class defining only '__class_iter__':
+    Python gives an iterable without '__len__' no length, and counting by
+    iteration would consume a class that is its own iterator, as a
+    plain class with such a counting '__len__' is consumed. A registry
+    class wanting a length defines '__class_len__'.
+
+    'isinstance(cls, Sized)' from 'collections.abc' answers 'True' for
+    every class this metaclass builds, hooks or not, and so does
+    'isinstance(cls, Collection)'. The fault is with 'collections.abc',
+    whose checks only look for the method names on the metaclass and never
+    ask the class; see '__iter__' and the class docstring. Code that must
+    know whether a worktoy class has a length calls 'len(cls)' and catches
+    'TypeError'.
+
+    Returns
+    -------
+
+    int
+      The length of the class.
+
+    Raises
+    ------
+
+    TypeError
+      The class defines no '__class_len__'.
+    """
     if cls.__class_len__ is not METACALL:
       return cls.__class_len__()
-    if cls.__class_iter__ is not METACALL:
-      return sum(1 for _ in cls)  # Count items in the iterator
     infoSpec = """type object '%s' has no len()"""
     info = infoSpec % cls.__name__
     raise TypeError(info)
@@ -300,11 +379,16 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   @staticmethod
   def _skipHash(cls) -> bool:
     """
-    The '_skipHash' method checks if the class has a '__skip_hash__'
-    attribute set to True. This is used to determine if the class should
-    skip custom hash computation. The flag is read with
-    'type.__getattribute__', so that no '__getattr__', '__class_getattr__'
-    or reimplemented '__getattribute__' of a base can answer for it.
+    '_Chill' is a base of every worktoy class and must not take part in
+    the hash of a class, or no class would hash as its declared bases
+    suggest.
+
+    Implementation
+    --------------
+
+    The flag '__skip_hash__' is read with 'type.__getattribute__', so no
+    '__getattr__' of a base answers for it; a plain base without the flag
+    counts as 'False'.
     """
     try:
       return type.__getattribute__(cls, '__skip_hash__')
@@ -312,12 +396,26 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
       return False
 
   def __hash__(cls) -> int:
-    """The '__class_hash__' of the class, asked at every hash, or else the
-    default, computed at the first hash and kept in the class's own
-    '__dict__' under '__class_hash_value__', so the class keeps its hash
-    for life, as a plain class does, whatever becomes of its name or
-    bases. Only the own '__dict__' is read, so a subclass computes its
-    own."""
+    """
+    A class must hash the same for its whole life, as a plain class does,
+    so it stays findable in a dictionary or set, even if renamed later;
+    and a class defining '__class_hash__' must hash as it says.
+
+    Implementation
+    --------------
+
+    Without '__class_hash__', the hash is computed at the first hash from
+    the name of the class, the names of its direct bases other than
+    'object' and '_Chill', and the name of its metaclass, and kept in the
+    class's own dictionary under '__class_hash_value__'. A subclass
+    computes its own.
+
+    Returns
+    -------
+
+    int
+      The hash.
+    """
     if cls.__class_hash__ is not METACALL:
       return cls.__class_hash__()
     try:
@@ -365,11 +463,31 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
     return cls.__class_delitem__(item)
 
   def __getattr__(cls, name: str) -> Any:
-    """A miss on the class comes here, so the dot operator is safe in
-    this method only for names the metaclass itself defines, such as
-    '__class_getattr__', which never miss. Any other name read with it
-    comes back here, so those take the clunky 'type.__getattribute__',
-    or it is recursion time!"""
+    """
+    A class may answer for attributes it does not have, by defining
+    '__class_getattr__'; otherwise a missing class attribute must fail as
+    'AttributeError', so 'hasattr' answers. Inside this method, only names
+    the metaclass itself defines are safe to read with the dot operator,
+    since any other missing name would come back here.
+
+    Parameters
+    ----------
+
+    name : str
+      The missing name.
+
+    Returns
+    -------
+
+    Any
+      What '__class_getattr__' returns.
+
+    Raises
+    ------
+
+    MissingVariable
+      The class defines no '__class_getattr__'.
+    """
     if cls.__class_getattr__ is METACALL:
       raise MissingVariable(cls, name)
     return cls.__class_getattr__(name, )
@@ -390,25 +508,48 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
 
   @staticmethod
   def _notifySubclassHook(cls, *bases) -> type:
-    """The _notifySubclassHook method is invoked to notify each baseclass
-    of the created class of the class creation."""
+    """
+    A base must be able to see, and refuse, each class created from it.
+
+    Implementation
+    --------------
+
+    '__subclasshook__' is called on each base with the new class; its
+    answer is ignored.
+    """
     for base in bases:
       base.__subclasshook__(cls)
     return cls
 
   def getNamespace(cls) -> ASpace:
     """
-    The 'getNamespace' method returns the namespace object that built
-    'clsName', read directly off '__namespace__' to bypass the class-level
-    attribute hooks.
+    Code inspecting a worktoy class may need the namespace object its body
+    ran in, read past any class-level attribute hook.
+
+    Returns
+    -------
+
+    AbstractNamespace
+      The namespace that built the class.
     """
     return type.__getattribute__(cls, '__namespace__', )
 
   @classmethod
   def getNamespaceClass(mcls) -> Type[ASpace]:
     """
-    The 'getNamespaceClass' classmethod returns the namespace type this
-    metaclass uses, obtained by inspecting the object '__prepare__'
-    returns.
+    Code building on a metaclass may need to know which namespace class it
+    uses.
+
+    Implementation
+    --------------
+
+    '__prepare__' is called for a class named '_' without bases, which
+    runs every hook's 'preparePhase' once for that name.
+
+    Returns
+    -------
+
+    Type[ASpace]
+      The class of the namespace.
     """
     return type(mcls.__prepare__('_', ()))

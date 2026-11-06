@@ -12,7 +12,7 @@ import cProfile
 
 from yolo_dev import runTests
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Callable
 
 here = os.path.dirname(__file__)

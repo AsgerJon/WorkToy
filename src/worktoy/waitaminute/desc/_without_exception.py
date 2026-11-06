@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
@@ -36,12 +36,11 @@ class WithoutException(WorkToyException, RuntimeError):
 
   def __str__(self, ) -> str:
     infoSpec = """Context-less call detected for descriptor at '%s.%s'!"""
-    fbOwner = 'NO-OWNER'
-    ownerName = getattr(self.desc.getFieldOwner(), '__name__', fbOwner)
-    fbName = 'NO-FIELD'
-    from worktoy.utilities import maybe
-    fieldName = maybe(self.desc.getFieldName(), fbName)
-    info = infoSpec % (ownerName, fieldName)
-    return info
+    #  The owner tells a placed descriptor apart: 'getFieldName' always
+    #  answers, falling back to the name of the descriptor class.
+    owner = self.desc.getFieldOwner()
+    if owner is None:
+      return infoSpec % ('NO-OWNER', 'NO-FIELD')
+    return infoSpec % (owner.__name__, self.desc.getFieldName())
 
   __repr__ = __str__

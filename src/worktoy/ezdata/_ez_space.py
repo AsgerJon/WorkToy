@@ -13,7 +13,7 @@ from ..mcls import AbstractMetaclass as AMeta
 from ..utilities import maybe
 from ..waitaminute.ezdata import DuplicateError, ReservedFieldError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Optional, TypeAlias, Type
   from . import EZMeta, EZField
 
@@ -49,16 +49,18 @@ class EZSpace(BaseSpace):
     Names of generated methods that EZData keeps for itself, the ones
     installed after the class body is merged, which a class-body
     definition could not replace anyway. A class body binding one of
-    them raises 'ReservedMethodError', whatever the value. A plain base
-    may define them, and the generated methods take precedence.
+    them raises 'ReservedMethodError', whatever the value, and so does a
+    class body overloading one of them, as the class is created. A plain
+    base may define them, and the generated methods take precedence.
   __reserved_ez_attributes__ : tuple[str, ...]
     Names of the attributes EZData keeps for itself: those it sets on
     every class, the fields and the options the class keywords resolve
-    to, '__key_args__', under which 'Object' keeps the keyword
-    arguments of its constructor, and '__slots__', since the field values
-    live in the instance '__dict__'. A class body binding one of them
+    to, and '__key_args__', under which 'Object' keeps the keyword
+    arguments of its constructor. A class body binding one of them
     raises 'ReservedAttributeError', whatever the value, where the binding
-    would otherwise become a field of that name.
+    would otherwise become a field of that name. '__slots__' is refused
+    before this namespace sees it, by 'NamespaceHook' with
+    'SlotsRefused', as in every worktoy class body.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -96,7 +98,6 @@ class EZSpace(BaseSpace):
     '__is_ordered__',
     '__kw_only__',
     '__ez_generated__',
-    '__slots__',
   )
 
   #  Private Variables
@@ -264,7 +265,13 @@ class EZSpace(BaseSpace):
     """
     BaseSpace.__init__(self, mcls, name, bases, **kw)
     for base in reversed(self._getLookupOrder()):
-      space = base.__dict__.get('__namespace__', None)
+      try:
+        space = base.__dict__['__namespace__']
+      except KeyError:
+        #  This branch is reached by the following:
+        #  - The base was built by no worktoy metaclass, as 'object' or a
+        #    plain mixin, so it carries no namespace and declares no field
+        continue
       if isinstance(space, EZSpace):
         for key, field in space.getEZFields().items():
           self.registerBaseField(key, field)

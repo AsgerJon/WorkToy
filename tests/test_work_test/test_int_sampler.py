@@ -1,6 +1,5 @@
 """
-TestIntSample subclasses 'SampleTest' and provides test cases for the
-'IntSample' class.
+TestIntSampler tests 'IntSampler' from 'worktoy.work_test.samplers'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -9,161 +8,119 @@ from __future__ import annotations
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.dispatch import DispatchException
 from worktoy.work_test.samplers import IntSampler
-from . import SamplerTest
+from . import WorkTestTest
 
 
-class TestIntSampler(SamplerTest):
+class TestIntSampler(WorkTestTest):
   """
-  TestIntSample provides test cases for the 'IntSample' class.
+  'IntSampler' draws integers from a range named once, by position or by
+  any spelling of the bounds, and keeps the pair ordered at every write.
+  The tests pin the defaults, the three positional constructors with and
+  without keywords after them, every synonym, the ordering of a pair, of
+  a lone keyword and of an assignment, the refusals, the draws within
+  the bounds, and the repeat of a seeded sampler.
   """
 
-  def test_init(self, ) -> None:
-    """
-    This method test the different instantiations of the 'IntSample' class
-    having the following overload signatures:
+  def test_defaults(self) -> None:
+    sampler = IntSampler()
+    self.assertEqual((sampler.minVal, sampler.maxVal), (0, 255))
+    self.assertIs(sampler.valueType, int)
+    self.assertEqual(repr(sampler), 'IntSampler(minVal=0, maxVal=255, '
+                                    'colCount=1, rowCount=1, seed=None)')
+    self.assertEqual(str(sampler), "<IntSampler: 'int' (1, 1)>")
+    self.assertFalse(sampler.__bounds_pending__)
 
+  def test_positional_constructors(self) -> None:
+    self.assertEqual(self._bounds(IntSampler(1, 6)), (1, 6))
+    self.assertEqual(self._bounds(IntSampler(6, 1)), (1, 6))
+    self.assertEqual(self._bounds(IntSampler(5)), (0, 5))
+    self.assertEqual(self._bounds(IntSampler(-5)), (-5, 0))
+    self.assertEqual(self._bounds(IntSampler(1.0, 6.0)), (1, 6))
+    self.assertIs(type(IntSampler(1.0, 6.0).minVal), int)
+    two = IntSampler(1, 6, seed=3, size=4)
+    self.assertEqual((two.seed, two.colCount), (3, 4))
+    one = IntSampler(5, count=2)
+    self.assertEqual((self._bounds(one), one.rowCount), ((0, 5), 2))
 
-    @overload(int, int)
-    def __init__(self, minVal: int, maxVal: int, **kw) -> None: ...
+  def test_keyword_bounds(self) -> None:
+    lows = ('minVal', 'minimum', 'min', 'min_value', 'minValue')
+    highs = ('maxVal', 'maximum', 'max', 'max_value', 'maxValue')
+    for key in lows:
+      with self.subTest(key=key):
+        self.assertEqual(self._bounds(IntSampler(**{key: 7})), (7, 255))
+    for key in highs:
+      with self.subTest(key=key):
+        self.assertEqual(self._bounds(IntSampler(**{key: 7})), (0, 7))
+    self.assertEqual(self._bounds(IntSampler(minVal=9, maxVal=2)), (2, 9))
+    self.assertEqual(self._bounds(IntSampler(min=2, max=9)), (2, 9))
+    self.assertEqual(self._bounds(IntSampler(minVal=300)), (255, 300))
+    self.assertEqual(self._bounds(IntSampler(maxVal=-5)), (-5, 0))
+    self.assertEqual(self._bounds(IntSampler(minVal=2.0)), (2, 255))
 
-    @overload(int)
-    def __init__(self, val: int, **kw) -> None: ...
+  def test_assignment_keeps_the_pair_ordered(self) -> None:
+    sampler = IntSampler(1, 6)
+    sampler.minVal = 10
+    self.assertEqual(self._bounds(sampler), (6, 10))
+    sampler.maxVal = 0
+    self.assertEqual(self._bounds(sampler), (0, 6))
+    sampler.maxVal = 6
+    self.assertEqual(self._bounds(sampler), (0, 6))
+    sampler._setBounds(9, 3)
+    self.assertEqual(self._bounds(sampler), (3, 9))
+    self.assertFalse(sampler.__bounds_pending__)
+    sampler._setBounds(3.0, 9.0)
+    self.assertEqual(self._bounds(sampler), (3, 9))
 
-    @overload()
-    def __init__(self, **kw) -> None: ...
-    """
-    argsTuple = (
-      (69, 420),
-      (69, 420,),
-      (1337,),
-      (69,),
-      (),
-      (),
-    )
-    kwargsTuple = (
-      dict(),
-      dict(maximum=420),
-      dict(),
-      dict(maxVal=420),
-      dict(minVal=42, maxVal=69),
-      dict(),
-    )
-    for args, kwargs in zip(argsTuple, kwargsTuple):
-      sampler = IntSampler(*args, **kwargs)
-      samples = self.rollSampler(sampler)
-      minSample, maxSample = min(samples), max(samples)
-      self.assertLessEqual(sampler.minVal, minSample)
-      self.assertGreaterEqual(sampler.maxVal, maxSample)
-
-  def test_bad_init(self, ) -> None:
-    """
-    This method tests the handling of bad type arguments. For positional
-    arguments having bad types, the overloading mechanism should fail with
-    'DispatchException', but for keyword arguments, the overloading
-    mechanism has already resolved. Thus, instead of the
-    'DispatchException', the dispatching overload itself raises
-    'TypeException'.
-    """
-    #  Arguments matching no overload signature
-    args = 'never', 'gonna', 'give', 'you', 'up'
-    with self.assertRaises(DispatchException) as context:
-      _ = IntSampler(*args)  # noqa
-    e = context.exception
-    self.assertIs(e.dispatch, IntSampler.__dict__['__init__'])
-    for expected, actual in zip(args, e.posArgs):
-      self.assertEqual(expected, actual)
-
-    #  Keyword arguments assigning bad types
+  def test_refusals(self) -> None:
     with self.assertRaises(TypeException) as context:
-      _ = IntSampler(minVal='sixty-nine', maxVal='four-twenty')  # noqa
-    e = context.exception
-    self.assertIn(e.varName, ('minVal', 'maxVal'))
-    self.assertIn(e.actualObject, ('sixty-nine', 'four-twenty'))
-    self.assertIs(e.actualType, str)
-    self.assertIn(int, e.expectedTypes)
-
-  def test_set_range(self, ) -> None:
-    """
-    This method tests changes to the 'minVal' and 'maxVal' attributes
-    collectively described as 'range'.
-    """
-    sampler = IntSampler()
-    sampler.minVal = 69
-    sampler.maxVal = 420
-    samples = self.rollSampler(sampler, )
-    minSample, maxSample = min(samples), max(samples)
-    self.assertLessEqual(sampler.minVal, minSample)
-    self.assertGreaterEqual(sampler.maxVal, maxSample)
-
-  def test_reversed_range(self, ) -> None:
-    """
-    This method tests the handling of setting 'minVal' to a new value
-    greater than 'maxVal'. The intention is for the sampler to set the new
-    'minVal' to the existing 'maxVal' and the new 'maxVal' to the new value.
-    """
-
-    sampler = IntSampler(-1337, -69)
-    sampler.minVal = 69  # Should set range to (-69, 69)
-    samples = self.rollSampler(sampler)
-    minSample, maxSample = min(samples), max(samples)
-    self.assertLessEqual(sampler.minVal, minSample)
-    self.assertGreaterEqual(sampler.maxVal, maxSample)
-    sampler.minVal = 420  # Should set range to (69, 420)
-    samples = self.rollSampler(sampler)
-    minSample, maxSample = min(samples), max(samples)
-    self.assertLessEqual(sampler.minVal, minSample)
-    self.assertGreaterEqual(sampler.maxVal, maxSample)
-
-    sampler = IntSampler(1000, 1337)
-    sampler.maxVal = 420  # Should set range to (420, 1000)
-    samples = self.rollSampler(sampler)
-    minSample, maxSample = min(samples), max(samples)
-    self.assertLessEqual(sampler.minVal, minSample)
-    self.assertGreaterEqual(sampler.maxVal, maxSample)
-    sampler.maxVal = 69  # Should set range to (69, 420)
-    samples = self.rollSampler(sampler)
-    minSample, maxSample = min(samples), max(samples)
-    self.assertLessEqual(sampler.minVal, minSample)
-    self.assertGreaterEqual(sampler.maxVal, maxSample)
-
-  def test_bad_range(self, ) -> None:
-    """
-    Testing the exceptions raised, when bad types or values are set on
-    the 'sampler.minVal' and 'sampler.maxVal' attributes.
-    """
-    sampler = IntSampler()
+      IntSampler(minVal=2.5)
+    self.assertTypeRefused(context.exception, 'minVal', 2.5, int)
     with self.assertRaises(TypeException) as context:
-      sampler.minVal = 'sixty-nine'  # type: ignore[assignment]
-    e = context.exception
-    self.assertEqual(e.varName, 'minVal')
-    self.assertEqual(e.actualObject, 'sixty-nine')
-    self.assertIs(e.actualType, str)
-    self.assertIn(int, e.expectedTypes)
-
+      IntSampler(maxVal='x')
+    self.assertTypeRefused(context.exception, 'maxVal', 'x', int)
+    sampler = IntSampler(1, 6)
     with self.assertRaises(TypeException) as context:
-      sampler.maxVal = 'four-twenty'  # type: ignore[assignment]
-    e = context.exception
-    self.assertEqual(e.varName, 'maxVal')
-    self.assertEqual(e.actualObject, 'four-twenty')
-    self.assertIs(e.actualType, str)
-    self.assertIn(int, e.expectedTypes)
+      sampler.minVal = None
+    self.assertTypeRefused(context.exception, 'minVal', None, int)
+    self.assertEqual(self._bounds(sampler), (1, 6))
+    for args in (('1',), (1.5,), (1, 2, 3)):
+      with self.subTest(args=args):
+        with self.assertRaises(DispatchException) as context:
+          IntSampler(*args)
+        self.assertIs(context.exception.dispatch,
+                      IntSampler.__dict__['__init__'])
+        self.assertEqual(context.exception.posArgs, args)
+        self.assertEqual(context.exception.keyArgs, {})
+        self.assertIn("no overload of 'IntSampler.__init__' accepts",
+                      str(context.exception))
+        self.assertIn('<TypeSig: [int, int]>', str(context.exception))
 
-  def test_cast_range(self, ) -> None:
-    """
-    This method tests that 'minVal' and 'maxVal' take an integral float
-    cast to 'int', and refuse a numeric string, which no cast parses.
-    """
-    sampler = IntSampler()
-    sampler.minVal = 69.0
-    sampler.maxVal = 420.0
-    self.assertEqual(sampler.minVal, 69)
-    self.assertEqual(sampler.maxVal, 420)
+  def test_draws(self) -> None:
+    sampler = IntSampler(1, 6, seed=3, size=5)
+    row = sampler.row
+    self.assertEqual(row, IntSampler(1, 6, size=5, randomSeed=3).row)
+    self.assertEqual(len(row), 5)
+    for value in row:
+      self.assertIn(value, range(1, 7))
+      self.assertIs(type(value), int)
+    self.assertIn(sampler(), range(1, 7))
+    table = IntSampler(3, 4, size=2, count=3, seed=1).table
+    self.assertEqual(table, ((3, 3), (4, 3), (4, 4)))
+    self.assertEqual(table, IntSampler(3, 4, size=2, count=3, seed=1).table)
+    narrow = IntSampler(7, 7, size=4)
+    self.assertEqual(narrow.row, (7, 7, 7, 7))
 
-    sampler = IntSampler()
-    minBefore, maxBefore = sampler.minVal, sampler.maxVal
-    with self.assertRaises(TypeException):
-      sampler.minVal = '69'
-    with self.assertRaises(TypeException):
-      sampler.maxVal = '420'
-    self.assertEqual(sampler.minVal, minBefore)
-    self.assertEqual(sampler.maxVal, maxBefore)
+  def test_random_draws(self) -> None:
+    self.randomInteger.size = 20
+    for value in self.randomInteger.row:
+      with self.subTest(value=value):
+        self.assertIn(value, range(256))
+    self.assertEqual(self.randomInteger.seed, self.__sampler_seed__)
+    fresh = IntSampler(seed=self.__sampler_seed__, size=20)
+    self.randomInteger.seed = self.__sampler_seed__
+    self.assertEqual(self.randomInteger.row, fresh.row)
+
+  @staticmethod
+  def _bounds(sampler: IntSampler) -> tuple:
+    """The two bounds of the sampler as a pair."""
+    return sampler.minVal, sampler.maxVal

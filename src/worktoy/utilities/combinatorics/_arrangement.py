@@ -12,7 +12,7 @@ from .. import QuickDesc, textFmt
 T = TypeVar('T')
 ItemTypeT = TypeVar('ItemTypeT')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Any, Iterator, Optional
 
   Values: TypeAlias = tuple[Any, ...]

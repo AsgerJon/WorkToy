@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Self, TypeAlias, Union
 
   Names: TypeAlias = tuple[str, ...]
@@ -15,8 +15,15 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class ReservedNames:
   """
-  ReservedNames provides a list of reserved names that are set
-  automatically by the interpreter.
+  A class body must not rebind the names Python reserves in a class
+  namespace or gives a class, such as '__module__', '__qualname__' and
+  '__doc__', and the hook guarding them needs the list.
+
+  Implementation
+  --------------
+
+  Through an instance, the descriptor returns the tuple of names;
+  through the class, itself.
   """
 
   # @formatter:off

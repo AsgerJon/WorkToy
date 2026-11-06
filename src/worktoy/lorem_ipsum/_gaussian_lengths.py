@@ -6,25 +6,29 @@ range.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from math import sqrt
-from random import gauss
-
 from . import StochasticVariable
+from ..desc import AttriBox
 from ..utilities import textFmt
 
 
 class GaussianLengths(StochasticVariable):
   """
-  GaussianLengths is a 'StochasticVariable' whose values follow a Gaussian
-  distribution of a given mean and variance, with every draw clamped to
-  '[minVal, maxVal]'. The four statistics are passed to the constructor,
-  so 'Clause', 'Sentence', and 'Paragraph' each hold one of these
-  parametrised with their own numbers rather than each needing a subclass.
+  The clauses of a sentence and the sentences of a paragraph have no word
+  list to take their lengths from, only a notion of how long they usually
+  are and how much they vary. A generator must be able to state that in
+  four numbers, a mean, a variance and two inclusive bounds, and get a
+  'StochasticVariable' back without writing a subclass for each set of
+  numbers.
 
-  This is the minimal concrete implementation of the abstract base: it
-  fills the four statistics getters and the sampler. The fuller worktoy
-  treatment, where the statistics are descriptor-backed attributes, comes
-  later.
+  Implementation
+  --------------
+
+  The four statistics are boxes, 'AttriBox[float]' for the mean and the
+  variance and 'AttriBox[int]' for the bounds, so an assignment is cast
+  as a box casts, an 'int' widened to a 'float' and a text refused with
+  'TypeException', and a project may retune a distribution it holds. The
+  constructor writes the four and then refuses a mean outside the bounds
+  and a negative variance with 'ValueError'. The draw is the base's.
 
   Parameters
   ----------
@@ -42,57 +46,25 @@ class GaussianLengths(StochasticVariable):
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Private Variables
-  __mean__ = None
-  __var__ = None
-  __min_val__ = None
-  __max_val__ = None
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def _getMean(self) -> float:
-    return self.__mean__
-
-  def _getVar(self) -> float:
-    return self.__var__
-
-  def _getMinVal(self) -> int:
-    return self.__min_val__
-
-  def _getMaxVal(self) -> int:
-    return self.__max_val__
+  #  Public Variables
+  mean = AttriBox[float]()
+  var = AttriBox[float]()
+  minVal = AttriBox[int]()
+  maxVal = AttriBox[int]()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, mean: float, var: float, minVal: int, maxVal: int):
-    if not minVal <= mean <= maxVal:
+    self.minVal = minVal
+    self.maxVal = maxVal
+    self.mean = mean
+    self.var = var
+    if not self.minVal <= self.mean <= self.maxVal:
       infoSpec = """Mean '%s' must lie within the bounds '[%s, %s]'!"""
-      raise ValueError(textFmt(infoSpec % (mean, minVal, maxVal)))
-    if var < 0:
+      info = infoSpec % (self.mean, self.minVal, self.maxVal)
+      raise ValueError(textFmt(info))
+    if self.var < 0:
       infoSpec = """Variance must be non-negative, but received '%s'!"""
-      raise ValueError(textFmt(infoSpec % (var,)))
-    self.__mean__ = float(mean)
-    self.__var__ = float(var)
-    self.__min_val__ = int(minVal)
-    self.__max_val__ = int(maxVal)
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def sampleInteger(self) -> int:
-    """
-    The 'sampleInteger' method draws one Gaussian value of the stored mean
-    and variance and clamps it into the inclusive bounds.
-
-    Returns
-    -------
-    int
-      A Gaussian draw clamped to '[minVal, maxVal]'.
-    """
-    value = round(gauss(self.mean, sqrt(self.var)))
-    return min(self.maxVal, max(self.minVal, value))
+      raise ValueError(textFmt(infoSpec % (self.var,)))

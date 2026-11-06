@@ -15,7 +15,7 @@ from ..dispatch import overload
 from ..desc import AttriBox, Field
 from . import BaseGenerator, Clause, GaussianLengths
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Self, TypeAlias, Optional, Iterator
 
   IntList: TypeAlias = list[int]
@@ -27,17 +27,35 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Sentence(BaseGenerator):
   """
-  Sentence assembles a comma-separated sequence of 'Clause' objects
-  terminated by a period, summing to a target character count. Clause
-  lengths are drawn from a Gaussian 'clauseDist'; the sentence's first word
-  is capitalized and its last is given the closing period.
+  A sentence is clauses joined by ', ' and closed by a period, its first
+  word capitalized, exactly as many characters as requested. Clause
+  lengths follow a Gaussian so sentences read naturally, and a sentence
+  too short for even one clause the distribution can draw must still
+  come out at its count, with every view of it, rendering, length,
+  'repr', iteration and the clause list, showing the same text.
 
-  A sentence of fewer than '__truncate_below__' characters is too short
-  for a clause the distribution can draw, so it holds one clause of the
-  words of the 'Lorem Ipsum...' placeholder, exactly 'charCount'
-  characters long, as a short first 'Clause' holds its own placeholder.
-  Rendering, length, 'repr()', iteration and 'clausesArray' therefore all
-  show the same text.
+  Implementation
+  --------------
+
+  'clauseDist' is a 'GaussianLengths' of mean 40, variance 15 and bounds
+  12 and 70, one per instance. 'clausesLengths' partitions the count plus
+  one with 'partitionSpaced' at two slots per clause, paying for the two
+  characters between clauses and the period; 'clausesArray' builds a
+  'Clause' per length, 'Clause.first' for the first when 'isFirst' holds,
+  capitalizes the first and terminates the last. Below
+  '__truncate_below__' the one clause holds the words of '_shortText'
+  directly. Each clause is comma-free, so the commas mark the clause
+  boundaries. The copy constructor copies each clause through the clause
+  copy constructor, so the copy owns its clauses.
+
+  Attributes
+  ----------
+  clauseDist : AttriBox[GaussianLengths]
+    The distribution of clause lengths.
+  clausesLengths : Field[IntList]
+    The cached clause lengths, a 'list[int]'.
+  clausesArray : Field[ClausesList]
+    The cached clauses, a 'list[Clause]'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -62,16 +80,16 @@ class Sentence(BaseGenerator):
   def _buildClauseLengths(self, ) -> None:
     """
     The '_buildClauseLengths' method partitions 'charCount' into clause
-    lengths drawn from 'clauseDist' and caches them. The target leaves room
-    for the ', ' between clauses and the closing period. A short sentence
+    lengths drawn from 'clauseDist' and caches them. Each clause costs its
+    length and two characters more, the ', ' after it or, for the last,
+    the period and the one that 'charCount + 1' pays for. A short sentence
     holds the placeholder as its one clause, of 'charCount' characters.
     """
     if self.charCount < self.__truncate_below__:
       self.__clause_lengths__ = [self.charCount, ]
       return
-    lengths = self.clauseDist.partitionSpaced(self.charCount + 1)
-    target = self.charCount - 2 * (len(lengths) - 1) - 1
-    self.__clause_lengths__ = self.clauseDist._settle(lengths, target)
+    lengths = self.clauseDist.partitionSpaced(self.charCount + 1, 2)
+    self.__clause_lengths__ = lengths
 
   @clausesLengths.GET
   def _getClauseLengths(self, **kwargs) -> IntList:
@@ -79,7 +97,7 @@ class Sentence(BaseGenerator):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._buildClauseLengths()
-      return self._getClauseLengths(_recursion=True)
+      return self._getClauseLengths(_recursion=True)  # pragma: no mutate
     return self.__clause_lengths__
 
   def _placeholderClause(self, ) -> Clause:
@@ -122,7 +140,7 @@ class Sentence(BaseGenerator):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._buildClausesArray()
-      return self._getClausesArray(_recursion=True)
+      return self._getClausesArray(_recursion=True)  # pragma: no mutate
     return self.__clause_array__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -136,7 +154,7 @@ class Sentence(BaseGenerator):
     clause copied in turn, so the copy holds clauses of its own.
     """
     self.charCount = other.charCount
-    self.__is_first__ = other.__is_first__
+    self.isFirst = other.isFirst
     if other.__clause_lengths__ is not None:
       self.__clause_lengths__ = [*other.__clause_lengths__, ]
     if other.__clause_array__ is not None:

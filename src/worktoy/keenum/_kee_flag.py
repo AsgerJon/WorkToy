@@ -12,7 +12,7 @@ from ..desc import Field
 from ..utilities import textFmt, maybe
 from ..waitaminute import MissingVariable, TypeException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Tuple, Self, Iterator, Never
   from ..keenum import KeeFlagsMeta
 
@@ -64,9 +64,6 @@ class KeeFlag:
   name: Field[str] = Field()
   args: Field[tuple] = Field()
   kwargs: Field[dict] = Field()
-
-  #  Virtual Variables
-  valueType: Field[type] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -121,18 +118,18 @@ class KeeFlag:
 
   def __set_name__(self, owner: type, name: str) -> Never:
     """
-    Reaching this method always signals misuse, so it always raises. A
-    'KeeFlag' declared inside a proper 'KeeFlags' class body is claimed
-    by 'KeeFlagsHook' during class-body execution and never stored in
-    the namespace, so the interpreter never runs its '__set_name__'; the
-    owner binding for a real flag is performed by 'KeeFlag.clone' as the
-    enumeration is assembled. The only way to arrive here is a 'KeeFlag'
-    placed in the body of a class not built by 'KeeFlagsMeta', which is
-    rejected with 'TypeException'.
+    A 'KeeFlag' in a 'KeeFlags' body is claimed by 'KeeFlagsHook' before
+    the namespace stores it, so the interpreter never calls this method
+    for it; the flag's owner is written by 'KeeFlag.clone' as the class
+    is assembled. The interpreter reaches this method only for a
+    'KeeFlag' in the body of a class not built by 'KeeFlagsMeta', which
+    is refused with a 'TypeError' saying where a 'KeeFlag' belongs.
     """
-    #  Local import: 'KeeFlagsMeta' loads after this file in the package.
-    from . import KeeFlagsMeta
-    raise TypeException('owner', owner, KeeFlagsMeta)
+    infoSpec = """A 'KeeFlag' declares a flag of a flags enumeration and
+    belongs in the body of a 'KeeFlags' subclass, but '%s' is bound to
+    one at '%s' and '%s' is no flags class."""
+    info = infoSpec % (owner.__name__, name, owner.__name__)
+    raise TypeError(textFmt(info))
 
   def __str__(self, ) -> str:
     if self.__field_owner__ is None:
@@ -205,7 +202,7 @@ class KeeFlag:
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     @typing.overload
     def __or__(self, other: Self) -> Self: ...
 

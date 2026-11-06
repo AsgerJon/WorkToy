@@ -9,7 +9,7 @@
 **worktoy** provides utilities for Python development focused on
 reducing boilerplate while improving type safety and readability. Each
 release is tested thoroughly on each supported Python version from 3.7*
-to 3.14.
+to 3.15.
 
 *Maybe it is time to consider updating if you are still using Python 3.7.
 
@@ -80,13 +80,15 @@ Attributes are declared explicitly at the class level. Despite this,
 flexibility remains, for example:
 
 ```python
-point = Point(69, '420')  # int, str
+point = Point(69, 420)  # int, int
 point.x == 69.0
 point.y == 420.0
 ```
 
-When types do not match, `AttriBox` attempts casting before raising an
-error. Same ergonomics. Stronger guarantees.
+When types do not match, `AttriBox` converts what converts without loss,
+as an `int` to a `float`, and refuses the rest: `Point(69, '420')` raises
+`TypeException`, since no string is ever parsed. Same ergonomics. Stronger
+guarantees.
 
 Note that `Point` above is a plain class: both `AttriBox` and `Field`
 are ordinary descriptors and work on any class. The `BaseObject` base
@@ -140,7 +142,7 @@ from worktoy.core.sentinels import THIS
 from worktoy.dispatch import overload
 from worktoy.desc import AttriBox
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Self
 
 
@@ -288,10 +290,11 @@ class Point:
   def __init__(self, *args, ) -> None: ...  # Implementation as before
 ```
 
-Both improve clarity. But in both cases `Point.x` and `Point.y` will raise
-`AttributeError`. The presence of `x` and `y` becomes visible only after
-instantiation. At this point, they are just attributes of the instance, not
-of the class. Setting during `__init__` makes no difference compared to
+Both improve clarity, but neither makes `x` and `y` part of the class.
+With annotations alone, `Point.x` raises `AttributeError`; with
+`__slots__`, `Point.x` is a bare slot that knows nothing of the type.
+Either way the values appear only once `__init__` sets them, as attributes
+of the instance, and setting them there makes no difference compared to
 setting them anywhere else. Structure remains implicit.
 
 With **worktoy** attributes are an essential part of the class structure

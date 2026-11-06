@@ -12,7 +12,7 @@ from ...utilities import maybe
 from ...waitaminute.meta import IllegalInstantiation, DuplicateSentinel
 from .. import MetaType
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Self, Never
 
   Bases = tuple[type, ...]
@@ -20,15 +20,37 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class SentinelMeta(MetaType, metaclass=MetaType):
   """
-  SentinelMeta is the metaclass for sentinel classes. It registers each
-  sentinel by name, refuses a second class statement at a registered name
-  with 'DuplicateSentinel', and prevents its classes from being
-  instantiated. A sentinel defines one concept for the whole process, so
-  the registry holds one sentinel per name wherever it was declared, and
-  the existing one is the one to import. It subclasses 'MetaType' and
-  is an instance of it, as 'AbstractMetaclass' is, so a sentinel declared
-  with a class keyword has the keyword absorbed by '_Chill' instead of
-  reaching the refusal of 'object.__init_subclass__'.
+  Code often needs a marker that no real value can be mistaken for: a
+  value meaning deleted, not given, or the class being defined. Such a
+  marker must be unique, compared by identity, readable in a traceback,
+  and impossible to instantiate, since an instance would be a second
+  object claiming the same meaning. A marker also means one thing in the
+  whole process: two files declaring a marker of the same name must not
+  end up with two objects of one meaning, nor share one object without
+  knowing it. A project building on worktoy must be able to declare
+  markers of its own, and families of markers that carry behaviour.
+
+  Implementation
+  --------------
+
+  A sentinel is a class whose metaclass is 'SentinelMeta', and the class
+  object itself is the marker. '__new__' refuses a name the registry
+  already holds with 'DuplicateSentinel' and registers every new
+  sentinel, the family bases included, in one registry kept on
+  'SentinelMeta' itself and shared by every metaclass based on it.
+  '__call__' raises 'IllegalInstantiation'; a family whose members must
+  be instantiable, as that of 'ARGS', reimplements it. Equality is
+  identity, the hash is taken from the modules and names of the sentinel
+  and its metaclass, and the text reads "<Sentinel: 'NAME'>".
+  'SentinelMeta' is a subclass and an instance of 'MetaType', so a
+  sentinel declared with a class keyword has the keyword absorbed by
+  '_Chill'.
+
+  Attributes
+  ----------
+
+  __registered_sentinels__ : list or None
+    The registry of sentinel classes, created on the first registration.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -44,18 +66,26 @@ class SentinelMeta(MetaType, metaclass=MetaType):
 
   @classmethod
   def _getRegisteredSentinels(mcls) -> list[Self]:
-    """The sentinel classes registered so far, or an empty list when none
-    have been registered yet. The registry is the one of 'SentinelMeta'
-    itself, whichever subclass of it asks, so a sentinel family built on
-    a subclass shares it with plain 'Sentinel'."""
+    """
+    Every family of sentinels must share one registry, or two families
+    could hold one name between them.
+
+    Implementation
+    --------------
+
+    The registry is read off 'SentinelMeta' by name, not off 'mcls', so a
+    metaclass based on 'SentinelMeta' reads the same list.
+
+    Returns
+    -------
+
+    list[SentinelMeta]
+      The registered sentinels, or an empty list.
+    """
     return maybe(SentinelMeta.__registered_sentinels__, [])
 
   @classmethod
   def _getNamedSentinel(mcls, sentinelName: str, ) -> Self:
-    """
-    Returns the registered sentinel having this name, or raises 'KeyError'
-    when none has it.
-    """
     existing = mcls._getRegisteredSentinels()
     for existingSentinel in existing:
       if existingSentinel.__name__ == sentinelName:
@@ -68,9 +98,6 @@ class SentinelMeta(MetaType, metaclass=MetaType):
 
   @classmethod
   def _registerSentinel(mcls, sentinel: Self) -> None:
-    """Records 'sentinel' in the registry, so a later class statement at
-    its name is refused instead of building a second sentinel of the
-    name."""
     existing = mcls._getRegisteredSentinels()
     SentinelMeta.__registered_sentinels__ = [*existing, sentinel]
 
@@ -79,10 +106,44 @@ class SentinelMeta(MetaType, metaclass=MetaType):
     return dict()
 
   def __new__(mcls, name: str, bases: Bases, space: dict, **kwargs) -> Self:
-    """Builds and registers the sentinel class for 'name'. A name a
-    sentinel already holds is refused with 'DuplicateSentinel', naming the
-    existing sentinel and the module of the refused class statement, since
-    a sentinel defines one concept for the whole process."""
+    """
+    A sentinel name stands for one meaning in the whole process, so a
+    second class statement at a name already taken is a mistake, wherever
+    it is written: the existing sentinel is the one to import.
+
+    Implementation
+    --------------
+
+    The name is checked before the class is built and registered after,
+    so a class statement failing in between leaves no trace.
+
+    Parameters
+    ----------
+
+    name : str
+      The name of the sentinel.
+
+    bases : Bases
+      A 'tuple[type, ...]' of the bases.
+
+    space : dict
+      The class body.
+
+    **kwargs
+      Class keywords, passed on to 'MetaType.__new__'.
+
+    Returns
+    -------
+
+    SentinelMeta
+      The new sentinel.
+
+    Raises
+    ------
+
+    DuplicateSentinel
+      A sentinel of the name is already registered.
+    """
     try:
       existing = mcls._getNamedSentinel(name)
     except KeyError:
@@ -95,7 +156,19 @@ class SentinelMeta(MetaType, metaclass=MetaType):
 
   def __call__(cls, *__, **_) -> Never:
     """
-    Raises 'IllegalInstantiation'.
+    A sentinel is the class object itself, and an instance would be a
+    second object claiming its meaning.
+
+    Implementation
+    --------------
+
+    Every call is refused.
+
+    Raises
+    ------
+
+    IllegalInstantiation
+      Always.
     """
     raise IllegalInstantiation(cls)
 
@@ -115,9 +188,13 @@ class SentinelMeta(MetaType, metaclass=MetaType):
 
 class Sentinel(metaclass=SentinelMeta):
   """
-  Sentinel is the base class for all sentinel objects in the
-  'worktoy.core.sentinels' package. It prevents instantiation and ensures
-  that only one sentinel of each name exists: a sentinel defines one
-  concept for the whole process, and a second class statement at a
-  registered name raises 'DuplicateSentinel'.
+  A project declaring a sentinel of its own needs a base to declare it
+  on, as in 'class PENDING(Sentinel)', with a docstring and nothing else.
+
+  Implementation
+  --------------
+
+  'Sentinel' has no body; 'SentinelMeta' gives every subclass its
+  behaviour. The name 'Sentinel' is itself registered, so no sentinel may
+  take it.
   """

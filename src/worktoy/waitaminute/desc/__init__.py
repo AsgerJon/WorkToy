@@ -8,9 +8,9 @@ share the 'DescriptorException' base, so a single
 a deletion are, so 'except AttributeError' catches them. 'WriteOnceError' (a
 'TypeError'), 'WithoutException' (a 'RuntimeError'), 'MissingInstanceDict'
 (a 'TypeError'), 'NamelessCallback' (a 'SyntaxError'), 'NotADescriptor' (a
-'TypeError'), and 'NotAliasable', 'DanglingAlias' and 'SharedDescriptor'
-(all three 'SyntaxError') are collected here too but do not inherit that
-base.
+'TypeError'), 'DanglingAlias', 'SharedDescriptor', 'ReferenceConflict'
+and 'OverloadReference' (all four 'SyntaxError') and 'RecursiveRead' (a
+'RecursionError') are collected here too but do not inherit that base.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -26,9 +26,11 @@ from ._phantom_box_error import PhantomBoxError
 from ._missing_instance_dict import MissingInstanceDict
 from ._nameless_callback import NamelessCallback
 from ._not_a_descriptor import NotADescriptor
-from ._not_aliasable import NotAliasable
 from ._dangling_alias import DanglingAlias
 from ._shared_descriptor import SharedDescriptor
+from ._reference_conflict import ReferenceConflict
+from ._overload_reference import OverloadReference
+from ._recursive_read import RecursiveRead
 
 __all__ = [
   'DescriptorException',
@@ -41,7 +43,9 @@ __all__ = [
   'MissingInstanceDict',
   'NamelessCallback',
   'NotADescriptor',
-  'NotAliasable',
   'DanglingAlias',
   'SharedDescriptor',
+  'ReferenceConflict',
+  'OverloadReference',
+  'RecursiveRead',
 ]

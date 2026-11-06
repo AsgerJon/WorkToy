@@ -7,26 +7,44 @@ dunders.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest import SkipTest
+from unittest import SkipTest, TestCase
 
-from ._base_test import BaseTest
+from ..utilities import textFmt
 from ._complex_mixin import ComplexMixin
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Type
 
 
-class ComplexTest(BaseTest):
+class ComplexTest:
   """
-  ComplexTest is the shared test framework for the arithmetic dunder
-  methods of 'ComplexMixin', so several complex-number implementations
-  can share one set of tests.
+  Several implementations of one interface, here complex arithmetic,
+  should pass one bank of tests, written once, without each
+  implementation copying it. 'ComplexTest' is that bank for the dunder
+  methods of 'ComplexMixin': a test class lists the bank before
+  'BaseTest' and its implementations in 'targets', and every test runs
+  once against each of them.
 
-  List the implementations to test in the 'targets' class attribute. Each
-  is a class that mixes in 'ComplexMixin' and is constructed from two
-  positional arguments, the real and imaginary parts; every test runs once
-  against each target. The tests touch nothing but the 'REAL' and 'IMAG'
-  attributes.
+    class TestMyComplex(ComplexTest, BaseTest):
+      targets = (MyComplex,)
+
+  Implementation
+  --------------
+
+  'ComplexTest' has no base of its own, so no loader collects the bank
+  itself and no test module importing it pays twenty-five skipped
+  tests; the assertions and 'subTest' come from the test case listed
+  after it. The twenty-five test methods are each a loop over 'targets'
+  with one block of 'subTest' per target labelled by the target's name,
+  touching nothing but the 'REAL' and 'IMAG' attributes and
+  constructing each target from two positional arguments, the real and
+  imaginary parts. 'setUp' hands on and then skips every test of a
+  class without targets, so a class that forgot them reports skips
+  rather than vacuous passes, and a class may set its targets in
+  'setUpClass'. A class listing the bank without a 'TestCase', the
+  shape the bank had when it was a 'BaseTest', is refused at the class
+  statement with a 'TypeError' naming the shape to write, so its tests
+  cannot vanish from a run unnoticed.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -36,26 +54,36 @@ class ComplexTest(BaseTest):
   #  Class Variables
   targets: tuple[Type[ComplexMixin], ...] = ()
 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def __init_subclass__(cls, **kwargs) -> None:
+    """
+    A class listing the bank without a test case would be collected by
+    no loader, and its tests would vanish from the run without a word;
+    it is refused here, at the class statement, with the shape to
+    write. A class listing a test case hands on along its resolution
+    order.
+    """
+    if not issubclass(cls, TestCase):
+      infoSpec = """'%s' lists 'ComplexTest' as a base but no test case,
+      so no loader would run its tests. The bank runs as part of a test
+      case: write 'class %s(ComplexTest, BaseTest):' with the
+      targets."""
+      raise TypeError(textFmt(infoSpec % (cls.__name__, cls.__name__)))
+    super().__init_subclass__(**kwargs)
+
   def setUp(self) -> None:
     """
-    A class without targets skips each of its tests. 'ComplexTest' is
-    collected as a test wherever it is imported, and would otherwise run
-    every test against nothing. The check waits for 'setUp', since a
-    subclass may set its targets in 'setUpClass'.
+    A class without targets skips each of its tests rather than running
+    them against nothing. The check waits for 'setUp', since a class may
+    set its targets in 'setUpClass'. The super call reaches the 'setUp'
+    of the test case listed after the bank.
     """
     super().setUp()
     if not self.targets:
       raise SkipTest('%s has no targets' % type(self).__name__)
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    """
-    A class without targets leaves the files loaded. That of
-    'BaseTest' unloads the file of the class, which for 'ComplexTest'
-    itself is this file of the library.
-    """
-    if cls.targets:
-      super().tearDownClass()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  UNARY OPERATORS  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -229,9 +257,11 @@ class ComplexTest(BaseTest):
     """Reflected division with a scalar left operand works."""
     for target in self.targets:
       with self.subTest(target=target.__name__):
-        result = 2 / target(1, 1)
-        self.assertAlmostEqual(result.REAL, 1.0)
-        self.assertAlmostEqual(result.IMAG, -1.0)
+        #  4, since '2 - (1 + 1j)' is also '1 - 1j' and would pass a
+        #  reflected division that subtracts.
+        result = 4 / target(1, 1)
+        self.assertAlmostEqual(result.REAL, 2.0)
+        self.assertAlmostEqual(result.IMAG, -2.0)
 
   def test_truediv_by_zero(self) -> None:
     """Dividing by zero raises ZeroDivisionError."""
@@ -255,8 +285,10 @@ class ComplexTest(BaseTest):
     """Raising an instance to a real power follows complex power."""
     for target in self.targets:
       with self.subTest(target=target.__name__):
-        result = target(2, 0) ** 2
-        self.assertAlmostEqual(result.REAL, 4.0)
+        #  3, since '2 * 2' is also '4' and would pass a power that
+        #  multiplies.
+        result = target(3, 0) ** 2
+        self.assertAlmostEqual(result.REAL, 9.0)
         self.assertAlmostEqual(result.IMAG, 0.0)
 
   def test_rpow_scalar(self) -> None:

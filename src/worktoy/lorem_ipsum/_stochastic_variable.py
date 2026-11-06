@@ -6,151 +6,55 @@ that drive the 'lorem_ipsum' generators.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from collections.abc import Callable
-from random import shuffle
+from math import sqrt
+from random import gauss, shuffle
 
-from ..desc import Field
 from ..mcls import BaseObject
 from ..utilities import textFmt
-from ..waitaminute import TypeException
 
 
 class StochasticVariable(BaseObject):
   """
-  StochasticVariable is the base class for a bounded distribution over the
-  integers. A subclass states its statistics, the mean, the variance, and
-  the inclusive bounds, and says how to draw one value; this base class
-  turns that into the shared operation the generators need: cutting a
-  target total into a list of plausible integers.
+  A lorem ipsum generator needs integers that add up: word lengths that
+  fill a clause, clause lengths that fill a sentence, sentence lengths
+  that fill a paragraph, each drawn from a distribution so the text looks
+  natural, and together meeting the requested count exactly. The
+  distributions differ, a Gaussian for the lengths of clauses and
+  sentences and the histogram of a word list for the lengths of words,
+  so the cutting of a total into plausible parts must be written once,
+  over what any distribution can say about itself: its mean, its
+  variance, its inclusive bounds, and one way to draw a value.
 
-  A subclass supplies four read accessors and one sampler:
+  Implementation
+  --------------
 
-  - 'mean', 'var', 'minVal', 'maxVal' are 'Field' getters left empty here
-    and required of every concrete subclass. 'StochasticWord' computes
-    them from the histogram of its word list; 'GaussianLengths' takes them
-    as construction arguments.
-  - 'sampleInteger' draws a single value, which must land within the
-    bounds.
+  The base declares nothing for the four statistics: a subclass holds
+  'mean', 'var', 'minVal' and 'maxVal' however it likes, 'GaussianLengths'
+  in boxes written by its constructor, 'StochasticWord' in class
+  attributes its class statement computes, and a subclass without them
+  fails where it reads them with Python's own 'AttributeError'.
+  'sampleInteger' rounds one 'random.gauss' draw of the mean and the
+  standard deviation and clamps it into the bounds; a subclass may draw
+  otherwise. 'partitionSpaced' chooses through '_countFor' how many
+  values to draw, the count the mean suggests held between the fewest and
+  the most that can add up to the target, each value costing 'spacing'
+  slots beyond itself, and refuses a target no count can reach with
+  'ValueError'; 'partition' is the same with no spacing. '_settle' moves
+  the drawn values onto the target: '_spread' gives each its share of
+  the difference in a shuffled order, clamped, and '_fill' hands what the
+  clamps left to the values in the same order.
 
-  On top of those, 'partition' produces a list of integers summing to a
-  given target, each one a sample, by choosing a count from the mean (so
-  the target always falls inside the reachable band), then nudging the
-  integers to land exactly on the target.
+  Attributes
+  ----------
+  mean : float
+    The mean of the distribution, held by the subclass.
+  var : float
+    The variance of the distribution, held by the subclass.
+  minVal : int
+    The lowest value a draw may give, held by the subclass.
+  maxVal : int
+    The highest value a draw may give, held by the subclass.
   """
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  #  Class Variables
-  __required_fields__ = ('mean', 'var', 'minVal', 'maxVal')
-
-  #  Public Variables
-  mean: Field[float] = Field()
-  var: Field[float] = Field()
-  minVal: Field[int] = Field()
-  maxVal: Field[int] = Field()
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @mean.GET
-  def _getMean(self) -> float:
-    """
-    The 'mean' getter, which each concrete subclass implements, returns the
-    mean of the distribution.
-
-    Returns
-    -------
-    float
-      The mean of the distribution.
-    """
-
-  @var.GET
-  def _getVar(self) -> float:
-    """
-    The 'var' getter, which each concrete subclass implements, returns the
-    variance of the distribution.
-
-    Returns
-    -------
-    float
-      The variance of the distribution.
-    """
-
-  @minVal.GET
-  def _getMinVal(self) -> int:
-    """
-    The 'minVal' getter, which each concrete subclass implements, returns
-    the lowest value the distribution may produce.
-
-    Returns
-    -------
-    int
-      The lowest value the distribution may produce.
-    """
-
-  @maxVal.GET
-  def _getMaxVal(self) -> int:
-    """
-    The 'maxVal' getter, which each concrete subclass implements, returns
-    the highest value the distribution may produce.
-
-    Returns
-    -------
-    int
-      The highest value the distribution may produce.
-    """
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @classmethod
-  def __class_init__(cls, name: str, bases, space, **kwargs) -> None:
-    """
-    The '__class_init__' method rejects a concrete subclass that left a
-    statistics getter on the abstract base, or that bound something not
-    callable to one. The base class subclasses 'BaseObject' directly and
-    declares those empty getters, so it is exempt, while its subclasses
-    are reached up the MRO.
-
-    Parameters
-    ----------
-    name : str
-      The name given to the subclass being created.
-    bases : tuple[type, ...]
-      The base classes of the subclass being created.
-    space : BaseSpace
-      The prepared namespace of the class body.
-
-    Raises
-    ------
-    TypeError
-      If a required statistics getter still resolves to the empty one
-      declared on the abstract base.
-    TypeException
-      If a getter name is bound to something that is not callable.
-    """
-    if BaseObject in bases:
-      return
-    baseClass = cls
-    for klass in cls.__mro__:
-      if BaseObject in klass.__bases__:
-        baseClass = klass
-        break
-    for fieldName in cls.__required_fields__:
-      getterKey = getattr(baseClass, fieldName).__get_key__
-      found = getattr(cls, getterKey)
-      original = getattr(baseClass, getterKey)
-      if found is original:
-        infoSpec = """Class '%s' must implement the getter for the '%s'
-        field; it still resolves to the empty one on '%s'."""
-        info = infoSpec % (name, fieldName, baseClass.__name__)
-        raise TypeError(textFmt(info))
-      if not callable(found):
-        raise TypeException(getterKey, found, Callable)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -158,29 +62,55 @@ class StochasticVariable(BaseObject):
 
   def sampleInteger(self) -> int:
     """
-    The 'sampleInteger' method is left abstract on the base and implemented
-    by each concrete subclass to draw a single value from the distribution.
+    The 'sampleInteger' method draws one value from a Gaussian of the mean
+    and the variance, rounded and clamped into the inclusive bounds.
 
     Returns
     -------
     int
-      A single value drawn from the distribution, landing within the
-      bounds.
-
-    Raises
-    ------
-    NotImplementedError
-      Always, on the abstract base, since a concrete subclass must supply
-      the draw.
+      A Gaussian draw clamped to '[minVal, maxVal]'.
     """
-    raise NotImplementedError
+    return self._clamp(round(gauss(self.mean, sqrt(self.var))))
+
+  def _clamp(self, value: int) -> int:
+    return min(self.maxVal, max(self.minVal, value))
+
+  def _spread(self, values: list[int], order: list[int], delta: int) -> int:
+    """
+    The '_spread' method moves each value, in the given order, by its share
+    of what is left of 'delta', each clamped to the bounds, so the values
+    stay near what was drawn. It returns what the clamps left over.
+    """
+    for n, i in enumerate(order):
+      if not delta:
+        break
+      share = round(delta / (len(order) - n))
+      adjusted = self._clamp(values[i] + share)
+      delta -= adjusted - values[i]
+      values[i] = adjusted
+    return delta
+
+  def _fill(self, values: list[int], order: list[int], delta: int) -> int:
+    """
+    The '_fill' method gives each value, in the given order, as much of
+    'delta' as its bounds allow, and returns what is left over: nothing,
+    when the target lies within what the bounds allow.
+    """
+    for i in order:
+      if not delta:
+        break
+      adjusted = self._clamp(values[i] + delta)
+      delta -= adjusted - values[i]
+      values[i] = adjusted
+    return delta
 
   def _settle(self, values: list[int], target: int) -> list[int]:
     """
-    The '_settle' method distributes the difference between 'target' and the
-    sum of 'values' across the values in random order, clamping each to the
-    bounds. It runs one pass, so it cannot spin, and an unreachable target
-    lands as near as the bounds allow.
+    The '_settle' method moves 'values' onto the sum 'target': the
+    difference is spread over the values in random order, each taking its
+    share, and what the clamps leave is filled in the same order. Two
+    passes, so it cannot spin; the sum is exact whenever the target lies
+    between the count times each bound.
 
     Parameters
     ----------
@@ -192,28 +122,65 @@ class StochasticVariable(BaseObject):
     Returns
     -------
     list[int]
-      The same list, adjusted toward summing to 'target'.
+      The same list, adjusted to sum to 'target'.
     """
     delta = target - sum(values)
     order = [*range(len(values))]
     shuffle(order)
-    for i in order:
-      if not delta:
-        break
-      adjusted = min(self.maxVal, max(self.minVal, values[i] + delta))
-      delta -= adjusted - values[i]
-      values[i] = adjusted
+    delta = self._spread(values, order, delta)
+    self._fill(values, order, delta)
     return values
+
+  def _countFor(self, target: int, spacing: int) -> int:
+    """
+    The '_countFor' method chooses how many values to draw for 'target',
+    each costing its value plus 'spacing': the count the mean suggests,
+    held between the fewest and the most values that can add up to the
+    target. A target no count can reach is refused.
+
+    Raises
+    ------
+    ValueError
+      If no number of values within the bounds adds up to 'target'.
+    """
+    if target == 0:
+      return 0
+    low = self.minVal + spacing
+    high = self.maxVal + spacing
+    spacedMean = self.mean + spacing
+    if spacedMean > 0:
+      preferred = round(target / spacedMean)
+    else:
+      preferred = 0
+    if target > 0 and high > 0:
+      fewest = -(-target // high)
+      if low > 0:
+        most = target // low
+      else:
+        most = max(fewest, preferred)
+    else:
+      #  This branch is reached by the following:
+      #  - The target is negative, which no values at or above zero add
+      #    up to.
+      #  - Every value is at most zero, so no positive target is reached.
+      fewest, most = 1, 0
+    if fewest > most:
+      infoSpec = """A '%s' cannot cut %d into values from %d to %d%s: no
+      number of such values adds up to it!"""
+      if spacing:
+        spacingStr = """, each with %d more for its separator""" % spacing
+      else:
+        spacingStr = ''
+      args = (type(self).__name__, target, self.minVal, self.maxVal)
+      raise ValueError(textFmt(infoSpec % (*args, spacingStr)))
+    return min(most, max(fewest, preferred))
 
   def partition(self, target: int) -> list[int]:
     """
-    The 'partition' method produces a list of integers summing to 'target',
-    each one a sample from the distribution. It draws a count of samples
-    taken from the mean, finds the single difference between their sum and
-    'target', then distributes that difference across the values in random
-    order, clamping each to the bounds. One pass settles the sum, so an
-    unreachable target lands as near as the bounds allow rather than
-    spinning in a loop.
+    The 'partition' method produces a list of integers summing to 'target'
+    exactly, each one a sample from the distribution: as many samples as
+    the mean suggests, held to a count that can reach the target, then
+    settled onto it.
 
     Parameters
     ----------
@@ -223,34 +190,42 @@ class StochasticVariable(BaseObject):
     Returns
     -------
     list[int]
-      Integers, each within the bounds, summing to 'target' when the bounds
-      allow and as near as possible otherwise.
-    """
-    count = round(target / self.mean) or 1
-    values = [self.sampleInteger() for _ in range(count)]
-    return self._settle(values, target)
+      Integers, each within the bounds, summing to 'target'; none for a
+      target of zero.
 
-  def partitionSpaced(self, target: int) -> list[int]:
+    Raises
+    ------
+    ValueError
+      If no number of values within the bounds adds up to 'target'.
     """
-    The 'partitionSpaced' method mirrors 'partition' but reserves one extra
-    slot per integer, as a word followed by a single separator does, so that
-    the sum of the integers plus their count equals 'target'. A list joined
-    by one character separators therefore reaches 'target' characters
-    exactly. Each integer costs its value plus that one slot, so the count
-    is taken from 'mean + 1' and the values are settled to sum to 'target'
-    minus the count.
+    return self.partitionSpaced(target, 0)
+
+  def partitionSpaced(self, target: int, spacing: int = 1) -> list[int]:
+    """
+    The 'partitionSpaced' method is 'partition' with 'spacing' extra slots
+    reserved per integer, as a word followed by a separator costs its
+    letters and one more, so that the sum of the integers plus 'spacing'
+    times their count equals 'target' exactly.
 
     Parameters
     ----------
     target : int
-      The total of the integers plus their count.
+      The total of the integers plus 'spacing' per integer.
+    spacing : int, optional
+      The slots each integer costs beyond its value, one unless given.
 
     Returns
     -------
     list[int]
-      Integers, each within the bounds, with 'sum(out) + len(out)' equal to
-      'target' when the bounds allow and as near as possible otherwise.
+      Integers, each within the bounds, with 'sum(out) + spacing *
+      len(out)' equal to 'target'; none for a target of zero.
+
+    Raises
+    ------
+    ValueError
+      If no number of values within the bounds, each plus 'spacing', adds
+      up to 'target'.
     """
-    count = round(target / (self.mean + 1)) or 1
+    count = self._countFor(target, spacing)
     values = [self.sampleInteger() for _ in range(count)]
-    return self._settle(values, target - count)
+    return self._settle(values, target - spacing * count)

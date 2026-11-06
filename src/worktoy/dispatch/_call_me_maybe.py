@@ -11,13 +11,26 @@ from collections.abc import Callable
 from ..utilities import textFmt, QuickDesc
 from ..waitaminute import MissingVariable, TypeException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Optional, Union, Any, Self
 
 T = TypeVar('T')
 
 
 class _Wrapped(QuickDesc, Generic[T]):
+  """
+  'CallMeMaybe.__wrapped__' must give the function a holder forwards to,
+  read-only, and without the function being bound as a method on the
+  way.
+
+  Implementation
+  --------------
+
+  The function is stored in a one-element tuple, which the descriptor
+  protocol leaves alone, and this descriptor returns its element. Writes
+  and deletions are refused, as for every 'QuickDesc'.
+  """
+
   def __get__(self, instance: Any, owner: type) -> Union[T, Self]:
     if instance is None:
       return self
@@ -25,7 +38,7 @@ class _Wrapped(QuickDesc, Generic[T]):
       raise MissingVariable(self, '__private_key__', str)
     if not isinstance(self.__private_key__, str):
       raise TypeException('__private_key__', self.__private_key__, str)
-    funcTuple = getattr(instance, self.__private_key__)
+    funcTuple = object.__getattribute__(instance, self.__private_key__)
     if funcTuple is None:
       raise MissingVariable(instance, self.__private_key__, tuple)
     if isinstance(funcTuple, tuple):
@@ -35,23 +48,33 @@ class _Wrapped(QuickDesc, Generic[T]):
 
 class CallMeMaybe:
   """
-  Holds a reference to a function and forwards calls to it via '__call__'.
+  The dispatch machinery needs to hold functions as plain callables:
+  calling the holder calls the function, reading a name such as
+  '__name__' off it reads the function's, and nothing ever binds the
+  function as a method, which would hand it the holder as its first
+  argument. A subclass must be able to change how the call reaches the
+  function, as 'Permuter' reorders the arguments.
 
-  This is a deliberately minimal indirection layer: a 'CallMeMaybe'
-  instance wraps a single function and behaves as if calls to the
-  instance were calls to the wrapped function. The wrapped function is
-  stored such that the descriptor protocol does not bind it - see
-  '_getWrappedFunction' for the mechanics.
+  Implementation
+  --------------
 
-  This class intentionally does not implement '__get__'. It exists for
-  use as a non-descriptor callable in the 'overload.flex' machinery,
-  where descriptor binding would interfere with dispatch. To enforce
-  this, '__set_name__' raises 'TypeError' if a 'CallMeMaybe' instance
-  is assigned as a class attribute. Use it as a free-standing object,
-  not as a class member.
+  The function is kept as a one-element tuple, which the descriptor
+  protocol does not bind, and '__wrapped__' gives it back. '__call__'
+  passes the function and the arguments to 'invoke', which a subclass
+  reimplements. '__getattr__' reads a missing name off the function, so
+  '__name__' and '__qualname__' are the function's while '__doc__' and
+  '__module__', which the class holds, are not. The holder has no
+  '__get__', and '__set_name__' refuses a place in a class body; a
+  subclass meant for one reimplements it and accepts the binding.
 
-  Subclasses that need descriptor behaviour must override '__set_name__'
-  and accept the resulting binding semantics.
+  Attributes
+  ----------
+
+  __wrapped__ : Callable
+    The function held, read-only.
+
+  __function_case__ : tuple or None
+    The one-element tuple holding the function.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -69,27 +92,6 @@ class CallMeMaybe:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _getWrappedFunction(self, ) -> Callable:
-    """
-    The '_getWrappedFunction' method returns the wrapped function from
-    its single-element tuple storage.
-
-    The wrapped function is held in '__function_case__' as a one-tuple
-    '(func,)' rather than as a bare attribute. This is deliberate. Plain
-    Python functions implement the descriptor protocol via 'FunctionType.
-    __get__', which means that storing 'func' directly as
-    'self.__function_case__ = func' would cause attribute access on a
-    'CallMeMaybe' instance to bind 'func' as a method - silently
-    prepending the 'CallMeMaybe' instance as the first argument the next
-    time the function is invoked. The tuple wrapper is opaque to the
-    descriptor protocol: a tuple's '__get__' is whatever 'object'
-    inherits, i.e. nothing, so 'self.__function_case__' returns the
-    tuple itself with no binding shenanigans, and indexing '[0]'
-    retrieves the original function unaltered.
-
-    The same defense is why this getter exists at all rather than
-    exposing '__function_case__' directly: callers should never see the
-    tuple, only the function inside it. The tuple is plumbing.
-    """
     if self.__function_case__ is None:
       raise MissingVariable(self, '__function_case__', tuple)
     return self.__function_case__[0]
@@ -100,14 +102,19 @@ class CallMeMaybe:
 
   def setFunction(self, func: Callable) -> None:
     """
-    The 'setFunction' method stores the wrapped function. The default
-    implementation keeps the function object in a single-element tuple,
-    which deactivates the descriptor protocol on it.
+    A holder created empty must be able to receive its function later.
+
+    Implementation
+    --------------
+
+    The function is stored as a one-element tuple, replacing any held
+    before. Unlike the constructor, nothing checks that it is callable.
 
     Parameters
     ----------
+
     func : Callable
-        The function to wrap.
+      The function to hold.
     """
     self.__function_case__ = (func,)
 
@@ -131,24 +138,29 @@ class CallMeMaybe:
 
   def __set_name__(self, owner: type, name: str) -> None:
     """
-    The '__set_name__' method always raises, because 'CallMeMaybe'
-    implements only the invocation of wrapped functions and offers no
-    descriptor protocol support. Raising here prevents accidental use as
-    a class attribute. Subclasses that need descriptor behaviour must
-    replace this method, which class creation invokes with the arguments
-    below.
+    A holder placed in a class body would be a callable the class never
+    binds, which is rarely what the body means.
+
+    Implementation
+    --------------
+
+    The placement is refused. On Python 3.7 to 3.11 the refusal reaches the
+    class statement wrapped in a 'RuntimeError'.
 
     Parameters
     ----------
+
     owner : type
-        The class created by the class body.
+      The class being created.
+
     name : str
-        The name by which the instance is assigned in the class body.
+      The name the holder was bound to.
 
     Raises
     ------
+
     TypeError
-        On every call, since 'CallMeMaybe' is not a descriptor.
+      Always.
     """
     infoSpec = """'%s' does not support the descriptor protocol!"""
     clsName = type(self).__name__
@@ -156,6 +168,36 @@ class CallMeMaybe:
     raise TypeError(textFmt(info))
 
   def __getattr__(self, key: str) -> Any:
+    """
+    A holder must pass for the function it holds where code reads a name
+    such as '__name__' off it, yet never recurse when it holds nothing.
+
+    Implementation
+    --------------
+
+    '__function_case__' and '__wrapped__' go to 'object.__getattribute__',
+    which re-raises the 'MissingVariable' of an empty holder. Any other
+    name is read off the function, and a name the function lacks raises
+    from the holder.
+
+    Parameters
+    ----------
+
+    key : str
+      The missing name.
+
+    Returns
+    -------
+
+    Any
+      The value on the function.
+
+    Raises
+    ------
+
+    AttributeError
+      Neither the holder nor the function has the name.
+    """
     if key in ('__function_case__', '__wrapped__'):
       return object.__getattribute__(self, key)
     try:
@@ -171,28 +213,30 @@ class CallMeMaybe:
 
   def invoke(self, *args, **kwargs) -> Any:
     """
-    The 'invoke' method specifies how the wrapped function object, given
-    as the first positional argument, receives the arguments after it.
-    The default simply passes them through, leaving subclasses free to
-    customize. The function is taken from 'args' by position rather than
-    named as a parameter, so a keyword of the caller named 'func' goes
-    through to the function.
+    A subclass must be able to transform, replace or skip the function on
+    the way, without reaching into the holder for it, and a keyword of the
+    caller named 'func' must still reach the function.
+
+    Implementation
+    --------------
+
+    The function arrives first among the positional arguments, not as a
+    named parameter. The default calls it with the rest unchanged.
 
     Parameters
     ----------
-    *args : Any
-        The wrapped function first, provided as an explicit argument so
-        that subclasses can transform, replace, or selectively invoke it
-        without reaching into instance state, then the positional
-        arguments forwarded from '__call__'.
-    **kwargs : Any
-        Keyword arguments forwarded from '__call__'.
+
+    *args
+      The function, then the positional arguments of the call.
+
+    **kwargs
+      The keyword arguments of the call.
 
     Returns
     -------
+
     Any
-        Whatever the function returns, possibly transformed by the
-        subclass.
+      What the function returns.
     """
     func, args = args[0], args[1:]
     return func(*args, **kwargs)

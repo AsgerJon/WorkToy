@@ -9,44 +9,63 @@ from typing import TYPE_CHECKING, TypeVar, Generic, overload
 
 from . import _RootAlias
 from ..core.sentinels import SentinelMeta, THIS
+from ..dispatch import TypeSig
 from ..utilities import textFmt, typeCast
 from ..waitaminute import TypeException, MissingVariable
-from ..waitaminute.desc import MissingInstanceDict
+from ..waitaminute.desc import MissingInstanceDict, SharedDescriptor
 
 T = TypeVar('T')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Self, Optional, Union
 
 
 class FastBox(Generic[T]):
   """
-  FastBox is 'AttriBox' made stricter and faster. An attribute is declared
-  the same way, 'mass = FastBox[float](1.0)', and the class docstring of
-  'AttriBox' explains how a box works; this one says only where 'FastBox'
-  differs.
+  An attribute read in a hot loop cannot afford the machinery of an
+  'AttriBox': frames, notification hooks, placeholders, casts and tags.
+  It still needs a declared type and a default, and a write of the wrong
+  type must still fail. What it gives up must be plain, not hidden in
+  conveniences that cost time.
 
-  It is faster because it keeps none of the machinery of 'AttriBox': no
-  notification hooks such as 'onSet', no 'self.instance' or 'self.owner',
-  no 'THIS', 'OWNER' or 'DESC' in the parentheses and no tags on the
-  field object. A read is one lookup in the instance dict, and a write
-  one 'isinstance' check and one store. It suits an attribute read in a
-  hot loop that needs none of that.
+  Implementation
+  --------------
 
-  It is stricter in what it accepts. The parentheses take one value, not
-  the arguments of a constructor, checked on the line that writes it, and
-  every instance shares that value; see '__call__'. A write must already
-  be of the field type, since nothing is cast on assignment. Deleting the
-  attribute lets the next read start it over, where 'AttriBox' raises
-  'MissingVariable' until the attribute is assigned again.
+  The attribute is declared as with 'AttriBox', 'mass =
+  FastBox[float](1.0)', but the parentheses hold one value, checked and
+  cast once on the declaration line, which every instance shares; empty
+  parentheses give each instance a new 'fieldType()' at its first read
+  instead. A box declared without parentheses is refused as the class is
+  created, and so is one placed on a second class, as an 'AttriBox' is;
+  a placed box called again, as 'Particle.mass(9.0)', is refused as well,
+  since it would change the value of every instance not read yet. A shared
+  value must be hashable, which keeps out
+  the mutable builtins, though an object hashed by identity, such as a
+  'BaseObject', passes and is then shared. A read is one lookup in the
+  instance dictionary, under '__fast_<name>__'. A write is one
+  'isinstance' check and one store, with no cast, so assigning '2' to a
+  'FastBox[float]' raises 'TypeException'. Deleting the attribute lets
+  the next read start over from the declared value. No tags, no hooks, no
+  'self.instance'.
 
-    class Particle:
-      mass = FastBox[float](1)       # holds 1.0
-      tags = FastBox[tuple](())
+  Attributes
+  ----------
 
-    p = Particle()
-    p.mass = 2.0                     # fine
-    p.mass = 2                       # TypeException: a write is not cast
+  __field_type__ : type
+    The class of the values.
+
+  __field_name__ : str
+    The name the box is placed at.
+
+  __field_owner__ : type
+    The class the box is placed in, for the refusal of a call.
+
+  __private_name__ : str
+    The key in the instance dictionary.
+
+  __declared_value__ : tuple or None
+    The declared value in a one-element tuple, or empty, or 'None' until
+    the parentheses are given.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -56,15 +75,17 @@ class FastBox(Generic[T]):
   #  Private Variables
   __field_type__: Optional[type] = None
   __field_name__: Optional[str] = None
+  __field_owner__: Optional[type] = None
   __private_name__: Optional[str] = None
-  #  The value of the parentheses as a one-tuple, or empty for none.
-  __declared_value__: tuple = ()
+  #  The value of the parentheses as a one-tuple, empty for none, or 'None'
+  #  until the parentheses are given.
+  __declared_value__: Optional[tuple] = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     # @formatter:off
     @overload
     def __init__(self, value: T) -> None: ...
@@ -75,18 +96,18 @@ class FastBox(Generic[T]):
 
   def clone(self) -> Self:
     """
-    Works as 'BaseDescriptor.clone' does for an 'AttriBox', giving the
-    second name of 'width = height = FastBox[int](1)' a box of its own; the
-    clone carries the declared value where the clone of an 'AttriBox'
-    carries the arguments of its declaration.
+    The second name of 'width = height = FastBox[int](1)', and
+    'THIS[Parent].name', need a box of their own with the same type and
+    declared value.
 
     Returns
     -------
-    Self
-        A new box, ready to be placed on a class.
+
+    FastBox
+      An unplaced copy of the same class.
     """
     new = object.__new__(type(self))
-    skipped = ('__field_name__', '__private_name__')
+    skipped = ('__field_name__', '__field_owner__', '__private_name__')
     for key, value in vars(self).items():
       if key in skipped:
         continue
@@ -99,44 +120,57 @@ class FastBox(Generic[T]):
 
   def __call__(self, *args, **kwargs) -> Self:
     """
-    Takes the place of 'AttriBox.__call__' and differs from it in what the
-    parentheses hold: one value, not the arguments of a constructor,
-    checked on the line that writes it. The value must be of the field
-    type, or one 'typeCast' converts without loss, and since every
-    instance shares it, it must be hashable. Empty parentheses give each
-    instance a new 'fieldType()' at its first read instead.
+    The declaration line must give the one value every instance starts
+    with, and refuse at that line a value that is of the wrong type or
+    that cannot be safely shared. A placed box called again, as
+    'Particle.mass(9.0)', would change the value of every instance not
+    read yet, and is refused.
 
-        class Point:
-          x = FastBox[float](1)      # holds 1.0
-          tags = FastBox[list]()     # a new list for each instance
+    Implementation
+    --------------
 
-        FastBox[int]('abc')          # TypeCastException
-        FastBox[list]([1, 2])        # TypeError: not hashable
+    A placed box is refused in the words 'AttriBox' uses. One value is
+    cast by 'typeCast' and must hash; none means a new 'fieldType()' per
+    instance.
+
+      class Point:
+        x = FastBox[float](1)      # holds 1.0
+        tags = FastBox[list]()     # a new list for each instance
 
     Parameters
     ----------
-    *args : Any
-        Nothing, or the one value every instance starts with.
-    **kwargs : Any
-        Nothing; any keyword is refused.
+
+    *args
+      Nothing, or the one declared value.
+
+    **kwargs
+      Nothing; any keyword is refused.
 
     Returns
     -------
-    Self
-        'self', so the call site can chain straight into a class-body
-        assignment, for example 'x = FastBox[int](42)'.
+
+    FastBox
+      The box itself.
 
     Raises
     ------
+
     MissingVariable
-        If the box has no field type.
+      The box was never subscripted.
+
     TypeCastException
-        If the value is no instance of the field type and 'typeCast'
-        refuses to convert it.
+      The value is not of the field type and does not convert.
+
     TypeError
-        If the value cannot be hashed, or several arguments or a keyword
-        are given.
+      The box is placed in a class already, the value cannot be hashed,
+      or several arguments or a keyword are given.
     """
+    if self.__field_owner__ is not None:
+      infoSpec = """The box at '%s.%s' took its value as its class was
+      created, and cannot take a new one."""
+      ownerName = self.__field_owner__.__name__
+      info = infoSpec % (ownerName, self.__field_name__)
+      raise TypeError(textFmt(info))
     fieldType = self.__field_type__
     if fieldType is None:
       raise MissingVariable(self, '__field_type__', type)
@@ -147,44 +181,55 @@ class FastBox(Generic[T]):
       names = (type(self).__name__, fieldType.__name__, fieldType.__name__)
       raise TypeError(textFmt(infoSpec % names))
     if not args:
-      self.__declared_value__ = ()
+      object.__setattr__(self, '__declared_value__', ())
       return self
     value = typeCast(fieldType, args[0])
     try:
       hash(value)
     except TypeError as typeError:
-      infoSpec = """'%s[%s]' shares its value among every instance, so the
-      value must be hashable, which a '%s' is not. Leave the parentheses
-      empty for a new '%s()' per instance, or use 'AttriBox'."""
+      infoSpec = """'%s[%s]' shares one value among every instance and
+      refuses one that cannot be hashed, as this '%s' cannot. Leave the
+      parentheses empty for a new '%s()' per instance, or use 'AttriBox'
+      for a value of its own per instance."""
       names = (
         type(self).__name__, fieldType.__name__, type(value).__name__,
         fieldType.__name__,
       )
       raise TypeError(textFmt(infoSpec % names)) from typeError
-    self.__declared_value__ = (value,)
+    object.__setattr__(self, '__declared_value__', (value,))
     return self
 
   @classmethod
   def __class_getitem__(cls, fieldType: Union[type, TypeVar]) -> FastBox:
     """
-    Works as 'AttriBox.__class_getitem__', with no difference.
+    As for 'AttriBox': a plain class, or 'THIS', makes a box, and anything
+    'typing' accepts makes a type alias for hints and bases. A class
+    'isinstance' refuses is refused at the subscript by
+    'TypeSig.validateTypes', as there.
 
     Parameters
     ----------
+
     fieldType : type or TypeVar
-        The field type fixed by the subscript.
+      The class of the values.
 
     Returns
     -------
-    FastBox
-        A new box of the class subscripted, carrying 'fieldType'.
+
+    FastBox or _RootAlias
+      A new box, or a type alias.
 
     Raises
     ------
-    TypeException
-        If 'fieldType' is neither a class nor anything 'typing' accepts.
+
     TypeError
-        If 'fieldType' is a sentinel other than 'THIS', such as 'OWNER'.
+      'fieldType' is a sentinel other than 'THIS'.
+
+    UncheckableType
+      'fieldType' is a class 'isinstance' refuses.
+
+    TypeException
+      'fieldType' is neither a class nor anything 'typing' accepts.
     """
     if isinstance(fieldType, SentinelMeta) and fieldType is not THIS:
       infoSpec = """The subscript '%s[%s]' names a sentinel as the field
@@ -199,8 +244,14 @@ class FastBox(Generic[T]):
     #  a metaclass exactly when the subscript is a plain class, on every
     #  version, without an attribute lookup a class-level hook could answer.
     if issubclass(type(fieldType), type) or fieldType is THIS:
+      declaration = '%s[%s]' % (cls.__name__, fieldType.__name__)
+      TypeSig.validateTypes(
+        fieldType,
+        variadic=False,
+        declaration=declaration
+        )
       self = cls.__new__(cls)
-      self.__field_type__ = fieldType
+      object.__setattr__(self, '__field_type__', fieldType)
       return self
     try:
       out = super().__class_getitem__(fieldType)  # noqa
@@ -212,35 +263,47 @@ class FastBox(Generic[T]):
 
   def __set_name__(self, owner: type, name: str) -> None:
     """
-    Works as 'AttriBox.__set_name__', with the same refusals on the class
-    statement. The difference is where an instance keeps its value: in its
-    own '__dict__' under '__fast_<name>__'.
+    The box must learn where to keep the values of its instances, and a
+    class it cannot serve must be refused as the class is created.
 
-      class Point:
-        x = FastBox[int](0)
+    Implementation
+    --------------
 
-      p = Point()
-      p.x = 3
-      vars(p)                        # {'__fast_x__': 3}
+    A box placed on another class already is refused, as
+    'BaseDescriptor.__set_name__' refuses it. A box placed already under
+    another name of the same class places a clone at the new name. 'THIS'
+    as field type becomes the class, a box declared without parentheses is
+    refused, the name and the owner are recorded, and the key is
+    '__fast_<name>__'.
 
     Parameters
     ----------
-    owner : type
-        The class being created that holds the box.
-    name : str
-        The name the box is bound to in the class body.
 
-    Returns
-    -------
-    None
+    owner : type
+      The class being created.
+
+    name : str
+      The name the box is bound to.
 
     Raises
     ------
+
     MissingVariable
-        If the box was never subscripted.
+      The box was never subscripted.
+
     MissingInstanceDict
-        If the instances of 'owner' have no '__dict__'.
+      The instances of 'owner' have no '__dict__'.
+
+    TypeError
+      The box is declared without parentheses.
+
+    SharedDescriptor
+      The box is placed on another class already.
     """
+    placedOwner = self.__field_owner__
+    if placedOwner is not None and placedOwner is not owner:
+      placedName = self.__field_name__
+      raise SharedDescriptor(self, placedOwner, placedName, owner, name)
     held = self.__field_name__
     if held is not None and held != name:
       #  'type.__new__' runs '__set_name__' over a copy of the class dict,
@@ -254,34 +317,52 @@ class FastBox(Generic[T]):
     if not type.__getattribute__(owner, '__dictoffset__'):
       raise MissingInstanceDict(owner, name)
     if self.__field_type__ is THIS:
-      self.__field_type__ = owner
-    self.__field_name__ = name
-    self.__private_name__ = '__fast_%s__' % name
+      object.__setattr__(self, '__field_type__', owner)
+    if self.__declared_value__ is None:
+      infoSpec = """The box at '%s.%s' is declared without parentheses. A
+      box takes its declared value in parentheses, as '%s[%s](...)', or
+      empty parentheses for a new '%s()' per instance."""
+      boxName = type(self).__name__
+      typeName = self.__field_type__.__name__
+      names = (owner.__name__, name, boxName, typeName, typeName)
+      raise TypeError(textFmt(infoSpec % names))
+    object.__setattr__(self, '__field_name__', name)
+    object.__setattr__(self, '__field_owner__', owner)
+    object.__setattr__(self, '__private_name__', '__fast_%s__' % name)
 
   def __get__(self, instance: Any, owner: type) -> Any:
     """
-    Works as 'AttriBox.__get__', except that a read through an instance is
-    one lookup in its '__dict__' and runs no hooks; the first read takes
-    the declared value or a new 'fieldType()', see '_build'.
+    A read through an instance must cost one dictionary lookup.
+
+    Implementation
+    --------------
+
+    Only a miss checks that the box was named, builds the value with
+    '_build' and stores it.
 
     Parameters
     ----------
+
     instance : Any
-        The instance the attribute is read through, or None when read
-        through the class.
+      The instance read through, or 'None'.
+
     owner : type
-        The class the attribute is read through.
+      The class read through.
 
     Returns
     -------
+
     Any
-        The box itself through the class, the value through an instance.
+      The box through the class, the value through an instance.
 
     Raises
     ------
+
     MissingInstanceDict
-        If the instance has no '__dict__', as for a box set with 'setattr'
-        on a class declaring '__slots__' without one.
+      The instance has no '__dict__'.
+
+    MissingVariable
+      The box never learned its name.
     """
     if instance is None:
       return self
@@ -292,37 +373,42 @@ class FastBox(Generic[T]):
       raise MissingInstanceDict(instance, fieldName) from attributeError
     try:
       return store[self.__private_name__]
-    except KeyError:
+    except KeyError as keyError:
+      #  Only a miss pays for this test, so a placed box reads in one
+      #  lookup as before.
+      if self.__private_name__ is None:
+        raise MissingVariable(self, '__field_name__', str) from keyError
       value = self._build()
       store[self.__private_name__] = value
       return value
 
   def __set__(self, instance: Any, value: Any) -> None:
     """
-    Works as an assignment to an 'AttriBox', see
-    'AttriBox.__instance_set__', except that nothing is cast and no hooks
-    run: the value must already be of the field type, so 'p.mass = 2' on a
-    'FastBox[float]' raises 'TypeException'.
+    A write must cost one check and one store, and nothing is converted on
+    the way.
 
     Parameters
     ----------
-    instance : Any
-        The instance the attribute is assigned through.
-    value : Any
-        The assigned value.
 
-    Returns
-    -------
-    None
+    instance : Any
+      The instance written through.
+
+    value : Any
+      The value assigned, already of the field type.
 
     Raises
     ------
+
     TypeException
-        If the value is not an instance of the field type.
+      The value is not an instance of the field type.
+
     MissingInstanceDict
-        If the instance has no '__dict__'.
+      The instance has no '__dict__'.
+
+    MissingVariable
+      The box never learned its name.
     """
-    if TYPE_CHECKING:  # pragma: no cover
+    if TYPE_CHECKING:  # pragma: no cover, no mutate
       assert isinstance(self.__field_type__, type)
       assert isinstance(self.__field_name__, str)
     if isinstance(value, self.__field_type__):
@@ -331,40 +417,41 @@ class FastBox(Generic[T]):
       except AttributeError as attributeError:
         fieldName = self.__field_name__
         raise MissingInstanceDict(instance, fieldName) from attributeError
+      if self.__private_name__ is None:
+        raise MissingVariable(self, '__field_name__', str)
       store[self.__private_name__] = value
       return
     raise TypeException(self.__field_name__, value, self.__field_type__)
 
   def __delete__(self, instance: Any) -> None:
     """
-    Works as 'AttriBox.__instance_delete__' except in what follows: the
-    next read starts the attribute over from the declared value instead of
-    raising 'MissingVariable', and deleting an attribute that holds
-    nothing, never read or already deleted, raises.
+    A deleted attribute starts over from the declared value at the next
+    read.
 
     Parameters
     ----------
-    instance : Any
-        The instance the attribute is deleted from.
 
-    Returns
-    -------
-    None
+    instance : Any
+      The instance deleted through.
 
     Raises
     ------
+
     MissingVariable
-        If the instance holds no value for the attribute.
+      The instance holds no value, or the box never learned its name.
+
     MissingInstanceDict
-        If the instance has no '__dict__'.
+      The instance has no '__dict__'.
     """
-    if TYPE_CHECKING:  # pragma: no cover
+    if TYPE_CHECKING:  # pragma: no cover, no mutate
       assert isinstance(self.__field_name__, str)
     try:
       store = instance.__dict__
     except AttributeError as attributeError:
       fieldName = self.__field_name__
       raise MissingInstanceDict(instance, fieldName) from attributeError
+    if self.__private_name__ is None:
+      raise MissingVariable(self, '__field_name__', str)
     try:
       del store[self.__private_name__]
     except KeyError as keyError:
@@ -375,24 +462,6 @@ class FastBox(Generic[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _build(self) -> Any:
-    """
-    Takes the place of 'AttriBox._resolve': instead of calling the
-    constructor on the arguments of the declaration, it gives the declared
-    value, which every instance shares, or for empty parentheses a new
-    'fieldType()'.
-
-    Returns
-    -------
-    Any
-        The declared value, or a new instance of the field type.
-
-    Raises
-    ------
-    MissingVariable
-        If no field type has been captured.
-    TypeException
-        If 'fieldType()' returns something that is not an instance of it.
-    """
     fieldType = self.__field_type__
     if fieldType is None:
       raise MissingVariable(self, '__field_type__', type)

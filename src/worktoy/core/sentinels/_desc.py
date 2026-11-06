@@ -11,8 +11,12 @@ from . import Sentinel
 
 class DESC(Sentinel):
   """
-  DESC is a sentinel placeholder for the descriptor object itself, used
-  in deferred 'AttriBox' constructor arguments alongside THIS and OWNER.
-  At access time it is replaced by the descriptor mediating the
-  attribute access.
+  An argument of an 'AttriBox', written in the class body, may need to be
+  the box itself, which has no name the class body could use for it.
+
+  Implementation
+  --------------
+
+  At the first read, an argument that is 'DESC' itself is replaced by the
+  box building the value.
   """

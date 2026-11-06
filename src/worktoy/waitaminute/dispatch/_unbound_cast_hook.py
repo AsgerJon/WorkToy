@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Optional
 
 
@@ -42,7 +42,7 @@ class UnboundCastHook(WorkToyException, SyntaxError):
       self,
       className: str,
       targetName: Optional[str] = None
-      ) -> None:
+  ) -> None:
     self.className = className
     if targetName == className:
       targetName = None

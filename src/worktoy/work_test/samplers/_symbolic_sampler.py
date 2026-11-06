@@ -7,85 +7,56 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...desc import Field, SymbolicName
+from ...desc import AttriBox, SymbolicName
 from ...dispatch import overload
 from . import BaseSampler, randomWord
 
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional, Union
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from typing import TypeAlias, Any
 
-  MaybeInt: TypeAlias = Optional[int]
-  MaybeStr: TypeAlias = Optional[str]
-  MaybeSymbolic: TypeAlias = Optional[SymbolicName]
+  KeyGroups: TypeAlias = dict[str, tuple[str, ...]]
 
 
 class SymbolicSampler(BaseSampler):
   """
-  SymbolicSampler draws 'SymbolicName' values, each built from
-  'wordCount' random words of 'LOREM_WORDS' (default three, and never
-  fewer than one). A 'SymbolicName' then renders in any of the case
-  formats, so this sampler is the source of random identifier-like test
-  data.
+  A test of anything that renders names in several conventions wants
+  random names made of real words, so that every spelling can be
+  checked against the words. 'SymbolicSampler' draws 'SymbolicName'
+  values, each built from 'wordCount' random words of 'LOREM_WORDS',
+  three unless set otherwise and never fewer than one.
+
+  Implementation
+  --------------
+
+  'wordCount' is an 'AttriBox[int]' with the synonyms 'numWords',
+  'num_words' and 'word_count' for the keyword constructor ('count' is
+  the row count, as on every sampler);
+  a 'preSet' notifier refuses a count below one with 'ValueError'. The
+  one-argument constructor takes the count. Each value is a
+  'SymbolicName' of 'wordCount' words from 'randomWord' drawing from
+  'self.random'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Fallback Variables
-  __fallback_count__: int = 3
-
   #  Class Variables
-  __count_keys__: tuple[str, ...] = (
-    'wordCount',
-    'count',
-    'numWords',
-    'num_words',
-    'word_count',
+  __key_groups__: KeyGroups = dict(
+      wordCount=('wordCount', 'numWords', 'num_words', 'word_count'),
   )
-  __key_groups__: dict[str, tuple[str, ...]] = dict(
-      wordCount=__count_keys__,
-  )
-  __key_types__: dict[str, type] = dict(
-      wordCount=int,
-  )
-  __key_defaults__: dict[str, Union[int, float]] = dict(
-      wordCount=__fallback_count__,
-  )
-
-  #  Private Variables
-  __word_count__: MaybeInt = None
 
   #  Public Variables
-  wordCount: Field[int] = Field()
-
-  #  Virtual Variables
+  wordCount = AttriBox[int](3)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _createWordCount(self, ) -> None:
-    self.__word_count__ = self.__fallback_count__
-
-  @wordCount.GET
-  def _getWordCount(self, **kwargs) -> int:
-    if self.__word_count__ is None:
-      if kwargs.get('_recursion', False):
-        raise RecursionError
-      self._createWordCount()
-      return self._getWordCount(_recursion=True)
-    return self.__word_count__
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @wordCount.SET
-  def _setWordCount(self, value: int) -> None:
-    if value < 1:
+  @wordCount.preSet
+  def _refuseWordCount(self, value: Any) -> None:
+    if isinstance(value, (int, float)) and value < 1:
       raise ValueError("""Word count must be a positive integer.""")
-    self.__word_count__ = value
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  PARENT METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -95,7 +66,7 @@ class SymbolicSampler(BaseSampler):
     return SymbolicName
 
   def _getItem(self, *args, **kwargs) -> SymbolicName:
-    words = (*(randomWord() for _ in range(self.wordCount)),)
+    words = (*(randomWord(self.random) for _ in range(self.wordCount)),)
     return SymbolicName(*words)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

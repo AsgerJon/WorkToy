@@ -13,7 +13,7 @@ from ..dispatch import TypeSig
 from ..mcls import BaseMeta
 from . import EZSpace, EZField
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, TypeAlias, Iterator
 
   from . import EZMeta
@@ -54,8 +54,8 @@ class EZMeta(BaseMeta):
     Whether the class was declared with any of the 'frozen'
     synonyms.
   isOrdered : bool
-    Whether the class was declared with any of the 'ordered'
-    synonyms.
+    Whether the class, or the nearest class it is based on to say, was
+    declared with any of the 'ordered' synonyms.
   kwOnly : bool
     Whether the class was declared with any of the 'kwOnly'
     synonyms.
@@ -132,8 +132,9 @@ class EZMeta(BaseMeta):
     """
     The 'isOrdered' getter returns the resolved 'ordered' build-option
     flag set during 'EZHook.postCompilePhase'. It is truthy when the
-    class was declared with any of the 'ordered', 'order', 'sortable',
-    or 'comparable' synonyms.
+    class, or the nearest class along its resolution order to say, was
+    declared with any of the 'ordered', 'order', 'sortable' or
+    'comparable' synonyms, and false below an 'ordered=False'.
 
     Returns
     -------
@@ -229,7 +230,7 @@ class EZMeta(BaseMeta):
     EZSpace
       A fresh namespace ready to receive the class body.
     """
-    if TYPE_CHECKING:  # pragma: no cover
+    if TYPE_CHECKING:  # pragma: no cover, no mutate
       assert isinstance(mcls, EZMeta)
     return EZSpace(mcls, name, bases, **kw)
 

@@ -10,7 +10,7 @@ from ...utilities import textFmt
 from .. import WorkToyException
 
 
-class ClassFieldError(WorkToyException, TypeError):
+class ClassFieldError(WorkToyException, SyntaxError):
   """
   ClassFieldError is raised at class construction time when an 'EZData'
   class body binds a name to a class object, either through a nested
@@ -19,7 +19,8 @@ class ClassFieldError(WorkToyException, TypeError):
   would become a field of type 'type' with the class as its default, and
   a nested class statement would quietly add a field to the constructor,
   the equality and the conversions. The class body fails at the
-  offending line instead.
+  offending line instead. It subclasses 'SyntaxError', as every refusal
+  of a class-body line in worktoy does.
 
   Attributes
   ----------
@@ -42,7 +43,9 @@ class ClassFieldError(WorkToyException, TypeError):
     self.clsName = clsName
     self.fieldName = fieldName
     self.classObject = classObject
-    TypeError.__init__(self, )
+    SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
     infoSpec = """EZData subclass '%s' binds the name '%s' to the class

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from . import EZMeta
 from ..core import Object
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Iterator, Self
 
 
@@ -18,10 +18,12 @@ class EZData(Object, metaclass=EZMeta):
   """
   EZData is the base class users subclass to declare a worktoy
   dataclass. Subclasses place their fields in the class body as
-  'EZField[T](...)' instances, optionally pass build-option
-  keywords ('frozen=True', 'ordered=True', 'kwOnly=True' or any
-  of their synonyms), and optionally define '__post_init__' for
-  validation or derived state.
+  'EZField[T](...)' instances, or as bare values whose type becomes
+  the field type, optionally pass build-option keywords
+  ('frozen=True', 'ordered=True', 'kwOnly=True' or any of their
+  synonyms), and optionally define '__post_init__' for validation or
+  derived state. An annotation alone, 'x: int' with no value, declares
+  no field: the fields are what the body binds.
 
   In return the class receives auto-generated '__init__',
   '__iter__', '__len__', '__eq__', '__setattr__', '__delattr__',
@@ -29,9 +31,13 @@ class EZData(Object, metaclass=EZMeta):
   dunders. The '__len__' gives the number of fields, which '__iter__'
   yields. The '__setattr__' casts every field assignment the way
   '__init__' does, or refuses it on a frozen class, which additionally
-  receives '__hash__'. A class body defining '__init__', '__iter__',
-  '__len__', '__eq__', '__hash__', an ordering method, '__setattr__' or
-  '__delattr__' raises 'ReservedMethodError', while a plain base, one not
+  receives '__hash__'. The '__delattr__' refuses deleting a field, since
+  every field holds a value of its declared type, and lets any other
+  attribute go; on a frozen class it refuses every deletion. A class
+  body defining '__init__', '__iter__', '__len__', '__eq__', '__hash__',
+  an ordering method, '__setattr__' or '__delattr__', plainly or with
+  '@overload', raises
+  'ReservedMethodError', while a plain base, one not
   built by 'EZMeta', may define them, as a mixin written against the
   same protocol does, and the generated methods take precedence over
   them. A class body binding an attribute EZData sets on every class
@@ -62,7 +68,7 @@ class EZData(Object, metaclass=EZMeta):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     #  These stubs shadow the dunder methods 'EZHook' generates at
     #  class creation. They exist only so type-checkers see accurate
     #  signatures for 'EZData' instances; the factory-built methods in

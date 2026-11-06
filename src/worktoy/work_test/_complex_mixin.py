@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, cast
 from ..desc import Field
 from ..waitaminute import TypeException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Union, Self, Optional, Iterator
   from types import NotImplementedType as NotImpType
 else:
@@ -21,16 +21,32 @@ else:
 
 class ComplexMixin:
   """
-  ComplexMixin is a mixin class for the purpose of complex number
-  implementations.
+  A class that stands for a complex number, whatever it keeps the two
+  parts in, wants the whole arithmetic of 'complex' without writing
+  twenty dunder methods, and a test bank for that arithmetic wants
+  several such classes to compare. 'ComplexMixin' gives a class the
+  arithmetic from two attributes, 'REAL' and 'IMAG', and is the worked
+  example 'ComplexTest' runs its bank against.
 
-  Subclasses can override the attributes 'REAL' and 'IMAG' to provide the
-  real and imaginary parts of the complex number, respectively.
-  Alternatively, subclasses can override the getter methods: '_getReal' and
-  '_getImag' to compute the real and imaginary parts dynamically.
+    class SimpleComplex(ComplexMixin):
+      pass
 
-  The mixin provides the dunder methods for arithmetic operations related to
-  complex numbers.
+  Implementation
+  --------------
+
+  'REAL' and 'IMAG' are fields over two private floats, zero until set,
+  so a subclass changes where the parts come from by overriding
+  '_getReal' and '_getImag', which the fields find by name; the setters
+  take an 'int' or a 'float' and store a 'float'. The constructor takes
+  no argument, one ('complex' or whatever 'complex(x)' accepts) or two
+  parts. '_resolveOther' coerces an operand (an instance, a number, a
+  'complex', a string the constructor parses, or an iterable of parts)
+  and gives 'NotImplemented' for anything else, so the operators defer
+  as Python expects. Equality takes numbers and other implementations
+  only, since the hash is that of 'complex' and a tuple or a string
+  would hash apart. 'bool' tests the magnitude against machine epsilon;
+  division refuses a zero divisor alone; 'str' and 'repr' show three
+  decimals; iteration yields the two parts.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -63,7 +79,7 @@ class ComplexMixin:
       if kwargs.get('_recursion', False):
         raise RecursionError
       self.__real_value__ = self.__fallback_real__
-      return self._getReal(_recursion=True)
+      return self._getReal(_recursion=True)  # pragma: no mutate
     if isinstance(self.__real_value__, (float, int)):
       return float(self.__real_value__)
     raise TypeException('__real_value__', self.__real_value__, float)
@@ -74,7 +90,7 @@ class ComplexMixin:
       if kwargs.get('_recursion', False):
         raise RecursionError
       self.__imag_value__ = self.__fallback_imag__
-      return self._getImag(_recursion=True)
+      return self._getImag(_recursion=True)  # pragma: no mutate
     if isinstance(self.__imag_value__, (float, int)):
       return float(self.__imag_value__)
     raise TypeException('__imag_value__', self.__imag_value__, float)

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from . import SpaceDesc
 from ...core import Object, MetaType
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Callable, TypeAlias, Type, Union, Optional
   from .. import AbstractMetaclass
   from .. import AbstractNamespace as ASpace
@@ -26,81 +26,44 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class AbstractSpaceHook(Object):
   """
-  AbstractSpaceHook is the abstract base class for defining hook objects
-  used in conjunction with 'AbstractNamespace'. These hooks enable
-  modular, stage-specific interception during class body evaluation and
-  namespace compilation within the metaclass system.
+  A worktoy namespace must be able to screen and transform the class
+  body as it runs and as it is compiled: refuse a misspelled dunder at
+  its line, claim '@overload' declarations so one name may be bound
+  several times, turn declarations into dispatchers. Each such job must
+  be a separate piece, declared in the body of a namespace class, so a
+  namespace is assembled from the jobs it needs, and a project may write
+  a job of its own.
 
-  Purpose
-  -------
-  Hooks allow custom behavior to be injected into the class construction
-  pipeline without modifying the namespace or metaclass core logic. They
-  observe and alter how names are accessed, assigned, or compiled into
-  the final class definition.
+    class MySpace(AbstractNamespace):
+      nameHook = NamespaceHook()
 
-  Integration
-  -----------
-  To activate a hook, instantiate a subclass of 'AbstractSpaceHook'
-  inside the body of a namespace class (a subclass of
-  'AbstractNamespace'). The descriptor protocol ('__set_name__') ensures
-  the hook registers itself with the namespace automatically at
-  definition time:
+  Implementation
+  --------------
 
-      class MyNamespace(AbstractNamespace):
-        nameHook = NamespaceHook()
-        reservedNameHook = ReservedNamespaceHook()
+  A hook registers itself with its namespace class in '__set_name__'.
+  The namespace calls each hook at each phase, and a hook reimplements
+  the phases it needs; the defaults do nothing:
 
-  Lifecycle hook methods
-  ----------------------
-  Subclasses may override any of the following methods to participate in
-  different stages of the namespace lifecycle. All are optional.
+  - 'preparePhase(space)' as the namespace is created; it may refuse by
+    raising, not change anything.
+  - 'setItemPhase(key, value, old)' before a binding; 'True' claims it,
+    and the namespace does not store it.
+  - 'getItemPhase(key, value)' on a read; it may refuse by raising.
+  - 'delItemPhase(key, value)' before a deletion; 'True' claims it.
+  - 'preCompilePhase(compiled)' and 'postCompilePhase(compiled)' before
+    and after the names of the body are merged into the dictionary for
+    'type.__new__'; each returns the dictionary.
+  - 'newClassPhase(cls)' after the class is created, returning it.
 
-  - 'preparePhase(self, space) -> None'
-    Called during '__init__' of the namespace object. This phase does
-    not allow changes to the namespace. Raise an exception to interrupt.
+  Inside a phase, 'self.space' is the namespace. One hook object serves
+  every class its namespace class builds, so it keeps the state of a
+  class body on the namespace, not on itself.
 
-  - 'setItemPhase(self, key, value, oldValue) -> bool'
-    Called just before a name is set in the namespace. Returning True
-    blocks the default behavior.
+  Attributes
+  ----------
 
-  - 'getItemPhase(self, key, value) -> None'
-    Called during '__getitem__', after the value is fetched and before
-    it is returned. Its return value is ignored, so unlike
-    'setItemPhase' it cannot veto the read; it signals only by raising.
-
-  - 'delItemPhase(self, key, value) -> bool'
-    Called when the class body deletes a name, before the namespace
-    removes it, with the value being removed. Returning True claims the
-    deletion, and the namespace then leaves the name alone.
-
-  - 'preCompilePhase(self, compiled: dict) -> dict'
-    Called after the class body finishes executing, but before the
-    namespace is finalized. May transform or replace namespace contents.
-
-  - 'postCompilePhase(self, compiled: dict) -> dict'
-    Called immediately before the finalized namespace is handed off to
-    the metaclass. Used for final transformations or validation.
-
-  - 'newClassPhase(self, clsName) -> type'
-    Called after the metaclass has created the new class object, but
-    before returning it.
-
-  Descriptor behavior
-  -------------------
-  'AbstractSpaceHook' implements the descriptor protocol. When accessed
-  via a namespace instance, the descriptor returns the hook with its
-  '__space_object__' attribute bound to that namespace. The 'space'
-  property exposes this binding so subclasses can introspect the active
-  namespace.
-
-  Extension notes
-  ---------------
-  Subclasses are expected to override only the relevant hook methods.
-  If none are overridden, the hook has no effect.
-
-  The 'addHook' method of the namespace class is automatically invoked
-  during registration via '__set_name__'. Hook authors do not need to
-  call it manually.
+  space : AbstractNamespace
+    The namespace the hook is working for.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -119,58 +82,167 @@ class AbstractSpaceHook(Object):
 
   def preparePhase(self, space: ASpace, ) -> None:
     """
-    The 'preparePhase' method runs during the namespace object's
-    '__init__'. This phase does not allow changes to the namespace;
-    raise an exception to interrupt the flow. The default does nothing.
+    A hook may need to refuse a class before its body runs.
+
+    Implementation
+    --------------
+
+    The default does nothing.
+
+    Parameters
+    ----------
+
+    space : AbstractNamespace
+      The new namespace.
     """
 
   def getItemPhase(self, key: str, value: Any, ) -> None:
     """
-    The 'getItemPhase' method runs during '__getitem__', after the value
-    is fetched and before it is returned. Its return value is ignored
-    (unlike 'setItemPhase'); raise an exception to interrupt. The default
-    does nothing.
+    A hook may need to refuse a read in the class body.
+
+    Implementation
+    --------------
+
+    The default does nothing; a return value is ignored.
+
+    Parameters
+    ----------
+
+    key : str
+      The name read.
+
+    value : Any
+      The value found, or the 'KeyError' of a miss.
     """
 
   def delItemPhase(self, key: str, val: Any = None, ) -> bool:
     """
-    The 'delItemPhase' method runs when the class body deletes a name,
-    before the namespace removes it, with the value being removed.
-    Returning True claims the deletion, and the namespace leaves the
-    name alone. The default does nothing and returns False.
+    A hook that claimed a binding may need to take care of its deletion.
+
+    Implementation
+    --------------
+
+    The default claims nothing.
+
+    Parameters
+    ----------
+
+    key : str
+      The name deleted.
+
+    val : Any
+      The value removed.
+
+    Returns
+    -------
+
+    bool
+      'True' to claim the deletion.
     """
     return False
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    The 'setItemPhase' method runs before a name is bound in the
-    namespace. Returning True blocks the namespace's own assignment. The
-    default does nothing and returns False.
+    A hook may need to refuse a binding in the class body, or take the
+    value for itself instead of the namespace storing it.
+
+    Implementation
+    --------------
+
+    The default claims nothing. The first hook claiming a binding hides it
+    from the hooks after it.
+
+    Parameters
+    ----------
+
+    key : str
+      The name bound.
+
+    val : Any
+      The value bound.
+
+    old : Any, optional
+      The value the name held, or 'None'.
+
+    Returns
+    -------
+
+    bool
+      'True' to claim the binding.
     """
     return False
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    The 'preCompilePhase' method runs during 'compile()', before the
-    class-body names are merged into the namespace dict. It receives that
-    dict and must return it; the default returns it unchanged.
+    A hook may need to give the class a default that the class body can
+    still override.
+
+    Implementation
+    --------------
+
+    The names of the body are merged in after this phase, so they replace
+    what it added. The default changes nothing.
+
+    Parameters
+    ----------
+
+    compiledSpace : dict
+      The dictionary being assembled.
+
+    Returns
+    -------
+
+    dict
+      The dictionary.
     """
     return compiledSpace
 
   def postCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    The 'postCompilePhase' method runs during 'compile()', after the
-    class-body names are merged into the namespace dict. It receives the
-    assembled dict and must return it; the default returns it unchanged.
+    A hook may need to transform what the class body bound, as building
+    the dispatchers of overloaded names.
+
+    Implementation
+    --------------
+
+    The names of the body are merged in before this phase, so what it
+    writes replaces them. The default changes nothing.
+
+    Parameters
+    ----------
+
+    compiledSpace : dict
+      The dictionary being assembled.
+
+    Returns
+    -------
+
+    dict
+      The dictionary.
     """
     return compiledSpace
 
   def newClassPhase(self, cls: Meta, ) -> Meta:  # NOQA
     """
-    The 'newClassPhase' method is the final phase, invoked by the
-    metaclass after it has created the new class object but before
-    returning it, ahead of the normal post-class-creation flow. The
-    default returns the class unchanged.
+    A hook may need to act on the finished class before the metaclass
+    returns it.
+
+    Implementation
+    --------------
+
+    The default returns the class unchanged.
+
+    Parameters
+    ----------
+
+    cls : Meta
+      The new class.
+
+    Returns
+    -------
+
+    Meta
+      The class.
     """
     return cls
 
@@ -180,23 +252,30 @@ class AbstractSpaceHook(Object):
 
   def __set_name__(self, owner: type, name: str, **kwargs) -> None:
     """
-    The '__set_name__' method runs the 'Object' registration and then
-    registers this hook with the owning namespace class via 'addHook',
-    so hook authors never call 'addHook' by hand.
+    A hook declared in a namespace class body must take part without
+    further code.
+
+    Implementation
+    --------------
+
+    The hook is registered with 'owner.addHook'. Placed in a class that is
+    not a namespace class, it fails for want of 'addHook'.
     """
-    super().__set_name__(owner, name, )
-    if TYPE_CHECKING:  # pragma: no cover
+    super().__set_name__(owner, name, **kwargs)
+    if TYPE_CHECKING:  # pragma: no cover, no mutate
       assert isinstance(owner, type)
       assert issubclass(owner, AbstractNamespace)
     owner.addHook(self)
 
   def __get__(self, instance: MaybeSpace, owner: type, **kwargs) -> Any:
     """
-    Accessed on a namespace instance, '__get__' binds
-    '__space_object__' to that instance and returns the hook, so the
-    'space' property resolves to the active namespace during the hook's
-    calls. Accessed on the namespace class ('instance' is None), it
-    returns the hook unchanged without rebinding.
+    A hook read through a namespace must work on that namespace.
+
+    Implementation
+    --------------
+
+    The namespace is recorded as the one 'self.space' gives, and the hook
+    returned. Through the namespace class, the hook is returned as it is.
     """
     if instance is None:
       return self

@@ -17,7 +17,7 @@ T = TypeVar('T')
 #  A decorated accessor keeps its own type for a checker.
 F = TypeVar('F', bound=Callable[..., Any])
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Optional
   from typing import Self
 
@@ -32,49 +32,37 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Field(BaseDescriptor[T]):
   """
-  Flexible descriptor requiring accessor methods to be decorated. Please
-  note that the instance of 'Field' can decorate only methods appearing
-  below it in the class body.
+  An attribute computed or guarded by methods of the class, as a
+  'property' is, must let a subclass change those methods by overriding
+  them, with no need to declare the attribute again; a 'property' holds
+  the very functions it was given and does not follow an override. The
+  attribute must also take the notification decorators every worktoy
+  descriptor takes.
 
-  @GET - Marks the getter, called as 'method(self)'. Only one getter is
-  kept: a second '@GET' silently replaces the first. Reading a 'Field'
-  with no getter raises 'AccessError'.
+    class Circle(BaseObject):
 
-  @SET - Decorate any number of methods as setters. Every such method runs
-  in response to __set__
+      radius = Field()
 
-  @DELETE - Decorate any number of methods as deleters. Optionally, implement
-  by setting the value to the 'DELETED' sentinel object. On 'del' the
-  getter is asked once for the old value, which 'ProtectedError' reports
-  when there is no deleter, and which, being 'DELETED' after such a
-  deleter ran, makes a second 'del' raise 'MissingVariable' as a read does.
-  A getter that raises stops nothing: the deleters run, and no old value is
-  reported; see '_peekValue'.
+      @radius.GET
+      def _getRadius(self) -> float:
+        return self.__radius__
 
-  Notes
-  -----
-  The accessors are stored by name, not as captured function objects. A
-  decorator such as 'GET' records 'callMeMaybe.__name__', and at access
-  time '__instance_get__' looks that name up with
-  'type.__getattribute__(owner, key)', where 'owner' is the type of the
-  instance being accessed rather than the class in which the 'Field' was
-  declared. Setters and deleters resolve the same way. A private
-  accessor, written '__getX', is recorded under the name the class body
-  stores it at, '_Owner__getX'. The lookup is
-  'type.__getattribute__' rather than 'getattr', so no '__getattr__',
-  '__class_getattr__' or reimplemented '__getattribute__' of the owner
-  can answer in place of the accessor.
+  Implementation
+  --------------
 
-  The consequence is that a subclass overrides any decorated accessor
-  just by redefining a method of the same name, with no need to decorate
-  it again: the name lookup finds the override. An accessor without a
-  name of its own, a lambda, could never be found, so the decorators
-  refuse one with 'NamelessCallback'. A subclass that redefines
-  an inherited '_getValue' as a plain method changes what the inherited
-  'Field' returns, because the parent never captured the decorated method,
-  only its name. The sampler hierarchy in 'worktoy.work_test' relies on
-  exactly this, where 'FloatSampler' replaces the 'int' accessors it
-  inherits from 'IntSampler' with floating-point versions.
+  'GET' records one getter, a second one replacing the first; 'SET' and
+  'DELETE' record any number of setters and deleters, run in order. Each
+  is recorded by name and found on the class of the instance at every
+  access, so an override is found, and called by its kind, as Python
+  would call 'instance.name()': a method with the instance, a classmethod
+  with the class, a staticmethod with nothing, plus the value for a
+  setter, and nothing else, no surplus being cut. Anything with no
+  function to look up by name is refused with 'TypeException', and a
+  lambda has no name to look up and is refused; a private name is
+  recorded mangled. Without a getter a read raises 'AccessError', without
+  a setter a write raises 'ReadOnlyError', without a deleter a deletion
+  raises 'ProtectedError'. The decorators return the method unchanged.
+  'Field(other)' copies another field.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -110,68 +98,67 @@ class Field(BaseDescriptor[T]):
 
   def GET(self, callMeMaybe: F) -> F:
     """
-    The 'GET' decorator marks the getter, called as 'method(self)'.
-    Only one getter is kept: a second '@GET' silently replaces the
-    first. Reading a 'Field' with no getter raises 'AccessError'.
+    The field needs the method answering a read.
 
     Parameters
     ----------
-    callMeMaybe : Callable
-        The method to register as the getter.
+
+    callMeMaybe : F
+      The method, called as 'method(self)'.
 
     Returns
     -------
-    Callable
-        The same method, unchanged, so the name stays bound in the
-        class body.
+
+    F
+      The same method.
     """
-    self.__get_key__ = self._getCallbackName('GET', callMeMaybe)
+    name = self._getCallbackName('GET', callMeMaybe)
+    object.__setattr__(self, '__get_key__', name)
     return callMeMaybe
 
   def SET(self, callMeMaybe: F) -> F:
     """
-    The 'SET' decorator marks a setter. Any number may be registered;
-    each is called as 'method(self, value)' in registration order on
-    every assignment, where 'value' is the incoming value. If no setter
-    is registered, assignment raises 'ReadOnlyError'.
+    The field needs the methods performing a write, if it takes writes.
 
     Parameters
     ----------
-    callMeMaybe : Callable
-        The method to register as a setter.
+
+    callMeMaybe : F
+      The method, called as 'method(self, value)' with the value as
+      assigned.
 
     Returns
     -------
-    Callable
-        The same method, unchanged, so the name stays bound in the
-        class body.
+
+    F
+      The same method.
     """
     existing = maybe(self.__set_keys__, ())
     name = self._getCallbackName('SET', callMeMaybe)
-    self.__set_keys__ = (*existing, name,)
+    object.__setattr__(self, '__set_keys__', (*existing, name,))
     return callMeMaybe
 
   def DELETE(self, callMeMaybe: F) -> F:
     """
-    The 'DELETE' decorator marks a deleter. Any number may be
-    registered; each is called as 'method(self)' in registration order
-    on 'del'. If no deleter is registered, 'del' raises
-    'ProtectedError'.
+    The field needs the methods performing a deletion, if it takes
+    deletions. A deleter storing 'DELETED' where the getter reads makes
+    the next read raise 'MissingVariable'.
 
     Parameters
     ----------
-    callMeMaybe : Callable
-        The method to register as a deleter.
+
+    callMeMaybe : F
+      The method, called as 'method(self)'.
 
     Returns
     -------
-    Callable
-        The same method, unchanged, so the name stays bound in the
-        class body.
+
+    F
+      The same method.
     """
     existing = maybe(self.__delete_keys__, ())
     name = self._getCallbackName('DELETE', callMeMaybe)
-    self.__delete_keys__ = (*existing, name,)
+    object.__setattr__(self, '__delete_keys__', (*existing, name,))
     return callMeMaybe
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -180,57 +167,84 @@ class Field(BaseDescriptor[T]):
 
   def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
     """
-    The '__instance_get__' method retrieves the getter by its
-    registered name from the owner of the instance and calls it. While
-    the instance received is certain to satisfy
-    'isinstance(instance, self.getFieldOwner())', the field owner is the
-    class where the descriptor was instantiated. For this reason the
-    decorated method is retrieved by name from the owner of the instance
-    received, so a subclass override is honoured. The getter is called as
-    'method(self)'.
+    A read must reach the getter as the class of the instance defines it.
 
-    A read passing '_deleting=True', which 'Object.__delete__' makes to
-    report the old value, is answered by '_peekValue', which asks the
-    getter but lets nothing it raises stop the deletion.
+    Implementation
+    --------------
+
+    The getter is found by name on 'owner' and called by its kind, as
+    'BaseDescriptor._bindCallback' binds it. A read made by a deletion goes
+    to '_peekValue'.
+
+    Parameters
+    ----------
+
+    instance : Any
+      The instance read through.
+
+    owner : type
+      The class read through.
+
+    Returns
+    -------
+
+    Any
+      What the getter returns.
+
+    Raises
+    ------
+
+    AccessError
+      No getter is marked.
     """
     if kwargs.get('_deleting', False):
       return self._peekValue(instance, owner)
     getterKey = self._getGetterKey()
-    getterFunc = type.__getattribute__(owner, getterKey)
-    return getterFunc(instance)
+    return self._bindCallback(instance, owner, getterKey)()
 
   def _peekValue(self, instance: Any, owner: type) -> Any:
     """
-    The '_peekValue' method reports the value the getter answers, for a
-    deletion to report as the old value, or None when there is no getter
-    or the getter raises. The getter answering 'DELETED', as it does once
-    a deleter stored it, makes 'Object.__delete__' raise 'MissingVariable'
-    for the second deletion, as a read raises. A getter that raises, as
-    one for a value not ready yet may, must not stop the deleters from
-    running, so its exception is dropped here, and only here: a read
-    raises it as ever.
+    A deletion reports the current value, and a getter that raises, as one
+    for a value not ready yet may, must not stop the deleters from
+    running.
+
+    Implementation
+    --------------
+
+    Any 'Exception' from the getter gives 'None', here and only here.
     """
     try:
       getterKey = self._getGetterKey()
-      getterFunc = type.__getattribute__(owner, getterKey)
-      return getterFunc(instance)
+      return self._bindCallback(instance, owner, getterKey)()
     except Exception:
       return None
 
   def __instance_set__(self, instance: Any, value: Any, **kwargs) -> None:
     """
-    The '__instance_set__' method retrieves every decorated setter by
-    name in the same fashion as the getter and calls each in
-    registration order. With no setter registered, assignment raises
-    'ReadOnlyError'.
+    A write must reach every setter as the class of the instance defines
+    it.
+
+    Parameters
+    ----------
+
+    instance : Any
+      The instance written through.
+
+    value : Any
+      The value assigned.
+
+    Raises
+    ------
+
+    ReadOnlyError
+      No setter is marked.
     """
     setterKeys = self._getSetterKeys()
     owner = type(instance)
     if not setterKeys:
       raise ReadOnlyError(instance, self, value, )
     for key in setterKeys:
-      setterFunc = type.__getattribute__(owner, key)
-      setterFunc(instance, value, )
+      self._bindCallback(instance, owner, key)(value, )
 
   def __instance_delete__(
       self,
@@ -239,19 +253,30 @@ class Field(BaseDescriptor[T]):
       **kwargs,
   ) -> None:
     """
-    The '__instance_delete__' method retrieves every decorated deleter
-    by name in the same fashion as the getter and calls each in
-    registration order. With no deleter registered, deletion raises
-    'ProtectedError', which reports the old value '_peekValue' read, or
-    None when the getter raised.
+    A deletion must reach every deleter as the class of the instance
+    defines it.
+
+    Parameters
+    ----------
+
+    instance : Any
+      The instance deleted through.
+
+    old : Any
+      The value '_peekValue' reported.
+
+    Raises
+    ------
+
+    ProtectedError
+      No deleter is marked.
     """
     deleterKeys = self._getDeleterKeys()
     owner = type(instance)
     if not deleterKeys:
       raise ProtectedError(instance, self, old)
     for key in deleterKeys:
-      deleterFunc = type.__getattribute__(owner, key)
-      deleterFunc(instance, **kwargs)
+      self._bindCallback(instance, owner, key)(**kwargs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -260,7 +285,8 @@ class Field(BaseDescriptor[T]):
   def __init__(self, other: Self = None) -> None:
     BaseDescriptor.__init__(self, other)
     if isinstance(other, Field):
-      self.__get_key__ = other.__get_key__
+      getKey = object.__getattribute__(other, '__get_key__')
+      object.__setattr__(self, '__get_key__', getKey)
       keyGroups = (
         '__pre_get_keys__',
         '__on_get_keys__',
@@ -273,8 +299,8 @@ class Field(BaseDescriptor[T]):
         '__delete_keys__',
       )
       for keyGroup in keyGroups:
-        otherValue = getattr(other, keyGroup)
+        otherValue = object.__getattribute__(other, keyGroup)
         if otherValue is not None:
-          setattr(self, keyGroup, (*otherValue,))
+          object.__setattr__(self, keyGroup, (*otherValue,))
     elif other is not None:
       raise TypeException('other', other, type(self))

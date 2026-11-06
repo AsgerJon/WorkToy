@@ -11,8 +11,17 @@ from . import Sentinel
 
 class METACALL(Sentinel):
   """
-  METACALL marks a class-level dunder hook as deferred to the metaclass.
-  When 'AbstractMetaclass' finds this sentinel as the value of a hook
-  such as '__class_str__' or '__class_iter__', it falls back to its own
-  implementation instead of calling the hook on the class.
+  A class built by 'AbstractMetaclass' may define hooks such as
+  '__class_len__' that the metaclass consults for operations on the class
+  itself. The metaclass needs to tell a class defining a hook from one
+  that does not with one cheap comparison, and a subclass needs a way to
+  undo a hook it inherits.
+
+  Implementation
+  --------------
+
+  'NamespaceHook' gives every hook nothing defines the value 'METACALL',
+  and the metaclass then performs the operation as for a plain class. A
+  subclass setting an inherited hook to 'METACALL' hands the operation
+  back to the metaclass.
   """

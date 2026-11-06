@@ -6,9 +6,10 @@ stateless class used by its type alone, as a sentinel is used by its
 identity, which is why the two families sit side by side in 'core'.
 
 - MetaFlow: the metaclass behind the signals, based on 'MetaType' as
-  every metaclass of the library is. It refuses every attribute in a
-  signal's class body but '__str__' and '__repr__', through
-  'ControlSpace', and keeps one root class.
+  every metaclass of the library is. Through 'ControlSpace' it lets a
+  signal's class body bind '__str__', '__repr__' and the names
+  'ControlClassError' lists, and refuses every other attribute; it keeps
+  one root class.
 - ControlSpace: the namespace object 'MetaFlow' prepares for a signal.
 - ControlFlow: the root signal every other signal is based on.
 - SkipSet: the one signal the library raises itself, from a

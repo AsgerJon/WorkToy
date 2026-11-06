@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import random
 from itertools import accumulate
-from math import sqrt
 from typing import TYPE_CHECKING
 
 from . import COMMON_WORDS, UNCOMMON_WORDS, RARE_WORDS
@@ -15,8 +14,8 @@ from . import StochasticVariable
 from ..desc import Field
 from ..utilities import textFmt, joinWords
 
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from typing import TypeAlias, Optional
 
   from ..mcls import BaseSpace
 
@@ -35,26 +34,44 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class StochasticWord(StochasticVariable):
   """
-  StochasticWord is a 'StochasticVariable' over the lengths of the
-  weighted collection of words it carries. Its statistics are those of
-  that collection, and drawing a value, as 'sampleInteger' does, draws a
-  length from a Gaussian of that mean and variance, clamped to the bounds.
+  The words of a clause must come out at the lengths the clause was cut
+  into, and the cut itself must follow how long words are, so a word list
+  is both a distribution over lengths and the source of a word of any
+  length it holds. A project must be able to bring its own words, in
+  tiers with weights of its own, by subclassing and nothing more, and
+  must learn at the class statement, not at some later draw, when its
+  list leaves out a length a draw may ask for.
 
-  The 'mean', 'var', 'minVal', and 'maxVal' fields belong to the base
-  class; this subclass only fills their getters, each returning a value
-  cached once. Those four statistics and the per-length sampler are
-  computed in '__class_init__' from '__category_weights__'. The sampler
-  pairs each length with its words and the cumulative weights of those
-  words, so 'realizeLength' draws with one call to 'random.choices'
-  rather than rebuilding a weight table per call. A subclass overriding
-  the weights gets its own caches when it is declared, so no analysis
-  happens per instance.
+  Implementation
+  --------------
 
-  'sampleInteger' draws a length from the distribution and 'realize' turns
-  that length into a word, so a realized word's length follows the cached
-  statistics. Any length across '[minVal, maxVal]' may be drawn, so a
-  subclass whose words leave a length in that range out is refused at
-  its class statement with 'ValueError'.
+  '__category_weights__' pairs each tier of words with the weight of
+  every word in it. '__class_init__', the class hook 'AbstractMetaclass'
+  calls once a class exists, flattens the tiers, groups the words by
+  length, refuses through '_refuseGaps' with 'ValueError' a length
+  missing between the shortest and the longest, and writes onto the class
+  a table of each length to its words and their cumulative weights, and
+  the four statistics of the lengths, 'mean', 'var', 'minVal' and
+  'maxVal', as class attributes; a subclass rebinding the weights gets
+  values of its own, and no analysis runs per instance. The draw is the
+  base's. 'realizeLength' draws one word of a length with
+  'random.choices' over the cumulative weights and refuses a length
+  without words with 'IndexError'; 'realize' draws a length and then a
+  word; 'word[n]' reads as 'realizeLength(n)'.
+
+  Attributes
+  ----------
+  mean : float
+    The weighted mean of the word lengths, written at the class statement.
+  var : float
+    The weighted variance of the word lengths.
+  minVal : int
+    The shortest word length.
+  maxVal : int
+    The longest word length.
+  byLengths : Field[WordLengths]
+    The words of each length, a new 'dict[int, tuple[str, ...]]' at
+    every read.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -68,12 +85,12 @@ class StochasticWord(StochasticVariable):
     (RARE_WORDS, 0.05),
   )
 
-  #  Class-Level Caches
+  #  Class-Level Caches, written by '__class_init__'
   __by_lengths__: ByLengths = None
-  __mean_value__: float = None
-  __var_value__: float = None
-  __min_value__: int = None
-  __max_value__: int = None
+  mean: Optional[float] = None
+  var: Optional[float] = None
+  minVal: Optional[int] = None
+  maxVal: Optional[int] = None
 
   #  Public Variables
   byLengths: Field[WordLengths] = Field()
@@ -81,18 +98,6 @@ class StochasticWord(StochasticVariable):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def _getMean(self) -> float:
-    return self.__mean_value__
-
-  def _getVar(self) -> float:
-    return self.__var_value__
-
-  def _getMinVal(self) -> int:
-    return self.__min_value__
-
-  def _getMaxVal(self) -> int:
-    return self.__max_value__
 
   @byLengths.GET
   def _getByLengths(self) -> WordLengths:
@@ -113,8 +118,8 @@ class StochasticWord(StochasticVariable):
     """
     The '__class_init__' method flattens '__category_weights__' into a
     weighted word table, builds the per-length sampler, and reduces the
-    table to the four statistics, caching them on the concrete class so the
-    getters and 'realizeLength' read prepared values rather than rebuild
+    table to the four statistics, writing them onto the concrete class so
+    the base and 'realizeLength' read prepared values rather than rebuild
     them.
 
     Parameters
@@ -126,7 +131,6 @@ class StochasticWord(StochasticVariable):
     space : Space
       The prepared class body namespace, a 'BaseSpace'.
     """
-    super().__class_init__(name, bases, space, **kwargs)
     pairs = []
     for words, weight in cls.__category_weights__:
       for word in words:
@@ -144,10 +148,10 @@ class StochasticWord(StochasticVariable):
     mean = sum(len(word) * weight for word, weight in pairs) / total
     spread = sum((len(word) - mean) ** 2 * weight for word, weight in pairs)
     cls.__by_lengths__ = byLengths
-    cls.__mean_value__ = mean
-    cls.__var_value__ = spread / total
-    cls.__min_value__ = min(grouped)
-    cls.__max_value__ = max(grouped)
+    cls.mean = mean
+    cls.var = spread / total
+    cls.minVal = min(grouped)
+    cls.maxVal = max(grouped)
 
   @classmethod
   def _refuseGaps(cls, *lengths: int) -> None:
@@ -187,21 +191,6 @@ class StochasticWord(StochasticVariable):
       A word of the requested length.
     """
     return self.realizeLength(length)
-
-  def sampleInteger(self) -> int:
-    """
-    The 'sampleInteger' method draws one length from the distribution, a
-    Gaussian of the cached mean and variance clamped to the inclusive
-    bounds.
-
-    Returns
-    -------
-    int
-      A length drawn from the distribution and clamped to
-      '[minVal, maxVal]'.
-    """
-    value = round(random.gauss(self.mean, sqrt(self.var)))
-    return min(self.maxVal, max(self.minVal, value))
 
   def realize(self) -> str:
     """

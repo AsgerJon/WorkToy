@@ -11,14 +11,16 @@ from typing import TYPE_CHECKING
 from . import DescriptorException
 from ...utilities import textFmt
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
 class PhantomBoxError(DescriptorException):
   """
-  PhantomBoxError is raised when reading an attribute whose class-body
-  declaration produced a type alias rather than a box.
+  PhantomBoxError is raised when a class-body declaration produced a type
+  alias rather than a box: when the alias is called with parentheses, as
+  for the arguments of a default, when it is bound in a class body, and
+  when an attribute holding it is read.
 
   A box claims its subscript only when the subscript names a plain
   'type'. Anything else, a 'TypeVar' or a parametrized generic such as
@@ -32,8 +34,9 @@ class PhantomBoxError(DescriptorException):
 
   The subscript itself cannot be refused, because a 'TypeVar' argument
   is a legitimate request at that moment: 'class Sub(AttriBox[T])' wants
-  exactly that alias. What settles the intent is the alias landing in a
-  class body as an attribute, which is where this is raised from.
+  exactly that alias. What settles the intent is the alias called as a
+  box is, or landing in a class body as an attribute, which is where this
+  is raised from.
 
   Attributes
   ----------

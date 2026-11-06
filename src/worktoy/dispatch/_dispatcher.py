@@ -6,52 +6,65 @@ calls to the matching one.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from collections import Counter
+from functools import wraps
 from types import FunctionType as Func
 from types import MethodType
 from typing import TYPE_CHECKING
 
 from ..core import Object
-from ..core.sentinels import ARGS
-from ..utilities import maybe, typeCast, textFmt
-from ..utilities.combinatorics import Arrangements
+from ..utilities import maybe, typeCast, textFmt, bipartiteMatching
 from ..waitaminute import TypeException, MissingVariable
-from ..waitaminute.desc import ReadOnlyError, ProtectedError
+from ..waitaminute.desc import ReadOnlyError, ProtectedError, WriteOnceError
 from ..waitaminute.dispatch import DispatchException, DuplicateSignature
+from ..waitaminute.dispatch import TypeCastException
 from . import TypeSig, PermuterMethod, CallMeMaybe
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Callable, Never, TypeAlias, Optional, Self
   from . import Dispatcher
 
   Method: TypeAlias = Callable[[Any, ...], Any]
-  Decorator: TypeAlias = Callable[[Method], Dispatcher]
   SigFuncList: TypeAlias = list[tuple[TypeSig, Method]]
   SigFuncMap: TypeAlias = dict[TypeSig, Method]
 
 
-def _refuseMethodKinds(func: Any) -> None:
+def _dropReceiver(func: Method) -> Method:
   """
-  The '_refuseMethodKinds' function raises 'TypeException' for a
-  staticmethod or a classmethod, and for anything that cannot be called,
-  such as a 'property' stacked below a decorator or a bare value. A
-  'Dispatcher' calls every function with the instance first, which
-  neither kind takes: a staticmethod would receive the instance as its
-  first argument, and a classmethod is not callable at all before Python
-  3.10. An object that cannot be called used to be registered all the
-  same and fail at the first call. 'overload' and the decorators of a
-  'Dispatcher' wired by hand refuse through this one function.
+  The dispatch function passes a receiver ahead of the arguments of every
+  call, the class for a dispatcher standing for a staticmethod, and a
+  staticmethod takes none. Each function of such a dispatcher must
+  receive the arguments alone, and must still show its own name and
+  docstring.
+
+  Implementation
+  --------------
+
+  The wrapper takes the receiver by position and calls the function
+  without it; 'functools.wraps' copies the name, docstring and
+  attributes.
+
+  Parameters
+  ----------
+
+  func : Method
+    A 'Callable[..., Any]' taking the arguments of the call alone.
+
+  Returns
+  -------
+
+  Method
+    A function taking the receiver first and dropping it.
   """
-  if isinstance(func, (staticmethod, classmethod)) or not callable(func):
-    raise TypeException('func', func, Func)
+
+  @wraps(func)
+  def dropped(receiver: Any, *args, **kwargs) -> Any:
+    return func(*args, **kwargs)
+
+  return dropped
 
 
 def _uniformType(types: tuple) -> Optional[type]:
-  """
-  The '_uniformType' function returns the one type every entry of 'types'
-  is, or None when the entries differ. The trailing arguments of a call
-  match a variadic signature by exact type only when they share one type,
-  the inner type of its 'ARGS'.
-  """
   first = types[0]
   for type_ in types:
     if type_ is not first:
@@ -59,139 +72,225 @@ def _uniformType(types: tuple) -> Optional[type]:
   return first
 
 
+#  A flexible declaration of at most this many classes is registered as one
+#  concrete signature per order of its classes. The orders number the
+#  factorial of the classes, so a longer declaration is registered once and
+#  matched by its classes in any order.
+_MAX_EXPANDED_FLEX: int = 3
+
+
+def _orderByClass(declared: tuple, args: tuple) -> tuple:
+  #  Each declared position takes the next argument of its exact class, in
+  #  the order the caller gave them.
+  queues = dict()
+  for arg in args:
+    try:
+      queues[type(arg)].append(arg)
+    except KeyError:
+      queues[type(arg)] = [arg]
+  iterators = {key: iter(queue) for key, queue in queues.items()}
+  return (*(next(iterators[type_]) for type_ in declared),)
+
+
+def _orderByInstance(declared: tuple, args: tuple) -> Optional[tuple]:
+  if len(args) != len(declared):
+    return None
+  slots = [
+    (*(i for i, arg in enumerate(args) if isinstance(arg, type_)),)
+    for type_ in declared
+  ]
+  try:
+    order = bipartiteMatching(slots)
+  except ValueError:
+    return None
+  return (*(args[i] for i in order),)
+
+
+#  The builtin number classes, each narrower than those after it.
+_NUMBERS: tuple = (bool, int, float, complex)
+
+
+def _castWidening(type_: type, arg: Any) -> Any:
+  """
+  'typeCast' turns a whole 'float' such as '2.0' into an 'int', so where
+  every cast is allowed, an 'int' parameter and a 'float' parameter both
+  take '2.0' and '7', and the first signature found decides which goes
+  where: a flexible declaration of an 'int' and a 'float' then hands the
+  float to the 'int' parameter and the int to the 'float' one. A cast
+  tried before that one must cast a number only to a wider number, never
+  to a narrower one, and cast everything else as 'typeCast' does.
+
+  Implementation
+  --------------
+
+  An instance of 'type_' is returned as it is. A class other than the
+  builtin number classes is left to 'typeCast'. A number class takes,
+  through 'typeCast', only a value of a number class before it in
+  '_NUMBERS': a 'float' an 'int', a 'complex' an 'int' or a 'float', and
+  an 'int' or a 'bool' nothing it is not already.
+
+  Parameters
+  ----------
+
+  type_ : type
+    The class of the position.
+
+  arg : Any
+    The argument.
+
+  Returns
+  -------
+
+  Any
+    The argument, or its cast.
+
+  Raises
+  ------
+
+  TypeCastException
+    The cast would narrow a number, or 'typeCast' refuses it.
+  """
+  if isinstance(arg, type_):
+    return arg
+  if type_ not in _NUMBERS:
+    return typeCast(type_, arg)
+  for narrower in _NUMBERS[:_NUMBERS.index(type_)]:
+    if isinstance(arg, narrower):
+      return typeCast(type_, arg)
+  raise TypeCastException(type_, arg)
+
+
+def _orderByCast(
+    declared: tuple,
+    args: tuple,
+    cast: Callable,
+) -> Optional[tuple]:
+  if len(args) != len(declared):
+    return None
+  values, slots = dict(), []
+  for position, type_ in enumerate(declared):
+    fitting = []
+    for i, arg in enumerate(args):
+      try:
+        values[position, i] = cast(type_, arg)
+      except (ValueError, TypeError):
+        continue
+      fitting.append(i)
+    slots.append((*fitting,))
+  try:
+    order = bipartiteMatching(slots)
+  except ValueError:
+    return None
+  return (*(values[position, i] for position, i in enumerate(order)),)
+
+
 class Dispatcher(Object):
   """
-  Dispatcher encapsulates the mapping from type signature to function
-  objects and thus provides the core overloading functionality.
+  A method declared several times with '@overload', once per signature,
+  needs one callable at its name that picks the declaration matching the
+  positional arguments of each call. Most calls pass exactly the declared
+  classes, and those must cost no more than a dictionary lookup. A call
+  passing a subclass must still find its declaration, and one passing a
+  value that converts without loss, as an 'int' for a 'float', may too.
+  A subclass overloading a name it inherits must win the calls its own
+  declarations accept, and leave the rest to the inherited ones. A call
+  nothing accepts must fail with an error listing what was received and
+  what is declared, unless a fallback takes it, and a finalizer may need
+  to run after every call. An overloaded name may be a classmethod or a
+  staticmethod as well, and must then receive the class, or nothing
+  before the arguments, as such a method does.
 
-  Dispatch tiers
+  Implementation
   --------------
-  Calls go through up to five ordered passes, returning at the first
-  match. They group into three kinds (FASTEST, FAST, SLOW); FAST and
-  SLOW each run first over concrete signatures, then over variadic
-  ('ARGS'-terminated) signatures:
 
-  1. FASTEST - a single 'dict.get' on the exact concrete-type
-     signature of the call and, when that misses, one 'dict.get' per
-     distinct prefix length among the variadic signatures, keyed by the
-     prefix types and the one type every trailing argument shares. This
-     is the only pass that runs when the argument types are an exact
-     match for a registered overload (e.g. 'f(69, 420)' against
-     '@overload(int, int)', or 'f(1, 2, 3, 4, 5, 6, 7)' against
-     '@overload(ARGS[int])'), at any length. Cost is one hash and one
-     dict lookup for each. Use it by registering overloads whose
-     'TypeSig' matches the exact concrete types the caller supplies.
-     Among exact matches the nearest registration wins: a variadic
-     signature of a subclass takes a call an explicit signature of a
-     parent also matches exactly, while a signature the subclass
-     declares explicitly keeps its call. An exact match inherited from
-     a farther class answers only when no registration of a nearer
-     class accepts the call through 'isinstance'; see below.
+  The namespace of a class whose metaclass is based on 'BaseMeta' builds
+  the dispatcher of each overloaded name, and registers the declarations
+  of the class body and those the class inherits before the class is
+  created. Registrations are kept in lists, each with its distance: 0 for
+  the class itself, 1 for the nearest class it inherits from, and so on.
+  The first read compiles them into a dispatch function, which tries, in
+  order:
 
-  2. FAST - isinstance-checks each argument against a signature and
-     returns the first match, class by class, nearest first; within a
-     class first the concrete signatures in registration order, then
-     the variadic ones, the most recent first (a variadic matches when
-     the call is at least as long as its fixed prefix). Cost is O(N) in
-     the number of registered overloads. Runs when FASTEST misses, i.e.
-     the call relies on subclass-via-isinstance matching, and, over the
-     nearer classes alone, before an exact match inherited from a
-     farther class is taken.
+  1. Exact classes: one lookup of the classes of the call, as a plain
+     tuple; one of the classes of the call in any order, for a flexible
+     declaration of more than three classes; and one per distinct prefix
+     length of the variadic signatures, keyed by the prefix and the one
+     class all trailing arguments share. A hit from a farther class first
+     lets the nearer classes answer through 'isinstance'.
+  2. 'isinstance', class by class, nearest first; within a class the
+     concrete signatures in registration order, then the flexible
+     declarations of more than three classes, then the variadic
+     signatures, most recent first.
+  3. A cast of each argument that is not an instance, where a number
+     class takes only a narrower number, 'int' to 'float' to 'complex',
+     and every other class casts as 'typeCast' allows; farthest class
+     first, so a subclass never redirects a call its parent handled
+     through such a cast: the concrete signatures, the flexible
+     declarations, then the variadic signatures.
+  4. The same with every cast 'typeCast' allows, narrowing included, as
+     '2.0' to the 'int' '2'.
+  5. The fallback, if any, else 'DispatchException'.
 
-  3. SLOW - the same two passes (concrete, then variadic) as FAST but
-     using 'typeCast' instead of 'isinstance'. Cost is O(N) plus a cast
-     attempt per signature per argument. Runs only when FAST produced
-     no match, i.e. the call relies on a conversion 'typeCast' allows:
-     within the number family and the text family, or through the
-     '__cast_as__' of the target class ('@overload(float)' matching '1'
-     via cast). No constructor is ever called on an argument, so a
-     signature naming the class itself matches its instances alone
-     unless the class declares '__cast_as__'.
+  A flexible declaration of up to three classes is registered as one
+  concrete signature per order. A longer one is registered once. Found by
+  exact classes, each declared position takes the next argument of its
+  class in the order the caller gave them; in the 'isinstance' and cast
+  passes, 'bipartiteMatching' gives each argument a position it fits.
 
-  The full order is FASTEST, FAST (concrete, then variadic, class by
-  class), SLOW-concrete, SLOW-variadic, then the fallback (if
-  registered), else 'DispatchException'. With no variadic overloads
-  registered the variadic passes are empty and dispatch behaves as
-  three tiers.
+  Tier 3 comes before tier 4 so that a flexible declaration keeps each
+  number in its role. With every cast allowed, '2.0' and '7' both fit an
+  'int' and a 'float' parameter, and the first signature found would
+  decide which goes where; with numbers widened only, '2.0' fits the
+  'float' parameter alone. A subclass taking a call in tier 3 therefore
+  wins over a base that would take it only in tier 4.
 
-  Keyword arguments
-  -----------------
-  A call dispatches on the types of its positional arguments alone, and
-  its keyword arguments pass through unchanged to the function the
-  positional types select, which refuses a keyword it does not take
-  with its own 'TypeError'. The dispatcher names no parameter of its
-  own a keyword could collide with, so 'instance=' and 'func=' pass
-  through like any other keyword. A call with no positional arguments
-  selects the empty signature, '@overload()', so a class that takes
-  keywords declares that overload and handles them there, forwarding
-  from its other overloads with 'if kwargs: self.__init__(**kwargs)'. A
-  call no signature accepts goes to the fallback, else
-  'DispatchException', which lists the keywords received.
+  The finalizer runs in a 'finally' block. Keywords play no part in
+  matching and pass to the selected function. Within one class, the
+  first registered signature accepting a call wins passes 2 and 3; the
+  dispatcher does not rank signatures by how specific they are, so the
+  more specific one is registered first. Read through the class, a
+  'Dispatcher' gives the dispatch function; through an instance, a bound
+  method of it; the dispatcher itself is in 'Owner.__dict__'.
+  'setMethodKind', before anything is registered, makes a dispatcher a
+  classmethod or a staticmethod. Either is bound to the class at every
+  read, through the class or an instance, and the class is the receiver
+  the dispatch function passes on; a staticmethod registers each
+  function, the fallback and the finalizer behind '_dropReceiver', and a
+  'PermuterMethod' over the wrapped function.
 
-  Within one class, match selection in FAST and SLOW is
-  first-registered-wins. The
-  dispatcher does not rank candidates by "specificity" - it cannot,
-  in general. A metaclass with a custom '__instancecheck__' can make
-  'isinstance(x, Number)' true for 'int' values intentionally, and
-  the dispatcher has no way to tell whether the user meant 'Number'
-  to be "broader than" 'int' or whether they explicitly want the
-  Number overload to absorb int calls. If both overloads are
-  registered, the one registered first wins. Order your overload
-  decorators with this in mind: register the most specific
-  signature you want to match first; any later, broader signature
-  becomes a fallback for what the earlier ones did not catch.
+  Attributes
+  ----------
 
-  When 'BaseSpace' builds a 'Dispatcher' for a class, it registers the
-  class body's own signatures first, followed by those inherited from
-  the classes in its method resolution order, nearest first, each with
-  its distance from the class. A registration of a nearer class wins
-  every call it accepts, by exact type or through 'isinstance', ahead of
-  any registration of a farther class: with '@overload(int)' inherited
-  and '@overload(object)' declared in the subclass, 'f(1)' reaches the
-  subclass, and so does a call of a further subclass that a 'THIS'
-  signature of the subclass matches only through 'isinstance'. The
-  inherited registrations keep the calls no nearer one accepts. SLOW
-  tries the greatest distance first instead: a
-  signature added in a subclass then only receives the calls none of
-  the inherited signatures could take through a cast, and never
-  redirects a call its parent already handled.
-
-  Performance contract
-  --------------------
-  FASTEST is roughly one or two orders of magnitude faster than FAST
-  or SLOW on a non-trivial dispatcher. Imprecise overloads - those
-  registered against abstract bases, broad union types, or types
-  the caller is unlikely to supply directly - force every call to
-  fall through FASTEST and into the FAST/SLOW iteration paths. For
-  hot dispatch code this is a real cost, not a micro-optimization. An
-  exact match inherited from a farther class first costs an
-  'isinstance' check of the registrations of the nearer classes, so a
-  subclass overloading a name it inherits pays that on the calls its
-  inherited signatures match.
-
-  Practical rule: register signatures against the exact concrete
-  types the caller will pass, not against ancestor classes. Use
-  abstract or coerced overloads sparingly and only when the
-  flexibility is intentionally part of the API.
+  __no_this_reference__ : bool
+    'True'. 'THIS[Parent].name' reads it off the class of what the name
+    holds and refuses a reference to an overloaded method with
+    'OverloadReference', since the clone it would take replaces the
+    dispatcher the namespace of the subclass builds.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  #  Class Variables
+  __no_this_reference__ = True
+
   #  Private Variables
   __sig_funcs__ = None
   __sig_distances__ = None
   __variadic_funcs__ = None
   __variadic_distances__ = None
+  __flex_funcs__ = None
+  __flex_distances__ = None
   __fallback_func__ = None
   __field_name__ = None
   __field_owner__ = None
   __finalizer_func__ = None
   __compiled_func__ = None
-  #  The function the last of the decorators was given, which a decorator
-  #  stacked above it registers; see '_stackedFunction'.
-  __latest_func__ = None
+  #  'classmethod', 'staticmethod', or 'None' for an instance method.
+  __method_kind__ = None
+  #  The '_dropReceiver' wrapper of each function, for a staticmethod.
+  __static_adapters__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -212,22 +311,27 @@ class Dispatcher(Object):
   def _getVariadicDistances(self) -> list[int]:
     return maybe(self.__variadic_distances__, [])
 
+  def _getFlexFuncs(self) -> SigFuncList:
+    return maybe(self.__flex_funcs__, [])
+
+  def _getFlexDistances(self) -> list[int]:
+    return maybe(self.__flex_distances__, [])
+
   def _getDeclaredSigs(self) -> list[TypeSig]:
-    """
-    The '_getDeclaredSigs' method returns the signatures as they were
-    declared: the concrete ones, then the variadic ones.
-    """
     out = [sig for sig, _ in self._getSigFuncList()]
+    out += [sig for sig, _ in self._getFlexFuncs()]
     out += [sig for sig, _ in self._getVariadicFuncs()]
+    return out
+
+  def _getExactFlexes(self) -> dict:
+    out = dict()
+    flexFuncs = self._getFlexFuncs()
+    for (sig, func), distance in zip(flexFuncs, self._getFlexDistances()):
+      out[sig.getBag()] = (distance, sig.getRawTypes(), func)
     return out
 
   @staticmethod
   def _coversExactly(sig: TypeSig, types: tuple) -> bool:
-    """
-    The '_coversExactly' method reports whether the variadic signature
-    'sig' accepts a call of exactly 'types' by exact type: the prefix by
-    identity, and every type after it the inner type of the 'ARGS'.
-    """
     raw = sig.getRawTypes()
     prefix, inner = raw[:-1], raw[-1].__inner_type__
     if len(types) < len(prefix):
@@ -240,20 +344,31 @@ class Dispatcher(Object):
         return False
     return True
 
-  def _getExactEntries(self) -> dict[TypeSig, tuple[int, Method]]:
+  def _getExactEntries(self) -> dict[tuple, tuple[int, Method]]:
     """
-    The '_getExactEntries' method returns the mapping the exact-type pass
-    reads, from each concrete signature to the distance and the function
-    of the registration that takes a call of exactly those types. That is
-    the concrete registration itself, unless a variadic signature from a
-    nearer class accepts the same call by exact type; the nearer
-    registration then wins, so a variadic override in a subclass takes
-    every call it accepts, the ones a parent declared explicitly included.
-    Of several nearer variadic signatures accepting the call, the most
-    recent declaration of the nearest class wins, as in the tables of
-    '_getExactVariadics'. A variadic signature of the same distance never
-    displaces an explicit one. The distance tells the exact-type pass
-    whether a nearer class must still be asked through 'isinstance'.
+    A call passing exactly the classes of a concrete signature must reach
+    the nearest class that accepts it, at the cost of one lookup. When a
+    subclass declares a variadic signature that accepts the same call by
+    exact class, the subclass wins it, while a variadic signature of the
+    same class never displaces an explicit one.
+
+    Implementation
+    --------------
+
+    The classes of each concrete signature, as a plain tuple, map to its
+    own registration, unless a variadic signature of a strictly nearer
+    class covers it exactly; the nearest such class wins, and within it
+    the most recent declaration. A tuple hashes as the signature does,
+    and compares its classes by identity, since neither 'type' nor
+    'AbstractMetaclass' defines '__eq__', in C rather than through the
+    methods of 'TypeSig'.
+
+    Returns
+    -------
+
+    dict[tuple, tuple[int, Method]]
+      For the classes of each concrete signature, the distance and the
+      function of the winning registration.
     """
     variadicFuncs = self._getVariadicFuncs()
     variadics = [*zip(variadicFuncs, self._getVariadicDistances())]
@@ -263,7 +378,8 @@ class Dispatcher(Object):
       types = sig.getRawTypes()
       best = None
       for index, ((variadic, nearerFunc), nearerDistance) in enumerate(
-          variadics):
+          variadics
+      ):
         if nearerDistance >= distance:
           continue
         if not self._coversExactly(variadic, types):
@@ -274,24 +390,31 @@ class Dispatcher(Object):
         if best is None or rank < best[0]:
           best = (rank, nearerFunc)
       if best is None:
-        out[sig] = (distance, func)
+        out[types] = (distance, func)
       else:
-        out[sig] = (best[0][0], best[1])
+        out[types] = (best[0][0], best[1])
     return out
 
   def _getExactVariadics(self) -> tuple[dict, dict, tuple[int, ...]]:
     """
-    The '_getExactVariadics' method returns the tables the exact-type pass
-    reads for the variadic signatures: one keyed by the prefix length,
-    the prefix types and the inner type, for a call with trailing
-    arguments, and one keyed by the prefix length and the prefix types
-    alone, for a call of the prefix and nothing more, which every variadic
-    signature of that prefix accepts whatever its inner type. Each entry
-    holds a rank and the function, the rank being the distance of the
-    class that declared it and then the declaration order reversed, so
-    that of several signatures accepting one call the most recent one of
-    the nearest class wins. The distinct prefix lengths come last,
-    ascending.
+    A call matching a variadic signature by exact class must be found by
+    lookup too, not by trying every variadic signature in turn, and of
+    several accepting one call the most recent declaration of the nearest
+    class must win.
+
+    Implementation
+    --------------
+
+    One table is keyed by prefix length, prefix classes and inner class,
+    for calls with trailing arguments; another by prefix length and prefix
+    classes alone, for calls of the bare prefix. Each entry keeps the best
+    rank, distance first and then declaration order reversed.
+
+    Returns
+    -------
+
+    tuple[dict, dict, tuple[int, ...]]
+      The two tables and the distinct prefix lengths, ascending.
     """
     tailed, empty, lengths = dict(), dict(), []
     distances = self._getVariadicDistances()
@@ -320,40 +443,50 @@ class Dispatcher(Object):
       distances: list[int],
   ) -> SigFuncList:
     """
-    The '_getCastOrder' method returns the order in which the cast passes
-    try the registrations: the greatest distance first, and registration
-    order among equal distances. 'distances' lists the distance of each
-    pair in 'sigFuncs', position by position. A signature inherited from
-    a parent is therefore cast to before a signature its subclass added,
-    so adding a signature in a subclass never redirects a call the parent
-    already handled through a cast.
+    Adding a signature in a subclass must never redirect a call its parent
+    already handled through a cast of the same tier.
+
+    Implementation
+    --------------
+
+    The registrations are sorted farthest first, keeping registration
+    order among equal distances.
 
     Parameters
     ----------
+
     sigFuncs : SigFuncList
-        Spells out to 'list[tuple[TypeSig, Method]]'. The registrations
-        in registration order.
+      A 'list[tuple[TypeSig, Method]]' in registration order.
+
     distances : list[int]
-        The distance of each registration, in the same order.
+      The distance of each registration.
 
     Returns
     -------
+
     SigFuncList
-        The same registrations in the order the cast passes try them.
+      The same pairs in the order the cast pass tries them.
     """
-    #  Indexing rather than zipping raises 'IndexError' should the two
-    #  lists ever fall out of step, where 'zip' would silently drop the
-    #  unmatched registrations from the cast passes.
     positions = sorted(range(len(sigFuncs)), key=lambda i: -distances[i])
     return [sigFuncs[i] for i in positions]
 
   def _getVariadicOrder(self, nearestFirst: bool) -> SigFuncList:
     """
-    The '_getVariadicOrder' method returns the variadic registrations in
-    the order the 'isinstance' pass tries them, the nearest class first,
-    or the cast passes, the farthest first, and within one class the
-    most recent declaration first either way, so a later declaration
-    takes a call an earlier one accepts as well.
+    Of several variadic signatures of one class accepting a call, the most
+    recent declaration must win, in the 'isinstance' pass nearest class
+    first and in the cast pass farthest first.
+
+    Parameters
+    ----------
+
+    nearestFirst : bool
+      'True' for the 'isinstance' pass, 'False' for the cast pass.
+
+    Returns
+    -------
+
+    SigFuncList
+      A 'list[tuple[TypeSig, Method]]' in that order.
     """
     pairs = self._getVariadicFuncs()
     distances = self._getVariadicDistances()
@@ -363,27 +496,47 @@ class Dispatcher(Object):
     )
     return [pairs[i] for i in positions]
 
-  def _getMatchTiers(self) -> list[tuple[int, SigFuncList, SigFuncList]]:
+  def _getMatchTiers(
+      self,
+  ) -> list[tuple[int, SigFuncList, SigFuncList, SigFuncList]]:
     """
-    The '_getMatchTiers' method returns the registrations the 'isinstance'
-    pass tries, grouped by distance, nearest class first, so a
-    registration of a nearer class takes every call it accepts before any
-    of a farther class is asked. Each group holds the concrete
-    registrations of its distance in registration order, then the
-    variadic ones with the most recent first.
+    In the 'isinstance' pass, a registration of a nearer class must take
+    every call it accepts before any of a farther class is asked.
+
+    Implementation
+    --------------
+
+    The registrations are grouped by distance, nearest first; within a
+    group, the concrete ones in registration order, then the flexible
+    declarations of more than three classes in registration order, then
+    the variadic ones most recent first.
+
+    Returns
+    -------
+
+    list[tuple[int, SigFuncList, SigFuncList, SigFuncList]]
+      The distance, the concrete pairs, the flexible pairs and the
+      variadic pairs of each group.
     """
-    concretes, variadics = dict(), dict()
+    concretes, flexes, variadics = dict(), dict(), dict()
     sigFuncs = self._getSigFuncList()
     for (sig, func), distance in zip(sigFuncs, self._getSigDistances()):
       concretes.setdefault(distance, []).append((sig, func))
+    flexFuncs = self._getFlexFuncs()
+    for (sig, func), distance in zip(flexFuncs, self._getFlexDistances()):
+      flexes.setdefault(distance, []).append((sig, func))
     variadicFuncs = self._getVariadicFuncs()
     variadicDistances = self._getVariadicDistances()
     for index in reversed(range(len(variadicFuncs))):
       group = variadics.setdefault(variadicDistances[index], [])
       group.append(variadicFuncs[index])
     out = []
-    for distance in sorted({*concretes, *variadics}):
-      group = concretes.get(distance, []), variadics.get(distance, [])
+    for distance in sorted({*concretes, *flexes, *variadics}):
+      group = (
+        concretes.get(distance, []),
+        flexes.get(distance, []),
+        variadics.get(distance, []),
+      )
       out.append((distance, *group))
     return out
 
@@ -393,56 +546,77 @@ class Dispatcher(Object):
   def _getFinalizerFunction(self) -> Optional[Method]:
     return self.__finalizer_func__
 
-  def _getFieldName(self, ) -> str:
+  def getMethodKind(self) -> Any:
     """
-    The '_getFieldName' method is a guarded variant of
-    'Object.getFieldName'.
+    Code holding a dispatcher may need to know which kind of method it
+    stands for.
 
     Returns
     -------
-    str
-        The field name assigned once this dispatcher is placed on a
-        class.
 
-    Raises
-    ------
-    MissingVariable
-        If '__field_name__' has not been set yet, that is, if
-        '__set_name__' has not fired.
+    Any
+      'classmethod' or 'staticmethod', or 'None' for an instance method.
     """
+    return self.__method_kind__
+
+  def _hasRegistrations(self) -> bool:
+    registries = (
+      self._getSigFuncList(),
+      self._getFlexFuncs(),
+      self._getVariadicFuncs(),
+    )
+    roles = (self.__fallback_func__, self.__finalizer_func__)
+    if any(registries):
+      return True
+    return True if any(role is not None for role in roles) else False
+
+  def _getFieldName(self, ) -> str:
     fieldName = self.__field_name__
     if fieldName is None:
       raise MissingVariable(self, '__field_name__', str)
     return fieldName
 
   def _getFieldOwner(self, ) -> type:
-    """
-    The '_getFieldOwner' method is a guarded variant of
-    'Object.getFieldOwner'.
-
-    Returns
-    -------
-    type
-        The class this dispatcher is placed on.
-
-    Raises
-    ------
-    MissingVariable
-        If '__field_owner__' has not been set yet, that is, if
-        '__set_name__' has not fired.
-    """
     fieldOwner = self.__field_owner__
     if fieldOwner is None:
       raise MissingVariable(self, '__field_owner__', type)
     return fieldOwner
 
   def _createCachedFunction(self) -> None:
+    """
+    Dispatch runs on every call of an overloaded method, so the work of
+    ordering the registrations must happen once, not per call, and the
+    callable at the name must look like the method a reader wrote: its
+    name, qualified name, file and docstring.
+
+    Implementation
+    --------------
+
+    The tables of every pass are taken now and closed over by the dispatch
+    function, which is cached; any registration afterwards clears the
+    cache. The dispatch function takes the instance by position, so no
+    keyword of a call collides with a parameter of its own. It takes the
+    classes of the arguments once, as a plain tuple, the key of every
+    exact table, and builds no 'TypeSig'; only 'DispatchException' builds
+    one, for its message. Its docstring is that of
+    '_getDocumentedFunction'.
+
+    Raises
+    ------
+
+    MissingVariable
+      The dispatcher has not been placed in a class.
+    """
     exactEntries = self._getExactEntries()
+    exactFlexes = self._getExactFlexes()
     tailed, empty, prefixLens = self._getExactVariadics()
     tiers = self._getMatchTiers()
     nearest = tiers[0][0] if tiers else 0
     castFuncs = self._getCastOrder(
         self._getSigFuncList(), self._getSigDistances(),
+    )
+    castFlexes = self._getCastOrder(
+        self._getFlexFuncs(), self._getFlexDistances(),
     )
     castVariadics = self._getVariadicOrder(False)
     fallback = self._getFallbackFunction()
@@ -473,13 +647,36 @@ class Dispatcher(Object):
       (distance, _), func = best
       return distance, func
 
+    def exactLoose(argTypes: tuple, args: tuple) -> Optional[tuple]:
+      """The distance, the function and the arguments in declared order of
+      the flexible declaration or the variadic signature accepting the call
+      of 'argTypes' by exact type, the nearer of the two, the flexible one
+      when both are of one class, or None when neither does."""
+      flexHit = None
+      if exactFlexes:
+        #  The bag 'TypeSig.getBag' gives, from the classes of the call.
+        bag = frozenset(Counter(argTypes).items())
+        try:
+          distance, declared, func = exactFlexes[bag]
+        except KeyError:
+          flexHit = None
+        else:
+          flexHit = distance, func, _orderByClass(declared, args)
+      variadicHit = exactVariadic(argTypes) if prefixLens else None
+      if variadicHit is None:
+        return flexHit
+      if flexHit is None or variadicHit[0] < flexHit[0]:
+        return (*variadicHit, args)
+      return flexHit
+
     def matchInstances(args: tuple, before: Optional[int], ) -> Any:
-      """The function of the registration accepting 'args' through
-      'isinstance', nearest class first, asking only the classes nearer
-      than the distance 'before' when it is given; within a class the
-      concrete signatures in registration order, then the variadic ones,
-      the most recent first. None when none accepts the call."""
-      for distance, concretes, variadics in tiers:
+      """The function, and the arguments in the order it takes them, of
+      the registration accepting 'args' through 'isinstance', nearest class
+      first, asking only the classes nearer than the distance 'before' when
+      it is given; within a class the concrete signatures in registration
+      order, then the flexible declarations, then the variadic ones, the
+      most recent first. None when none accepts the call."""
+      for distance, concretes, flexes, variadics in tiers:
         if before is not None and distance >= before:
           return None
         for sig, func in concretes:
@@ -489,7 +686,11 @@ class Dispatcher(Object):
             if not isinstance(arg, type_):
               break
           else:
-            return func
+            return func, args
+        for sig, func in flexes:
+          ordered = _orderByInstance(sig.getRawTypes(), args)
+          if ordered is not None:
+            return func, ordered
         for sig, func in variadics:
           rawTypes = sig.getRawTypes()
           prefix = rawTypes[:-1]
@@ -508,7 +709,66 @@ class Dispatcher(Object):
               matched = False
               break
           if matched:
-            return func
+            return func, args
+      return None
+
+    def matchCasts(args: tuple, cast: Callable) -> Any:
+      """The function, and the arguments in the order it takes them, of
+      the registration accepting 'args' when 'cast' is applied to each
+      argument that is not an instance, farthest class first; within a
+      class the concrete signatures in registration order, then the
+      flexible declarations, then the variadic ones, the most recent
+      first. None when none accepts the call."""
+      for sig, func in castFuncs:
+        if len(args) != len(sig):
+          continue
+        castArgs = []
+        for arg, type_ in zip(args, sig):
+          if isinstance(arg, type_):
+            castArgs.append(arg)
+            continue
+          try:
+            castedArg = cast(type_, arg)
+          except (ValueError, TypeError):
+            break
+          else:
+            castArgs.append(castedArg)
+        else:
+          return func, castArgs
+      for sig, func in castFlexes:
+        castArgs = _orderByCast(sig.getRawTypes(), args, cast)
+        if castArgs is not None:
+          return func, castArgs
+      for sig, func in castVariadics:
+        rawTypes = sig.getRawTypes()
+        prefix = rawTypes[:-1]
+        innerType = rawTypes[-1].__inner_type__
+        if len(args) < len(prefix):
+          continue
+        castArgs = []
+        matched = True
+        for arg, type_ in zip(args[:len(prefix)], prefix):
+          if isinstance(arg, type_):
+            castArgs.append(arg)
+            continue
+          try:
+            castArgs.append(cast(type_, arg))
+          except (ValueError, TypeError):
+            matched = False
+            break
+        if not matched:
+          continue
+        for arg in args[len(prefix):]:
+          if isinstance(arg, innerType):
+            castArgs.append(arg)
+            continue
+          try:
+            castArgs.append(cast(innerType, arg))
+          except (ValueError, TypeError):
+            matched = False
+            break
+        if matched:
+          return func, castArgs
       return None
 
     def dispatch(*args, **kwargs) -> Any:
@@ -525,11 +785,13 @@ class Dispatcher(Object):
       #  is handling, when the call raised nothing.
       raised = None
       try:
-        argSig = TypeSig.fromArgs(*args, )
+        argTypes = (*map(type, args),)
         try:
-          hit = exactEntries.get(argSig, None)
-          if hit is None and prefixLens:
-            hit = exactVariadic(argSig.getRawTypes())
+          hit = exactEntries.get(argTypes, None)
+          if hit is None:
+            hit = exactLoose(argTypes, args)
+          else:
+            hit = (*hit, args)
         except TypeError:
           #  An argument whose class cannot be hashed misses the exact-type
           #  lookups and goes on to the 'isinstance' passes.
@@ -537,64 +799,27 @@ class Dispatcher(Object):
         #  FASTEST, unless a nearer class accepts the call through
         #  'isinstance': the match of the nearer class wins either way.
         if hit is not None:
-          distance, func = hit
+          distance, func, callArgs = hit
           if distance > nearest:
             nearer = matchInstances(args, distance)
             if nearer is not None:
-              func = nearer
-          return func(instance, *args, **kwargs)
+              func, callArgs = nearer
+          return func(instance, *callArgs, **kwargs)
         #  FAST, nearest class first
-        func = matchInstances(args, None)
-        if func is not None:
-          return func(instance, *args, **kwargs)
-        #  SLOW
-        for sig, func in castFuncs:
-          castArgs = []
-          if len(argSig) != len(sig):
-            continue
-          for arg, type_ in zip(args, sig):
-            if isinstance(arg, type_):
-              castArgs.append(arg)
-              continue
-            try:
-              castedArg = typeCast(type_, arg)
-            except (ValueError, TypeError):
-              break
-            else:
-              castArgs.append(castedArg)
-          else:
-            return func(instance, *castArgs, **kwargs)
-        #  SLOW (variadic)
-        for sig, func in castVariadics:
-          rawTypes = sig.getRawTypes()
-          prefix = rawTypes[:-1]
-          innerType = rawTypes[-1].__inner_type__
-          if len(args) < len(prefix):
-            continue
-          castArgs = []
-          matched = True
-          for arg, type_ in zip(args[:len(prefix)], prefix):
-            if isinstance(arg, type_):
-              castArgs.append(arg)
-              continue
-            try:
-              castArgs.append(typeCast(type_, arg))
-            except (ValueError, TypeError):
-              matched = False
-              break
-          if not matched:
-            continue
-          for arg in args[len(prefix):]:
-            if isinstance(arg, innerType):
-              castArgs.append(arg)
-              continue
-            try:
-              castArgs.append(typeCast(innerType, arg))
-            except (ValueError, TypeError):
-              matched = False
-              break
-          if matched:
-            return func(instance, *castArgs, **kwargs)
+        found = matchInstances(args, None)
+        if found is not None:
+          func, callArgs = found
+          return func(instance, *callArgs, **kwargs)
+        #  SLOW, numbers widened only
+        found = matchCasts(args, _castWidening)
+        if found is not None:
+          func, callArgs = found
+          return func(instance, *callArgs, **kwargs)
+        #  SLOWER, every cast 'typeCast' allows
+        found = matchCasts(args, typeCast)
+        if found is not None:
+          func, callArgs = found
+          return func(instance, *callArgs, **kwargs)
         #  FALLBACK
         if callable(fallback):
           return fallback(instance, *args, **kwargs)
@@ -616,34 +841,49 @@ class Dispatcher(Object):
     dispatch.__qualname__ = '%s.%s' % (ownerName, fieldName)
     dispatch.__module__ = owner.__module__
     documented = self._getDocumentedFunction()
-    dispatch.__doc__ = getattr(documented, '__doc__', None)
+    if documented is None:
+      #  This branch is reached by the following:
+      #  - The dispatcher holds no function at all
+      dispatch.__doc__ = None
+    else:
+      dispatch.__doc__ = documented.__doc__
     self.__compiled_func__ = dispatch
 
   def _getDocumentedFunction(self) -> Optional[Method]:
     """
-    The '_getDocumentedFunction' method returns the function whose
-    docstring the compiled dispatch carries: the first concrete
-    registration, else the first variadic one, else the fallback, else
-    None. A registration the dispatcher wraps itself, the 'PermuterMethod'
-    of a flexible declaration, is documented by the function it wraps:
-    read as an attribute, the wrapper answers with the docstring of its
-    own class, since the lookup finds that before 'CallMeMaybe.__getattr__'
-    could hand over to the function. The owner's module is the dispatch's
-    module, so 'help' and the documentation tools see the method where the
-    author wrote it.
+    'help' on an overloaded method must show the docstring its author
+    wrote.
+
+    Implementation
+    --------------
+
+    The first concrete registration documents the dispatch, else the first
+    flexible declaration of more than three classes, else the first
+    variadic one, else the fallback, else the finalizer; a
+    'PermuterMethod' is documented by the function it holds. Inherited
+    registrations follow the class's own in the same lists, so a class
+    declaring only variadic overloads at a name where it inherits
+    concrete ones shows the inherited docstring.
+
+    Returns
+    -------
+
+    Method or None
+      The function whose docstring is shown.
     """
     for _, func in self._getSigFuncList():
       return self._unwrapCallMeMaybe(func)
+    for _, func in self._getFlexFuncs():
+      return self._unwrapCallMeMaybe(func)
     for _, func in self._getVariadicFuncs():
       return self._unwrapCallMeMaybe(func)
-    return self._unwrapCallMeMaybe(self._getFallbackFunction())
+    fallback = self._getFallbackFunction()
+    if fallback is not None:
+      return self._unwrapCallMeMaybe(fallback)
+    return self._unwrapCallMeMaybe(self._getFinalizerFunction())
 
   @staticmethod
   def _unwrapCallMeMaybe(func: Any) -> Any:
-    """
-    The '_unwrapCallMeMaybe' method returns the function a 'CallMeMaybe'
-    wraps, and anything else as it is.
-    """
     if isinstance(func, CallMeMaybe):
       return func.__wrapped__
     return func
@@ -653,12 +893,96 @@ class Dispatcher(Object):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._createCachedFunction()
-      return self._getCachedFunction(_recursion=True)
+      return self._getCachedFunction(_recursion=True)  # pragma: no mutate
     return self.__compiled_func__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def setMethodKind(self, kind: Any) -> None:
+    """
+    A dispatcher must stand for a classmethod or a staticmethod as well as
+    for an instance method. The kind decides what a read binds and how
+    every function is registered, so it is set before anything is
+    registered, and nothing but the three kinds is admitted.
+
+    Implementation
+    --------------
+
+    The kind is recorded and the compiled dispatch function cleared.
+
+    Parameters
+    ----------
+
+    kind : Any
+      'classmethod', 'staticmethod', or 'None' for an instance method.
+
+    Raises
+    ------
+
+    TypeError
+      'kind' is not one of the three.
+
+    WriteOnceError
+      A function, a fallback or a finalizer is registered already.
+    """
+    kinds = (None, classmethod, staticmethod)
+    if not any(kind is allowed for allowed in kinds):
+      infoSpec = """The method kind of a dispatcher is 'classmethod',
+      'staticmethod', or None for an instance method, not '%s'."""
+      raise TypeError(textFmt(infoSpec % (kind,)))
+    if self._hasRegistrations():
+      raise WriteOnceError(self, self.__method_kind__, kind)
+    self.__method_kind__ = kind
+    self.__compiled_func__ = None
+
+  def _adaptToKind(self, func: Method) -> Method:
+    """
+    The dispatch function passes a receiver ahead of the arguments of every
+    call, and a staticmethod takes none, so each function of a dispatcher
+    standing for a staticmethod must be called without it. A function
+    registered under several signatures must still be one function to the
+    checks comparing registrations.
+
+    Implementation
+    --------------
+
+    For a staticmethod, a function is wrapped by '_dropReceiver', the
+    wrapper kept in '__static_adapters__' under the function; a
+    'PermuterMethod' is rebuilt over the wrapped function with the same
+    arrangement, so it still reorders the arguments after the receiver.
+    For the other kinds the function is returned as it is.
+
+    Parameters
+    ----------
+
+    func : Method
+      The function, or a 'PermuterMethod' of a flexible declaration.
+
+    Returns
+    -------
+
+    Method
+      What the dispatcher registers.
+    """
+    if self.__method_kind__ is not staticmethod:
+      return func
+    if isinstance(func, PermuterMethod):
+      inner = self._adaptToKind(func.__wrapped__)
+      return PermuterMethod(inner, func.arrangement)
+    adapters = self.__static_adapters__
+    if adapters is None:
+      adapters = dict()
+      self.__static_adapters__ = adapters
+    try:
+      adapted = adapters[func]
+    except KeyError:
+      #  This branch is reached by the following:
+      #  - The first registration of the function on this dispatcher
+      adapted = _dropReceiver(func)
+      adapters[func] = adapted
+    return adapted
 
   def addSigFunc(
       self,
@@ -667,43 +991,124 @@ class Dispatcher(Object):
       distance: int = 0,
   ) -> Method:
     """
-    The 'addSigFunc' method adds a signature-function pair to the
-    internal signature-function map.
+    A dispatcher must accept registrations one concrete signature at a
+    time, from its namespace as the class is created, and two functions at
+    one signature would leave dispatch undecided.
+
+    Implementation
+    --------------
+
+    The registration is appended with its distance, and the compiled
+    dispatch function is cleared. Placing the dispatcher replaces 'THIS'
+    in every signature registered before.
 
     Parameters
     ----------
+
     sig : TypeSig
-        The type signature to register the function under.
+      The signature, without a trailing 'ARGS'.
+
     func : Method
-        The function to register. 'Method' expands to
-        'Callable[[Any, ...], Any]'.
+      A 'Callable[[Any, ...], Any]' taking the instance first.
+
     distance : int, optional
-        How far from the owning class the registration comes: 0 for the
-        owning class itself, 1 for the nearest class it inherits the
-        registration from, and so on. The exact-type and isinstance
-        passes prefer the smallest distance: a registration of a nearer
-        class takes every call it accepts ahead of one of a farther
-        class. The cast passes try the greatest distance first.
-        Defaults to 0.
+      How far from the owning class the registration comes. Defaults to 0.
 
     Returns
     -------
+
     Method
-        The same 'func', so the method can sit at the end of a
-        registration chain.
+      'func' itself.
 
     Raises
     ------
+
     DuplicateSignature
-        If a function is already registered under 'sig'.
+      An equal signature is registered already, at any distance, or the
+      signature is one order of a flexible declaration of another function
+      at the same distance.
     """
-    self._resolveTHIS(sig)
+    load = self._adaptToKind(func)
     existing = self._getSigFuncList()
     for existingSig, existingFunc in existing:
       if existingSig == sig:
         raise DuplicateSignature(sig, existingFunc, func)
-    self.__sig_funcs__ = [*existing, (sig, func,)]
+    bag = sig.getBag()
+    flexPairs = zip(self._getFlexFuncs(), self._getFlexDistances())
+    for (flexSig, flexFunc), flexDistance in flexPairs:
+      if flexDistance != distance or flexFunc is load:
+        continue
+      if flexSig.getBag() == bag:
+        raise DuplicateSignature(sig, flexFunc, func)
+    self.__sig_funcs__ = [*existing, (sig, load,)]
     self.__sig_distances__ = [*self._getSigDistances(), distance]
+    self.__compiled_func__ = None
+    return func
+
+  def addFlexSigFunc(
+      self,
+      sig: TypeSig,
+      func: Method,
+      distance: int = 0,
+  ) -> Method:
+    """
+    A flexible declaration of more than three classes has as many orders
+    as the factorial of its classes, too many to register one signature
+    each, so the dispatcher must accept it as one registration standing
+    for every order, and refuse it where its classes are declared already.
+
+    Implementation
+    --------------
+
+    As 'addSigFunc', with the signature in the declared order of its
+    classes. Two declarations are the same when 'TypeSig.getBag' gives one
+    value for both: an equal flexible declaration is refused at any
+    distance, and a concrete signature of the same classes for another
+    function at the same distance. A nearer class declaring one order
+    explicitly takes that order and leaves the others to the inherited
+    declaration, and one function declared under one order and flexibly
+    takes that order as declared.
+
+    Parameters
+    ----------
+
+    sig : TypeSig
+      The signature, in the order the function takes its arguments.
+
+    func : Method
+      A 'Callable[[Any, ...], Any]' taking the instance first.
+
+    distance : int, optional
+      How far from the owning class the registration comes. Defaults to 0.
+
+    Returns
+    -------
+
+    Method
+      'func' itself.
+
+    Raises
+    ------
+
+    DuplicateSignature
+      A flexible declaration of the same classes is registered already, or
+      a concrete signature of them for another function at the same
+      distance.
+    """
+    load = self._adaptToKind(func)
+    bag = sig.getBag()
+    existing = self._getFlexFuncs()
+    for existingSig, existingFunc in existing:
+      if existingSig.getBag() == bag:
+        raise DuplicateSignature(sig, existingFunc, func)
+    sigPairs = zip(self._getSigFuncList(), self._getSigDistances())
+    for (existingSig, existingFunc), existingDistance in sigPairs:
+      if existingDistance != distance or existingFunc is load:
+        continue
+      if existingSig.getBag() == bag:
+        raise DuplicateSignature(sig, existingFunc, func)
+    self.__flex_funcs__ = [*existing, (sig, load,)]
+    self.__flex_distances__ = [*self._getFlexDistances(), distance]
     self.__compiled_func__ = None
     return func
 
@@ -714,121 +1119,113 @@ class Dispatcher(Object):
       distance: int = 0,
   ) -> Method:
     """
-    The 'addVariadicSigFunc' method registers a '(variadicSig, func)'
-    pair on this dispatcher. Unlike 'addSigFunc', it does not reject
-    duplicates: a repeated variadic signature is appended, and of several
-    accepting one call the most recent of the nearest class wins at
-    dispatch. The dispatcher matches a call
-    against the variadic signatures by exact type in the FASTEST pass,
-    the prefix types and the one type the trailing arguments share as
-    the key, and in the FAST and SLOW passes when no concrete signature
-    matches, isinstance-checking the prefix raw types against the first
-    '(len(sig) - 1)' call arguments and every remaining argument against
-    the 'ARGS' inner type.
+    A dispatcher must accept variadic registrations too. Several variadic
+    signatures accepting one call are no conflict; the most recent of the
+    nearest class takes it.
+
+    Implementation
+    --------------
+
+    As 'addSigFunc', but repeats are appended rather than refused. That
+    the signature ends in an 'ARGS' instance is not checked.
 
     Parameters
     ----------
+
     sig : TypeSig
-        The variadic signature, which must end in an 'ARGS' sentinel.
-        This is not validated here.
+      The signature, ending in an 'ARGS' instance.
+
     func : Method
-        The function to register. 'Method' expands to
-        'Callable[[Any, ...], Any]'.
+      A 'Callable[[Any, ...], Any]' taking the instance first.
+
     distance : int, optional
-        How far from the owning class the registration comes, with the
-        same meaning as in 'addSigFunc'. Defaults to 0.
+      How far from the owning class the registration comes. Defaults to 0.
 
     Returns
     -------
+
     Method
-        The same 'func', so the method can sit at the end of a
-        registration chain.
+      'func' itself.
     """
-    self._resolveTHIS(sig)
     existing = self._getVariadicFuncs()
-    self.__variadic_funcs__ = [*existing, (sig, func,)]
+    load = self._adaptToKind(func)
+    self.__variadic_funcs__ = [*existing, (sig, load,)]
     self.__variadic_distances__ = [*self._getVariadicDistances(), distance]
     self.__compiled_func__ = None
     return func
 
-  def _resolveTHIS(self, sig: TypeSig) -> None:
-    """
-    The '_resolveTHIS' method rewrites 'THIS' in 'sig' to the owning
-    class when this dispatcher is already placed on one, so a signature
-    registered after '__set_name__' resolves as one registered before.
-    A dispatcher not yet placed leaves the sentinel for '__set_name__'.
-    """
-    owner = self.__field_owner__
-    if owner is not None:
-      sig.swapTHIS(owner)
-
   def setFallbackFunction(self, func: Method) -> Method:
     """
-    The 'setFallbackFunction' method registers the fallback, run when no
-    registered signature matches a dispatched call.
+    A call that no signature accepts, by class, by length or by cast, may
+    need a function of its own instead of an error.
 
     Parameters
     ----------
+
     func : Method
-        The fallback to register. 'Method' expands to
-        'Callable[[Any, ...], Any]'.
+      A 'Callable[[Any, ...], Any]' receiving the call as it came, the
+      instance first.
 
     Returns
     -------
+
     Method
-        The same 'func', so the method can sit at the end of a
-        registration chain.
+      'func' itself.
 
     Raises
     ------
+
     TypeException
-        If 'func' is not callable.
+      'func' is not callable.
+
     DuplicateSignature
-        If a fallback is already set, with 'fallback' in place of the
-        signature, as for a second registration of one signature.
+      A fallback is set already.
     """
     if not callable(func):
       raise TypeException('__fallback_func__', func, Func, MethodType)
     if self.__fallback_func__ is not None:
       raise DuplicateSignature('fallback', self.__fallback_func__, func)
-    self.__fallback_func__ = func
+    self.__fallback_func__ = self._adaptToKind(func)
     self.__compiled_func__ = None
     return func
 
   def setFinalizerFunction(self, func: Method) -> Method:
     """
-    The 'setFinalizerFunction' method registers the finalizer. Like a
-    'finally' clause, the finalizer runs at the end of every dispatched
-    call no matter which overload was selected, and it runs even when the
-    body raised, including a 'DispatchException' from no overload
-    matching. If the finalizer itself raises while an exception is
-    already in flight, its exception is chained from the in-flight one.
+    Some work must follow every dispatched call, whichever function was
+    selected and whether or not it raised, as a 'finally' clause would.
+
+    Implementation
+    --------------
+
+    The finalizer receives the arguments of the call. An exception it
+    raises replaces that of the call, chained from it.
 
     Parameters
     ----------
+
     func : Method
-        The finalizer to register. 'Method' expands to
-        'Callable[[Any, ...], Any]'.
+      A 'Callable[[Any, ...], Any]' taking the instance first.
 
     Returns
     -------
+
     Method
-        The same 'func', so the method can sit at the end of a
-        registration chain.
+      'func' itself.
 
     Raises
     ------
+
     TypeException
-        If 'func' is not callable.
+      'func' is not callable.
+
     DuplicateSignature
-        If a finalizer is already set, with 'finalizer' in place of the
-        signature.
+      A finalizer is set already.
     """
     if not callable(func):
       raise TypeException('__finalizer_func__', func, Func, MethodType)
     if self.__finalizer_func__ is not None:
       raise DuplicateSignature('finalizer', self.__finalizer_func__, func)
-    self.__finalizer_func__ = func
+    self.__finalizer_func__ = self._adaptToKind(func)
     self.__compiled_func__ = None
     return func
 
@@ -838,107 +1235,99 @@ class Dispatcher(Object):
 
   def __get__(self, instance: Any, owner: type) -> Callable:
     """
-    The '__get__' method is the descriptor protocol entry point. It
-    always returns a callable suitable for dispatching against the
-    registered signatures.
+    An overloaded method must behave as a plain method does: read through
+    the class it is a function taking the instance first, read through an
+    instance it is bound to that instance. Nothing may be stored on the
+    instance, since a stored bound method would be found by a dispatcher of
+    the same name reached through 'super', copied along by 'copy.copy' and
+    kept alive in a reference cycle.
 
-    Class-level access ('Owner.attr') returns the compiled dispatch
-    function, which takes the instance as its first positional argument,
-    as the function of a plain method takes 'self', so
-    'Owner.attr(obj, ...)' dispatches against 'obj' as the first
-    argument. It takes the instance by position without naming it, so no
-    keyword of a call collides with a parameter of its own. The compiled
-    function is built lazily by '_getCachedFunction' and cached on the
-    'Dispatcher' itself.
+    Implementation
+    --------------
 
-    Instance-level access ('obj.attr') returns a fresh bound
-    'MethodType' wrapping that compiled function on every access, just
-    as Python does for a plain method. Nothing is stored on the
-    instance. A bound method stored there would be found again by
-    whichever 'Dispatcher' of the same name reads the instance next,
-    such as the parent's 'Dispatcher' reached through 'super'. It would
-    also be carried along by 'copy.copy', still bound to the original,
-    and it would keep the instance alive through a reference cycle.
-
-    The live 'Dispatcher' is no longer reachable through normal
-    attribute access on the owning class. Reach it through
-    'Owner.__dict__[name]' for introspection, post-hoc registration,
-    or cloning.
-
-    A dispatcher installed on a finished class with 'setattr' never
-    receives '__set_name__'. The first read through that class adopts
-    the class holding it and the name it is held under; see
-    '_adoptOwner'.
+    Through the class the compiled function is returned, through an
+    instance a new 'MethodType' of it on every read. A classmethod or a
+    staticmethod gives a new 'MethodType' bound to the class, read through
+    either. A dispatcher no class body placed, as one installed with
+    'setattr', has no name to compile with.
 
     Parameters
     ----------
+
     instance : Any
-        The instance the attribute is read from, or None on
-        class-level access.
+      The instance read through, or 'None'.
+
     owner : type
-        The class the descriptor is attached to.
+      The class read through.
 
     Returns
     -------
+
     Callable
-        On class-level access, the compiled dispatch function; on
-        instance-level access, a bound 'MethodType' wrapping it.
+      The dispatch function, or a bound method of it.
+
+    Raises
+    ------
+
+    MissingVariable
+      No class body placed the dispatcher.
     """
-    self._adoptOwner(owner if owner is not None else type(instance))
+    if owner is None:
+      owner = type(instance)
+    if self.__method_kind__ is not None:
+      return MethodType(self._getCachedFunction(), owner)
     if instance is None:
       return self._getCachedFunction()
     return MethodType(self._getCachedFunction(), instance)
 
-  def _adoptOwner(self, owner: type) -> None:
-    """
-    The '_adoptOwner' method names this dispatcher, when nothing has yet,
-    after the class along the resolution order of 'owner' that holds it
-    and the name it is held under, by running '__set_name__' as the class
-    statement would have. A dispatcher installed with 'setattr' is the
-    one this serves; a placed dispatcher is left as it is, and one no
-    class holds is left unnamed, to be refused as before. The resolution
-    order is read with 'type.__getattribute__', so that no reimplemented
-    '__getattribute__' of the owner can answer for it.
-    """
-    if self.__field_owner__ is not None:
-      return
-    try:
-      mro = type.__getattribute__(owner, '__mro__')
-    except (AttributeError, TypeError):
-      mro = (owner,)
-    for cls in mro:
-      for name, value in cls.__dict__.items():
-        if value is self:
-          self.__set_name__(cls, name)
-          return
-
   def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
     """
-    A 'Dispatcher' is read-only, so the '__set__' method always raises.
+    An overloaded method must not be replaced through an instance.
 
     Raises
     ------
+
     ReadOnlyError
-        On every call.
+      Always.
     """
     raise ReadOnlyError(instance, self, value)
 
   def __delete__(self, instance: Any, **kwargs) -> Never:
     """
-    A 'Dispatcher' is protected, so the '__delete__' method always
-    raises.
+    An overloaded method must not be removed through an instance.
 
     Raises
     ------
+
     ProtectedError
-        On every call.
+      Always.
     """
     raise ProtectedError(instance, self, )
 
   def __set_name__(self, owner: type, name: str, **kwargs) -> None:
-    self.__field_name__ = name
-    self.__field_owner__ = owner
+    """
+    A dispatcher must learn the class and name it is placed at, resolve
+    'THIS' in its signatures to that class, and let a subclass react to
+    the placement through 'hookSetName', as every 'Object' does.
+
+    Implementation
+    --------------
+
+    'THIS' is replaced first, so the hook sees the signatures as the class
+    will use them; then 'Object.__set_name__' records the owner and the
+    name and calls 'hookSetName'.
+
+    Parameters
+    ----------
+
+    owner : type
+      The class the dispatcher is placed in.
+
+    name : str
+      The name it is placed at.
+    """
     self.swapAllTHIS(owner)
+    Object.__set_name__(self, owner, name, **kwargs)
 
   def __str__(self, ) -> str:
     owner = self.getFieldOwner()
@@ -961,12 +1350,27 @@ class Dispatcher(Object):
   @staticmethod
   def _copySig(sig: TypeSig) -> TypeSig:
     """
-    The '_copySig' method returns a copy of 'sig' holding the same types
-    and the same declared types.
-    '__set_name__' rewrites 'THIS' in the signatures of a dispatcher in
-    place, so a clone holding the signatures of the original would fix
-    'THIS' for both. The copy keeps the declared types so that
-    'restoreTHIS' can put the sentinel back on the clone.
+    Placing a dispatcher rewrites 'THIS' in its signatures in place, so a
+    clone sharing the signature objects of the original would fix 'THIS'
+    for both.
+
+    Implementation
+    --------------
+
+    A new signature of the same class gets the declared entries and the
+    current ones.
+
+    Parameters
+    ----------
+
+    sig : TypeSig
+      The signature to copy.
+
+    Returns
+    -------
+
+    TypeSig
+      The copy.
     """
     copied = type(sig)(*sig.getDeclaredTypes())
     copied.__raw_types__ = sig.getRawTypes()
@@ -974,24 +1378,24 @@ class Dispatcher(Object):
 
   def clone(self, ) -> Self:
     """
-    The 'clone' method builds a copy of this 'Dispatcher' carrying the
-    same registered signature/function pairs (including variadic ones)
-    with their distances, the same fallback, and the same finalizer.
+    A namespace building on 'BaseSpace' may need a copy of a dispatcher
+    for another class, holding the same registrations, without the copy
+    and the original sharing anything that placement changes.
 
-    The signatures are copies, see '_copySig', so placing the clone on a
-    class resolves 'THIS' in its own signatures alone. A clone of a
-    placed dispatcher carries the class of the original in place of
-    'THIS', as the original does, so a subclass may add a 'THIS' overload
-    of its own beside the inherited one; 'restoreTHIS' on the clone puts
-    the sentinel back before placement, so the clone resolves 'THIS' to
-    the class it is placed on instead.
+    Implementation
+    --------------
+
+    The copy holds the same functions with copies of the signatures and
+    the same distances, fallback, finalizer and method kind, and no owner,
+    name or compiled function. Its signatures hold the class of the
+    original where 'THIS' was declared; 'restoreTHIS' on the copy, before
+    it is placed, makes it resolve 'THIS' to its own class instead.
 
     Returns
     -------
-    Self
-        A new 'Dispatcher' with an empty compiled-function cache and no
-        field name or owner. Those are populated when the clone is
-        placed on a class and its '__set_name__' fires.
+
+    Dispatcher
+      The copy.
     """
     newLoad = type(self)()
     sigFuncs = self._getSigFuncList()
@@ -1002,191 +1406,42 @@ class Dispatcher(Object):
       copies = [(self._copySig(s), f) for s, f in variadicFuncs]
       newLoad.__variadic_funcs__ = copies
       newLoad.__variadic_distances__ = [*self._getVariadicDistances(), ]
+    flexFuncs = self._getFlexFuncs()
+    if flexFuncs:
+      copies = [(self._copySig(s), f) for s, f in flexFuncs]
+      newLoad.__flex_funcs__ = copies
+      newLoad.__flex_distances__ = [*self._getFlexDistances(), ]
     fallback = self._getFallbackFunction()
     if fallback is not None:
       newLoad.__fallback_func__ = fallback
     finalizer = self._getFinalizerFunction()
     if finalizer is not None:
       newLoad.__finalizer_func__ = finalizer
+    newLoad.__method_kind__ = self.__method_kind__
+    #  The wrappers of a staticmethod stay one per function on the copy.
+    newLoad.__static_adapters__ = self.__static_adapters__
     return newLoad
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _stackedFunction(self, func: Any) -> Method:
-    """
-    The '_stackedFunction' method returns the function a decorator of this
-    dispatcher registers. Each decorator returns the dispatcher, so one
-    stacked above another receives the dispatcher itself, and registers
-    the function the decorator below it was given instead: a stack
-    decorates one function, and each decorator in it adds one role for
-    that function, in any order. Given a function, it records it for the
-    decorators above.
-
-    Raises
-    ------
-    MissingVariable
-        If the dispatcher is given itself before any function.
-    TypeException
-        If the function is a staticmethod, a classmethod or cannot be
-        called; see '_refuseMethodKinds'.
-    """
-    if func is self:
-      if self.__latest_func__ is None:
-        raise MissingVariable(self, '__latest_func__', Func)
-      return self.__latest_func__
-    _refuseMethodKinds(func)
-    self.__latest_func__ = func
-    return func
-
-  def overload(self, *types: type) -> Decorator:
-    """
-    The 'overload' method builds a decorator that registers the
-    decorated function under the given positional-argument type
-    signature. The decorator returns the dispatcher itself, so
-    successive '@dispatcher.overload(...)' layers stack on the same
-    instance, each registering the one function of the stack; see
-    '_stackedFunction'. A signature ending in an 'ARGS' is registered as a
-    variadic one, through 'addVariadicSigFunc', so it takes calls of any
-    length from its fixed prefix on.
-
-    Parameters
-    ----------
-    *types : type
-        The positional-argument types of the signature.
-
-    Returns
-    -------
-    Decorator
-        A decorator registering its function and returning this
-        dispatcher. 'Decorator' expands to
-        'Callable[[Method], Dispatcher]'.
-
-    Raises
-    ------
-    TypeException
-        If an entry is not a class, or an 'ARGS' of one at the end; see
-        'TypeSig.validateTypes'.
-    """
-    types = TypeSig.starARGS(*types)
-    TypeSig.validateTypes(*types)
-
-    def decorator(func: Method) -> Self:
-      func = self._stackedFunction(func)
-      sig = TypeSig(*types)
-      if types and isinstance(types[-1], ARGS):
-        self.addVariadicSigFunc(sig, func)
-      else:
-        self.addSigFunc(sig, func)
-      return self
-
-    return decorator
-
-  def finalize(self, func: Method) -> Self:
-    """
-    The 'finalize' method registers 'func' as the finalizer. It runs in
-    the 'finally' block of every dispatched call, after the body returns
-    or raises. If the finalizer itself raises, its exception propagates
-    in place of a normal return and is chained from any in-flight
-    dispatch exception. Only one finalizer is allowed per dispatcher.
-    Stacked on another decorator of this dispatcher, it registers the
-    function of the stack; see '_stackedFunction'.
-
-    Parameters
-    ----------
-    func : Method
-        The finalizer to register. 'Method' expands to
-        'Callable[[Any, ...], Any]'.
-
-    Returns
-    -------
-    Self
-        This dispatcher, so used as a decorator it binds the decorated
-        name to the same instance.
-    """
-    self.setFinalizerFunction(self._stackedFunction(func))
-    return self
-
-  def fallback(self, func: Method) -> Self:
-    """
-    The 'fallback' method registers 'func' as the fallback. It runs
-    after every pass has missed: not only on a type mismatch but also on
-    a length mismatch, a coercion-disabled signature, or a keyword call
-    binding no registration. Only one fallback is allowed
-    per dispatcher. Stacked on another decorator of this dispatcher, it
-    registers the function of the stack; see '_stackedFunction'.
-
-    Parameters
-    ----------
-    func : Method
-        The fallback to register. 'Method' expands to
-        'Callable[[Any, ...], Any]'.
-
-    Returns
-    -------
-    Self
-        This dispatcher, so used as a decorator it binds the decorated
-        name to the same instance.
-    """
-    self.setFallbackFunction(self._stackedFunction(func))
-    return self
-
-  def flex(self, *types: type, ) -> Decorator:
-    """
-    The 'flex' method builds a decorator that registers its function
-    under every ordering of the given types, so the caller may pass
-    those arguments in any order. Each ordering is stored as a concrete
-    signature, and a 'PermuterMethod' restores the canonical argument
-    order before calling the function.
-    This is not a catch-all and not the fallback: only permutations of
-    'types' match. See 'fallback' for the no-match catch-all. Stacked on
-    another decorator of this dispatcher, it registers the function of
-    the stack; see '_stackedFunction'.
-
-    Parameters
-    ----------
-    *types : type
-        The canonical positional-argument types. Every ordering of
-        them is registered.
-
-    Returns
-    -------
-    Decorator
-        A decorator registering its function and returning this
-        dispatcher. 'Decorator' expands to
-        'Callable[[Method], Dispatcher]'.
-
-    Raises
-    ------
-    TypeException
-        If an entry is not a class; an 'ARGS' is refused too, since the
-        entries are rearranged.
-    """
-    types = TypeSig.starARGS(*types)
-    TypeSig.validateTypes(*types, variadic=False)
-
-    def decorator(func: Method) -> Self:
-      func = self._stackedFunction(func)
-      for arrangement in Arrangements(*types):
-        sig = TypeSig(*arrangement.values)
-        if TYPE_CHECKING:  # pragma: no cover
-          assert isinstance(func, Func)
-        load = PermuterMethod(func, arrangement)
-        self.addSigFunc(sig, load)
-      return self
-
-    return decorator
-
   def restoreTHIS(self) -> None:
     """
-    The 'restoreTHIS' method puts 'THIS' back in every registered
-    signature that was declared with it, concrete and variadic, undoing
-    'swapAllTHIS', and invalidates the compiled-function cache. On a
-    clone made from a placed dispatcher this lets the clone resolve
-    'THIS' to the class it is placed on next.
+    A clone of a placed dispatcher must resolve 'THIS' to the class it is
+    placed on next.
+
+    Implementation
+    --------------
+
+    Every signature is restored to its declared entries in place, and the
+    compiled function is cleared. A dispatcher built by 'BaseSpace' shares
+    its signature objects with the dispatchers of its bases and
+    subclasses, so this is meant for clones, whose signatures are copies.
     """
     for sig, func in self._getSigFuncList():
+      sig.restoreTHIS()
+    for sig, func in self._getFlexFuncs():
       sig.restoreTHIS()
     for sig, func in self._getVariadicFuncs():
       sig.restoreTHIS()
@@ -1194,19 +1449,24 @@ class Dispatcher(Object):
 
   def swapAllTHIS(self, thisType: type) -> None:
     """
-    The 'swapAllTHIS' method replaces every occurrence of THIS in the
-    registered signatures with the provided type, walking both the
-    concrete signature list and the variadic signature list. It
-    invalidates the compiled-function cache, since 'TypeSig' hashes
-    change with the swap.
+    Once the class holding the dispatcher exists, every signature declared
+    with 'THIS' must match instances of it.
+
+    Implementation
+    --------------
+
+    'THIS' is replaced by the class in every signature, in place, and the
+    compiled function is cleared.
 
     Parameters
     ----------
+
     thisType : type
-        The class to substitute for the THIS sentinel, supplied once
-        the enclosing class exists.
+      The class holding the dispatcher.
     """
     for sig, func in self._getSigFuncList():
+      sig.swapTHIS(thisType)
+    for sig, func in self._getFlexFuncs():
       sig.swapTHIS(thisType)
     for sig, func in self._getVariadicFuncs():
       sig.swapTHIS(thisType)

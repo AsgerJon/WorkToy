@@ -12,10 +12,8 @@ from ..utilities import textFmt
 from ..waitaminute import VariableNotNone, MissingVariable, TypeException
 from ..waitaminute.keenum import KeeCaseException
 
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import Any, Type, TypeAlias, Self
-
-  KEENUM: TypeAlias = Type[object]
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from typing import Any, Self
 
 T = TypeVar('T')
 
@@ -49,10 +47,6 @@ class Kee(AttriBox[T]):
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Annotations
-  valueType: Field[Type[T]]
-  kee: Field[Type[Self]]
-
   #  Private Variables
   __field_value__ = None
   __value_built__ = False
@@ -85,7 +79,7 @@ class Kee(AttriBox[T]):
       keyArgs = self.getKeyArgs()
       self.__field_value__ = self._resolve(*args, **keyArgs)
       self.__value_built__ = True
-      return self.getValue(_recursion=True)
+      return self.getValue(_recursion=True)  # pragma: no mutate
     fieldType = self.getFieldType()
     if isinstance(self.__field_value__, fieldType):
       return self.__field_value__
@@ -113,10 +107,10 @@ class Kee(AttriBox[T]):
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  The 'KeeSpace' namespace class expects to be able to set 'name' and
-  #  'index'  before the enumeration class is created. Subclasses that
-  #  change this behaviour must also implement these changes  in the
-  #  'KeeSpace' class.
+  #  'KeeSpace.addNum' sets 'name' as the class body runs, and
+  #  'KeeMeta._createMembers' sets 'index' as the class is created, each
+  #  once. A subclass changing either setter changes what those two
+  #  expect.
 
   @name.SET
   def _setName(self, name: str) -> None:
@@ -140,21 +134,40 @@ class Kee(AttriBox[T]):
 
   def __set_name__(self, owner: type, name: str, **kwargs) -> None:
     """
-    A 'Kee' declared inside a proper 'KeeNum' class body never receives
-    the interpreter-driven call: 'KeeSpaceHook' claims it during class
-    body execution, before the namespace stores it. The interpreter
-    reaches this method only when a 'Kee' landed in the class body of a
-    class not built by 'KeeMeta', so an owner of any other kind is
-    rejected with 'TypeException'.
+    A 'Kee' in a 'KeeNum' body is claimed by 'KeeSpaceHook' before the
+    namespace stores it, so the interpreter never calls this method for
+    it; 'KeeMeta._createMembers' calls it instead, with the enumeration
+    as owner, once the class exists, and the placement of a box runs: a
+    'Kee' declared without parentheses, or placed on another enumeration
+    already, is refused there. The interpreter reaches this method only
+    for a 'Kee' in the body of a class not built by 'KeeMeta', which is
+    refused with a 'TypeError' saying where a 'Kee' belongs.
     """
     #  Local import: 'KeeMeta' loads after this file in the package.
     from . import KeeMeta
     if isinstance(owner, KeeMeta):
       return AttriBox.__set_name__(self, owner, name, **kwargs)
-    raise TypeException('owner', owner, KeeMeta)
+    infoSpec = """A 'Kee' declares a member of an enumeration and belongs
+    in the body of a 'KeeNum' subclass, but '%s' is bound to one at '%s'
+    and '%s' is no enumeration."""
+    info = infoSpec % (owner.__name__, name, owner.__name__)
+    raise TypeError(textFmt(info))
 
   def __int__(self, ) -> int:
     return self.index
+
+  def __reduce__(self) -> tuple:
+    """
+    A placed box pickles as a reference to its class and name, which for
+    a 'Kee' would give the member, not the 'Kee'. A placed 'Kee' pickles
+    as the 'kee' of its member instead, so it unpickles as the very
+    object; a 'Kee' never placed pickles by its state, as a box does.
+    """
+    owner, name = self.__field_owner__, self.__field_name__
+    if owner is None or name is None:
+      return AttriBox.__reduce__(self)
+    member = type.__getattribute__(owner, name)
+    return getattr, (member, 'kee')
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

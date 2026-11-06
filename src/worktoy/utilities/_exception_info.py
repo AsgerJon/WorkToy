@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from . import textFmt, QuickDesc
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Type, Self, Optional, TypeAlias
 
   ExcType: TypeAlias = Type[Exception]

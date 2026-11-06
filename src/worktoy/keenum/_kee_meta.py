@@ -10,14 +10,14 @@ from collections.abc import Callable
 
 from ..desc import Field
 from ..mcls import BaseMeta
-from ..utilities import textFmt, joinWords, maybe
+from ..utilities import textFmt, joinWords
 from ..waitaminute import TypeException
 from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
 from . import KeeSpace as KSpace
 from . import KeeBase
 from . import KeeMetaMeta
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Iterator, Optional
 
   from . import KeeNum
@@ -113,7 +113,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   __registered_members__: Optional[tuple[Any, ...]] = None
   __named_members__: Optional[dict[str, Any]] = None
   __valued_members__: Optional[dict[Any, Any]] = None
-  __kee_num__: Optional[KeeMeta] = None
 
   base: Field[KeeMeta] = Field()
   space: Field[KSpace] = Field()
@@ -122,7 +121,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
   valueType: Field[type] = Field()
   namedMembers: Field[dict[str, KeeNum]] = Field()
   valuedMembers: Field[dict[Any, KeeNum]] = Field()
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     #  'KeeMetaMeta' provides 'keeNum' on the metaclass; this hint only
     #  lets a type checker see it, and a 'Field' here, with no getter,
     #  would answer every enumeration with 'AccessError'.
@@ -144,7 +143,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       if kwargs.get('_recursion', False):
         raise RecursionError
       cls._createSpace()
-      return cls._getSpace(_recursion=True, )
+      return cls._getSpace(_recursion=True)  # pragma: no mutate
     return cls.__name_space__
 
   def _createBase(cls, ) -> None:
@@ -187,7 +186,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       if kwargs.get('_recursion', False):
         raise RecursionError
       cls._createBase()
-      return cls._getBase(_recursion=True, )
+      return cls._getBase(_recursion=True)  # pragma: no mutate
     return cls.__base_class__
 
   @mroNum.GET
@@ -198,15 +197,23 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     """
     The '_createMembers' method builds the members, in the order the
     namespace registered them. A member the base enumeration already has
-    under the name is the same member here; anything else the base holds
-    under the name, such as a plain class attribute or a member of some
-    other enumeration, gives way to a new member.
+    under the name is the same member here, with the 'Kee' and the index
+    it has there; anything else the base holds under the name, such as a
+    plain class attribute or a member of some other enumeration, gives
+    way to a new member. The 'Kee' of a new member is placed on the
+    enumeration first, as a box is placed on its class, which refuses a
+    'Kee' declared without parentheses or declared in another
+    enumeration already, and then receives its index, the position of
+    the member.
     """
     type.__setattr__(cls, '__allow_instantiation__', True)
     registry = []
-    for key, kee in cls.space.__enumeration_members__.items():
+    members = cls.space.__enumeration_members__.items()
+    for index, (key, kee) in enumerate(members):
       member = cls._getInheritedMember(key)
       if member is None:
+        kee.__set_name__(cls, key)
+        kee.index = index
         member = cls(kee, )
       setattr(cls, key, member)
       registry.append(member)
@@ -219,11 +226,12 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     enumeration named 'key', or None when the base holds no member of
     that name.
     """
+    base = cls.base
     try:
-      member = getattr(cls.base, key, )
+      member = type.__getattribute__(base, key)
     except AttributeError:
       return None
-    return member if isinstance(member, cls.base) else None
+    return member if isinstance(member, base) else None
 
   @members.GET
   def _getMembers(cls, **kwargs) -> tuple[Any, ...]:
@@ -231,7 +239,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       if kwargs.get('_recursion', False):
         raise RecursionError
       cls.__registered_members__ = ()
-      return cls._getMembers(_recursion=True, )
+      return cls._getMembers(_recursion=True)  # pragma: no mutate
     return cls.__registered_members__
 
   @valueType.GET
@@ -239,9 +247,10 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     """
     The 'valueType' getter returns the type the members were declared
     with, 'T' in 'Kee[T]', which 'KeeSpace' pins for every member of the
-    enumeration. The values may be instances of subclasses of it, as a
-    'bool' among 'int' values. A value found not to be an instance of it
-    raises 'TypeException'. An enumeration without members has no
+    enumeration as the body runs, refusing a second type. The values may
+    be instances of subclasses of it, as a 'bool' among 'int' values,
+    and each is checked against it by its own 'Kee' at every read, so
+    this getter reads no member. An enumeration without members has no
     declared type and raises 'TypeError'.
     """
     type_ = cls.space.__member_type__
@@ -250,9 +259,6 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       'valueType'."""
       info = infoSpec % (cls.__name__,)
       raise TypeError(textFmt(info))
-    for member in cls.members:
-      if not isinstance(member.value, type_):
-        raise TypeException('value', member.value, type_)
     return type_
 
   def _createNamedMembers(cls) -> None:
@@ -271,7 +277,7 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       if kwargs.get('_recursion', False):
         raise RecursionError
       cls._createNamedMembers()
-      return cls._getNamedMembers(_recursion=True, )
+      return cls._getNamedMembers(_recursion=True)  # pragma: no mutate
     return cls.__named_members__
 
   def _createValuedMembers(cls) -> None:
@@ -303,21 +309,28 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       if kwargs.get('_recursion', False):
         raise RecursionError
       cls._createValuedMembers()
-      return cls._getValuedMembers(_recursion=True, )
+      return cls._getValuedMembers(_recursion=True)  # pragma: no mutate
     return cls.__valued_members__
 
   def _validateClassResolve(cls) -> None:
     """
-    Detects '__class_resolve__' anywhere in the class hierarchy and
-    validates it. Sets 'cls.__custom_resolve__' to True when a
-    callable hook is found, False otherwise.
+    The lookups ask '__class_resolve__' only when the class has one, so
+    the metaclass records once, as the class is created, whether a
+    callable hook is found along the resolution order; 'None' at the
+    name declares none, as a subclass may bind to drop an inherited
+    hook.
 
     Raises
     ------
+
     TypeException
-      If '__class_resolve__' is defined but not callable.
+      '__class_resolve__' is bound to something that is not callable.
     """
-    classResolve = getattr(cls, '__class_resolve__', None)
+    try:
+      classResolve = type.__getattribute__(cls, '__class_resolve__')
+    except AttributeError:
+      cls.__custom_resolve__ = False
+      return
     if classResolve is None:
       cls.__custom_resolve__ = False
       return
@@ -366,18 +379,14 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
   def __getattr__(cls, name: str) -> Any:
     """
-    The '__getattr__' method resolves an attribute miss as a member-name
-    lookup, walking the class and its enumeration base before deferring to
+    An attribute miss on an enumeration is a member name in another
+    case, as 'Color.red' for 'Color.RED', since the members of the base
+    are registered on the class as its own and ordinary lookup finds
+    every member by its name. A name that is no member falls through to
     the ordinary attribute error.
     """
-    mcls = type(cls)
-    bases: list[KeeMeta] = [cls, maybe(cls.__base_class__, cls)]
-    for num in bases:
-      value = mcls._resolveFromName(num, name)
-      if value is NotImplemented:
-        continue
-      break
-    else:
+    value = cls._resolveFromName(name)
+    if value is NotImplemented:
       return type.__getattribute__(cls, name)
     return value
 
@@ -391,9 +400,13 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     members in the first place.
     """
     if not cls.__allow_instantiation__:
-      existing = cls.__dict__.get(name, None)
-      if isinstance(existing, KeeBase):
-        raise KeeWriteOnceError(existing, name)
+      try:
+        existing = cls.__dict__[name]
+      except KeyError:
+        pass
+      else:
+        if isinstance(existing, KeeBase):
+          raise KeeWriteOnceError(existing, name)
     BaseMeta.__setattr__(cls, name, value)
 
   def __delattr__(cls, name: str) -> None:
@@ -402,9 +415,13 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     'KeeWriteOnceError' unconditionally: no stage of class construction
     deletes a member, so no window exists.
     """
-    existing = cls.__dict__.get(name, None)
-    if isinstance(existing, KeeBase):
-      raise KeeWriteOnceError(existing, name)
+    try:
+      existing = cls.__dict__[name]
+    except KeyError:
+      pass
+    else:
+      if isinstance(existing, KeeBase):
+        raise KeeWriteOnceError(existing, name)
     BaseMeta.__delattr__(cls, name)
 
   def __iter__(cls) -> Iterator[Any]:
@@ -540,22 +557,27 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     else:
       return member
 
-  def _resolveFromValue(cls, identifier: Any) -> Any:
+  def _resolveFromValue(cls, identifier: Any, valueType: type) -> Any:
     """
-    Returns the first member whose 'value' equals 'identifier' or returns
-    'NotImplemented'.
+    The '_resolveFromValue' method gives the first member whose 'value'
+    equals 'identifier', or 'NotImplemented' when none does. The caller
+    hands over the value type it has read, since reading 'valueType'
+    checks every member's value.
 
     Parameters
     ----------
     identifier : Any
       The value identifier to resolve.
 
+    valueType : type
+      The value type of the enumeration, as 'valueType' gave it.
+
     Returns
     -------
     KeeNum or NotImplemented
       The resolved member, or 'NotImplemented' if resolution fails.
     """
-    if cls.valueType is int:
+    if valueType is int:
       if identifier is True or identifier is False:
         return NotImplemented
     if '__unhashable__' in cls.valuedMembers:
@@ -587,7 +609,8 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
   def _resolveMember(cls, identifier: Any, **kwargs) -> Any:
     """
-    Top-level dispatch for resolving a member from an identifier.
+    The '_resolveMember' method is the one resolver behind a call and a
+    subscript of the class, applying the steps below in order.
 
     Order
     -----
@@ -637,32 +660,48 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
           except IndexError:
             pass
     #  An enumeration without members has no value type to ask for.
-    if cls.members and isinstance(identifier, cls.valueType):
-      resolved = cls._resolveFromValue(identifier)
-      if resolved is not NotImplemented:
-        return resolved
+    if cls.members:
+      valueType = cls.valueType
+      if isinstance(identifier, valueType):
+        resolved = cls._resolveFromValue(identifier, valueType)
+        if resolved is not NotImplemented:
+          return resolved
     raise KeeResolveError(cls, identifier)
 
   def fromValue(cls, value: Any) -> Any:
     """
-    Resolves a member by value.
+    A project holding a value may need the member carrying it, without
+    the name and position steps a call or a subscript makes first.
 
-    Returns the lowest-indexed member whose 'value' equals the argument.
+    Implementation
+    --------------
+
+    The lowest-indexed member whose 'value' equals the argument answers.
     An enumeration without members has none, and raises
     'KeeResolveError' whatever the value.
+
+    Raises
+    ------
+
+    TypeException
+      The value is not of the value type.
+
+    KeeResolveError
+      No member carries the value.
     """
     if not cls.members:
       raise KeeResolveError(cls, value)
-    if not isinstance(value, cls.valueType):
-      raise TypeException('value', value, cls.valueType)
-    resolved = cls._resolveFromValue(value)
+    valueType = cls.valueType
+    if not isinstance(value, valueType):
+      raise TypeException('value', value, valueType)
+    resolved = cls._resolveFromValue(value, valueType)
     if resolved is NotImplemented:
       raise KeeResolveError(cls, value)
     return resolved
 
 
 # @formatter:off
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   class KeeNum(KeeBase, metaclass = KeeMeta):  # noqa
     """
     This is to PyCharm's typing what samizdat was to the USSR.

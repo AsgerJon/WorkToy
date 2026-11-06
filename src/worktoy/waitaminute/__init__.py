@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from ._work_toy_exception import WorkToyException
 from ._type_exception import TypeException
+from ._uncheckable_type import UncheckableType
 from ._variable_not_none import VariableNotNone
 from ._unpack_exception import UnpackException
 from ._subclass_exception import SubclassException
@@ -36,6 +37,7 @@ from . import control_flow
 __all__ = [
   'WorkToyException',
   'TypeException',
+  'UncheckableType',
   'VariableNotNone',
   'UnpackException',
   'SubclassException',

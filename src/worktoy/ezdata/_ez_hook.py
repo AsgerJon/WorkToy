@@ -11,7 +11,7 @@ from collections.abc import Callable
 from types import FunctionType, BuiltinFunctionType
 from typing import TYPE_CHECKING
 
-from . import EZField, EZStore, _BLACK_LISTED_TYPES
+from . import EZField, EZStore
 from ..core import Object
 from ..mcls.space_hooks import AbstractSpaceHook, ReservedNames
 from ..utilities import typeCast, textFmt
@@ -20,9 +20,9 @@ from ..waitaminute.dispatch import TypeCastException
 from ..waitaminute.ezdata import ExtraPositionalException, \
   KwargsOnlyException, IncompleteFieldException, ClassFieldError, \
   ReservedMethodError, ExtraKeywordException, \
-  RepeatedFieldException, ReservedAttributeError, BlackListedType
+  RepeatedFieldException, ReservedAttributeError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, TypeAlias, Iterator
   from . import EZSpace
 
@@ -40,8 +40,8 @@ def _unorderable(self: Any, other: Any) -> Any:
   as '__lt__', '__le__', '__gt__', and '__ge__' on every non-ordered
   'EZData' subclass. It returns 'NotImplemented' unconditionally, so
   the interpreter falls back to its standard TypeError for unsupported
-  comparisons, while ordering dunders inherited from an ordered base
-  class are still shadowed.
+  comparisons, and a class declared 'ordered=False' below an ordered
+  base shadows the ordering dunders of the base with it.
   """
   return NotImplemented
 
@@ -77,7 +77,7 @@ class EZHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Annotations
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     space: EZSpace
 
   #  Class Variables
@@ -103,10 +103,12 @@ class EZHook(AbstractSpaceHook):
     EZField value is routed to 'EZSpace.registerEZField' after passing
     '_assertCompleteField'; a function value, written in Python or a
     builtin such as 'len', falls through to the namespace untouched, as
-    do bound methods, which are descriptors; any other value is wrapped
-    through 'EZField.fromValue' and registered. A bare 'None' value is
-    rejected outright, since no field type can be inferred from it,
-    and so is a class object, which would become a field of type 'type'.
+    do descriptors, an 'Alias' of a method among them (an 'Alias' of a
+    field is refused by the core, since no class holds the name); any
+    other value is wrapped through 'EZField.fromValue' and registered.
+    A bare 'None' value is rejected outright, since no field type can be
+    inferred from it, and so is a class object, which would become a
+    field of type 'type'.
     The names the interpreter writes into a class body on
     its own, listed by 'ReservedNames', pass through untouched, while
     a method EZData generates and keeps for itself, listed in
@@ -158,8 +160,6 @@ class EZHook(AbstractSpaceHook):
       If 'key' names an attribute EZData keeps for itself, such as
       '__kw_only__'.
     """
-    if isinstance(val, _BLACK_LISTED_TYPES):
-      raise BlackListedType(self.space.getClassName(), key, val)
     if key in self.space.__reserved_ez_methods__:
       raise ReservedMethodError(key, self.space)
     if key in self.space.__reserved_ez_attributes__:
@@ -191,22 +191,59 @@ class EZHook(AbstractSpaceHook):
     The '_isDescriptor' method decides whether a class-body value is a
     descriptor, left in place as a class attribute, or a value, which
     becomes a field. A value that is not an 'Object' is a descriptor
-    when its type implements '__get__' or '__set__'. Every 'Object'
-    implements both, members, EZData instances and 'SymbolicName'
-    included, so an 'Object' is a descriptor only when its type
-    overrides '__instance_get__' or '__instance_set__', which is where a
-    descriptor built on 'Object' does its work.
+    when its type defines '__get__', '__set__' or '__delete__', which is
+    how Python tells a descriptor. Every 'Object' defines all three,
+    members, EZData instances and 'SymbolicName' included, so an
+    'Object' is a descriptor only when its type overrides one of them,
+    as 'Alias', 'Dispatcher' and a descriptor a project writes directly
+    do, or one of '__instance_get__', '__instance_set__' and
+    '__instance_delete__', where a descriptor built on 'Object' the
+    documented way does its work. Each name is read off the type with
+    'type.__getattribute__', past any '__class_getattr__' of a worktoy
+    class, and compared with what 'Object' holds by identity.
     """
     valueType = type(value)
     if isinstance(value, Object):
-      instanceGet = getattr(valueType, '__instance_get__')
-      instanceSet = getattr(valueType, '__instance_set__')
-      ownGet = instanceGet is not Object.__instance_get__
-      ownSet = instanceSet is not Object.__instance_set__
-      return True if ownGet or ownSet else False
-    hasGet = hasattr(valueType, '__get__')
-    hasSet = hasattr(valueType, '__set__')
-    return True if hasGet or hasSet else False
+      return EZHook._overridesObjectProtocol(valueType)
+    for name in ('__get__', '__set__', '__delete__'):
+      if EZHook._typeDefines(valueType, name):
+        return True
+    return False
+
+  @staticmethod
+  def _overridesObjectProtocol(valueType: type) -> bool:
+    """
+    The '_overridesObjectProtocol' method reports whether a class based
+    on 'Object' overrides any of the six methods through which an
+    'Object' serves as a descriptor; see '_isDescriptor'.
+    """
+    names = (
+      '__get__',
+      '__set__',
+      '__delete__',
+      '__instance_get__',
+      '__instance_set__',
+      '__instance_delete__',
+    )
+    for name in names:
+      own = type.__getattribute__(valueType, name)
+      base = type.__getattribute__(Object, name)
+      if own is not base:
+        return True
+    return False
+
+  @staticmethod
+  def _typeDefines(valueType: type, name: str) -> bool:
+    """
+    The '_typeDefines' method reports whether a class holds 'name'
+    along its resolution order, read with 'type.__getattribute__' so
+    that no '__getattr__' of its metaclass answers for a name it lacks.
+    """
+    try:
+      type.__getattribute__(valueType, name)
+    except AttributeError:
+      return False
+    return True
 
   def _assertCompleteField(self, key: str, field: EZField) -> None:
     """
@@ -282,7 +319,14 @@ class EZHook(AbstractSpaceHook):
       own = vars(klass)
       if name not in own:
         continue
-      if name in own.get('__ez_generated__', ()):
+      try:
+        generated = own['__ez_generated__']
+      except KeyError:
+        #  This branch is reached by the following:
+        #  - The class is a plain base, built by no 'EZMeta', so it lists
+        #    no generated names and everything it holds is hand-written
+        generated = ()
+      if name in generated:
         continue
       return True, own[name]
     return False, None
@@ -341,8 +385,13 @@ class EZHook(AbstractSpaceHook):
        arguments via 'parseKwargs', accepting any of the synonyms
        listed in the corresponding '__*_keys__' tuple. The first
        synonym present in the kwargs wins; the resolved value is
-       truthy-coerced. Each flag defaults to 'False' when none
-       of its synonyms is present.
+       truthy-coerced. 'frozen' and 'kwOnly' default to 'False' when
+       none of their synonyms is present; 'ordered' is taken from the
+       nearest 'EZData' class along the resolution order through
+       '_inheritedFlag', so the subclasses of an ordered class compare
+       unless one says 'ordered=False'. A class that is not frozen
+       while an 'EZData' class along its resolution order is, is
+       refused through '_refuseThawing'; 'kwOnly' is per class.
 
     3. Settles the optional names, '__field_pairs__', 'asDict',
        'asTuple', 'replace', '__repr__', '__str__' and
@@ -359,22 +408,26 @@ class EZHook(AbstractSpaceHook):
        '__iter__', '__len__', '__eq__', '__delattr__', and
        '__setattr__' are installed unconditionally, on the class
        itself, so they take precedence over a plain base defining any
-       of them. '__delattr__' always raises because the EZData
-       contract guarantees every declared field carries a value of the
-       declared type;
-       deletion would break the guarantee. For the same reason the
-       '__setattr__' of a non-frozen class casts each field
-       assignment through 'castField', while that of a frozen class
-       refuses every assignment. Frozen classes also receive
-       '__hash__'; non-frozen classes get '__hash__' set to 'None'
-       so the interpreter rejects hashing. Ordered classes receive
+       of them. Before anything else, a class body that overloaded one
+       of the installed names is refused with 'ReservedMethodError'
+       through '_refuseOverloadedReserved', since the namespace claims
+       an '@overload' binding before 'setItemPhase' could refuse it.
+       The '__delattr__' of a non-frozen class refuses deleting a
+       field, since the EZData contract guarantees every declared field
+       carries a value of the declared type, and lets any other
+       attribute go; that of a frozen class refuses every deletion. For
+       the same reason the '__setattr__' of a non-frozen class casts
+       each field assignment through 'castField', while that of a
+       frozen class refuses every assignment. Frozen classes also
+       receive '__hash__'; non-frozen classes get '__hash__' set to
+       'None' so the interpreter rejects hashing. Ordered classes receive
        '__lt__', '__le__', '__gt__', and '__ge__' through
        'orderingFactory'; non-ordered classes get those four
        dunders set to the shared '_unorderable' function, which
        always returns 'NotImplemented' so the interpreter raises
-       its standard TypeError for unsupported comparisons while
-       still blocking inheritance of an ordered base class's
-       ordering dunders.
+       its standard TypeError for unsupported comparisons, and which
+       shadows the ordering dunders of an ordered base in a class
+       declared 'ordered=False'.
 
     Every method generated here is named after the class and itself,
     as 'Point.asDict', through '_qualify'.
@@ -398,18 +451,23 @@ class EZHook(AbstractSpaceHook):
     dict
       'compiledSpace', with the entries described above set.
     """
+    self._refuseOverloadedReserved()
     ezFields = self.space.getFields()
     kwargs = self.space.getKwargs()
     compiledSpace['__ez_fields__'] = ezFields
 
+    lookupOrder = self.space._getLookupOrder()
     isFrozen, _ = self.parseKwargs(*self.__frozen_keys__, **kwargs)
     isOrdered, _ = self.parseKwargs(*self.__ordered_keys__, **kwargs)
     isKwOnly, _ = self.parseKwargs(*self.__kw_only_keys__, **kwargs)
+    if isOrdered is None:
+      isOrdered = self._inheritedFlag(lookupOrder, '__is_ordered__')
     compiledSpace['__is_frozen__'] = True if isFrozen else False
     compiledSpace['__is_ordered__'] = True if isOrdered else False
     compiledSpace['__kw_only__'] = True if isKwOnly else False
 
-    lookupOrder = self.space._getLookupOrder()
+    if not compiledSpace['__is_frozen__']:
+      self._refuseThawing(lookupOrder)
     factories = self._optionalFactories(
         ezFields,
         compiledSpace['__kw_only__']
@@ -420,14 +478,15 @@ class EZHook(AbstractSpaceHook):
     compiledSpace['__iter__'] = self.iterFactory()
     compiledSpace['__len__'] = self.lenFactory()
     compiledSpace['__eq__'] = self.eqFactory()
-    compiledSpace['__delattr__'] = self.badDelAttrFactory()
     compiledSpace.update(self.storeFactory(ezFields, lookupOrder))
     if compiledSpace['__is_frozen__']:
       compiledSpace['__hash__'] = self.hashFactory()
       compiledSpace['__setattr__'] = self.badSetAttrFactory()
+      compiledSpace['__delattr__'] = self.badDelAttrFactory()
     else:
       compiledSpace['__hash__'] = None
       compiledSpace['__setattr__'] = self.setAttrFactory(ezFields)
+      compiledSpace['__delattr__'] = self.delAttrFactory(ezFields)
     if compiledSpace['__is_ordered__']:
       compiledSpace['__lt__'] = self.orderingFactory(operator.lt)
       compiledSpace['__le__'] = self.orderingFactory(operator.le)
@@ -438,9 +497,117 @@ class EZHook(AbstractSpaceHook):
       compiledSpace['__le__'] = _unorderable
       compiledSpace['__gt__'] = _unorderable
       compiledSpace['__ge__'] = _unorderable
-    owner = compiledSpace.get('__qualname__', self.space.getClassName())
+    try:
+      owner = compiledSpace['__qualname__']
+    except KeyError:
+      #  This branch is reached by the following:
+      #  - The class is built by calling the metaclass, or 'types.new_class',
+      #    with a dictionary the compiler never wrote, so no qualified name
+      #    was recorded in it
+      owner = self.space.getClassName()
     self._qualify(compiledSpace, owner, *generated, *self.__installed__)
     return compiledSpace
+
+  def _refuseThawing(self, lookupOrder: list[type]) -> None:
+    """
+    The '_refuseThawing' method refuses a class that is not frozen while
+    an 'EZData' class along its resolution order is. Freezing is a
+    promise of the base: its instances refuse assignment and hash by
+    their values. A subclass declared without the keyword would take
+    assignment and refuse hashing while comparing equal to the frozen
+    instances, so the class statement is refused instead, as
+    'dataclasses' refuses a non-frozen dataclass based on a frozen one.
+    A frozen subclass of a mutable class is allowed, as documented.
+    'ordered' is inherited through '_inheritedFlag'; 'kwOnly' stays per
+    class.
+
+    Parameters
+    ----------
+    lookupOrder : list[type]
+      The classes after the class under construction in its resolution
+      order.
+
+    Raises
+    ------
+    TypeError
+      If a class along 'lookupOrder' is a frozen 'EZData' class.
+    """
+    for base in lookupOrder:
+      try:
+        frozen = type.__getattribute__(base, '__is_frozen__')
+      except AttributeError:
+        #  This branch is reached by the following:
+        #  - The base was built by no 'EZMeta', as 'Object' or a plain
+        #    mixin, so it carries no frozen flag
+        continue
+      if frozen:
+        infoSpec = """'%s' is based on the frozen class '%s' and does
+        not declare 'frozen=True' itself. A class based on a frozen
+        'EZData' class is frozen too: its instances would otherwise take
+        assignment and refuse hashing while comparing equal to the frozen
+        ones."""
+        info = infoSpec % (self.space.getClassName(), base.__name__)
+        raise TypeError(textFmt(info))
+
+  @staticmethod
+  def _inheritedFlag(lookupOrder: list[type], name: str) -> bool:
+    """
+    A class declared without the 'ordered' keyword must take the choice
+    of the nearest 'EZData' class it is based on, so a subclass of an
+    ordered class compares as its base does unless it says
+    'ordered=False' itself.
+
+    Implementation
+    --------------
+
+    The first class along the order carrying the flag answers, read with
+    'type.__getattribute__' past any class-level attribute hook; a plain
+    base carries no flag and is passed over. 'EZData' itself carries
+    'False', so a class with no ordered ancestor stays unordered.
+
+    Parameters
+    ----------
+    lookupOrder : list[type]
+      The classes after the class under construction in its resolution
+      order.
+    name : str
+      The flag to read, '__is_ordered__'.
+
+    Returns
+    -------
+    bool
+      The flag of the nearest class carrying it, or 'False'.
+    """
+    for base in lookupOrder:
+      try:
+        return type.__getattribute__(base, name)
+      except AttributeError:
+        #  This branch is reached by the following:
+        #  - The base was built by no 'EZMeta', as 'Object' or a plain
+        #    mixin, so it carries no flag
+        continue
+    return False
+
+  def _refuseOverloadedReserved(self) -> None:
+    """
+    The '_refuseOverloadedReserved' method refuses a class body that
+    overloads a method EZData generates and keeps for itself, as
+    'setItemPhase' refuses a plain definition of it. 'LoadSpaceHook'
+    runs before this hook and claims every '@overload' binding, so the
+    binding never reaches 'setItemPhase'; the namespace records the
+    body's own overloads, and 'hasOverloads' answers for them alone, so
+    a plain base overloading '__init__' still gives way to the generated
+    one as documented.
+
+    Raises
+    ------
+    ReservedMethodError
+      If the class body overloaded one of the names in
+      'EZSpace.__reserved_ez_methods__'.
+    """
+    for name in self.space.__reserved_ez_methods__:
+      if self.space.hasOverloads(name):
+        raise ReservedMethodError(name, self.space)
 
   @staticmethod
   def _qualify(compiledSpace: dict, owner: str, *names: str) -> None:
@@ -452,7 +619,7 @@ class EZHook(AbstractSpaceHook):
     comparison every unordered class shares keeps its own name.
     """
     for name in names:
-      method = compiledSpace.get(name, None)
+      method = compiledSpace[name]
       if isinstance(method, FunctionType) and method is not _unorderable:
         method.__qualname__ = '%s.%s' % (owner, name)
 
@@ -491,8 +658,11 @@ class EZHook(AbstractSpaceHook):
     """
     Creates an 'EZStore' for every field whose name a data descriptor
     further along the method resolution order would otherwise take
-    over, such as 'Object.directory' or a property on a mixin. Every
-    other field gets no class attribute at all and is read as a plain
+    over, such as 'Object.directory' or a property on a mixin. The
+    store stands ahead of that descriptor in the lookup and defines
+    '__get__' alone, so the instance '__dict__' answers every populated
+    read and takes every write, as for any other field. Every other
+    field gets no class attribute at all and is read as a plain
     instance attribute.
 
     Parameters
@@ -571,9 +741,8 @@ class EZHook(AbstractSpaceHook):
     castField = cls.castField
 
     def __setattr__(self: Any, key: str, value: Any) -> None:
-      fieldType = fieldTypes.get(key)
-      if fieldType is not None:
-        value = castField(key, value, fieldType)
+      if key in fieldTypes:
+        value = castField(key, value, fieldTypes[key])
       object.__setattr__(self, key, value)
 
     return __setattr__
@@ -642,11 +811,13 @@ class EZHook(AbstractSpaceHook):
     'TypeException'.
 
     After every field has been populated, the generated '__init__'
-    looks up '__post_init__' on 'type(self)' and calls it with
-    'self' if it is defined. The lookup walks the MRO, so a
-    subclass that does not define its own '__post_init__' still
-    inherits the parent's. The hook is the supported customization
-    point for validation, normalization, and derived state.
+    looks up '__post_init__' on 'type(self)' with
+    'type.__getattribute__' and calls it with 'self' if it is defined.
+    The lookup walks the resolution order, so a subclass that does not
+    define its own '__post_init__' still inherits the parent's, and it
+    asks no '__class_getattr__' hook of the class. The hook is the
+    supported customization point for validation, normalization, and
+    derived state.
 
     Parameters
     ----------
@@ -714,9 +885,14 @@ class EZHook(AbstractSpaceHook):
       _refuseRepeated(self, len(args), **kwargs)
       _applyKwargs(self, **kwargs)
       _applyDefaults(self)
-      postInit = getattr(type(self), '__post_init__', None)
-      if postInit is not None:
-        postInit(self)
+      try:
+        postInit = type.__getattribute__(type(self), '__post_init__')
+      except AttributeError:
+        #  This branch is reached by the following:
+        #  - Neither the class body nor a base defines '__post_init__'; a
+        #    '__class_getattr__' hook of the class is not asked for it
+        return
+      postInit(self)
 
     return __init__
 
@@ -814,9 +990,10 @@ class EZHook(AbstractSpaceHook):
     Mirrors 'dataclasses.replace' and is the canonical way to
     derive a modified copy of a frozen instance.
 
-    Like the generated '__init__', 'replace' raises 'TypeError'
-    on any keyword that is not the name of a declared field, so a
-    misspelled name is reported rather than dropped.
+    The new instance is built by the generated '__init__', which
+    raises 'ExtraKeywordException' on a keyword that is the name of no
+    declared field, so a misspelled name is reported rather than
+    dropped, as 'dataclasses.replace' leaves the refusal to '__init__'.
 
     Returns
     -------
@@ -826,17 +1003,6 @@ class EZHook(AbstractSpaceHook):
     """
 
     def replace(self: Any, **changes) -> Any:
-      fields = self.__ez_fields__
-      unknown = [k for k in changes if k not in fields]
-      if unknown:
-        infoSpec = (
-          "replace() got unexpected field name(s) %s for "
-          "EZData class '%s'. Known fields: %s."
-        )
-        names = ', '.join(repr(k) for k in unknown)
-        known = ', '.join(repr(k) for k in fields)
-        clsName = type(self).__name__
-        raise TypeError(infoSpec % (names, clsName, known))
       return type(self)(**{**self.asDict(), **changes})
 
     return replace
@@ -926,8 +1092,13 @@ class EZHook(AbstractSpaceHook):
     """
     Creates the '__eq__' method for the 'EZData' subclass under
     construction. The returned '__eq__' yields 'NotImplemented' when
-    'other' is not an 'EZData' instance, 'False' when it is one but
-    not congruent, and otherwise compares the fields value by value.
+    'other' is not an 'EZData' instance, 'False' when it is one of
+    another class that is not congruent, and otherwise compares the
+    fields value by value. Two instances of one class are congruent by
+    definition, so 'isCongruent', which builds the signature of both
+    classes through the metaclass at every call, is asked only when the
+    classes differ; the common comparison costs the tuple comparison
+    alone.
 
     Returns
     -------
@@ -939,8 +1110,9 @@ class EZHook(AbstractSpaceHook):
       selfCls, otherCls = type(self), type(other)
       if not isinstance(otherCls, type(selfCls)):
         return NotImplemented
-      if not selfCls.isCongruent(otherCls):
-        return False
+      if otherCls is not selfCls:
+        if not selfCls.isCongruent(otherCls):
+          return False
       selfValues = (*self,)
       otherValues = (*other,)
       return True if selfValues == otherValues else False
@@ -1027,25 +1199,55 @@ class EZHook(AbstractSpaceHook):
     return __setattr__
 
   @classmethod
-  def badDelAttrFactory(cls, ) -> INIT:
+  def delAttrFactory(cls, ezFields: dict[str, EZField]) -> INIT:
     """
-    Creates the '__delattr__' method installed on every 'EZData'
-    subclass, frozen or not. The returned '__delattr__' raises
-    'AttributeError' on every deletion, since the EZData contract
-    is 'every declared field always holds a value of the declared
-    type'; deleting a field would leave the instance in a state
-    that violates the type guarantee.
+    Creates the '__delattr__' method for a non-frozen 'EZData' subclass.
+    The returned '__delattr__' raises 'AttributeError' for a field,
+    since the EZData contract is 'every declared field always holds a
+    value of the declared type' and deleting one would break it, and
+    hands any other name to 'object.__delattr__', so an attribute the
+    instance took beside its fields can go again, as on a non-frozen
+    dataclass.
+
+    Parameters
+    ----------
+    ezFields : dict[str, EZField]
+      The class's merged own and inherited fields.
 
     Returns
     -------
     INIT: (self, key) -> None
-      The '__delattr__' method for the 'EZData' subclass.
+      The '__delattr__' method for the non-frozen 'EZData' subclass.
+    """
+    fieldNames = (*ezFields,)
+
+    def __delattr__(self: Any, key: str) -> None:
+      if key in fieldNames:
+        clsName = type(self).__name__
+        infoSpec = """EZData class '%s' does not allow deleting field
+        '%s': every field holds a value of its declared type."""
+        raise AttributeError(textFmt(infoSpec % (clsName, key)))
+      object.__delattr__(self, key)
+
+    return __delattr__
+
+  @classmethod
+  def badDelAttrFactory(cls, ) -> INIT:
+    """
+    Creates the '__delattr__' method for a frozen 'EZData' subclass. The
+    returned '__delattr__' raises 'AttributeError' on every deletion, a
+    field or any other attribute, as the frozen '__setattr__' refuses
+    every assignment, so an instance stays as it was built.
+
+    Returns
+    -------
+    INIT: (self, key) -> None
+      The '__delattr__' method for the frozen 'EZData' subclass.
     """
 
     def __delattr__(self: Any, key: str) -> None:
       clsName = type(self).__name__
-      infoSpec = """EZData class '%s' does not allow deleting
-      attribute '%s'."""
-      raise AttributeError(textFmt(infoSpec % (clsName, key)))
+      infoSpec = """'%s' is frozen; cannot delete attribute '%s'!"""
+      raise AttributeError(infoSpec % (clsName, key))
 
     return __delattr__
