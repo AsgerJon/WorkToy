@@ -1,363 +1,265 @@
 """
-TestKeeFlagsMeta tests the KeeFlagsMeta metaclass functionality.
+TestKeeFlagsMeta tests 'KeeFlagsMeta' from 'worktoy.keenum'.
 """
 #  Apache-2.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.utilities.combinatorics import Arrangements
-from worktoy.waitaminute.keenum import KeeFlagDuplicate
-from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsMeta, KeeNum
-from worktoy.desc import Field
-from .examples import SubclassExample, FlagsExample, MouseButton, PrimeValued
-from . import KeeTest
+from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsMeta, KeeFlagsSpace
+from worktoy.waitaminute.keenum import KeeResolveError, KeeWriteOnceError
+from worktoy.waitaminute.meta import ShadowedClassHook
+from . import KeenumTest, Permission, Extended, FileAccess
 
 
-class TestKeeFlagsMeta(KeeTest):
+class TestKeeFlagsMeta(KeenumTest):
   """
-  TestKeeFlagsMeta tests the KeeFlagsMeta metaclass functionality.
+  'KeeFlagsMeta' builds one member per combination of the flags, keeps
+  them in a list and a dictionary keyed by the names of the high flags,
+  resolves a member from a member of the lineage, a name in any case
+  and order, an index, a value or several identifiers, and takes over
+  calling, length, iteration, membership and the attributes of the
+  class. The tests pin each on the fixtures of the folder.
   """
 
-  def testExamples(self, ) -> None:
-    """Tests the existence of example KeeFlags classes."""
-    for Flags in self.exampleFlags:
-      self.assertTrue(issubclass(Flags, KeeFlags))
-      self.assertTrue(isinstance(Flags, KeeFlagsMeta))
+  def test_members_built(self) -> None:
+    self.assertEqual(len(Permission), 8)
+    self.assertEqual(len(Extended), 16)
+    names = [m.name for m in Permission]
+    expected = ['NULL', 'READ', 'WRITE', 'READ_WRITE', 'EXEC', 'READ_EXEC',
+                'WRITE_EXEC', 'READ_WRITE_EXEC']
+    self.assertEqual(names, expected)
+    self.assertEqual([m.index for m in Permission], [*range(8)])
+    self.assertEqual(Permission.memberList, [*Permission])
+    self.assertIs(Permission.memberDict[frozenset(('READ', 'EXEC'))],
+                  Permission.READ_EXEC)
+    self.assertEqual(len(Permission.memberDict), 8)
+    for member in Permission:
+      with self.subTest(member=member.name):
+        self.assertIs(Permission.__dict__[member.name], member)
+        self.assertIs(member.__field_owner__, Permission)
+        self.assertEqual(member.__field_name__, member.name)
 
-  def testMeta(self) -> None:
-    """
-    Tests that 'KeeFlagsMeta' correctly implements the 'valueType' field.
-    """
-    metaAttributes = dict(
-      flags=Field,
-      memberList=Field,
-      memberDict=Field,
-      valueType=Field,
-    )
-    for key, value in metaAttributes.items():
-      self.assertTrue(hasattr(KeeFlagsMeta, key))
-      self.assertIsInstance(getattr(KeeFlagsMeta, key), value)
+  def test_flags_cloned_once(self) -> None:
+    flags = Permission.flags
+    self.assertEqual([f.name for f in flags], ['READ', 'WRITE', 'EXEC'])
+    self.assertEqual([f.index for f in flags], [0, 1, 2])
+    self.assertIsNot(flags, Permission.flags)
+    self.assertEqual(flags, Permission.flags)
+    self.assertIs(flags[0], Permission.flags[0])
+    self.assertIs(Permission.__dict__['__flag_clones__'][0], flags[0])
+    self.assertEqual([f.name for f in Extended.flags],
+                     ['READ', 'WRITE', 'EXEC', 'OWN'])
+    self.assertIsNot(Extended.flags[0], Permission.flags[0])
 
-  def testLen(self, ) -> None:
-    """Tests that '__len__' correctly returns the number of members."""
-    for cls in self.exampleFlags:
-      self.assertEqual(len(cls), 2 ** len(cls.flags))
+  def test_value_type(self) -> None:
+    self.assertIs(Permission.valueType, int)
+    self.assertIs(FileAccess.valueType, bytes)
 
-  def testContains(self, ) -> None:
-    """Tests that '__contains__' correctly identifies members."""
+  def test_root(self) -> None:
+    self.assertIs(KeeFlagsMeta.__kee_class__, KeeFlags)
+    self.assertIs(type(KeeFlags), KeeFlagsMeta)
+    self.assertNotIn('__member_list__', KeeFlags.__dict__)
+    self.assertEqual(KeeFlags.__keyword_arguments__, {'_root': True})
+    self.assertIsInstance(KeeFlagsMeta.__prepare__('A', ()), KeeFlagsSpace)
 
-    for cls in self.exampleFlags:
-      for i, arrangement in enumerate(Arrangements(*cls.flags, )):
-        key = frozenset((p.name for p in arrangement.values))
-        index = sum(1 << f.index for f in arrangement.values)
-        name = '_'.join(f.name for f in arrangement.values) or 'NULL'
-        self.assertIn(key, cls)
-        self.assertIn(index, cls)
-        self.assertIn(name, cls)
-      for sus in self.exampleFlags:
-        if issubclass(sus, cls) or issubclass(cls, sus) or cls is sus:
-          continue
-        for member in sus:
-          if member.name == 'NULL':
-            continue
-          self.assertNotIn(member, cls)
+  def test_built_by_call(self) -> None:
+    Local = KeeFlagsMeta('Local', (Permission,), {'OWN': KeeFlag()})
+    self.assertEqual(len(Local), 16)
+    self.assertEqual(Local.READ_OWN.index, 9)
+    self.assertEqual([f.name for f in Local.flags],
+                     ['READ', 'WRITE', 'EXEC', 'OWN'])
 
-  def testBasicSubclassCheck(self, ) -> None:
-    """
-    Tests that instances of KeeFlagsMeta correctly identify themselves
-    as subclasses of themselves.
-    """
-    for cls in self.exampleFlags:
-      self.assertIsSubclass(cls, cls)
+  def test_attributes_of_the_class(self) -> None:
+    with self.assertRaises(KeeWriteOnceError) as context:
+      Permission.READ = 1
+    self.assertIs(context.exception.member, Permission.READ)
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.attribute, 'READ')
+    self.assertIn("'READ' of member 'Permission.READ [1]'",
+                  str(context.exception))
+    with self.assertRaises(KeeWriteOnceError) as context:
+      del Permission.NULL
+    self.assertIs(context.exception.member, Permission.NULL)
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.attribute, 'NULL')
+    self.assertIn("'NULL' of member 'Permission.NULL [0]'",
+                  str(context.exception))
+    Permission.note = 'free'
+    self.assertEqual(Permission.__dict__['note'], 'free')
+    Permission.note = 'again'
+    self.assertEqual(Permission.__dict__['note'], 'again')
+    del Permission.note
+    self.assertNotIn('note', Permission.__dict__)
+    with self.assertRaises(AttributeError):
+      del Permission.note
 
-  def testIsSubclassCheck(self, ) -> None:
-    """
-    Tests that instances of KeeFlagsMeta correctly identify subclasses.
-    """
-    self.assertIsSubclass(SubclassExample, FlagsExample)
-    self.assertIsNotSubclass(FlagsExample, SubclassExample)
+  def test_call(self) -> None:
+    self.assertIs(Permission(), Permission.NULL)
+    self.assertIs(Permission('read'), Permission.READ)
+    self.assertIs(Permission('READ', 'WRITE'), Permission.READ_WRITE)
+    self.assertIs(Permission(Permission.EXEC, 'read'), Permission.READ_EXEC)
+    self.assertIs(Permission(5), Permission.READ_EXEC)
+    with self.assertRaises(TypeError) as context:
+      Permission(flag='read')
+    self.assertEqual(str(context.exception),
+                     "Permission() takes no keyword arguments, "
+                     "but received 'flag'.")
 
-    class Base(KeeFlags):
-      A = KeeFlag()
+  def test_subscript(self) -> None:
+    self.assertIs(Permission['write_read'], Permission.READ_WRITE)
+    self.assertIs(Permission['Exec'], Permission.EXEC)
+    self.assertIs(Permission['null'], Permission.NULL)
+    self.assertIs(Permission[('READ', 'EXEC')], Permission.READ_EXEC)
+    self.assertIs(Permission[['read', 'read']], Permission.READ)
+    self.assertIs(Permission[{'WRITE'}], Permission.WRITE)
+    self.assertIs(Permission[frozenset()], Permission.NULL)
+    self.assertIs(Permission[0], Permission.NULL)
+    self.assertIs(Permission[7], Permission.READ_WRITE_EXEC)
 
-    class SubB(Base):
-      B = KeeFlag()
+  def test_misses(self) -> None:
+    for identifier in ('nothing', 'READ_NOTHING', 8, -1, True, 3.5):
+      with self.subTest(identifier=identifier):
+        with self.assertRaises(KeeResolveError) as context:
+          Permission[identifier]
+        self.assertIs(context.exception.keeNum, Permission)
+        self.assertEqual(context.exception.identifier, identifier)
+        self.assertIn("'Permission' could not resolve the identifier '%s'"
+                      % (identifier,), str(context.exception))
+    with self.assertRaises(KeeResolveError) as context:
+      Permission('read', 'nothing')
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.identifier, 'nothing')
+    self.assertIn("'nothing'", str(context.exception))
 
-    class SubC(SubB):
-      C = KeeFlag()
+  def test_values(self) -> None:
+    self.assertIs(FileAccess(b'2'), FileAccess.CLOSE)
+    self.assertIs(FileAccess[b'0'], FileAccess.NULL)
+    self.assertIs(FileAccess._resolveValue(b'3'), FileAccess.OPEN_CLOSE)
+    with self.assertRaises(KeeResolveError) as context:
+      FileAccess(b'9')
+    self.assertIs(context.exception.keeNum, FileAccess)
+    self.assertEqual(context.exception.identifier, b'9')
+    self.assertIn("'FileAccess' could not resolve the identifier 'b'9''",
+                  str(context.exception))
+    with self.assertRaises(KeeResolveError) as context:
+      FileAccess('9')
+    self.assertIs(context.exception.keeNum, FileAccess)
+    self.assertEqual(context.exception.identifier, '9')
+    self.assertIn("the identifier '9'", str(context.exception))
+    with self.assertRaises(KeeResolveError) as context:
+      FileAccess._resolveValue(True)
+    self.assertIs(context.exception.keeNum, FileAccess)
+    self.assertIs(context.exception.identifier, True)
+    self.assertIn("the identifier 'True'", str(context.exception))
+    self.assertIs(Permission._resolveValue(3), Permission.READ_WRITE)
 
-    class SubD(SubC):
-      D = KeeFlag()
+  def test_members_of_the_lineage(self) -> None:
+    self.assertIs(Permission(Extended.READ), Permission.READ)
+    self.assertIs(Extended(Permission.READ_WRITE), Extended.READ_WRITE)
+    self.assertIsNot(Extended.READ, Permission.READ)
+    self.assertIs(Permission._fromMember(Permission.EXEC), Permission.EXEC)
+    self.assertIs(Permission._fromMember(Extended.EXEC), Permission.EXEC)
+    self.assertIsNone(Permission._fromMember(Extended.OWN))
+    self.assertIsNone(Permission._fromMember(FileAccess.OPEN))
+    with self.assertRaises(KeeResolveError) as context:
+      Permission(Extended.OWN)
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertIs(context.exception.identifier, Extended.OWN)
+    self.assertIn("'Permission' could not resolve the identifier "
+                  "'Extended.OWN [8]'", str(context.exception))
+    with self.assertRaises(KeeResolveError) as context:
+      Permission[FileAccess.OPEN]
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertIs(context.exception.identifier, FileAccess.OPEN)
+    self.assertIn("the identifier 'FileAccess.OPEN [1]'",
+                  str(context.exception))
 
-    subception = [SubB, SubC, SubD]
-    for sub in subception:
-      self.assertIsSubclass(sub, Base)
+  def test_contains(self) -> None:
+    self.assertIn(Permission.READ, Permission)
+    self.assertIn(Extended.READ_WRITE, Permission)
+    self.assertNotIn(Extended.OWN, Permission)
+    self.assertIn(Permission.READ, Extended)
+    self.assertNotIn(FileAccess.OPEN, Permission)
+    self.assertNotIn('READ', Permission)
+    self.assertNotIn(1, Permission)
+    self.assertNotIn(Permission.READ, FileAccess)
 
-  def testNotSubclassCheck(self, ) -> None:
-    """
-    Tests that instances of KeeFlagsMeta correctly rejects unrelated
-    classes as subclasses.
-    """
+  def test_iteration_and_length(self) -> None:
+    self.assertEqual([m.index for m in Extended], [*range(16)])
+    self.assertEqual(len(FileAccess), 4)
+    self.assertTrue(Permission)
 
-    susClasses = [type(self), type('Sus', (), {}), KeeFlags, KeeNum]
-    for cls in self.exampleFlags:
-      for sus in susClasses:
-        self.assertNotIsSubclass(sus, cls)
+  def test_text(self) -> None:
+    self.assertEqual(str(Permission), 'Permission[metaclass=KeeFlagsMeta]')
+    self.assertEqual(repr(Extended), 'Extended[metaclass=KeeFlagsMeta]')
 
-  def testAdvancedSubclassCheck(self, ) -> None:
-    """
-    Tests more advanced subclass checks with two separate hierarchies.
-    """
+  def test_taken_over_operations_refuse_hooks(self) -> None:
+    for hook in ('__class_len__', '__class_call__', '__class_iter__',
+                 '__class_contains__', '__class_setattr__'):
+      with self.subTest(hook=hook):
+        with self.assertRaises(ShadowedClassHook) as context:
+          KeeFlagsMeta('Bad', (KeeFlags,), {hook: classmethod(len)})
+        self.assertEqual(context.exception.className, 'Bad')
+        self.assertEqual(context.exception.hookName, hook)
+        self.assertEqual(context.exception.metaclassName, 'KeeFlagsMeta')
+        self.assertEqual(context.exception.methodName,
+                         hook.replace('class_', ''))
+        self.assertIn("The class body of 'Bad' binds '%s'" % hook,
+                      str(context.exception))
+        self.assertIn("'KeeFlagsMeta' implements '%s'"
+                      % hook.replace('class_', ''), str(context.exception))
 
-    class Base(KeeFlags):
-      Z = KeeFlag()
-
-    class Sus1A(Base):
-      A = KeeFlag()
-
-    class Sus1B(Sus1A):
-      B = KeeFlag()
-
-    class Sus1C(Sus1B):
-      C = KeeFlag()
-
-    class Sus1D(Sus1C):
-      D = KeeFlag()
-
-    class Sus2A(KeeFlags):
-      A = KeeFlag()
-
-    class Sus2B(Sus2A):
-      B = KeeFlag()
-
-    class Sus2C(Sus2B):
-      C = KeeFlag()
-
-    class Sus2D(Sus2C):
-      D = KeeFlag()
-
-    sus1 = [Sus1A, Sus1B, Sus1C, Sus1D]
-    sus2 = [Sus2A, Sus2B, Sus2C, Sus2D]
-
-    s1, s2 = [*reversed(sus1), ], [*reversed(sus2), ]
-    while s1:
-      b = s1.pop()
-      for s in s1:
-        self.assertIsSubclass(s, b)
-      for s in sus2:
-        self.assertNotIsSubclass(s, b)
-    s1, s2 = [*reversed(sus1), ], [*reversed(sus2), ]
-    while s2:
-      b = s2.pop()
-      for s in s2:
-        self.assertIsSubclass(s, b)
-      for s in sus1:
-        self.assertNotIsSubclass(s, b)
-
-  def testBadSubclass(self, ) -> None:
-    """Tests error handling when subclass checking with a non-class."""
-    expectedMessage = 'issubclass() arg 1 must be a class'
-
-    for cls in self.exampleFlags:
-      with self.assertRaises(TypeError) as context:
-        # noinspection PyTypeChecker
-        _ = issubclass("""Bro, I'm a class, trust!""", cls)
-      actualMessage = str(context.exception)
-      self.assertIn(expectedMessage, actualMessage)
-
-  def testEqualityOperatorTrue(self, ) -> None:
-    """Tests that flags classes compare by identity: each equals itself
-    and no other, a subclass included."""
-    for left in self.exampleFlags:
-      for right in self.exampleFlags:
-        self.assertIs(left == right, left is right)
-
-  def testInBodyDuplicateFlag(self, ) -> None:
-    """Declaring the same flag name twice in one class body raises."""
-    a = KeeFlag()
-    b = KeeFlag()
-    with self.assertRaises(KeeFlagDuplicate) as context:
-      # noinspection PyUnusedLocal
-      class StackedOverflow(KeeFlags):
-        BREH = a
-        # noinspection PyRedeclaration
-        BREH = b
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.name, 'BREH')
-    self.assertIs(e.oldFlag, a)
-    self.assertIs(e.newFlag, b)
-
-  def testInheritedDuplicateFlag(self, ) -> None:
-    """A subclass that redeclares an inherited flag name raises, matching
-    'KeeNum'. Neither family allows redeclaring an inherited name."""
-
-    class Base(KeeFlags):
+  def test_other_hooks_work(self) -> None:
+    class Shown(KeeFlags):
       READ = KeeFlag()
-      WRITE = KeeFlag()
 
-    with self.assertRaises(KeeFlagDuplicate) as context:
-      # noinspection PyUnusedLocal
-      class Sub(Base):
-        READ = KeeFlag()  # collides with the inherited 'READ'
-    e = context.exception
-    self.assertEqual(e.name, 'READ')
-    self.assertIsInstance(e.oldFlag, KeeFlag)
-    self.assertIsInstance(e.newFlag, KeeFlag)
-    self.assertEqual(e.oldFlag.name, 'READ')
+      @classmethod
+      def __class_str__(cls) -> str:
+        return 'shown'
 
-  def testCustomGetValue(self) -> None:
-    """Tests that defining a custom 'getValue' method works as intended."""
+    self.assertEqual(str(Shown), 'shown')
+    self.assertEqual(len(Shown), 2)
 
-    class Offset(KeeFlags):
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
+  def test_random_flags_classes(self) -> None:
+    self.randomWord.size = 4
+    words = [*dict.fromkeys(self.randomWord.row)]
+    space = {w.upper(): KeeFlag() for w in words}
+    Local = KeeFlagsMeta('Local', (KeeFlags,), space)
+    self.assertEqual(len(Local), 2 ** len(words))
+    for index, word in enumerate(words):
+      with self.subTest(word=word):
+        member = Local(word)
+        self.assertEqual(member.index, 1 << index)
+        self.assertEqual(member.names, frozenset((word.upper(),)))
 
-      def _getValue(self) -> int:
-        return self.index + 69420
+  def test_index_past_the_end_and_values_of_another_type(self) -> None:
+    with self.assertRaises(KeeResolveError) as context:
+      _ = Permission[len(Permission)]
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.identifier, len(Permission))
+    self.assertIn("'Permission' could not resolve the identifier '8'",
+                  str(context.exception))
+    with self.assertRaises(KeeResolveError) as context:
+      _ = Permission[99]
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.identifier, 99)
+    self.assertIn("the identifier '99'", str(context.exception))
+    with self.assertRaises(KeeResolveError) as context:
+      Permission._resolveIndex(99)
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.identifier, 99)
+    self.assertIn("the identifier '99'", str(context.exception))
 
-    for member in Offset:
-      self.assertEqual(member.value, member.index + 69420)
+    class Scaled(FileAccess):
+      def _getValue(self) -> float:
+        return self.index * 1.5
 
-  def testSubclassGetValue(self) -> None:
-    """
-    Tests that a subclass of a class providing a custom '_getValue'
-    method correctly inherits the method.
-    """
-
-    class Offset(KeeFlags):
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-
-      def _getValue(self) -> int:
-        return self.index + 69420
-
-    class SubOffset(Offset):
-      D = KeeFlag()
-      E = KeeFlag()
-
-    for member in SubOffset:
-      self.assertEqual(member.value, member.index + 69420)
-
-  def testSuper(self, ) -> None:
-    """
-    Tests that custom metaclass implementation preserves conventional
-    behaviour of 'super()'.
-    """
-
-    class Base(KeeFlags):
-      A = KeeFlag()
-      B = KeeFlag()
-
-      def _getValue(self) -> int:
-        return self.index + 69420
-
-    class Sub(Base):
-      C = KeeFlag()
-      D = KeeFlag()
-
-      def _getValue(self) -> int:
-        return super()._getValue() * 2
-
-    for member in Sub:
-      self.assertAlmostEqual(member.value / 2, member.index + 69420)
-
-  def testImplementedEqualOperator(self, ) -> None:
-    """
-    Tests that the '__eq__' operator correctly identifies equal members.
-    """
-    for left in self.exampleFlags:
-      for right in self.exampleFlags:
-        if left is right:
-          self.assertEqual(left, right)
-        else:
-          self.assertNotEqual(left, right)
-
-  def testNotImplementedEqualOperator(self, ) -> None:
-    """
-    Tests that comparing a flags class with an object of a different type
-    hands the decision to that object, and is otherwise decided by
-    identity, without the other operand ever being hashed.
-    """
-
-    class OtherImplemented:
-      def __eq__(self, other: object) -> bool:
-        return True
-
-      def __hash__(self, ) -> int:
-        raise TypeError('all your base are belong to us')  # pragma: no cover
-
-    class OtherNotImplemented:
-      pass
-
-    for cls in self.exampleFlags:
-      self.assertEqual(cls, OtherImplemented())
-      self.assertNotEqual(cls, OtherNotImplemented())
-
-  def testPrimeValued(self, ) -> None:
-    """
-    The 'PrimeValued' example class provides a custom '_getValue'
-    implementation that associates each flag with a prime number beginning
-    with 2. Then the value of each member is the product of the primes
-    associated with the flags that are HIGH for that member. Thus, it
-    provides a practical demonstration of custom '_getValue' behaviour.
-
-    'MouseButton' subclasses 'PrimeValued' with flags: 'LEFT', 'RIGHT' and
-    'MIDDLE' associated with 2, 3 and 5 respectively. Thus, the 8 possible
-    members and their values are:
-
-    - index 0: NULL with value 1
-    - index 1: LEFT with value 2
-    - index 2: RIGHT with value 3
-    - index 3: LEFT_RIGHT with value 6
-    - index 4: MIDDLE with value 5  # Note ordering by index, not value
-    - index 5: LEFT_MIDDLE with value 10
-    - index 6: RIGHT_MIDDLE with value 15
-    - index 7: LEFT_RIGHT_MIDDLE with value 30
-
-    """
-    primes = [PrimeValued.indexPrime(index) for index in range(6)]
-    self.assertEqual(primes, [2, 3, 5, 7, 11, 13])
-    expected = [1, 2, 3, 6, 5, 10, 15, 30]
-    self.assertEqual([member.value for member in MouseButton], expected)
-    for member in MouseButton:
-      for high in member.highs:
-        self.assertFalse(member.value % PrimeValued.indexPrime(high.index))
-
-  def testMultipleInheritance(self, ) -> None:
-    """
-    Tests that multiple inheritance correctly merges the flags of bases
-    with the conventional precedence order. This includes the flags and
-    the '_getValue' method. This implements the use case of creating a new
-    class with the flags of an existing class, but with a '_getValue' from
-    a separate class, such as the 'PrimeValued' class.
-
-    Please note that since the '_getValue' method of 'PrimeValued' should
-    replace the '_getValue' provided by the other base class, it is the
-    first base class. Otherwise, any custom '_getValue' method of the
-    other parent would take precedence.
-    """
-
-    class PrimeRoll(PrimeValued, FlagsExample):
-      pass
-
-    for a, b in zip(FlagsExample, PrimeRoll):
-      for high in a.highs:
-        prime = PrimeValued.indexPrime(high.index)
-        self.assertFalse(b.value % prime)
-
-  def testCoverageGymnastics(self, ) -> None:
-    """
-    While this method appears to 'test' the function of a helper class,
-    it actually tests the preservation of overloading functionality in a
-    subclass of a 'KeeFlags' class.
-    """
-
-    class PrimeRoll(PrimeValued, FlagsExample):
-      pass
-
-    for p in PrimeRoll:
-      self.assertEqual(p.coverageGymnastics(69, 420), 69 + 420)
-      self.assertEqual(p.coverageGymnastics('1337', '80085'), 1337 + 80085)
+    self.assertEqual([m.value for m in Scaled][:3], [0.0, 1.5, 3.0])
+    self.assertIs(Scaled(1.5), Scaled.memberList[1])
+    self.assertIs(Scaled(3.0), Scaled.memberList[2])
+    with self.assertRaises(KeeResolveError) as context:
+      Scaled(2.0)
+    self.assertIs(context.exception.keeNum, Scaled)
+    self.assertEqual(context.exception.identifier, 2.0)
+    self.assertIn("'Scaled' could not resolve the identifier '2.0'",
+                  str(context.exception))

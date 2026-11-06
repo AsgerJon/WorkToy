@@ -2,7 +2,8 @@
 The 'worktoy.lorem_ipsum' package provides a simple way to generate
 lorem ipsum text for testing and placeholder content. The generators draw
 their word and length choices from bounded distributions, so a requested
-character count is met exactly.
+character count is met exactly, or refused when no run of the words can
+meet it.
 
 - COMMON_WORDS, UNCOMMON_WORDS, RARE_WORDS
 - StochasticVariable

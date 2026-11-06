@@ -2,9 +2,12 @@
 The 'worktoy.work_test.samplers' package provides random sample-data
 generators for the test suite. 'BaseSampler' defines the shared shape, a
 value type plus a single-sample recipe sized into items, rows, and
-tables; each concrete sampler fills in one data type.
+tables, with a generator and a seed of its own; each concrete sampler
+fills in one data type. 'SamplerMeta' builds them, so a sampler without
+both hooks is refused.
 
 - LOREM_WORDS, randomWord, loremSentence
+- SamplerMeta
 - BaseSampler
 - IntSampler
 - FloatSampler
@@ -18,6 +21,7 @@ tables; each concrete sampler fills in one data type.
 from __future__ import annotations
 
 from ._lorem_text import LOREM_WORDS, randomWord, loremSentence
+from ._sampler_meta import SamplerMeta
 from ._base_sampler import BaseSampler
 from ._int_sampler import IntSampler
 from ._float_sampler import FloatSampler
@@ -30,6 +34,7 @@ __all__ = [
   'LOREM_WORDS',
   'randomWord',
   'loremSentence',
+  'SamplerMeta',
   'BaseSampler',
   'IntSampler',
   'FloatSampler',

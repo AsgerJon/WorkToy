@@ -10,17 +10,19 @@ from . import ControlFlow
 
 
 class SkipSet(ControlFlow):
-  """'ControlFlow' exception that aborts a descriptor set silently.
+  """
+  A descriptor sometimes receives a write it has nothing to do for, most
+  often the value it already holds. It needs a way to end the write
+  there, without the notifications of a completed write and without an
+  error at the line that assigned.
 
-  The 'Object.__set__' wrapper catches 'SkipSet' raised from
-  'hookPreSet' and skips '__instance_set__' and 'hookOnSet'
-  entirely. The caller sees no exception and no error.
+  Implementation
+  --------------
 
-  Used irresponsibly this leads to highly undefined behaviour: the
-  caller cannot learn that their write was discarded. The canonical,
-  recommended use case is redundant-set elision: raise 'SkipSet'
-  when 'newValue' is already the value the descriptor holds. That is
-  safe because the caller's intent is already satisfied. For any
-  other "refuse to set" scenario, raise a proper typed exception
-  that propagates.
+  'Object.__set__' catches 'SkipSet' raised from 'hookPreSet', and then
+  calls neither '__instance_set__' nor 'hookOnSet'. The caller cannot
+  learn that the write was discarded, so 'SkipSet' is safe only where
+  the intent of the caller is met already, as for a redundant write. A
+  write refused for any other reason calls for a typed exception that
+  reaches the caller.
   """

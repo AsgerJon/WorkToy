@@ -13,7 +13,7 @@ from ..desc import Field, AttriBox
 from ..utilities import textFmt
 from . import StochasticWord, BaseGenerator
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Optional, Self, Iterator
 
   IntList: TypeAlias = list[int]
@@ -27,15 +27,42 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Clause(BaseGenerator):
   """
-  Clause assembles a flat sequence of words summing to a target character
-  count. It samples word lengths from a 'StochasticWord', realizes each
-  length into a concrete word, and caches both arrays lazily.
+  A clause is the smallest text a layout asks for: words joined by single
+  spaces, exactly as many characters as requested, with no punctuation of
+  its own, since the sentence around it puts the commas and the period
+  and capitalizes its first word. A first clause opens with 'Lorem
+  ipsum', and one too short to hold the lead-in and a word still has to
+  come out at its count, as a placeholder. A project must be able to
+  bring its own words by rebinding 'stochWord' to a box of its own
+  'StochasticWord' subclass, and its own lead-in by rebinding
+  '__lead_in__'.
 
-  When built via 'Clause.first(...)', the leading positions are pinned to
-  '__lead_in__' ('Lorem ipsum'), and a first clause too short to hold the
-  lead-in degrades to a 'Lorem ipsum ...' placeholder of exactly the
-  requested length. The surrounding 'Sentence' drives capitalization and
-  terminating punctuation through 'capitalizeLead' and 'terminate'.
+  Implementation
+  --------------
+
+  'wordsLengths' and 'wordsArray' are 'Field's built on first read and
+  cached until 'clear'. The lengths come from 'stochWord.partitionSpaced'
+  over the count plus one, less the lead-in words and their separators,
+  so the words joined by single spaces meet the count; a clause that is
+  not first refuses a count below the shortest word with 'ValueError',
+  and a count no run of the words adds up to is refused the same way. A
+  first clause too short for the lead-in, a space and one word of its
+  list takes its words from '_placeholderWords': as much of the lead-in
+  as fits ahead of three dots, and dots for the rest ('Lorem ipsum....'
+  at fifteen). 'capitalizeLead' and 'terminate' change the cached
+  words in place for the sentence. 'reset' clears and rebuilds, 'realize'
+  and 'str' render, 'len' measures the text, and iteration yields the
+  words. The copy constructor, '@overload(THIS)', copies the count, the
+  flag and the caches.
+
+  Attributes
+  ----------
+  stochWord : AttriBox[StochasticWord]
+    The word list, one per instance, built on first read.
+  wordsLengths : Field[IntList]
+    The cached word lengths, a 'list[int]'.
+  wordsArray : Field[StrList]
+    The cached words, a 'list[str]'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -47,12 +74,6 @@ class Clause(BaseGenerator):
   #  are pinned to the leading positions and their character lengths
   #  override the sampled lengths at those indices.
   __lead_in__: Words = ('Lorem', 'ipsum')
-
-  #  A first clause shorter than '__dotted_below__' characters is rendered
-  #  as a 'Lorem ipsum ...' placeholder of exactly that length rather than a
-  #  real word sequence: the lead-in, a partial word filling the gap, then a
-  #  trailing ellipsis.
-  __dotted_below__: int = 24
 
   #  Private Variables
   __words_lengths__: MaybeIntList = None
@@ -67,15 +88,24 @@ class Clause(BaseGenerator):
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def _isShortFirst(self, ) -> bool:
+    """
+    The '_isShortFirst' method says whether this is a first clause too
+    short to hold its lead-in, a space and one word of its list, and so
+    renders the placeholder instead of words.
+    """
+    if not self.isFirst:
+      return False
+    lead = ' '.join(self.__lead_in__)
+    threshold = len(lead) + 1 + self.stochWord.minVal
+    return True if self.charCount < threshold else False
+
   def _placeholderWords(self, ) -> StrList:
     """
-    The '_placeholderWords' method builds a 'Lorem ipsum ...' placeholder
-    of exactly 'charCount' characters for a first clause shorter than
-    '__dotted_below__'. The lead-in is followed by a space and a gap word
-    filling the room before the trailing ellipsis: an 'etc' prefix when one
-    to three characters remain, a real word once four or more fit. Below the
-    lead-in's own length the lead-in itself is truncated. The text is split
-    on spaces so the surrounding 'Sentence' can still capitalize the first
+    The '_placeholderWords' method builds the placeholder of a short first
+    clause, exactly 'charCount' characters: as much of the lead-in as fits
+    ahead of three dots, and dots for the rest. The text is split on
+    spaces so the surrounding 'Sentence' can still capitalize the first
     word and terminate the last.
 
     Returns
@@ -86,18 +116,8 @@ class Clause(BaseGenerator):
     """
     lead = ' '.join(self.__lead_in__)
     n = self.charCount
-    if n <= len(lead) + 3:
-      visible = lead[:max(0, n - 3)]
-      text = visible + '.' * (n - len(visible))
-    else:
-      fillerLen = n - len(lead) - 4
-      if fillerLen <= 0:
-        filler = ''
-      elif fillerLen <= 3:
-        filler = 'etc'[:fillerLen]
-      else:
-        filler = self.stochWord.realizeLength(fillerLen)
-      text = lead + ' ' + filler + '...'
+    visible = lead[:max(0, n - 3)]
+    text = visible + '.' * (n - len(visible))
     return [*text.split(' '), ]
 
   def _buildWordsLengths(self, ) -> None:
@@ -106,23 +126,23 @@ class Clause(BaseGenerator):
     lengths drawn from 'stochWord' and caches them. When 'isFirst' is set,
     the leading slots are pinned to the character lengths of '__lead_in__'
     so 'Lorem ipsum' (or whatever the subclass configures) fits exactly,
-    and only the remaining words are sampled. A first clause shorter than
-    '__dotted_below__' falls back to a placeholder, whose lengths are read
-    back from the realized words.
+    and only the remaining words are sampled. A first clause too short for
+    the lead-in and one word falls back to the placeholder, whose lengths
+    are read back from the realized words.
 
     Raises
     ------
     ValueError
       If this clause is not a first clause and 'charCount' falls below
-      the shortest word that 'stochWord' can realize, since no word
-      sequence could then reach the requested length exactly.
+      the shortest word that 'stochWord' can realize, or if no run of
+      words from the list adds up to 'charCount'.
     """
-    leadIn = self.__lead_in__ if self.isFirst else ()
-    if leadIn and self.charCount < self.__dotted_below__:
+    if self._isShortFirst():
       self.__words_lengths__ = [len(word) for word in self.wordsArray]
       return
+    leadIn = self.__lead_in__ if self.isFirst else ()
     if not leadIn:
-      shortestWord = min(self.stochWord.byLengths)
+      shortestWord = self.stochWord.minVal
       if self.charCount < shortestWord:
         infoSpec = """A 'Clause' that is not a first clause cannot
         realize fewer than %d characters, but received a character
@@ -140,7 +160,7 @@ class Clause(BaseGenerator):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._buildWordsLengths()
-      return self._getWordsLengths(_recursion=True)
+      return self._getWordsLengths(_recursion=True)  # pragma: no mutate
     return self.__words_lengths__
 
   def _buildWordsArray(self, ) -> None:
@@ -148,12 +168,12 @@ class Clause(BaseGenerator):
     The '_buildWordsArray' method realizes each cached length into a
     concrete word and caches the resulting word list. The leading slots are
     taken from '__lead_in__' when 'isFirst' is set. A first clause too short
-    to hold the lead-in and one word is filled with a placeholder instead.
+    to hold the lead-in and one word is filled with the placeholder instead.
     """
-    leadIn = self.__lead_in__ if self.isFirst else ()
-    if leadIn and self.charCount < self.__dotted_below__:
+    if self._isShortFirst():
       self.__words_array__ = self._placeholderWords()
       return
+    leadIn = self.__lead_in__ if self.isFirst else ()
     words = []
     for i, length in enumerate(self.wordsLengths):
       if i < len(leadIn):
@@ -168,7 +188,7 @@ class Clause(BaseGenerator):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._buildWordsArray()
-      return self._getWordsArray(_recursion=True)
+      return self._getWordsArray(_recursion=True)  # pragma: no mutate
     return self.__words_array__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -178,7 +198,7 @@ class Clause(BaseGenerator):
   @overload(THIS)
   def __init__(self, other: Self) -> None:
     self.charCount = other.charCount
-    self.__is_first__ = other.__is_first__
+    self.isFirst = other.isFirst
     if other.__words_lengths__ is not None:
       self.__words_lengths__ = [*other.__words_lengths__, ]
     if other.__words_array__ is not None:

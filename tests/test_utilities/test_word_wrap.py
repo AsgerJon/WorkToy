@@ -1,106 +1,109 @@
-"""TestWordWrap tests the wordWrap function."""
+"""
+TestWordWrap tests 'wordWrap' from 'worktoy.utilities'.
+"""
 #  Apache-2.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import shuffle
+import os
 
-from . import UtilitiesTest
-from worktoy.utilities import wordWrap, textFmt
+from worktoy.utilities import wordWrap
 from worktoy.waitaminute import TypeException
+from worktoy.work_test.samplers import WordSampler
+from . import UtilitiesTest
 
 
 class TestWordWrap(UtilitiesTest):
-  """TestWordWrap tests the wordWrap function."""
+  """
+  'wordWrap' reflows text to a width, closing a line before a word
+  that would push it past the width or at a break token, and leaves a
+  word longer than the width on a line of its own. The tests pin the
+  docstring examples, the exact fit, the long word, the token in any
+  case and under another spelling, the refusals, and that every line
+  of a random text fits unless it is a single long word.
+  """
 
-  def setUp(self) -> None:
-    """Set up the test case."""
-    self.paragraph = textFmt(
-      """Lorem ipsum dolor sit amet, adipiscing 
-          elit. Sed do eiusmod tempor incididunt ut labore et dolore magna 
-          aliqua. Ut enim ad minim veniam, quis nostrud exercitation 
-          ullamco. <br>
-          laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure 
-          dolor 
-          in reprehenderit in voluptate velit esse cillum dolore eu fugiat 
-          nulla 
-          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in 
-          culpa qui officia deserunt mollit anim id est laborum.""",
-    )
-    self.sentence = """Never gonna give you up, never gonna let you down, 
-    never gonna run"""
+  def test_docstring_examples(self) -> None:
+    expected = os.linesep.join(('lorem ipsum', 'dolor sit', 'amet'))
+    self.assertEqual(wordWrap(12, 'lorem ipsum dolor sit amet'), expected)
+    expected = os.linesep.join(('first half', 'second half'))
+    self.assertEqual(wordWrap(20, 'first half <br> second half'), expected)
 
-  def test_wordWrap(self) -> None:
-    """Testing the wordWrap function."""
-    for width in range(25, 100):
-      actual = wordWrap(width, self.paragraph)
-      lines = actual.split('\n')
-      for line in lines:
-        self.assertLessEqual(len(line), width)
+  def test_exact_fit_stays(self) -> None:
+    self.assertEqual(wordWrap(5, 'ab cd'), 'ab cd')
+    self.assertEqual(wordWrap(4, 'ab cd'), os.linesep.join(('ab', 'cd')))
 
-  def test_missing_length(self) -> None:
-    """
-    Testing that wordWrap raises 'TypeException' when the width is not an
-    integer.
-    """
+  def test_long_word_on_its_own_line(self) -> None:
+    expected = os.linesep.join(('abcdef', 'gh'))
+    self.assertEqual(wordWrap(3, 'abcdef gh'), expected)
+    expected = os.linesep.join(('a', 'abcdef', 'b'))
+    self.assertEqual(wordWrap(3, 'a abcdef b'), expected)
+
+  def test_width_one(self) -> None:
+    self.assertEqual(wordWrap(1, 'a b'), os.linesep.join(('a', 'b')))
+
+  def test_words_sorting_before_the_token_kept(self) -> None:
+    #  Only a word equal to the token breaks the line; '1' and '('
+    #  sort before '<br>' and must stay.
+    self.assertEqual(wordWrap(20, 'a 1 ( b'), 'a 1 ( b')
+
+  def test_no_text(self) -> None:
+    self.assertEqual(wordWrap(10), '')
+    self.assertEqual(wordWrap(10, ''), '')
+    self.assertEqual(wordWrap(10, '   '), '')
+
+  def test_fragments_joined(self) -> None:
+    self.assertEqual(wordWrap(100, 'a b', 'c  d', ' e'), 'a b c d e')
+
+  def test_break_token_any_case(self) -> None:
+    expected = os.linesep.join(('a', 'b'))
+    self.assertEqual(wordWrap(20, 'a <BR> b'), expected)
+    self.assertEqual(wordWrap(20, 'a <Br> b'), expected)
+
+  def test_custom_break_token(self) -> None:
+    expected = os.linesep.join(('a', 'b'))
+    self.assertEqual(wordWrap(20, 'a // b', newLine='//'), expected)
+    self.assertEqual(wordWrap(20, 'a <x> b', newLine=' <X> '), expected)
+    self.assertEqual(wordWrap(20, 'a <br> b', newLine='//'), 'a <br> b')
+
+  def test_leading_break_gives_empty_first_line(self) -> None:
+    self.assertEqual(wordWrap(10, '<br> a'), os.linesep.join(('', 'a')))
+
+  def test_width_not_int_refused(self) -> None:
+    for width in ('10', 10.0, None):
+      with self.subTest(width=width):
+        with self.assertRaises(TypeException) as context:
+          wordWrap(width, 'a')
+        self.assertEqual(context.exception.varName, 'width')
+        self.assertIs(context.exception.actualObject, width)
+        self.assertIs(context.exception.actualType, type(width))
+        self.assertEqual(context.exception.expectedTypes, (int,))
+        self.assertIn("'width'", str(context.exception))
+
+  def test_width_below_one_refused(self) -> None:
+    for width in (0, -3):
+      with self.subTest(width=width):
+        with self.assertRaises(ValueError) as context:
+          wordWrap(width, 'a')
+        self.assertIn('received: %d' % width, str(context.exception))
+
+  def test_fragment_not_str_refused(self) -> None:
     with self.assertRaises(TypeException) as context:
-      wordWrap('not an int', self.paragraph)
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.varName, 'width')
-    self.assertEqual(e.actualObject, 'not an int')
-    self.assertEqual(e.actualType, str)
-    self.assertEqual(e.expectedTypes, (int,))
+      wordWrap(10, 'a', 7)
+    self.assertEqual(context.exception.varName, 'line')
+    self.assertEqual(context.exception.actualObject, 7)
+    self.assertIs(context.exception.actualType, int)
+    self.assertEqual(context.exception.expectedTypes, (str,))
+    self.assertIn("'line'", str(context.exception))
+    self.assertIn("'int'", str(context.exception))
 
-  def test_non_str_lines(self, ) -> None:
-    """
-    Testing that wordWrap raises 'TypeException' when a line is not a string.
-    """
-    with self.assertRaises(TypeException) as context:
-      wordWrap(50, self.paragraph, 123, 'breh')
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertEqual(e.varName, 'line')
-    self.assertEqual(e.actualObject, 123)
-    self.assertEqual(e.actualType, int)
-    self.assertEqual(e.expectedTypes, (str,))
-
-  def test_samples(self, ) -> None:
-    """
-    Testing the wordWrap function with sample inputs.
-    """
-
-    words = str.split(self.sentence)
-    minWord = min([len(word) for word in words])
-    for i in [7, 6, 5, 4, 3, 2]:
-      wrapped = wordWrap(i * int(minWord) + 1, self.sentence)
-      for word in words:
-        self.assertIn(word, wrapped)
-
-    wordBag = []
-    while words:
-      wordBag.append(words.pop())
-      maxWord = max([len(word) for word in wordBag])
-      allWords = len(' '.join(wordBag)) + 1
-      for _ in range(7):
-        shuffle(wordBag)
-        for i in range(maxWord, allWords):
-          wrapped = wordWrap(i, textFmt(*wordBag))
-          for word in wordBag:
-            self.assertIn(word, wrapped)
-
-  def test_explicit_newline_token_breaks_line(self) -> None:
-    """A literal '<br>' token forces a line break regardless of width."""
-    result = wordWrap(50, 'first half <br> second half')
-    lines = result.split('\n')
-    self.assertEqual(lines[0], 'first half')
-    self.assertEqual(lines[1], 'second half')
-
-  def test_non_positive_width(self) -> None:
-    """
-    Testing that 'wordWrap' rejects zero and negative widths with
-    'ValueError' rather than producing one word per line.
-    """
-    for width in (0, -1, -69):
-      with self.assertRaises(ValueError):
-        _ = wordWrap(width, 'never gonna give you up')
+  def test_random_text_fits_width(self) -> None:
+    self.randomWord = WordSampler(seed=21, size=40)
+    words = self.randomWord.row
+    for width in (6, 9, 12, 20):
+      wrapped = wordWrap(width, ' '.join(words))
+      lines = wrapped.split(os.linesep)
+      with self.subTest(width=width):
+        self.assertEqual(' '.join(wrapped.split()), ' '.join(words))
+        for line in lines:
+          self.assertTrue(len(line) <= width or ' ' not in line)

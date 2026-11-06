@@ -1,78 +1,83 @@
 """
-TestSymbolicSampler subclasses 'BaseTest' and provides tests for the
-'SymbolicSampler' class from the 'worktoy.work_test.samplers' package.
+TestSymbolicSampler tests 'SymbolicSampler' from
+'worktoy.work_test.samplers'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.dispatch import overload
-from worktoy.work_test.samplers import SymbolicSampler
-from . import SamplerTest
+from worktoy.desc import SymbolicName
+from worktoy.waitaminute import TypeException
+from worktoy.waitaminute.dispatch import DispatchException
+from worktoy.work_test.samplers import SymbolicSampler, LOREM_WORDS
+from . import WorkTestTest
 
 
-class TestSymbolicSampler(SamplerTest):
+class TestSymbolicSampler(WorkTestTest):
   """
-  TestSymbolicSampler subclasses 'BaseTest' and provides tests for the
-  'SymbolicSampler' class from the 'worktoy.work_test.samplers' package.
+  'SymbolicSampler' draws names made of real words, 'wordCount' of them,
+  three unless set otherwise and never fewer than one. The tests pin
+  the defaults, the count by position and by every synonym, the
+  refusals, the names drawn, and the repeat of a seeded sampler.
   """
 
-  def test_init(self, ) -> None:
-    """
-    This method tests the constructor overloads of the 'SymbolicSampler'
-    class:
+  def test_defaults(self) -> None:
+    sampler = SymbolicSampler()
+    self.assertEqual(sampler.wordCount, 3)
+    self.assertIs(sampler.valueType, SymbolicName)
+    self.assertEqual(repr(sampler), 'SymbolicSampler(wordCount=3, '
+                                    'colCount=1, rowCount=1, seed=None)')
+    self.assertEqual(str(sampler),
+                     "<SymbolicSampler: 'SymbolicName' (1, 1)>")
 
-    @overload(int)
-    def __init__(self, wordCount: int, **kw) -> None:
+  def test_word_count(self) -> None:
+    self.assertEqual(SymbolicSampler(2).wordCount, 2)
+    self.assertEqual(SymbolicSampler(2, seed=1).seed, 1)
+    for key in ('wordCount', 'numWords', 'num_words', 'word_count'):
+      with self.subTest(key=key):
+        self.assertEqual(SymbolicSampler(**{key: 4}).wordCount, 4)
+    self.assertEqual(SymbolicSampler(wordCount=5.0).wordCount, 5)
+    sampler = SymbolicSampler()
+    sampler.wordCount = 1
+    self.assertEqual(len([*sampler()]), 1)
 
-    @overload()
-    def __init__(self, **kw) -> None:
-    """
+  def test_refusals(self) -> None:
+    for value in (0, -1, 0.5):
+      with self.subTest(value=value):
+        with self.assertRaises(ValueError) as context:
+          SymbolicSampler(wordCount=value)
+        self.assertEqual(str(context.exception),
+                         'Word count must be a positive integer.')
+    with self.assertRaises(TypeException) as context:
+      SymbolicSampler(wordCount='x')
+    self.assertTypeRefused(context.exception, 'wordCount', 'x', int)
+    with self.assertRaises(DispatchException) as context:
+      SymbolicSampler('x')
+    self.assertIs(context.exception.dispatch,
+                  SymbolicSampler.__dict__['__init__'])
+    self.assertEqual(context.exception.posArgs, ('x',))
+    self.assertEqual(context.exception.keyArgs, {})
+    self.assertIn("no overload of 'SymbolicSampler.__init__' accepts",
+                  str(context.exception))
 
-    intSampler = SymbolicSampler(4)
-    self.assertEqual(intSampler.wordCount, 4)
-    kwargSampler = SymbolicSampler(wordCount=5)
-    self.assertEqual(kwargSampler.wordCount, 5)
-    intKwargSampler = SymbolicSampler(6, numWords=6)
-    self.assertEqual(intKwargSampler.wordCount, 6)
-    defaultSampler = SymbolicSampler()
-    expectedCount = SymbolicSampler.__fallback_count__
-    self.assertEqual(defaultSampler.wordCount, expectedCount)
+  def test_names(self) -> None:
+    sampler = SymbolicSampler(2, seed=1, size=5)
+    for name in sampler.row:
+      with self.subTest(name=str(name)):
+        self.assertIsInstance(name, SymbolicName)
+        words = [*name]
+        self.assertEqual(len(words), 2)
+        for word in words:
+          self.assertIn(word, LOREM_WORDS)
+    first = [str(name) for name in SymbolicSampler(3, seed=4).row]
+    second = [str(name) for name in SymbolicSampler(3, seed=4).row]
+    self.assertEqual(first, second)
+    self.assertEqual(str(SymbolicSampler(2, seed=1)()),
+                     "<SymbolicName: 'enim', 'eum'>")
 
-  def test_coverage(self, ) -> None:
-    """
-    This method covers the legacy creator function pattern currently
-    obsolete because the generalized fallback constructor provided by
-    'BaseSampler'.
-    In the legacy getter pattern, the getter looks for a value at a
-    specific private variable. If 'None', the getter will raise
-    'RecursionError' if called with keyword argument '_recursion' set to
-    'True'. This both prevents infinite recursion *and* allows inspection
-    of the presence the private variable. By default, no 'RecursionError'
-    is raised. Instead, the getter will call the associated creator
-    function and then recursively call itself with '_recursion' set to
-    'True'.
-    The generalized fallback constructor currently implemented by
-    'BaseSampler' prevents certain branches in the legacy pattern
-    described above. This is because the fallback constructor automatically
-    sets the private variable to the fallback value during handling of
-    keyword arguments.
-    As of writing, both patterns are being considered so both remain in
-    the codebase, necessitating the coverage gymnastics provided by this
-    method.
-    """
-
-    class FooSampler(SymbolicSampler):
-      """
-      By reimplementing the keyword argument constructor overload,
-      the generalized fallback pattern is disabled, allowing coverage of
-      the legacy pattern.
-      """
-
-      @overload()
-      def __init__(self, **kwargs) -> None:
-        pass
-
-    fooSampler = FooSampler()
-    expectedCount = FooSampler.__fallback_count__
-    self.assertEqual(fooSampler.wordCount, expectedCount)
+  def test_random_names(self) -> None:
+    self.randomSymbolicName.size = 6
+    for name in self.randomSymbolicName.row:
+      with self.subTest(name=str(name)):
+        self.assertEqual(len([*name]), 3)
+    self.assertEqual(self.randomSymbolicName.seed, self.__sampler_seed__)

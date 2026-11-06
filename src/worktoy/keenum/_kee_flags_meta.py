@@ -13,7 +13,7 @@ from ..waitaminute.keenum import KeeMemberNameError
 from . import KeeFlag
 from . import KeeFlagsSpace as KFSpace
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Self, Any, Iterator, Union
   from . import KeeFlags, KeeFlagsMeta
 
@@ -32,12 +32,15 @@ class KeeFlagsMeta(BaseMeta):
   nearest override wins, and 'cls(...)' / 'cls[...]' route through
   '_resolveMember' once instantiation is locked. A miss, by name, index
   or value, raises 'KeeResolveError', as a miss on a 'KeeNum' does, and
-  'in' reports it as absent. Calling, length,
-  iteration, membership, hashing, the subclass check and attribute
-  assignment and deletion are the metaclass's own, so a flags class body
-  binding the class hook for one of them, such as '__class_len__', is
-  refused with 'ShadowedClassHook'; the hooks for the other operations,
-  such as '__class_str__', work as on any class.
+  'in' answers by identity: an object is in the class when it is one of
+  its members, or a member of a related flags class whose flags the
+  class holds, which resolves to that member. Calling, length,
+  iteration, membership,
+  subscripting and attribute assignment and deletion are the
+  metaclass's own, so a flags class body binding the class hook for one
+  of them, such as '__class_len__', is refused with 'ShadowedClassHook';
+  the hooks for the other operations, such as '__class_str__',
+  '__class_hash__' or '__class_subclasscheck__', work as on any class.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -46,7 +49,6 @@ class KeeFlagsMeta(BaseMeta):
 
   #  Class Variables
   __kee_class__ = None
-  __kee_bases__ = None
 
   #  Private Variables
   __kee_flags__ = None
@@ -93,21 +95,6 @@ class KeeFlagsMeta(BaseMeta):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __subclasscheck__(cls, other: type, **kwargs) -> bool:
-    if cls is other:
-      return True
-    if other is type(cls).__kee_class__:
-      return False
-    if not isinstance(other, type):
-      raise TypeError('issubclass() arg 1 must be a class')
-    otherKeeBases = getattr(other, '__kee_bases__', None)
-    if otherKeeBases is None:
-      return False
-    for base in otherKeeBases:
-      if base is cls or cls.__subclasscheck__(base):
-        return True
-    return False
-
   @classmethod
   def __prepare__(mcls, name: str, bases: Bases, **kw) -> KFSpace:
     """
@@ -127,19 +114,21 @@ class KeeFlagsMeta(BaseMeta):
     isRoot = True if kw.get('_root', False) else False
     cls: KFMeta = BaseMeta.__new__(mcls, name, bases, space, **kw)
     if isRoot:
-      setattr(cls, '__kee_bases__', bases)
       setattr(mcls, '__kee_class__', cls)
       return cls
-    setattr(cls, '__kee_bases__', bases)
     cls.__allow_instantiation__ = True
     memberList = []
     memberDict = dict()
     n = 2 ** len(cls.flags)
+    #  The names of the body are those the namespace kept; the 'space'
+    #  argument is a plain dictionary with the flag names still in it when
+    #  the class is built by calling the metaclass with one.
+    namespace = type.__getattribute__(cls, '__namespace__')
     for i in range(n):
       member = cls(i, )
       #  The guard is down while the members are bound, so a class-body
       #  attribute of the name would be replaced without a word.
-      if dict.__contains__(space, member.name):
+      if dict.__contains__(namespace, member.name):
         raise KeeMemberNameError(name, member.name)
       setattr(member, '__field_owner__', cls)
       setattr(member, '__field_name__', member.name)
@@ -164,10 +153,14 @@ class KeeFlagsMeta(BaseMeta):
     members in the first place.
     """
     if not cls.__allow_instantiation__:
-      existing = cls.__dict__.get(name, None)
-      keeClass = type(cls).__kee_class__
-      if keeClass is not None and isinstance(existing, keeClass):
-        raise KeeWriteOnceError(existing, name)
+      try:
+        existing = cls.__dict__[name]
+      except KeyError:
+        pass
+      else:
+        keeClass = type(cls).__kee_class__
+        if keeClass is not None and isinstance(existing, keeClass):
+          raise KeeWriteOnceError(existing, name)
     BaseMeta.__setattr__(cls, name, value)
 
   def __delattr__(cls, name: str) -> None:
@@ -176,10 +169,14 @@ class KeeFlagsMeta(BaseMeta):
     'KeeWriteOnceError' unconditionally: no stage of class construction
     deletes a member, so no window exists.
     """
-    existing = cls.__dict__.get(name, None)
-    keeClass = type(cls).__kee_class__
-    if keeClass is not None and isinstance(existing, keeClass):
-      raise KeeWriteOnceError(existing, name)
+    try:
+      existing = cls.__dict__[name]
+    except KeyError:
+      pass
+    else:
+      keeClass = type(cls).__kee_class__
+      if keeClass is not None and isinstance(existing, keeClass):
+        raise KeeWriteOnceError(existing, name)
     BaseMeta.__delattr__(cls, name)
 
   def __call__(cls, *args, **kwargs) -> Any:
@@ -189,7 +186,7 @@ class KeeFlagsMeta(BaseMeta):
     '__new__' builds the members. A keyword has no meaning here and raises
     Python's 'TypeError', as a function given an unexpected keyword does.
     """
-    if getattr(cls, '__allow_instantiation__', False):
+    if cls.__allow_instantiation__:
       return BaseMeta.__call__(cls, *args, **kwargs)
     if kwargs:
       keys = joinWords(*["""'%s'""" % key for key in kwargs])
@@ -205,31 +202,70 @@ class KeeFlagsMeta(BaseMeta):
 
   def __contains__(cls, identifier: Any) -> bool:
     """
-    The '__contains__' method reports whether 'identifier' resolves to a
-    member, by any of the lookups: a miss raises 'KeeResolveError', which
-    reads as absent.
+    The '__contains__' method reports membership by identity: 'x in cls'
+    is True when 'x' is one of the members of the class, or a member of a
+    related flags class with flags the class holds, which is equal to
+    one of its members; it is False for a name, an index or a value,
+    however it would resolve. The '__eq__' of 'x' is never asked.
     """
-    try:
-      _ = cls._resolveMember(identifier)
-    except KeeResolveError:
-      return False
-    else:
-      return True
+    if isinstance(type(identifier), KeeFlagsMeta):
+      return True if cls._fromMember(identifier) is not None else False
+    return False
 
   def __getitem__(cls, identifier: Any) -> KeeFlags:
     return cls._resolveMember(identifier)
-
-  def __hash__(cls, ) -> int:
-    return hash((cls.__name__, cls.__module__,))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+  def _fromMember(cls, member: KeeFlags) -> Any:
+    """
+    A member of another class in the same lineage, a flags class based
+    on this one or that this one is based on, names flags this class may
+    hold too, and the member of this class with exactly those flags
+    stands for it here. The members of each class are its own, so the
+    foreign member is never handed back.
+
+    Parameters
+    ----------
+
+    member : KeeFlags
+      A member of any flags class.
+
+    Returns
+    -------
+
+    KeeFlags or None
+      The member of this class with the flags of 'member', the member
+      itself when it is this class's own, or 'None' when the classes are
+      unrelated or this class lacks one of the flags.
+    """
+    other = type(member)
+    if other is cls:
+      return member
+    if not (issubclass(other, cls) or issubclass(cls, other)):
+      #  This branch is reached by the following:
+      #  - The member belongs to a flags class of another lineage
+      return None
+    try:
+      return cls.memberDict[member.names]
+    except KeyError:
+      #  This branch is reached by the following:
+      #  - The member has a flag high that this class lacks, as a member
+      #    of a subclass combining the flag it added
+      return None
+
   def _resolveIndex(cls, index: int) -> KeeFlags:
-    for member in cls:
-      if member.index == index:
-        return member
+    """
+    The '_resolveIndex' method resolves a member from its index, which is
+    its position in 'memberList', since the metaclass builds the members
+    in index order. An index outside the range, a negative one included,
+    raises 'KeeResolveError'.
+    """
+    members = cls.memberList
+    if 0 <= index < len(members):
+      return members[index]
     raise KeeResolveError(cls, index)
 
   def _resolveName(cls, name: str) -> KeeFlags:
@@ -286,8 +322,11 @@ class KeeFlagsMeta(BaseMeta):
     if len(identifier) > 1:
       return cls._resolveNames(*identifier)
     identifier = identifier[0]
-    if isinstance(identifier, cls):
-      return identifier
+    if isinstance(type(identifier), KeeFlagsMeta):
+      member = cls._fromMember(identifier)
+      if member is None:
+        raise KeeResolveError(cls, identifier)
+      return member
     if isinstance(identifier, (tuple, list, frozenset, set)):
       return cls._resolveNames(*identifier)
     #  A 'bool' is an 'int', but no index.

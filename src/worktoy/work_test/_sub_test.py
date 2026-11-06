@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Any
 from unittest import TestCase, SkipTest
 
 from ..desc import Field
-from ..utilities import textFmt
+from ..utilities import textFmt, maybe
 from ..waitaminute import TypeException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Optional, TypeAlias, Type, Self
   from . import BaseTest
 
@@ -22,18 +22,36 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class SubTest(TestCase):
   """
-  SubTest subclasses 'unittest.TestCase' (for its assertion methods),
-  not 'BaseTest'. It is a per-instance accumulator and context manager:
-  'BaseTest' hosts it as the 'subTest' descriptor, '__get__' lazily
-  builds one per instance, and using it as a context manager records
-  each block as passed, failed (AssertionError), or errored (any other
-  Exception). 'BaseTest.tearDown' then fails the test if any sub-test
-  failed or errored. It is not itself a runnable, discovered test class.
+  A test that runs one check against several targets wants every target
+  checked even when one fails, and wants the report to say which target
+  failed, with what, and at which line. 'unittest.subTest' stops a
+  block at its first failure and reports each block to the runner;
+  'SubTest' instead swallows what a block raises, records it with the
+  block's label, lets the test method run to its end, and leaves it to
+  'BaseTest.tearDown' to fail the test once with every record and its
+  traceback. 'BaseTest' hosts it as the 'subTest' descriptor, so a test
+  writes 'with self.subTest(target=x):' as it would with 'unittest'.
 
-  A block is labelled by calling the sub-test first, as in
-  'with self.subTest(target=x):'. A block entered without the call, as in
-  'with self.subTest:', is labelled '<sub test>' instead. Nested blocks
-  chain their labels with ' -> '.
+  Implementation
+  --------------
+
+  'SubTest' subclasses 'unittest.TestCase' for its assertion methods,
+  not 'BaseTest', and is not a runnable test class. Through the class
+  the descriptor reads as itself; through a test instance '__get__'
+  builds one 'SubTest' for that instance at the first read and keeps it
+  under '__sub_test__'. A call pushes a label built from its arguments,
+  'target=x', onto the label stack; '__enter__' keeps the pushed label
+  or pushes '<sub test>' for a block entered without a call; nested
+  blocks chain their labels with ' -> '; '__exit__' records the block
+  as passed under its label, as a fail with its label for an
+  'AssertionError', or as an error with its label for any other
+  'Exception', swallows those two, lets 'unittest.SkipTest' and any
+  'BaseException' that is no 'Exception' through, and pops the label.
+  'fails', 'errors' and 'passed' are tuples, 'failLabels' and
+  'errorLabels' the labels alongside the first two, 'current' the
+  chained label of the block in progress, and the sub-test is true
+  when anything failed or errored. 'BaseTest.tearDown' reads the
+  records through the descriptor without building one.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -53,6 +71,8 @@ class SubTest(TestCase):
   __test_fails__: Optional[tuple[AssertionError, ...]] = None
   __test_errors__: Optional[tuple[Exception, ...]] = None
   __test_passed__: Optional[tuple[str, ...]] = None
+  __fail_labels__: Optional[tuple[str, ...]] = None
+  __error_labels__: Optional[tuple[str, ...]] = None
   __owning_test__: Optional[Type[BaseTest]] = None
   __owning_instance__: Optional[BaseTest] = None
   #  Raised by '__call__' and lowered by the '__enter__' that follows, so
@@ -63,6 +83,8 @@ class SubTest(TestCase):
   fails: Field[tuple[AssertionError, ...]] = Field()
   errors: Field[tuple[Exception, ...]] = Field()
   passed: Field[tuple[str, ...]] = Field()
+  failLabels: Field[tuple[str, ...]] = Field()
+  errorLabels: Field[tuple[str, ...]] = Field()
   current: Field[str] = Field()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -78,7 +100,7 @@ class SubTest(TestCase):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._createFails()
-      return self._getFails(_recursion=True)
+      return self._getFails(_recursion=True)  # pragma: no mutate
     if isinstance(self.__test_fails__, tuple):
       for fail in self.__test_fails__:
         if not isinstance(fail, AssertionError):
@@ -97,7 +119,7 @@ class SubTest(TestCase):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._createErrors()
-      return self._getErrors(_recursion=True)
+      return self._getErrors(_recursion=True)  # pragma: no mutate
     if isinstance(self.__test_errors__, tuple):
       for error in self.__test_errors__:
         if not isinstance(error, Exception):
@@ -116,7 +138,7 @@ class SubTest(TestCase):
       if kwargs.get('_recursion', False):
         raise RecursionError
       self._createPassed()
-      return self._getPassed(_recursion=True)
+      return self._getPassed(_recursion=True)  # pragma: no mutate
     if isinstance(self.__test_passed__, tuple):
       for passed in self.__test_passed__:
         if not isinstance(passed, str):
@@ -125,6 +147,14 @@ class SubTest(TestCase):
         return self.__test_passed__
       raise TypeException('passed', passed, str)
     raise TypeException('__test_passed__', self.__test_passed__, tuple)
+
+  @failLabels.GET
+  def _getFailLabels(self) -> tuple[str, ...]:
+    return maybe(self.__fail_labels__, ())
+
+  @errorLabels.GET
+  def _getErrorLabels(self) -> tuple[str, ...]:
+    return maybe(self.__error_labels__, ())
 
   def _popCurrent(self, ) -> None:
     if self.__current_tests__ is None:
@@ -147,10 +177,20 @@ class SubTest(TestCase):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _addFail(self, fail: AssertionError) -> None:
+    """
+    The '_addFail' method records a fail under the label of the block in
+    progress, '<sub test>' outside any block.
+    """
     self.__test_fails__ = (*self.fails, fail)
+    self.__fail_labels__ = (*self.failLabels, self.current)
 
   def _addError(self, error: Exception) -> None:
+    """
+    The '_addError' method records an error under the label of the block
+    in progress, '<sub test>' outside any block.
+    """
     self.__test_errors__ = (*self.errors, error)
+    self.__error_labels__ = (*self.errorLabels, self.current)
 
   def _addPassed(self, passed: str) -> None:
     self.__test_passed__ = (*self.passed, passed)
@@ -187,7 +227,8 @@ class SubTest(TestCase):
       sub.__owning_instance__ = instance
       sub.__owning_test__ = owner
       setattr(instance, self.__private_name__, sub)
-      return self.__get__(instance, owner, _recursion=True)
+      return self.__get__(
+          instance, owner, _recursion=True)  # pragma: no mutate
     else:
       if isinstance(sub, cls):
         return sub
@@ -303,8 +344,8 @@ class SubTest(TestCase):
     if self.fails:
       lines.append(thin)
       lines.append(row('fails:'))
-      for fail in self.fails[:8]:
-        lines.append(row('   x  %s' % fail))
+      for label, fail in zip(self.failLabels[:8], self.fails[:8]):
+        lines.append(row('   x  [%s] %s' % (label, fail)))
       if len(self.fails) > 8:
         extra = len(self.fails) - 8
         lines.append(row('   .. and %d more' % extra))
@@ -312,8 +353,8 @@ class SubTest(TestCase):
     if self.errors:
       lines.append(thin)
       lines.append(row('errors:'))
-      for error in self.errors[:8]:
-        lines.append(row('   !  %r' % error))
+      for label, error in zip(self.errorLabels[:8], self.errors[:8]):
+        lines.append(row('   !  [%s] %r' % (label, error)))
       if len(self.errors) > 8:
         extra = len(self.errors) - 8
         lines.append(row('   .. and %d more' % extra))

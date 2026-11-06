@@ -3,8 +3,8 @@ The 'worktoy.ezdata' package provides 'EZData', a dataclass-style
 base class with auto-generated construction, equality, iteration,
 and conversion methods, plus a '__post_init__' hook. Hashing and
 ordering are opt-in: '__hash__' is added when the class is declared
-'frozen' (or 'hashable'), and the ordering methods when it is
-declared 'ordered'.
+'frozen' (or 'hashable'), and the ordering methods when it, or a class
+it is based on, is declared 'ordered'.
 
 Public surface:
 
@@ -15,9 +15,10 @@ Public surface:
 - 'EZMeta', 'EZSpace', 'EZHook' : the metaclass, namespace, and
   space hook that drive class construction. Exposed for users
   building their own auto-generating bases against the same shape.
-- 'EZStore' : the descriptor keeping a field in the instance
-  '__dict__' when a data descriptor of the same name would otherwise
-  take the name over.
+- 'EZStore' : the descriptor placed at the name of a field when a data
+  descriptor of the same name further along the resolution order would
+  otherwise take the name over; it shadows that descriptor and leaves
+  the value in the instance '__dict__'.
 
 See 'worktoy.waitaminute.ezdata' for the typed exceptions raised
 by the package.
@@ -26,7 +27,6 @@ by the package.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from ._black_listed_types import _BLACK_LISTED_TYPES
 from ._ez_field import EZField
 from ._ez_store import EZStore
 from ._ez_hook import EZHook

@@ -11,7 +11,7 @@ from . import textFmt
 
 T = TypeVar('T')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Self, Any, Union, Optional, Never
 
 
@@ -53,9 +53,9 @@ class QuickDesc(Generic[T]):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # @formatter:off
-  @overload
+  @overload  # pragma: no mutate
   def __get__(self, instance: None, owner: type) -> Self: ...
-  @overload
+  @overload  # pragma: no mutate
   def __get__(self, instance: Any, owner: type) -> T: ...
   # @formatter:on
 
@@ -69,7 +69,9 @@ class QuickDesc(Generic[T]):
       #  called the full library is loaded and the import is cheap.
       from ..waitaminute import MissingVariable
       raise MissingVariable(self, '__private_key__', str)
-    return getattr(instance, self.__private_key__)
+    #  Read past any '__getattr__' of the owner, which a missing slot would
+    #  otherwise hand the private key.
+    return object.__getattribute__(instance, self.__private_key__)
 
   def __set__(self, instance: Any, value: Any) -> Never:
     #  Local import, as in '__get__': 'worktoy.waitaminute' loads after

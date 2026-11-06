@@ -10,16 +10,24 @@ from typing import TYPE_CHECKING
 from ..mcls.space_hooks import AbstractSpaceHook
 from . import KeeFlag
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
 class KeeFlagsHook(AbstractSpaceHook):
   """
-  KeeFlagsHook provides a namespace hook for the 'KeeFlagsSpace' class.
+  A flags class body binds its flags as ordinary names, 'READ =
+  KeeFlag()', yet the class must hold members, not flags, at those
+  names. The flags must therefore reach the namespace's record and
+  never its dictionary.
 
-  It intercepts key, KeeFlag pairs and redirects them to the 'addKeeFlag'
-  method on the 'KeeFlagsSpace' instance.
+  Implementation
+  --------------
+
+  'setItemPhase' hands every 'KeeFlag' to 'addKeeFlag' of the namespace
+  and claims the binding; every other binding is left to the namespace.
+  A body name colliding with a member name is refused as the class is
+  created, since the combined names exist only then.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -27,12 +35,6 @@ class KeeFlagsHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    """
-    The 'setItemPhase' method routes each 'KeeFlag' bound in the class
-    body to the namespace's 'addKeeFlag', claiming it so the namespace
-    does not store it as an ordinary attribute. Anything else is left
-    untouched.
-    """
     if isinstance(val, KeeFlag):
       self.space.addKeeFlag(key, val)
       return True

@@ -8,11 +8,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...core.sentinels import METACALL
+from ...dispatch import overload, Dispatcher
 from ...waitaminute.meta import QuestionableSyntax, DelException
 from ...waitaminute.meta import UnboundClassHook, ShadowedClassHook
+from ...waitaminute.meta import SlotsRefused
 from . import AbstractSpaceHook
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, TypeAlias, Optional
 
   NearMiss: TypeAlias = tuple[str, str]
@@ -20,56 +22,32 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class NamespaceHook(AbstractSpaceHook):
   """
-  NamespaceHook intercepts names added to the namespace and filters out
-  near-miss identifiers that resemble critical Python dunder methods.
-  These mistakes often go unnoticed, leading to subtle bugs or broken
-  protocol support.
+  Python silently ignores a dunder method it does not know, so a
+  misspelling such as '__setname__' for '__set_name__' or
+  '__get_item__' for '__getitem__' leaves the class without the protocol
+  and without any error. A finalizer, '__del__', ties the class to the
+  garbage collector and is often written where '__delete__' was meant.
+  The class-level hooks that 'AbstractMetaclass' consults, such as
+  '__class_len__' for 'len(cls)', only work as classmethods, and a
+  metaclass ahead of 'AbstractMetaclass' in the resolution order that
+  implements the operation takes it over for its classes, which then
+  cannot implement the hook. And '__slots__' cannot work in a worktoy
+  class, whose instances always keep a '__dict__'.
+  Each of these mistakes must fail at the line making it.
 
-  This hook raises a 'QuestionableSyntax' exception when such names are
-  detected during assignment in the namespace.
+  Implementation
+  --------------
 
-  Purpose
-  -------
-  Many magic methods in Python have specific names that must be spelled
-  exactly. If a user misspells one by inserting or omitting underscores,
-  the name is silently ignored by Python and treated as an ordinary
-  attribute, sometimes shadowing a builtin or behaving unexpectedly.
-
-  Near-miss examples
-  ------------------
-  Intended name    Mistyped name    Notes
-  '__set_name__'   '__setname__'    Misses descriptor registration
-  '__getitem__'    '__get_item__'   Breaks item access in dict-like APIs
-  '__setitem__'    '__set_item__'   Same as above
-  '__delitem__'    '__del_item__'   Silent failure of delete protocol
-  '__delete__'     '__del__'        High risk: '__del__' ties to GC hooks
-
-  These errors are difficult to diagnose because they usually do not
-  raise any errors directly. Instead, they silently fail to participate
-  in expected behaviors or override builtin methods.
-
-  Shadowed class hooks
-  --------------------
-  'AbstractMetaclass' calls each routed '__class_*__' hook from its own
-  implementation of the operation, '__class_len__' from '__len__'. A
-  metaclass based on it that implements the operation again takes it
-  over, so the hook would never run: 'KeeMeta' measures, iterates and
-  searches its members itself, and 'EZMeta' its fields. A class body
-  binding such a hook raises 'ShadowedClassHook' at the line binding it,
-  naming the metaclass and the method that take the operation over.
-  '__class_init__' is exempt, since it is not called from an operation:
-  every metaclass '__init__' hands over to the inherited one, which
-  calls it. A hook is a classmethod and nothing else: a plain function,
-  a staticmethod, an '@overload', a value, anything but a classmethod at
-  a hook name is refused with 'UnboundClassHook'. The 'METACALL'
-  sentinel, which means the metaclass's own implementation, passes.
-
-  Usage
-  -----
-  To use 'NamespaceHook', declare it in your namespace class:
-
-      class Space(AbstractNamespace):
-        nameHook = NamespaceHook()
+  'setItemPhase' raises 'SlotsRefused' for '__slots__',
+  'QuestionableSyntax' for a known near miss, and 'DelException' for
+  '__del__' unless the class is declared with the class keyword
+  'trustMeBro=True'. A class-level hook bound to anything but a
+  classmethod, overloads declared as classmethods or 'METACALL' raises
+  'UnboundClassHook', and one whose operation a metaclass based on
+  'AbstractMetaclass' implements itself raises 'ShadowedClassHook'.
+  'preCompilePhase' sets every class-level hook that neither the body nor
+  a base supplies to 'METACALL', and holds the hook the nearest base
+  supplies to the same rule as the body.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -79,8 +57,14 @@ class NamespaceHook(AbstractSpaceHook):
   @classmethod
   def _getClassDunders(cls) -> list[str]:
     """
-    The '_getClassDunders' method returns the class-level dunder hook
-    names that 'AbstractMetaclass' routes to its own implementations.
+    The hook must know which names are the class-level hooks
+    'AbstractMetaclass' consults.
+
+    Returns
+    -------
+
+    list[str]
+      The routed hook names.
     """
     return [
       '__class_call__',
@@ -123,8 +107,14 @@ class NamespaceHook(AbstractSpaceHook):
   @classmethod
   def _getNearMisses(cls) -> list[NearMiss]:
     """
-    The '_getNearMisses' method returns the '(intended, mistyped)' name
-    pairs that the hook rejects on sight.
+    The hook must know which misspellings to refuse, each with the name it
+    stands for, for the message.
+
+    Returns
+    -------
+
+    list[tuple[str, str]]
+      The '(intended, mistyped)' pairs.
     """
     return [
       ('__set_name__', '__setname__'),  # NOQA, miss-spelled name
@@ -136,31 +126,51 @@ class NamespaceHook(AbstractSpaceHook):
   @classmethod
   def _getChainedHooks(cls) -> list[str]:
     """
-    The '_getChainedHooks' method returns the class hooks that no
-    metaclass method takes over: '__class_init__' is called by
-    'AbstractMetaclass.__init__', which every metaclass '__init__' hands
-    over to, rather than from an operation a metaclass may implement
-    itself.
+    '__class_init__' is not called from an operation a metaclass might
+    implement, but by 'AbstractMetaclass.__init__', which every metaclass
+    '__init__' reaches, so no metaclass takes it over.
+
+    Returns
+    -------
+
+    list[str]
+      The hooks exempt from 'ShadowedClassHook'.
     """
     return ['__class_init__']
 
   @staticmethod
   def _getOperation(hookName: str) -> str:
-    """
-    The '_getOperation' method returns the name of the operation a
-    routed hook is called from, '__len__' for '__class_len__'.
-    """
     return '__%s__' % hookName[len('__class_'):-2]
 
   def _getShadowingMetaclass(self, hookName: str) -> Optional[type]:
     """
-    The '_getShadowingMetaclass' method returns the metaclass that
-    implements the operation of 'hookName' itself, so that the hook would
-    never be called, or None when the operation is left to
-    'AbstractMetaclass', which calls the hook. The metaclass building the
-    class and its bases before 'AbstractMetaclass' are searched, since a
-    metaclass based on 'KeeMeta' inherits its '__len__'. A metaclass
-    not based on 'AbstractMetaclass' calls no hook, and takes none over.
+    A metaclass ahead of 'AbstractMetaclass' in the resolution order that
+    implements an operation, as 'KeeMeta' implements '__len__', takes the
+    operation over for its classes, whether or not it hands on to
+    'AbstractMetaclass', so a class-level hook of that operation is
+    refused, and the body binding it must be told which metaclass took
+    over. A metaclass behind 'AbstractMetaclass' takes nothing over, since
+    'AbstractMetaclass' answers first.
+
+    Implementation
+    --------------
+
+    The resolution order of the metaclass up to 'AbstractMetaclass' is
+    searched for a class implementing the operation. 'AbstractMetaclass'
+    is imported inside, since it loads after the hooks its namespace
+    declares.
+
+    Parameters
+    ----------
+
+    hookName : str
+      The name of the hook.
+
+    Returns
+    -------
+
+    type or None
+      The metaclass taking the operation over, or 'None'.
     """
     if hookName in self._getChainedHooks():
       return None
@@ -177,13 +187,34 @@ class NamespaceHook(AbstractSpaceHook):
         return klass
     return None
 
+  @staticmethod
+  def _isClassHookValue(value: Any) -> bool:
+    """
+    The metaclass calls a class-level hook on the class, so the hook is a
+    classmethod, overloads declared as classmethods, which become a
+    dispatcher bound to the class, or 'METACALL'.
+
+    Parameters
+    ----------
+
+    value : Any
+      What the class body binds at a hook name, or what the nearest base
+      holding the name holds there.
+
+    Returns
+    -------
+
+    bool
+      Whether the value may stand at a hook name.
+    """
+    if value is METACALL or isinstance(value, classmethod):
+      return True
+    if isinstance(value, (overload, Dispatcher)):
+      return True if value.getMethodKind() is classmethod else False
+    return False
+
   @classmethod
   def _validateName(cls, name: str) -> bool:
-    """
-    The '_validateName' method compares 'name' against the near-miss
-    list and raises 'QuestionableSyntax' on a match, otherwise returning
-    False so the assignment proceeds.
-    """
     nearMisses = cls._getNearMisses()
     for nearMiss in nearMisses:
       if name == nearMiss[1]:
@@ -192,11 +223,19 @@ class NamespaceHook(AbstractSpaceHook):
 
   def _validateDel(self, ) -> bool:
     """
-    The '_validateDel' method reports whether the current class is
-    allowed to implement '__del__', which it is only when the class was
-    declared with a truthy 'trustMeBro' keyword (for example
-    'trustMeBro=True'). An absent keyword, or a falsy value such as
-    'trustMeBro=False', denies it.
+    A class that does mean to define '__del__' needs a way to say so.
+
+    Implementation
+    --------------
+
+    The class keyword 'trustMeBro' is read from the namespace; a truthy
+    value allows '__del__'.
+
+    Returns
+    -------
+
+    bool
+      Whether '__del__' is allowed.
     """
     kwargs = self.space.getKwargs()
     return True if kwargs.get('trustMeBro', False) else False
@@ -207,39 +246,47 @@ class NamespaceHook(AbstractSpaceHook):
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    The 'setItemPhase' method screens each name as it is bound. A
-    '__del__' definition raises 'DelException' unless the class opted in
-    with 'trustMeBro'; any near-miss dunder raises 'QuestionableSyntax'.
-    Returns False for an acceptable name so the namespace stores it
-    normally.
+    Each name of the class body must be screened at the line binding it.
 
     Parameters
     ----------
+
     key : str
-        The name being bound in the class body.
+      The name bound.
+
     val : Any
-        The value being bound.
+      The value bound.
+
     old : Any, optional
-        The previous value bound under 'key', if any.
+      The value the name held, or 'None'.
 
     Returns
     -------
+
     bool
-        False, so the namespace performs the default assignment.
+      'False', so the namespace stores an accepted name.
 
     Raises
     ------
+
+    SlotsRefused
+      '__slots__' is bound.
+
     DelException
-        If '__del__' is defined without the 'trustMeBro' keyword.
+      '__del__' without 'trustMeBro=True'.
+
     ShadowedClassHook
-        If 'key' is a routed '__class_*__' hook name whose operation the
-        metaclass implements itself, so the hook would never be called.
+      A class-level hook whose operation the metaclass implements itself.
+
     UnboundClassHook
-        If 'key' is a routed '__class_*__' hook name bound to anything
-        but a classmethod or 'METACALL'.
+      A class-level hook that is neither a classmethod, overloads declared
+      as classmethods nor 'METACALL'.
+
     QuestionableSyntax
-        If 'key' is a near-miss spelling of a known dunder.
+      A near miss of a dunder method.
     """
+    if key == '__slots__':
+      raise SlotsRefused(self.space.getClassName())
     if key == '__del__':
       if self._validateDel():
         return False
@@ -253,43 +300,72 @@ class NamespaceHook(AbstractSpaceHook):
         clsName = self.space.getClassName()
         operation = self._getOperation(key)
         raise ShadowedClassHook(clsName, key, shadowing.__name__, operation)
-      if not isinstance(val, classmethod) and val is not METACALL:
+      if not self._isClassHookValue(val):
         #  The metaclass invokes these hooks as bound classmethods. A
         #  plain function receives no class binding: most hooks fail
         #  with a confusing 'TypeError' at call time, and
         #  '__class_call__' silently swallows the first constructor
-        #  argument as the class. An '@overload' becomes a 'Dispatcher'
-        #  expecting an instance the metaclass never passes.
+        #  argument as the class. An '@overload' of instance methods
+        #  becomes a 'Dispatcher' expecting an instance the metaclass
+        #  never passes.
         clsName = self.space.getClassName()
         raise UnboundClassHook(clsName, key)
     return self._validateName(key)
 
   def preCompilePhase(self, compiledSpace: dict) -> dict:
     """
-    The 'preCompilePhase' method seeds the class-dunder hook names with
-    the 'METACALL' sentinel, but only where neither the class body nor a
-    class along the method resolution order supplies one, a plain mixin
-    included. This is what lets 'AbstractMetaclass' route
-    '__class_len__', '__class_iter__', and the rest to its own
-    implementations. A hook a plain base supplies is held to the rule
-    'setItemPhase' applies to the class body, see
-    '_validateInheritedHook'.
+    'AbstractMetaclass' tells a defined hook from an undefined one by
+    comparing with 'METACALL', so every hook must hold a value, and a hook
+    the class inherits must be held to the rule of the class body, since a
+    plain base holding it was screened by no worktoy namespace.
+
+    Implementation
+    --------------
+
+    A hook neither the body nor a class along the resolution order holds
+    is set to 'METACALL'; the first worktoy class of a hierarchy therefore
+    receives the 'METACALL' entries, and its subclasses inherit them. For
+    a hook the body does not bind, the nearest class along the order
+    holding it is checked by the rule of the body, whatever built that
+    class; the hook of a worktoy base passes, its own namespace having
+    screened it. A binding a hook claimed, as overloads are, counts as
+    bound: what a base holds there is not checked, and the hook is set to
+    'METACALL' until the claiming hook writes its value, as
+    'LoadSpaceHook' writes the dispatcher after the names of the body are
+    merged.
 
     Parameters
     ----------
+
     compiledSpace : dict
-        The namespace dict being assembled.
+      The dictionary being assembled.
 
     Returns
     -------
+
     dict
-        The same dict, with 'METACALL' filled in for any unhandled
-        class-dunder name.
+      The dictionary.
+
+    Raises
+    ------
+
+    UnboundClassHook
+      The nearest base holding a hook holds something other than a
+      classmethod, overloads declared as classmethods or 'METACALL', as a
+      plain base may.
     """
     dunderNames = self._getClassDunders()
     mro = self.space._getLookupOrder()
+    shadow = self.space.getShadowSpace()
     for name in dunderNames:
       if dict.__contains__(self.space, name):
+        continue
+      if name in shadow:
+        #  This branch is reached by the following:
+        #  - The class body bound the name to what a hook claimed, as
+        #    overloads declared as classmethods, which replace what a base
+        #    holds there
+        compiledSpace[name] = METACALL
         continue
       for cls in mro:
         if name in cls.__dict__:
@@ -300,16 +376,7 @@ class NamespaceHook(AbstractSpaceHook):
     return compiledSpace
 
   def _validateInheritedHook(self, base: type, hookName: str) -> None:
-    """
-    The '_validateInheritedHook' method holds a routed hook that 'base'
-    supplies to the rule 'setItemPhase' applies to the class body:
-    anything but a classmethod or 'METACALL' raises 'UnboundClassHook'
-    naming the base. A base built by a worktoy metaclass passed that
-    rule as it was created, so only a plain base can still supply such a
-    hook, which used to be inherited unchecked and fail at the first
-    call.
-    """
     value = base.__dict__[hookName]
-    if not isinstance(value, classmethod) and value is not METACALL:
+    if not self._isClassHookValue(value):
       clsName = self.space.getClassName()
       raise UnboundClassHook(clsName, hookName, base.__name__)

@@ -1,71 +1,51 @@
 """
-TestSliceLen tests the 'sliceLen' function from the 'worktoy.utilities'
-module.
+TestSliceLen tests 'sliceLen' from 'worktoy.utilities'.
 """
 #  Apache-2.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import UtilitiesTest
 from worktoy.utilities import sliceLen
+from worktoy.work_test.samplers import IntSampler
+from . import UtilitiesTest
 
 
 class TestSliceLen(UtilitiesTest):
   """
-  TestSliceLen tests the 'sliceLen' function from the 'worktoy.utilities'
-  module.
+  'sliceLen' answers how many elements a slice selects from a sequence
+  of a given length, which a sequence must know before it can refuse an
+  assignment of the wrong size. The tests pin the docstring examples
+  and that the count agrees with the length of the actual slice of a
+  range for random bounds and every usual step.
   """
 
-  def testFullSlice(self) -> None:
-    """Tests that a full slice includes the whole sequence."""
-    for length in [0, 1, 10, 42]:
-      self.assertEqual(sliceLen(slice(None, None), length), length)
+  def test_docstring_examples(self) -> None:
+    self.assertEqual(sliceLen(slice(0, 10, 2), 10), 5)
+    self.assertEqual(sliceLen(slice(None, None, -1), 4), 4)
+    self.assertEqual(sliceLen(slice(5, 100), 10), 5)
 
-  def testSimpleForwardSlice(self) -> None:
-    """Tests simple forward slices with positive step."""
-    self.assertEqual(sliceLen(slice(1, 4), 10), 3)
-    self.assertEqual(sliceLen(slice(0, 10), 10), 10)
-    self.assertEqual(sliceLen(slice(3, 3), 10), 0)
-    self.assertEqual(sliceLen(slice(7, 20), 10), 3)
-    self.assertEqual(sliceLen(slice(0, 100), 4), 4)
+  def test_empty_selections(self) -> None:
+    self.assertEqual(sliceLen(slice(5, 2), 10), 0)
+    self.assertEqual(sliceLen(slice(None), 0), 0)
+    self.assertEqual(sliceLen(slice(20, 30), 10), 0)
 
-  def testNegativeIndices(self) -> None:
-    """Tests slices using negative start or stop."""
-    self.assertEqual(sliceLen(slice(-3, None), 10), 3)
-    self.assertEqual(sliceLen(slice(None, -2), 10), 8)
-    self.assertEqual(sliceLen(slice(-5, -2), 10), 3)
-    self.assertEqual(sliceLen(slice(-100, 100), 10), 10)
-
-  def testStepSlices(self) -> None:
-    """Tests slices with various step values."""
-    self.assertEqual(sliceLen(slice(None, None, 2), 6), 3)
-    self.assertEqual(sliceLen(slice(1, 10, 2), 10), 5)
-    self.assertEqual(sliceLen(slice(1, 10, 3), 10), 3)
-    self.assertEqual(sliceLen(slice(0, 10, 5), 10), 2)
-    self.assertEqual(sliceLen(slice(0, 10, 100), 10), 1)
-
-  def testReverseSlices(self) -> None:
-    """Tests slices with negative steps."""
-    self.assertEqual(sliceLen(slice(None, None, -1), 5), 5)
-    self.assertEqual(sliceLen(slice(4, None, -1), 5), 5)
-    self.assertEqual(sliceLen(slice(4, 1, -1), 5), 3)
-    self.assertEqual(sliceLen(slice(3, -100, -1), 4), 4)
-    self.assertEqual(sliceLen(slice(-1, -6, -1), 10), 5)
-
-  def testEmptySlices(self) -> None:
-    """Tests slices that should return zero length."""
-    self.assertEqual(sliceLen(slice(10, 0), 4), 0)
-    self.assertEqual(sliceLen(slice(3, 3), 4), 0)
-    self.assertEqual(sliceLen(slice(0, 0, -1), 4), 0)
-    self.assertEqual(sliceLen(slice(1, 5, -1), 4), 0)
-
-  def testZeroStep(self) -> None:
-    """Tests that step=0 raises ValueError, as in Python slice/range."""
+  def test_zero_step_refused(self) -> None:
     with self.assertRaises(ValueError):
-      sliceLen(slice(None, None, 0), 10)
+      sliceLen(slice(0, 10, 0), 10)
 
-  def testZeroLength(self) -> None:
-    """Tests with empty sequence."""
-    self.assertEqual(sliceLen(slice(None, None), 0), 0)
-    self.assertEqual(sliceLen(slice(1, 5), 0), 0)
-    self.assertEqual(sliceLen(slice(-100, 100), 0), 0)
+  def test_agrees_with_range(self) -> None:
+    self.randomInteger = IntSampler(-12, 12, seed=8, size=2)
+    for step in (-3, -2, -1, 1, 2, 3):
+      for _ in range(10):
+        start, stop = self.randomInteger.row
+        sliceObj = slice(start, stop, step)
+        with self.subTest(sliceObj=sliceObj):
+          self.assertEqual(sliceLen(sliceObj, 10), len(range(10)[sliceObj]))
+
+  def test_open_bounds_agree_with_range(self) -> None:
+    for step in (-2, -1, 1, 2):
+      for length in range(0, 7):
+        sliceObj = slice(None, None, step)
+        with self.subTest(step=step, length=length):
+          expected = len(range(length)[sliceObj])
+          self.assertEqual(sliceLen(sliceObj, length), expected)

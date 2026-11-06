@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload, Generic, TypeVar
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Union, Self
 
   from . import AbstractSpaceHook as Hook
@@ -18,8 +18,14 @@ NamespaceT = TypeVar('NamespaceT')
 
 class SpaceDesc(Generic[NamespaceT]):
   """
-  SpaceDesc provides a descriptor class for 'AbstractSpaceHook' objects,
-  exposing it to the namespace object.
+  A hook method must reach the namespace whose class body it is working
+  on, and one hook object serves every namespace of its class.
+
+  Implementation
+  --------------
+
+  Through a hook, the descriptor returns '__space_object__', the
+  namespace that last read the hook; through the class, itself.
   """
 
   # @formatter:off
@@ -37,4 +43,4 @@ class SpaceDesc(Generic[NamespaceT]):
     """
     if instance is None:
       return self
-    return getattr(instance, '__space_object__')
+    return object.__getattribute__(instance, '__space_object__')

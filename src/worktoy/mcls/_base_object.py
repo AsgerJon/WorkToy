@@ -11,43 +11,37 @@ from ..core import Object
 
 class BaseObject(Object, metaclass=BaseMeta):
   """
-  BaseObject combines the core functionality of Object with the
-  hook-based metaclass behavior of BaseMeta.
+  A class built with worktoy needs a base that gives it everything at
+  once: overloads declared with '@overload', a class body checked for
+  misspelled dunders and rebound reserved names, the class-level hooks
+  of 'AbstractMetaclass', and the descriptor protocol of 'Object' for
+  when an instance is placed in another class body. Arguments given to
+  a class that has no initializer must still fail, as they do for a
+  plain class, and a base listed after it, such as 'threading.Thread',
+  must be initialized as in a plain class.
 
-  From Object, it inherits robust constructor handling, controlled
-  descriptor mutation, and context-aware access to instance and owner
-  information. From BaseMeta, it gains support for function overloading
-  and other hook-based class construction features via BaseSpace.
+  Implementation
+  --------------
 
-  Subclass this when you want both: sane, safe object semantics and
-  overload-aware metaclass support.
+  'BaseObject' is an 'Object' built by 'BaseMeta'. Its '__init__' refuses
+  arguments when the class defines neither '__init__' nor '__new__'
+  below 'BaseObject', with Python's own 'TypeError: Point() takes no
+  arguments', and otherwise passes them to 'Object.__init__', which
+  keeps them and calls the next '__init__' along the resolution order
+  without them. A base whose '__init__' requires arguments is therefore
+  listed before 'BaseObject'.
 
-  Constructor arguments
-  ---------------------
-  A subclass that defines neither '__init__' nor '__new__' takes no
-  constructor arguments, as a plain Python class takes none: 'Point(3,
-  4)' raises 'TypeError: Point() takes no arguments'. 'Object.__init__'
-  records whatever arguments it receives, which a descriptor needs for its
-  deferred default, so such a class used to accept any arguments and drop
-  them without a word. A subclass whose '__init__' hands its arguments on
-  to 'super().__init__' still has them recorded, and so does every
-  'Object' that is not a 'BaseObject'.
-
-  Once 'Object.__init__' has recorded the arguments, it calls the next
-  '__init__' along the resolution order without them. A base listed after
-  'BaseObject', such as 'threading.Thread', 'logging.Handler' or a
-  cooperative mixin, is therefore initialized as in a plain class. A base
-  whose '__init__' requires arguments goes before 'BaseObject', where it
-  receives them.
+  Like every class built by 'AbstractMetaclass', a subclass is reported
+  by 'collections.abc' as an 'Iterable', 'Iterator', 'Sized',
+  'Container' and 'Collection', whether or not it defines
+  '__class_iter__' or '__class_len__'. That report is wrong, and the
+  fault is with 'collections.abc', whose checks look only at the
+  metaclass and leave a class no way to answer for itself; see
+  'AbstractMetaclass'. 'iter(cls)' and 'len(cls)' are the reliable
+  tests.
   """
 
   def __init__(self, *args, **kwargs) -> None:
-    """
-    The '__init__' method refuses arguments given to a class that defines
-    neither '__init__' nor '__new__' below 'BaseObject', with the
-    'TypeError' Python raises for a class without an initializer, and
-    otherwise hands them on to 'Object.__init__', which records them.
-    """
     cls = type(self)
     ownInit = cls.__init__ is not BaseObject.__init__
     ownNew = cls.__new__ is not object.__new__

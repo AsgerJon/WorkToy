@@ -1,377 +1,223 @@
 """
-TestKeeBox tests the 'KeeBox' subclass of 'AttriBox' specially tailored
-for boxing up enumerations.
+TestKeeBox tests 'KeeBox' from 'worktoy.keenum'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from math import pi, e
-from typing import TYPE_CHECKING
-
-from worktoy.desc import AttriBox
+from worktoy.keenum import KeeBox, KeeNum, Kee
 from worktoy.mcls import BaseObject
-from worktoy.waitaminute import TypeException
-from worktoy.core.control_flow import SkipSet
-from worktoy.waitaminute.dispatch import DispatchException
-from worktoy.waitaminute.keenum import KeeBoxException, \
-  KeeBoxValueError, KeeBoxTypeError
-from . import KeeTest
-from .examples import Pen, RGB, ColorNum
-from worktoy.keenum import KeeBox, KeeNum, KeeMeta, KeeFlag, KeeFlags, \
-  KeeFlagsMeta, Kee
-
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import Type
-
-exp1 = float(e)
+from worktoy.waitaminute import MissingVariable, TypeException
+from worktoy.waitaminute.keenum import KeeBoxException, KeeBoxTypeError
+from worktoy.waitaminute.keenum import KeeBoxValueError
+from . import KeenumTest, WeekDay, Shade, Permission, Extended, KeyBind
 
 
-class TestKeeBox(KeeTest):
+class Tone(KeeNum):
+  """An enumeration of complex values, for the constructor route."""
+
+  LOW = Kee[complex](complex(1, 2))
+  HIGH = Kee[complex](complex(3, 4))
+
+
+class TestKeeBox(KeenumTest):
   """
-  TestKeeBox tests the 'KeeBox' subclass of 'AttriBox' specially tailored
-  for boxing up enumerations.
+  A 'KeeBox' is an 'AttriBox' over an enumeration whose parentheses
+  take whatever identifies a member: a member, a name in any case, a
+  position, a value, the arguments of a value, or the flags of a flags
+  member. The tests pin the subscript, every route of the resolution
+  with its refusal, the fixtures, and assignment through the
+  enumeration's conversion.
   """
 
-  def setUp(self, ) -> None:
-    super().setUp()
-
-    self.penSamples = Pen.fullSample()
-
-  def test_init(self, ) -> None:
-    """
-    Testing that 'Pen' objects instantiate correctly.
-    """
-
-    for pen in self.penSamples:
-      self.assertIsInstance(pen, Pen)
-      self.assertIsInstance(pen.color, ColorNum)
-      self.assertIsInstance(pen.color.value, RGB)
-      self.assertIsInstance(pen.width, int)
-
-  def test_class(self, ) -> None:
-    """
-    Testing the class attributes of 'Pen'.
-    """
-    self.assertIsInstance(Pen.color, KeeBox)
-    self.assertIsInstance(Pen.color.fieldType, KeeMeta)
-    self.assertIsSubclass(Pen.color.fieldType, KeeNum)
-    self.assertIsInstance(Pen.width, AttriBox)
-    self.assertIsInstance(Pen.width.fieldType, type)
-    self.assertIs(Pen.width.fieldType, int)
-
-  def test_bad_init(self, ) -> None:
-    """
-    Testing that 'Pen' raises 'DispatchException' when instantiated with
-    bad arguments.
-    """
-    with self.assertRaises(DispatchException) as context:
-      _ = Pen('never', 'gonna', 'give', 'you', 'up')
-    e = context.exception
-    self.assertIs(e.dispatch, Pen.__dict__['__init__'])
-    self.assertEqual(e.posArgs, ('never', 'gonna', 'give', 'you', 'up'))
-
-  def test_good_set(self, ) -> None:
-    """
-    Testing that 'Pen' objects can be set with type-accurate values.
-    """
-    pen = Pen(ColorNum.RED, 4)
-    self.assertIs(pen.color, ColorNum.RED)
-    for color in ColorNum:
-      pen.color = color
-      self.assertIs(pen.color, color)
-    for width in range(1, 10):
-      pen.width = width
-      self.assertEqual(pen.width, width)
-
-  def test_flex_init(self, ) -> None:
-    """
-    Tests that 'KeeBox' can resolve from different arguments besides the
-    exact type.
-    """
-
-    redRGB = RGB(255, 0, 0)
-
-    class SprayCan(BaseObject):
-      indexColor = KeeBox[ColorNum](0)  # From index -> ColorNum.RED
-      nameColor = KeeBox[ColorNum]('red')  # Case flex
-      valueColor = KeeBox[ColorNum](redRGB)  # From value -> ColorNum.RED
-      valueArgColor = KeeBox[ColorNum](255, 0, 0)
-      badValueColor = KeeBox[ColorNum](69, 420, 1337)
-      #  Does result in a valid 'RGB' object, but not a member of the
-      #  'ColorNum' enumeration. Should raise 'KeeValueError' when trying
-      #  to resolve.
-
-    self.assertIsInstance(SprayCan.indexColor, KeeBox)
-    self.assertIsInstance(SprayCan.indexColor.fieldType, KeeMeta)
-    self.assertIsSubclass(SprayCan.indexColor.fieldType, KeeNum)
-
-    sprayCan = SprayCan()
-    self.assertIs(sprayCan.indexColor, ColorNum.RED)
-    self.assertIsInstance(sprayCan.indexColor.value, RGB)
-    self.assertEqual(sprayCan.indexColor.value.r, 255)
-    self.assertEqual(sprayCan.indexColor.value.g, 0)
-    self.assertEqual(sprayCan.indexColor.value.b, 0)
-
-    self.assertIs(sprayCan.nameColor, ColorNum.RED)
-    self.assertIsInstance(sprayCan.nameColor.value, RGB)
-    self.assertEqual(sprayCan.nameColor.value.r, 255)
-    self.assertEqual(sprayCan.nameColor.value.g, 0)
-    self.assertEqual(sprayCan.nameColor.value.b, 0)
-
-    self.assertIs(sprayCan.valueColor, ColorNum.RED)
-    self.assertIsInstance(sprayCan.valueColor.value, RGB)
-    self.assertEqual(sprayCan.valueColor.value.r, 255)
-    self.assertEqual(sprayCan.valueColor.value.g, 0)
-    self.assertEqual(sprayCan.valueColor.value.b, 0)
-
-    self.assertIs(sprayCan.valueArgColor, ColorNum.RED)
-    self.assertIsInstance(sprayCan.valueArgColor.value, RGB)
-    self.assertEqual(sprayCan.valueArgColor.value.r, 255)
-    self.assertEqual(sprayCan.valueArgColor.value.g, 0)
-    self.assertEqual(sprayCan.valueArgColor.value.b, 0)
-
-    with self.assertRaises(KeeBoxValueError) as context:
-      _ = sprayCan.badValueColor
-    e = context.exception
-    self.assertIs(e.desc, SprayCan.badValueColor)
-    self.assertIs(e.num, ColorNum)
-    self.assertEqual(e.value, RGB(69, 420, 1337))
-
-  def test_pen(self, ) -> None:
-    """
-    Tests that 'Pen' objects can be instantiated and set as intended.
-    """
-
-    colorNumPen = Pen(ColorNum.GREEN)
-    self.assertIs(colorNumPen.color, ColorNum.GREEN)
-    intPen = Pen(1)
-    self.assertIs(intPen.width, 1)
-    thisPen = Pen(intPen, )
-    self.assertIs(thisPen.color, intPen.color)
-    blankPen = Pen()
-    self.assertIs(blankPen.color, ColorNum.YELLOW)
-    self.assertIs(blankPen.width, 1)
-    for pen in (*Pen.rands(7), *Pen.rands(), Pen.rand()):
-      self.assertIsInstance(pen, Pen)
-      self.assertIsInstance(pen.color, ColorNum)
-      self.assertIsInstance(pen.width, int)
-
-  def test_gymnastics(self) -> None:
-    """
-    Covering edge cases
-    """
-
-    class Bar:
-      foo = KeeBox[ColorNum](0)
-
-    bar = Bar()
-    with self.assertRaises(RecursionError):
-      Bar.foo.__instance_get__(bar, Bar, _recursion=True)
-
-  def test_box_of_flags(self, ) -> None:
-    """
-    Tests that 'KeeBox' can be used to box up 'Flag' enumerations.
-    """
-
-    class EF(KeeFlags):  # ExampleFlags, but shortened
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-      D = KeeFlag()
-      E = KeeFlag()
-
-    class Foo:
-      bar = KeeBox[EF]('A', 'B', 'C')
-
-    foo = Foo()
-    self.assertIs(foo.bar, EF.A | EF.B | EF.C)
-
-  def test_box_of_flags_set(self, ) -> None:
-    """
-    Tests that assigning to a 'KeeBox' with a 'KeeFlags' field type
-    resolves the assigned value rather than reapplying the declared
-    default.
-    """
-
-    class EF(KeeFlags):  # ExampleFlags, but shortened
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-
-    class Foo:
-      bar = KeeBox[EF]('A')
-
-    foo = Foo()
-    self.assertIs(foo.bar, EF.A)
-    foo.bar = 'B'
-    self.assertIs(foo.bar, EF.B)
-    foo.bar = ('A', 'C')
-    self.assertIs(foo.bar, EF.A | EF.C)
-    foo.bar = ['b', 'c']
-    self.assertIs(foo.bar, EF.B | EF.C)
-    foo.bar = frozenset(('A', 'B', 'C'))
-    self.assertIs(foo.bar, EF.A | EF.B | EF.C)
-    foo.bar = EF.NULL
-    self.assertIs(foo.bar, EF.NULL)
-
-  def test_bad_box(self, ) -> None:
-    """
-    Tests that 'KeeBox' raises 'KeeBoxException' when given a field type
-    that is not a 'KeeMeta' or 'KeeFlagsMeta'.
-    """
-
+  def test_subscript(self) -> None:
+    self.assertIsInstance(KeeBox[WeekDay], KeeBox)
+    self.assertIsInstance(KeeBox[Permission], KeeBox)
+    self.assertIs(KeeBox[Shade].getFieldType(), Shade)
     with self.assertRaises(TypeException) as context:
-      class Foo:
-        bar = KeeBox[int]('69')
-    e = context.exception
-    self.assertEqual(e.varName, 'fieldType')
-    self.assertIs(e.actualObject, int)
-    self.assertIs(e.actualType, type)
-    self.assertIn(KeeMeta, e.expectedTypes)
-    self.assertIn(KeeFlagsMeta, e.expectedTypes)
+      KeeBox[int]
+    self.assertEqual(context.exception.varName, 'fieldType')
+    self.assertIs(context.exception.actualObject, int)
+    self.assertIs(context.exception.actualType, type)
+    self.assertEqual(context.exception.expectedTypes[0].__name__, 'KeeMeta')
+    self.assertEqual(len(context.exception.expectedTypes), 2)
+    self.assertIn("'fieldType'", str(context.exception))
+    self.assertIn("'KeeMeta' or 'KeeFlagsMeta'", str(context.exception))
 
-    class EF(KeeFlags):  # ExampleFlags, but shortened
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-      D = KeeFlag()
-      E = KeeFlag()
+  def test_fixture(self) -> None:
+    bind = KeyBind()
+    self.assertIs(bind.day, WeekDay.TUESDAY)
+    self.assertIs(bind.access, Permission.READ_EXEC)
+    self.assertIs(bind.level, Shade.MID)
+    self.assertNotIn('__field_box__', WeekDay.TUESDAY.__dict__)
+    bind.day = 'friday'
+    self.assertIs(bind.day, WeekDay.FRIDAY)
+    bind.day = WeekDay.SUNDAY
+    self.assertIs(bind.day, WeekDay.SUNDAY)
+    bind.access = ('read', 'write')
+    self.assertIs(bind.access, Permission.READ_WRITE)
+    bind.level = 9
+    self.assertIs(bind.level, Shade.DARK)
+    with self.assertRaises(TypeException) as context:
+      bind.day = 'nothing'
+    self.assertEqual(context.exception.varName, 'day')
+    self.assertEqual(context.exception.actualObject, 'nothing')
+    self.assertIs(context.exception.actualType, str)
+    self.assertEqual(context.exception.expectedTypes, (WeekDay,))
+    self.assertIn("'day'", str(context.exception))
+    self.assertIn("'WeekDay'", str(context.exception))
+    del bind.day
+    with self.assertRaises(MissingVariable) as context:
+      _ = bind.day
+    self.assertIs(context.exception.instance, bind)
+    self.assertEqual(context.exception.varName, 'day')
+    self.assertEqual(context.exception.expectedTypes, (object,))
+    self.assertEqual(str(context.exception),
+                     "Missing 'KeyBind.day: object'!")
 
-    class Foo:
-      bar = KeeBox[EF]()
+  def test_num_routes(self) -> None:
+    class Holder(BaseObject):
+      member = KeeBox[WeekDay](WeekDay.FRIDAY)
+      exact = KeeBox[WeekDay]('SATURDAY')
+      loose = KeeBox[WeekDay]('sUnDaY')
+      position = KeeBox[Shade](2)
+      value = KeeBox[WeekDay]('onsdag')
+      number = KeeBox[Shade](9)
+      built = KeeBox[Tone](3, 4)
+      keyed = KeeBox[Tone](real=1, imag=2)
+      fractional = KeeBox[Shade](1.5)
 
-    setattr(Foo.bar, '__field_type__', int)
-    with self.assertRaises(KeeBoxException) as context:
-      foo = Foo()
-      _ = foo.bar
-    e = context.exception
-    self.assertIs(e.box, Foo.bar)
-    self.assertEqual(e.posArgs, ())
+    holder = Holder()
+    self.assertIs(holder.fractional, Shade.LIGHT)
+    self.assertIs(holder.member, WeekDay.FRIDAY)
+    self.assertIs(holder.exact, WeekDay.SATURDAY)
+    self.assertIs(holder.loose, WeekDay.SUNDAY)
+    self.assertIs(holder.position, Shade.DARK)
+    self.assertIs(holder.value, WeekDay.WEDNESDAY)
+    self.assertIs(holder.number, Shade.DARK)
+    self.assertIs(holder.built, Tone.HIGH)
+    self.assertIs(holder.keyed, Tone.LOW)
 
-  def test_str_field_type(self) -> None:
-    """
-    Tests the situation where the field type is instantiated with a string.
-    """
+  def test_num_refusals(self) -> None:
+    class Holder(BaseObject):
+      noValue = KeeBox[Shade](4)
+      noBool = KeeBox[Shade](True)
+      noName = KeeBox[WeekDay]('nothing')
+      noBuild = KeeBox[Shade]('x', 'y')
+      noMatch = KeeBox[Tone](7, 7)
 
-    class IntNum(KeeNum):
-      NUM_0 = Kee[int](69420_0)
-      NUM_1 = Kee[int](69420_1)
-      NUM_2 = Kee[int](69420_2)
-      NUM_3 = Kee[int](69420_3)
-      NUM_4 = Kee[int](69420_4)
-      NUM_5 = Kee[int](69420_5)
-
-    class Foo:
-      bar = KeeBox[IntNum]('694203')
-      ham = KeeBox[IntNum](694204)
-      eggs = KeeBox[IntNum]()
-
-    setattr(Foo.eggs, '__field_type__', str)
-    foo = Foo()
-    self.assertAlmostEqual(foo.bar, IntNum.NUM_3)
-    self.assertAlmostEqual(foo.ham, IntNum.NUM_4)
-
-    with self.assertRaises(KeeBoxException) as context:
-      foo.eggs = 694206
-    e = context.exception
-    self.assertIs(e.box, Foo.eggs)
-    self.assertEqual(e.posArgs, ())
-    self.assertEqual(repr(e), str(e))
-
-    with self.assertRaises(RecursionError):
-      Foo.bar.__set__(foo, lambda: None, _recursion=True)
-
+    holder = Holder()
     with self.assertRaises(KeeBoxValueError) as context:
-      Foo.bar.__set__(foo, 69)
-    e = context.exception
-    self.assertIs(e.desc, Foo.bar)
-    self.assertIs(e.num, IntNum)
-    self.assertEqual(e.value, 69)
-    self.assertEqual(repr(e), str(e))
-
-  def test_floating_field(self) -> None:
-    """
-    Testing when 'KeeBox' is instantiated with arguments that *would*
-    create an object belonging to the value type of the field enumeration,
-    but where the object is not equal to the value type of any member of
-    the enumeration.
-    """
-
-    class Constants(KeeNum):
-      PI = Kee[float](pi)
-      E = Kee[float](exp1)
-
-    class Foo:
-      bar = KeeBox[Constants]('PI')
-
-    foo = Foo()
-    with  self.assertRaises(KeeBoxValueError) as context:
-      foo.bar = 69
-    e = context.exception
-    self.assertIs(e.desc, Foo.bar)
-    self.assertIs(e.num, Constants)
-    self.assertEqual(e.value, 69)
-    self.assertEqual(repr(e), str(e))
-
+      _ = holder.noValue
+    exception = context.exception
+    self.assertIs(exception.desc, Holder.__dict__['noValue'])
+    self.assertIs(exception.num, Shade)
+    self.assertEqual(exception.value, 4)
+    self.assertIn("'Holder.noValue: Shade'", str(exception))
     with self.assertRaises(KeeBoxValueError) as context:
-      foo.bar = 0.557
-    e = context.exception
-    self.assertIs(e.desc, Foo.bar)
-    self.assertIs(e.num, Constants)
-    self.assertAlmostEqual(e.value, 0.557)
-    self.assertEqual(repr(e), str(e))
-
-    class Bad:
-      bar = KeeBox[Constants]('never', 'gonna', 'give', 'you', 'up')
-
+      _ = holder.noBool
+    self.assertIs(context.exception.desc, Holder.__dict__['noBool'])
+    self.assertIs(context.exception.num, Shade)
+    self.assertIs(context.exception.value, True)
+    self.assertIn("'Holder.noBool: Shade'", str(context.exception))
+    self.assertIn("'True'", str(context.exception))
+    with self.assertRaises(KeeBoxValueError) as context:
+      _ = holder.noName
+    self.assertIs(context.exception.desc, Holder.__dict__['noName'])
+    self.assertIs(context.exception.num, WeekDay)
+    self.assertEqual(context.exception.value, 'nothing')
+    self.assertIn("'Holder.noName: WeekDay'", str(context.exception))
     with self.assertRaises(KeeBoxTypeError) as context:
-      _ = Bad().bar
-    e = context.exception
-    self.assertIs(e.box, Bad.bar)
-    self.assertEqual(e.posArgs, ('never', 'gonna', 'give', 'you', 'up'))
-    self.assertEqual(repr(e), str(e))
+      _ = holder.noBuild
+    exception = context.exception
+    self.assertIs(exception.box, Holder.__dict__['noBuild'])
+    self.assertEqual(exception.posArgs, ('x', 'y'))
+    self.assertIsInstance(exception.__cause__, TypeError)
+    self.assertIn("'Holder.noBuild: Shade'", str(exception))
+    with self.assertRaises(KeeBoxValueError) as context:
+      _ = holder.noMatch
+    self.assertIs(context.exception.desc, Holder.__dict__['noMatch'])
+    self.assertIs(context.exception.num, Tone)
+    self.assertEqual(context.exception.value, complex(7, 7))
+    self.assertIn("'Holder.noMatch: Tone'", str(context.exception))
+    self.assertIn("'(7+7j)'", str(context.exception))
 
-  def test_skip_set(self, ) -> None:
-    """
-    Testing the situation where '__set__' is called with '_recursion=True'
-    in the kw, which should cause it to skip trying to resolve the
-    value and just set it directly.
-    """
+  def test_flags_routes(self) -> None:
+    class Holder(BaseObject):
+      names = KeeBox[Permission]('read', 'WRITE')
+      listed = KeeBox[Permission](['exec'])
+      frozen = KeeBox[Permission](frozenset(('READ',)))
+      indexed = KeeBox[Permission](6)
+      member = KeeBox[Permission](Extended.READ_WRITE)
+      none = KeeBox[Permission]()
 
-    class Foo:
-      __redundant_exception__ = None
+    holder = Holder()
+    self.assertIs(holder.names, Permission.READ_WRITE)
+    self.assertIs(holder.listed, Permission.EXEC)
+    self.assertIs(holder.frozen, Permission.READ)
+    self.assertIs(holder.indexed, Permission.WRITE_EXEC)
+    self.assertIs(holder.member, Permission.READ_WRITE)
+    self.assertIs(holder.none, Permission.NULL)
 
-      bar = KeeBox[ColorNum]('red')
+  def test_neither_kind(self) -> None:
+    box = KeeBox[WeekDay]('monday')
+    object.__setattr__(box, '__field_type__', int)
+    with self.assertRaises(KeeBoxException) as context:
+      box._resolve('monday')
+    self.assertIs(context.exception.box, box)
+    self.assertEqual(context.exception.posArgs, ('monday',))
+    self.assertIn("'monday'", str(context.exception))
 
-      def __init__(self, redundantException: Type[Exception] = None):
-        self.__redundant_exception__ = redundantException
+  def test_is_member(self) -> None:
+    box = KeeBox[Permission]()
+    self.assertTrue(box._isMember(Permission.READ))
+    self.assertTrue(box._isMember(Extended.READ))
+    self.assertFalse(box._isMember('READ'))
 
-      def _getRedundantException(self, ) -> Type[Exception]:
-        return self.__redundant_exception__
+  def test_random_names(self) -> None:
+    self.randomInteger.size = 6
+    for number in self.randomInteger.row:
+      member = WeekDay.members[number % 7]
+      space = {'day': KeeBox[WeekDay](member.name.lower())}
+      Holder = type(BaseObject)('Holder', (BaseObject,), space)
+      with self.subTest(member=member.name):
+        self.assertIs(Holder().day, member)
 
-      @bar.preSet
-      def _preSetBar(self, value, **kwargs):
-        cls = type(self)
-        desc = getattr(cls, 'bar')
-        try:
-          currentValue = desc.__instance_get__(self, cls, _recursion=True)
-        except RecursionError:
-          pass
-        else:
-          if value == currentValue:
-            raise self._getRedundantException()
+  def test_argument_shapes_and_index_edges(self) -> None:
+    class Owner(BaseObject):
+      two = KeeBox[Shade](1, 2)
+      none = KeeBox[Shade]()
+      first = KeeBox[Shade](0)
+      last = KeeBox[Shade](2)
+      negative = KeeBox[Shade](-1)
+      past = KeeBox[Shade](3)
+      built = KeeBox[WeekDay](str.join('', ['fre', 'dag']))
 
-    foo = Foo(SkipSet)
-    self.assertIs(foo.bar, ColorNum.RED)
-    foo.bar = ColorNum.RED  # Triggers SkipSet
-    foo.bar = ColorNum.CYAN
-    self.assertIs(foo.bar, ColorNum.CYAN)
-
-    class Skibidy(Exception):  # noqa
-      pass
-
-    bad = Foo(Skibidy)
-    with self.assertRaises(Skibidy):
-      bad.bar = ColorNum.RED
-      bad.bar = ColorNum.RED
+    owner = Owner()
+    with self.assertRaises(KeeBoxTypeError) as context:
+      _ = owner.two
+    self.assertIs(context.exception.box, Owner.__dict__['two'])
+    self.assertEqual(context.exception.posArgs, (1, 2))
+    self.assertIn("'Owner.two: Shade'", str(context.exception))
+    self.assertIn('<int: 1>', str(context.exception))
+    with self.assertRaises(KeeBoxValueError) as context:
+      _ = owner.none
+    self.assertIs(context.exception.desc, Owner.__dict__['none'])
+    self.assertIs(context.exception.num, Shade)
+    self.assertEqual(context.exception.value, 0)
+    self.assertIn("'Owner.none: Shade'", str(context.exception))
+    self.assertIs(owner.first, Shade.LIGHT)
+    self.assertIs(owner.last, Shade.DARK)
+    with self.assertRaises(KeeBoxValueError) as context:
+      _ = owner.negative
+    self.assertIs(context.exception.desc, Owner.__dict__['negative'])
+    self.assertIs(context.exception.num, Shade)
+    self.assertEqual(context.exception.value, -1)
+    self.assertIn("'-1'", str(context.exception))
+    with self.assertRaises(KeeBoxValueError) as context:
+      _ = owner.past
+    self.assertIs(context.exception.desc, Owner.__dict__['past'])
+    self.assertIs(context.exception.num, Shade)
+    self.assertEqual(context.exception.value, 3)
+    self.assertIn("'3'", str(context.exception))
+    self.assertIs(owner.built, WeekDay.FRIDAY)

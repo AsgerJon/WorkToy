@@ -1,105 +1,39 @@
 """
-The 'TestMaybe' class provides unit tests for the 'maybe' function from
-the 'worktoy.utilities' module.
+TestMaybe tests 'maybe' from 'worktoy.utilities'.
 """
 #  Apache-2.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import shuffle, random
-from typing import TYPE_CHECKING
-
-from . import UtilitiesTest
 from worktoy.utilities import maybe
-
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias
-
-  Bases: TypeAlias = tuple[type, ...]
+from . import UtilitiesTest
 
 
 class TestMaybe(UtilitiesTest):
   """
-  TestMaybe tests the 'maybe' function from 'worktoy.utilities'.
+  'maybe' picks the first argument that is not 'None', which is how a
+  keyword left at 'None' takes its fallback without a falsy value such
+  as '0' or an empty string being mistaken for one. The tests pin that
+  only 'None' is skipped, and that 'None' comes back when nothing else
+  is there.
   """
 
-  def setUp(self) -> None:
-    """
-    Sets up a list of falsy objects on an instance variable 'falsies'.
-    """
-    self.falsies = [
-      False,
-      0,
-      0.0,
-      0j,
-      '',
-      [],
-      {},
-      set(),
-      frozenset(),
-    ]
-    self.typeFalsies = {
-      bool     : False,
-      int      : 0,
-      float    : 0.0,
-      complex  : 0j,
-      str      : '',
-      list     : [],
-      dict     : {},
-      set      : set(),
-      frozenset: frozenset(),
-    }
-    self.typeTruthies = {
-      bool     : True,
-      int      : 1,
-      float    : 0.1337,
-      complex  : 0.80085j,
-      str      : 'a',
-      list     : [1],
-      dict     : {'a': 1},
-      set      : {1},
-      frozenset: frozenset({1}),
-    }
+  def test_first_not_none(self) -> None:
+    self.assertEqual(maybe(None, None, 'fallback'), 'fallback')
+    self.assertEqual(maybe('first', 'second'), 'first')
 
-  @staticmethod
-  def weave(a: list, b: list) -> list:
-    """
-    Weaves two lists of any length.
-    """
-    out = []
-    a, b = [*reversed(a), ], [*reversed(b), ]
-    while a or b:
-      if not a:
-        out.append(b.pop())
-        continue
-      if not b:
-        out.append(a.pop())
-        continue
-      if random() < len(a) / (len(a) + len(b)):
-        out.append(a.pop())
-      else:
-        out.append(b.pop())
-    return [*out, ]
+  def test_falsy_values_kept(self) -> None:
+    for value in (0, '', False, [], (), 0.0):
+      with self.subTest(value=value):
+        self.assertIs(maybe(None, value, 'ignored'), value)
 
-  def testMaybe(self, ) -> None:
-    """
-    Tests the 'maybe' function with various falsy objects.
-    """
-    for _ in range(100):
-      falsies = [*self.falsies, ]
-      shuffle(falsies)
-      expected = falsies[0]
-      testValues = self.weave(falsies, [None for _ in range(69)])
-      self.assertIs(expected, maybe(*testValues), )
+  def test_all_none(self) -> None:
+    self.assertIsNone(maybe(None, None))
+    self.assertIsNone(maybe(None))
 
-  def testEmpty(self) -> None:
-    """
-    Tests the 'maybe' function with an empty list.
-    """
-    self.assertIsNone(maybe(), )
+  def test_no_arguments(self) -> None:
+    self.assertIsNone(maybe())
 
-  def testOnlyNone(self) -> None:
-    """
-    Tests the 'maybe' function with only None values.
-    """
-    self.assertIsNone(maybe(None, None, None), )
+  def test_later_arguments_not_reached(self) -> None:
+    #  The first hit is returned at once, so what follows is never read.
+    self.assertEqual(maybe(1, None, 2), 1)

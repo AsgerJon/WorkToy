@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Callable, TypeAlias, Union
 
   from worktoy.dispatch import TypeSig
@@ -23,9 +23,8 @@ class DuplicateSignature(WorkToyException, TypeError):
   """
   DuplicateSignature is raised when a 'Dispatcher' receives a second
   function registration under a 'TypeSig' it already has on file. A
-  second fallback or a second finalizer raises it too, whether a class
-  body registers it under one name or it is set on a 'Dispatcher' by
-  hand, with the role in place of the signature, since neither has one.
+  second fallback or a second finalizer at one name raises it too, with
+  the role in place of the signature, since neither has one.
 
   Attributes
   ----------

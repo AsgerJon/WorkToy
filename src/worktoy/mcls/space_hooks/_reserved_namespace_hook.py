@@ -10,48 +10,30 @@ from typing import TYPE_CHECKING
 from ...waitaminute.meta import ReservedName
 from . import AbstractSpaceHook, ReservedNames
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
 class ReservedNamespaceHook(AbstractSpaceHook):
   """
-  ReservedNamespaceHook prevents redefinition of names that are reserved
-  for use by Python or the metaclass system. These names are typically
-  populated automatically during class construction and must not be
-  reassigned by user code.
+  Python places names such as '__module__', '__qualname__' and '__doc__'
+  in the namespace as the class body starts, and gives a class others,
+  such as '__orig_bases__'. A class body binding one of them again, as
+  "__module__ = 'other'", quietly breaks what relies on it, and must fail
+  at that line instead.
 
-  Protected names
-  ---------------
-  '__dict__'              Internal attribute dictionary
-  '__weakref__'           Weak reference support slot
-  '__module__'            Name of the module defining the class
-  '__annotations__'       Type hint storage
-  '__match_args__'        Structural pattern matching
-  '__doc__'               Docstring
-  '__name__'              Class name
-  '__qualname__'          Fully qualified class name
-  '__firstlineno__'       Source line for class definition
-  '__static_attributes__' Names bound on 'self' in methods (3.13 and up)
-  '__classcell__'         Cell behind 'super()' and '__class__'
-  '__classdictcell__'     Cell behind lazy annotations (3.14 and up)
-  '__orig_bases__'        Bases as written, before substitution
-  '__type_params__'       Type parameters of a generic class (3.12 and up)
+  Implementation
+  --------------
 
-  Behavior
-  --------
-  During namespace population (when a class body assigns names), any
-  attempt to override a name in the reserved list raises a
-  'ReservedName' exception, but only if the name already exists in the
-  namespace. This prevents accidental clobbering of values while still
-  allowing deferred initialization.
+  'setItemPhase' raises 'ReservedName', a 'SyntaxError', when a name of
+  'ReservedNames' is bound while the namespace holds it already, which
+  lets the first binding, the interpreter's own, through.
 
-  Usage
-  -----
-  To use 'ReservedNamespaceHook', declare it in your namespace class:
+  Attributes
+  ----------
 
-      class Space(AbstractNamespace):
-        reservedNameHook = ReservedNamespaceHook()
+  reservedNames : tuple[str, ...]
+    The protected names.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -66,32 +48,6 @@ class ReservedNamespaceHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    """
-    The 'setItemPhase' method runs before a name is bound. It raises
-    'ReservedName' when 'key' is reserved and already present in the
-    namespace, otherwise returning False so the assignment proceeds. The
-    already-present check still allows the interpreter's own deferred
-    initialization of these names.
-
-    Parameters
-    ----------
-    key : str
-        The name being bound in the class body.
-    val : Any
-        The value being bound.
-    old : Any, optional
-        The previous value bound under 'key', if any.
-
-    Returns
-    -------
-    bool
-        False, so the namespace performs the default assignment.
-
-    Raises
-    ------
-    ReservedName
-        If 'key' is reserved and already present in the namespace.
-    """
     if key in self.reservedNames and key in self.space:
       raise ReservedName(key)
     return False

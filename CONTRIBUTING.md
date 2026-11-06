@@ -35,7 +35,7 @@ mamba activate worktoy_env
 ## Version Support
 
 Another quirk of *worktoy* is legacy support all the way back to 3.7 and
-up to the latest stable Python, which as of this writing is 3.14. Extending
+up to the latest stable Python, which as of this writing is 3.15. Extending
 support to development versions of Python may come in the future. What
 holds this back presently is basically just the implementation of development
 versions in the CI-pipeline.
@@ -56,7 +56,7 @@ runtime. Thus, any object used only for type hinting will not actually
 be needed at runtime. This means it does not need to be imported at
 runtime, or in other words, not imported at all.
 
-### Runtime and `if TYPE_CHECKING:  # pragma: no cover`
+### Runtime and `if TYPE_CHECKING:  # pragma: no cover, no mutate`
 
 An important companion to the stringified type annotations is the use of
 the pattern of having an always `False` block containing imports that
@@ -84,7 +84,8 @@ later versions of Python *cannot* be backported this way. This is why
 A point of pride for *worktoy* is the 100% branch coverage of the test
 suite. This requirement is non-negotiable. The CI-pipeline contains a
 measurement of the coverage that is authoritative, but included in the
-repository is the `bin/dev_tooling/coverage_test.sh` script that reliably achieves the
+repository is the `bin/dev_tooling/coverage_test.sh` script that reliably
+achieves the
 same results as the CI-pipeline. It does rely on the previously mentioned
 development dependencies. It runs all the tests in the `tests` directory
 and if all pass, the script opens the HTML report in the system browser.
@@ -92,13 +93,38 @@ and if all pass, the script opens the HTML report in the system browser.
 Running tests without measuring coverage is substantially faster and is
 frequently desirable during development when designing the tests
 themselves. For this purpose, two Python functions are available from the
-`bin/dev_tooling/yolo_dev.py` module: `runTests`, which runs all the tests found and puts
+`bin/dev_tooling/yolo_dev.py` module: `runTests`, which runs all the tests
+found and puts
 results in the terminal. A related function, `runTest`, allows running a
 single test by passing the test class to it.
 
 Besides the test runners, the `yolo_dev.py` module also provides the
 `yolo` function which runs any passed functions including relevant
 information such as identifying the running Python environment.
+
+### Mutation Testing Before a Release
+
+Coverage says that every line ran; it does not say that the tests would
+notice a wrong line. Mutation testing does: Cosmic Ray changes one line
+at a time and runs the tests against each change. The rule for releases:
+
+> Before every release, run Cosmic Ray restricted to code changed since
+> the last release tag, using `cr-filter-git`. Every surviving mutant
+> must either be killed by a new test or confirmed equivalent and
+> recorded as such. A release does not ship with non-equivalent
+> survivors. This keeps the changelog's mutation testing claim true
+> without full runs.
+
+The run goes on a copy of `src`, `tests` and `pyproject.toml`, never on
+the working tree. `cosmic-ray init` on the config, then
+`cr-filter-pragma` (so that the `# pragma: no mutate` markers count)
+and `cr-filter-git` (so that only the lines changed since the tag
+count), then `cosmic-ray baseline` and `cosmic-ray exec`. Each
+survivor is read, not trusted: an equivalent mutant is accepted only
+with a written reason, as a typing stub, an `is` turned into `==` on a
+class or a sentinel, or a shortcut whose removal gives the same answer.
+The sessions, their dumps and the survivor lists with their reasons go
+in `bin/dev_tooling/mutation/runs/`, which is not committed.
 
 ## Documentation
 

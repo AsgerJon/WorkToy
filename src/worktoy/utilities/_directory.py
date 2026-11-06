@@ -9,7 +9,7 @@ import sys
 import os
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Never, Optional
 
 

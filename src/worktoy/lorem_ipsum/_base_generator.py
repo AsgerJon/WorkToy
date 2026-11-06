@@ -7,36 +7,49 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..utilities import maybe, typeCast, textFmt
+from ..utilities import typeCast, textFmt
 from ..dispatch import overload
-from ..desc import AttriBox, Field
+from ..desc import AttriBox
 from ..mcls import BaseObject
 from ..waitaminute.dispatch import TypeCastException
 
-if TYPE_CHECKING:  # pragma: no cover
-  from typing import TypeAlias, Optional, Self, Any
-
-  MaybeBool: TypeAlias = Optional[bool]
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from typing import Self, Any
 
 
 class BaseGenerator(BaseObject):
   """
-  BaseGenerator is the shared base for the 'lorem_ipsum' generators
-  'Clause', 'Sentence', and 'Paragraph'. It holds the target 'charCount',
-  the 'isFirst' flag with its 'first' constructor, and the short-text
-  placeholder a generator falls back to when 'charCount' is too small to
-  lay out real content.
+  The three text generators, a clause of words, a sentence of clauses and
+  a paragraph of sentences, share one contract: a target character count
+  given to the constructor or assigned later, a flag saying whether the
+  text opens with 'Lorem ipsum', a layout made on first use and kept
+  until the count or the flag changes, and a placeholder for a count too
+  small to lay out. A project must be able to write 'Clause(30)',
+  'Clause(charCount=30)' or 'Clause.first(30)' alike, be refused a
+  negative count where it gives it, and get a text of exactly the count
+  it asked for.
 
-  The target is given by position or as the 'charCount' keyword, as in
-  'Clause(30)' or 'Clause(charCount=30)', and a generator built without it
-  takes the default of the 'charCount' box. Any other keyword raises the
-  'TypeError' Python raises for an unexpected keyword argument, and a
-  negative target raises 'ValueError', whether given to the constructor
-  or assigned later.
+  Implementation
+  --------------
 
-  A generator lays out its content on first use and caches the layout.
-  Assigning 'charCount' calls 'clear', which drops that cache, so the next
-  rendering is laid out anew at the new count.
+  'charCount' is an 'AttriBox[int]' of 40; its 'preSet' callback refuses
+  a negative value with 'ValueError' and leaves a value the box cannot
+  cast to the box, and its 'onSet' callback calls 'clear'. 'isFirst' is
+  an 'AttriBox[bool]' of 'False', set by the 'first' classmethod, and its
+  'onSet' callback calls 'clear' as well. Three '@overload's of
+  '__init__' take the count by position, as a keyword, or as 'None' by
+  position, which keeps the default as 'charCount=None' does; any other
+  keyword fails with Python's own 'TypeError'. 'clear' is empty here
+  and replaced by
+  each subclass. '_shortText' gives the 'Lorem Ipsum...' placeholder of
+  exactly the count, which a subclass returns below '__truncate_below__'.
+
+  Attributes
+  ----------
+  charCount : AttriBox[int]
+    The target character count, 40 unless given.
+  isFirst : AttriBox[bool]
+    Whether the text opens with the lead-in, 'False' unless given.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -49,20 +62,9 @@ class BaseGenerator(BaseObject):
   #  of exactly that length.
   __truncate_below__: int = 15
 
-  #  Private Variables
-  __is_first__: MaybeBool = None
-
   #  Public Variables
   charCount = AttriBox[int](40)
-  isFirst: Field[bool] = Field()
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @isFirst.GET
-  def _getIsFirst(self, ) -> bool:
-    return maybe(self.__is_first__, False)
+  isFirst = AttriBox[bool](False)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -94,6 +96,14 @@ class BaseGenerator(BaseObject):
     """
     self.clear()
 
+  @isFirst.onSet
+  def _onSetIsFirst(self, ) -> None:
+    """
+    The '_onSetIsFirst' callback drops the cached layout whenever 'isFirst'
+    is assigned, since that layout was made with or without the lead-in.
+    """
+    self.clear()
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -109,9 +119,10 @@ class BaseGenerator(BaseObject):
     """
     The '_shortText' method returns a 'Lorem Ipsum...' placeholder of
     exactly 'charCount' characters for a generator too small to lay out its
-    content: the leading dots alone below four characters, otherwise as
-    much of 'Lorem Ipsum' as fits ahead of a trailing ellipsis. A subclass
-    returns this for a 'charCount' below '__truncate_below__'.
+    content: as much of 'Lorem Ipsum' as fits ahead of three dots, and dots
+    alone below four characters. Past the whole lead the dots make up the
+    count, so a subclass may render the placeholder up to any
+    '__truncate_below__' it sets.
 
     Returns
     -------
@@ -119,9 +130,8 @@ class BaseGenerator(BaseObject):
       The placeholder text, exactly 'charCount' characters long.
     """
     n = self.charCount
-    if n < 4:
-      return '...'[:n]
-    return 'Lorem Ipsum'[:n - 3] + '...'
+    visible = 'Lorem Ipsum'[:max(0, n - 3)]
+    return visible + '.' * (n - len(visible))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -136,6 +146,10 @@ class BaseGenerator(BaseObject):
     if charCount is not None:
       self.charCount = charCount
 
+  @overload(type(None))
+  def __init__(self, charCount: None) -> None:
+    """A count of 'None' keeps the default, as 'charCount=None' does."""
+
   @classmethod
   def first(cls, *args, **kwargs) -> Self:
     """
@@ -148,5 +162,5 @@ class BaseGenerator(BaseObject):
       A new instance with its first-word flag set.
     """
     self = cls(*args, **kwargs)
-    self.__is_first__ = True
+    self.isFirst = True
     return self

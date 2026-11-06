@@ -10,40 +10,51 @@ from typing import TYPE_CHECKING
 
 from . import Permuter
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
 class PermuterMethod(Permuter):
   """
-  PermuterMethod subclasses 'Permuter' from 'worktoy.dispatch' and provides
-  a wrapper that extracts the calling 'instance' object and passes only
-  remaining positional arguments through the arrangement.
+  A flexible overload declared in a class body is a method: the first
+  argument is the instance, which must stay first, and only the arguments
+  after it may come in any order.
+
+  Implementation
+  --------------
+
+  'invoke' takes the instance off the front and restores the remaining
+  arguments through the arrangement, which therefore covers the
+  parameters after 'self'.
   """
 
   def invoke(self, *args, **kwargs) -> Any:
     """
-    The 'invoke' method accepts the calling instance ahead of the
-    reordered positional arguments, so a 'PermuterMethod' can wrap a
-    bound method: the instance is forwarded first, then the arguments
-    restored to canonical order. The wrapped function and the instance
-    are taken from 'args' by position rather than named as parameters,
-    so keywords of the caller named 'func' or 'instance' go through to
-    the function.
+    The method must receive the instance first and its other positional
+    arguments in the order it declares them.
+
+    Implementation
+    --------------
+
+    The function and the instance are taken by position, so caller
+    keywords named 'func' or 'instance' reach the function. With no
+    positional argument at all, the instance is 'None'.
 
     Parameters
     ----------
-    *args : Any
-        The wrapped function, then the calling instance, forwarded as the
-        first argument (None when the call gives none), then the
-        positional arguments in arranged order.
-    **kwargs : Any
-        Keyword arguments forwarded unchanged.
+
+    *args
+      The function, the instance, then the remaining positional arguments
+      in the order of 'arrangement.values'.
+
+    **kwargs
+      Keyword arguments.
 
     Returns
     -------
+
     Any
-        Whatever the function returns.
+      What the function returns.
     """
     func, args = args[0], args[1:]
     instance, args = (args[0], args[1:]) if args else (None, ())

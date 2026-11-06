@@ -11,7 +11,7 @@ from ...utilities import textFmt
 from .. import WorkToyException
 
 
-class IncompleteFieldException(WorkToyException, TypeError):
+class IncompleteFieldException(WorkToyException, SyntaxError):
   """
   IncompleteFieldException is raised at class construction time when
   an EZData subclass body contains an EZField that is missing either
@@ -19,7 +19,9 @@ class IncompleteFieldException(WorkToyException, TypeError):
   that produce this state are 'EZField(value)' without a type
   subscript and 'EZField[T]' without trailing parentheses; both
   compile as valid Python but produce a field that cannot supply a
-  default value.
+  default value. A bare 'None' in the body is refused the same way,
+  since no field type can be inferred from it. It subclasses
+  'SyntaxError', as every refusal of a class-body line in worktoy does.
 
   Attributes
   ----------
@@ -39,7 +41,9 @@ class IncompleteFieldException(WorkToyException, TypeError):
     self.clsName = clsName
     self.fieldName = fieldName
     self.missing = missing
-    TypeError.__init__(self, )
+    SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
     infoSpec = """EZData subclass '%s' has incomplete field '%s':

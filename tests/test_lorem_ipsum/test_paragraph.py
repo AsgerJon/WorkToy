@@ -1,105 +1,135 @@
 """
-TestParagraph tests the 'Paragraph' class from the
-'worktoy.lorem_ipsum' package.
+TestParagraph tests 'Paragraph' from 'worktoy.lorem_ipsum'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from random import randint
+from worktoy.lorem_ipsum import Paragraph, Sentence, GaussianLengths
+from worktoy.lorem_ipsum import BaseGenerator
+from worktoy.work_test.samplers import IntSampler
+from . import LoremTest
 
-from worktoy.lorem_ipsum import Paragraph
-from . import LoremIpsumTest
 
-
-class TestParagraph(LoremIpsumTest):
+class TestParagraph(LoremTest):
   """
-  TestParagraph provides tests for the 'Paragraph' class from the
-  'worktoy.lorem_ipsum' package.
+  A paragraph is sentences joined by single spaces at exactly the
+  requested count, opening with 'Lorem ipsum' unless told otherwise.
+  The tests pin the layout and its arithmetic, the first-word flag and
+  its callback, the short paragraph, the caches, the copy constructor
+  and the renderings.
   """
 
-  def setUp(self) -> None:
-    super().setUp()
-    self.paragraph: Paragraph = Paragraph()
-    self.paragraph.reset()
-    self.minLen: int = 300
-    self.maxLen: int = 1500
+  def test_layout(self) -> None:
+    paragraph = Paragraph(300)
+    sentences = paragraph.sentenceArray
+    lengths = paragraph.sentenceLengths
+    text = str(paragraph)
+    self.assertEqual(len(text), 300)
+    self.assertEqual(len(paragraph), 300)
+    self.assertTrue(text.startswith('Lorem ipsum '))
+    self.assertEqual(text, ' '.join(str(s) for s in sentences))
+    self.assertEqual(sum(lengths) + len(lengths) - 1, 300)
+    self.assertGreater(len(sentences), 1)
+    self.assertEqual(paragraph.realize(), text)
+    self.assertEqual([*paragraph], sentences)
+    for sentence, length in zip(sentences, lengths):
+      with self.subTest(length=length):
+        self.assertIsInstance(sentence, Sentence)
+        self.assertEqual(len(sentence), length)
+        self.assertTrue(str(sentence).endswith('.'))
+    self.assertTrue(sentences[0].isFirst)
+    self.assertFalse(sentences[1].isFirst)
+    self.assertEqual(repr(paragraph),
+                     '\n'.join(repr(s) for s in sentences))
 
-  def test_lengths(self, ) -> None:
-    """
-    Testing that 'Paragraph' realizes to exactly the requested character
-    count.
-    """
-    lengths = [randint(self.minLen, self.maxLen) for _ in range(16)]
+  def test_first_by_default(self) -> None:
+    self.assertTrue(Paragraph().isFirst)
+    self.assertTrue(Paragraph(100).isFirst)
+    self.assertTrue(Paragraph.first(100).isFirst)
+    self.assertFalse(Sentence().isFirst)
+    paragraph = Paragraph(200)
+    first = str(paragraph)
+    paragraph.isFirst = False
+    self.assertIsNone(paragraph.__sentences_array__)
+    self.assertIsNone(paragraph.__sentences_lengths__)
+    self.assertFalse(paragraph.sentenceArray[0].isFirst)
+    self.assertEqual(len(paragraph), 200)
+    self.assertNotEqual(str(paragraph), first)
+    self.assertIs(Paragraph.__dict__['_onSetIsFirst'],
+                  BaseGenerator.__dict__['_onSetIsFirst'])
+
+  def test_short(self) -> None:
+    paragraph = Paragraph(39)
+    self.assertEqual(paragraph.sentenceLengths, [39])
+    self.assertEqual(len(paragraph.sentenceArray), 1)
+    self.assertEqual(len(paragraph), 39)
+    self.assertTrue(str(paragraph).startswith('Lorem ipsum '))
+    self.assertEqual(str(Paragraph(10)), 'Lorem I...')
+    self.assertEqual(len(Paragraph(10)), 10)
+    self.assertEqual(str(Paragraph(0)), '')
+    self.assertEqual(len(Paragraph(0)), 0)
+    self.assertEqual(Paragraph(0).sentenceLengths, [0])
+
+  def test_sentence_distribution(self) -> None:
     paragraph = Paragraph()
-    self.assertEqual(len(paragraph), paragraph.charCount)
-    for length in lengths:
-      paragraph = Paragraph(length)
-      self.assertIsInstance(paragraph, Paragraph)
-      self.assertEqual(len(paragraph), length)
+    dist = paragraph.sentenceDist
+    self.assertIsInstance(dist, GaussianLengths)
+    self.assertEqual((dist.mean, dist.var, dist.minVal, dist.maxVal),
+                     (80.0, 20.0, 40, 120))
+    self.assertIs(paragraph.sentenceDist, dist)
+    self.assertIsNot(Paragraph().sentenceDist, dist)
 
-  def test_recursion_guard(self, ) -> None:
-    """
-    Testing the 'RecursionError' guards.
-    """
-    paragraph = Paragraph(self.paragraph)
-    paragraph.clear()
-    with self.assertRaises(RecursionError):
-      _ = paragraph._getSentenceArray(_recursion=True)
-    with self.assertRaises(RecursionError):
-      _ = paragraph._getSentenceLengths(_recursion=True)
-
-  def test_iteration(self) -> None:
-    """
-    Testing iteration of 'Paragraph'.
-    """
-    paragraph = Paragraph(self.paragraph)
-    paragraph.reset()
-    paragraphRepr = repr(paragraph)
-    for sentence in paragraph:
-      for clause in sentence:
-        for word in clause:
-          self.assertIn(word, paragraphRepr)
-
-  def test_init(self, ) -> None:
-    """
-    Testing initialization of 'Paragraph'.
-    """
-    paragraph = Paragraph()
-    paragraph.clear()
-    self.assertIsInstance(paragraph, Paragraph)
-    sentences = (*paragraph.sentenceArray,)
-    for left, right in zip(paragraph, sentences):
-      self.assertIs(left, right)
-    paragraph.clear()
-    paragraph = Paragraph(paragraph)
+  def test_caches(self) -> None:
+    paragraph = Paragraph(150)
     self.assertIsNone(paragraph.__sentences_lengths__)
     self.assertIsNone(paragraph.__sentences_array__)
-
-  def test_str(self) -> None:
-    """
-    Testing the string representation of 'Paragraph'.
-    """
-    paragraph = Paragraph(self.paragraph)
+    with self.assertRaises(RecursionError) as context:
+      paragraph._getSentenceLengths(_recursion=True)
+    self.assertEqual(context.exception.args, ())
+    with self.assertRaises(RecursionError) as context:
+      paragraph._getSentenceArray(_recursion=True)
+    self.assertEqual(context.exception.args, ())
+    sentences = paragraph.sentenceArray
+    self.assertIs(paragraph.sentenceArray, sentences)
+    paragraph.clear()
+    self.assertIsNone(paragraph.__sentences_lengths__)
+    self.assertIsNone(paragraph.__sentences_array__)
     paragraph.reset()
-    paragraphStr = str(paragraph)
-    for sentence in paragraph:
-      self.assertIn(str(sentence), paragraphStr)
+    self.assertIsNotNone(paragraph.__sentences_array__)
+    self.assertIsNot(paragraph.sentenceArray, sentences)
+    self.assertEqual(len(paragraph), 150)
+    paragraph.charCount = 250
+    self.assertIsNone(paragraph.__sentences_array__)
+    self.assertEqual(len(paragraph), 250)
 
-  def test_realize(self) -> None:
-    """
-    This method tests that 'realize' matches '__str__'.
-    """
-    expectedText = str(self.paragraph)
-    actualText = self.paragraph.realize()
-    self.assertEqual(expectedText, actualText)
+  def test_copy_constructor(self) -> None:
+    blank = Paragraph(150)
+    blank.isFirst = False
+    copy = Paragraph(blank)
+    self.assertEqual(copy.charCount, 150)
+    self.assertFalse(copy.isFirst)
+    self.assertIsNone(copy.__sentences_lengths__)
+    self.assertIsNone(copy.__sentences_array__)
+    built = Paragraph(200)
+    text = str(built)
+    copy = Paragraph(built)
+    self.assertEqual(str(copy), text)
+    self.assertTrue(copy.isFirst)
+    self.assertEqual(copy.sentenceLengths, built.sentenceLengths)
+    self.assertIsNot(copy.sentenceLengths, built.sentenceLengths)
+    for mine, theirs in zip(copy.sentenceArray, built.sentenceArray):
+      with self.subTest(text=str(theirs)):
+        self.assertIsNot(mine, theirs)
+        self.assertEqual(str(mine), str(theirs))
+        self.assertIsNot(mine.clausesArray[0], theirs.clausesArray[0])
 
-  def test_short_charcount(self) -> None:
-    """
-    A 'charCount' below the sentence distribution's minimum collapses to a
-    single sentence length equal to 'charCount', since 'Sentence' realizes
-    short counts exactly through its own placeholder fallback.
-    """
-    short = Paragraph(20)
-    self.assertLess(short.charCount, short.sentenceDist.minVal)
-    self.assertEqual(short.sentenceLengths, [20])
+  def test_random_counts(self) -> None:
+    self.randomInteger = IntSampler(40, 600, seed=self.__sampler_seed__)
+    self.randomInteger.size = 10
+    for count in self.randomInteger.row:
+      with self.subTest(count=count):
+        paragraph = Paragraph(count)
+        self.assertEqual(len(paragraph), count)
+        self.assertEqual(len(str(paragraph)), count)
+        self.assertTrue(str(paragraph).startswith('Lorem ipsum'))

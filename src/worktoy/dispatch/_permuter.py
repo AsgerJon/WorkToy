@@ -9,13 +9,13 @@ from __future__ import annotations
 from types import FunctionType as Func
 from typing import TYPE_CHECKING, overload
 
-from ..dispatch import CallMeMaybe
 from ..utilities import textFmt, QuickDesc
 from ..utilities.combinatorics import Arrangement
 from ..waitaminute import TypeException, MissingVariable
 from ..waitaminute.desc import WriteOnceError
+from . import CallMeMaybe
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Self, Any, Union, Optional, Type
 
   MaybeArrangement: TypeAlias = Optional[Arrangement]
@@ -24,29 +24,29 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Permuter(CallMeMaybe):
   """
-  Permuter subclasses 'CallMeMaybe' from 'worktoy.dispatch' and provides
-  an 'Arrangement' that reorders received positional arguments before
-  forwarding to the wrapped function.
+  An overload declared with 'overload.flex(str, int)' must accept its
+  arguments in any order, '(str, int)' as well as '(int, str)', while the
+  function itself declares them in one order. Each accepted order needs a
+  callable that puts the arguments back in the declared order before
+  calling the function.
 
-  At call time, the user supplies arguments in the order described by
-  'self.arrangement.values'. Before forwarding to the wrapped function,
-  'arrangement.restoreFrom(*args)' permutes those arguments back into
-  the canonical order described by 'self.arrangement.items'. This is
-  the direction the wrapped function expects.
+  Implementation
+  --------------
 
-  Parameters
+  A 'Permuter' holds the function and an 'Arrangement'. A caller gives
+  the arguments in the order of 'arrangement.values', and
+  'arrangement.restoreFrom' puts them back in the order of
+  'arrangement.items', the order of the parameters. Keywords pass
+  unchanged. The constructor takes a plain function and an arrangement,
+  each optional, positionally and in either order. 'p << arrangement'
+  and 'arrangement >> p' give a new 'Permuter' over the same function,
+  and 'p <<= arrangement' sets the arrangement once in place.
+
+  Attributes
   ----------
-  func: FunctionType (optional)
-    The function to wrap. If not provided, it must be set by calling
-    the 'setFunction' method before the 'Permuter' instance can be
-    called.
-  arrangement: Arrangement (optional)
-    The 'Arrangement' object that specifies the reordering of received
-    positional arguments. If not provided, it must be set by calling
-    the 'setArrangement' method before the 'Permuter' instance can be
-    called.
 
-  The parameters may be provided positionally only but in any order.
+  arrangement : Arrangement
+    The arrangement, read-only.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -64,11 +64,6 @@ class Permuter(CallMeMaybe):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _getArrangement(self) -> Arrangement:
-    """
-    The '_getArrangement' method returns the 'Arrangement' the call
-    restores the arguments through, raising 'MissingVariable' when none
-    was set.
-    """
     if self.__arg_arrangement__ is None:
       raise MissingVariable(self, '__arg_arrangement__', Arrangement)
     return self.__arg_arrangement__
@@ -79,19 +74,24 @@ class Permuter(CallMeMaybe):
 
   def setArrangement(self, arrangement: Arrangement) -> None:
     """
-    The 'setArrangement' method records the 'Arrangement' once.
+    A 'Permuter' created without an arrangement must receive one later,
+    once, since a 'Permuter' changing its order after dispatch was built
+    would silently reroute calls.
 
     Parameters
     ----------
+
     arrangement : Arrangement
-        The arrangement describing how received arguments are reordered.
+      The order the caller gives the arguments in.
 
     Raises
     ------
+
     TypeException
-        If 'arrangement' is not an 'Arrangement'.
+      'arrangement' is not an 'Arrangement'.
+
     WriteOnceError
-        If an arrangement has already been set.
+      An arrangement is set already.
     """
     if not isinstance(arrangement, Arrangement):
       raise TypeException('arrangement', arrangement, Arrangement)
@@ -162,21 +162,23 @@ class Permuter(CallMeMaybe):
       cls, original: Self, arrangement: Arrangement,
   ) -> Self:
     """
-    The 'newArrangement' classmethod builds a new 'Permuter' wrapping the
-    same function as 'original' but with a different 'Arrangement'.
+    Each order of a flexible declaration needs its own 'Permuter' over the
+    same function.
 
     Parameters
     ----------
-    original : Self
-        The 'Permuter' whose wrapped function is reused.
+
+    original : Permuter
+      The 'Permuter' whose function is reused.
+
     arrangement : Arrangement
-        The arrangement for the new 'Permuter'.
+      The arrangement of the new 'Permuter'.
 
     Returns
     -------
-    Self
-        A new 'Permuter' over the same function and the given
-        arrangement.
+
+    Permuter
+      A new instance of the class it is called on.
     """
     return cls(original.__wrapped__, arrangement)
 
@@ -205,24 +207,38 @@ class Permuter(CallMeMaybe):
 
   def invoke(self, *args, **kwargs) -> Any:
     """
-    The 'invoke' method forwards to the wrapped function, given as the
-    first positional argument, after restoring the arguments after it
-    from arranged order back to the canonical order the function expects.
-    The function is taken from 'args' by position, as in 'CallMeMaybe',
-    so a keyword of the caller named 'func' goes through to it.
+    The function must receive its positional arguments in the order it
+    declares them, whatever order the caller used.
+
+    Implementation
+    --------------
+
+    The arguments after the function are restored through the
+    arrangement; keywords pass unchanged. A caller keyword named 'func'
+    reaches the function, as in 'CallMeMaybe.invoke'.
 
     Parameters
     ----------
-    *args : Any
-        The wrapped function, then the positional arguments in arranged
-        order.
-    **kwargs : Any
-        Keyword arguments forwarded unchanged.
+
+    *args
+      The function, then the positional arguments in the order of
+      'arrangement.values'.
+
+    **kwargs
+      Keyword arguments.
 
     Returns
     -------
+
     Any
-        Whatever the function returns.
+      What the function returns.
+
+    Raises
+    ------
+
+    ValueError
+      The number of positional arguments differs from the length of the
+      arrangement.
     """
     func, args = args[0], args[1:]
     return func(*self._getArrangement().restoreFrom(*args), **kwargs)

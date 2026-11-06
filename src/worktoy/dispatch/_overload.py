@@ -12,12 +12,15 @@ from typing import TYPE_CHECKING
 from ..core.sentinels import ARGS
 from ..utilities import maybe, textFmt
 from ..utilities.combinatorics import Arrangements
-from ..waitaminute import MissingVariable
+from ..waitaminute import MissingVariable, TypeException
+from ..waitaminute.dispatch import BareOverload
+from ..waitaminute.meta import MixedMethodKind
 from . import TypeSig, PermuterMethod
-from ._dispatcher import _refuseMethodKinds
+from ._dispatcher import _MAX_EXPANDED_FLEX
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Callable, TypeAlias, Self, Iterator, Never
+  from typing import Optional
 
   Method: TypeAlias = Callable[..., Any]
   Decorator: TypeAlias = Callable[[Method], Any]
@@ -25,84 +28,161 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class overload:  # NOQA
-  """User-facing decorator that registers a type signature against a
-  function so 'BaseMeta' can wire it into a 'Dispatcher' during
-  class construction.
+  """
+  Python keeps only the last function bound to a name in a class body,
+  so a method cannot be written once per signature:
 
-  Usage inside a class body:
+    class Frob(BaseObject):
 
-  >>> from worktoy.mcls import BaseObject
-  ...
-  >>> class Frob(BaseObject):
-  ...   @overload(int)
-  ...   def __init__(self, n: int) -> None: pass
-  ...   @overload(int, int)
-  ...   def __init__(self, n: int, m: int) -> None: pass
+      @overload(int)
+      def __init__(self, n: int) -> None:
+        ...
 
-  Stacking '@overload(...)' on a method registers each signature.
-  The class's metaclass ('BaseMeta' or a subclass) sees the
-  'overload' instance during namespace compilation and produces a
-  'Dispatcher' descriptor that does the runtime dispatch.
+      @overload(int, int)
+      def __init__(self, n: int, m: int) -> None:
+        ...
 
-  For classes whose metaclass is not 'BaseMeta'-based, use the
-  'Dispatcher' descriptor directly.
+  Each declaration must survive the rebinding of its name and record its
+  signature, so that all the declarations of a name, with those the class
+  inherits, can become one dispatcher once the class exists. One function
+  may also serve several signatures, or be the fallback or the finalizer
+  of its name, by stacking decorators. An overloaded name may be a
+  classmethod, as an alternative constructor taking several kinds of
+  argument, or a staticmethod, with '@classmethod' or '@staticmethod'
+  written above '@overload', below it, or between two decorators of a
+  stack. Only a class whose metaclass is
+  based on 'BaseMeta' has such a namespace; a class whose metaclass comes
+  from another library overloads its methods through a metaclass combined
+  with 'BaseMeta'. An 'overload' left in the body of any other class is
+  refused as the class is created, and a record called anywhere is
+  refused at the call.
 
-  Class methods 'overload.flex', 'overload.fallback', and
-  'overload.finalize' provide the same hooks as the corresponding
-  'Dispatcher' methods.
+  Implementation
+  --------------
 
-  Decorators stacked on one function each add a role for that function,
-  in any order. '@overload(str)' above '@overload.fallback' makes the
-  function both the 'str' overload and the fallback, and '@overload(str)'
-  above '@overload.flex(str, int)' registers the function for a lone
-  'str' beside both orders of 'str' and 'int':
-
-  >>> class Label(BaseObject):
-  ...   @overload(str)
-  ...   @overload.flex(str, int)
-  ...   def __init__(self, text: str, size: int = 12) -> None: pass
-
-  Performance and ordering
-  ------------------------
-  '@overload(SomeType)' produces a 'TypeSig' that the 'Dispatcher'
-  matches in three kinds of pass (see 'Dispatcher' docstring):
-  exact-type hash lookup, then isinstance iteration, then 'typeCast'
-  iteration. Only the first is constant-time; the other two scan
-  every registered overload in order and return the first match.
-  Within one class body that order is the declaration order.
-
-  Three consequences for how you stack '@overload' decorators:
-
-  1. Register against the exact concrete types callers will pass.
-     '@overload(int)' for a caller that supplies 'int' values keeps
-     the call on the constant-time pass. '@overload(SomeABC)' or
-     '@overload(SomeUnionBase)' forces every matching call through
-     O(N) iteration.
-
-  2. When two overloads can both match the same call by
-     isinstance, the one registered first wins. The dispatcher does
-     not rank by specificity - it cannot, since a class with a
-     custom '__instancecheck__' may legitimately want to absorb
-     calls that would otherwise hit a "more specific" overload.
-     Order your decorators to match the dispatch you want; treat
-     overlapping isinstance coverage as deliberate, not as a bug
-     for the dispatcher to second-guess.
-
-  3. A subclass overloading an inherited name keeps the inherited
-     overloads and adds its own, and an equal signature replaces the
-     inherited one outright. Its own win every call they accept, by
-     exact type or through 'isinstance', before any inherited overload
-     is tried: with '@overload(int)' inherited and '@overload(object)'
-     declared, 'f(1)' and 'f(True)' both reach the override, and the
-     inherited overload keeps the calls the subclass does not accept.
-     The 'typeCast' pass tries the inherited overloads first, so a
-     signature the subclass adds never takes a call its parent
-     already handled through a cast.
+  '@overload(...)' returns a decorator, and the decorator returns an
+  'overload' object recording the function and the signature; it does no
+  dispatching. A decorator stacked above another adds its signature to
+  the 'overload' below it. The class methods 'flex', 'fallback' and
+  'finalize' declare the other roles the same way. A decorator given a
+  'classmethod' or 'staticmethod' object takes the function out of it and
+  keeps its kind; given one over the record of the decorator below, it
+  extends that record, which takes the kind. 'LoadSpaceHook' does the
+  same for one written above the whole stack. A stack holding both kinds
+  raises 'MixedMethodKind'.
+  The namespace of a 'BaseObject' class claims every 'overload' object,
+  so the namespace never stores one, and 'LoadSpaceHook' builds the
+  'Dispatcher' of each name, refusing a body that declares one name as
+  two kinds of method; see 'Dispatcher' for how calls are matched, and
+  for why the most specific signature is declared first. A subclass
+  declaring an overload at a name it inherits keeps the inherited
+  overloads and adds its own, an equal signature replacing the inherited
+  one. A subclass overloading the name as another kind of method
+  overrides it as a plain definition does, hiding the inherited
+  overloads.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  STATIC METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @staticmethod
+  def peelMethodKinds(obj: Any) -> tuple[tuple, Any]:
+    """
+    '@classmethod' and '@staticmethod' may be written above '@overload',
+    below it, or between two decorators of a stack, so a decorator and
+    'LoadSpaceHook' must both find the function or the record under such
+    layers, together with the kind of method each layer declares.
+
+    Implementation
+    --------------
+
+    Each 'classmethod' or 'staticmethod' layer, a subclass of either
+    included, is taken off with 'object.__getattribute__' reading
+    '__func__', outermost first, and its kind recorded as the builtin.
+
+    Parameters
+    ----------
+
+    obj : Any
+      What a decorator or the class body received.
+
+    Returns
+    -------
+
+    tuple[tuple, Any]
+      The kinds of the layers, outermost first, and what they wrapped.
+    """
+    kinds = []
+    while isinstance(obj, (classmethod, staticmethod)):
+      if isinstance(obj, classmethod):
+        kinds.append(classmethod)
+      else:
+        kinds.append(staticmethod)
+      obj = object.__getattribute__(obj, '__func__')
+    return (*kinds,), obj
+
+  @staticmethod
+  def agreeMethodKind(
+      kinds: tuple,
+      name: str,
+      className: Optional[str] = None,
+  ) -> Any:
+    """
+    One function is one kind of method, so the kinds a stack of decorators
+    declares for it must be one kind. A classmethod and a staticmethod in
+    one stack would mean something different on each version of Python.
+
+    Implementation
+    --------------
+
+    The first kind is compared with every other by identity.
+
+    Parameters
+    ----------
+
+    kinds : tuple
+      The kinds declared, outermost first, each 'classmethod' or
+      'staticmethod'.
+
+    name : str
+      The name of the function or of the overloaded name, for the
+      message.
+
+    className : str, optional
+      The name of the class whose body declares it, for the message.
+
+    Returns
+    -------
+
+    Any
+      The kind, or 'None' when nothing declares one.
+
+    Raises
+    ------
+
+    MixedMethodKind
+      Two of the kinds disagree.
+    """
+    if not kinds:
+      return None
+    first = kinds[0]
+    for kind in kinds[1:]:
+      if kind is not first:
+        raise MixedMethodKind(className, name, (first, kind))
+    return first
+
+  @staticmethod
+  def _getFunctionName(func: Any) -> str:
+    try:
+      name = object.__getattribute__(func, '__name__')
+    except AttributeError:
+      #  This branch is reached by the following:
+      #  - A decorator received a value without a name of its own, as a
+      #    number or a 'functools.partial'
+      return repr(func)
+    else:
+      return name
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -111,34 +191,63 @@ class overload:  # NOQA
   #  Private Variables
   __sig_func_dict__ = None
   __variadic_sig_func_list__ = None
-  __next_sig__ = None
-  __next_func__ = None
+  __flex_sig_func_list__ = None
   __latest_func__ = None
   __fallback_func__ = None
   __finalizer_func__ = None
+  __method_kind__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def getMethodKind(self) -> Any:
+    """
+    The dispatcher of a name must know whether its functions are instance
+    methods, classmethods or staticmethods, and a decorator given a
+    'classmethod' or 'staticmethod' object is the one to learn it.
+
+    Returns
+    -------
+
+    Any
+      'classmethod' or 'staticmethod', or 'None' when the decorators of
+      the record were given a plain function.
+    """
+    return self.__method_kind__
 
   def _getSigFuncDict(self) -> dict[TypeSig, Method]:
     return maybe(self.__sig_func_dict__, dict())
 
   def getVariadics(self) -> list[tuple[TypeSig, Method]]:
     """
-    The 'getVariadics' method returns the list of '(variadicSig, func)'
-    pairs registered on this overload. Each variadicSig has a trailing
-    'ARGS' instance as its last raw type, and the dispatcher matches a
-    call of any length against it, the prefix by type and every trailing
-    argument against the inner type of the 'ARGS'.
+    'LoadSpaceHook' must read the variadic signatures of an 'overload'
+    apart from the concrete ones, since they go to the dispatcher by
+    another route.
 
     Returns
     -------
-    list of tuple of (TypeSig, Method)
-        The registered variadic pairs. 'Method' expands to
-        'Callable[..., Any]'.
+
+    list[tuple[TypeSig, Method]]
+      The variadic pairs in declaration order, 'Method' being
+      'Callable[..., Any]'.
     """
     return maybe(self.__variadic_sig_func_list__, [])
+
+  def getFlexes(self) -> list[tuple[TypeSig, Method]]:
+    """
+    'LoadSpaceHook' must read the flexible declarations of more than three
+    classes apart from the concrete signatures, since the dispatcher holds
+    each of them as one registration standing for every order.
+
+    Returns
+    -------
+
+    list[tuple[TypeSig, Method]]
+      The pairs in declaration order, each signature in the order the
+      function takes its arguments, 'Method' being 'Callable[..., Any]'.
+    """
+    return maybe(self.__flex_sig_func_list__, [])
 
   def _getLatestFunc(self) -> Method:
     if self.__latest_func__ is None:
@@ -148,21 +257,15 @@ class overload:  # NOQA
     return self.__latest_func__
 
   def isFallback(self) -> bool:
-    """True when a fallback function has been registered on this
-    overload."""
     return False if self.__fallback_func__ is None else True
 
   def getFallback(self, ) -> Method:
-    """The fallback function registered on this overload, or None."""
     return self.__fallback_func__
 
   def isFinalizer(self) -> bool:
-    """True when a finalizer function has been registered on this
-    overload."""
     return False if self.__finalizer_func__ is None else True
 
   def getFinalizer(self, ) -> Method:
-    """The finalizer function registered on this overload, or None."""
     return self.__finalizer_func__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -171,22 +274,25 @@ class overload:  # NOQA
 
   def _addSigFunc(self, sig: TypeSig, func: Method) -> None:
     """
-    The '_addSigFunc' method registers a '(TypeSig, func)' pair on this
-    overload. A signature ending in an 'ARGS' sentinel instance, a
-    variadic declaration, is recorded once in
-    '__variadic_sig_func_list__', as written, and the dispatcher matches
-    calls of any length against it. Every other signature is recorded in
-    the concrete mapping, where an equal signature stacked again keeps
-    the place it first took.
+    A stack of decorators may declare several signatures for one function,
+    and a decorator stacked above must know which function the stack is
+    for.
+
+    Implementation
+    --------------
+
+    A signature ending in an 'ARGS' instance goes to the variadic list, any
+    other into the concrete mapping, where an equal signature keeps its
+    first position. The function becomes the latest one.
 
     Parameters
     ----------
+
     sig : TypeSig
-        The signature to register, possibly ending in an 'ARGS'
-        sentinel.
+      The signature.
+
     func : Method
-        The function to register. 'Method' expands to
-        'Callable[..., Any]'.
+      The function, or a 'PermuterMethod' of a flexible declaration.
     """
     raw = sig.getRawTypes()
     if raw and isinstance(raw[-1], ARGS):
@@ -198,18 +304,47 @@ class overload:  # NOQA
       self.__sig_func_dict__ = existing
     self.__latest_func__ = func
 
-  def _extendLatest(self, sig: TypeSig) -> None:
+  def _takeMethodKinds(self, kinds: tuple) -> None:
     """
-    The '_extendLatest' method registers another signature against the
-    most recently added function, so stacked '@overload(...)' decorators
-    all resolve to the same function body.
+    A '@classmethod' or '@staticmethod' written between two decorators of
+    a stack declares the kind of the one function the stack decorates, as
+    it does written above the stack or below it, so the record of the
+    decorator below must take that kind, and refuse it when the stack
+    declares another kind elsewhere.
+
+    Implementation
+    --------------
+
+    The kinds of the layers, outermost first, are agreed with the kind the
+    record holds already, which comes from below them, and the agreed kind
+    is recorded.
 
     Parameters
     ----------
-    sig : TypeSig
-        The additional signature to register against the latest
-        function.
+
+    kinds : tuple
+      The kinds of the layers between this record and the decorator above
+      it, outermost first; empty when nothing stands between them.
+
+    Raises
+    ------
+
+    MixedMethodKind
+      The stack declares a classmethod and a staticmethod.
     """
+    if self.__method_kind__ is None:
+      #  This branch is reached by the following:
+      #  - No '@classmethod' or '@staticmethod' is written lower in the stack
+      stack = kinds
+    else:
+      #  This branch is reached by the following:
+      #  - '@classmethod' or '@staticmethod' is written lower in the stack,
+      #    below its last decorator or between two decorators below this one
+      stack = (*kinds, self.__method_kind__)
+    name = self._getFunctionName(self._getLatestFunc())
+    self.__method_kind__ = self.agreeMethodKind(stack, name)
+
+  def _extendLatest(self, sig: TypeSig) -> None:
     self._addSigFunc(sig, self._getLatestFunc())
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -218,43 +353,76 @@ class overload:  # NOQA
 
   def __new__(cls, *types, **kwargs) -> Decorator:
     """
-    The 'overload' constructor returns a decorator that registers the
-    decorated function under the given positional-argument type
-    signature.
+    '@overload(int, str)' must check its signature where it is written and
+    give a decorator, which in turn must give an 'overload' object, new or
+    the one of the decorator below it in a stack.
+
+    Implementation
+    --------------
+
+    The entries are read through 'TypeSig.starARGS' and checked by
+    'TypeSig.validateTypes' when '@overload(...)' is evaluated, and the
+    decorator is returned instead of an instance. The decorator takes a
+    'classmethod' or 'staticmethod' apart with 'peelMethodKinds'; a record
+    beneath takes its kind and the signature, and a function is checked and
+    given a new record keeping the kind. The class keyword '_root=True' is
+    internal and builds a bare instance.
 
     Parameters
     ----------
+
     *types : type
-        The positional-argument types of the signature.
+      The classes of the positional arguments after 'self', optionally
+      ending in an 'ARGS'.
 
     Returns
     -------
+
     Decorator
-        A decorator registering its function and returning the 'overload'
-        instance. 'Decorator' expands to 'Callable[[Method], Any]'.
+      A 'Callable[[Method], Any]' returning an 'overload' object.
 
     Raises
     ------
+
     TypeException
-        If an entry is not a class, or an 'ARGS' of one at the end; see
-        'TypeSig.validateTypes'.
+      An entry is not a class, or an 'ARGS' of one at the end.
+
     TypeError
-        If a keyword is given; 'overload' takes none.
+      A keyword is given, or an entry is 'None' or a sentinel other than
+      'THIS'.
+
+    UncheckableType
+      An entry is a class 'isinstance' refuses.
+
+    BareOverload
+      The decorator is written without parentheses.
+
+    TypeException
+      What lies under any 'classmethod' or 'staticmethod' cannot be called.
+
+    MixedMethodKind
+      The decorator is given a function decorated as both a classmethod
+      and a staticmethod, or a stack declares both kinds.
     """
 
     if kwargs.get('_root', False):
       return super(overload, cls).__new__(cls)
     cls._refuseKeywords(**kwargs)
+    cls._refuseBare('overload', *types)
     types = TypeSig.starARGS(*types)
     TypeSig.validateTypes(*types)
 
     def decorator(func: Method) -> Self:
       sig = TypeSig(*types, )
+      kinds, func = cls.peelMethodKinds(func)
       if isinstance(func, cls):
+        func._takeMethodKinds(kinds)
         func._extendLatest(sig)
         return func
-      _refuseMethodKinds(func)
+      kind = cls.agreeMethodKind(kinds, cls._getFunctionName(func))
+      cls._refuseUncallable(func)
       self = super(overload, cls).__new__(cls)
+      self.__method_kind__ = kind
       self._addSigFunc(sig, func)
       return self
 
@@ -266,43 +434,63 @@ class overload:  # NOQA
   @classmethod
   def flex(cls, *types: type) -> Decorator:
     """
-    The 'flex' decorator factory returns a decorator that registers the
-    function under every arrangement of the given canonical type
-    signature.
+    Some methods take arguments whose order carries no meaning, as a label
+    taking a 'str' and an 'int', and their callers should be free to pass
+    them in any order. Only the orders of the given classes may match;
+    every other call is left to the other signatures and the fallback.
 
-    At dispatch time, the user supplies arguments in some arrangement of
-    the canonical order. Each registered 'PermuterMethod' carries the
-    'Arrangement' that produced its signature. When the dispatcher
-    selects it, that 'PermuterMethod' (not the dispatcher) calls
-    'arrangement.restoreFrom(*args)' to permute the caller's arguments
-    back into canonical order, then invokes 'func'.
+    Implementation
+    --------------
+
+    Up to three classes, each distinct order of the classes is recorded
+    with a 'PermuterMethod' that puts the arguments back in the declared
+    order. More classes are recorded once, in the declared order, since
+    the orders number the factorial of the classes; the dispatcher matches
+    them in any order. A decorator stacked above registers the function
+    itself, not a wrapper.
 
     Parameters
     ----------
+
     *types : type
-        The canonical positional-argument types. Every ordering of them
-        is registered.
+      The classes of the positional arguments after 'self', in the order
+      the function declares them.
 
     Returns
     -------
+
     Decorator
-        A decorator registering its function and returning the 'overload'
-        instance. 'Decorator' expands to 'Callable[[Method], Any]'.
+      A 'Callable[[Method], Any]' returning an 'overload' object.
 
     Raises
     ------
+
     TypeException
-        If an entry is not a class; an 'ARGS' is refused too, since the
-        entries are rearranged.
+      An entry is not a class; an 'ARGS' is refused too, since the entries
+      are reordered.
+
+    TypeError
+      An entry is 'None', or a sentinel other than 'THIS'.
+
+    UncheckableType
+      An entry is a class 'isinstance' refuses.
+
+    BareOverload
+      The decorator is written without parentheses.
     """
+    cls._refuseBare('overload.flex', *types)
     types = TypeSig.starARGS(*types)
     TypeSig.validateTypes(*types, variadic=False)
 
     def decorator(func: Method) -> Self:
       self, function = cls._stackOn(func)
+      if len(types) > _MAX_EXPANDED_FLEX:
+        flexes = self.getFlexes()
+        self.__flex_sig_func_list__ = [*flexes, (TypeSig(*types), function)]
+        return self
       for arrangement in Arrangements(*types):
         sig = TypeSig(*arrangement.values)
-        if TYPE_CHECKING:  # pragma: no cover
+        if TYPE_CHECKING:  # pragma: no cover, no mutate
           assert isinstance(function, FunctionType)
         load = PermuterMethod(function, arrangement)
         self._addSigFunc(sig, load)
@@ -316,19 +504,20 @@ class overload:  # NOQA
   @classmethod
   def fallback(cls, func) -> Self:
     """
-    The 'fallback' classmethod registers 'func' as the fallback, invoked
-    when no signature matches a dispatched call.
+    A call no declaration of the name accepts may need a function of its
+    own instead of an error.
 
     Parameters
     ----------
+
     func : Method
-        The fallback function. 'Method' expands to 'Callable[..., Any]'.
+      The function, or the 'overload' of a decorator below in the stack.
 
     Returns
     -------
-    Self
-        The 'overload' carrying the fallback: the one from a decorator
-        below in the same stack, or a new one.
+
+    overload
+      The 'overload' of the stack, or a new one.
     """
     self, function = cls._stackOn(func)
     self.__fallback_func__ = function
@@ -337,19 +526,20 @@ class overload:  # NOQA
   @classmethod
   def finalize(cls, func: Method) -> Self:
     """
-    The 'finalize' classmethod registers 'func' as the finalizer, run in
-    the 'finally' block of every dispatched call.
+    Some work must follow every call of the name, whichever declaration
+    took it and whether or not it raised.
 
     Parameters
     ----------
+
     func : Method
-        The finalizer function. 'Method' expands to 'Callable[..., Any]'.
+      The function, or the 'overload' of a decorator below in the stack.
 
     Returns
     -------
-    Self
-        The 'overload' carrying the finalizer: the one from a decorator
-        below in the same stack, or a new one.
+
+    overload
+      The 'overload' of the stack, or a new one.
     """
     self, function = cls._stackOn(func)
     self.__finalizer_func__ = function
@@ -358,28 +548,119 @@ class overload:  # NOQA
   @classmethod
   def _stackOn(cls, func: Any) -> tuple[Self, Method]:
     """
-    The '_stackOn' method returns the 'overload' a role decorator, 'flex',
-    'fallback' or 'finalize', adds its role to, with the function the role
-    is for. Given an 'overload' from a decorator below in the same stack,
-    it returns that one, with the function the stack decorates, so every
-    decorator of the stack registers one function. Given the function
-    itself, it returns a new 'overload' decorating it, after refusing a
-    staticmethod or a classmethod.
+    The role decorators 'flex', 'fallback' and 'finalize' are called with
+    whatever the decorator below them returned, and every decorator of a
+    stack must register the one function the stack decorates.
+
+    Implementation
+    --------------
+
+    Any 'classmethod' or 'staticmethod' is taken off first. An 'overload'
+    beneath takes its kind and is returned with its latest function; a
+    function is checked and given a new 'overload' keeping that kind.
+
+    Parameters
+    ----------
+
+    func : Any
+      A function, possibly a 'classmethod' or 'staticmethod', or an
+      'overload'.
+
+    Returns
+    -------
+
+    tuple[overload, Method]
+      The 'overload' and the function.
+
+    Raises
+    ------
+
+    TypeException
+      What lies under any 'classmethod' or 'staticmethod' cannot be called.
+
+    MixedMethodKind
+      The function is decorated as both a classmethod and a staticmethod,
+      or the stack declares both kinds.
     """
+    kinds, func = cls.peelMethodKinds(func)
     if isinstance(func, cls):
+      func._takeMethodKinds(kinds)
       return func, func._getLatestFunc()
-    _refuseMethodKinds(func)
+    kind = cls.agreeMethodKind(kinds, cls._getFunctionName(func))
+    cls._refuseUncallable(func)
     self = cls(_root=True)
+    self.__method_kind__ = kind
     self.__latest_func__ = func
     return self, func
 
   @staticmethod
+  def _refuseUncallable(func: Any) -> None:
+    """
+    The dispatcher a namespace builds calls every registered function
+    itself, so what lies under the method kinds of a declaration must be
+    callable, or the mistake would show only at the first call.
+
+    Parameters
+    ----------
+
+    func : Any
+      What the decorator registers.
+
+    Raises
+    ------
+
+    TypeException
+      'func' cannot be called.
+    """
+    if not callable(func):
+      raise TypeException('func', func, FunctionType)
+
+  @classmethod
+  def _refuseBare(cls, decorator: str, *types) -> None:
+    """
+    '@overload' written without parentheses, as 'typing.overload' is
+    written, hands the function to the decorator where the first class of
+    the signature belongs, and the refusal must say that the parentheses
+    are missing rather than that a function is no class.
+
+    Implementation
+    --------------
+
+    A single entry that is a function, under any 'classmethod' or
+    'staticmethod' layers, or a record of another decorator, is refused.
+
+    Parameters
+    ----------
+
+    decorator : str
+      The decorator, 'overload' or 'overload.flex', for the message.
+
+    *types
+      What the decorator received as its signature.
+
+    Raises
+    ------
+
+    BareOverload
+      The single entry is a function or a record.
+    """
+    if len(types) != 1:
+      return
+    _, entry = cls.peelMethodKinds(types[0])
+    if isinstance(entry, (FunctionType, cls)):
+      raise BareOverload(decorator, types[0])
+
+  @staticmethod
   def _refuseKeywords(**kwargs) -> None:
     """
-    The '_refuseKeywords' method raises the 'TypeError' Python raises for
-    an unexpected keyword argument, for any keyword at all, since the
-    decorator takes none. A misspelled keyword would otherwise go
+    'overload' takes no keyword, and a misspelled keyword must not pass
     unnoticed.
+
+    Raises
+    ------
+
+    TypeError
+      Any keyword is given, worded as Python words it.
     """
     for key in kwargs:
       infoSpec = """overload() got an unexpected keyword argument '%s'"""
@@ -390,12 +671,9 @@ class overload:  # NOQA
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __getattr__(self, key: str) -> Any:
-    if self.__latest_func__ is not None:
-      func = self.__latest_func__
-    elif self.isFallback():
-      func = self.getFallback()
-    else:
+    if self.__latest_func__ is None:
       raise MissingVariable(self, key)
+    func = self.__latest_func__
     try:
       value = getattr(func, key)
     except AttributeError:
@@ -405,41 +683,92 @@ class overload:  # NOQA
 
   def __iter__(self, ) -> Iterator[tuple[TypeSig, Method]]:
     """
-    Iterating an 'overload' yields each concrete '(TypeSig, function)'
-    pair registered on it; the variadic pairs are read from
-    'getVariadics'.
+    'LoadSpaceHook' must read the concrete signatures an 'overload'
+    records, each with its function.
 
     Yields
     ------
-    tuple of (TypeSig, Method)
-        Each registered signature-function pair. 'Method' expands to
-        'Callable[..., Any]'.
+
+    tuple[TypeSig, Method]
+      Each concrete pair; the variadic ones come from 'getVariadics'.
     """
     yield from self._getSigFuncDict().items()
 
-  if TYPE_CHECKING:  # pragma: no cover
-    def __call__(self, func: Method) -> Never:
-      """Linter friendly explicitly disabled call method. """
+  def __set_name__(self, owner: type, name: str) -> Never:
+    """
+    In the body of a class whose metaclass is not based on 'BaseMeta',
+    nothing claims an 'overload' record or builds a dispatcher from it, so
+    the record would stay at its name, the class statement would succeed,
+    and the mistake would show only at the first call, far from the
+    class. The class statement is the place to refuse it.
+
+    Implementation
+    --------------
+
+    Python calls this method only for a record left in the dictionary of
+    the class, which the namespace of a 'BaseMeta' metaclass never stores.
+    Before Python 3.12 the refusal reaches the class statement wrapped in
+    a 'RuntimeError'.
+
+    Parameters
+    ----------
+
+    owner : type
+      The class being created.
+
+    name : str
+      The name the record is bound to.
+
+    Raises
+    ------
+
+    TypeError
+      Always.
+    """
+    infoSpec = """The class body of '%s' leaves the 'overload' of '%s' at
+    its name: the metaclass of '%s' builds no dispatcher from it, and an
+    'overload' only records a signature, so nothing would ever call it. A
+    class using '@overload' is based on 'BaseObject', or built by a
+    metaclass based on 'BaseMeta'; a class whose metaclass comes from
+    another library takes a metaclass combined with 'BaseMeta'."""
+    ownerName = owner.__name__
+    raise TypeError(textFmt(infoSpec % (ownerName, name, ownerName)))
+
+  def __call__(self, *args, **kwargs) -> Never:
+    """
+    A record is never called: it holds signatures for the namespace that
+    builds the dispatcher. A call reaching one means it was declared where
+    no namespace claims it, as on a function outside a class, and the
+    error must say so, rather than only that the record cannot be called.
+
+    Raises
+    ------
+
+    TypeError
+      Always.
+    """
+    infoSpec = """The 'overload' of '%s' was called. An 'overload' only
+    records a signature, which the namespace of a class based on
+    'BaseObject' turns into a dispatcher, and is never called itself. A
+    class using '@overload' is based on 'BaseObject', or built by a
+    metaclass based on 'BaseMeta', as a metaclass combined with one of
+    another library is; a function outside a class is not
+    overloaded."""
+    name = self._getFunctionName(self._getLatestFunc())
+    raise TypeError(textFmt(infoSpec % name))
 
   def __str__(self, ) -> str:
-    """
-    The string representation names the function the overload decorates
-    and lists each role it registers the function in: every type
-    signature, the variadic ones after the concrete, then the fallback
-    and the finalizer, as a stack of decorators may combine them. An
-    instance with no function yet renders a short note instead of
-    raising.
-    """
     if self.__latest_func__ is None:
       return textFmt("""overload with no function registered so far""")
     roles = [str(sig) for sig, _ in self._getSigFuncDict().items()]
+    roles += ['%s in any order' % sig for sig, _ in self.getFlexes()]
     roles += [str(sig) for sig, _ in self.getVariadics()]
     if self.isFallback():
       roles.append('the fallback')
     if self.isFinalizer():
       roles.append('the finalizer')
     infoSpec = """overload of function: '%s', registered as:<br><tab>%s"""
-    name = self._getLatestFunc().__name__
+    name = self._getFunctionName(self._getLatestFunc())
     return textFmt(infoSpec % (name, '<br><tab>'.join(roles)))
 
   __repr__ = __str__

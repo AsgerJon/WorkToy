@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ...utilities import maybe
 from ...waitaminute.meta import ControlClassError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Type, TypeAlias
 
   from . import MetaFlow
@@ -22,8 +22,37 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class ControlSpace(dict):
   """
-  ControlSpace provides the namespace object for the control flow
-  exceptions.
+  A control-flow signal is used by its type alone: it is raised, caught
+  by type, and carries nothing. A signal class defining methods or state
+  is therefore a mistake, and the mistake should fail at the line making
+  it rather than later. The body of a signal still binds the names Python
+  writes into every class body, a docstring among them, and may define
+  its own text.
+
+  Implementation
+  --------------
+
+  'MetaFlow.__prepare__' creates the namespace. '__setitem__' admits the
+  names in '__white_list__' ('__str__', '__repr__' and the names the
+  interpreter writes, such as '__classcell__'), and any name 'Exception'
+  holds as an attribute that is not callable, such as '__module__',
+  '__qualname__' and '__doc__'. Every other name raises
+  'ControlClassError'. The body of the root signal, declared with
+  '_root=True', is not checked. 'MetaType' writes '__namespace__' into
+  the class past '__setitem__', as for every class it builds.
+
+  Attributes
+  ----------
+
+  __white_list__ : tuple[str, ...]
+    The names always admitted.
+
+  __metaclass__, __base_classes__, __class_name__ : Any
+    The metaclass, bases and name of the signal, for the message of
+    'ControlClassError'.
+
+  __is_root__ : bool
+    Whether the body is that of the root signal.
   """
 
   #  The interpreter binds '__classcell__' when a method uses 'super()',
@@ -32,7 +61,6 @@ class ControlSpace(dict):
     '__firstlineno__',
     '__str__',
     '__repr__',
-    '__namespace__',
     '__static_attributes__',
     '__classcell__',
     '__classdictcell__',
@@ -53,7 +81,6 @@ class ControlSpace(dict):
     self.__base_classes__ = bases
     self.__class_name__ = name
     self.__is_root__ = True if kw.get('_root', False) else False
-    self['__namespace__'] = self
 
   def __setitem__(self, key: str, value: Any) -> None:
     if key in self._getWhiteList():

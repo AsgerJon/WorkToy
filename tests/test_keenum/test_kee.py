@@ -1,183 +1,222 @@
 """
-TestKee tests the 'Kee' class. The addition of this dedicated test case
-comes *after* reimplement 'Kee' as a subclass of 'AttriBox'. It is
-sufficiently different from 'AttriBox' to not be covered by the same test
-case as it. Further, 'Kee' now implements certain functionalities not used
-by 'KeeNum' classes directly after class creation.
+TestKee tests 'Kee' from 'worktoy.keenum'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from tests.test_keenum import KeeTest
+import pickle
+
 from worktoy.keenum import Kee, KeeNum
-from worktoy.waitaminute import TypeException, VariableNotNone
-from worktoy.waitaminute import MissingVariable
-from worktoy.waitaminute.keenum import KeeNameConflict, KeeDuplicate
+from worktoy.waitaminute import MissingVariable, TypeException
+from worktoy.waitaminute import VariableNotNone
+from worktoy.waitaminute.keenum import KeeCaseException
+from . import KeenumTest, WeekDay
 
 
-class TestKee(KeeTest):
-  """TestKee tests the 'Kee' class. The addition of this dedicated test case
-  comes *after* reimplement 'Kee' as a subclass of 'AttriBox'. It is
-  sufficiently different from 'AttriBox' to not be covered by the same test
-  case as it. Further, 'Kee' now implements certain functionalities not used
-  by 'KeeNum' classes directly after class creation.
+class TestKee(KeenumTest):
+  """
+  A 'Kee' declares one member: it carries the value type and the
+  constructor arguments as a box does, builds the value at the first
+  read, and receives its name from the namespace and its index from the
+  metaclass, each once. The tests pin the value, the two settings and
+  their refusals, the placement outside an enumeration, the text, the
+  integer, the pickling and the clone.
   """
 
-  def test_index_bad_get(self) -> None:
-    """
-    Testing exceptions raised when getting 'index'.
-    """
-    kee = Kee[str]('')
+  def test_value_built_once(self) -> None:
+    kee = Kee[list]([1, 2])
+    self.assertFalse(kee.__value_built__)
+    first = kee.value
+    self.assertEqual(first, [1, 2])
+    self.assertTrue(kee.__value_built__)
+    self.assertIs(kee.value, first)
+    self.assertIs(kee.getValue(), first)
+
+  def test_none_is_a_value(self) -> None:
+    kee = Kee[object](None)
+    self.assertIsNone(kee.value)
+    self.assertTrue(kee.__value_built__)
+    self.assertIsNone(kee.value)
+
+  def test_written_value_honoured(self) -> None:
+    kee = Kee[int](1)
+    object.__setattr__(kee, '__field_value__', 7)
+    self.assertEqual(kee.value, 7)
+    self.assertFalse(kee.__value_built__)
+
+  def test_value_of_wrong_type_refused(self) -> None:
+    kee = Kee[int](1)
+    object.__setattr__(kee, '__field_value__', 'seven')
+    with self.assertRaises(TypeException) as context:
+      _ = kee.value
+    self.assertEqual(context.exception.varName, '__field_value__')
+    self.assertEqual(context.exception.actualObject, 'seven')
+    self.assertIs(context.exception.actualType, str)
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertIn("'__field_value__'", str(context.exception))
+    self.assertIn("'int'", str(context.exception))
+    with self.assertRaises(RecursionError) as context:
+      Kee[int](1).getValue(_recursion=True)
+    self.assertEqual(context.exception.args, ())
+
+  def test_name_and_index(self) -> None:
+    kee = Kee[int](1)
+    with self.assertRaises(MissingVariable) as context:
+      _ = kee.name
+    self.assertIs(context.exception.instance, kee)
+    self.assertEqual(context.exception.varName, '__num_name__')
+    self.assertEqual(context.exception.expectedTypes, (str,))
+    self.assertEqual(str(context.exception),
+                     "Missing 'Kee.__num_name__: str'!")
     with self.assertRaises(MissingVariable) as context:
       _ = kee.index
-    e = context.exception
-    self.assertEqual(e.varName, '__num_index__')
-    self.assertIs(e.instance, kee)
-    self.assertIn(int, e.expectedTypes, )
-
-    setattr(kee, '__num_index__', 'sixty-nine')
-    with self.assertRaises(TypeException) as context:
-      _ = kee.index
-    e = context.exception
-    self.assertEqual(e.varName, '__num_index__')
-    self.assertIs(e.actualObject, getattr(kee, '__num_index__'))
-    self.assertIs(e.actualType, str)
-    self.assertIn(int, e.expectedTypes)
-
-  def test_index_bad_set(self, ) -> None:
-    """
-    Testing exceptions raised when setting 'index'.
-    """
-    kee = Kee[str]('')
+    self.assertIs(context.exception.instance, kee)
+    self.assertEqual(context.exception.varName, '__num_index__')
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertEqual(str(context.exception),
+                     "Missing 'Kee.__num_index__: int'!")
+    kee.name = 'RED'
+    kee.index = 3
+    self.assertEqual(kee.name, 'RED')
+    self.assertEqual(kee.index, 3)
+    self.assertEqual(int(kee), 3)
     with self.assertRaises(VariableNotNone) as context:
-      kee.index = 69
-      kee.index = 420
-    e = context.exception
-    self.assertEqual(e.name, 'index')
-    self.assertIs(e.value, 69)
+      kee.name = 'BLUE'
+    self.assertEqual(context.exception.name, 'name')
+    self.assertEqual(context.exception.value, 'RED')
+    self.assertIn("'RED' at name 'name'", str(context.exception))
+    with self.assertRaises(VariableNotNone) as context:
+      kee.index = 4
+    self.assertEqual(context.exception.name, 'index')
+    self.assertEqual(context.exception.value, 3)
+    self.assertIn("'3' at name 'index'", str(context.exception))
 
-    kee = Kee[str]('')
+  def test_name_must_be_upper_case(self) -> None:
+    kee = Kee[int](1)
+    for name in ('red', 'Red', 'rED', 'red_one'):
+      with self.subTest(name=name):
+        with self.assertRaises(KeeCaseException) as context:
+          kee.name = name
+        self.assertEqual(context.exception.name, name)
+        self.assertIn(name, str(context.exception))
+    kee.name = 'RED_ONE'
+    self.assertEqual(kee.name, 'RED_ONE')
+
+  def test_index_must_be_an_int(self) -> None:
+    kee = Kee[int](1)
     with self.assertRaises(TypeException) as context:
-      kee.index = 'sixty-nine'
-    e = context.exception
-    self.assertEqual(e.varName, 'index')
-    self.assertIs(e.actualObject, 'sixty-nine')
-    self.assertIs(e.actualType, str)
-    self.assertIn(int, e.expectedTypes)
+      kee.index = '3'
+    self.assertEqual(context.exception.varName, 'index')
+    self.assertEqual(context.exception.actualObject, '3')
+    self.assertIs(context.exception.actualType, str)
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertIn("'index'", str(context.exception))
+    self.assertIn("'int'", str(context.exception))
 
-  def test_value_bad_get(self, ) -> None:
-    """
-    Testing exceptions raised when getting 'value'.
-    """
-    kee = Kee[str]('')
-    with self.assertRaises(RecursionError):
-      _ = kee.getValue(_recursion=True)
-    setattr(kee, '__field_value__', 69)
-    with self.assertRaises(TypeException) as context:
-      _ = kee.getValue()
-    e = context.exception
-    self.assertEqual(e.varName, '__field_value__')
-    self.assertIs(e.actualObject, getattr(kee, '__field_value__'))
-    self.assertIs(e.actualType, int)
-    self.assertIn(str, e.expectedTypes)
-
-  def test_name_bad_type_get(self, ) -> None:
-    """
-    Testing exception when '__num_name__' is not 'None' and not 'str'.
-    """
-    kee = Kee[str]('')
-    setattr(kee, '__num_name__', 69)
+  def test_settings_of_wrong_type_refused(self) -> None:
+    kee = Kee[int](1)
+    object.__setattr__(kee, '__num_name__', 5)
+    object.__setattr__(kee, '__num_index__', 'x')
     with self.assertRaises(TypeException) as context:
       _ = kee.name
-    e = context.exception
-    self.assertEqual(e.varName, '__num_name__')
-    self.assertEqual(e.actualObject, getattr(kee, '__num_name__'))
-    self.assertIs(e.actualType, int)
-    self.assertIn(str, e.expectedTypes)
+    self.assertEqual(context.exception.varName, '__num_name__')
+    self.assertEqual(context.exception.actualObject, 5)
+    self.assertIs(context.exception.actualType, int)
+    self.assertEqual(context.exception.expectedTypes, (str,))
+    self.assertIn("'__num_name__'", str(context.exception))
+    with self.assertRaises(TypeException) as context:
+      _ = kee.index
+    self.assertEqual(context.exception.varName, '__num_index__')
+    self.assertEqual(context.exception.actualObject, 'x')
+    self.assertIs(context.exception.actualType, str)
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertIn("'__num_index__'", str(context.exception))
 
-  def test_kee_name_conflict(self) -> None:
-    """
-    Tests behaviour where a 'member' stored under one name has its
-    internal name set to a different name.
-    """
+  def test_placed_only_in_an_enumeration(self) -> None:
+    with self.assertRaises((TypeError, RuntimeError)) as context:
+      class Plain:
+        RED = Kee[int](1)
 
-    class ABCD(KeeNum):
-      A = Kee[int](1)
-      B = Kee[int](2)
-      C = Kee[int](3)
-      D = Kee[int](4)
-      E = Kee[int](5)
+    exception = context.exception.__cause__ or context.exception
+    self.assertIn("'Plain' is no enumeration", str(exception))
+    self.assertIn("'RED'", str(exception))
+    kee = Kee[int](1)
+    with self.assertRaises(TypeError) as context:
+      kee.__set_name__(int, 'RED')
+    self.assertIn("'int' is no enumeration", str(context.exception))
+    self.assertIn("'RED'", str(context.exception))
 
-    with self.assertRaises(KeeNameConflict) as context:
-      class L(ABCD):  # noqa: F841
-        F = ABCD.A.kee  # Is present but at different name
-    e = context.exception
-    self.assertEqual(str(e), repr(e))
-    self.assertIs(e.member, ABCD.A.kee)
-    self.assertEqual(e.oldName, 'A')
-    self.assertEqual(e.newName, 'F')
+  def test_placed_kee(self) -> None:
+    kee = WeekDay.MONDAY.kee
+    self.assertIsInstance(kee, Kee)
+    self.assertIs(kee.getFieldOwner(), WeekDay)
+    self.assertEqual(kee.getFieldName(), 'MONDAY')
+    self.assertEqual(kee.name, 'MONDAY')
+    self.assertEqual(kee.index, 0)
+    self.assertEqual(kee.value, 'mandag')
+    self.assertIs(kee.getFieldType(), str)
 
-  def test_inheritance_from_non_keenum(self, ) -> None:
-    """
-    Tests that inheriting from a non-'KeeNum' class raises the
-    appropriate exception.
-    """
+  def test_text(self) -> None:
+    kee = Kee[int](1)
+    self.assertEqual(str(kee), '<Kee member: - N/A ->')
+    kee.name = 'RED'
+    self.assertEqual(str(kee), '<Kee member: RED>')
+    self.assertEqual(repr(kee), '<Kee member: RED>')
+    self.assertEqual(str(WeekDay.FRIDAY.kee), '<Kee member: FRIDAY>')
 
-    class Space:
-      __member_type__ = int
-      __overload_map__ = dict()
-      __fallback_map__ = dict()
-      __finalizer_map__ = dict()
-      __compiled_space__ = dict()
+  def test_pickle(self) -> None:
+    placed = WeekDay.SUNDAY.kee
+    self.assertIs(pickle.loads(pickle.dumps(placed)), placed)
+    loose = Kee[int](4)
+    loose.name = 'FOUR'
+    loaded = pickle.loads(pickle.dumps(loose))
+    self.assertIsNot(loaded, loose)
+    self.assertIsInstance(loaded, Kee)
+    self.assertIs(loaded.getFieldType(), int)
+    self.assertEqual(loaded.getPosArgs(), (4,))
+    self.assertEqual(loaded.name, 'FOUR')
+    self.assertEqual(loaded.value, 4)
 
-    class Base:
-      __namespace__ = Space()
-
-    class ABCD(KeeNum, Base):
-      A = Kee[int](1)
-      B = Kee[int](2)
-      C = Kee[int](3)
-      D = Kee[int](4)
-
-    for letter, member in zip('ABCD', ABCD):
-      self.assertEqual(getattr(ABCD, letter), member)
-
-  def test_kee_duplicate_in_bases(self, ) -> None:
-    """
-    Tests that having the same 'Kee' member in multiple base
-    classes raises the appropriate exception.
-    """
-
-    class A(KeeNum):
-      X = Kee[int](1)
-
-    class B(KeeNum):
-      X = Kee[int](1)
-
-    with self.assertRaises(KeeDuplicate) as context:
-      class C(A, B):  # noqa: F841
-        """
-        If it just says 'pass', then sometimes when the class fails to
-        create, the 'pass' line will not be considered covered.
-        """
-    e = context.exception
-    self.assertEqual(e.name, 'X')
-
-  def test_missing_kee(self) -> None:
-    """
-    Tests the exception raised when '__field_kee__ is None'.
-    """
-
-    class Num(KeeNum):
-      A = Kee[int](69)
-
-    self.assertIs(Num.A.valueType, int)
-
-    object.__setattr__(Num.A, '__field_kee__', None)
+  def test_clone(self) -> None:
+    kee = Kee[int](4, )
+    kee.name = 'FOUR'
+    kee.index = 2
+    cloned = kee.clone()
+    self.assertIsNot(cloned, kee)
+    self.assertIs(type(cloned), Kee)
+    self.assertIs(cloned.getFieldType(), int)
+    self.assertEqual(cloned.getPosArgs(), (4,))
+    self.assertEqual(cloned.name, 'FOUR')
     with self.assertRaises(MissingVariable) as context:
-      _ = Num.A.kee
-    e = context.exception
-    self.assertIs(e.instance, Num.A)
-    self.assertEqual(e.varName, '__field_kee__')
-    self.assertIn(Kee, e.expectedTypes)
+      _ = cloned.index
+    self.assertIs(context.exception.instance, cloned)
+    self.assertEqual(context.exception.varName, '__num_index__')
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertEqual(str(context.exception),
+                     "Missing 'Kee.__num_index__: int'!")
+    cloned.index = 0
+    self.assertEqual(cloned.index, 0)
+    self.assertEqual(kee.index, 2)
+
+  def test_subclass_of_kee(self) -> None:
+    class Loud(Kee):
+      def shout(self) -> str:
+        return self.name.upper()
+
+    class Volume(KeeNum):
+      SOFT = Loud[int](1)
+      HARD = Loud[int](2)
+
+    self.assertIsInstance(Volume.SOFT.kee, Loud)
+    self.assertEqual(Volume.HARD.kee.shout(), 'HARD')
+    self.assertIs(type(Volume.SOFT.kee.clone()), Loud)
+
+  def test_random_names(self) -> None:
+    self.randomWord.size = 6
+    for word in self.randomWord.row:
+      kee = Kee[str](word)
+      kee.name = word.upper()
+      with self.subTest(word=word):
+        self.assertEqual(kee.value, word)
+        self.assertEqual(str(kee), '<Kee member: %s>' % word.upper())

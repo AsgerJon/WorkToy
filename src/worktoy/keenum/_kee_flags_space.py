@@ -14,7 +14,7 @@ from ..waitaminute.keenum import KeeFlagDuplicate, KeeFlagNameError
 from ..waitaminute.keenum import KeeCaseException
 from . import KeeFlag, KeeFlagsHook
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Type, TypeAlias
 
   from . import KeeFlags
@@ -26,8 +26,36 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeFlagsSpace(BaseSpace):
   """
-  KeeFlagsSpace subclasses 'BaseSpace' from the 'worktoy.mcls' package and
-  provides the namespace object required for 'KeeFlags'.
+  A 'KeeFlags' body declares its flags as 'KeeFlag' objects, and the
+  class must receive them in declaration order, inherited flags first,
+  each name once, upper case and free of the underscore that joins flag
+  names into member names, with 'NULL' kept for the member with no flag
+  high. The namespace of the body sees each binding and knows the
+  bases, so the bookkeeping belongs there.
+
+  Implementation
+  --------------
+
+  'KeeFlagsSpace' is a 'BaseSpace' with one hook of its own,
+  'KeeFlagsHook', which hands every 'KeeFlag' bound in the body to
+  'addKeeFlag'. 'addKeeFlag' refuses an underscore in the name or the
+  name 'NULL' with 'KeeFlagNameError', a name that is not upper case
+  with 'KeeCaseException' and a repeated or inherited name with
+  'KeeFlagDuplicate', and records the flag under its name. The
+  constructor records the flags of every base that is a flags class.
+  'postCompile' writes the merged flags into the class dictionary as
+  '__kee_flags__' and installs 'getKeeFlags', a classmethod that clones
+  them onto the class with their bit indices; the root, declared with
+  the class keyword '_root', gets neither.
+
+  Attributes
+  ----------
+
+  __kee_flags__ : dict or None
+    The flags the body declared, by name.
+
+  __base_flags__ : dict or None
+    The flags inherited from the bases, by name.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -121,7 +149,7 @@ class KeeFlagsSpace(BaseSpace):
         if not isinstance(base, KeeFlagsMeta):
           continue
         try:
-          flags = getattr(base, 'flags')
+          flags = type.__getattribute__(base, 'flags')
         except AttributeError:
           continue
         else:

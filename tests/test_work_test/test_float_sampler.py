@@ -1,115 +1,106 @@
 """
-TestFloatSampler tests the FloatSampler class from the
-'worktoy.work_test.samplers' module.
+TestFloatSampler tests 'FloatSampler' from 'worktoy.work_test.samplers'.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from worktoy.waitaminute import TypeException
-from worktoy.work_test.samplers import FloatSampler
-from . import SamplerTest
+from worktoy.waitaminute.dispatch import DispatchException
+from worktoy.work_test.samplers import FloatSampler, IntSampler
+from . import WorkTestTest
 
 
-class TestFloatSampler(SamplerTest):
+class TestFloatSampler(WorkTestTest):
   """
-  TestFloatSampler tests the FloatSampler class from the
-  'worktoy.work_test.samplers' module.
+  'FloatSampler' draws real numbers from an interval named as an integer
+  range is named, with the bounds declared again as floats, so a pair of
+  integers reaches them through the inherited signatures and is cast.
+  The tests pin the defaults, the positional constructors of both kinds,
+  the ordering of a pair, of a lone keyword and of an assignment through
+  the notifier registered again on the float boxes, the refusals, and
+  the draws within the interval.
   """
 
-  def test_init(self, ) -> None:
-    """
-    This method tests the constructor overloads of the 'FloatSampler'
-    class, which are as follows:
+  def test_defaults(self) -> None:
+    sampler = FloatSampler()
+    self.assertIsInstance(sampler, IntSampler)
+    self.assertEqual(self._bounds(sampler), (0.0, 1.0))
+    self.assertIs(type(sampler.minVal), float)
+    self.assertIs(sampler.valueType, float)
+    self.assertEqual(repr(sampler), 'FloatSampler(minVal=0.0, maxVal=1.0, '
+                                    'colCount=1, rowCount=1, seed=None)')
+    self.assertEqual(str(sampler), "<FloatSampler: 'float' (1, 1)>")
 
-    @overload(float, float, )
-    def __init__(self, minVal: float, maxVal: float, **kw) -> None: ...
+  def test_positional_constructors(self) -> None:
+    self.assertEqual(self._bounds(FloatSampler(1.5, 2.5)), (1.5, 2.5))
+    self.assertEqual(self._bounds(FloatSampler(2.0, 1.0)), (1.0, 2.0))
+    self.assertEqual(self._bounds(FloatSampler(3.0)), (0.0, 3.0))
+    self.assertEqual(self._bounds(FloatSampler(-3.0)), (-3.0, 0.0))
+    self.assertEqual(self._bounds(FloatSampler(1, 6)), (1.0, 6.0))
+    self.assertEqual(self._bounds(FloatSampler(3)), (0.0, 3.0))
+    self.assertIs(type(FloatSampler(1, 6).maxVal), float)
+    self.assertEqual(self._bounds(FloatSampler(5.0, minVal=2.0)),
+                     (2.0, 5.0))
+    two = FloatSampler(1.0, 2.0, seed=3)
+    self.assertEqual(two.seed, 3)
+    one = FloatSampler(2.0, size=3)
+    self.assertEqual((self._bounds(one), one.colCount), ((0.0, 2.0), 3))
 
-    @overload(float, )
-    def __init__(self, maxVal: float, **kw) -> None: ...
+  def test_keywords_and_assignment(self) -> None:
+    self.assertEqual(self._bounds(FloatSampler(min=0.5, max=0.25)),
+                     (0.25, 0.5))
+    self.assertEqual(self._bounds(FloatSampler(maxVal=0.5)), (0.0, 0.5))
+    self.assertEqual(self._bounds(FloatSampler(minVal=2)), (1.0, 2.0))
+    sampler = FloatSampler()
+    sampler.minVal = 5
+    self.assertEqual(self._bounds(sampler), (1.0, 5.0))
+    self.assertIs(type(sampler.maxVal), float)
+    sampler.maxVal = 0.5
+    self.assertEqual(self._bounds(sampler), (0.5, 1.0))
+    sampler.maxVal = 7.5
+    self.assertEqual(self._bounds(sampler), (0.5, 7.5))
 
-    @overload()
-    def __init__(self, **kw) -> None: ...
-    """
-
-    floatFloatKwarg = FloatSampler(69., 420., maximum=420.)
-    self.assertEqual(floatFloatKwarg.minVal, 69.)
-    self.assertEqual(floatFloatKwarg.maxVal, 420.)
-    floatFloatSampler = FloatSampler(69., 420.)
-    self.assertEqual(floatFloatSampler.minVal, 69.)
-    self.assertEqual(floatFloatSampler.maxVal, 420.)
-    floatKwarg = FloatSampler(69., minimum=0.)
-    self.assertEqual(floatKwarg.minVal, 0.)
-    self.assertEqual(floatKwarg.maxVal, 69.)
-    floatSampler = FloatSampler(69.)
-    self.assertEqual(floatSampler.minVal, 0.)
-    self.assertEqual(floatSampler.maxVal, 69.)
-    defaultSampler = FloatSampler()
-    self.assertEqual(defaultSampler.minVal, 0.)
-    self.assertEqual(defaultSampler.maxVal, 1.)
-    kwargSampler = FloatSampler(minVal=69., maxVal=420.)
-    self.assertEqual(kwargSampler.minVal, 69.)
-    self.assertEqual(kwargSampler.maxVal, 420.)
-
-  def test_values(self, ) -> None:
-    """
-    The 'FloatSampler' class inherits most functionality from 'IntSampler'
-    tested elsewhere, so this method tests only the values it generates.
-    Specifically, it validates that it adheres to the specified value
-    given by the 'minValue' and 'maxValue' attributes.
-    """
-    sampler = FloatSampler(69., 420.)
-    numbers = self.rollSampler(sampler)
-    minNumber, maxNumber = min(numbers), max(numbers)
-    self.assertGreaterEqual(minNumber, sampler.minVal)
-    self.assertLessEqual(maxNumber, sampler.maxVal)
-
-  def test_bad_set(self, ) -> None:
-    """
-    This method tests the handling of bad types when setting 'minVal' and
-    'maxVal' attributes. The 'FloatSampler' class should raise
-    'TypeException'
-    when trying to set these attributes to non-float values.
-    """
+  def test_refusals(self) -> None:
+    with self.assertRaises(TypeException) as context:
+      FloatSampler(minVal='x')
+    self.assertTypeRefused(context.exception, 'minVal', 'x', float)
     sampler = FloatSampler()
     with self.assertRaises(TypeException) as context:
-      sampler.minVal = 'sixty-nine'  # type: ignore[assignment]
-    e = context.exception
-    self.assertEqual(e.varName, 'minValue')
-    self.assertEqual(e.actualObject, 'sixty-nine')
-    self.assertIs(e.actualType, str)
-    self.assertIn(float, e.expectedTypes)
+      sampler.maxVal = 'y'
+    self.assertTypeRefused(context.exception, 'maxVal', 'y', float)
+    self.assertEqual(self._bounds(sampler), (0.0, 1.0))
+    with self.assertRaises(DispatchException) as context:
+      FloatSampler('a')
+    self.assertIs(context.exception.dispatch,
+                  FloatSampler.__dict__['__init__'])
+    self.assertEqual(context.exception.posArgs, ('a',))
+    self.assertEqual(context.exception.keyArgs, {})
+    self.assertIn("no overload of 'FloatSampler.__init__' accepts",
+                  str(context.exception))
+    self.assertIn('<TypeSig: [float, float]>', str(context.exception))
 
-    with self.assertRaises(TypeException) as context:
-      sampler.maxVal = 'four-twenty'  # type: ignore[assignment]
-    e = context.exception
-    self.assertEqual(e.varName, 'maxValue')
-    self.assertEqual(e.actualObject, 'four-twenty')
-    self.assertIs(e.actualType, str)
-    self.assertIn(float, e.expectedTypes)
+  def test_draws(self) -> None:
+    sampler = FloatSampler(2.0, 3.0, seed=5, size=50)
+    row = sampler.row
+    self.assertEqual(row, FloatSampler(2.0, 3.0, size=50, seed=5).row)
+    for value in row:
+      self.assertIs(type(value), float)
+      self.assertGreaterEqual(value, 2.0)
+      self.assertLess(value, 3.0)
+    self.assertEqual(len(set(row)), 50)
+    flat = FloatSampler(4.0, 4.0, size=3)
+    self.assertEqual(flat.row, (4.0, 4.0, 4.0))
 
-  def test_bad_get(self, ) -> None:
-    """
-    This method tests the handling of bad types when getting 'minVal' and
-    'maxVal' attributes. The 'FloatSampler' class should raise
-    'TypeException'
-    when trying to get these attributes if they are set to non-float values.
-    """
-    sampler = FloatSampler()
-    object.__setattr__(sampler, '__min_value__', 'sixty-nine')
-    with self.assertRaises(TypeException) as context:
-      _ = sampler.minVal
-    e = context.exception
-    self.assertEqual(e.varName, 'minVal')
-    self.assertEqual(e.actualObject, 'sixty-nine')
-    self.assertIs(e.actualType, str)
-    self.assertIn(float, e.expectedTypes)
+  def test_random_draws(self) -> None:
+    self.randomFloat.size = 20
+    for value in self.randomFloat.row:
+      with self.subTest(value=value):
+        self.assertGreaterEqual(value, 0.0)
+        self.assertLess(value, 1.0)
+    self.assertEqual(self.randomFloat.seed, self.__sampler_seed__)
 
-    object.__setattr__(sampler, '__max_value__', 'four-twenty')
-    with self.assertRaises(TypeException) as context:
-      _ = sampler.maxVal
-    e = context.exception
-    self.assertEqual(e.varName, 'maxVal')
-    self.assertEqual(e.actualObject, 'four-twenty')
-    self.assertIs(e.actualType, str)
-    self.assertIn(float, e.expectedTypes)
+  @staticmethod
+  def _bounds(sampler: FloatSampler) -> tuple:
+    """The two bounds of the sampler as a pair."""
+    return sampler.minVal, sampler.maxVal

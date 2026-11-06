@@ -11,7 +11,7 @@ from ..core import MetaType
 from ..desc import Field
 from . import KeeBase
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Optional
   from . import KeeMeta
 else:
@@ -116,5 +116,5 @@ class KeeMetaMeta(MetaType):
       num = mcls.__new__(mcls, name, bases, numSpace, _root=True)
       mcls.__kee_num__ = cast(KeeMeta, num)
       mcls.__init__(num, name, bases, numSpace, _root=True)
-      return mcls._getKeeNum(_recursion=True, )
+      return mcls._getKeeNum(_recursion=True)  # pragma: no mutate
     return mcls.__kee_num__

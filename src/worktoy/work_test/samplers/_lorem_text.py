@@ -8,6 +8,11 @@ text without the 'lorem_ipsum' package.
 from __future__ import annotations
 
 import random
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from random import Random
+  from typing import Optional
 
 #  A word of every length from one letter to the longest. That coverage is
 #  what lets 'loremSentence' close a sentence at exactly the requested
@@ -40,15 +45,27 @@ _UP_TO_LENGTH: dict[int, tuple[str, ...]] = {
 }
 
 
-def randomWord() -> str:
+def _choose(words: tuple[str, ...], generator: Optional[Random]) -> str:
+  """
+  The '_choose' function draws one of 'words' from 'generator', a
+  'random.Random', or from the state of the 'random' module when no
+  generator is given.
+  """
+  if generator is None:
+    return random.choice(words)
+  return generator.choice(words)
+
+
+def randomWord(generator: Optional[Random] = None) -> str:
   """
   The 'randomWord' function returns one word drawn uniformly from
-  'LOREM_WORDS'.
+  'LOREM_WORDS', from 'generator' when one is given and from the state
+  of the 'random' module otherwise.
   """
-  return random.choice(LOREM_WORDS)
+  return _choose(LOREM_WORDS, generator)
 
 
-def _fittingWord(room: int) -> str:
+def _fittingWord(room: int, generator: Optional[Random] = None) -> str:
   """
   The '_fittingWord' function returns a word that keeps a sentence
   closable within 'room' characters: a word of exactly 'room' letters
@@ -57,16 +74,18 @@ def _fittingWord(room: int) -> str:
   after it.
   """
   if room <= _LONGEST:
-    return random.choice(_OF_LENGTH[room])
-  return random.choice(_UP_TO_LENGTH[min(room - 2, _LONGEST)])
+    return _choose(_OF_LENGTH[room], generator)
+  return _choose(_UP_TO_LENGTH[min(room - 2, _LONGEST)], generator)
 
 
-def loremSentence(charCount: int) -> str:
+def loremSentence(charCount: int, generator: Optional[Random] = None) -> str:
   """
   The 'loremSentence' function returns a sentence of exactly 'charCount'
   characters: words from 'LOREM_WORDS' joined by single spaces, the first
-  letter capitalised and a period closing it. A count of one gives the
-  period alone. A count below one is refused with 'ValueError'.
+  letter capitalised and a period closing it, drawn from 'generator' when
+  one is given and from the state of the 'random' module otherwise. A
+  count of one gives the period alone. A count below one is refused with
+  'ValueError'.
   """
   if charCount < 1:
     infoSpec = """A sentence needs at least one character, but %d were
@@ -76,7 +95,7 @@ def loremSentence(charCount: int) -> str:
   need = charCount - 1  # the body, before the closing period
   while need > 0:
     space = 1 if words else 0
-    word = _fittingWord(need - space)
+    word = _fittingWord(need - space, generator)
     words.append(word)
     need -= len(word) + space
   body = ' '.join(words)

@@ -1,47 +1,92 @@
 """
-BaseSampler is the base class for the sample-data generators.
+BaseSampler is the base class of the sample-data generators.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from abc import abstractmethod
+from random import Random
 from typing import TYPE_CHECKING, Any
 
 from ...dispatch import overload
-from ...utilities import maybe, typeCast
-from ...desc import Field, Alias
+from ...desc import Field, Alias, AttriBox
 from ...mcls import BaseObject
 from ...waitaminute import TypeException
-from ...waitaminute.dispatch import TypeCastException
+from . import SamplerMeta
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Optional, Iterator
-
-  MaybeInt: TypeAlias = Optional[int]
-
-  ValueTuple: TypeAlias = tuple[Any, ...]
-  ValueTuples: TypeAlias = tuple[ValueTuple, ...]
 
   Item: TypeAlias = Any
   Row: TypeAlias = tuple[Item, ...]
   Table: TypeAlias = tuple[Row, ...]
-
-  from abc import ABC, abstractmethod
-else:
-  ABC, abstractmethod = object, lambda x: x
+  KeyGroups: TypeAlias = dict[str, tuple[str, ...]]
+  Settings: TypeAlias = dict[str, Any]
 
 
-class BaseSampler(BaseObject, ABC):
+class BaseSampler(BaseObject, metaclass=SamplerMeta):
   """
-  BaseSampler is the base class for the sample-data generators. A
-  concrete sampler supplies a value type and a single-sample recipe
-  through the abstract '_getValueType' and '_getItem' hooks; this base
-  builds the rest on top of them. 'colCount' and 'rowCount' (with the
-  'width'/'height'/'size'/'count' aliases) size the output, and the
-  'item', 'row', and 'table' accessors draw one value, one row of
-  'colCount' values, and a 'rowCount' by 'colCount' table respectively.
-  Calling the sampler draws a single item; iterating yields 'rowCount'
-  rows.
+  A test that needs random data wants a sampler it can size, narrow and
+  seed in one expression, draw from one value, one row or one table at
+  a time, and trust to give values of one type; and a sampler for a new
+  kind of value should take a value type and a single-sample recipe and
+  nothing more. 'BaseSampler' is that base. 'IntSampler' and the other
+  samplers of the package supply the two hooks, and a sampler of a
+  project does the same:
+
+    class DieSampler(BaseSampler):
+
+      sides = AttriBox[int](6)
+
+      def _getValueType(self, **kwargs) -> type:
+        return int
+
+      def _getItem(self, *args, **kwargs) -> int:
+        return self.random.randint(1, self.sides)
+
+  Implementation
+  --------------
+
+  The settings are boxes. 'colCount' and 'rowCount', one each unless
+  set, size a row and a table, with 'width', 'size', 'height' and
+  'count' as aliases and as keywords, and a count below one is refused
+  with 'ValueError'; a subclass declares its own settings the same way.
+  The keyword constructor takes every setting by the synonyms
+  '__key_groups__' lists, merged along the resolution order so that a
+  subclass adds its own groups, writes the first synonym present of
+  each through its box, which casts what converts without loss and
+  refuses the rest with 'TypeException' naming the setting, and refuses
+  a keyword that names no setting with the 'TypeError' Python raises
+  for an unexpected keyword argument. '_applySettings' receives the
+  values found, so a subclass holding a pair of settings may write them
+  together. Every draw goes to 'random', a 'random.Random' built for
+  each sampler apart; 'seed' is 'None' until an 'int' is given, by
+  keyword or by assignment, which seeds that generator, so two samplers
+  seeded alike draw alike whatever else draws in between. 'item', 'row'
+  and 'table' draw one value, a row of 'colCount' values and a table of
+  'rowCount' rows, each value checked against 'valueType'; calling the
+  sampler draws one value and iterating it yields 'rowCount' rows. The
+  two hooks are abstract, and 'SamplerMeta' refuses a sampler without
+  both.
+
+  Attributes
+  ----------
+
+  colCount, rowCount : int
+    The values in a row and the rows in a table.
+
+  random : random.Random
+    The generator of this sampler.
+
+  seed : int or None
+    The seed the generator was last given, 'None' when never seeded.
+
+  valueType : type
+    The class of every value drawn.
+
+  item, row, table
+    One value, one row and one table, drawn afresh at each read.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -49,29 +94,26 @@ class BaseSampler(BaseObject, ABC):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Class Variables
-  __key_groups__: dict[str, tuple[str, ...]] = dict()
-  __key_types__: dict[str, type] = dict()
-  __key_defaults__: dict[str, Any] = dict()
-
-  #  Fallback Variables
-  __fallback_col_count__: int = 1
-  __fallback_row_count__: int = 1
+  __key_groups__: KeyGroups = dict(
+      colCount=('colCount', 'width', 'size'),
+      rowCount=('rowCount', 'height', 'count'),
+      seed=('seed', 'randomSeed'),
+  )
 
   #  Private Variables
-  __col_count__: MaybeInt = None
-  __row_count__: MaybeInt = None
+  __seed_value__: Optional[int] = None
 
   #  Public Variables
+  colCount = AttriBox[int](1)
+  rowCount = AttriBox[int](1)
+  random = AttriBox[Random]()
+  seed: Field[Optional[int]] = Field()
   valueType: Field[type] = Field()
-  # --#  Settings
-  colCount: Field[int] = Field()
-  rowCount: Field[int] = Field()
 
   #  Virtual Variables
-  # --#  Samples
   item: Field[Any] = Field()
-  row: Field[tuple[Any, ...]] = Field()
-  table: Field[tuple[tuple[Any, ...], ...]] = Field()
+  row: Field[Row] = Field()
+  table: Field[Table] = Field()
 
   #  Aliases
   width = Alias('colCount')
@@ -83,33 +125,52 @@ class BaseSampler(BaseObject, ABC):
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @colCount.GET
-  def _getCount(self) -> int:
-    return maybe(self.__col_count__, self.__fallback_col_count__)
+  @seed.GET
+  def _getSeed(self) -> Optional[int]:
+    return self.__seed_value__
 
-  @rowCount.GET
-  def _getTupleCount(self) -> int:
-    return maybe(self.__row_count__, self.__fallback_row_count__)
+  @classmethod
+  def _getKeyGroups(cls) -> KeyGroups:
+    """
+    The '_getKeyGroups' method returns the synonyms of every setting the
+    class and its bases declare in '__key_groups__', the nearest class
+    answering for a setting declared more than once, so a subclass may
+    redeclare the synonyms of a setting it inherits.
+    """
+    out = dict()
+    for base in cls.__mro__:
+      if '__key_groups__' not in vars(base):
+        continue
+      for name, keys in vars(base)['__key_groups__'].items():
+        if name in out:
+          continue
+        out[name] = keys
+    return out
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  SETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @colCount.SET
-  def _setColCount(self, colCount: int) -> None:
-    if not isinstance(colCount, int):
-      raise TypeException('colCount', colCount, int)
-    if colCount < 1:
-      raise ValueError("""Column count must be a positive integer.""")
-    self.__col_count__ = colCount
+  @seed.SET
+  def _setSeed(self, seed: int) -> None:
+    if not isinstance(seed, int):
+      raise TypeException('seed', seed, int)
+    self.__seed_value__ = seed
+    self.random.seed(seed)
 
-  @rowCount.SET
-  def _setRowCount(self, rowCount: int) -> None:
-    if not isinstance(rowCount, int):
-      raise TypeException('rowCount', rowCount, int)
-    if rowCount < 1:
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  NOTIFIERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @colCount.preSet
+  def _refuseColCount(self, value: Any) -> None:
+    if isinstance(value, (int, float)) and value < 1:
+      raise ValueError("""Column count must be a positive integer.""")
+
+  @rowCount.preSet
+  def _refuseRowCount(self, value: Any) -> None:
+    if isinstance(value, (int, float)) and value < 1:
       raise ValueError("""Row count must be a positive integer.""")
-    self.__row_count__ = rowCount
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -119,58 +180,49 @@ class BaseSampler(BaseObject, ABC):
   def __init__(self, **kwargs) -> None:
     """
     The keyword constructor sets each setting from the first of its
-    synonyms present, cast to the type of the setting without loss, as
-    the setters do, so an 'int' bound suits a float sampler. A keyword
-    naming no setting raises the 'TypeError' Python raises for an
-    unexpected keyword argument.
+    synonyms present, through its box, so an 'int' bound suits a float
+    sampler and a lossy value is refused with 'TypeException' naming the
+    setting. A keyword naming no setting raises the 'TypeError' Python
+    raises for an unexpected keyword argument.
     """
     self._refuseUnknown(**kwargs)
-    defaults = self.__key_defaults__
-    valTypes = self.__key_types__
-    keys = (*(k for k, v in self.__key_groups__.items()),)
-    cls = type(self)
-    fields = {k: getattr(cls, k) for k in keys}
-    getterKeys = {k: getattr(f, '__get_key__') for k, f in fields.items()}
-    getters = {k: getattr(cls, g) for k, g in getterKeys.items()}
-    existing = dict()
-    for name, default in defaults.items():
-      try:
-        value = getters[name](self, _recursion=True)
-      except RecursionError:
-        existing[name] = default
-      else:
-        existing[name] = value
-    for name, keys in self.__key_groups__.items():
-      type_ = valTypes[name]
-      default = existing[name]
-      for key in keys:
-        if key in kwargs:
-          setattr(self, name, self._castSetting(name, kwargs[key], type_))
-          break
-      else:
-        setattr(self, name, default)
+    self._applySettings(self._collectSettings(**kwargs))
 
   def _refuseUnknown(self, **kwargs) -> None:
     """
     The '_refuseUnknown' method raises 'TypeError' for a keyword that is
     none of the synonyms of any setting, such as a misspelled one.
     """
-    accepted = [key for keys in self.__key_groups__.values() for key in keys]
+    groups = self._getKeyGroups()
+    accepted = [key for keys in groups.values() for key in keys]
     for key in kwargs:
       if key not in accepted:
         infoSpec = """%s() got an unexpected keyword argument '%s'"""
         raise TypeError(infoSpec % (type(self).__name__, key))
 
-  @staticmethod
-  def _castSetting(name: str, value: Any, type_: type) -> Any:
+  def _collectSettings(self, **kwargs) -> Settings:
     """
-    The '_castSetting' method casts 'value' to 'type_' through 'typeCast',
-    raising 'TypeException' naming the setting when the cast refuses.
+    The '_collectSettings' method returns the value of each setting from
+    the first of its synonyms present in the keywords, by the name of
+    the setting.
     """
-    try:
-      return typeCast(type_, value)
-    except TypeCastException as typeCastException:
-      raise TypeException(name, value, type_) from typeCastException
+    out = dict()
+    for name, keys in self._getKeyGroups().items():
+      for key in keys:
+        if key in kwargs:
+          out[name] = kwargs[key]
+          break
+    return out
+
+  def _applySettings(self, settings: Settings) -> None:
+    """
+    The '_applySettings' method writes each setting found through its
+    box, which casts or refuses the value. A subclass holding a pair of
+    settings that belong together overrides it to write the pair at
+    once and hands the rest on.
+    """
+    for name, value in settings.items():
+      setattr(self, name, value)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  REQUIRED METHODS   # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -180,17 +232,17 @@ class BaseSampler(BaseObject, ABC):
   @valueType.GET
   def _getValueType(self, **kwargs) -> type:
     """
-    Subclasses must implement this method to return the type of the sample
-    values.
+    A sampler returns here the class of every value it draws; 'row'
+    checks each value against it.
     """
 
   @abstractmethod
   @item.GET
-  def _getItem(self, ) -> Any:
+  def _getItem(self, *args, **kwargs) -> Any:
     """
-    Subclasses must implement this method to specify how it generates a
-    single sample value. Please note that the method cannot accept any
-    arguments other than the bound instance.
+    A sampler draws here one value of its value type from 'self.random',
+    the generator of the sampler, so that a seeded sampler draws the
+    same values again.
 
     Returns
     -------
@@ -226,7 +278,7 @@ class BaseSampler(BaseObject, ABC):
     return (*out,)
 
   @table.GET
-  def _getTable(self, *args, **kwargs) -> ValueTuples:
+  def _getTable(self, ) -> Table:
     """
     The 'table' getter generates 'N' tuples each with 'n' sample values,
     where 'N' and 'n' are given by the 'self.rowCount' and 'self.colCount'
@@ -236,7 +288,7 @@ class BaseSampler(BaseObject, ABC):
 
     Returns
     -------
-    ValueTuples
+    Table
       A tuple of tuples of sample values of the type specified by the
       '_getValueType' method.
     """
@@ -272,5 +324,13 @@ class BaseSampler(BaseObject, ABC):
     return infoSpec % (clsName, typeName, self.colCount, self.rowCount)
 
   def __repr__(self, ) -> str:
-    infoSpec = """%s(colCount=%d, rowCount=%d)"""
-    return infoSpec % (type(self).__name__, self.colCount, self.rowCount)
+    """
+    The 'repr' of a sampler names every setting of its key groups with
+    its value, as 'IntSampler(minVal=0, maxVal=255, colCount=1,
+    rowCount=1, seed=None)'.
+    """
+    parts = []
+    for name in self._getKeyGroups():
+      value = object.__getattribute__(self, name)
+      parts.append('%s=%r' % (name, value))
+    return '%s(%s)' % (type(self).__name__, ', '.join(parts))

@@ -11,23 +11,21 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from ...ezdata import EZSpace
 
 
-class DuplicateError(WorkToyException, AttributeError):
+class DuplicateError(WorkToyException, SyntaxError):
   """
-  DuplicateError subclasses 'AttributeError' and provides a custom exception
-  raised to indicate that a variable was attempted to be defined more than
-  once in the same scope.
+  DuplicateError is raised when an EZData class body assigns the same
+  field name a second time, so that one of the two declarations would
+  replace the other without a word. It subclasses 'SyntaxError', as
+  every refusal of a class-body line in worktoy does.
 
   Attributes
   ----------
   fieldName : str
-    The field name the class body assigned a second time. It is not kept
-    at 'name', which an 'AttributeError' reads as the name of a missing
-    attribute, and which tracebacks from Python 3.12 on answer with a
-    suggestion.
+    The field name the class body assigned a second time.
   space : EZSpace
     The namespace under construction; carries the class name.
   """
@@ -37,7 +35,9 @@ class DuplicateError(WorkToyException, AttributeError):
   def __init__(self, fieldName: str, space: EZSpace) -> None:
     self.fieldName = fieldName
     self.space = space
-    AttributeError.__init__(self, )
+    SyntaxError.__init__(self, )
+    #  The traceback of a 'SyntaxError' shows 'msg' rather than 'str()'.
+    self.msg = str(self)
 
   def __str__(self) -> str:
     infoSpec = """In the class body of 'EZData' class '%s', the already 

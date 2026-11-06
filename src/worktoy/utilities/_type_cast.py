@@ -9,7 +9,7 @@ from __future__ import annotations
 from numbers import Number
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Callable, Optional
 
 
@@ -144,7 +144,7 @@ def _findCastHook(target: type) -> Optional[Callable[[Any], Any]]:
     if hook is None:
       continue
     if isinstance(hook, classmethod):
-      return getattr(target, '__cast_as__')
+      return hook.__get__(None, target)
     from worktoy.waitaminute.dispatch import UnboundCastHook
     raise UnboundCastHook(klass.__name__, target.__name__)
   return None
@@ -185,9 +185,12 @@ def typeCast(target: type, arg: Any) -> Any:
   and the rest of the library ask it the same way.
 
   A value already an instance of 'target' is returned as it is, a 'bool'
-  for an 'int' target included. Otherwise two closed families of
-  builtins convert within themselves without loss, and nothing else
-  converts unless the target itself says how:
+  for an 'int' target included, unless it is an instance of a strict
+  subclass of a target that defines '__cast_as__': that hook is asked,
+  so an enumeration resolves a member of a related class to its own
+  member as its call does. Otherwise two closed families of builtins
+  convert within themselves without loss, and nothing else converts
+  unless the target itself says how:
 
   - Numbers: 'bool', 'int', 'float' and 'complex'. An 'int' is cast from
     an integral 'float' or a real integral 'complex'; a 'float' from an
@@ -202,7 +205,8 @@ def typeCast(target: type, arg: Any) -> Any:
     zero bytes.
   - Any other class, a subclass of a family builtin included, converts
     only through a classmethod '__cast_as__(cls, value)' of its own,
-    consulted when 'value' is not already an instance. It returns an
+    consulted when 'value' is not an instance of 'cls' itself, an
+    instance of a strict subclass included. It returns an
     instance of 'cls', or 'NotImplemented' to refuse; any other result
     is refused here, so a field or an overload never receives a foreign
     object. A hook may lean on the families:
@@ -248,7 +252,8 @@ def typeCast(target: type, arg: Any) -> Any:
   True
   """
   if isinstance(arg, target):
-    return arg
+    if type(arg) is target or _findCastHook(target) is None:
+      return arg
   handler = _familyHandler(target)
   if handler is not None:
     return handler(arg)

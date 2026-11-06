@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from ...utilities import textFmt
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 
@@ -22,10 +22,14 @@ class DanglingAlias(WorkToyException, SyntaxError):
   resolution order holds: that of the owner for an alias, that of the
   class named for a reference. Both forward to the descriptor the real
   name holds, so a name nobody holds leaves them nothing to forward to.
-  The refusal comes at the line for a reference, as the class is created
-  for an alias, and for an alias again from an access should the name be
-  removed from the class afterwards. It subclasses 'SyntaxError', as the
-  other refusals of a class-body line do.
+  An alias bound at the very name it stands for is refused as well: the
+  descriptor it would find there is the alias itself, which leaves it
+  nothing to forward to but itself. The refusal comes at the line for a
+  reference, as the class is created for an alias, and for an alias again
+  from an access should the name be removed from the class afterwards. The
+  message names a reference as it was written, 'THIS[Parent].y', and an
+  alias by its owner and its own name, 'Parent.w'. It subclasses
+  'SyntaxError', as the other refusals of a class-body line do.
 
   Attributes
   ----------
@@ -49,14 +53,27 @@ class DanglingAlias(WorkToyException, SyntaxError):
 
   def __str__(self) -> str:
     spec = """The name '%s.%s' stands for '%s', which no class along the
-    resolution order of '%s' holds. An alias, or a decoration through
-    'THIS', stands for a descriptor the class already holds, such as an
-    'AttriBox'."""
+    resolution order of '%s' holds. An alias stands for a descriptor the
+    class already holds, such as an 'AttriBox'."""
     ownerName = getattr(self.owner, '__name__', 'object')
     try:
       aliasName = object.__getattribute__(self.alias, '__field_name__')
     except AttributeError:
-      aliasName = 'alias'
+      #  Only a reference through 'THIS' has no field name of its own, and
+      #  its owner is the class its subscript names.
+      refSpec = """The reference 'THIS[%s].%s' names '%s', which no class
+      along the resolution order of '%s' holds. A reference through 'THIS'
+      stands for a descriptor the class already holds, such as an
+      'AttriBox'."""
+      names = (ownerName, self.realName, self.realName, ownerName)
+      return textFmt(refSpec % names)
+    else:
+      if aliasName == self.realName:
+        selfSpec = """The alias '%s.%s' stands for '%s', its own name, so
+        it would forward every access to itself. An alias stands for a
+        descriptor the class holds under another name, such as an
+        'AttriBox'."""
+        return textFmt(selfSpec % (ownerName, aliasName, self.realName))
     names = (ownerName, aliasName, self.realName, ownerName)
     return textFmt(spec % names)
 

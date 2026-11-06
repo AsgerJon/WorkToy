@@ -17,16 +17,19 @@ class ShadowedClassHook(WorkToyException, SyntaxError):
   '__class_*__' hook names under a metaclass that implements the
   operation itself. 'AbstractMetaclass' calls each hook from its own
   implementation of the operation, '__class_len__' from '__len__' for
-  instance, so a metaclass based on it that implements '__len__' again
-  takes the operation over, and a '__class_len__' in the body of one of
-  its classes would never run. 'KeeMeta' and 'KeeFlagsMeta' implement
-  most of the operations for their enumerations themselves, and 'EZMeta'
-  iterates, measures and searches the fields of its classes itself. Such
-  a hook used to be accepted without a word, and a '__class_call__' in an
-  enumeration body even broke the class statement with an unrelated
-  error, since the hook ran as the members were created. The class body
-  fails at the line binding the hook instead. It subclasses
-  'SyntaxError', as the other refusals of a class-body line do.
+  instance. A metaclass ahead of 'AbstractMetaclass' in the resolution
+  order that implements '__len__' takes the operation over for its
+  classes, whether or not it hands on to 'AbstractMetaclass', and its
+  classes cannot implement '__class_len__'. A metaclass behind it takes
+  nothing over, since 'AbstractMetaclass' answers first. 'KeeMeta' and
+  'KeeFlagsMeta' implement most of the operations for their enumerations
+  themselves, and 'EZMeta' iterates, measures and searches the fields of
+  its classes itself. Such a hook used to be accepted without a word, and
+  a '__class_call__' in an enumeration body even broke the class
+  statement with an unrelated error, since the hook ran as the members
+  were created. The class body fails at the line binding the hook
+  instead. It subclasses 'SyntaxError', as the other refusals of a
+  class-body line do.
 
   Attributes
   ----------
@@ -61,12 +64,14 @@ class ShadowedClassHook(WorkToyException, SyntaxError):
 
   def __str__(self) -> str:
     spec = """The class body of '%s' binds '%s', but the metaclass '%s'
-    implements '%s' itself and does not call the hook, so the binding
-    would never run."""
+    implements '%s' itself."""
+    rule = """A metaclass ahead of 'AbstractMetaclass' in the resolution
+    order that implements an operation takes it over for its classes,
+    which cannot implement the class hook of that operation."""
     names = (
       self.className, self.hookName, self.metaclassName,
       self.methodName
     )
-    return textFmt(spec % names)
+    return textFmt(spec % names, rule)
 
   __repr__ = __str__

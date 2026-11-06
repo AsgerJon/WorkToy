@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from .. import WorkToyException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
 
   from ...keenum import KeeBox
 

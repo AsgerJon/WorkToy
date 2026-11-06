@@ -1,29 +1,39 @@
-"""The 'tests.test_desc' module provides tests for the 'worktoy.desc'
-module."""
+"""
+The 'tests.test_desc' package tests 'worktoy.desc': the base descriptor
+with its notification decorators, 'Field', 'Alias', 'AttriBox',
+'FastBox', 'FixBox', 'SymbolicName' and the type alias a box subscript
+gives. Every test class is based on 'DescTest', the local base of the
+folder, and the fixtures the tests share are small classes of their own.
+
+- DescTest
+
+Private, importable but not intended for public use:
+
+- Part
+- Vessel
+- Watched
+- Listener
+- Geometry
+- Shrunk
+- Circle
+- Particle
+- Config
+"""
 #  Apache-2.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import geometry
-from ._complex_fields import ComplexFields
-from ._complex_fields_subclass import ComplexFieldsSubclass
-from ._complex_box import ComplexBox
-from ._complex_fix import ComplexFix
-from ._complex_alias import ComplexAlias
-from ._boxed_float import BoxedFloat
-from ._boxed_object import BoxedObject
-from ._box_owner import BoxOwner
 from ._desc_test import DescTest
+from ._part import Part
+from ._vessel import Vessel
+from ._watched import Watched
+from ._listener import Listener
+from ._geometry import Geometry
+from ._shrunk import Shrunk
+from ._circle import Circle
+from ._particle import Particle
+from ._config import Config
 
 __all__ = [
-  'geometry',
-  'ComplexFields',
-  'ComplexFieldsSubclass',
-  'ComplexBox',
-  'ComplexFix',
-  'ComplexAlias',
-  'BoxedFloat',
-  'BoxedObject',
-  'BoxOwner',
   'DescTest',
 ]

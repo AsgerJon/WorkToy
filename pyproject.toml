@@ -22,6 +22,7 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: 3.15',
     "Programming Language :: Python :: Implementation :: CPython",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
@@ -55,13 +56,6 @@ dev = [
 
 [tool.setuptools.package-data]
 worktoy = ["py.typed"]
-
-[tool.coverage.run]
-omit = [
-    # Pre-PEP 634 fallback. Unreachable on 3.14 where coverage
-    # runs; exercised by unittest on <3.10.
-    "tests/test_ezdata/_match_args_legacy_helpers.py",
-]
 
 # pytest configuration lives here rather than in a root 'pytest.ini' so
 # the repository root stays uncluttered. pytest auto-discovers this

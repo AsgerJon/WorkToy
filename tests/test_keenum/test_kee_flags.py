@@ -1,564 +1,223 @@
 """
-TestKeeFlags module tests the KeeFlags class functionality.
+TestKeeFlags tests 'KeeFlags' from 'worktoy.keenum', the members of a
+flags class.
 """
 #  Apache-2.0 license
-#  Copyright (c) 2025-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.keenum import KeeFlags, KeeFlagsMeta, KeeFlag
+import copy
+import pickle
+
+from worktoy.keenum import KeeFlags, KeeFlag
+from worktoy.utilities import typeCast
 from worktoy.waitaminute import MissingVariable, TypeException
-from worktoy.waitaminute.keenum import KeeResolveError
-from . import KeeTest
+from worktoy.waitaminute.dispatch import TypeCastException
+from worktoy.waitaminute.keenum import KeeWriteOnceError, KeeResolveError
+from . import KeenumTest, Permission, Extended, FileAccess
 
 
-class TestKeeFlags(KeeTest):
-  """TestKeeFlags class tests the KeeFlags class functionality."""
+class TestKeeFlags(KeenumTest):
+  """
+  A flags member knows its high and low flags, its index, value, name
+  and names, is falsy only as 'NULL', equal to the member of a related
+  class with the same flags, hashes by its names, combines with the
+  three operators and the inversion, survives copies and pickling as
+  itself, and refuses every change. The tests pin each on the fixtures.
+  """
 
-  # exampleFlags: list[Type[KeeFlags]]
-  # exampleValueTypes: list[type]
+  def test_flags_and_highs_and_lows(self) -> None:
+    member = Permission.READ_EXEC
+    self.assertEqual(member.flags, Permission.flags)
+    self.assertEqual([f.name for f in member.highs], ['READ', 'EXEC'])
+    self.assertEqual([f.name for f in member.lows], ['WRITE'])
+    self.assertEqual([f.name for f in member], ['READ', 'EXEC'])
+    self.assertEqual([f.name for f in Permission.NULL.highs], [])
+    self.assertEqual([f.name for f in Permission.NULL.lows],
+                     ['READ', 'WRITE', 'EXEC'])
+    self.assertEqual(member.names, frozenset(('READ', 'EXEC')))
+    self.assertEqual(Permission.NULL.names, frozenset())
+    self.assertEqual(Permission.NULL.name, 'NULL')
 
-  def testIndices(self) -> None:
-    """Tests the members of the example KeeFlags classes."""
+  def test_index_and_value(self) -> None:
+    self.assertEqual(Permission.READ_WRITE.index, 3)
+    self.assertEqual(Permission.READ_WRITE.value, 3)
+    self.assertEqual(FileAccess.OPEN_CLOSE.value, b'3')
+    loose = KeeFlags.__new__(KeeFlags)
+    with self.assertRaises(MissingVariable) as context:
+      _ = loose.index
+    self.assertIs(context.exception.instance, loose)
+    self.assertEqual(context.exception.varName, '__member_index__')
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertEqual(str(context.exception),
+                     "Missing 'KeeFlags.__member_index__: int'!")
+    object.__setattr__(loose, '__member_index__', 'x')
+    with self.assertRaises(TypeException) as context:
+      _ = loose.index
+    self.assertEqual(context.exception.varName, '__member_index__')
+    self.assertEqual(context.exception.actualObject, 'x')
+    self.assertIs(context.exception.actualType, str)
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertIn("'__member_index__'", str(context.exception))
 
-    for Flags in self.exampleFlags:
-      for i, member in enumerate(Flags):
-        self.assertEqual(member.index, i)
+  def test_truth(self) -> None:
+    self.assertFalse(Permission.NULL)
+    self.assertTrue(Permission.READ)
+    self.assertEqual([bool(m) for m in Permission].count(False), 1)
 
-  def testFlags(self, ) -> None:
-    """Tests the 'flags' attribute of the example KeeFlags classes."""
-    for cls in self.exampleFlags:
-      for flag in cls.flags:
-        self.assertTrue(isinstance(flag, KeeFlag))
+  def test_text(self) -> None:
+    self.assertEqual(str(Permission.READ_WRITE), 'Permission.READ_WRITE [3]')
+    self.assertEqual(repr(Permission.NULL), 'Permission.NULL [0]')
+    self.assertEqual(str(Extended.OWN), 'Extended.OWN [8]')
 
-  def testMemberList(self, ) -> None:
-    """
-    Tests that 'memberList' (defined on the metaclass) is present and
-    is a list, and that its order matches the class iteration order:
-    for each position, the member from 'memberList' and the member
-    from iterating the class resolve to each other by name.
-    """
-    for cls in self.exampleFlags:
-      self.assertTrue(hasattr(cls, 'memberList'))
-      self.assertTrue(isinstance(cls.memberList, list))
-      for (i, (foo, bar)) in enumerate(zip(cls.memberList, cls)):
-        fromBarAttr = getattr(cls, bar.name)
-        fromFooAttr = getattr(cls, foo.name)
-        self.assertIs(foo, fromBarAttr)
-        self.assertIs(bar, fromFooAttr)
+  def test_frozen(self) -> None:
+    with self.assertRaises(KeeWriteOnceError) as context:
+      Permission.READ.extra = 1
+    self.assertIs(context.exception.member, Permission.READ)
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.attribute, 'extra')
+    self.assertIn("'extra' of member 'Permission.READ [1]'",
+                  str(context.exception))
+    with self.assertRaises(KeeWriteOnceError) as context:
+      del Permission.READ.extra
+    self.assertIs(context.exception.member, Permission.READ)
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.attribute, 'extra')
+    self.assertIn("'extra'", str(context.exception))
+    with self.assertRaises(KeeWriteOnceError) as context:
+      Permission.READ.__member_index__ = 9
+    self.assertIs(context.exception.member, Permission.READ)
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.attribute, '__member_index__')
+    self.assertIn("'__member_index__'", str(context.exception))
 
-  def testMemberDict(self, ) -> None:
-    """
-    Tests the availability of the 'memberDict' attribute on the
-    examples. This attribute is defined on the metaclass.
-    """
-    for cls in self.exampleFlags:
-      self.assertTrue(hasattr(cls, 'memberDict'))
-      self.assertTrue(isinstance(cls.memberDict, dict))
-      for (i, (key, member)) in enumerate(cls.memberDict.items()):
-        fromAttr = getattr(cls, member.name)
-        self.assertIs(member, fromAttr)
+  def test_equality(self) -> None:
+    self.assertEqual(Permission.READ, Permission.READ)
+    self.assertNotEqual(Permission.READ, Permission.WRITE)
+    self.assertEqual(Permission.READ_WRITE, Extended.READ_WRITE)
+    self.assertEqual(Extended.READ, Permission.READ)
+    self.assertNotEqual(Extended.OWN, Permission.READ)
+    self.assertIs(Permission.READ.__eq__(FileAccess.OPEN), NotImplemented)
+    self.assertFalse(Permission.READ == FileAccess.OPEN)
+    self.assertIs(Permission.READ.__eq__(1), NotImplemented)
+    self.assertFalse(Permission.READ == 1)
+    self.assertTrue(Permission.READ != 1)
 
-  def testResolveIndex(self, ) -> None:
-    """Tests the '_resolveIndex' method"""
-    for cls in self.exampleFlags:
-      for index, member in enumerate(cls, ):
-        fromIndex = cls._resolveIndex(index)
-        fromGeneral = cls._resolveMember(index, )
-        fromCall = cls(index)
-        fromDict = cls[index]
-        self.assertIs(fromDict, member)
-        self.assertIs(fromCall, member)
-        self.assertIs(fromIndex, member)
-        self.assertIs(fromGeneral, member)
+  def test_hash(self) -> None:
+    self.assertEqual(hash(Permission.READ), hash(frozenset(('READ',))))
+    self.assertEqual(hash(Permission.READ), hash(Extended.READ))
+    self.assertEqual({Permission.READ: 1}[Extended.READ], 1)
+    self.assertEqual(len({Permission.NULL, Extended.NULL}), 1)
+
+  def test_operators(self) -> None:
+    self.assertIs(Permission.READ | Permission.WRITE, Permission.READ_WRITE)
+    self.assertIs(Permission.READ | Permission.READ, Permission.READ)
+    self.assertIs(Permission.READ_WRITE & Permission.WRITE, Permission.WRITE)
+    self.assertIs(Permission.READ & Permission.WRITE, Permission.NULL)
+    self.assertIs(Permission.READ ^ Permission.READ_WRITE, Permission.WRITE)
+    self.assertIs(Permission.READ ^ Permission.READ, Permission.NULL)
+    self.assertIs(~Permission.READ, Permission.WRITE_EXEC)
+    self.assertIs(~Permission.NULL, Permission.READ_WRITE_EXEC)
+    self.assertIs(~Permission.READ_WRITE_EXEC, Permission.NULL)
+
+  def test_operators_across_the_lineage(self) -> None:
+    self.assertIs(Extended.OWN | Permission.READ, Extended.READ_OWN)
+    self.assertIs(Permission.READ | Extended.OWN, Extended.READ_OWN)
+    self.assertIs(Permission.READ | Extended.WRITE, Permission.READ_WRITE)
+    self.assertIs(Extended.READ_OWN & Permission.READ, Extended.READ)
+    self.assertIs(Permission.READ & Extended.READ_OWN, Extended.READ)
+    self.assertIs(Permission.READ ^ Extended.READ_WRITE, Permission.WRITE)
+    self.assertIs(Permission.READ._asOwn(Extended.WRITE), Permission.WRITE)
+    self.assertIsNone(Permission.READ._asOwn(Extended.OWN))
+    self.assertIsNone(Permission.READ._asOwn(FileAccess.OPEN))
+    self.assertIsNone(Permission.READ._asOwn(3))
+
+  def test_operators_refuse_strangers(self) -> None:
+    for other in (FileAccess.OPEN, 1, 'READ'):
+      with self.subTest(other=other):
+        with self.assertRaises(TypeError):
+          _ = Permission.READ | other
+        with self.assertRaises(TypeError):
+          _ = Permission.READ & other
+        with self.assertRaises(TypeError):
+          _ = Permission.READ ^ other
+    self.assertIs(Permission.READ.__or__(FileAccess.OPEN), NotImplemented)
+    self.assertIs(Permission.READ.__and__(1), NotImplemented)
+    self.assertIs(Permission.READ.__xor__('READ'), NotImplemented)
+
+  def test_copies_and_pickles_are_the_member(self) -> None:
+    self.assertIs(copy.copy(Permission.EXEC), Permission.EXEC)
+    self.assertIs(copy.deepcopy(Permission.EXEC), Permission.EXEC)
+    self.assertIs(copy.deepcopy([Extended.OWN])[0], Extended.OWN)
+    for member in Permission:
+      with self.subTest(member=member.name):
+        self.assertIs(pickle.loads(pickle.dumps(member)), member)
+    self.assertIs(pickle.loads(pickle.dumps(Extended.READ_OWN)),
+                  Extended.READ_OWN)
+
+  def test_cast_hook(self) -> None:
+    self.assertIs(typeCast(Permission, 'read_write'), Permission.READ_WRITE)
+    self.assertIs(typeCast(Permission, ('READ', 'EXEC')),
+                  Permission.READ_EXEC)
+    self.assertIs(typeCast(Permission, 6), Permission.WRITE_EXEC)
+    self.assertIs(typeCast(Extended, Permission.READ), Extended.READ)
+    with self.assertRaises(TypeCastException) as context:
+      typeCast(Permission, 'nothing')
+    self.assertIs(context.exception.type_, Permission)
+    self.assertEqual(context.exception.arg, 'nothing')
+    self.assertEqual(str(context.exception),
+                     "Unable to cast value 'nothing' to type 'Permission'!")
+    self.assertIs(Permission.__cast_as__('nothing'), NotImplemented)
+    type.__setattr__(Permission, '__allow_instantiation__', True)
+    try:
+      self.assertIs(Permission.__cast_as__('read'), NotImplemented)
+    finally:
+      type.__setattr__(Permission, '__allow_instantiation__', False)
+    self.assertIs(Permission.__cast_as__('read'), Permission.READ)
+
+  def test_cast_of_a_subclass_member_gives_own_member(self) -> None:
+    #  The class docstring: a member of the subclass resolves through
+    #  'typeCast' to this class's own member when this class holds every
+    #  one of its flags.
+    self.assertIs(typeCast(Permission, Extended.READ), Permission.READ)
+
+  def test_value_override_wins(self) -> None:
+    class Twice(FileAccess):
+      def _getValue(self) -> int:
+        return self.index * 2
+
+    self.assertEqual(Twice.OPEN.value, 2)
+    self.assertIs(Twice.valueType, int)
+    self.assertIs(Twice[2], Twice.CLOSE)
+    self.assertIs(Twice._resolveValue(4), Twice.CLOSE)
+    with self.assertRaises(KeeResolveError) as context:
+      Twice._resolveValue(4.0)
+    self.assertIs(context.exception.keeNum, Twice)
+    self.assertEqual(context.exception.identifier, 4.0)
+    self.assertIn("'Twice' could not resolve the identifier '4.0'",
+                  str(context.exception))
+    self.assertEqual(FileAccess.OPEN.value, b'1')
+
+  def test_random_combinations(self) -> None:
+    self.randomInteger.size = 6
+    for number in self.randomInteger.row:
+      index = number % len(Extended)
+      member = Extended[index]
+      with self.subTest(index=index):
         self.assertEqual(member.index, index)
+        self.assertIs(Extended(member.names), member)
+        self.assertIs(Extended(*member.names), member)
+        self.assertIs(member | Extended.NULL, member)
+        self.assertIs(member & member, member)
+        self.assertIs(member ^ member, Extended.NULL)
+        self.assertIs(~~member, member)
 
-  def testResolveName(self, ) -> None:
-    """Tests the '_resolveName' method"""
-    for cls in self.exampleFlags:
-      for index, member in enumerate(cls, ):
-        fromName = cls._resolveName(member.name)
-        fromGeneral = cls._resolveMember(member.name, )
-        fromCall = cls(member.name)
-        fromDict = cls[member.name]
-        self.assertIs(fromDict, member)
-        self.assertIs(fromCall, member)
-        self.assertIs(fromName, member)
-        self.assertIs(fromGeneral, member)
-        self.assertEqual(fromName.name, member.name)
-
-  def testResolveNames(self, ) -> None:
-    """Tests the '_resolveNames' method"""
-    for cls in self.exampleFlags:
-      for member in cls:
-        names = [flag.name for flag in member.highs]
-        if not names:
-          continue
-        fromNames = cls._resolveNames(*names)
-        fromGeneral = cls._resolveMember(*names)
-        fromCall = cls(*names)
-        fromDict = cls.__getitem__(names, )
-        self.assertIs(fromDict, member)
-        fromSet = cls._resolveMember(set(member.names))
-        fromFrozenSet = cls._resolveMember(member.names)
-        fromTuple = cls._resolveMember((*names,))
-        fromList = cls._resolveMember([*names, ])
-        self.assertIs(fromSet, member)
-        self.assertIs(fromFrozenSet, member)
-        self.assertIs(fromTuple, member)
-        self.assertIs(fromList, member)
-        self.assertIs(fromCall, member)
-        self.assertIs(fromGeneral, member)
-        self.assertIs(fromNames, member)
-
-  def testResolveValue(self, ) -> None:
-    """Tests the '_resolveValue' method"""
-    for cls in self.exampleFlags:
-      for member in cls:
-        fromValue = cls._resolveValue(member.value)
-        self.assertIs(fromValue, member)
-
-  def testMembers(self, ) -> None:
-    """Tests the functionality of the 'KeeFlag' class"""
-    for cls in self.exampleFlags:
-      for flag in cls.flags:
-        self.assertIn(cls.__name__, str(flag))
-        self.assertIn(cls.__name__, repr(flag))
-        self.assertIsInstance(flag, KeeFlag)
-        self.assertEqual(flag.index, int(flag))
-        self.assertIn(str(flag.index), str(flag))
-        self.assertIn(flag.fieldName, str(flag))
-        self.assertIn(cls.__name__, str(flag))
-        for arg in flag.args:
-          self.assertIn(repr(arg), repr(flag))
-        for key, val in flag.kwargs.items():
-          self.assertIn(key, repr(flag))
-          self.assertIn(repr(val), repr(flag))
-
-  def testOrphanedFlags(self, ) -> None:
-    """Tests that orphaned flags fall back to 'object' methods."""
-
-    orphanFlag = KeeFlag()
-
-    expected = object.__str__(orphanFlag)
-    actual = str(orphanFlag)
-    self.assertEqual(expected, actual)
-
-    expected = object.__repr__(orphanFlag)
-    actual = repr(orphanFlag)
-    self.assertEqual(expected, actual)
-
-    with self.assertRaises(MissingVariable) as context:
-      _ = orphanFlag.fieldName
-    e = context.exception
-    self.assertIs(e.instance, orphanFlag)
-    self.assertEqual(e.varName, '__field_name__')
-    self.assertIn(str, e.expectedTypes, )
-
-    with self.assertRaises(MissingVariable) as context:
-      _ = orphanFlag.fieldOwner
-    e = context.exception
-    self.assertIs(e.instance, orphanFlag)
-    self.assertEqual(e.varName, '__field_owner__')
-    self.assertIn(KeeFlagsMeta, e.expectedTypes, )
-
-    with self.assertRaises(MissingVariable) as context:
-      _ = orphanFlag.index
-    e = context.exception
-    self.assertIs(e.instance, orphanFlag)
-    self.assertEqual(e.varName, '__member_index__')
-    self.assertIn(int, e.expectedTypes, )
-
-    with self.assertRaises(MissingVariable) as context:
-      _ = orphanFlag.name
-    e = context.exception
-    self.assertIs(e.instance, orphanFlag)
-    self.assertEqual(e.varName, '__member_name__')
-    self.assertIn(str, e.expectedTypes, )
-
-  def testBadlyTypedFlags(self, ) -> None:
-    """Tests that badly typed flags raise 'TypeException'."""
-
-    badlyTypedFlag = KeeFlag()
-    badlyTypedFlag.__member_index__ = """bro, i'm an integer, trust!"""
-    badlyTypedFlag.__field_name__ = 69
-    badlyTypedFlag.__member_name__ = 420
-    badlyTypedFlag.__field_owner__ = """bro, i'm a class, trust!"""
-
-    with self.assertRaises(TypeException) as context:
-      _ = badlyTypedFlag.index
-    e = context.exception
-    self.assertEqual(e.varName, '__member_index__')
-    self.assertEqual(e.actualObject, badlyTypedFlag.__member_index__)
-    self.assertIs(e.actualType, type(badlyTypedFlag.__member_index__))
-    self.assertIn(int, e.expectedTypes)
-
-    with self.assertRaises(TypeException) as context:
-      _ = badlyTypedFlag.fieldName
-    e = context.exception
-    self.assertEqual(e.varName, '__field_name__')
-    self.assertEqual(e.actualObject, badlyTypedFlag.__field_name__)
-    self.assertIs(e.actualType, type(badlyTypedFlag.__field_name__))
-    self.assertIn(str, e.expectedTypes)
-
-    with self.assertRaises(TypeException) as context:
-      _ = badlyTypedFlag.name
-    e = context.exception
-    self.assertEqual(e.varName, '__member_name__')
-    self.assertEqual(e.actualObject, badlyTypedFlag.__member_name__)
-    self.assertIs(e.actualType, type(badlyTypedFlag.__member_name__))
-    self.assertIn(str, e.expectedTypes)
-
-    with self.assertRaises(TypeException) as context:
-      _ = badlyTypedFlag.fieldOwner
-    e = context.exception
-    self.assertEqual(e.varName, '__field_owner__')
-    self.assertEqual(e.actualObject, badlyTypedFlag.__field_owner__)
-    self.assertIs(e.actualType, type(badlyTypedFlag.__field_owner__))
-    self.assertIn(KeeFlagsMeta, e.expectedTypes)
-
-    with self.assertRaises(TypeError) as context:
-      _ = [*badlyTypedFlag, ]
-    e = context.exception
-    self.assertIn('iterable', str(e))
-
-    class BadlyTypedFlags(KeeFlags):
-      TOM = KeeFlag()
-      DICK = KeeFlag()
-      HARRY = KeeFlag()
-
-    tom = BadlyTypedFlags(1)
-    #  Forced corruption through 'object' bypasses the member freeze on
-    #  purpose, reaching the validation branches in the getters.
-    object.__delattr__(tom, '__member_index__')
-
-    with self.assertRaises(MissingVariable) as context:
-      _ = tom.index
-    e = context.exception
-    self.assertIs(e.instance, tom, )
-    self.assertEqual(e.varName, '__member_index__')
-    self.assertIn(int, e.expectedTypes, )
-
-    object.__setattr__(tom, '__member_index__', "I'm an integer, trust!")
-
-    with self.assertRaises(TypeException) as context:
-      _ = tom.index
-    e = context.exception
-    self.assertEqual(e.varName, '__member_index__')
-    self.assertIs(e.actualObject, tom.__member_index__)
-    self.assertIs(e.actualType, type(tom.__member_index__))
-    self.assertIn(int, e.expectedTypes)
-
-  def testHighsLows(self) -> None:
-    """
-    Tests the 'highs' and 'lows' attributes of the example KeeFlags
-    classes.
-    """
-    for cls in self.exampleFlags:
-      for member in cls:
-        _c = 0
-        for flag in cls.flags:
-          self.assertIsInstance(flag, KeeFlag)
-        for high in member.highs:
-          self.assertIsInstance(high, KeeFlag)
-          self.assertIn(high, cls.flags)
-          self.assertNotIn(high, member.lows)
-          _c += 1
-        for low in member.lows:
-          self.assertIn(low, cls.flags)
-          self.assertNotIn(low, member.highs)
-          _c += 1
-        for flag in cls.flags:
-          self.assertIn(flag, [*member.highs, *member.lows])
-          _c -= 1
-        self.assertFalse(_c, )
-        for i, j in zip(member, member.highs):
-          self.assertEqual(i, j)
-
-  def testBadResolve(self, ) -> None:
-    """Tests that bad resolutions raise the appropriate exceptions."""
-
-    for cls in self.exampleFlags:
-      with self.assertRaises(KeeResolveError) as context:
-        _ = cls._resolveIndex(len(cls))
-      e = context.exception
-      self.assertIn(cls.__name__, str(e))
-      self.assertIn(str(len(cls)), str(e))
-
-  def testValueTypes(self) -> None:
-    """
-    Tests that the 'value' attribute is of type 'valueType' on the owning
-    class.
-    """
-    for cls in self.exampleFlags:
-      for member in cls:
-        self.assertIsInstance(member.value, cls.valueType)
-
-  def testEmptyResolution(self) -> None:
-    """
-    Tests that '_resolveMember' correctly returns the 'NULL' member when
-    called without arguments.
-    """
-    for cls in self.exampleFlags:
-      expectedNull = cls._resolveMember()
-      actualNull = cls.NULL
-      self.assertIs(expectedNull, actualNull)
-
-  def testResolveBadName(self, ) -> None:
-    """
-    Tests that '_resolveName' raises 'KeeResolveError' when given a bad
-    name.
-    """
-    expectedMessage = """could not resolve the identifier"""
-    for cls in self.exampleFlags:
-      with self.assertRaises(KeeResolveError) as context:
-        _ = cls._resolveName("""Bro, it's me, lemme in!""")
-      self.assertIn(expectedMessage, str(context.exception))
-
-  def testImplementedEqualityOperator(self, ) -> None:
-    """
-    Tests the equality operator for situations not resulting in
-    'NotImplemented'.
-    """
-    for leftCls in self.exampleFlags:
-      for rightCls in self.exampleFlags:
-        for i, left in enumerate(leftCls):
-          for j, right in enumerate(rightCls):
-            if leftCls == rightCls:  # Equal when indices match
-              if i == j:
-                self.assertTrue(left == right)
-              else:
-                self.assertFalse(left == right)
-            else:  # Not equal, even when indices match
-              self.assertFalse(left == right)
-
-  def testOr(self, ) -> None:
-    """
-    Tests the '__or__' operator ('|'). A | B should return the member with
-    high flags that are high in either or both.
-    """
-
-    class EF(KeeFlags):  # ExampleFlags, but shortened
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-      D = KeeFlag()
-      E = KeeFlag()
-
-    self.assertIs(EF.A | EF.B, EF.A_B)
-    self.assertIs(EF.A | EF.C, EF.A_C)
-    self.assertIs(EF.B | EF.C, EF.B_C)
-    self.assertIs(EF.A | EF.B | EF.C, EF.A_B_C)
-    self.assertIs(EF.A | EF.D, EF.A_D)
-    self.assertIs(EF.B | EF.D, EF.B_D)
-    self.assertIs(EF.C | EF.D, EF.C_D)
-    self.assertIs(EF.A | EF.E, EF.A_E)
-    self.assertIs(EF.B | EF.E, EF.B_E)
-    self.assertIs(EF.C | EF.E, EF.C_E)
-    self.assertIs(EF.D | EF.E, EF.D_E)
-    self.assertIs(EF.A | EF.B | EF.C | EF.D, EF.A_B_C_D)
-    self.assertIs(EF.A | EF.B | EF.C | EF.E, EF.A_B_C_E)
-    self.assertIs(EF.A | EF.B | EF.D | EF.E, EF.A_B_D_E)
-    self.assertIs(EF.A | EF.C | EF.D | EF.E, EF.A_C_D_E)
-    self.assertIs(EF.B | EF.C | EF.D | EF.E, EF.B_C_D_E)
-    self.assertIs(EF.A | EF.B | EF.C | EF.D | EF.E, EF.A_B_C_D_E)
-
-  def testAnd(self, ) -> None:
-    """
-    Tests the '__and__' operator ('&'). A & B should return the member with
-    high flags that are high in both.
-    """
-
-    class EF(KeeFlags):  # ExampleFlags, but shortened
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-      D = KeeFlag()
-      E = KeeFlag()
-
-    self.assertIs(EF.A & EF.B, EF.NULL)
-    self.assertIs(EF.A & EF.C, EF.NULL)
-    self.assertIs(EF.B & EF.C, EF.NULL)
-    self.assertIs(EF.A & EF.B & EF.C, EF.NULL)
-    self.assertIs(EF.A & EF.D, EF.NULL)
-    self.assertIs(EF.B & EF.D, EF.NULL)
-    self.assertIs(EF.C & EF.D, EF.NULL)
-    self.assertIs(EF.A & EF.E, EF.NULL)
-
-    self.assertIs(EF.A_B & EF.A_B_C, EF.A_B)
-    self.assertIs(EF.A_B & EF.A_B_D, EF.A_B)
-    self.assertIs(EF.A_B & EF.A_B_E, EF.A_B)
-    self.assertIs(EF.A_B & EF.A_B_C_D, EF.A_B)
-    self.assertIs(EF.A_B & EF.A_B_C_E, EF.A_B)
-    self.assertIs(EF.A_B & EF.A_B_D_E, EF.A_B)
-    self.assertIs(EF.A_B & EF.A_C_D_E, EF.A)
-    self.assertIs(EF.A_B & EF.B_C_D_E, EF.B)
-    self.assertIs(EF.A_B & EF.A_B_C_D_E, EF.A_B)
-    self.assertIs(EF.A_C & EF.A_B_C, EF.A_C)
-    self.assertIs(EF.A_C & EF.A_C_D, EF.A_C)
-    self.assertIs(EF.A_C & EF.A_C_E, EF.A_C)
-    self.assertIs(EF.A_C & EF.A_B_C_D, EF.A_C)
-    self.assertIs(EF.A_C & EF.A_B_C_E, EF.A_C)
-    self.assertIs(EF.A_C & EF.A_C_D_E, EF.A_C)
-    self.assertIs(EF.A_C & EF.B_C_D_E, EF.C)
-    self.assertIs(EF.A_C & EF.A_B_C_D_E, EF.A_C)
-    self.assertIs(EF.B_C & EF.A_B_C, EF.B_C)
-    self.assertIs(EF.B_C & EF.B_C_D, EF.B_C)
-    self.assertIs(EF.B_C & EF.B_C_E, EF.B_C)
-    self.assertIs(EF.B_C & EF.A_B_C_D, EF.B_C)
-    self.assertIs(EF.B_C & EF.A_B_C_E, EF.B_C)
-    self.assertIs(EF.B_C & EF.A_C_D_E, EF.C)
-    self.assertIs(EF.B_C & EF.B_C_D_E, EF.B_C)
-    self.assertIs(EF.B_C & EF.A_B_C_D_E, EF.B_C)
-    self.assertIs(EF.A_B_C & EF.A_B_C_D, EF.A_B_C)
-    self.assertIs(EF.A_B_C & EF.A_B_C_E, EF.A_B_C)
-    self.assertIs(EF.A_B_C & EF.A_C_D_E, EF.A_C)
-    self.assertIs(EF.A_B_C & EF.B_C_D_E, EF.B_C)
-    self.assertIs(EF.A_B_C & EF.A_B_C_D_E, EF.A_B_C)
-    self.assertIs(EF.A_B_D & EF.A_B_C_D, EF.A_B_D)
-    self.assertIs(EF.A_B_D & EF.A_B_D_E, EF.A_B_D)
-    self.assertIs(EF.A_B_D & EF.A_C_D_E, EF.A_D)
-    self.assertIs(EF.A_B_D & EF.B_C_D_E, EF.B_D)
-    self.assertIs(EF.A_B_D & EF.A_B_C_D_E, EF.A_B_D)
-    self.assertIs(EF.A_C_D & EF.A_C_D_E, EF.A_C_D)
-    self.assertIs(EF.A_C_D & EF.B_C_D_E, EF.C_D)
-    self.assertIs(EF.A_C_D & EF.A_B_C_D_E, EF.A_C_D)
-    self.assertIs(EF.A_B_C_D & EF.A_B_C_D_E, EF.A_B_C_D)
-    self.assertIs(EF.A_B_C_D_E & EF.A_B_C_D_E, EF.A_B_C_D_E)
-
-  def testXor(self) -> None:
-    """
-    Tests the '__xor__' operator ('^'). A ^ B should return the member with
-    high flags that are high in either but not both.
-    """
-
-    class EF(KeeFlags):  # ExampleFlags, but shortened
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-      D = KeeFlag()
-      E = KeeFlag()
-
-    self.assertIs(EF.A ^ EF.B, EF.A_B)
-    self.assertIs(EF.A ^ EF.C, EF.A_C)
-    self.assertIs(EF.B ^ EF.C, EF.B_C)
-    self.assertIs(EF.A ^ EF.B ^ EF.C, EF.A_B_C)
-    self.assertIs(EF.A ^ EF.D, EF.A_D)
-    self.assertIs(EF.B ^ EF.D, EF.B_D)
-    self.assertIs(EF.C ^ EF.D, EF.C_D)
-    self.assertIs(EF.A ^ EF.E, EF.A_E)
-    self.assertIs(EF.B ^ EF.E, EF.B_E)
-    self.assertIs(EF.C ^ EF.E, EF.C_E)
-    self.assertIs(EF.D ^ EF.E, EF.D_E)
-    self.assertIs(EF.A ^ EF.B ^ EF.C ^ EF.D, EF.A_B_C_D)
-    self.assertIs(EF.A ^ EF.B ^ EF.C ^ EF.E, EF.A_B_C_E)
-    self.assertIs(EF.A ^ EF.B ^ EF.D ^ EF.E, EF.A_B_D_E)
-    self.assertIs(EF.A ^ EF.C ^ EF.D ^ EF.E, EF.A_C_D_E)
-    self.assertIs(EF.B ^ EF.C ^ EF.D ^ EF.E, EF.B_C_D_E)
-
-  def testInvert(self) -> None:
-    """
-    Tests the '__invert__' operator ('~'). ~A should return the member with
-    high flags that are low in A.
-    """
-
-    class EF(KeeFlags):  # ExampleFlags, but shortened
-      A = KeeFlag()
-      B = KeeFlag()
-      C = KeeFlag()
-      D = KeeFlag()
-      E = KeeFlag()
-
-    self.assertIs(~EF.A, EF.B_C_D_E)
-    self.assertIs(~EF.B, EF.A_C_D_E)
-    self.assertIs(~EF.C, EF.A_B_D_E)
-    self.assertIs(~EF.D, EF.A_B_C_E)
-    self.assertIs(~EF.E, EF.A_B_C_D)
-    self.assertIs(~EF.A_B, EF.C_D_E)
-    self.assertIs(~EF.A_C, EF.B_D_E)
-    self.assertIs(~EF.A_D, EF.B_C_E)
-    self.assertIs(~EF.A_E, EF.B_C_D)
-    self.assertIs(~EF.B_C, EF.A_D_E)
-    self.assertIs(~EF.B_D, EF.A_C_E)
-    self.assertIs(~EF.B_E, EF.A_C_D)
-    self.assertIs(~EF.C_D, EF.A_B_E)
-    self.assertIs(~EF.C_E, EF.A_B_D)
-    self.assertIs(~EF.D_E, EF.A_B_C)
-    self.assertIs(~EF.A_B_C, EF.D_E)
-    self.assertIs(~EF.A_B_D, EF.C_E)
-    self.assertIs(~EF.A_C_D, EF.B_E)
-    self.assertIs(~EF.A_B_C_D, EF.E)
-    self.assertIs(~EF.A_B_C_E, EF.D)
-    self.assertIs(~EF.A_B_D_E, EF.C)
-    self.assertIs(~EF.A_C_D_E, EF.B)
-    self.assertIs(~EF.B_C_D_E, EF.A)
-    self.assertIs(~EF.A_B_C_D_E, EF.NULL)
-
-  def testBadOr(self) -> None:
-    """Tests that '|' with non-KeeFlags raises 'TypeError'."""
-    for cls in self.exampleFlags:
-      for flag in cls:
-        with self.assertRaises(TypeError) as context:
-          _ = flag | 69
-        e = context.exception
-        self.assertIn('unsupported operand', str(e))
-
-  def testBadAnd(self) -> None:
-    """Tests that '&' with non-KeeFlags raises 'TypeError'."""
-    for cls in self.exampleFlags:
-      for flag in cls:
-        with self.assertRaises(TypeError) as context:
-          _ = flag & 420
-        e = context.exception
-        self.assertIn('unsupported operand', str(e))
-
-  def testBadXor(self) -> None:
-    """Tests that '^' with non-KeeFlags raises 'TypeError'."""
-    for cls in self.exampleFlags:
-      for flag in cls:
-        with self.assertRaises(TypeError) as context:
-          _ = flag ^ 80085
-        e = context.exception
-        self.assertIn('unsupported operand', str(e))
-
-  def test_flags_descriptor(self) -> None:
-    """
-    Testing the 'flags' descriptor
-    """
-    for cls in self.exampleFlags:
-      for member in cls:
-        instanceFlags = member.flags
-        classFlags = cls.flags
-        for instanceFlag, classFlag in zip(instanceFlags, classFlags):
-          self.assertEqual(instanceFlag, classFlag)
-
-  def test_bool(self) -> None:
-    """
-    The NULL member (no flags HIGH, index 0) is falsy. Every other
-    member of a 'KeeFlags' class is truthy.
-    """
-    for cls in self.exampleFlags:
-      self.assertFalse(cls.NULL)
-      for member in cls:
-        if member is cls.NULL:
-          self.assertFalse(member)
-        else:
-          self.assertTrue(member)
-
-  def test_member_to_member(self, ) -> None:
-    """
-    Tests that a member can be resolved to itself.
-    """
-    for cls in self.exampleFlags:
-      for member in cls:
-        fromMember = cls._resolveMember(member)
-        self.assertIs(fromMember, member)
-
-  def test_bad_names(self, ) -> None:
-    """
-    Tests that bad names raise 'KeeResolveError' when passed to
-    '_resolveNames'.
-    """
-    for cls in self.exampleFlags:
-      with self.assertRaises(KeeResolveError) as context:
-        _ = cls._resolveNames("""Bro, it's me, lemme in!""")
-      self.assertIn("""could not resolve the identifier""", str(context.exception))
+  def test_equality_in_both_directions(self) -> None:
+    self.assertNotEqual(Permission.WRITE, Permission.READ)
+    self.assertNotEqual(Permission.READ, Permission.WRITE)
+    self.assertNotEqual(Extended.READ_OWN, Permission.READ)
+    self.assertNotEqual(Permission.READ, Extended.READ_OWN)
+    self.assertNotEqual(Extended.READ, Permission.READ_WRITE)
+    self.assertNotEqual(Permission.READ_WRITE, Extended.READ)
+    self.assertEqual(Extended.READ, Permission.READ)
+    self.assertEqual(Permission.READ_WRITE, Extended.READ_WRITE)

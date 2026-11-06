@@ -11,18 +11,37 @@ from ...dispatch import overload, Dispatcher
 from ...waitaminute.meta import OverloadConflict, ReboundOverload
 from . import AbstractSpaceHook
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Optional
 
 
 class LoadSpaceHook(AbstractSpaceHook):
   """
-  LoadSpaceHook collects the 'overload' instances declared in the class
-  body. During 'setItemPhase' it records each overload's signatures,
-  variadics, fallback, and finalizer on the namespace; during
-  'postCompilePhase' it assembles one 'Dispatcher' per overloaded name
-  from the registrations the namespace merges across the method
-  resolution order, and writes it into the compiled namespace.
+  Python keeps only the last function bound to a name in a class body,
+  yet a 'BaseObject' class declares one function per signature at one
+  name with '@overload'. Every declaration must therefore be taken from
+  the body as it is bound, and once the body ends, the declarations of
+  each name, with those the class inherits, must become one dispatcher
+  at that name. A name may not be both overloaded and defined plainly in
+  one body, since one of the two would be lost.
+
+  Implementation
+  --------------
+
+  'setItemPhase' claims every 'overload' object, so the namespace never
+  stores one, and records its signatures, as copies, its fallback and its
+  finalizer on the namespace. A record under '@classmethod' or
+  '@staticmethod' is taken out and claimed the same way, and the kind of
+  method each binding declares is recorded; a second kind at one name, or
+  both kinds in one stack, raises 'MixedMethodKind'. A plain binding at
+  an overloaded name, or an overload at a plainly bound one, raises
+  'OverloadConflict'; binding one 'overload' object twice in a body, as
+  '__radd__ = __add__', raises 'ReboundOverload'. 'postCompilePhase'
+  builds a 'Dispatcher' for every
+  overloaded name of the body or of a base, unless the body defines the
+  name plainly, and writes it into the dictionary, of the kind of method
+  the nearest class declaring the name made it. Every class thus has
+  dispatchers of its own.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -31,31 +50,62 @@ class LoadSpaceHook(AbstractSpaceHook):
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
     """
-    The 'setItemPhase' method records each binding of the class body. An
-    'overload' is claimed and its registrations are stored on the
-    namespace, each signature as a copy, so that the 'overload' object
-    keeps 'THIS' and may be bound in another class body; anything else
-    is a plain definition, whose name is noted and which the namespace
-    stores as usual. One class body may not give
-    a name both, in either order, so the second of the two raises
-    'OverloadConflict'. The hook runs ahead of the hooks of the namespace
-    subclasses, so it also notes a plain value one of them then claims,
-    such as an 'EZField'. One class body binds an 'overload' object once:
-    a second binding of it, under another name as in '__radd__ =
-    __add__' or under the same one, raises 'ReboundOverload', and the
-    second name takes a method of its own. Another class body may bind
-    the same object again.
+    Each 'overload' object must be recorded as it is bound, and a mixed or
+    repeated binding refused at its line.
+
+    Implementation
+    --------------
+
+    The signatures are copied with 'sig()', since placing a class rewrites
+    'THIS' in a registered signature in place and the 'overload' object
+    may be bound in another class body. A plain value one of the later
+    hooks claims, such as an 'EZField', is still noted as plain, since this
+    hook runs before any hook a namespace subclass adds.
+
+    Parameters
+    ----------
+
+    key : str
+      The name bound.
+
+    val : Any
+      The value bound.
+
+    old : Any, optional
+      The value the name held, or 'None'.
+
+    Returns
+    -------
+
+    bool
+      'True' for an 'overload', claiming it.
+
+    Raises
+    ------
+
+    OverloadConflict
+      The name is bound both plainly and to overloads.
+
+    ReboundOverload
+      The 'overload' object is bound a second time in the body.
+
+    MixedMethodKind
+      The body declared the name as another kind of method already, or the
+      binding is decorated as both a classmethod and a staticmethod.
     """
-    if not isinstance(val, overload):
+    kinds, record = overload.peelMethodKinds(val)
+    if not isinstance(record, overload):
       if self.space.hasOverloads(key):
         raise OverloadConflict(self.space.getClassName(), key, True)
       self.space.addPlainName(key)
       return False
+    val = record
     if key in self.space.getPlainNames():
       raise OverloadConflict(self.space.getClassName(), key, False)
     claimedName = self.space.getClaimedName(val)
     if claimedName is not None:
       raise ReboundOverload(self.space.getClassName(), claimedName, key)
+    self.space.addMethodKind(key, self._getMethodKind(key, kinds, val))
     self.space.addClaimedName(val, key)
     #  A stack of decorators may give one 'overload' every role at once.
     if val.isFallback():
@@ -67,50 +117,81 @@ class LoadSpaceHook(AbstractSpaceHook):
     #  otherwise hand the second class the signatures the first fixed.
     for sig, func in val:
       self.space.addOverload(key, sig(), func)
+    for sig, func in val.getFlexes():
+      self.space.addFlex(key, sig(), func)
     for sig, func in val.getVariadics():
       self.space.addVariadic(key, sig(), func)
     return True
 
+  def _getMethodKind(self, key: str, kinds: tuple, record: overload) -> Any:
+    """
+    The kind of method a binding declares comes from the layers written
+    above the record and from those its decorators were given, and both
+    must name one kind.
+
+    Parameters
+    ----------
+
+    key : str
+      The name bound.
+
+    kinds : tuple
+      The kinds of the layers above the record, outermost first.
+
+    record : overload
+      The record under them.
+
+    Returns
+    -------
+
+    Any
+      'classmethod', 'staticmethod', or 'None' for an instance method.
+    """
+    recordKind = record.getMethodKind()
+    if recordKind is None:
+      stack = kinds
+    else:
+      stack = (*kinds, recordKind)
+    className = self.space.getClassName()
+    return overload.agreeMethodKind(stack, key, className)
+
   def delItemPhase(self, key: str, val: Any = None, ) -> bool:
     """
-    The 'delItemPhase' method forgets a plain name the class body
-    deletes, so the name may be overloaded afterwards; the record exists
-    so that one body does not give a name both a plain definition and
-    overloads, and a deleted definition is no longer one. A deleted
-    overloaded name is left to the namespace, which records the deletion
-    and refuses it as the class is created.
+    A plain definition deleted from the body no longer conflicts with
+    overloads at its name.
+
+    Implementation
+    --------------
+
+    The name is forgotten as plain. A deleted overloaded name is left to
+    the namespace, which refuses it as the class is created.
     """
     self.space.removePlainName(key)
     return False
 
   def postCompilePhase(self, compiledSpace) -> dict:
-    """Assembles one 'Dispatcher' per overloaded name and writes each
-    into 'compiledSpace'. The registrations come from 'collectOverloads',
-    'collectVariadics', 'collectFallback', and 'collectFinalizer' on the
-    namespace, which put the class body's own registrations first and
-    merge in those of the classes in the method resolution order, nearest
-    first. Each registration reaches the 'Dispatcher' together with its
-    distance, which decides the order of the cast passes.
+    """
+    Once the body has ended, each overloaded name must hold its
+    dispatcher, built from the declarations of the body and of the bases.
 
-    Two different variadic declarations that both accept one call by
-    exact type, such as 'ARGS[int]' and '(int, ARGS[int])', are no
-    conflict: the most recent declaration of the nearest class takes the
-    call, as 'Dispatcher' documents. Two equal ones in one class body
-    with different functions are refused at the second of them by
-    'addVariadic', as two equal concrete signatures are by
-    'addOverload'.
+    Implementation
+    --------------
 
-    A name that the class body bound to a plain (non-'overload')
-    definition gets no 'Dispatcher': that explicit definition overrides
-    any overloads inherited from a base class, and it also stops
-    subclasses from collecting registrations beyond it. The class body
-    itself cannot have overloaded the name as well, which 'setItemPhase'
-    refuses. The signal is the namespace's own storage: '@overload'
-    declarations are claimed by 'setItemPhase' and never reach it,
-    whereas a plain definition is stored there under its name. A name for
-    which a plain definition in a base class shadows every registration
-    gets no 'Dispatcher' either, leaving that plain definition to be
-    found through the method resolution order.
+    A name the body defines plainly gets none, since that definition
+    overrides the inherited overloads, and so does a name whose every
+    registration a plain definition in a base hides.
+
+    Parameters
+    ----------
+
+    compiledSpace : dict
+      The dictionary being assembled.
+
+    Returns
+    -------
+
+    dict
+      The dictionary with the dispatchers.
     """
     for name in self.space.getOverloadNames():
       if dict.__contains__(self.space, name):
@@ -125,20 +206,19 @@ class LoadSpaceHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _buildDispatcher(self, name: str) -> Optional[Dispatcher]:
-    """
-    The '_buildDispatcher' method builds the 'Dispatcher' for 'name' from
-    the registrations the namespace collects, or returns None when a
-    plain definition in a base class shadows all of them.
-    """
     sigFuncs = self.space.collectOverloads(name)
+    flexes = self.space.collectFlexes(name)
     variadics = self.space.collectVariadics(name)
     fallback = self.space.collectFallback(name)
     finalizer = self.space.collectFinalizer(name)
-    if not (sigFuncs or variadics or fallback or finalizer):
+    if not (sigFuncs or flexes or variadics or fallback or finalizer):
       return None
     dispatcher = Dispatcher()
+    dispatcher.setMethodKind(self.space.collectMethodKind(name))
     for sig, func, distance in sigFuncs:
       dispatcher.addSigFunc(sig, func, distance)
+    for sig, func, distance in flexes:
+      dispatcher.addFlexSigFunc(sig, func, distance)
     for sig, func, distance in variadics:
       dispatcher.addVariadicSigFunc(sig, func, distance)
     if fallback is not None:

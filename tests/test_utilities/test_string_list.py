@@ -1,72 +1,63 @@
-"""TestStringList tests the stringList function."""
+"""
+TestStringList tests 'stringList' from 'worktoy.utilities'.
+"""
 #  Apache-2.0 license
-#  Copyright (c) 2024-2026 Asger Jon Vistisen
+#  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from . import UtilitiesTest
 from worktoy.utilities import stringList
 from worktoy.waitaminute import TypeException
+from . import UtilitiesTest
 
 
 class TestStringList(UtilitiesTest):
-  """TestStringList tests the 'stringList' function."""
+  """
+  'stringList' splits strings on a separator into stripped, non-empty
+  pieces, with several separators applied one after another when a
+  list or tuple of them is given. The tests pin the docstring examples,
+  the stripping and dropping of empty pieces, the sequence of
+  separators, and the refusal of any other separator type.
+  """
 
-  def test_stringList(self) -> None:
-    """Testing the stringList function."""
-    items = 'a, b, c, d'
-    expected = ['a', 'b', 'c', 'd']
-    actual = stringList(items)
-    self.assertEqual(expected, actual)
+  def test_docstring_examples(self) -> None:
+    self.assertEqual(stringList('a, b, c'), ['a', 'b', 'c'])
+    self.assertEqual(stringList('a;b,c', separator=[',', ';']),
+                     ['a', 'b', 'c'])
 
-    items = 'a, b, c, d'
-    expected = ['a', 'b', 'c', 'd']
-    actual = stringList(items, separator=',')
-    self.assertEqual(expected, actual)
-
-    items = 'a, b, c, d'
-    expected = ['a', 'b', 'c', 'd']
-    actual = stringList(items, separator='LOL')
-    self.assertNotEqual(expected, actual)
-
-    items = '/usr/bin:/usr/local/bin:/usr/sbin'
-    expected = ['/usr/bin', '/usr/local/bin', '/usr/sbin']
-    actual = stringList(items, separator=':')
-    self.assertEqual(expected, actual)
-
-  def test_stringList_empty(self) -> None:
-    """Testing the stringList function with empty string."""
-    items = ''
-    expected = []
-    actual = stringList(items)
-    self.assertEqual(expected, actual)
+  def test_default_separator_is_comma_space(self) -> None:
+    self.assertEqual(stringList('a,b, c'), ['a,b', 'c'])
 
   def test_custom_separator(self) -> None:
-    """Testing the stringList function with custom separator."""
-    sample = """1, 2, fizz, 4, buzz, 6, 7, 8, 9, 10"""
-    sep = 'fizz'
-    expected = ['1, 2,', ', 4, buzz, 6, 7, 8, 9, 10']
-    actual = stringList(sample, separator=sep)
-    self.assertEqual(expected, actual)
-    sep = 'buzz'
-    expected = ['1, 2, fizz, 4,', ', 6, 7, 8, 9, 10']
-    actual = stringList(sample, separator=sep)
-    self.assertEqual(expected, actual)
+    self.assertEqual(stringList('a|b|c', separator='|'), ['a', 'b', 'c'])
 
-  def test_multiple_separators(self) -> None:
-    """Testing the stringList function with multiple separators."""
-    sample = 'a, b; c, d'
-    expected = ['a', 'b', 'c', 'd']
-    actual = stringList(sample, separator=[', ', '; '])
-    self.assertEqual(len(expected), len(actual))
-    for e, a in zip(expected, actual):
-      self.assertEqual(e, a)
+  def test_pieces_stripped_and_empty_dropped(self) -> None:
+    self.assertEqual(stringList('  a ,, b ,  ', separator=','), ['a', 'b'])
+    self.assertEqual(stringList('', separator=','), [])
+    self.assertEqual(stringList('   '), [])
 
-  def test_invalid_separator(self) -> None:
+  def test_several_arguments(self) -> None:
+    self.assertEqual(stringList('a, b', 'c, d'), ['a', 'b', 'c', 'd'])
+
+  def test_no_arguments(self) -> None:
+    self.assertEqual(stringList(), [])
+    self.assertEqual(stringList(separator=[',', ';']), [])
+
+  def test_tuple_of_separators(self) -> None:
+    self.assertEqual(stringList('a;b|c', separator=(';', '|')),
+                     ['a', 'b', 'c'])
+
+  def test_separators_apply_in_order(self) -> None:
+    #  Splitting on 'ab' before 'b' leaves no 'b' for the second pass,
+    #  while the other order does.
+    self.assertEqual(stringList('xaby', separator=['ab', 'b']), ['x', 'y'])
+    self.assertEqual(stringList('xaby', separator=['b', 'ab']), ['xa', 'y'])
+
+  def test_bad_separator_refused(self) -> None:
     with self.assertRaises(TypeException) as context:
-      stringList('a, b, c', separator=80085)
-    e = context.exception
-    self.assertEqual(e.varName, 'separator')
-    self.assertEqual(e.actualObject, 80085)
-    self.assertEqual(e.actualType, int)
-    for type_ in [str, list, tuple]:
-      self.assertIn(type_, e.expectedTypes)
+      stringList('a, b', separator=42)
+    self.assertEqual(context.exception.varName, 'separator')
+    self.assertEqual(context.exception.actualObject, 42)
+    self.assertIs(context.exception.actualType, int)
+    self.assertEqual(context.exception.expectedTypes, (str, list, tuple))
+    self.assertIn("'separator'", str(context.exception))
+    self.assertIn("'str', 'list' or 'tuple'", str(context.exception))

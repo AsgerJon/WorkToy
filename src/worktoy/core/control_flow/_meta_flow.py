@@ -11,7 +11,7 @@ from ...waitaminute import VariableNotNone
 from .. import MetaType
 from . import ControlSpace
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Type, TypeAlias, Optional, Self, Union, Callable
 
   Bases: TypeAlias = tuple[Type[Any], ...]
@@ -21,11 +21,29 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class MetaFlow(MetaType, metaclass=MetaType):
   """
-  MetaFlow provides the metaclass for the control flow exception classes. It
-  prevents these classes from having any sort of attributes. It
-  subclasses 'MetaType' and is an instance of it, as 'AbstractMetaclass' is,
-  so a signal declared with a class keyword has the keyword absorbed by
-  '_Chill'; the '_root' keyword is read by '__prepare__' before that.
+  Some exceptions steer a protocol instead of reporting a failure, as
+  'StopIteration' tells a loop to stop. worktoy needs such signals,
+  'SkipSet' among them, and a project may add its own. A signal is
+  caught by its type, so the family needs one root to catch them all, a
+  text that names the signal whatever it was raised with, and class
+  bodies limited to what a signal can sensibly hold.
+
+  Implementation
+  --------------
+
+  '__prepare__' returns a 'ControlSpace', which refuses every name a
+  signal may not define, already holding a '__str__' and '__repr__' that
+  give the text of the class, and the flag '__is_root__' read from the
+  class keyword '_root'. '__new__' builds the signal through 'MetaType'
+  and records the one root, refusing a second with 'VariableNotNone'.
+  The text of a signal class reads '<ControlFlow: SkipSet>', and the root
+  reads '<ControlFlow: [Root]>'.
+
+  Attributes
+  ----------
+
+  __root_cls__ : type or None
+    The root signal, 'ControlFlow', once created.
   """
 
   __is_root__: bool
@@ -69,10 +87,6 @@ class MetaFlow(MetaType, metaclass=MetaType):
 
   @staticmethod
   def _strFactory() -> STR:
-    """
-    Factory method generating a '__str__' method that shows for the
-    instance the same as for the class.
-    """
 
     def __str__(self, ) -> str:
       cls = type(self)

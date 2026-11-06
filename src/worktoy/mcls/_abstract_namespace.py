@@ -12,7 +12,7 @@ from ..waitaminute import TypeException
 from ..waitaminute.meta import HookException, DuplicateHook, ClaimedName
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, TypeAlias, Iterator, Union, Self, Optional
   from .space_hooks import AbstractSpaceHook
   from . import AbstractMetaclass as AMeta
@@ -26,33 +26,35 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class AbstractNamespace(dict):
   """
-  AbstractNamespace defines the custom execution environment used by
-  AbstractMetaclass during class construction. It provides a controlled
-  and extensible context for evaluating class bodies, enabling advanced
-  metaprogramming behavior.
+  A metaclass learns about a class body only after it has run, as a
+  plain dictionary of names. worktoy needs more: a mistake in the body,
+  such as a misspelled dunder, must fail at its line; one name must be
+  bindable several times, as with '@overload'; what the body declared
+  must be turned into something else before the class is created; and a
+  subclass must find what its bases declared, overloads included, once
+  those bases exist. All of this must be split into pieces a namespace
+  is assembled from, so a project can add its own.
 
-  The core feature of AbstractNamespace is its support for modular
-  hook-based behavior. Hooks are instances of subclasses of
-  AbstractSpaceHook, declared directly within the body of the namespace
-  class. Upon declaration, each hook registers itself with the namespace
-  via the descriptor protocol.
+  Implementation
+  --------------
 
-  These hooks allow interception and transformation of key events during
-  class construction, including symbol access, assignment, and final
-  namespace compilation. For details on available hook methods and their
-  intended usage, refer to the AbstractSpaceHook documentation.
-
-  This design allows complex functionality, such as decorator-based
-  overload resolution and placeholder replacement, to be cleanly
-  separated into reusable components. By defining a namespace subclass
-  with the desired combination of hooks, users can tailor the behavior of
-  class construction without modifying the core metaclass logic.
-
-  A class keeps the namespace that built it under '__namespace__', with
-  the compiled dict the namespace records, so a subclass can collect the
-  registrations it inherits. Everything the class body bound, the
-  'overload' objects a hook claimed included, therefore stays alive with
-  the class for the life of the process.
+  'AbstractMetaclass.__prepare__' creates one namespace per class
+  statement. Every binding, read and deletion of the body passes through
+  the hooks of the namespace class, instances of 'AbstractSpaceHook'
+  declared in its body; a hook may refuse a name, or claim a binding so
+  the namespace does not store it. A shadow record of every binding
+  keeps a claimed name readable in the body instead of falling through
+  to the global names of the file. 'compile' assembles the dictionary for
+  'type.__new__' from the hooks' defaults, the names of the body and the
+  hooks' transformations, adds '__metaclass__', '__namespace__' and
+  '__keyword_arguments__', and keeps it, so subclasses can read it later
+  through 'getMROSpace'. Everything a class body bound therefore stays
+  alive with the class. Every namespace refuses rebinding of reserved
+  names ('ReservedNamespaceHook') and misspelled dunders
+  ('NamespaceHook'); a subclass adds hooks by declaring them, and cannot
+  replace an inherited hook by declaring one at the same name. The class
+  keyword '_strictMRO=False' admits bases with no consistent resolution
+  order, for a namespace built for inspection alone.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -85,37 +87,43 @@ class AbstractNamespace(dict):
 
   def getShadowSpace(self, ) -> dict:
     """
-    The 'getShadowSpace' method returns the shadow mapping recording
-    every assignment the class body has made, including assignments a
-    hook claimed away from the namespace itself. The reading protocol
-    falls back to this mapping, so a name bound earlier in the class
-    body remains readable even after a hook has claimed it. Without
-    this fallback, reading a claimed name would escape to the module
-    scope, silently picking up whatever global happens to share the
-    name.
+    A name a hook claimed must stay readable in the class body, or reading
+    it would silently find a global of the same name instead.
 
     Returns
     -------
+
     dict
-      The mapping of every class-body assignment seen so far, with
-      the most recent assignment winning on repeated names.
+      Every binding of the body so far, the latest per name.
     """
     return maybe(self.__shadow_space__, dict())
 
   def getClaimedDeletions(self, ) -> tuple[str, ...]:
-    """
-    The 'getClaimedDeletions' method returns the names the class body
-    deleted after a hook had claimed them, in the order deleted; see
-    '__delitem__'.
-    """
     return maybe(self.__claimed_deletions__, ())
 
   def deepGetItem(self, item: str, ) -> Any:
     """
-    The 'deepGetItem' method looks up 'item' in the namespace itself,
-    then in the combined MRO namespace if absent, raising 'KeyError'
-    when neither holds it. A value found in the MRO namespace is the list
-    of the values the classes along it contribute; see 'getMROSpace'.
+    A hook may need what a name holds in the body or, failing that, in the
+    classes along the resolution order.
+
+    Parameters
+    ----------
+
+    item : str
+      The name to read.
+
+    Returns
+    -------
+
+    Any
+      The value the body bound, or the list of values the classes along
+      the order hold, nearest first.
+
+    Raises
+    ------
+
+    KeyError
+      Neither holds the name.
     """
     if dict.__contains__(self, item):
       return dict.__getitem__(self, item)
@@ -133,14 +141,26 @@ class AbstractNamespace(dict):
     hooks = self.classGetHooks()
     for hook in hooks:
       out = hook.__get__(self, cls, )
-      setattr(out, '__space_object__', self)
       yield out
 
   @classmethod
   def classGetHooks(cls, ) -> Hooks:
     """
-    The 'classGetHooks' classmethod returns the hooks registered on this
-    namespace class and its bases, de-duplicated in MRO order.
+    A namespace must run the hooks its own class declares and those its
+    bases declared, each once, in a fixed order, since the first hook
+    claiming a binding hides it from the rest.
+
+    Implementation
+    --------------
+
+    The hooks of the base namespace classes come first, then those of the
+    subclass in declaration order.
+
+    Returns
+    -------
+
+    Hooks
+      A 'list[AbstractSpaceHook]'.
     """
     pvtName = cls.getHookListName()
     out = []
@@ -154,7 +174,7 @@ class AbstractNamespace(dict):
     return out
 
   def getMetaclass(self, ) -> AMeta:
-    if TYPE_CHECKING:  # pragma: no cover
+    if TYPE_CHECKING:  # pragma: no cover, no mutate
       assert isinstance(self.__metaclass__, AMeta)
     return self.__metaclass__
 
@@ -169,11 +189,14 @@ class AbstractNamespace(dict):
 
   def _getLookupOrder(self, ) -> list[type]:
     """
-    The '_getLookupOrder' method returns the classes after the class under
-    construction in its method resolution order. A namespace created with
-    '_strictMRO=False' for bases admitting no consistent order has none,
-    and falls back to each base's own order, bases left to right, with
-    repeated classes kept at their first position.
+    A namespace built with '_strictMRO=False' for bases with no consistent
+    resolution order still needs an order to search.
+
+    Implementation
+    --------------
+
+    The computed order, or else each base's own order, bases left to
+    right, each class kept at its first position.
     """
     mro: Optional[list[type]] = self.getMRO()
     if mro is not None:
@@ -187,14 +210,23 @@ class AbstractNamespace(dict):
 
   def getMROSpace(self, ) -> MROSpace:
     """
-    The 'getMROSpace' method combines the compiled namespaces of every
-    base in the MRO into one dict, where each key maps to the list of
-    values contributed for it across the MRO. It follows the lookup order
-    of '_getLookupOrder', so a namespace without a resolved order still
-    answers. Both names are read with 'type.__getattribute__' and
-    'object.__getattribute__', so that no '__getattr__',
-    '__class_getattr__' or reimplemented '__getattribute__' of a class in
-    the lookup order can answer for them.
+    A subclass must read what its bases declared, each base as its own
+    namespace compiled it, nearest first.
+
+    Implementation
+    --------------
+
+    The compiled dictionary of every class along the lookup order built by
+    a worktoy namespace is merged, read past any '__getattr__' or
+    '__getattribute__' a class reimplements; plain classes are passed
+    over.
+
+    Returns
+    -------
+
+    MROSpace
+      A 'dict[str, list[Any]]' from each name to the values the classes
+      hold, nearest first.
     """
     lookupOrder = self._getLookupOrder()
     compiledSpaces = []
@@ -220,9 +252,21 @@ class AbstractNamespace(dict):
   @classmethod
   def addHook(cls, hook: AbstractSpaceHook) -> None:
     """
-    The 'addHook' classmethod registers 'hook' on the namespace class,
-    raising 'DuplicateHook' if a different hook is already registered
-    under the same field name.
+    A hook declared in the body of a namespace class must register itself,
+    and two different hooks at one name would leave it unclear which one
+    runs.
+
+    Parameters
+    ----------
+
+    hook : AbstractSpaceHook
+      The hook.
+
+    Raises
+    ------
+
+    DuplicateHook
+      Another hook is registered at the name, on this class or a base.
     """
     existingHooks = cls.classGetHooks()
     for existingHook in existingHooks:
@@ -242,11 +286,36 @@ class AbstractNamespace(dict):
 
   def __init__(self, mcls: AMeta, name: str, bases: Base, **kwargs) -> None:
     """
-    Please note that setting the '_strictMRO' keyword argument to 'False'
-    allows bases admitting no consistent method resolution order. This
-    serves a namespace built directly alone, since no class can be
-    created from such bases: 'getMRO' is then None, and the lookup order
-    falls back to the own order of each base; see '_getLookupOrder'.
+    The namespace must know the class it serves before the body runs, so
+    its hooks can screen every line.
+
+    Implementation
+    --------------
+
+    The metaclass, name, bases and keywords are kept, the resolution order
+    is computed, and every hook's 'preparePhase' runs.
+
+    Parameters
+    ----------
+
+    mcls : AMeta
+      The metaclass creating the class.
+
+    name : str
+      The name of the class.
+
+    bases : Base
+      A 'tuple[type, ...]' of the bases of the class statement.
+
+    **kwargs
+      The class keywords; '_strictMRO=False' admits bases with no
+      consistent resolution order.
+
+    Raises
+    ------
+
+    TypeError
+      The bases admit no consistent resolution order.
     """
     self.__metaclass__ = mcls
     self.__class_name__ = name
@@ -263,7 +332,6 @@ class AbstractNamespace(dict):
       if kwargs.get('_strictMRO', True):
         raise typeError
     for hook in self.getHooks():
-      setattr(hook, '__space_object__', self)
       hook.preparePhase(self)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -272,11 +340,36 @@ class AbstractNamespace(dict):
 
   def __getitem__(self, key: str, **kwargs) -> Any:
     """
-    The '__getitem__' method fetches 'key', then runs every hook's
-    'getItemPhase' before returning the value or re-raising the
-    'KeyError'. A key absent from the namespace but present in the
-    shadow space resolves to its shadow value: the class body can
-    read back a name even after a hook has claimed the assignment.
+    Every read in the class body must pass the hooks, and a name a hook
+    claimed must still read as bound.
+
+    Implementation
+    --------------
+
+    The dictionary is asked, then the shadow record; every hook's
+    'getItemPhase' runs, with the 'KeyError' as value on a miss, which is
+    then raised again for the interpreter to look among the global names.
+
+    Parameters
+    ----------
+
+    key : str
+      The name read.
+
+    Returns
+    -------
+
+    Any
+      The value bound in the body.
+
+    Raises
+    ------
+
+    KeyError
+      The body never bound the name.
+
+    HookException
+      A hook raised; the original is its cause.
     """
     #  The miss is kept apart from the value, which a class body may well
     #  bind to a 'KeyError' of its own.
@@ -290,7 +383,6 @@ class AbstractNamespace(dict):
       else:
         val = missing = keyError
     for hook in self.getHooks():
-      setattr(hook, '__space_object__', self)
       try:
         hook.getItemPhase(key, val)
       except Exception as exception:
@@ -301,11 +393,24 @@ class AbstractNamespace(dict):
 
   def __setitem__(self, key: str, val: Any, **kwargs) -> None:
     """
-    The '__setitem__' method offers each hook's 'setItemPhase' a chance
-    to handle 'key' first; the namespace performs the default assignment
-    only when no hook claims it. Every assignment is also recorded in
-    the shadow space, claimed or not, keeping the name readable from
-    the class body either way.
+    Every binding in the class body must pass the hooks, any of which may
+    refuse it or claim it.
+
+    Implementation
+    --------------
+
+    The shadow record takes the binding first; the hooks run in order and
+    the first claiming the binding ends the round; unclaimed, the value is
+    stored.
+
+    Parameters
+    ----------
+
+    key : str
+      The name bound.
+
+    val : Any
+      The value bound.
     """
     shadow = self.getShadowSpace()
     shadow[key] = val
@@ -315,7 +420,6 @@ class AbstractNamespace(dict):
     except KeyError:
       oldVal = None
     for hook in self.getHooks():
-      setattr(hook, '__space_object__', self)
       if hook.setItemPhase(key, val, oldVal):
         break  # Breaks out of the loop if handled by hook.
     else:  # If no 'break', the 'else' block is executed.
@@ -323,22 +427,29 @@ class AbstractNamespace(dict):
 
   def __delitem__(self, key: str, **kwargs) -> None:
     """
-    The '__delitem__' method runs 'del' in the class body. The name is
-    removed from the namespace and from the shadow space alike, so a later
-    read in the class body no longer finds it, as in a plain class. A name
-    the class body never bound raises 'KeyError', which the interpreter
-    reports as a 'NameError'.
+    Every deletion in the class body must pass the hooks. A name whose
+    latest binding a hook claimed cannot be deleted, since the hook
+    registered the value already, and the interpreter replaces any
+    exception a deletion in a class body raises with its own 'NameError'.
 
-    Every hook's 'delItemPhase' runs first, with the name and the value
-    being removed; a hook returning True claims the deletion, and the
-    name is left alone.
+    Implementation
+    --------------
 
-    A name whose latest binding a hook claimed cannot be deleted, since
-    the hook registered the value as it was bound. The deletion is
-    recorded instead, and 'compile' raises 'ClaimedName' for it as the
-    class is created. Raising here would be lost: the interpreter replaces
-    any exception a deletion in a class body raises with its own
-    'NameError', saying that the name is not defined.
+    A hook may claim the deletion. Otherwise a claimed name is recorded,
+    and 'compile' raises 'ClaimedName' for it; the name leaves the shadow
+    record and the dictionary.
+
+    Parameters
+    ----------
+
+    key : str
+      The name deleted.
+
+    Raises
+    ------
+
+    KeyError
+      The body never bound the name.
     """
     shadow = self.getShadowSpace()
     if key not in shadow and not dict.__contains__(self, key):
@@ -348,7 +459,6 @@ class AbstractNamespace(dict):
     else:
       val = shadow[key]
     for hook in self.getHooks():
-      setattr(hook, '__space_object__', self)
       if hook.delItemPhase(key, val):
         return
     if self._isClaimed(key):
@@ -359,10 +469,15 @@ class AbstractNamespace(dict):
 
   def _isClaimed(self, key: str) -> bool:
     """
-    The '_isClaimed' method reports whether a hook claimed the latest
-    binding of 'key' in the class body: the shadow space records every
-    binding, while the namespace holds only those no hook claimed, so the
-    two disagree exactly when the latest one was claimed.
+    A deletion must know whether a hook claimed the latest binding of the
+    name.
+
+    Implementation
+    --------------
+
+    The shadow record holds every binding and the dictionary only the
+    unclaimed ones, so they disagree exactly when the latest binding was
+    claimed.
     """
     shadow = self.getShadowSpace()
     if not dict.__contains__(self, key):
@@ -399,29 +514,67 @@ class AbstractNamespace(dict):
 
   def preCompile(self, namespace: Optional[dict] = None) -> dict:
     """
-    The 'preCompile' method runs each hook's 'preCompilePhase' over the
-    starting namespace dict (a fresh dict when none is given) and returns
-    the accumulated result, which 'compile' then merges the class-body
-    names into.
+    A namespace subclass may need to change how the dictionary starts out,
+    before the names of the body are merged in.
+
+    Implementation
+    --------------
+
+    Every hook's 'preCompilePhase' runs over the dictionary.
+
+    Parameters
+    ----------
+
+    namespace : dict, optional
+      The dictionary to start from; a new one by default.
+
+    Returns
+    -------
+
+    dict
+      The dictionary.
     """
     if namespace is None:
       namespace = dict()
     elif not isinstance(namespace, dict):
       raise TypeException('namespace', namespace, dict)
     for hook in self.getHooks():
-      setattr(hook, '__space_object__', self)
       namespace = hook.preCompilePhase(namespace)
     return namespace
 
   def compile(self, namespace: Optional[dict] = None) -> dict:
     """
-    The 'compile' method builds the final namespace passed to
-    'type.__new__': it runs 'preCompile', merges in the class-body names,
-    runs 'postCompile', and records the metaclass, namespace, and
-    keyword arguments. Subclasses may reimplement 'preCompile' or
-    'postCompile' as needed, but must not reimplement this method. A
-    class body that deleted a name a hook claimed raises 'ClaimedName'
-    here, before anything is compiled; see '__delitem__'.
+    The metaclass needs the dictionary the class is created from, and
+    subclasses of the class need it later to learn what the class
+    declared.
+
+    Implementation
+    --------------
+
+    A deletion of a claimed name raises 'ClaimedName' first. Then
+    'preCompile', the names of the body, which replace the defaults,
+    'postCompile', and the entries '__metaclass__', '__namespace__' and
+    '__keyword_arguments__'. The result is kept as the compiled dictionary.
+    A namespace subclass reimplements 'preCompile' or 'postCompile', not
+    this method.
+
+    Parameters
+    ----------
+
+    namespace : dict, optional
+      The dictionary to start from; a new one by default.
+
+    Returns
+    -------
+
+    dict
+      The dictionary for 'type.__new__'.
+
+    Raises
+    ------
+
+    ClaimedName
+      The body deleted a name a hook had claimed.
     """
     for key in self.getClaimedDeletions():
       raise ClaimedName(self.getClassName(), key)
@@ -437,12 +590,27 @@ class AbstractNamespace(dict):
 
   def postCompile(self, namespace: dict) -> dict:
     """
-    The 'postCompile' method runs each hook's 'postCompilePhase' over the
-    assembled namespace and returns the result, which 'compile' hands to
-    the metaclass. This is where 'LoadSpaceHook' turns collected
-    overloads into 'Dispatcher' objects.
+    A namespace subclass may need to change the dictionary after the names
+    of the body are merged in.
+
+    Implementation
+    --------------
+
+    Every hook's 'postCompilePhase' runs over the dictionary; this is
+    where 'LoadSpaceHook' builds the dispatchers.
+
+    Parameters
+    ----------
+
+    namespace : dict
+      The assembled dictionary.
+
+    Returns
+    -------
+
+    dict
+      The dictionary.
     """
     for hook in self.getHooks():
-      setattr(hook, '__space_object__', self)
       namespace = hook.postCompilePhase(namespace)
     return namespace

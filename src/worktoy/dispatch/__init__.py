@@ -3,9 +3,10 @@ The 'worktoy.dispatch' package provides the machinery for type-signature
 based function overloading, not a ready-to-use overloading facility on its
 own. The 'overload' decorator only records signatures; turning those into
 live dispatch happens one layer up, where 'BaseMeta' in 'worktoy.mcls'
-compiles them into a 'Dispatcher' during class construction. Use these
-tools through a 'BaseObject' subclass, or wire a 'Dispatcher' onto a class
-by hand.
+compiles them into a 'Dispatcher' during class construction. They serve
+a class based on 'BaseObject' or built by a metaclass based on 'BaseMeta';
+a class whose metaclass comes from another library takes a metaclass
+combined with 'BaseMeta'.
 
 - flexCall, isFlex
 - CallMeMaybe

@@ -12,7 +12,7 @@ from ..waitaminute.keenum import KeeDuplicate, KeeTypeException
 from ..waitaminute.keenum import KeeNameConflict
 from . import KeeSpaceHook, Kee
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Dict, TypeAlias
 
   Members: TypeAlias = Dict[str, Kee]
@@ -20,8 +20,39 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class KeeSpace(BaseSpace):
-  """KeeSpace provides the namespace class used by the 'worktoy.keenum'
-  package."""
+  """
+  A 'KeeNum' body declares its members as 'Kee' objects, one per name,
+  and the class must receive them as members in the order declared,
+  inherited members first, every name once, every value of one type,
+  and never as plain attributes the members would then replace. The
+  namespace of the body is where that bookkeeping belongs, since it
+  sees each binding as it is made and knows the bases before the body
+  runs.
+
+  Implementation
+  --------------
+
+  'KeeSpace' is a 'BaseSpace' with one hook of its own, 'KeeSpaceHook',
+  which hands every 'Kee' bound in the body to 'addNum'. 'addNum'
+  refuses a repeated name with 'KeeDuplicate', a 'Kee' already named
+  otherwise with 'KeeNameConflict', a name that is not upper case
+  through the 'Kee' setter, and a value type other than the first
+  member's through 'typeGuard', then records the member. The
+  constructor registers a clone of every member of each base that is an
+  enumeration, so the names and the value type are inherited before the
+  body runs. 'postCompile' writes the pinned value type into the class
+  dictionary as '__member_type__'; 'KeeMeta' reads the members off the
+  namespace as the class is created.
+
+  Attributes
+  ----------
+
+  __enumeration_members__ : dict
+    The 'Kee' of each member by name, inherited clones first.
+
+  __member_type__ : type or None
+    The value type pinned by the first member, or 'None' before any.
+  """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -42,8 +73,9 @@ class KeeSpace(BaseSpace):
     """
     The 'addNum' method registers one 'Kee' member under 'name', raising
     'KeeDuplicate' on a repeated name and 'KeeNameConflict' if the member
-    already carries a different name. It assigns the member its index and
-    runs it through 'typeGuard' before storing it.
+    already carries a different name. It runs the member through
+    'typeGuard' before storing it; the index is assigned as the class is
+    created, by 'KeeMeta._createMembers', once the 'Kee' is placed.
     """
     if name in self.__enumeration_members__:
       oldMember = self.__enumeration_members__[name]
@@ -55,7 +87,6 @@ class KeeSpace(BaseSpace):
     else:
       if oldName != name:
         raise KeeNameConflict(member, oldName, name)
-    member.__num_index__ = len(self.__enumeration_members__)
     member = self.typeGuard(member)
     self.__enumeration_members__[name] = member
 
@@ -88,28 +119,27 @@ class KeeSpace(BaseSpace):
     self.__enumeration_members__ = dict()
     super().__init__(mcls, name, bases, **kwargs)
     for base in bases:
-      space: dict = getattr(base, '__namespace__', dict())
       try:
-        memberType = getattr(space, '__member_type__')
+        space = type.__getattribute__(base, '__namespace__')
       except AttributeError:
+        #  This branch is reached by the following:
+        #  - The base was built by no worktoy metaclass, as a plain mixin
         continue
-      else:
-        self.__member_type__ = memberType
-      try:
-        members = getattr(space, '__enumeration_members__')
-      except AttributeError:
+      if not isinstance(space, KeeSpace):
+        #  This branch is reached by the following:
+        #  - The base is a worktoy class that is no enumeration, as a
+        #    'BaseObject' mixin
         continue
-      else:
-        for i, (key, val) in enumerate(members.items()):
-          if key in self.__enumeration_members__:
-            oldMember = self.__enumeration_members__[key]
-            raise KeeDuplicate(key, oldMember, val)
-          #  The inherited member is cloned before registration, since
-          #  'addNum' writes the index directly onto its argument. The
-          #  original stays untouched on the parent enumeration, even
-          #  when the class under construction later fails, for example
-          #  for declaring multiple bases.
-          self.addNum(key, val.clone())
+      self.__member_type__ = space.__member_type__
+      for key, val in space.__enumeration_members__.items():
+        if key in self.__enumeration_members__:
+          oldMember = self.__enumeration_members__[key]
+          raise KeeDuplicate(key, oldMember, val)
+        #  The inherited member is registered as a clone, so the base's
+        #  'Kee', placed on the base, is never handed to this body: the
+        #  class takes the base's member object itself as it is created,
+        #  and the clone serves the name checks alone.
+        self.addNum(key, val.clone())
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

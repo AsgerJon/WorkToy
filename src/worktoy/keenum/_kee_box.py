@@ -14,107 +14,58 @@ from ..waitaminute import TypeException
 from ..waitaminute.keenum import KeeBoxException, \
   KeeBoxValueError, KeeBoxTypeError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Self
 
 
 class KeeBox(AttriBox):
   """
-  KeeBox subclasses AttriBox and provides special support for the
-  enumerations. This solves a general problem with 'AttriBox' objects using
-  enumerations as their field types. When doing so, the positional arguments
-  in the parentheses, *must* be a member of the enumeration. First of all,
-  this requires duplication of the enumeration class. Secondly, it fails to
-  provide the intended flexibility of passing constructor arguments for
-  deferred instantiation. Because enumerations instantiate *during* class
-  creation, there is no deferred instantiation. Finally, when an descriptor
-  is retrieved from an instance, it is mostly for the purpose of retrieving
-  the value of the descriptor.
+  A field typed with an enumeration is declared with the member it
+  starts as, and a project wants to write that member the way it
+  thinks of it: by name, by the arguments of the value it carries, by
+  the value, or by its position. An 'AttriBox' over the enumeration
+  hands the parentheses to the class, which takes one identifier and
+  no more, so 'AttriBox[CurrencyNum]('JPY', decimals=0)' is refused
+  although every argument names the member. The parentheses of a field
+  over an enumeration must take what identifies a member, the
+  arguments of its value included, while assignment stays what it is on
+  every box: a member is stored, anything else is converted as the
+  enumeration converts it, or refused.
 
-  The KeeBox makes the following attempts at resolving arguments to a member
-  of the enumeration:
-  0: Single member of the enumeration received, returned as it is.
-  1: Single 'str' object received
-  1a: The string matches the 'name' of a member of the enumeration.
-  1b: The string matches the 'value' of a member of the enumeration.
-  2: Single 'int' object received
-  2a: The integer is the 'index' of a member of the enumeration. No member
-  has a negative index, so a negative integer is never read as a position
-  counted from the end.
-  2b: The integer matches the 'value' of a member of the enumeration,
-  provided it is an instance of the 'valueType' of the enumeration.
-  3: Single argument received of the 'valueType' type of the enumeration.
-  3a: The argument matches the 'value' of a member of the enumeration.
-  4: Any number of arguments received
-  4a: For a 'KeeNum' class, the arguments build an instance of its
-  'valueType', which must equal the 'value' of a member. This is how '-1'
-  finds a member whose value is '-1.0'.
-  4b: For a 'KeeFlags' class, each argument is resolved the way
-  subscripting the class resolves it, so a member, a name in any case and
-  order, or an index all work. The result is the member having every flag
-  high that any of those members has.
-
-  The above process applies to both instantiation and setting.
-
-  Examples:
-
-    #  KeeNum classes:
-    class KeyboardNum(KeeNum):
-      A = Kee[str]('key A')
-      B = Kee[str]('key B')
-      ...
-
-    class KeyModFlags(KeeFlags):
-      SHIFT = KeeFlag(0)
-      CTRL = KeeFlag(1)
-      ALT = KeeFlag(2)
-      META = KeeFlag(3)
-
-    #  Illustrative classes using the above KeeNum classes:
-    class SelectAll:
+    class KeyBind(BaseObject):
       key = KeeBox[KeyboardNum]('A')
-      mod = KeeBox[KeyModFlags]('ctrl')
-
-    class Settings:  # PyCharm: CTRL+SHIFT+S
-      key = KeeBox[KeyboardNum]('S')
       mod = KeeBox[KeyModFlags]('ctrl', 'shift')
+
+  Implementation
+  --------------
+
+  'KeeBox' is an 'AttriBox' whose subscript must be an enumeration of
+  either kind, 'KeeMeta' or 'KeeFlagsMeta', and whose '_resolve' builds
+  the value of the parentheses by its own steps instead of calling the
+  class with them. For a 'KeeNum' class, a lone member is taken as it
+  is; a lone 'str' is a name, matched exactly and then ignoring case; a
+  lone 'int' other than a 'bool' is a position when it is in range; a
+  lone 'bool' is no value of an 'int' enumeration and is refused with
+  'KeeBoxValueError', as the class refuses it; a lone instance of the
+  value type is matched against the member values by equality and
+  refused with 'KeeBoxValueError' when none equals it;
+  any other arguments, keywords included, build an instance of the value
+  type, refused with 'KeeBoxTypeError' when the constructor raises, and
+  that instance is matched the same way. For a 'KeeFlags' class every
+  argument, or every element of a lone tuple, list or set, is resolved
+  as subscripting the class resolves it, and the member having every
+  flag high that any of them has is the value. A member a 'KeeBox'
+  hands out is never tagged, since the box built nothing. Assignment,
+  storage and deletion are those of 'AttriBox': an assigned member is
+  stored, any other value goes through 'typeCast' and the enumeration's
+  '__cast_as__', so a name, a value or a tuple of flag names is stored
+  as the member it resolves to and a value the class cannot resolve is
+  refused with 'TypeException' naming the field.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+  #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  def __instance_get__(self, instance: Any, owner: type, **kwargs) -> Any:
-    pvtName = self._getStorageName()
-    try:
-      #  Not 'getattr', whose miss an owner's '__getattr__' could answer.
-      return object.__getattribute__(instance, pvtName)
-    except AttributeError as attributeError:
-      #  A read made before deleting only reports; it must not build.
-      if kwargs.get('_deleting', False):
-        raise attributeError
-      if kwargs.get('_recursion', False):
-        raise RecursionError from attributeError
-      try:
-        fieldObject = self._resolve()
-      except Exception as exception:
-        raise exception from attributeError
-      self._store(instance, fieldObject)
-      return self.__instance_get__(instance, owner, _recursion=True)
-
-  def __instance_set__(self, instance: Any, value: Any, **kwargs) -> Any:
-    """
-    The '__instance_set__' method stores the member 'value' resolves to,
-    and returns it, so the 'onSet' callbacks receive the member.
-    """
-    if self._isMember(value):
-      self._store(instance, value)
-      return value
-    if kwargs.get('_recursion', False):
-      raise RecursionError
-    return self.__instance_set__(
-        instance, self._resolve(value, ), _recursion=True
-    )
 
   def _isMember(self, value: Any) -> bool:
     """
@@ -124,29 +75,28 @@ class KeeBox(AttriBox):
     return True if isinstance(value, self.fieldType) else False
 
   def _resolve(self, *args, **kwargs) -> Any:
+    """
+    The box builds the value of its parentheses from the arguments of
+    the declaration, placeholders replaced, as every box does; here the
+    build is a resolution by the steps the class docstring lists.
+    """
     fieldNum = self.fieldType
     if isinstance(fieldNum, KeeMeta):
-      return self._resolveNum(*args, )
-    elif isinstance(fieldNum, KeeFlagsMeta):
-      return self._resolveFlags(*args, )
-    else:
-      raise KeeBoxException(self, self.getPosArgs())
+      return self._resolveNum(*args, **kwargs)
+    if isinstance(fieldNum, KeeFlagsMeta):
+      return self._resolveFlags(*args)
+    raise KeeBoxException(self, args)
 
-  def _resolveNum(self, *args, ) -> Any:
+  def _resolveNum(self, *args, **kwargs) -> Any:
     """
-    The '_resolveNum' method resolves to a member of a 'KeeNum' field
-    type, falling back to the captured constructor arguments when called
-    without any. The captured keyword arguments belong to those, and so
-    build the default alone: an assigned value is resolved from the value
-    only.
+    The '_resolveNum' method resolves the arguments of the parentheses
+    to a member of a 'KeeNum' field type: a lone member, name, position
+    or value, else an instance of the value type built from the
+    arguments and matched by equality.
     """
-    if args:
-      kwargs = dict()
-    else:
-      args, kwargs = self.getPosArgs(), self.getKeyArgs()
     fieldNum = self.fieldType
     valueType = fieldNum.valueType
-    if len(args) == 1:
+    if len(args) == 1 and not kwargs:
       if self._isMember(args[0]):
         return args[0]
       if isinstance(args[0], str):
@@ -156,35 +106,37 @@ class KeeBox(AttriBox):
         for member in fieldNum:  # Case-insensitive match
           if str.lower(args[0]) == str.lower(str(member.name)):
             return member
-      if isinstance(args[0], int) and 0 <= args[0] < len(fieldNum):
-        return fieldNum[args[0]]
+      if isinstance(args[0], int) and not isinstance(args[0], bool):
+        if 0 <= args[0] < len(fieldNum):
+          return fieldNum[args[0]]
+      if isinstance(args[0], bool) and valueType is int:
+        #  This branch is reached by the following:
+        #  - The parentheses hold a lone 'bool' for an 'int' enumeration,
+        #    which the class refuses as a value, so the box refuses it too
+        raise KeeBoxValueError(self, fieldNum, args[0])
       if isinstance(args[0], valueType):
         for member in fieldNum:
           if args[0] == member.value:
             return member
+        raise KeeBoxValueError(self, fieldNum, args[0])
     try:
       tempObject = valueType(*args, **kwargs)
     except Exception as exception:
       raise KeeBoxTypeError(self, *args) from exception
-    else:
-      for member in fieldNum:
-        if tempObject == member.value:
-          return member
-      else:
-        raise KeeBoxValueError(self, fieldNum, tempObject)
+    for member in fieldNum:
+      if tempObject == member.value:
+        return member
+    raise KeeBoxValueError(self, fieldNum, tempObject)
 
   def _resolveFlags(self, *args, ) -> Any:
     """
-    The '_resolveFlags' method resolves to a flags member, falling back
-    to the captured constructor arguments when called without any. A
-    lone container argument counts as several flag identifiers, since
-    the descriptor protocol delivers an assigned tuple as one object.
-    Each identifier is resolved by subscripting the flags class, so the
-    box accepts and refuses exactly what the class itself does, and the
-    result is the member having every flag high that any of the
-    resolved members has.
+    The '_resolveFlags' method resolves the arguments of the parentheses
+    to a member of a 'KeeFlags' field type. A lone container argument
+    counts as several flag identifiers. Each identifier is resolved by
+    subscripting the flags class, so the box accepts and refuses exactly
+    what the class itself does, and the result is the member having
+    every flag high that any of the resolved members has.
     """
-    args = args or self.getPosArgs()
     if len(args) == 1 and isinstance(args[0], (tuple, list, set, frozenset)):
       args = (*args[0],)
     fieldNum = self.fieldType

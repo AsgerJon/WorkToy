@@ -13,7 +13,7 @@ from ..waitaminute.keenum import KeeMemberNameError
 from ..waitaminute.meta import UnboundClassHook
 from . import Kee
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Type, TypeAlias, Callable
   from . import KeeMeta
 
@@ -23,14 +23,24 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class KeeSpaceHook(AbstractSpaceHook):
   """
-  KeeSpaceHook collects the 'Kee' descriptors encountered in the
-  class bodies of KeeNum classes. This happens during the
-  'setItemPhase'. To avoid context leakage, the members are collected
-  in the owning namespace object. The namespace object is expected to
-  implement an 'addNum' method which KeeSpaceHook calls to register
-  each Kee. The hook provides no further functionality than deciding
-  which key, value pairs to collect as future members of the
-  enumeration.
+  An enumeration body binds its members as ordinary names, 'RED =
+  Kee[int](1)', yet the class must hold members at those names and
+  nothing else: a plain value bound at a member's name, before or after
+  the member, would be replaced without a word. The 'Kee' objects must
+  therefore reach the namespace's record and never its dictionary, and
+  a body binding a member's name twice must fail at that line.
+
+  Implementation
+  --------------
+
+  'setItemPhase' hands every 'Kee' to 'addNum' of the namespace and
+  claims the binding. A 'Kee' bound at a name the dictionary holds, or
+  a plain value bound at a name a member takes, declared or inherited,
+  raises 'KeeMemberNameError'; two 'Kee' objects of one name raise
+  'KeeDuplicate' from 'addNum'. A '__class_resolve__' bound to a plain
+  function or a staticmethod raises 'UnboundClassHook', as a routed
+  class hook does, since the lookups call the hook bound to the class.
+  One hook object serves every body, so it keeps nothing of its own.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -38,18 +48,6 @@ class KeeSpaceHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    """
-    Routes 'Kee' objects to the 'addNum' method of the present namespace
-    object. A '__class_resolve__' that is a plain function or a
-    staticmethod raises 'UnboundClassHook', as a routed '__class_*__'
-    hook does: the lookups call the hook bound to the class.
-
-    A name bound both to a 'Kee' and to a plain value, in either order,
-    raises 'KeeMemberNameError': the member would replace the attribute
-    without a word, as the 'Kee' is routed past the namespace while the
-    plain value is stored in it. Two 'Kee' objects of one name raise
-    'KeeDuplicate' from 'addNum', as before.
-    """
     if key == '__class_resolve__':
       if isinstance(val, (FunctionType, staticmethod)):
         raise UnboundClassHook(self.space.getClassName(), key)

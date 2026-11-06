@@ -5,16 +5,18 @@ EZField is the per-field descriptor declared in an 'EZData' class body.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from copy import copy
+from copy import deepcopy, Error
 from typing import TYPE_CHECKING, TypeVar, Generic
 
+from ..core.sentinels import THIS
 from ..desc import Field
+from ..dispatch import TypeSig
 from ..mcls import BaseObject
-from ..utilities import maybe, typeCast, hasCastRule
+from ..utilities import maybe, typeCast, hasCastRule, textFmt
 from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute.dispatch import TypeCastException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Union, Optional, Self, Type
 
 T = TypeVar('T')
@@ -54,8 +56,9 @@ class EZField(BaseObject, Generic[T]):
 
   - 'EZField[T](value)' : type 'T', default a copy of 'value' when it
     already is a 'T', the cast of 'value' when 'T' is a text or a number
-    type, and 'T(value)' otherwise, which a builtin container refuses
-    for text.
+    type, and 'T(value)' otherwise, with whatever 'T' makes of the
+    value: 'EZField[list]('abc')' defaults to the three letters, as
+    'list('abc')' does.
   - 'EZField[T]()' : type 'T', default 'T()'.
   - 'EZField[T](*args, **kwargs)' : type 'T', default
     'T(*args, **kwargs)'.
@@ -66,6 +69,15 @@ class EZField(BaseObject, Generic[T]):
 
   - 'EZField(value)' (no type subscript)
   - 'EZField[T]' (no trailing parens)
+
+  An 'EZField' belongs in an 'EZData' body, where 'EZHook' claims it
+  before the namespace stores it, so 'Object.__set_name__' never runs
+  for it and 'fieldName' and 'fieldOwner' are set by
+  'EZSpace.registerEZField' and 'EZMeta.__init__' instead. Bound in any
+  other class body, it is refused with a 'TypeError' saying so (see
+  'hookSetName'). The placeholders 'THIS', 'OWNER' and 'DESC' of a box
+  are not resolved in a field recipe: a field keeps no access in
+  progress, and the recipe's arguments reach the field type as written.
 
   Examples
   --------
@@ -89,17 +101,21 @@ class EZField(BaseObject, Generic[T]):
   def _construct(fieldType: type, name: str, args: tuple, kwargs: dict) -> T:
     """
     The '_construct' method builds the value of the field at 'name' from
-    'args' and 'kwargs', by the rule 'AttriBox' applies to its default.
-    A lone argument without keywords is a value for the field: one
-    already an instance of 'fieldType' is copied with 'copy.copy', since
-    calling the field type on it is no copy for every type, as
-    'Point(Point(1, 2))' shows, while the copy gives each instance an
-    object of its own and an enumeration member copies to itself; for a
-    field type 'typeCast' decides for, a family builtin, a subclass of
-    one or a class declaring '__cast_as__', it is cast or refused, as an
-    argument to the field is; for any other class it is the one argument
-    of the constructor. Several arguments, keywords or none call the
-    constructor. A field always holds an instance of its field type, and
+    'args' and 'kwargs', the recipe of the declaration, as a box builds
+    its default from its parentheses, with one difference: a lone value
+    of a family type is cast where the box calls the constructor. A
+    lone argument without keywords is a value for the field: one
+    already an instance of 'fieldType' is deep-copied by '_copyValue',
+    as the box deep-copies its default, since calling the field type on
+    it is no copy for every type, as 'Point(Point(1, 2))' shows, while
+    the copy gives each instance an object of its own, nested state
+    included, and an enumeration member or an immutable value copies to
+    itself; for a field type 'typeCast' decides for, a family builtin, a
+    subclass of one or a class declaring '__cast_as__', it is cast or
+    refused, as an argument to the field is; for any other class it is
+    the one argument of the constructor. Several arguments, keywords or
+    none call the constructor. A field always holds an instance of its
+    field type, and
     a class whose constructor returns anything else would break that, so
     such a result raises 'TypeException' naming the field, as does a
     constructor raising 'TypeError' or 'ValueError'. Both 'defaultValue'
@@ -128,11 +144,14 @@ class EZField(BaseObject, Generic[T]):
       If the cast refuses the lone value, if the constructor refuses the
       arguments, or if the call returns something that is not an
       instance of 'fieldType'.
+    TypeError
+      If a lone value of the field type cannot be copied; see
+      '_copyValue'.
     """
     if len(args) == 1 and not kwargs:
       value = args[0]
       if isinstance(value, fieldType):
-        return copy(value)
+        return EZField._copyValue(fieldType, name, value)
       if hasCastRule(fieldType):
         return EZField._castValue(fieldType, name, value)
     try:
@@ -143,6 +162,27 @@ class EZField(BaseObject, Generic[T]):
     if isinstance(value, fieldType):
       return value
     raise TypeException(name, value, fieldType)
+
+  @staticmethod
+  def _copyValue(fieldType: type, name: str, value: Any) -> Any:
+    """
+    The '_copyValue' method deep-copies a lone default already of the
+    field type, so that each instance owns its default with everything
+    nested in it, as 'AttriBox._resolve' deep-copies the default of a
+    box: the declaration is a recipe materialized per instance. A value
+    that cannot be copied, as a lock, is refused with a 'TypeError'
+    naming the field and the way out, the arguments of the constructor,
+    chained from the copy's own error.
+    """
+    try:
+      return deepcopy(value)
+    except (Error, TypeError, ValueError) as exception:
+      infoSpec = """The default of the field '%s' is a '%s' that cannot
+      be copied, so each instance cannot have its own. Give the field the
+      arguments of the '%s' constructor instead: 'EZField[%s](...)'."""
+      typeName = fieldType.__name__
+      info = infoSpec % (name, typeName, typeName, typeName)
+      raise TypeError(textFmt(info)) from exception
 
   @staticmethod
   def _castValue(fieldType: type, name: str, value: Any) -> Any:
@@ -309,11 +349,11 @@ class EZField(BaseObject, Generic[T]):
     """
     The 'defaultValue' getter constructs a fresh default value from the
     stored positional and keyword arguments, by the rules of
-    '_construct'. Each call builds a new top-level object, so two
-    instances do not share the same mutable container ('list', 'dict',
-    'set', ...). This is a shallow construction, though: a mutable object
-    nested inside the stored arguments is shared across instances,
-    so mutating that nested object leaks between them.
+    '_construct'. Each call builds a new object, a deep copy of a lone
+    default already of the field type, so two instances share nothing of
+    a mutable default, nested state included. Several arguments reach
+    the constructor as they are, so a mutable object among them is
+    whatever the constructor makes of it.
 
     Returns
     -------
@@ -329,6 +369,9 @@ class EZField(BaseObject, Generic[T]):
     TypeException
       If the field type returns something that is not an instance of
       it; see '_construct'.
+    TypeError
+      If a lone default of the field type cannot be copied; see
+      '_copyValue'.
     """
     name = maybe(self.__field_name__, 'defaultValue')
     return self._construct(self.fieldType, name, self.posArgs, self.keyArgs)
@@ -386,9 +429,27 @@ class EZField(BaseObject, Generic[T]):
       test is that the type of 'type_' is a metaclass, as the boxes judge
       their subscripts, since 'isinstance(list[int], type)' answers
       'True' on Python 3.9 and 3.10.
+    UncheckableType
+      If 'type_' is a class 'isinstance' refuses, as 'typing.Any' is
+      from Python 3.11 on and a 'Protocol' that is not
+      '@runtime_checkable' is; 'TypeSig.validateTypes' is the one check
+      of a declared type, the field types of the boxes included, and
+      every value of the field is checked with 'isinstance'.
+    TypeError
+      If 'type_' is a sentinel. 'THIS', which a box resolves to its
+      owner, is refused here too: a field needs a default, and no value
+      of the class being declared exists while its body runs.
     """
     if not issubclass(type(type_), type):
       raise TypeException('fieldType', type_, type)
+    declaration = '%s[%s]' % (cls.__name__, type_.__name__)
+    TypeSig.validateTypes(type_, variadic=False, declaration=declaration)
+    if type_ is THIS:
+      infoSpec = """The subscript '%s' names 'THIS', the class being
+      declared, as the field type. A field needs a default, and no value
+      of that class exists while its body runs, so a field cannot be
+      typed with it."""
+      raise TypeError(textFmt(infoSpec % declaration))
     self = cls.__new__(cls)
     setattr(self, '__field_type__', type_)
     return self
@@ -478,7 +539,7 @@ class EZField(BaseObject, Generic[T]):
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     # @formatter:off
     from typing import overload
     @overload
@@ -487,6 +548,30 @@ class EZField(BaseObject, Generic[T]):
     def __get__(self, instance: Any, owner: type) -> T: ...
     def __get__(self, instance: Any, owner: type) -> Union[Self, T]: ...
     # @formatter:on
+
+  def hookSetName(self, owner: type, name: str, **kwargs) -> None:
+    """
+    An 'EZField' in an 'EZData' body is claimed by 'EZHook' before the
+    namespace stores it, so the interpreter never places it and this
+    hook never runs for it. The interpreter reaches it only for a field
+    bound in the body of a class not built by 'EZMeta', where the field
+    would otherwise sit as every 'Object' does, reading as itself and
+    refusing writes, which says nothing about the mistake. Such a
+    placement is refused with a 'TypeError' saying where an 'EZField'
+    belongs; before Python 3.12 the interpreter hands it on wrapped in
+    'RuntimeError'.
+
+    Raises
+    ------
+    TypeError
+      Always: the field was placed in the body of a class that is no
+      'EZData' subclass.
+    """
+    infoSpec = """An 'EZField' declares a field of a dataclass and
+    belongs in the body of an 'EZData' subclass, but '%s' is bound to one
+    at '%s' and '%s' is no 'EZData' subclass."""
+    info = infoSpec % (owner.__name__, name, owner.__name__)
+    raise TypeError(textFmt(info))
 
   def __str__(self) -> str:
     """

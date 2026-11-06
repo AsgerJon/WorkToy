@@ -12,46 +12,55 @@ from typing import _GenericAlias as GenAlias
 
 from ..waitaminute.desc import PhantomBoxError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Never, Optional
 
 
 class _RootAlias(GenAlias, _root=True):
   """
-  This class is returned when a box, 'AttriBox' or 'FastBox', is
-  subscripted with anything but a plain class: a 'TypeVar', as in
-  'class Sub(AttriBox[T])', or a parametrized generic such as 'list[int]'.
+  A box subscripted with a plain class, 'AttriBox[int]', is a box. A box
+  subscripted with anything else, a 'TypeVar' as in
+  'class Sub(AttriBox[T])' or a generic such as 'list[int]', must be a
+  type alias, since that is what a type hint or a list of bases needs.
+  Such an alias written in a class body as if it were a box would sit
+  there silently and read back as itself, so the mistake must fail
+  instead, without spoiling the alias where it belongs.
 
-  The generic machinery hands back a plain 'typing._GenericAlias', which
-  is the object a class body actually stores when a subscript is written
-  without the trailing call. Its type carries no '__get__', so reading
-  such an attribute quietly returns the alias itself. Re-clothing the
-  alias in this subclass puts a '__get__' on the stored object, which is
-  the only hook the descriptor protocol consults for it.
+  Implementation
+  --------------
+
+  The alias 'typing' returns is rebuilt as a '_RootAlias', a subclass of
+  'typing._GenericAlias' whose '__set_name__' refuses a place in a class
+  body, whose '__call__' refuses the parentheses of a declaration, and
+  whose '__get__' refuses a read of one installed later with 'setattr',
+  all with 'PhantomBoxError'. A base is not a value of the class body,
+  so 'class Sub(AttriBox[T])' never reaches any of them.
   """
 
   @classmethod
   def fromAlias(cls, alias: GenAlias) -> _RootAlias:
     """
-    The 'fromAlias' constructor rebuilds 'alias' as an instance of this
-    class, carrying over the origin, the arguments, and the two display
-    settings that decide how the alias renders and whether it may be
-    instantiated.
+    The alias 'typing' returns must become a '_RootAlias' without losing
+    anything that decides how it renders or whether it may be called.
 
-    Cloning through 'copy_with' does not work here: that method builds
-    'self.__class__(...)', and 'self' is the plain alias the generic
-    machinery returned, so the copy comes back the same plain class no
-    matter which class the method is looked up on.
+    Implementation
+    --------------
+
+    The origin, the arguments, the name and the instantiation setting are
+    carried over. 'copy_with' cannot serve, since it builds an instance of
+    the class of the alias it is called on, which is the plain alias.
 
     Parameters
     ----------
+
     alias : GenAlias
-        The alias handed back by the generic machinery.
+      The 'typing._GenericAlias' 'Generic.__class_getitem__' returned.
 
     Returns
     -------
+
     _RootAlias
-        A faithful copy of 'alias' whose type supplies '__get__'.
+      An equal alias of this class.
     """
     # noinspection PyProtectedMember
     aliasName, aliasInst = alias._name, alias._inst
@@ -60,46 +69,64 @@ class _RootAlias(GenAlias, _root=True):
 
   def copy_with(self, args: tuple) -> _RootAlias:
     """
-    The 'copy_with' method keeps this class through the copies the
-    generic machinery makes internally, for instance while substituting
-    a 'TypeVar'. Without the override those copies fall back to the
-    plain alias class and silently lose '__get__' again.
-
-    The name is snake_case because it overrides a CPython 'typing'
-    internal, not because the surrounding convention changed.
+    'typing' copies an alias internally, as when it substitutes a
+    'TypeVar', and the copy must stay a '_RootAlias'.
 
     Parameters
     ----------
+
     args : tuple
-        The replacement arguments for the copy.
+      The arguments of the copy.
 
     Returns
     -------
+
     _RootAlias
-        A copy carrying 'args' and this class.
+      The copy.
     """
     cls = type(self)
     return cls(self.__origin__, args, name=self._name, inst=self._inst, )
 
   def __set_name__(self, owner: type, name: str) -> Never:
     """
-    Binding this alias to a name in a class body is refused as the class
-    is created, which is the earliest moment the mistake is unambiguous.
-    The subscript alone cannot be judged, since 'class Sub(AttriBox[T])'
-    legitimately asks for the very same alias; a base-class entry is not
-    a namespace value, so that declaration never reaches here.
+    The alias bound to a name in a class body is the moment the mistake is
+    certain.
 
-    The interpreter looks '__set_name__' up on the type of each value in
-    the class body, and the type of a stored alias is this class, so a
-    plain method is all the hook requires.
+    Raises
+    ------
+
+    PhantomBoxError
+      Always; on Python 3.7 to 3.11 it reaches the class statement wrapped
+      in a 'RuntimeError'.
     """
     raise PhantomBoxError(self, owner, name)
 
+  def __call__(self, *args, **kwargs) -> Never:
+    """
+    The alias called with parentheses, as 'AttriBox[list[int]]([])', is a
+    box declared with a subscript the box does not claim, and the mistake
+    must fail at that line with the error written for it. 'typing' would
+    build a bare box of the origin instead, with no field type, refused
+    only as the class is created and in other words.
+
+    Raises
+    ------
+
+    PhantomBoxError
+      Always. A generic subclass, 'class Sub(AttriBox[T])', takes the
+      alias as a base and never calls it.
+    """
+    raise PhantomBoxError(self)
+
   def __get__(self, instance: Any, owner: Optional[type] = None) -> Never:
     """
-    Reading an attribute that holds this alias is refused as well. The
-    class-body route is already closed by '__set_name__', so what
-    reaches here is an alias installed after the fact, by 'setattr' on a
-    finished class, where no name was ever assigned to report.
+    An alias installed on a finished class with 'setattr' must fail when
+    read, as one in the class body fails when the class is created.
+
+    Raises
+    ------
+
+    PhantomBoxError
+      Always. It is not an 'AttributeError', so 'hasattr' raises too.
     """
     raise PhantomBoxError(self, owner)

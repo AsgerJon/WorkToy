@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING
 from ..desc import Field
 from ..utilities import textFmt
 from ..waitaminute import MissingVariable, TypeException
-from ..waitaminute.keenum import KeeWriteOnceError
+from ..waitaminute.keenum import KeeWriteOnceError, KeeResolveError
 from . import KeeFlag, KeeFlagsMeta
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Iterator, Never, Self
 
 
@@ -27,21 +27,24 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   Cost (read before declaring a large enum)
   -----------------------------------------
   A KeeFlags class with N single-bit flags materializes 2 ** N
-  members eagerly during class definition:
+  members eagerly during class definition, each a Python object built
+  by a call. Measured on one desktop machine under Python 3.14, the
+  class statement took:
 
-      N =  4   -> 16 members
-      N =  8   -> 256 members
-      N = 12   -> 4096 members
-      N = 16   -> 65,536 members
-      N = 20   -> 1,048,576 members
+      N =  4   -> 16 members          less than a millisecond
+      N =  8   -> 256 members         0.1 seconds
+      N = 12   -> 4096 members        2 seconds
+      N = 14   -> 16,384 members      9 seconds
+      N = 16   -> 65,536 members      50 seconds
 
-  The cost is paid once, at import. For typical use (file
-  permissions, keyboard modifiers, etc.) where N <= 8, this is
-  negligible. For N up to 12, expect a small but real import-time
-  delay and memory footprint. For N >= 16, expect a noticeable
-  delay and several MB of memory just for the class. For N > 20 you
+  The cost is paid once, at import, and grows four times for every two
+  flags added. For typical use (file permissions, keyboard modifiers,
+  etc.) where N <= 8, this is negligible. Past 12 the class statement
+  takes seconds and the members several MB of memory. For N >= 16 you
   almost certainly want a plain 'int' bitmask with helper functions,
-  not a KeeFlags enum.
+  not a KeeFlags enum. A lookup by index or through the operators is
+  one step whatever N is; a lookup by name compares the name with each
+  member's in turn.
 
   Member attributes
   -----------------
@@ -68,6 +71,21 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   flag names in a canonical name, a flag name may not contain '_' itself;
   declaring one raises 'KeeFlagNameError' in the class body.
 
+  Members across a lineage
+  ------------------------
+  A flags class based on another holds the flags of its base first and
+  members of its own, so no member object is shared between the two.
+  Across the lineage a member is identified by the names of its high
+  flags: a member of the base or of the subclass is equal to the member
+  here with the same flags and hashes alike, resolves through a call, a
+  subscript or 'typeCast' to this class's own member when this class
+  holds every one of its flags, and is refused with 'KeeResolveError'
+  otherwise, is in the class exactly when such a member exists, and
+  takes part in the operators, where the class of the left operand
+  answers when it holds every flag and the class of the right one
+  answers through the reflected operator otherwise. Members of
+  unrelated flags classes are strangers to each other.
+
   Like 'KeeNum' members, the members are write-once constants: once
   'KeeFlagsMeta.__new__' has stamped a member, any attempt to set or
   delete an attribute on it raises 'KeeWriteOnceError', as does
@@ -82,11 +100,6 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   #  Class Variables (type hints)
   __member_list__: list[Self]
   __member_dict__: dict[frozenset[str], Self]
-
-  #  Class Variables
-  #  A member is a shared singleton, which no box creates, so a box
-  #  holding one leaves it untagged; see 'AttriBox._applyTags'.
-  __no_box_tag__ = True
 
   #  Private Variables
   #  '__field_owner__' and '__field_name__' are set on each instance
@@ -138,23 +151,19 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     """
     cls = type(self)
     mcls = type(cls)
-    desc = getattr(mcls, 'flags')
+    desc = type.__getattribute__(mcls, 'flags')
     return desc.__get__(cls, mcls)
 
   @value.GET
   def _getValue(self) -> Any:
     """
-    Returns the object at the 'value' attribute of the member. The base
-    implementation provides for retrieving a member from the class from a
-    given value. Other than this, the attribute provides no further
-    functionality. Subclasses may override this method to provide any
-    object from any member. While not enforced, it is recommended that
-    that member values should be of the same type and that the type should
-    be immutable. Subclasses are free to grant multiple members the same
-    value. In this case, the 'fromValue' method returns the first member
-    having the given value.
-
-    By default, the value is the index of the member.
+    The value of a member is what a project reads off it, and what the
+    class resolves a member from. The base gives every member its index
+    as its value; a subclass reimplements this getter to give any object
+    from any member, as 'FileAccess' in the tests gives bytes. Values of
+    one immutable type are recommended, not required, and several
+    members may share one value, in which case the lowest-indexed member
+    answers for it.
     """
     return self.index
 
@@ -196,6 +205,25 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  @classmethod
+  def __cast_as__(cls, value: Any) -> Any:
+    """
+    The '__cast_as__' hook lets 'typeCast' resolve a value to the member
+    it identifies, as calling the class does: a member passes, a name in
+    any case and order, a tuple of names, an index or a value resolves,
+    and one the class cannot resolve is declined with 'NotImplemented',
+    so 'typeCast' raises its own refusal and an 'AttriBox' over the
+    class, or an overload naming it, refuses it as any value it cannot
+    convert. While the metaclass still builds the members, nothing is
+    resolved.
+    """
+    if cls.__allow_instantiation__:
+      return NotImplemented
+    try:
+      return cls(value)
+    except KeeResolveError:
+      return NotImplemented
 
   def __setattr__(self, name: str, value: Any) -> None:
     """
@@ -254,41 +282,61 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   def __eq__(self, other: Any) -> bool:
     if not isinstance(type(other), KeeFlagsMeta):
       return NotImplemented
-    if self.__field_owner__ is not other.__field_owner__:
-      return False
-    return True if self.index == other.index else False
+    cls, otherCls = type(self), type(other)
+    if otherCls is cls:
+      return True if self.index == other.index else False
+    if issubclass(otherCls, cls) or issubclass(cls, otherCls):
+      return True if self.names == other.names else False
+    return NotImplemented
 
   def __hash__(self, ) -> int:
-    return hash((hash(type(self)), *self.highs))
+    return hash(self.names)
 
-  #  The operators take members of the very same class: a member of a
-  #  subclass passes 'isinstance', but holds flags this class lacks.
+  def _asOwn(self, other: Any) -> Any:
+    """
+    An operator takes a member of this class or of a related one, and
+    works on the member of this class with the other's flags; anything
+    else, a member of an unrelated class or a member with a flag this
+    class lacks, gives 'None', so the operator answers 'NotImplemented'
+    and Python asks the other operand.
+    """
+    if not isinstance(type(other), KeeFlagsMeta):
+      return None
+    return type(self)._fromMember(other)
 
-  def __or__(self, other: Self) -> Self:
-    cls = type(self)
-    if type(other) is not cls:
+  def __or__(self, other: Any) -> Any:
+    other = self._asOwn(other)
+    if other is None:
       return NotImplemented
+    cls = type(self)
     highs = (*self.highs, *other.highs,)
     names = frozenset((f.name for f in highs), )
     return cls.memberDict[names]
 
-  def __and__(self, other: Self) -> Self:
-    cls = type(self)
-    if type(other) is not cls:
+  def __and__(self, other: Any) -> Any:
+    other = self._asOwn(other)
+    if other is None:
       return NotImplemented
+    cls = type(self)
     highs = (f for f in self.highs if f in other.highs)
     names = frozenset((f.name for f in highs), )
     return cls.memberDict[names]
 
-  def __xor__(self, other: Self) -> Self:
-    cls = type(self)
-    if type(other) is not cls:
+  def __xor__(self, other: Any) -> Any:
+    other = self._asOwn(other)
+    if other is None:
       return NotImplemented
+    cls = type(self)
     ors = self | other
     ands = self & other
     highs = (f for f in ors.highs if f not in ands.highs)
     names = frozenset((*(f.name for f in highs),), )
     return cls.memberDict[names]
+
+  #  The three operators commute, so the reflected forms are the same.
+  __ror__ = __or__
+  __rand__ = __and__
+  __rxor__ = __xor__
 
   def __invert__(self, ) -> Self:
     cls = type(self)

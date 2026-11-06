@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from ..utilities import joinWords, textFmt
 from ..waitaminute import TypeException
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 _CO_VARARGS: int = 0x04  # CPython compile flag
@@ -21,20 +21,27 @@ _FLEX_MARKER: str = '__flex_wrapped__'  # idempotency sentinel
 
 def isFlex(func: FunctionType) -> bool:
   """
-  The 'isFlex' function returns True if 'func' has already been wrapped
-  by 'flexCall', detected by the presence of the idempotency marker. The
-  marker is read with 'object.__getattribute__', so that an object whose
-  class answers every name in '__getattr__' does not pass for wrapped.
+  Wrapping a function twice by 'flexCall' must be avoided, so code needs
+  to tell whether a function is wrapped already, even when it is handed an
+  object whose class answers every name through '__getattr__'.
+
+  Implementation
+  --------------
+
+  The marker 'flexCall' sets on its wrapper is read with
+  'object.__getattribute__'.
 
   Parameters
   ----------
+
   func : FunctionType
-      The function to test.
+    The function to test.
 
   Returns
   -------
+
   bool
-      True if 'func' carries the flex marker, otherwise False.
+    Whether the function is a wrapper made by 'flexCall'.
   """
   try:
     _ = object.__getattribute__(func, _FLEX_MARKER)
@@ -49,15 +56,6 @@ def _missingNames(
     received: int,
     kwargs: dict,
 ) -> tuple[str, ...]:
-  """
-  The '_missingNames' function returns the names of the required
-  positional parameters that a call leaves without a value.
-  'requiredNames' lists those parameters in order, and the first
-  'received' of them took their values by position. Each later one is
-  missing unless 'kwargs' names it. A positional-only parameter named in
-  'kwargs' counts as supplied here, and the wrapped function then refuses
-  it with its own 'TypeError', which says what went wrong.
-  """
   out = []
   for name in requiredNames[received:]:
     if name not in kwargs:
@@ -66,55 +64,55 @@ def _missingNames(
 
 
 def flexCall(func: FunctionType) -> FunctionType:
-  """Wrap 'func' with truncating positional-argument dispatch.
+  """
+  A descriptor passes each of its notification callbacks the same
+  arguments, the instance and, for some, the value, however few the
+  callback declares, and a callback must be free to declare only what it
+  uses. A namespace may likewise want every method of its classes to
+  accept surplus positional arguments. Such a call must drop the
+  arguments the function does not declare, yet still fail clearly when a
+  required argument is missing, and the function must look like itself
+  to anything inspecting it.
 
-  The descriptor notification callbacks of 'BaseDescriptor' are wrapped
-  this way, since a descriptor passes each of them the same arguments
-  however few it declares. So is every plain function in the body of a
-  class whose namespace declares 'FlexCallHook'. An ordinary method is
-  otherwise left as it was written.
+  Implementation
+  --------------
 
-  The returned wrapper:
-  - silently drops positional args beyond the wrapped function's
-    declared positional arity,
-  - raises TypeError when a required positional parameter receives no
-    value, neither by position nor by keyword (parameters with
-    defaults are not counted as required); a missing required
-    keyword-only argument, or a positional-only parameter named by
-    keyword, is not checked here and surfaces as the wrapped
-    function's own TypeError,
-  - passes keyword args through unchanged,
-  - carries the metadata and attributes of the wrapped function, as
-    'functools.wraps' copies them, and names it in '__wrapped__',
-  - caches arity at wrap time; per-call cost is one length check,
-    one comparison, and a slice only when truncation fires.
-
-  Returns 'func' itself, not a wrapper, when wrapping is a no-op:
-  an already-wrapped function, a *args function, or a dunder.
+  The positional parameter counts are read once, when wrapping. The
+  wrapper cuts surplus positional arguments, passes keywords on, and
+  raises a 'TypeError' naming the required positional parameters that
+  received no value by position or keyword; a missing keyword-only
+  argument is left to the function itself. 'functools.wraps' copies the
+  name, docstring and attributes, and '__wrapped__' holds the function.
+  A function already wrapped, one taking '*args', or one with a dunder
+  name, which the interpreter calls with fixed arguments, is returned as
+  it is. The wrapper is a plain function, so a wrapped 'async def' or
+  generator function still returns its coroutine or generator but is no
+  longer recognized as such by 'inspect'.
 
   Parameters
   ----------
+
   func : FunctionType
-      The function to wrap. Must be a plain Python function, not a
-      builtin, method, classmethod, staticmethod, or any other
-      non-FunctionType callable.
+    A plain Python function; a builtin, a bound method, a 'classmethod'
+    or 'staticmethod' object or any other callable is refused.
 
   Returns
   -------
+
   FunctionType
-      A new function object with flex semantics, or 'func'
-      unchanged when wrapping does not apply.
+    The wrapper, or 'func' itself when wrapping does not apply.
 
   Raises
   ------
-  TypeError
-      If 'func' is not an instance of 'types.FunctionType'.
+
+  TypeException
+    'func' is not a 'types.FunctionType'.
   """
   if not isinstance(func, FunctionType):
     raise TypeException('func', func, FunctionType)
 
   #  Idempotent re-wrap.
-  if getattr(func, _FLEX_MARKER, False):
+  if isFlex(func):
     return func
 
   code = func.__code__
@@ -152,6 +150,6 @@ def flexCall(func: FunctionType) -> FunctionType:
 
   setattr(wrapper, _FLEX_MARKER, True)
 
-  if TYPE_CHECKING:  # pragma: no cover
+  if TYPE_CHECKING:  # pragma: no cover, no mutate
     assert isinstance(wrapper, FunctionType)  # pycharm, please!
   return wrapper

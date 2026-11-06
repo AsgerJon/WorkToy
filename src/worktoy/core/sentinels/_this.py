@@ -13,22 +13,57 @@ from typing import TYPE_CHECKING
 
 from . import Sentinel
 from ...waitaminute import TypeException, MissingVariable
-from ...waitaminute.desc import DanglingAlias
+from ...waitaminute.desc import DanglingAlias, ReferenceConflict
+from ...waitaminute.desc import OverloadReference
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Optional, TypeVar, TypeAlias
   from ...desc import BaseDescriptor
 
   Descriptors: TypeAlias = dict[str, BaseDescriptor]
 
-  #  'F' keeps a decorated function its own type for a checker, which
-  #  the roles below declare; 'T' lets 'THIS[Parent]' resolve to
-  #  'type[Parent]', so 'THIS[Parent].x' is 'Parent.x' statically.
+  #  A checker reads 'THIS[Parent]' as a '_SetParent' and 'THIS[Parent].x'
+  #  as a '_SetDescriptorName', as the annotations below say. 'F' keeps a
+  #  function decorated through such a reference its own type, which the
+  #  roles below declare, and 'T' types the class named in the subscript.
   F = TypeVar('F', bound=Callable[..., Any])
   T = TypeVar('T')
 
 
 class _SetDescriptorName:
+  """
+  'THIS[Parent].x' in the body of a subclass must stand for the
+  descriptor 'x' as the subclass will hold it: a descriptor of its own,
+  which callbacks may be added to while the base keeps its 'x' as it was.
+  The subclass does not exist yet while its body runs, so the descriptor
+  must be prepared now and handed over once the class exists. Decorating
+  through the reference must work as decorating the descriptor itself
+  would, its own decorators included.
+
+  Implementation
+  --------------
+
+  The reference takes a clone of the descriptor at once, from the first
+  class along the resolution order of 'Parent' that holds 'x' in its own
+  dictionary, the holder. The seven notification decorators, and any
+  other name read from the reference, act on the clone. The hook that
+  'THIS' installs on the holder places the clone on the next subclass
+  created, unless the body of that subclass binds the name to something
+  else itself; see 'isDeclaredBy'. The name must hold an object with a
+  'clone' method, such as a 'BaseDescriptor'.
+
+  Attributes
+  ----------
+
+  __parent_class__ : type
+    The holder.
+
+  __descriptor_name__ : str
+    The name of the descriptor.
+
+  __new_descriptor__ : BaseDescriptor
+    The clone the subclass receives.
+  """
   __parent_class__: Optional[type] = None
   __descriptor_name__: Optional[str] = None
   __new_descriptor__: Optional[BaseDescriptor] = None
@@ -36,8 +71,29 @@ class _SetDescriptorName:
   @classmethod
   def newDescriptorsOnParent(cls, parent: type, **kwargs) -> Descriptors:
     """
-    Returns the record of references 'parent' holds itself, creating an
-    empty one when it holds none.
+    The references made through a holder wait on the holder until its next
+    subclass is created. They must not be inherited: a subclass of the
+    holder reading the record would otherwise see references meant for its
+    sibling.
+
+    Implementation
+    --------------
+
+    The record is read from the own dictionary of the holder under
+    '__new_descriptors__', and an empty one is created there when missing.
+
+    Parameters
+    ----------
+
+    parent : type
+      The holder.
+
+    Returns
+    -------
+
+    Descriptors
+      A 'dict[str, BaseDescriptor]' from each referenced name to its
+      reference.
     """
     key: str = """__new_descriptors__"""
     try:
@@ -46,24 +102,17 @@ class _SetDescriptorName:
       if kwargs.get('_recursion', False):
         raise RecursionError
       type.__setattr__(parent, key, dict())
-      return cls.newDescriptorsOnParent(parent, _recursion=True)
+      return cls.newDescriptorsOnParent(
+          parent, _recursion=True)  # pragma: no mutate
     else:
       return descriptors
 
   def _getParent(self) -> type:
-    """
-    Returns the parent class of this deferred THIS, or raises
-    'MissingVariable' when it has not been set yet.
-    """
     if self.__parent_class__ is None:
       raise MissingVariable(self, '__parent_class__', type)
     return self.__parent_class__
 
   def _getDescriptorName(self) -> str:
-    """
-    Returns the real name of this deferred THIS, or raises
-    'MissingVariable' when it has not been set yet.
-    """
     if self.__descriptor_name__ is None:
       raise MissingVariable(self, '__descriptor_name__', str)
     return self.__descriptor_name__
@@ -76,8 +125,48 @@ class _SetDescriptorName:
       if kwargs.get('_recursion', False):
         raise RecursionError
       self.__new_descriptor__ = self.getParentDescriptor().clone()
-      return self.getNewDescriptor(_recursion=True)
+      return self.getNewDescriptor(_recursion=True)  # pragma: no mutate
     return self.__new_descriptor__
+
+  def isDeclaredBy(self, sub: type) -> bool:
+    """
+    The clone must not replace a descriptor the body of the subclass
+    declares at the same name, or that declaration would be lost without
+    a word. Only what the body itself bound counts, not what a hook of its
+    namespace added to the class. A body binding the very clone the
+    reference gave, as a decorator of the descriptor that hands the
+    descriptor back makes it do, declares nothing else.
+
+    Implementation
+    --------------
+
+    The body is the namespace object 'MetaType' keeps under
+    '__namespace__', whose dictionary holds the names the body bound and
+    a hook did not claim; a class built by 'type' keeps none, and its own
+    dictionary is the body. A name found there counts unless the class
+    holds the clone itself at it.
+
+    Parameters
+    ----------
+
+    sub : type
+      The subclass being created.
+
+    Returns
+    -------
+
+    bool
+      Whether the body of 'sub' binds the name to something other than the
+      clone.
+    """
+    name = self._getDescriptorName()
+    body = sub.__dict__.get('__namespace__', None)
+    if not isinstance(body, dict):
+      body = sub.__dict__
+    if name not in body:
+      return False
+    held = sub.__dict__.get(name, None)
+    return False if held is self.getNewDescriptor() else True
 
   def __init__(self, parent: type, key: str) -> None:
     self.__parent_class__ = parent
@@ -106,6 +195,22 @@ class _SetDescriptorName:
     return self.getNewDescriptor().setName(func)
 
   def __getattr__(self, key: str) -> Any:
+    """
+    A descriptor class of a project may define decorators beyond the seven
+    of 'BaseDescriptor', and 'THIS[Parent].x' must offer them as well.
+
+    Implementation
+    --------------
+
+    A name the reference lacks is read off the clone with
+    'object.__getattribute__'.
+
+    Raises
+    ------
+
+    AttributeError
+      The clone has no such name either.
+    """
     newDescriptor = self.getNewDescriptor()
     try:
       decorator = object.__getattribute__(newDescriptor, key)
@@ -118,13 +223,19 @@ class _SetDescriptorName:
 
 
 class _SetParent:
+  """
+  'THIS[Parent]' must give an object from which 'THIS[Parent].x' is read,
+  remembering which class the subscript named.
+
+  Attributes
+  ----------
+
+  __parent_class__ : type
+    The class named in the subscript.
+  """
   __parent_class__: Optional[type] = None
 
   def _getParent(self) -> type:
-    """
-    Returns the parent class of this deferred THIS, or raises
-    'MissingVariable' when it has not been set yet.
-    """
     if self.__parent_class__ is None:
       raise MissingVariable(self, '__parent_class__', type)
     return self.__parent_class__
@@ -134,15 +245,48 @@ class _SetParent:
 
   def __getattr__(self, key: str) -> _SetDescriptorName:
     """
-    THIS[Parent].x is a deferred reference to the descriptor 'x' that
-    'Parent' holds, as the class being built will hold it. Reading it
-    takes a clone of 'Parent.x' at once. The reference is recorded on the
-    class that holds the descriptor, for the '__init_subclass__' installed
-    there to place the clone on the subclass being created, and the next
-    reading of 'x' through that class or any subclass of it returns the
-    same reference: 'THIS[GrandParent].x' is 'THIS[Parent].x' for an 'x'
-    that 'Parent' inherits, one reference with one clone. The base is
-    named for a static checker as well.
+    'THIS[Parent].x' and 'THIS[GrandParent].x' must be one reference when
+    'Parent' inherits 'x' from 'GrandParent', so that every decoration made
+    through either reaches the one descriptor the subclass receives. A name
+    that no class holds is a mistake in the class body and must fail at
+    that line. So is a name holding an overloaded method: its clone would
+    replace the dispatcher the namespace of the subclass builds, and with
+    it the overloads the body declares.
+
+    Implementation
+    --------------
+
+    The resolution order of the subscripted class is searched for the
+    first class holding 'key' in its own dictionary, the holder, and the
+    reference is kept on the holder, created on the first read. A name
+    holding no value is refused with 'DanglingAlias', and one holding a
+    value whose class sets '__no_this_reference__', as 'Dispatcher' does,
+    with 'OverloadReference', both before anything is recorded. The marker
+    is read with 'type.__getattribute__', so a class answering every name
+    it lacks is not taken for a dispatcher. Both refusals are
+    'SyntaxError's, so 'hasattr' and 'getattr' with a default raise for
+    such a name rather than answer.
+
+    Parameters
+    ----------
+
+    key : str
+      The name of the descriptor.
+
+    Returns
+    -------
+
+    _SetDescriptorName
+      The reference.
+
+    Raises
+    ------
+
+    DanglingAlias
+      No class along the resolution order holds the name.
+
+    OverloadReference
+      The name holds an overloaded method.
     """
     parent = self._getParent()
     for holder in parent.__mro__:
@@ -150,6 +294,15 @@ class _SetParent:
         break
     else:
       raise DanglingAlias(self, key, parent)
+    heldType = type(holder.__dict__[key])
+    try:
+      refused = type.__getattribute__(heldType, '__no_this_reference__')
+    except AttributeError:
+      #  This branch is reached by the following:
+      #  - The name holds a descriptor, as an 'AttriBox', or a plain value
+      refused = False
+    if refused:
+      raise OverloadReference(parent.__name__, key)
     references = _SetDescriptorName.newDescriptorsOnParent(holder)
     if key not in references:
       references[key] = _SetDescriptorName(holder, key)
@@ -159,19 +312,22 @@ class _SetParent:
 
 class THIS(Sentinel):
   """
-  THIS is a sentinel placeholder for the enclosing class, used inside
-  a class body before that class exists.
+  A class body sometimes needs to refer to the class it defines, which
+  does not exist until the body ends. A method may take another instance
+  of the same class, and its overload signature must say so. The value of
+  an 'AttriBox' may need to be built with the instance it belongs to. And
+  a subclass may need to add notifiers to a descriptor it inherits,
+  without changing the descriptor of the base, which other subclasses
+  share.
 
-  In a deferred 'AttriBox' constructor argument, THIS is replaced at
-  access time by the 'instance' passed to '__get__' (the object the
-  attribute is read from). In an '@overload(...)' signature it stands
-  for the enclosing class, so the overload matches instances of that
-  class, analogous to 'typing.Self'.
+  Implementation
+  --------------
 
-  'THIS[Parent].name' in a class body is a deferred reference to the
-  descriptor 'name' that 'Parent' holds, as the class being built will
-  hold it, so a subclass may expand on the notifiers of a descriptor it
-  inherits without touching the base's:
+  In an overload signature, as in '@overload(THIS)', 'THIS' stands for
+  the class, and the dispatcher replaces it once the class exists. In the
+  arguments of an 'AttriBox', an argument that is 'THIS' is replaced at
+  the first read by the instance read through. 'THIS[Parent].name' is a
+  reference to the descriptor 'name' as the subclass will hold it:
 
     class Child(Parent):
 
@@ -180,53 +336,61 @@ class THIS(Sentinel):
       def _watchX(self, value) -> None:
         ...
 
-  The decorators hand the function back as the descriptor's own decorators
-  return it; the subclass takes a clone of the base's descriptor, decorated
-  with the callback, as it is created, through an '__init_subclass__'
-  installed on the base, and the base keeps its descriptor as it was.
-  Naming the base is what lets a static checker resolve the reference to
-  'Parent.x'.
+  The reference takes a clone of 'Parent.x', the decorators add their
+  callbacks to the clone and return the function, and an
+  '__init_subclass__' that the subscript installs on the base places the
+  clone on 'Child' as it is created. 'THIS[GrandParent].x' is
+  'THIS[Parent].x' when 'Parent' inherits 'x'. A decorator may hold a
+  subscript only from Python 3.9 on, so on 3.7 and 3.8 the decoration is
+  written as a call after the method:
 
-  'THIS[GrandParent].x' is 'THIS[Parent].x' when 'Parent' inherits 'x'
-  from 'GrandParent': one reference with one clone, so every decoration
-  made through either applies to the 'x' the subclass takes.
-
-  A decorator may hold a subscript only from Python 3.9 on (PEP 614). On
-  3.7 and 3.8 the same decoration is written as a call after the method:
-
-    class Child(Parent):
-
-      def _watchX(self, value) -> None:
-        ...
-
-      _watchX = THIS[Parent].x.onGet(_watchX)
-      _watchX = THIS[Parent].x.onSet(_watchX)
-
-  Like the decorator, the call is written only inside the body of a
-  subclass of 'Parent'.
+    _watchX = THIS[Parent].x.onGet(_watchX)
 
   The clone goes to the next subclass created of the class holding the
-  descriptor, which is the class whose body made the reference only when
-  no other such subclass is created before that body ends. A subclass of
-  'Parent' nested in the body is created first and takes the clone, so
-  the enclosing class is left without the decoration. 'worktoy' is
-  designed around custom metaclasses rather than nested classes; see the
-  package docstring of 'worktoy'.
-
-  Use 'OWNER' for the 'owner' class passed to '__get__'; OWNER has no
-  role in overload signatures.
+  descriptor. The decoration therefore belongs in the body of a subclass
+  of 'Parent' and nowhere else, and no other subclass of the holder may
+  be created before that body ends: a subclass of 'Parent' nested in the
+  body would take the clone. A body that declares 'x' itself decorates
+  that 'x' directly, as in '@x.onGet'; decorating 'THIS[Parent].x' as
+  well would replace the declaration with the clone, and the class
+  statement is refused with 'ReferenceConflict'. A name holding an
+  overloaded method is refused at the line with 'OverloadReference': a
+  subclass declares its own overloads of an inherited name with
+  '@overload' in its body. The owner class has its own placeholder,
+  'OWNER', which has no meaning in an overload signature.
   """
 
   @classmethod
   def __class_getitem__(cls, parent: type[T], ) -> _SetParent:
     """
-    THIS[Parent] names the base holding the descriptors a class body
-    expands on, and installs on 'Parent' the '__init_subclass__' that
-    places the clones taken through the reference on the subclass being
-    created; see '_installThese'. 'Parent' is therefore a base of the
-    class being built. Naming it is also what lets a static checker
-    resolve 'THIS[Parent].x' to 'Parent.x'. Anything but a class is
-    refused with 'TypeException'.
+    'THIS[Parent]' names the base whose descriptors the class body expands
+    on.
+
+    Implementation
+    --------------
+
+    The subscript installs on 'Parent' the hook that hands the clones over
+    (see '_installThese') and returns the object the references are read
+    from. A builtin class such as 'int' cannot take the hook, and fails
+    with Python's own 'TypeError'.
+
+    Parameters
+    ----------
+
+    parent : type
+      A base of the class being built.
+
+    Returns
+    -------
+
+    _SetParent
+      The object 'THIS[Parent].name' is read from.
+
+    Raises
+    ------
+
+    TypeException
+      'parent' is not a class.
     """
     if not isinstance(parent, type):
       raise TypeException('parent', parent, type)
@@ -236,15 +400,35 @@ class THIS(Sentinel):
   @classmethod
   def _installThese(cls, parent: type) -> None:
     """
-    Installs on 'parent', once, the '__init_subclass__' that places the
-    descriptors recorded on 'parent' onto the subclass being created.
-    Whether it is installed is read off 'parent' itself: a hook a base
-    of 'parent' holds serves that base alone, placing the descriptors
-    recorded on the base, so 'parent' takes a hook of its own beside it.
-    The hook first hands over to what 'parent' held under the name, or,
-    when 'parent' held nothing of its own, to the next '__init_subclass__'
-    along the resolution order of the subclass, found as the hook runs,
-    so a hook a base takes after this one is not passed over.
+    The clones taken through 'THIS[Parent].x' must reach the subclass as it
+    is created, after the class exists but before anything uses it, and
+    the base must go on creating subclasses as before: its own
+    '__init_subclass__', and those along the resolution order, must still
+    run with every class keyword.
+
+    Implementation
+    --------------
+
+    An '__init_subclass__' is set on the class, once, marked with
+    '__this_new_desc__' and read off the own dictionary, so a hook on a
+    base does not count. When it runs, it calls what the class held under
+    the name before, or else the next '__init_subclass__' along the
+    resolution order of the subclass, with every keyword. With no record
+    on the class it ends there, writing nothing. Otherwise it removes the
+    record, so only the first subclass created receives the clones, even
+    when its class statement is refused, and sets each recorded clone
+    on the subclass and calls its '__set_name__', which Python has already
+    run for the rest of the body. A clone whose name the body of the
+    subclass binds to something else itself is refused with
+    'ReferenceConflict' instead of replacing that declaration; see
+    '_SetDescriptorName.isDeclaredBy'. The refusal comes from an
+    '__init_subclass__', so no 'RuntimeError' wraps it on any version.
+
+    Parameters
+    ----------
+
+    parent : type
+      The class to install the hook on.
     """
     name: str = """__init_subclass__"""
     own: Optional[Callable] = parent.__dict__.get(name, None)
@@ -261,12 +445,22 @@ class THIS(Sentinel):
         super(parent, sub).__init_subclass__(**kwargs)
       else:
         own.__get__(None, sub)(**kwargs)
-      references = _SetDescriptorName.newDescriptorsOnParent(parent)
+      try:
+        references = parent.__dict__['__new_descriptors__']
+      except KeyError:
+        #  This branch is reached by the following:
+        #  - No reference through 'THIS' is pending on the class, as for
+        #    every subclass created after the one that received the clones
+        return
+      #  The record goes first, so the clones of a refused body never
+      #  reach the next subclass.
+      type.__delattr__(parent, '__new_descriptors__')
       for descName, reference in references.items():
+        if reference.isDeclaredBy(sub):
+          raise ReferenceConflict(sub.__name__, descName, parent.__name__)
         newDesc = reference.getNewDescriptor()
         type.__setattr__(sub, descName, newDesc)
         newDesc.__set_name__(sub, descName)
-      type.__delattr__(parent, '__new_descriptors__')
 
     object.__setattr__(__init_subclass__, '__this_new_desc__', True)
 
