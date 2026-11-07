@@ -9,7 +9,8 @@ receive nothing.
 
 | Version | Status                |
 | ------- | --------------------- |
-| 1.0.x   | Supported             |
+| 1.1.x   | Supported (LTS)       |
+| 1.0.x   | End-of-Life           |
 | < 1.0   | Not supported (alpha) |
 
 ## Reporting a vulnerability

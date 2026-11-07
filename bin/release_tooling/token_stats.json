@@ -1,5 +1,5 @@
 {
-  "cumulative": 13080409387,
+  "cumulative": 19825328939,
   "releases": [
     {
       "timestamp": "2026-06-14T09:21:17.632214Z",
@@ -10,6 +10,11 @@
       "timestamp": "2026-10-03T10:41:43.011360Z",
       "periodTokens": 4882349575,
       "cumulative": 13080409387
+    },
+    {
+      "timestamp": "2026-11-07T13:08:03.651686Z",
+      "periodTokens": 6744919552,
+      "cumulative": 19825328939
     }
   ]
 }

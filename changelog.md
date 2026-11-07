@@ -4,7 +4,7 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
-## [1.1.0] - unreleased
+## [1.1.0] - 2026 November 7
 
 ### Descriptors and namespace hooks keep their state per thread
 
