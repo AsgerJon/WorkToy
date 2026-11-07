@@ -81,8 +81,13 @@ class TestBaseDescriptorPlacement(DescTest):
 
     box = Owner.__dict__['x']
     _ = Owner().x
+    #  The first write caches the wrapped callback on the box, after
+    #  the placement keys, so the copy must reach past them.
+    Owner().x = 4
     clone = box.clone()
     self.assertIsInstance(clone, AttriBox)
+    placement = {'__field_owner__', '__field_name__', '__private_name__'}
+    self.assertEqual(set(vars(clone)), set(vars(box)) - placement)
     self.assertIsNot(clone, box)
     self.assertIsNone(clone.getFieldOwner())
     self.assertEqual(clone.getFieldName(), '<AttriBox>')

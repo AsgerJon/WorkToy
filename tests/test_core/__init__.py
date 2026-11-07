@@ -28,6 +28,8 @@ Private, importable but not intended for public use:
 - Nudge
 - FamilyMeta
 - Agreeable
+- SlowInstance
+- SlowHook
 
 '_this_sugar_helpers.py' holds the class statements written with the
 decorator spelling '@THIS[Parent].x.onGet', syntax from Python 3.9 on;
@@ -58,6 +60,8 @@ from ._holder import Holder
 from ._nudge import Nudge
 from ._family_meta import FamilyMeta
 from ._agreeable import Agreeable
+from ._slow_instance import SlowInstance
+from ._slow_hook import SlowHook
 
 __all__ = [
   'CoreTest',

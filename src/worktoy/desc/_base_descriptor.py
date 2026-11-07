@@ -359,8 +359,9 @@ class BaseDescriptor(Object, Generic[T]):
     --------------
 
     The instance dictionary is copied field by field, except the owner,
-    the field name, '__private_name__', the stack of frames, which starts
-    empty, and the record of the read hooks running. A subclass keeping a
+    the field name and '__private_name__'. The stack of frames and the
+    record of the read hooks running are kept per context outside the
+    descriptor, so the copy starts with neither. A subclass keeping a
     cache built from the field name clears it when the copy is placed.
 
     Returns
@@ -375,14 +376,11 @@ class BaseDescriptor(Object, Generic[T]):
       '__field_owner__',
       '__field_name__',
       '__private_name__',
-      '__call_chain__',
-      '__get_lock__',
     )
     for key, value in vars(self).items():
       if key in skipped:
         continue
       object.__setattr__(new, key, value)
-    object.__setattr__(new, '__call_chain__', [])
     return new
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

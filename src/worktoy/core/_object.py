@@ -6,6 +6,7 @@ Object is the most primitive base class in the 'worktoy' library.
 from __future__ import annotations
 
 import re
+from threading import local
 from typing import TYPE_CHECKING
 
 from ..utilities import Directory, maybe
@@ -24,6 +25,61 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 #  Compiled once at import rather than rebuilt on every 'getPrivateName'
 #  call.
 _PRIVATE_KEY_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
+
+class _ThreadRecords(local):
+  """
+  The frames and the read-hook records of every descriptor, kept per
+  thread. Each mapping takes 'id(desc)' to '(desc, list)', the list being
+  changed in place, since no other thread ever reads it. A record is
+  dropped when its list empties. Every thread starts without records, on
+  every build and whatever the flag 'thread_inherit_context' says, and a
+  frame never outlives the call that pushed it, so an asyncio task
+  cannot see the frames of another.
+
+  Implementation
+  --------------
+
+  The key is 'id(desc)', and an 'id' is unique only among objects alive
+  at the same time: once a descriptor is gone, Python may hand its 'id'
+  to a new object. A record found under the 'id' of a new descriptor
+  would then be the frames of a dead one. That cannot happen here, and
+  the reason is the first element of the record. The record holds the
+  descriptor itself, so for as long as a record exists its descriptor is
+  alive and its 'id' is taken; the record is dropped the moment its
+  list empties, and with it the hold. A descriptor dropped by its owner
+  while a frame is still open keeps its 'id' until that frame is popped,
+  which the pairing of 'createContext' with 'exitContext' guarantees.
+  The held descriptor is read by nothing. An identity check against it
+  was carried at first and removed, since no input reaches it: the four
+  mutants turning it into an equality check all survived the sweep of
+  2026-11-07, which is what an unreachable branch looks like.
+  """
+
+  def __init__(self) -> None:
+    """Give the thread empty mappings on its first use"""
+    self.chains: dict[int, tuple[Any, list]] = {}
+    self.locks: dict[int, tuple[Any, list]] = {}
+
+
+_THREAD = _ThreadRecords()
+
+
+def _record(records: dict[int, tuple[Any, list]], desc: Any) -> list:
+  """Return the list of 'desc' in 'records', or an empty one"""
+  entry: Optional[tuple[Any, list]] = records.get(id(desc))
+  if entry is None:
+    return []
+  return entry[1]
+
+
+def _readCallChain(self: Any) -> list[tuple[Any, type]]:
+  """Return a copy of the frames of 'self' in the current thread"""
+  return [*_record(_THREAD.chains, self)]
+
+
+def _readGetLock(self: Any) -> list[tuple[Any, str]]:
+  """Return a copy of the read-hook records of 'self' in this thread"""
+  return [*_record(_THREAD.locks, self)]
 
 
 class Object(metaclass=MetaType):
@@ -62,9 +118,10 @@ class Object(metaclass=MetaType):
   left to the metaclass, as for 'type'. A deletion stores 'DELETED',
   which a read turns into 'MissingVariable'. A read made while a read
   hook of the same descriptor runs for the same instance is refused with
-  'RecursiveRead', since it would run that hook again. The frames live on
-  the descriptor and are shared by every instance of the owning class, so
-  the protocol is meant for single-threaded, synchronous code.
+  'RecursiveRead', since it would run that hook again. The frames and the
+  read-hook records live in thread-local storage, not on the descriptor,
+  so each thread keeps its own, and accesses through the same descriptor
+  from several threads do not see each other.
 
   Attributes
   ----------
@@ -90,12 +147,13 @@ class Object(metaclass=MetaType):
   __key_args__ : dict or None
     The keyword arguments of the constructor.
 
-  __call_chain__ : list or None
-    The stack of '(instance, owner)' frames.
+  __call_chain__ : list
+    A copy of the stack of '(instance, owner)' frames in the current
+    thread.
 
-  __get_lock__ : list or None
-    The instances whose read hooks are running, each with the name of
-    the hook, 'preGet' or 'onGet'.
+  __get_lock__ : list
+    A copy of the instances whose read hooks are running in the current
+    thread, each with the name of the hook, 'preGet' or 'onGet'.
 
   Examples
   --------
@@ -124,13 +182,15 @@ class Object(metaclass=MetaType):
   __private_name__: Optional[str] = None  # cached result of 'getPrivateName'
   __pos_args__: Optional[tuple[Any, ...]] = None
   __key_args__: Optional[dict[str, Any]] = None
-  __call_chain__: Optional[list[tuple[Any, type]]] = None
-  __get_lock__: Optional[list[tuple[Any, str]]] = None
 
   #  Public Variables
   directory = Directory()
   instance = ContextInstance()
   owner = ContextOwner()
+
+  #  Virtual Variables
+  __call_chain__ = property(_readCallChain)
+  __get_lock__ = property(_readGetLock)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -160,8 +220,9 @@ class Object(metaclass=MetaType):
     dict[type[Sentinel], Any]
       The mapping from each placeholder to its value.
     """
-    if self.__call_chain__:
-      instance, owner = self.__call_chain__[-1]
+    chain: list = _record(_THREAD.chains, self)
+    if chain:
+      instance, owner = chain[-1]
     else:
       instance, owner = None, None
     return {
@@ -281,9 +342,10 @@ class Object(metaclass=MetaType):
       of its box.
     """
     if self.hasContext():
-      if self.__call_chain__ is None:
+      chain: list = _record(_THREAD.chains, self)
+      if not chain:
         raise MissingVariable(self, '__call_chain__', list)
-      return self.__call_chain__[-1][0]
+      return chain[-1][0]
     if self.__field_name__ is None:
       infoSpec: str = """'%s' object has no attribute 'instance'"""
       info: str = infoSpec % type(self).__name__
@@ -331,9 +393,10 @@ class Object(metaclass=MetaType):
       of its box.
     """
     if self.hasContext():
-      if self.__call_chain__ is None:
+      chain: list = _record(_THREAD.chains, self)
+      if not chain:
         raise MissingVariable(self, '__call_chain__', list)
-      return self.__call_chain__[-1][1]
+      return chain[-1][1]
     if self.__field_name__ is None:
       infoSpec: str = """'%s' object has no attribute 'owner'"""
       info: str = infoSpec % type(self).__name__
@@ -372,7 +435,7 @@ class Object(metaclass=MetaType):
     bool
       Whether a frame is on the stack.
     """
-    return bool(self.__call_chain__)
+    return bool(_record(_THREAD.chains, self))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -388,16 +451,14 @@ class Object(metaclass=MetaType):
     Implementation
     --------------
 
-    The arguments and an empty stack are written with
-    'object.__setattr__', and the next '__init__' along the resolution
-    order is called without arguments. A subclass taking arguments of its
-    own passes on to this method the ones meant for 'getPosArgs' and
-    'getKeyArgs'.
+    The arguments are written with 'object.__setattr__', and the next
+    '__init__' along the resolution order is called without arguments. A
+    subclass taking arguments of its own passes on to this method the ones
+    meant for 'getPosArgs' and 'getKeyArgs'.
     """
     #  The bookkeeping bypasses any '__setattr__' of a subclass.
     object.__setattr__(self, '__pos_args__', args)
     object.__setattr__(self, '__key_args__', kwargs)
-    object.__setattr__(self, '__call_chain__', [])
     #  The arguments belong to this class, which recorded them above. A
     #  base after it in the resolution order, such as 'threading.Thread',
     #  is initialized without them, as in a plain class.
@@ -505,13 +566,14 @@ class Object(metaclass=MetaType):
     Implementation
     --------------
 
-    The instances whose read hooks are running are kept in '__get_lock__',
-    each with the name of its hook. An instance found there is refused
-    with 'RecursiveRead', naming the hook that runs. Otherwise the instance
-    is added, the hook called, and the instance removed in a 'finally'
-    block, so a hook raising leaves later reads as they were. The record
-    is written with 'object.__setattr__', past any '__setattr__' of a
-    subclass.
+    The instances whose read hooks are running in the current thread are
+    kept in the thread-local records, each with the name of its hook. An
+    instance found there is refused with 'RecursiveRead', naming the hook
+    that runs. Otherwise the instance is added, the hook called, and the
+    instance removed in a 'finally' block, so a hook raising leaves later
+    reads as they were. Hooks of one thread nest, so the instance removed
+    is always the last one added. A read of the same instance from another
+    thread has records of its own, and is not refused.
 
     Parameters
     ----------
@@ -534,17 +596,24 @@ class Object(metaclass=MetaType):
     RecursiveRead
       A read hook of this descriptor runs for the instance already.
     """
-    locked = maybe(self.__get_lock__, [])
-    for held, runningPhase in locked:
-      if held is instance:
-        raise RecursiveRead(self, instance, runningPhase)
-    object.__setattr__(self, '__get_lock__', [*locked, (instance, phase)])
+    records: dict[int, tuple[Any, list]] = _THREAD.locks
+    key: int = id(self)
+    entry: Optional[tuple[Any, list]] = records.get(key)
+    if entry is None:
+      entry = (self, [])
+      records[key] = entry
+    else:
+      for held, runningPhase in entry[1]:
+        if held is instance:
+          raise RecursiveRead(self, instance, runningPhase)
+    locked: list[tuple[Any, str]] = entry[1]
+    locked.append((instance, phase))
     try:
       hook(instance, *args)
     finally:
-      locked = maybe(self.__get_lock__, [])
-      remaining = [pair for pair in locked if pair[0] is not instance]
-      object.__setattr__(self, '__get_lock__', remaining)
+      locked.pop()
+      if not locked:
+        del records[key]
 
   def __set__(self, instance: Any, newValue: Any, **kwargs) -> None:
     """
@@ -766,8 +835,9 @@ class Object(metaclass=MetaType):
     Implementation
     --------------
 
-    The frame is appended to a new copy of the stack. Every call is paired
-    with one call of 'exitContext', in a 'finally' block.
+    The frame is appended to the stack of the current thread, which is
+    made when the descriptor has none. Every call is paired with one call
+    of 'exitContext', in a 'finally' block.
 
     Parameters
     ----------
@@ -784,9 +854,13 @@ class Object(metaclass=MetaType):
     Object
       The descriptor itself.
     """
-    existing: list[tuple[Any, type]] = maybe(self.__call_chain__, [])
-    updated: list[tuple[Any, type]] = [*existing, (instance, owner), ]
-    object.__setattr__(self, '__call_chain__', updated)
+    records: dict[int, tuple[Any, list]] = _THREAD.chains
+    key: int = id(self)
+    entry: Optional[tuple[Any, list]] = records.get(key)
+    if entry is None:
+      records[key] = (self, [(instance, owner)])
+    else:
+      entry[1].append((instance, owner))
     return self
 
   def exitContext(self) -> Self:
@@ -798,7 +872,8 @@ class Object(metaclass=MetaType):
     Implementation
     --------------
 
-    The stack is replaced by a copy without its top frame.
+    The top frame of the stack of the current thread is removed, and the
+    stack is dropped when it empties.
 
     Returns
     -------
@@ -812,10 +887,15 @@ class Object(metaclass=MetaType):
     WithoutException
       The stack is empty.
     """
-    if not self.__call_chain__:
+    records: dict[int, tuple[Any, list]] = _THREAD.chains
+    key: int = id(self)
+    entry: Optional[tuple[Any, list]] = records.get(key)
+    if entry is None:
       raise WithoutException(self)
-    updated: list[tuple[Any, type]] = self.__call_chain__[:-1]
-    object.__setattr__(self, '__call_chain__', updated)
+    frames: list[tuple[Any, type]] = entry[1]
+    frames.pop()
+    if not frames:
+      del records[key]
     return self
 
   def _deletedGuard(self, instance: Any, value: Any, ) -> Any:

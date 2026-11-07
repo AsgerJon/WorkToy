@@ -36,6 +36,9 @@ Private, importable but not intended for public use:
 - Fixed
 - Badge
 - Tag
+- SlowSpaceHook
+- SlowSpace
+- SlowMeta
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -67,6 +70,9 @@ from ._labelled import Labelled
 from ._fixed import Fixed
 from ._badge import Badge
 from ._tag import Tag
+from ._slow_space_hook import SlowSpaceHook
+from ._slow_space import SlowSpace
+from ._slow_meta import SlowMeta
 
 __all__ = [
   'MclsTest',
