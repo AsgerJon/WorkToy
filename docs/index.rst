@@ -4,7 +4,7 @@ worktoy
 A Python utilities library that adds runtime type enforcement,
 declarative attributes, function overloading, and custom-metaclass
 infrastructure on top of stock Python. Targets Python 3.7 through
-3.14.
+3.15.
 
 Installation
 ------------

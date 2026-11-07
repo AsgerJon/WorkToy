@@ -32,6 +32,16 @@ mamba env create -f environment.yml
 mamba activate worktoy_env
 ```
 
+Without 'mamba', the same development tools are declared as dependency
+groups in `pyproject.toml`, which pip 25.1 or later installs into
+whatever environment is active:
+
+```terminaloutput
+pip install --group dev
+```
+
+The `dev` group includes the `test` and `docs` groups.
+
 ## Version Support
 
 Another quirk of *worktoy* is legacy support all the way back to 3.7 and
