@@ -211,3 +211,8 @@ etc/docs_build/
 /archive/
 /archive/
 /commit_message.txt
+
+#  Announcement drafts stay local, never committed.
+/reddit_post*.md
+/*_post.md
+/announcements/
