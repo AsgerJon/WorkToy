@@ -1,10 +1,10 @@
 [![wakatime](https://wakatime.com/badge/github/AsgerJon/WorkToy.svg)](https://wakatime.com/badge/github/AsgerJon/WorkToy)
-[![Tokens](https://img.shields.io/badge/Tokens-8.2B-D97757)](https://claude.com/claude-code)
+[![Tokens](https://img.shields.io/badge/Tokens-13.1B-D97757)](https://claude.com/claude-code)
 [![codecov](https://codecov.io/gh/AsgerJon/WorkToy/graph/badge.svg?token=FC0KFZJ7JK)](https://codecov.io/gh/AsgerJon/WorkToy)
 [![PyPI version](https://img.shields.io/pypi/v/worktoy)](https://pypi.org/project/worktoy/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# worktoy v1.1.0-dev4 (development build)
+# worktoy v1.1.0-rc0 (release candidate)
 
 **worktoy** provides utilities for Python development focused on
 reducing boilerplate while improving type safety and readability. Each
