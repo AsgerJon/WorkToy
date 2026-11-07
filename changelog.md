@@ -6,6 +6,30 @@ rolled into the release they lead up to.
 
 ## [1.1.0] - unreleased
 
+### Descriptors and namespace hooks keep their state per thread
+
+A descriptor based on `Object` keeps a stack of frames so that its code
+can ask for the instance and the owner of the access in progress, and
+a record of the read hooks running so that a hook reading its own field
+is refused rather than looping. Both lived on the descriptor, shared by
+every thread, so two threads reading through the same descriptor at
+once could see each other's frames: one read answered with the other
+thread's instance, and two threads reading the same instance were taken
+for a recursive read. A namespace hook had the same flaw one level up:
+one hook object serves every class statement of its namespace class and
+was bound to the namespace of the latest statement, so two threads
+running class statements at once could hand each other's namespace to
+the hooks, and a class could be built without the overloads of its
+body. All three records now live in thread-local storage keyed by the
+descriptor or the hook, nothing is kept on the object itself, and each
+thread sees only its own. A frame never outlives the call that pushed
+it, so an asyncio task cannot see the frames of another either. The
+cost of an access did not rise: a frame is now pushed and popped on a
+list in place where a copy of the list was written before, and reads
+through an `AttriBox` measure the same or slightly faster. A test with
+eight threads hammering one descriptor, and one with eight threads
+running class statements, pin both.
+
 ### A FastBox write refuses the instance and the name before the value
 
 `FastBox.__set__` checked the type of the value first and only then

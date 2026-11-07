@@ -70,9 +70,6 @@ class AbstractSpaceHook(Object):
   #  NAMESPACE  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  #  Private variables
-  __space_object__: Optional[AbstractNamespace] = None
-
   #  Public variables
   space: SpaceDesc[AbstractNamespace] = SpaceDesc()
 
@@ -279,5 +276,5 @@ class AbstractSpaceHook(Object):
     """
     if instance is None:
       return self
-    self.__space_object__ = instance
+    self.space = instance
     return self
