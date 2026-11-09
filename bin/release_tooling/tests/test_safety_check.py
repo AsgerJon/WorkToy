@@ -29,65 +29,65 @@ class TestSafetyCheck(ReleaseToolingTest):
         self.assertEqual(self.readSafety(name), 'STOP')
 
   def check(self, button: str, **kwargs) -> tuple:
-    code, output = self.runScript('safety_check.py', button, 'SAFETY_VERDICT',
-                            **kwargs)
+    code, output = self.runScript('safety_check.py', button,
+                                  'SAFETY_VERDICT', **kwargs)
     env = self.readEnv()
     return code, output, env
 
   def test_armed_and_allowed(self) -> None:
-    self.writeSafety('dev-minor', 'ALLOW\n')
-    code, output, env = self.check('dev-minor')
+    self.writeSafety('minor-dev', 'ALLOW\n')
+    code, output, env = self.check('minor-dev')
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'ALLOW')
-    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'dev-minor' publishes
-    1.2.0-dev0 and needs dev-minor.safety to read 'ALLOW'. It read
+    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'minor-dev' publishes
+    1.2.0-dev0 and needs minor-dev.safety to read 'ALLOW'. It read
     'ALLOW'.""".replace('\n   ', ''))
-    self.assertIn("dev-minor.safety read 'ALLOW', verdict: ALLOW", output)
+    self.assertIn("minor-dev.safety read 'ALLOW', verdict: ALLOW", output)
     self.assertAllLocked()
     self.assertEqual(self.readCounters()['level'], 'none')
 
   def test_armed_and_stopped(self) -> None:
-    code, output, env = self.check('dev')
+    code, output, env = self.check('micro-dev')
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'STOP')
-    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'dev' would publish
-    1.1.1-dev0 but needs dev.safety to read 'ALLOW' in the commit it was
-    pressed on, and it read 'STOP'.""".replace('\n   ', ''))
+    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'micro-dev' would
+    publish 1.1.1-dev0 but needs micro-dev.safety to read 'ALLOW' in the
+    commit it was pressed on, and it read 'STOP'.""".replace('\n   ', ''))
     self.assertAllLocked()
 
   def test_armed_and_missing(self) -> None:
-    os.remove(self.safetyPath('micro'))
+    os.remove(self.safetyPath('micro-lts'))
     self.writeVersion(level='micro', dev=1, rc=1)
-    code, output, env = self.check('lts-micro')
+    code, output, env = self.check('micro-lts')
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'STOP')
     self.assertIn("and it read '<missing>'", env['SAFETY_VERDICT_MESSAGE'])
     self.assertAllLocked()
 
   def test_another_arming_is_spent(self) -> None:
-    self.writeSafety('rc', 'ALLOW\n')
+    self.writeSafety('micro-rc', 'ALLOW\n')
     self.writeVersion(level='micro', dev=1)
-    code, output, env = self.check('dev')
+    code, output, env = self.check('micro-dev')
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'ALLOW')
     self.assertAllLocked()
 
   def test_free(self) -> None:
     self.writeVersion(level='minor', dev=2)
-    code, output, env = self.check('dev-minor')
+    code, output, env = self.check('minor-dev')
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'ALLOW')
-    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'dev-minor' publishes
+    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'minor-dev' publishes
     1.2.0-dev2 and needs no safety.""".replace('\n   ', ''))
     self.assertNotIn('.safety read', output)
     self.assertAllLocked()
 
   def test_refused(self) -> None:
-    self.writeSafety('micro', 'ALLOW\n')
-    code, output, env = self.check('lts-micro')
+    self.writeSafety('micro-lts', 'ALLOW\n')
+    code, output, env = self.check('micro-lts')
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'REFUSED')
-    press = release_state.decide(self.info(), 'lts-micro')
+    press = release_state.decide(self.info(), 'micro-lts')
     self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], press.message)
     self.assertIn(press.message, output)
     self.assertAllLocked()
@@ -95,36 +95,36 @@ class TestSafetyCheck(ReleaseToolingTest):
 
   def test_unreadable_version(self) -> None:
     self.writeText(self.versionPath, 'MAJOR=1\n')
-    self.writeSafety('dev', 'ALLOW\n')
-    code, output, env = self.check('dev')
+    self.writeSafety('micro-dev', 'ALLOW\n')
+    code, output, env = self.check('micro-dev')
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'REFUSED')
-    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'dev' is refused,
-    since VERSION cannot be read: VERSION lacks the lines for MINOR, MICRO,
-    RC, DEV and LEVEL.""".replace('\n   ', ''))
+    self.assertEqual(env['SAFETY_VERDICT_MESSAGE'], """'micro-dev' is
+    refused, since VERSION cannot be read: VERSION lacks the lines for
+    MINOR, MICRO, RC, DEV and LEVEL.""".replace('\n   ', ''))
     self.assertAllLocked()
 
   def test_main_only(self) -> None:
-    self.writeSafety('dev-minor', 'ALLOW\n')
-    code, output, env = self.check('dev-minor', ref='refs/heads/threading')
+    self.writeSafety('minor-dev', 'ALLOW\n')
+    code, output, env = self.check('minor-dev', ref='refs/heads/threading')
     self.assertEqual(code, 6)
     self.assertIn("""The release buttons run from 'main' alone, but
-    'dev-minor' was pressed on 'threading'. Nothing was locked, tested or
+    'minor-dev' was pressed on 'threading'. Nothing was locked, tested or
     published.""".replace('\n   ', ''), output)
     self.assertEqual(env, dict())
-    self.assertEqual(self.readSafety('dev-minor'), 'ALLOW')
-    code, output, env = self.check('dev-minor', ref='refs/tags/1.1.0')
+    self.assertEqual(self.readSafety('minor-dev'), 'ALLOW')
+    code, output, env = self.check('minor-dev', ref='refs/tags/1.1.0')
     self.assertEqual(code, 6)
     self.assertIn("was pressed on 'refs/tags/1.1.0'.", output)
 
   def test_outside_github_actions(self) -> None:
-    self.writeSafety('dev', 'ALLOW\n')
-    code, output, env = self.check('dev', ref=None)
+    self.writeSafety('micro-dev', 'ALLOW\n')
+    code, output, env = self.check('micro-dev', ref=None)
     self.assertEqual(code, 0, output)
     self.assertEqual(env['SAFETY_VERDICT'], 'ALLOW')
 
   def test_printed_only(self) -> None:
-    code, output = self.runScript('safety_check.py', 'dev')
+    code, output = self.runScript('safety_check.py', 'micro-dev')
     self.assertEqual(code, 0, output)
     self.assertIn('Verdict: STOP', output)
     self.assertEqual(self.readEnv(), dict())
@@ -133,12 +133,15 @@ class TestSafetyCheck(ReleaseToolingTest):
     code, output = self.runScript('safety_check.py')
     self.assertEqual(code, 1)
     self.assertIn('Usage: python bin/release_tooling/safety_check.py', output)
-    code, output = self.runScript('safety_check.py', 'dev', 'A', 'B')
+    code, output = self.runScript('safety_check.py', 'micro-dev', 'A', 'B')
     self.assertEqual(code, 2)
     self.assertIn("Received unexpected extra arguments: 'B'!", output)
-    code, output = self.runScript('safety_check.py', 'micro')
-    self.assertEqual(code, 3)
-    self.assertIn("""Unrecognized button: 'micro'! Expected one of: dev,
-    dev-minor, dev-major, rc, rc-minor, rc-major, lts-micro, lts-minor or
-    lts-major""".replace('\n   ', ''), output)
-    self.assertEqual(self.readSafety('micro'), 'STOP')
+    for old in ('dev', 'dev-minor', 'lts-micro', 'micro'):
+      with self.subTest(button=old):
+        code, output = self.runScript('safety_check.py', old)
+        self.assertEqual(code, 3)
+        self.assertIn("""Unrecognized button: '%s'! Expected one of:
+        micro-dev, micro-rc, micro-lts, minor-dev, minor-rc, minor-lts,
+        major-dev, major-rc or major-lts""".replace('\n       ', '') % old,
+                      output)
+    self.assertEqual(self.readSafety('micro-lts'), 'STOP')

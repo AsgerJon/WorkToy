@@ -1,10 +1,10 @@
-# LTS major: the public, official release button for the next major line.
+# Major LTS: the public, official release button for the next major line.
 # Publishes the next major version (X.0.0, raising X)
 # to PyPI as a full release and deploys the GitHub Pages docs. Manual
 # trigger only, and run from 'main' alone. The release state machine in
 # 'bin/release_tooling/release_state.py' accepts the press only while a
 # release candidate cycle of the major level is open, and then only when
-# 'bin/release_tooling/major.safety' read 'ALLOW' in the commit the
+# 'bin/release_tooling/major-lts.safety' read 'ALLOW' in the commit the
 # button was pressed on; see the 'safety' job.
 on:
   workflow_dispatch:
@@ -32,13 +32,13 @@ jobs:
         with:
           python-version: '3.12'
       - name: Decide and lock
-        run: python bin/release_tooling/safety_check.py lts-major SAFETY_VERDICT
+        run: python bin/release_tooling/safety_check.py major-lts SAFETY_VERDICT
       - name: Push the lock
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
           git add bin/release_tooling/*.safety
-          git diff --cached --quiet || git commit -m "lts-major: safeties locked, verdict ${SAFETY_VERDICT}"
+          git diff --cached --quiet || git commit -m "major-lts: safeties locked, verdict ${SAFETY_VERDICT}"
           git push origin HEAD:${{ github.ref }}
       - name: Test the release tooling
         working-directory: bin/release_tooling
@@ -119,7 +119,7 @@ jobs:
       # Compute the next major version from VERSION and expose it as
       # VERSION_INFO in the environment for the steps below.
       - name: Resolve next version
-        run: python bin/release_tooling/version_get.py lts-major VERSION_INFO
+        run: python bin/release_tooling/version_get.py major-lts VERSION_INFO
 
       # Write VERSION_INFO into pyproject.toml (the build reads its
       # version from there), into src/worktoy/__init__.py (so
@@ -143,7 +143,7 @@ jobs:
       # Only reached if the publish above succeeded: advance the
       # counters in VERSION, then commit VERSION + the stamped files.
       - name: Bump version counters
-        run: python bin/release_tooling/version_bump.py lts-major
+        run: python bin/release_tooling/version_bump.py major-lts
 
       - name: Commit version changes
         run: |

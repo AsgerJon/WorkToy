@@ -20,43 +20,43 @@ class TestDevCycle(ReleaseToolingTest):
   """
 
   def test_micro_locked(self) -> None:
-    accepted = ('dev', 'dev-minor', 'dev-major', 'rc')
+    accepted = ('micro-dev', 'micro-rc', 'minor-dev', 'major-dev')
     self.assertPresses(self.info(level='micro', dev=2), {
-      'dev': ('free', '1.1.1-dev2', dict(dev=3)),
-      'dev-minor': ('armed', '1.2.0-dev0', dict(level='minor', dev=1)),
-      'dev-major': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
-      'rc': ('armed', '1.1.1-rc0', dict(rc=1)),
-      'rc-minor': ('refused', accepted),
-      'rc-major': ('refused', accepted),
-      'lts-micro': ('refused', accepted),
-      'lts-minor': ('refused', accepted),
-      'lts-major': ('refused', accepted),
+      'micro-dev': ('free', '1.1.1-dev2', dict(dev=3)),
+      'micro-rc': ('armed', '1.1.1-rc0', dict(rc=1)),
+      'micro-lts': ('refused', accepted),
+      'minor-dev': ('armed', '1.2.0-dev0', dict(level='minor', dev=1)),
+      'minor-rc': ('refused', accepted),
+      'minor-lts': ('refused', accepted),
+      'major-dev': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
+      'major-rc': ('refused', accepted),
+      'major-lts': ('refused', accepted),
     })
 
   def test_minor_locked(self) -> None:
-    accepted = ('dev-minor', 'dev-major', 'rc-minor')
+    accepted = ('minor-dev', 'minor-rc', 'major-dev')
     self.assertPresses(self.info(level='minor', dev=2), {
-      'dev': ('refused', accepted),
-      'dev-minor': ('free', '1.2.0-dev2', dict(dev=3)),
-      'dev-major': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
-      'rc': ('refused', accepted),
-      'rc-minor': ('armed', '1.2.0-rc0', dict(rc=1)),
-      'rc-major': ('refused', accepted),
-      'lts-micro': ('refused', accepted),
-      'lts-minor': ('refused', accepted),
-      'lts-major': ('refused', accepted),
+      'micro-dev': ('refused', accepted),
+      'micro-rc': ('refused', accepted),
+      'micro-lts': ('refused', accepted),
+      'minor-dev': ('free', '1.2.0-dev2', dict(dev=3)),
+      'minor-rc': ('armed', '1.2.0-rc0', dict(rc=1)),
+      'minor-lts': ('refused', accepted),
+      'major-dev': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
+      'major-rc': ('refused', accepted),
+      'major-lts': ('refused', accepted),
     })
 
   def test_major_locked(self) -> None:
-    accepted = ('dev-major', 'rc-major')
+    accepted = ('major-dev', 'major-rc')
     self.assertPresses(self.info(level='major', dev=2), {
-      'dev': ('refused', accepted),
-      'dev-minor': ('refused', accepted),
-      'dev-major': ('free', '2.0.0-dev2', dict(dev=3)),
-      'rc': ('refused', accepted),
-      'rc-minor': ('refused', accepted),
-      'rc-major': ('armed', '2.0.0-rc0', dict(rc=1)),
-      'lts-micro': ('refused', accepted),
-      'lts-minor': ('refused', accepted),
-      'lts-major': ('refused', accepted),
+      'micro-dev': ('refused', accepted),
+      'micro-rc': ('refused', accepted),
+      'micro-lts': ('refused', accepted),
+      'minor-dev': ('refused', accepted),
+      'minor-rc': ('refused', accepted),
+      'minor-lts': ('refused', accepted),
+      'major-dev': ('free', '2.0.0-dev2', dict(dev=3)),
+      'major-rc': ('armed', '2.0.0-rc0', dict(rc=1)),
+      'major-lts': ('refused', accepted),
     })

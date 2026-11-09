@@ -31,17 +31,18 @@ SCRIPTS = (
 )
 
 #  The safety file each button reads, written out here rather than taken
-#  from 'release_state', so the tests state the design independently.
+#  from 'release_state', so the tests state the design independently:
+#  every button reads the safety of its own name.
 SAFETY = {
-  'dev': 'dev',
-  'dev-minor': 'dev-minor',
-  'dev-major': 'dev-major',
-  'rc': 'rc',
-  'rc-minor': 'rc-minor',
-  'rc-major': 'rc-major',
-  'lts-micro': 'micro',
-  'lts-minor': 'minor',
-  'lts-major': 'major',
+  'micro-dev': 'micro-dev',
+  'micro-rc': 'micro-rc',
+  'micro-lts': 'micro-lts',
+  'minor-dev': 'minor-dev',
+  'minor-rc': 'minor-rc',
+  'minor-lts': 'minor-lts',
+  'major-dev': 'major-dev',
+  'major-rc': 'major-rc',
+  'major-lts': 'major-lts',
 }
 
 #  The counters after the 1.1.0 release, from which every state of the

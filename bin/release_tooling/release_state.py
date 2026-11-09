@@ -13,28 +13,26 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:  # pragma: no cover
   from typing import Optional
 
-#  The nine buttons, each the name of its workflow file, in the order the
-#  messages list them.
+#  The nine buttons, each named level first and kind second, as is its
+#  workflow file, in the order the messages list them.
 BUTTONS = (
-  'dev', 'dev-minor', 'dev-major',
-  'rc', 'rc-minor', 'rc-major',
-  'lts-micro', 'lts-minor', 'lts-major',
+  'micro-dev', 'micro-rc', 'micro-lts',
+  'minor-dev', 'minor-rc', 'minor-lts',
+  'major-dev', 'major-rc', 'major-lts',
 )
 
-#  The kind of each button, its level, and the stem of its safety file.
-#  The four safety files that existed before the state machine keep their
-#  names, so the lts buttons read 'micro.safety', 'minor.safety' and
-#  'major.safety'.
+#  The kind of each button, its level, and the stem of its safety file,
+#  which carries the name of the button.
 _BUTTON_TABLE = {
-  'dev': ('dev', 'micro', 'dev'),
-  'dev-minor': ('dev', 'minor', 'dev-minor'),
-  'dev-major': ('dev', 'major', 'dev-major'),
-  'rc': ('rc', 'micro', 'rc'),
-  'rc-minor': ('rc', 'minor', 'rc-minor'),
-  'rc-major': ('rc', 'major', 'rc-major'),
-  'lts-micro': ('lts', 'micro', 'micro'),
-  'lts-minor': ('lts', 'minor', 'minor'),
-  'lts-major': ('lts', 'major', 'major'),
+  'micro-dev': ('dev', 'micro', 'micro-dev'),
+  'micro-rc': ('rc', 'micro', 'micro-rc'),
+  'micro-lts': ('lts', 'micro', 'micro-lts'),
+  'minor-dev': ('dev', 'minor', 'minor-dev'),
+  'minor-rc': ('rc', 'minor', 'minor-rc'),
+  'minor-lts': ('lts', 'minor', 'minor-lts'),
+  'major-dev': ('dev', 'major', 'major-dev'),
+  'major-rc': ('rc', 'major', 'major-rc'),
+  'major-lts': ('lts', 'major', 'major-lts'),
 }
 
 #  The levels from lowest to highest.

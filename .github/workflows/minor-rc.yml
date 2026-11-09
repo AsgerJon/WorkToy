@@ -1,11 +1,11 @@
-# Release candidate minor: the release-candidate button of the minor level.
+# Minor release candidate: the release-candidate button of the minor level.
 # Publishes the next release candidate of the locked minor release
 # (X.Y.Z-rcN) to PyPI as a pre-release. Manual trigger only, and run from
 # 'main' alone. The release state machine in
 # 'bin/release_tooling/release_state.py' decides every press from
 # 'bin/release_tooling/VERSION': the first release candidate, rc0, closes
 # the dev cycle of its level for good and runs only when
-# 'bin/release_tooling/rc-minor.safety' read 'ALLOW' in the commit the
+# 'bin/release_tooling/minor-rc.safety' read 'ALLOW' in the commit the
 # button was pressed on, while a later one needs no safety; see the
 # 'safety' job.
 on:
@@ -34,13 +34,13 @@ jobs:
         with:
           python-version: '3.12'
       - name: Decide and lock
-        run: python bin/release_tooling/safety_check.py rc-minor SAFETY_VERDICT
+        run: python bin/release_tooling/safety_check.py minor-rc SAFETY_VERDICT
       - name: Push the lock
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
           git add bin/release_tooling/*.safety
-          git diff --cached --quiet || git commit -m "rc-minor: safeties locked, verdict ${SAFETY_VERDICT}"
+          git diff --cached --quiet || git commit -m "minor-rc: safeties locked, verdict ${SAFETY_VERDICT}"
           git push origin HEAD:${{ github.ref }}
       - name: Test the release tooling
         working-directory: bin/release_tooling
@@ -121,7 +121,7 @@ jobs:
       # Compute the next rc version from VERSION and expose it as
       # VERSION_INFO in the environment for the steps below.
       - name: Resolve next version
-        run: python bin/release_tooling/version_get.py rc-minor VERSION_INFO
+        run: python bin/release_tooling/version_get.py minor-rc VERSION_INFO
 
       # Write VERSION_INFO into pyproject.toml (the build reads its
       # version from there), into src/worktoy/__init__.py (so
@@ -145,7 +145,7 @@ jobs:
       # Only reached if the publish above succeeded: advance the
       # counters in VERSION, then commit VERSION + the stamped files.
       - name: Bump version counters
-        run: python bin/release_tooling/version_bump.py rc-minor
+        run: python bin/release_tooling/version_bump.py minor-rc
 
       - name: Commit version changes
         run: |

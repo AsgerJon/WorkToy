@@ -1,11 +1,10 @@
 """
 This script locks every safety file beside it, by hand. Each of the nine
-release buttons has one, named in 'release_state.SAFETY_NAMES': 'dev',
-'dev-minor', 'dev-major', 'rc', 'rc-minor', 'rc-major', and 'micro',
-'minor' and 'major' for the three lts buttons. A locked safety holds the
-sole word 'STOP'. The author arms one by hand, replacing 'STOP' with
-'ALLOW' and committing, right before pressing a button whose press the
-release state machine arms.
+release buttons has one, carrying the name of its button and listed in
+'release_state.SAFETY_NAMES', as 'minor-dev.safety' for 'minor-dev'. A
+locked safety holds the sole word 'STOP'. The author arms one by hand,
+replacing 'STOP' with 'ALLOW' and committing, right before pressing a
+button whose press the release state machine arms.
 
 Every release workflow locks all nine safeties in its first job, through
 'safety_check.py', so no run of any workflow leaves one armed: an arming

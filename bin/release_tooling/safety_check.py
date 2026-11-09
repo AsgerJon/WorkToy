@@ -2,9 +2,9 @@
 This script decides whether a press of a release button may run, and
 locks every safety whatever it decides. It requires one argument naming
 the button, which is the name of its workflow file, one of:
-- 'dev', 'dev-minor', 'dev-major'
-- 'rc', 'rc-minor', 'rc-major'
-- 'lts-micro', 'lts-minor', 'lts-major'
+- 'micro-dev', 'micro-rc', 'micro-lts'
+- 'minor-dev', 'minor-rc', 'minor-lts'
+- 'major-dev', 'major-rc', 'major-lts'
 
 First, a press on any branch but 'main' is refused before anything is
 read or written, with exit code 6, so the job stops there and pushes
@@ -117,7 +117,7 @@ def safetyPath(name: str) -> str:
   Parameters
   ----------
   name : str
-    One of 'release_state.SAFETY_NAMES', as 'dev-minor' or 'micro'.
+    One of 'release_state.SAFETY_NAMES', as 'minor-dev'.
 
   Returns
   -------

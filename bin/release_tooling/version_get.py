@@ -2,13 +2,13 @@
 This script names the version a press of a release button publishes. It
 requires one argument naming the button, which is the name of its
 workflow file, one of:
-- 'dev', 'dev-minor', 'dev-major'
-- 'rc', 'rc-minor', 'rc-major'
-- 'lts-micro', 'lts-minor', 'lts-major'
+- 'micro-dev', 'micro-rc', 'micro-lts'
+- 'minor-dev', 'minor-rc', 'minor-lts'
+- 'major-dev', 'major-rc', 'major-lts'
 
 The name comes from the state of 'VERSION' and the release state machine
 in 'release_state.py': for example '1.2.0-dev0' for the first press of
-'dev-minor' after the release of 1.1.0. A press the state machine refuses
+'minor-dev' after the release of 1.1.0. A press the state machine refuses
 names nothing: the script prints the refusal and fails. The publish job
 of every button runs this script before the build, from the branch tip,
 so a press another run made obsolete since the 'safety' job is refused

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from . import ReleaseToolingTest
 
-DEVS = ('dev', 'dev-minor', 'dev-major')
+DEVS = ('micro-dev', 'minor-dev', 'major-dev')
 
 
 class TestNoCycle(ReleaseToolingTest):
@@ -21,28 +21,28 @@ class TestNoCycle(ReleaseToolingTest):
 
   def test_presses(self) -> None:
     self.assertPresses(self.info(), {
-      'dev': ('armed', '1.1.1-dev0', dict(level='micro', dev=1)),
-      'dev-minor': ('armed', '1.2.0-dev0', dict(level='minor', dev=1)),
-      'dev-major': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
-      'rc': ('refused', DEVS),
-      'rc-minor': ('refused', DEVS),
-      'rc-major': ('refused', DEVS),
-      'lts-micro': ('refused', DEVS),
-      'lts-minor': ('refused', DEVS),
-      'lts-major': ('refused', DEVS),
+      'micro-dev': ('armed', '1.1.1-dev0', dict(level='micro', dev=1)),
+      'micro-rc': ('refused', DEVS),
+      'micro-lts': ('refused', DEVS),
+      'minor-dev': ('armed', '1.2.0-dev0', dict(level='minor', dev=1)),
+      'minor-rc': ('refused', DEVS),
+      'minor-lts': ('refused', DEVS),
+      'major-dev': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
+      'major-rc': ('refused', DEVS),
+      'major-lts': ('refused', DEVS),
     })
 
   def test_after_a_minor_release(self) -> None:
     #  After 1.2.0 the counters read MINOR=2 MICRO=1: micro targets 1.2.1.
     info = self.info(minor=2, micro=1)
     self.assertPresses(info, {
-      'dev': ('armed', '1.2.1-dev0', dict(level='micro', dev=1)),
-      'dev-minor': ('armed', '1.3.0-dev0', dict(level='minor', dev=1)),
-      'dev-major': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
-      'rc': ('refused', DEVS),
-      'rc-minor': ('refused', DEVS),
-      'rc-major': ('refused', DEVS),
-      'lts-micro': ('refused', DEVS),
-      'lts-minor': ('refused', DEVS),
-      'lts-major': ('refused', DEVS),
+      'micro-dev': ('armed', '1.2.1-dev0', dict(level='micro', dev=1)),
+      'micro-rc': ('refused', DEVS),
+      'micro-lts': ('refused', DEVS),
+      'minor-dev': ('armed', '1.3.0-dev0', dict(level='minor', dev=1)),
+      'minor-rc': ('refused', DEVS),
+      'minor-lts': ('refused', DEVS),
+      'major-dev': ('armed', '2.0.0-dev0', dict(level='major', dev=1)),
+      'major-rc': ('refused', DEVS),
+      'major-lts': ('refused', DEVS),
     })

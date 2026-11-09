@@ -2,9 +2,9 @@
 This script records a published press in the 'VERSION' file. It requires
 one argument naming the button that just published, which is the name of
 its workflow file, one of:
-- 'dev', 'dev-minor', 'dev-major'
-- 'rc', 'rc-minor', 'rc-major'
-- 'lts-micro', 'lts-minor', 'lts-major'
+- 'micro-dev', 'micro-rc', 'micro-lts'
+- 'minor-dev', 'minor-rc', 'minor-lts'
+- 'major-dev', 'major-rc', 'major-lts'
 
 The release state machine in 'release_state.py' advances the counters and
 the locked level as the press requires: a dev press of the locked level

@@ -1,11 +1,12 @@
-# LTS micro: the public, official release button for the next patch level.
-# Publishes the next official version (X.Y.Z, raising Z)
-# to PyPI as a full release and deploys the GitHub Pages docs. Manual
-# trigger only, and run from 'main' alone. The release state machine in
-# 'bin/release_tooling/release_state.py' accepts the press only while a
-# release candidate cycle of the micro level is open, and then only when
-# 'bin/release_tooling/micro.safety' read 'ALLOW' in the commit the
-# button was pressed on; see the 'safety' job.
+# Micro dev: the dev-release button of the micro level. Publishes the
+# next dev version of the next micro release (X.Y.Z-devN) to PyPI as a
+# pre-release. Manual trigger only, and run from 'main' alone. The release
+# state machine in 'bin/release_tooling/release_state.py' decides every
+# press from 'bin/release_tooling/VERSION': the press opening a dev cycle,
+# and one climbing to this level from a lower one, run only when
+# 'bin/release_tooling/micro-dev.safety' read 'ALLOW' in the commit the
+# button was pressed on, while a later press of the locked level needs no
+# safety; see the 'safety' job.
 on:
   workflow_dispatch:
 
@@ -32,13 +33,13 @@ jobs:
         with:
           python-version: '3.12'
       - name: Decide and lock
-        run: python bin/release_tooling/safety_check.py lts-micro SAFETY_VERDICT
+        run: python bin/release_tooling/safety_check.py micro-dev SAFETY_VERDICT
       - name: Push the lock
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
           git add bin/release_tooling/*.safety
-          git diff --cached --quiet || git commit -m "lts-micro: safeties locked, verdict ${SAFETY_VERDICT}"
+          git diff --cached --quiet || git commit -m "micro-dev: safeties locked, verdict ${SAFETY_VERDICT}"
           git push origin HEAD:${{ github.ref }}
       - name: Test the release tooling
         working-directory: bin/release_tooling
@@ -86,7 +87,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/src
         run: |
           pip install pytest pytest-cov
-          pytest --cov --cov-branch --cov-report=xml --cov-fail-under=100
+          pytest --cov --cov-branch --cov-report=xml
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version == '3.15' }}
         uses: codecov/codecov-action@v7
@@ -99,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write   # trusted publishing (OIDC) to PyPI
-      contents: write   # push the version changes and cut the release
+      contents: write   # push the version bump and cut the release
     steps:
       # The branch tip rather than the commit the button was pressed on:
       # the version commit below has to sit on top of the lock commit the
@@ -116,10 +117,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
 
-      # Compute the official version from VERSION and expose it as
+      # Compute the next dev version from VERSION and expose it as
       # VERSION_INFO in the environment for the steps below.
       - name: Resolve next version
-        run: python bin/release_tooling/version_get.py lts-micro VERSION_INFO
+        run: python bin/release_tooling/version_get.py micro-dev VERSION_INFO
 
       # Write VERSION_INFO into pyproject.toml (the build reads its
       # version from there), into src/worktoy/__init__.py (so
@@ -128,11 +129,6 @@ jobs:
       # the stamped pyproject.toml.
       - name: Stamp version into pyproject, package and README
         run: python bin/release_tooling/version_stamp.py VERSION_INFO
-
-      # Refresh the cumulative token-usage badge in the README from the
-      # canonical count in token_stats.json.
-      - name: Stamp token-usage badge into README
-        run: python bin/release_tooling/token_stamp.py
 
       - name: Build
         run: python -m build
@@ -143,95 +139,20 @@ jobs:
       # Only reached if the publish above succeeded: advance the
       # counters in VERSION, then commit VERSION + the stamped files.
       - name: Bump version counters
-        run: python bin/release_tooling/version_bump.py lts-micro
+        run: python bin/release_tooling/version_bump.py micro-dev
 
       - name: Commit version changes
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
-          git add bin/release_tooling/VERSION bin/release_tooling/token_stats.json pyproject.toml src/worktoy/__init__.py README.md
-          git commit -m "LTS ${{ env.VERSION_INFO }}"
+          git add bin/release_tooling/VERSION pyproject.toml src/worktoy/__init__.py README.md
+          git commit -m "dev ${{ env.VERSION_INFO }}"
           git push origin HEAD:${{ github.ref }}
 
-      - name: GitHub release
+      - name: GitHub pre-release
         uses: ncipollo/release-action@v1.21.0
         with:
           tag: ${{ env.VERSION_INFO }}
-          name: ${{ env.VERSION_INFO }}
-          prerelease: false
+          name: dev ${{ env.VERSION_INFO }}
+          prerelease: true
           generateReleaseNotes: true
-
-  docs:
-    needs: publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-      actions: write   # to delete stale Pages artifacts on a re-run
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout (full history, for tags)
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          ref: ${{ github.ref_name }}
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r docs/requirements.txt
-
-      - name: Build all versions
-        run: |
-          set -e
-          mkdir -p site
-          sphinx-build -b html docs site/latest
-          versions='"latest"'
-          # Build each official tag that carries the docs generator:
-          # either the in-repo docs/_gen.py of older tags, or a
-          # conf.py using the markwork extension. Pre-releases
-          # (dev / rc) are skipped so Pages only shows finished
-          # versions.
-          for tag in $(git tag --sort=-version:refname); do
-            case "$tag" in *dev*|*rc*) continue;; esac
-            if git cat-file -e "$tag:docs/_gen.py" 2>/dev/null \
-                || git show "$tag:docs/conf.py" 2>/dev/null \
-                | grep -q markwork; then
-              git worktree add --detach ../version-build "$tag"
-              sphinx-build -b html \
-                -D release="$tag" \
-                -D version="${tag%.*}" \
-                ../version-build/docs "site/$tag"
-              git worktree remove --force ../version-build
-              versions="$versions,\"$tag\""
-            fi
-          done
-          printf '[%s]\n' "$versions" > site/versions.json
-          printf '%s\n' \
-            '<!doctype html><meta http-equiv="refresh" content="0; url=latest/">' \
-            > site/index.html
-
-      - name: Remove stale Pages artifacts from earlier attempts
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
-            --jq '.artifacts[] | select(.name=="github-pages") | .id' \
-          | while read -r id; do
-              gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" || true
-            done
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: site
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5

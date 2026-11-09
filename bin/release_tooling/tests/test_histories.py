@@ -41,8 +41,8 @@ class TestHistories(ReleaseToolingTest):
     return [self.press(button) for button in buttons]
 
   def test_the_minor_release(self) -> None:
-    walked = self.walk('dev-minor', 'dev-minor', 'rc-minor', 'rc-minor',
-                       'lts-minor')
+    walked = self.walk('minor-dev', 'minor-dev', 'minor-rc', 'minor-rc',
+                       'minor-lts')
     self.assertEqual(walked, [
       ('1.2.0-dev0', True),
       ('1.2.0-dev1', False),
@@ -53,7 +53,7 @@ class TestHistories(ReleaseToolingTest):
     self.assertEqual(self.readCounters(), self.info(minor=2, micro=1))
 
   def test_a_micro_line_climbing_to_minor(self) -> None:
-    walked = self.walk('dev', 'dev-minor', 'rc-minor', 'lts-minor')
+    walked = self.walk('micro-dev', 'minor-dev', 'minor-rc', 'minor-lts')
     self.assertEqual(walked, [
       ('1.1.1-dev0', True),
       ('1.2.0-dev0', True),
@@ -63,7 +63,8 @@ class TestHistories(ReleaseToolingTest):
     self.assertEqual(self.readCounters(), self.info(minor=2, micro=1))
 
   def test_a_micro_release_then_the_next_line(self) -> None:
-    walked = self.walk('dev', 'dev', 'rc', 'lts-micro', 'dev')
+    walked = self.walk('micro-dev', 'micro-dev', 'micro-rc', 'micro-lts',
+                       'micro-dev')
     self.assertEqual(walked, [
       ('1.1.1-dev0', True),
       ('1.1.1-dev1', False),
@@ -75,7 +76,7 @@ class TestHistories(ReleaseToolingTest):
                      self.info(micro=2, level='micro', dev=1))
 
   def test_a_major_release(self) -> None:
-    walked = self.walk('dev-minor', 'dev-major', 'rc-major', 'lts-major')
+    walked = self.walk('minor-dev', 'major-dev', 'major-rc', 'major-lts')
     self.assertEqual([name for name, _ in walked],
                      ['1.2.0-dev0', '2.0.0-dev0', '2.0.0-rc0', '2.0.0'])
     self.assertEqual(self.readCounters(),

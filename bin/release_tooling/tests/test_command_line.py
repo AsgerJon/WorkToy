@@ -20,22 +20,23 @@ class TestCommandLine(ReleaseToolingTest):
   """
 
   def test_get_prints_or_exports(self) -> None:
-    code, output = self.runScript('version_get.py', 'dev-minor')
+    code, output = self.runScript('version_get.py', 'minor-dev')
     self.assertEqual((code, output), (0, '1.2.0-dev0\n'))
-    code, output = self.runScript('version_get.py', 'dev-minor',
+    code, output = self.runScript('version_get.py', 'minor-dev',
                                   'VERSION_INFO')
     self.assertEqual((code, output), (0, ''))
     self.assertEqual(self.readEnv(), dict(VERSION_INFO='1.2.0-dev0'))
 
   def test_get_refused(self) -> None:
-    code, output = self.runScript('version_get.py', 'rc', 'VERSION_INFO')
+    code, output = self.runScript('version_get.py', 'micro-rc',
+                                  'VERSION_INFO')
     self.assertEqual(code, 5)
-    press = release_state.decide(self.info(), 'rc')
+    press = release_state.decide(self.info(), 'micro-rc')
     self.assertEqual(output, press.message + '\n')
     self.assertEqual(self.readEnv(), dict())
 
   def test_bump(self) -> None:
-    code, output = self.runScript('version_bump.py', 'dev-minor')
+    code, output = self.runScript('version_bump.py', 'minor-dev')
     self.assertEqual(code, 0, output)
     self.assertEqual(self.readCounters(), self.info(level='minor', dev=1))
     self.assertIn('LEVEL=minor', self.readText(self.versionPath))
@@ -43,9 +44,9 @@ class TestCommandLine(ReleaseToolingTest):
 
   def test_bump_refused(self) -> None:
     before = self.readText(self.versionPath)
-    code, output = self.runScript('version_bump.py', 'lts-minor')
+    code, output = self.runScript('version_bump.py', 'minor-lts')
     self.assertEqual(code, 5)
-    press = release_state.decide(self.info(), 'lts-minor')
+    press = release_state.decide(self.info(), 'minor-lts')
     self.assertEqual(output, press.message + '\n')
     self.assertEqual(self.readText(self.versionPath), before)
 
@@ -53,7 +54,7 @@ class TestCommandLine(ReleaseToolingTest):
     self.writeText(self.versionPath, 'MAJOR=1\n')
     for script in ('version_get.py', 'version_bump.py'):
       with self.subTest(script=script):
-        code, output = self.runScript(script, 'dev')
+        code, output = self.runScript(script, 'micro-dev')
         self.assertEqual(code, 4)
         self.assertIn('VERSION lacks the lines for MINOR', output)
 
@@ -67,9 +68,9 @@ class TestCommandLine(ReleaseToolingTest):
         code, output = self.runScript(script, 'lts')
         self.assertEqual(code, 3)
         self.assertIn("Unrecognized button: 'lts'!", output)
-    code, output = self.runScript('version_get.py', 'dev', 'A', 'B')
+    code, output = self.runScript('version_get.py', 'micro-dev', 'A', 'B')
     self.assertEqual(code, 2)
     self.assertIn("Received unexpected extra arguments: 'B'!", output)
-    code, output = self.runScript('version_bump.py', 'dev', 'A')
+    code, output = self.runScript('version_bump.py', 'micro-dev', 'A')
     self.assertEqual(code, 2)
     self.assertIn("Received unexpected extra arguments: 'A'!", output)
