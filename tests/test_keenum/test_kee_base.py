@@ -13,8 +13,6 @@ from worktoy.core import Object
 from worktoy.desc import AttriBox
 from worktoy.keenum import KeeBase, KeeNum, Kee
 from worktoy.utilities import typeCast
-from worktoy.waitaminute import MissingVariable
-from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
 from worktoy.waitaminute.dispatch import TypeCastException
 from worktoy.waitaminute.keenum import KeeWriteOnceError
 from . import KeenumTest, WeekDay, Bag
@@ -22,17 +20,19 @@ from . import KeenumTest, WeekDay, Bag
 
 class TestKeeBase(KeenumTest):
   """
-  A member is one object built once, answering its name, index, value
-  and value type through its 'Kee', equal to itself alone, hashing
-  where its value hashes, surviving copies and pickling as itself, and
-  refusing every change. The tests pin each promise on the members of
-  the fixtures and on members placed in other class bodies.
+  A member is one object built once, holding the name, index, value and
+  value type its 'Kee' gave, equal to itself alone, hashing where its
+  value hashes, surviving copies and pickling as itself, and refusing
+  every change. It is a plain object, not a worktoy 'Object', so a box
+  leaves it untagged and another class body holds it as an ordinary
+  class attribute. The tests pin each promise on the members of the
+  fixtures and on members placed in other class bodies.
   """
 
   def test_answers_through_its_kee(self) -> None:
     member = WeekDay.WEDNESDAY
     self.assertIsInstance(member, KeeBase)
-    self.assertIsInstance(member, Object)
+    self.assertNotIsInstance(member, Object)
     self.assertEqual(member.name, 'WEDNESDAY')
     self.assertEqual(member.index, 2)
     self.assertEqual(member.value, 'onsdag')
@@ -41,23 +41,6 @@ class TestKeeBase(KeenumTest):
                   ['WEDNESDAY'])
     self.assertEqual(int(member), 2)
     self.assertEqual(['a', 'b', 'c'][member], 'c')
-
-  def test_kee_missing(self) -> None:
-    class Local(KeeNum):
-      A = Kee[int](1)
-
-    type.__setattr__(Local, '__allow_instantiation__', True)
-    try:
-      bare = Local(None)
-    finally:
-      type.__setattr__(Local, '__allow_instantiation__', False)
-    with self.assertRaises(MissingVariable) as context:
-      _ = bare.kee
-    self.assertIs(context.exception.instance, bare)
-    self.assertEqual(context.exception.varName, '__field_kee__')
-    self.assertEqual(context.exception.expectedTypes, (Kee,))
-    self.assertEqual(str(context.exception),
-                     "Missing 'Local.__field_kee__: Kee'!")
 
   def test_frozen(self) -> None:
     member = WeekDay.MONDAY
@@ -93,6 +76,10 @@ class TestKeeBase(KeenumTest):
   def test_hash_follows_the_value(self) -> None:
     self.assertEqual(hash(WeekDay.MONDAY), hash(WeekDay.MONDAY))
     self.assertNotEqual(hash(WeekDay.MONDAY), hash(WeekDay.TUESDAY))
+    #  The hash of an integer is the same in every process, unlike that of
+    #  a string, so a member hashes alike from one run to the next.
+    expected = hash(int.from_bytes(b'WeekDay::MONDAY', 'big'))
+    self.assertEqual(hash(WeekDay.MONDAY), expected)
     self.assertEqual({WeekDay.MONDAY: 1}[WeekDay.MONDAY], 1)
     with self.assertRaises(TypeError) as context:
       hash(Bag.FEW)
@@ -128,22 +115,13 @@ class TestKeeBase(KeenumTest):
     holder = Holder()
     self.assertIs(holder.day, WeekDay.THURSDAY)
     self.assertIs(Holder.day, WeekDay.THURSDAY)
-    with self.assertRaises(ReadOnlyError) as context:
-      holder.day = WeekDay.FRIDAY
-    self.assertIs(context.exception.instance, holder)
-    self.assertIs(context.exception.desc, WeekDay.THURSDAY)
-    self.assertIs(context.exception.newVal, WeekDay.FRIDAY)
-    self.assertIn("'Holder.day'", str(context.exception))
-    self.assertIn("'WeekDay.FRIDAY'", str(context.exception))
-    with self.assertRaises(ProtectedError) as context:
-      del holder.day
-    self.assertIs(context.exception.instance, holder)
-    self.assertIs(context.exception.desc, WeekDay.THURSDAY)
-    self.assertIs(context.exception.oldVal, WeekDay.THURSDAY)
-    self.assertIn("'Holder.day'", str(context.exception))
-    self.assertIn("'WeekDay.THURSDAY'", str(context.exception))
-    self.assertIsNone(WeekDay.THURSDAY.getFieldOwner())
-    self.assertEqual(WeekDay.THURSDAY.getFieldName(), '<WeekDay>')
+    holder.day = WeekDay.FRIDAY
+    self.assertIs(holder.day, WeekDay.FRIDAY)
+    self.assertIs(Holder.day, WeekDay.THURSDAY)
+    del holder.day
+    self.assertIs(holder.day, WeekDay.THURSDAY)
+    self.assertNotIn('__field_owner__', vars(WeekDay.THURSDAY))
+    self.assertNotIn('__field_name__', vars(WeekDay.THURSDAY))
 
   def test_cast_hook(self) -> None:
     self.assertIs(typeCast(WeekDay, 'monday'), WeekDay.MONDAY)
@@ -163,7 +141,7 @@ class TestKeeBase(KeenumTest):
       type.__setattr__(WeekDay, '__allow_instantiation__', False)
     self.assertIs(WeekDay.__cast_as__('monday'), WeekDay.MONDAY)
 
-  def test_box_tags_a_member_it_builds(self) -> None:
+  def test_box_leaves_a_member_untagged(self) -> None:
     class Local(KeeNum):
       A = Kee[int](1)
       B = Kee[int](2)
@@ -175,9 +153,8 @@ class TestKeeBase(KeenumTest):
     holder = Holder()
     self.assertIs(holder.built, Local.A)
     self.assertIs(holder.given, Local.B)
-    self.assertIs(Local.A.__dict__['__field_box__'],
-                  Holder.__dict__['built'])
-    self.assertEqual(Local.A.__dict__['__field_name__'], 'built')
+    self.assertNotIn('__field_box__', Local.A.__dict__)
+    self.assertNotIn('__field_name__', Local.A.__dict__)
     self.assertNotIn('__field_box__', Local.B.__dict__)
     self.assertEqual(str(Local.A), 'Local.A')
     self.assertIs(pickle.loads(pickle.dumps(Local.A.name)), 'A')

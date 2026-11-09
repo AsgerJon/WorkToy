@@ -3,9 +3,9 @@
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from ..desc import Field
 from ..mcls import BaseMeta
 from ..utilities import textFmt, joinWords
 from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
@@ -15,32 +15,41 @@ from . import KeeFlagsSpace as KFSpace
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Self, Any, Iterator, Union
+
   from . import KeeFlags, KeeFlagsMeta
 
   Bases: TypeAlias = tuple[type, ...]
   KFMeta: TypeAlias = Union[KeeFlagsMeta, BaseMeta]
+
+#  The tables of a class before '__new__' gives it its own.
+_EMPTY: MappingProxyType = MappingProxyType({})
 
 
 class KeeFlagsMeta(BaseMeta):
   """
   KeeFlagsMeta is the metaclass driving every 'KeeFlags' bitmask-flag
   enumeration. During '__new__' it reads the 'KeeFlag' declarations
-  collected by 'KeeFlagsHook', then materializes one member per
-  combination of those flags, 2 ** N members for N flags, caching them in
-  'memberList' and a names-keyed 'memberDict'. The value of a member comes
-  from the '_getValue' the ordinary method resolution order finds, so the
-  nearest override wins, and 'cls(...)' / 'cls[...]' route through
-  '_resolveMember' once instantiation is locked. A miss, by name, index
-  or value, raises 'KeeResolveError', as a miss on a 'KeeNum' does, and
-  'in' answers by identity: an object is in the class when it is one of
-  its members, or a member of a related flags class whose flags the
-  class holds, which resolves to that member. Calling, length,
-  iteration, membership,
-  subscripting and attribute assignment and deletion are the
-  metaclass's own, so a flags class body binding the class hook for one
-  of them, such as '__class_len__', is refused with 'ShadowedClassHook';
-  the hooks for the other operations, such as '__class_str__',
-  '__class_hash__' or '__class_subclasscheck__', work as on any class.
+  collected by 'KeeFlagsHook', clones them onto the class with their bit
+  indices, then materializes one member per combination of those flags,
+  2 ** N members for N flags, in index order through 'type.__call__',
+  caching them in 'memberList' and a names-keyed 'memberDict'. The index
+  of a member is its bit mask, so 'memberList[index]' is the member of a
+  mask, and the operators of the members are bit operations on indices.
+  The value of a member comes from the '_getValue' the ordinary method
+  resolution order finds, so the nearest override wins, and it is read
+  once as the member is built. 'cls(...)' / 'cls[...]' route through
+  '_resolveMember'. A miss, by name, index or value, raises
+  'KeeResolveError', as a miss on a 'KeeNum' does, and 'in' answers by
+  identity: an object is in the class when it is one of its members, or
+  a member of a related flags class whose flags the class holds, which
+  resolves to that member. A lookup by name, in any case and order, is
+  one lookup in 'memberDict'; a lookup by value is one lookup when every
+  value hashes. Calling, length, iteration, membership, subscripting and
+  attribute assignment and deletion are the metaclass's own, so a flags
+  class body binding the class hook for one of them, such as
+  '__class_len__', is refused with 'ShadowedClassHook'; the hooks for the
+  other operations, such as '__class_str__', '__class_hash__' or
+  '__class_subclasscheck__', work as on any class.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -53,18 +62,16 @@ class KeeFlagsMeta(BaseMeta):
   #  Private Variables
   __kee_flags__ = None
   __allow_instantiation__ = None
-
-  #  Public Variables
-  flags: Field[list[KeeFlag]] = Field()
-  memberList: Field[list[KeeFlags]] = Field()
-  memberDict: Field[dict[frozenset[str], KeeFlags]] = Field()
-  valueType: Field[type] = Field()
+  __flag_clones__: tuple = ()
+  __member_list__: list = []
+  __member_dict__ = _EMPTY
+  __valued_members__ = _EMPTY
+  __value_scan__: bool = False
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @flags.GET
   def _getFlags(cls) -> list[KeeFlag]:
     """
     The 'flags' getter returns the flags of the class in a new list. The
@@ -78,18 +85,20 @@ class KeeFlagsMeta(BaseMeta):
       type.__setattr__(cls, '__flag_clones__', clones)
     return [*cls.__dict__['__flag_clones__']]
 
-  @valueType.GET
   def _getValueType(cls) -> type:
     nullMember = cls.NULL
     return type(nullMember.value)
 
-  @memberList.GET
   def _getMemberList(cls) -> list[KeeFlags]:
     return cls.__member_list__
 
-  @memberDict.GET
-  def _getMemberDict(cls) -> dict[str, KeeFlags]:
+  def _getMemberDict(cls) -> dict[frozenset[str], KeeFlags]:
     return cls.__member_dict__
+
+  flags = property(_getFlags)
+  memberList = property(_getMemberList)
+  memberDict = property(_getMemberDict)
+  valueType = property(_getValueType)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -106,9 +115,9 @@ class KeeFlagsMeta(BaseMeta):
   def __new__(mcls, name: str, bases: Bases, space: KFSpace, **kw) -> Self:
     """
     The '__new__' method builds the flag enumeration: it constructs the
-    class, then for every subclass past the 'KeeFlags' base materializes
-    all 2 ** N flag combinations as members, populating 'memberList' and
-    'memberDict'.
+    class, then for every subclass past the 'KeeFlags' base clones the
+    flags and materializes all 2 ** N flag combinations as members,
+    populating 'memberList', 'memberDict' and the table of values.
     """
     #  The root is marked by the '_root' keyword, never by its name.
     isRoot = True if kw.get('_root', False) else False
@@ -116,31 +125,10 @@ class KeeFlagsMeta(BaseMeta):
     if isRoot:
       setattr(mcls, '__kee_class__', cls)
       return cls
-    cls.__allow_instantiation__ = True
-    memberList = []
-    memberDict = dict()
-    n = 2 ** len(cls.flags)
-    #  The names of the body are those the namespace kept; the 'space'
-    #  argument is a plain dictionary with the flag names still in it when
-    #  the class is built by calling the metaclass with one.
-    namespace = type.__getattribute__(cls, '__namespace__')
-    for i in range(n):
-      member = cls(i, )
-      #  The guard is down while the members are bound, so a class-body
-      #  attribute of the name would be replaced without a word.
-      if dict.__contains__(namespace, member.name):
-        raise KeeMemberNameError(name, member.name)
-      setattr(member, '__field_owner__', cls)
-      setattr(member, '__field_name__', member.name)
-      setattr(cls, member.name, member)
-      memberList.append(member)
-      memberDict[member.names] = member
-      #  The stamping above must precede the freeze; from here on the
-      #  member is a write-once constant.
-      object.__setattr__(member, '__frozen_state__', True)
-    cls.__member_list__ = memberList
-    cls.__member_dict__ = memberDict
-    cls.__allow_instantiation__ = False
+    type.__setattr__(cls, '__allow_instantiation__', True)
+    mcls._createMembers(cls, name)
+    mcls._createValued(cls)
+    type.__setattr__(cls, '__allow_instantiation__', False)
     return cls
 
   def __setattr__(cls, name: str, value: Any) -> None:
@@ -148,19 +136,16 @@ class KeeFlagsMeta(BaseMeta):
     Rebinding a name that currently holds an enumeration member raises
     'KeeWriteOnceError': the members of an enumeration are write-once
     constants, and 'memberList' and 'memberDict' would keep serving the
-    original member anyway. While '__allow_instantiation__' is high the
-    guard stands down, which is the window '__new__' uses to bind the
-    members in the first place.
+    original member anyway.
     """
-    if not cls.__allow_instantiation__:
-      try:
-        existing = cls.__dict__[name]
-      except KeyError:
-        pass
-      else:
-        keeClass = type(cls).__kee_class__
-        if keeClass is not None and isinstance(existing, keeClass):
-          raise KeeWriteOnceError(existing, name)
+    try:
+      existing = cls.__dict__[name]
+    except KeyError:
+      pass
+    else:
+      keeClass = type(cls).__kee_class__
+      if keeClass is not None and isinstance(existing, keeClass):
+        raise KeeWriteOnceError(existing, name)
     BaseMeta.__setattr__(cls, name, value)
 
   def __delattr__(cls, name: str) -> None:
@@ -182,12 +167,11 @@ class KeeFlagsMeta(BaseMeta):
   def __call__(cls, *args, **kwargs) -> Any:
     """
     Calling the class resolves the member combining the flags of the
-    positional identifiers, or the empty member for none, except while
-    '__new__' builds the members. A keyword has no meaning here and raises
-    Python's 'TypeError', as a function given an unexpected keyword does.
+    positional identifiers, or the empty member for none. A keyword has
+    no meaning here and raises Python's 'TypeError', as a function given
+    an unexpected keyword does. The members are built past this method,
+    by '_createMembers'.
     """
-    if cls.__allow_instantiation__:
-      return BaseMeta.__call__(cls, *args, **kwargs)
     if kwargs:
       keys = joinWords(*["""'%s'""" % key for key in kwargs])
       infoSpec = """%s() takes no keyword arguments, but received %s."""
@@ -195,10 +179,10 @@ class KeeFlagsMeta(BaseMeta):
     return cls._resolveMember(*args)
 
   def __len__(cls) -> int:
-    return len(cls.memberList)
+    return len(cls.__member_list__)
 
   def __iter__(cls, ) -> Iterator[KeeFlags]:
-    yield from cls.memberList
+    return iter(cls.__member_list__)
 
   def __contains__(cls, identifier: Any) -> bool:
     """
@@ -218,6 +202,55 @@ class KeeFlagsMeta(BaseMeta):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+  def _createMembers(cls, name: str) -> None:
+    """
+    One member per bit mask, in index order, each bound at its name. The
+    flags are cloned onto the class first, since every member reads them.
+    A name the class body binds itself is refused before any member is
+    bound, since the member would replace it without a word. The names
+    of the body are those the namespace kept; the namespace argument of
+    '__new__' is a plain dictionary with the flag names still in it when
+    the class is built by calling the metaclass with one.
+
+    Raises
+    ------
+
+    KeeMemberNameError
+      The class body binds the name of a member.
+    """
+    flags = cls._getFlags()
+    namespace = type.__getattribute__(cls, '__namespace__')
+    members, byNames = [], dict()
+    for index in range(2 ** len(flags)):
+      member = type.__call__(cls, index)
+      if dict.__contains__(namespace, member.name):
+        raise KeeMemberNameError(name, member.name)
+      members.append(member)
+      byNames[member.names] = member
+    for member in members:
+      type.__setattr__(cls, member.name, member)
+    type.__setattr__(cls, '__member_list__', members)
+    type.__setattr__(cls, '__member_dict__', byNames)
+
+  def _createValued(cls) -> None:
+    """
+    Each hashable value maps to the lowest-indexed member holding it. A
+    single unhashable value raises the flag '__value_scan__', and value
+    lookups then go through the members in turn.
+    """
+    valued = dict()
+    for member in cls.__member_list__:
+      try:
+        hash(member.value)
+      except TypeError:
+        type.__setattr__(cls, '__value_scan__', True)
+        return
+      if member.value in valued:
+        continue
+      valued[member.value] = member
+    type.__setattr__(cls, '__valued_members__', valued)
+    type.__setattr__(cls, '__value_scan__', False)
 
   def _fromMember(cls, member: KeeFlags) -> Any:
     """
@@ -248,13 +281,13 @@ class KeeFlagsMeta(BaseMeta):
       #  This branch is reached by the following:
       #  - The member belongs to a flags class of another lineage
       return None
-    try:
-      return cls.memberDict[member.names]
-    except KeyError:
-      #  This branch is reached by the following:
-      #  - The member has a flag high that this class lacks, as a member
-      #    of a subclass combining the flag it added
-      return None
+    byNames = cls.__member_dict__
+    if member.names in byNames:
+      return byNames[member.names]
+    #  The rest of the method is reached by the following:
+    #  - The member has a flag high that this class lacks, as a member of
+    #    a subclass combining the flag it added
+    return None
 
   def _resolveIndex(cls, index: int) -> KeeFlags:
     """
@@ -263,7 +296,7 @@ class KeeFlagsMeta(BaseMeta):
     in index order. An index outside the range, a negative one included,
     raises 'KeeResolveError'.
     """
-    members = cls.memberList
+    members = cls.__member_list__
     if 0 <= index < len(members):
       return members[index]
     raise KeeResolveError(cls, index)
@@ -273,14 +306,17 @@ class KeeFlagsMeta(BaseMeta):
     The '_resolveName' method resolves a member from a name that matches
     the canonical name of a member ignoring case, as 'null' matches
     'NULL', or that lists the flags of a member separated by '_', in any
-    order and any case. A name matching no member raises
-    'KeeResolveError'.
+    order and any case. The flags of a member are the parts of its
+    canonical name, so one lookup by the set of the parts answers both.
+    A name matching no member raises 'KeeResolveError'.
     """
     upperName = name.upper()
-    identifier = frozenset(upperName.split('_'))
-    for member in cls:
-      if member.name.upper() == upperName or member.names == identifier:
-        return member
+    if upperName == 'NULL':
+      return cls.__member_list__[0]
+    names = frozenset(upperName.split('_'))
+    byNames = cls.__member_dict__
+    if names in byNames:
+      return byNames[names]
     raise KeeResolveError(cls, name)
 
   def _resolveNames(cls, *identifiers: Any) -> KeeFlags:
@@ -291,10 +327,10 @@ class KeeFlagsMeta(BaseMeta):
     order, a combined name, or an index all work, and the miss of any one
     raises 'KeeResolveError' for it.
     """
-    names = set()
+    mask = 0
     for identifier in identifiers:
-      names.update(cls._resolveMember(identifier).names)
-    return cls.memberDict[frozenset(names)]
+      mask |= cls._resolveMember(identifier).index
+    return cls.__member_list__[mask]
 
   def _resolveValue(cls, value: Any) -> KeeFlags:
     """
@@ -306,19 +342,33 @@ class KeeFlagsMeta(BaseMeta):
     anything. A 'bool' is compared with 'bool' values alone, though it
     is an 'int', as a 'KeeNum' of 'int' values refuses one.
     """
-    for member in cls:
-      memberValue = member.value
-      if not isinstance(value, type(memberValue)):
-        continue
-      if isinstance(value, bool) and not isinstance(memberValue, bool):
-        continue
-      if memberValue == value:
+    if not cls.__value_scan__:
+      try:
+        hash(value)
+      except TypeError:
+        pass
+      else:
+        valued = cls.__valued_members__
+        if value not in valued:
+          raise KeeResolveError(cls, value)
+        member = valued[value]
+        if cls._valueMatches(value, member.value):
+          return member
+    for member in cls.__member_list__:
+      if cls._valueMatches(value, member.value):
         return member
     raise KeeResolveError(cls, value)
 
+  def _valueMatches(cls, value: Any, memberValue: Any) -> bool:
+    if not isinstance(value, type(memberValue)):
+      return False
+    if isinstance(value, bool) and not isinstance(memberValue, bool):
+      return False
+    return True if memberValue == value else False
+
   def _resolveMember(cls, *identifier: Any, **kwargs) -> KeeFlags:
     if not identifier:
-      return cls(0, )
+      return cls.__member_list__[0]
     if len(identifier) > 1:
       return cls._resolveNames(*identifier)
     identifier = identifier[0]

@@ -11,7 +11,6 @@ import pickle
 
 from worktoy.keenum import KeeFlags, KeeFlag
 from worktoy.utilities import typeCast
-from worktoy.waitaminute import MissingVariable, TypeException
 from worktoy.waitaminute.dispatch import TypeCastException
 from worktoy.waitaminute.keenum import KeeWriteOnceError, KeeResolveError
 from . import KeenumTest, Permission, Extended, FileAccess
@@ -31,6 +30,9 @@ class TestKeeFlags(KeenumTest):
     self.assertEqual(member.flags, Permission.flags)
     self.assertEqual([f.name for f in member.highs], ['READ', 'EXEC'])
     self.assertEqual([f.name for f in member.lows], ['WRITE'])
+    #  A low flag above a high one, and a high one between two lows.
+    self.assertEqual([f.name for f in Permission.WRITE.lows],
+                     ['READ', 'EXEC'])
     self.assertEqual([f.name for f in member], ['READ', 'EXEC'])
     self.assertEqual([f.name for f in Permission.NULL.highs], [])
     self.assertEqual([f.name for f in Permission.NULL.lows],
@@ -43,22 +45,6 @@ class TestKeeFlags(KeenumTest):
     self.assertEqual(Permission.READ_WRITE.index, 3)
     self.assertEqual(Permission.READ_WRITE.value, 3)
     self.assertEqual(FileAccess.OPEN_CLOSE.value, b'3')
-    loose = KeeFlags.__new__(KeeFlags)
-    with self.assertRaises(MissingVariable) as context:
-      _ = loose.index
-    self.assertIs(context.exception.instance, loose)
-    self.assertEqual(context.exception.varName, '__member_index__')
-    self.assertEqual(context.exception.expectedTypes, (int,))
-    self.assertEqual(str(context.exception),
-                     "Missing 'KeeFlags.__member_index__: int'!")
-    object.__setattr__(loose, '__member_index__', 'x')
-    with self.assertRaises(TypeException) as context:
-      _ = loose.index
-    self.assertEqual(context.exception.varName, '__member_index__')
-    self.assertEqual(context.exception.actualObject, 'x')
-    self.assertIs(context.exception.actualType, str)
-    self.assertEqual(context.exception.expectedTypes, (int,))
-    self.assertIn("'__member_index__'", str(context.exception))
 
   def test_truth(self) -> None:
     self.assertFalse(Permission.NULL)

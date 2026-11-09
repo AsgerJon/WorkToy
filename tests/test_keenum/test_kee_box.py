@@ -5,12 +5,17 @@ TestKeeBox tests 'KeeBox' from 'worktoy.keenum'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from worktoy.keenum import KeeBox, KeeNum, Kee
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import MissingVariable, TypeException
 from worktoy.waitaminute.keenum import KeeBoxException, KeeBoxTypeError
 from worktoy.waitaminute.keenum import KeeBoxValueError
 from . import KeenumTest, WeekDay, Shade, Permission, Extended, KeyBind
+
+if TYPE_CHECKING:  # pragma: no cover, no mutate
+  from typing import Any
 
 
 class Tone(KeeNum):
@@ -20,14 +25,42 @@ class Tone(KeeNum):
   HIGH = Kee[complex](complex(3, 4))
 
 
+#  Every identifier 'Rank.__class_resolve__' is asked, in order.
+ASKED: list = []
+
+
+class Rank(KeeNum):
+  """
+  An enumeration of 'int' values whose '__class_resolve__' answers
+  'True' with 'MID', 'top' with 'HIGH' and 2 with 'LOW', declines
+  anything else, and records every identifier it is asked in 'ASKED'.
+  """
+
+  LOW = Kee[int](10)
+  MID = Kee[int](20)
+  HIGH = Kee[int](30)
+
+  @classmethod
+  def __class_resolve__(cls, identifier: Any) -> Any:
+    ASKED.append(identifier)
+    if identifier is True:
+      return cls.MID
+    if identifier == 'top':
+      return cls.HIGH
+    if identifier == 2:
+      return cls.LOW
+    return NotImplemented
+
+
 class TestKeeBox(KeenumTest):
   """
   A 'KeeBox' is an 'AttriBox' over an enumeration whose parentheses
-  take whatever identifies a member: a member, a name in any case, a
-  position, a value, the arguments of a value, or the flags of a flags
-  member. The tests pin the subscript, every route of the resolution
-  with its refusal, the fixtures, and assignment through the
-  enumeration's conversion.
+  take whatever identifies a member: a member, a name in any case, what
+  the enumeration's '__class_resolve__' answers, a position, a value,
+  the arguments of a value, or the flags of a flags member. The tests
+  pin the subscript, every route of the resolution with its refusal,
+  the place of the hook among the routes, the fixtures, and assignment
+  through the enumeration's conversion.
   """
 
   def test_subscript(self) -> None:
@@ -86,9 +119,17 @@ class TestKeeBox(KeenumTest):
       built = KeeBox[Tone](3, 4)
       keyed = KeeBox[Tone](real=1, imag=2)
       fractional = KeeBox[Shade](1.5)
+      #  'Shade.__class_resolve__' takes a 'float' to the nearest member
+      #  below it, as 'Shade(8.5)' does; 'int(8.5)' carries no member.
+      nearest = KeeBox[Shade](8.5)
+      #  A lone argument of another type is built into a value.
+      parsed = KeeBox[Tone]('3+4j')
 
     holder = Holder()
+    self.assertIs(holder.parsed, Tone.HIGH)
     self.assertIs(holder.fractional, Shade.LIGHT)
+    self.assertIs(holder.nearest, Shade.MID)
+    self.assertIs(Shade(8.5), Shade.MID)
     self.assertIs(holder.member, WeekDay.FRIDAY)
     self.assertIs(holder.exact, WeekDay.SATURDAY)
     self.assertIs(holder.loose, WeekDay.SUNDAY)
@@ -142,6 +183,37 @@ class TestKeeBox(KeenumTest):
     self.assertIn("'Holder.noMatch: Tone'", str(context.exception))
     self.assertIn("'(7+7j)'", str(context.exception))
 
+  def test_class_resolve_order(self) -> None:
+    class Holder(BaseObject):
+      member = KeeBox[Rank](Rank.HIGH)
+      named = KeeBox[Rank]('mid')
+      built = KeeBox[Rank]('30', base=10)
+      hooked = KeeBox[Rank]('top')
+      flag = KeeBox[Rank](True)
+      before = KeeBox[Rank](2)
+      position = KeeBox[Rank](1)
+      value = KeeBox[Rank](20)
+
+    ASKED.clear()
+    holder = Holder()
+    #  A member, a name and the arguments of a value never reach the hook.
+    self.assertIs(holder.member, Rank.HIGH)
+    self.assertIs(holder.named, Rank.MID)
+    self.assertIs(holder.built, Rank.HIGH)
+    self.assertEqual(ASKED, [])
+    #  The hook answers before the refusal of a 'bool' and before a
+    #  position, and a declined identifier goes on to position and value.
+    self.assertIs(holder.hooked, Rank.HIGH)
+    self.assertIs(holder.flag, Rank.MID)
+    self.assertIs(holder.before, Rank.LOW)
+    self.assertIs(holder.position, Rank.MID)
+    self.assertIs(holder.value, Rank.MID)
+    self.assertEqual(ASKED, ['top', True, 2, 1, 20])
+    self.assertIs(ASKED[1], True)
+    #  An assignment resolves through the class as the declaration did.
+    holder.member = 'top'
+    self.assertIs(holder.member, Rank.HIGH)
+
   def test_flags_routes(self) -> None:
     class Holder(BaseObject):
       names = KeeBox[Permission]('read', 'WRITE')
@@ -150,8 +222,11 @@ class TestKeeBox(KeenumTest):
       indexed = KeeBox[Permission](6)
       member = KeeBox[Permission](Extended.READ_WRITE)
       none = KeeBox[Permission]()
+      #  A container among several arguments is one argument.
+      mixed = KeeBox[Permission](('read',), 'exec')
 
     holder = Holder()
+    self.assertIs(holder.mixed, Permission.READ_EXEC)
     self.assertIs(holder.names, Permission.READ_WRITE)
     self.assertIs(holder.listed, Permission.EXEC)
     self.assertIs(holder.frozen, Permission.READ)

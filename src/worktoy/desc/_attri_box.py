@@ -246,8 +246,8 @@ class AttriBox(BaseDescriptor[T]):
           arguments of the '%s' constructor instead: '%s[%s](...)'."""
           typeName = fieldType.__name__
           info = infoSpec % (
-            self.getFieldOwner().__name__, self.getFieldName(), typeName,
-            typeName, type(self).__name__, typeName,
+              self.getFieldOwner().__name__, self.getFieldName(), typeName,
+              typeName, type(self).__name__, typeName,
           )
           raise TypeError(textFmt(info)) from exception
         else:
@@ -445,6 +445,7 @@ class AttriBox(BaseDescriptor[T]):
     cast = self._cast(value)
     return self.__instance_set__(
         instance, cast, _recursion=True)  # pragma: no mutate
+
   def __instance_delete__(self, instance: Any, *_, **kwargs) -> None:
     """
     After a deletion the next read must fail, and must not build the

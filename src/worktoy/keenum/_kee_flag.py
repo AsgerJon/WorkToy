@@ -8,7 +8,6 @@ from __future__ import annotations
 import typing
 from typing import TYPE_CHECKING
 
-from ..desc import Field
 from ..utilities import textFmt, maybe
 from ..waitaminute import MissingVariable, TypeException
 
@@ -35,8 +34,13 @@ class KeeFlag:
   however that when retrieving members by value, the member having the
   lowest index is used.
 
+  The flags are read for every member as the class is created, so their
+  attributes are builtin properties over the private values, not worktoy
+  descriptors.
+
   Attributes (on the 'KeeFlag' itself, describing the single flag, not
   the wrapped 'KeeFlags' member):
+
   - name: The flag's name, set from the class-body assignment by
     'KeeFlagsSpace.addKeeFlag'.
   - index: The flag's bit index, the number of flags declared before
@@ -57,19 +61,10 @@ class KeeFlag:
   __pos_args__ = None
   __key_args__ = None
 
-  #  Public Variables
-  fieldName: Field[str] = Field()
-  fieldOwner: Field[type] = Field()
-  index: Field[int] = Field()
-  name: Field[str] = Field()
-  args: Field[tuple] = Field()
-  kwargs: Field[dict] = Field()
-
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @fieldName.GET
   def _getFieldName(self, ) -> str:
     if self.__field_name__ is None:
       raise MissingVariable(self, '__field_name__', str)
@@ -77,7 +72,6 @@ class KeeFlag:
       return self.__field_name__
     raise TypeException('__field_name__', self.__field_name__, str)
 
-  @fieldOwner.GET
   def _getFieldOwner(self, ) -> type:
     if self.__field_owner__ is None:
       from . import KeeFlagsMeta
@@ -88,7 +82,6 @@ class KeeFlag:
     from . import KeeFlagsMeta
     raise TypeException(name, value, KeeFlagsMeta)
 
-  @index.GET
   def _getIndex(self, ) -> int:
     if self.__member_index__ is None:
       raise MissingVariable(self, '__member_index__', int)
@@ -96,7 +89,6 @@ class KeeFlag:
       return self.__member_index__
     raise TypeException('__member_index__', self.__member_index__, int)
 
-  @name.GET
   def _getName(self, ) -> str:
     if self.__member_name__ is None:
       raise MissingVariable(self, '__member_name__', str)
@@ -104,13 +96,18 @@ class KeeFlag:
       return self.__member_name__
     raise TypeException('__member_name__', self.__member_name__, str)
 
-  @args.GET
   def _getArgs(self, ) -> Tuple[Any, ...]:
     return maybe(self.__pos_args__, ())
 
-  @kwargs.GET
   def _getKwargs(self, ) -> dict[str, Any]:
     return maybe(self.__key_args__, {})
+
+  fieldName = property(_getFieldName)
+  fieldOwner = property(_getFieldOwner)
+  index = property(_getIndex)
+  name = property(_getName)
+  args = property(_getArgs)
+  kwargs = property(_getKwargs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

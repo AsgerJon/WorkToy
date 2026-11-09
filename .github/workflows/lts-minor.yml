@@ -1,32 +1,38 @@
 # LTS minor: the public, official release button for the next minor line.
-# Publishes the next minor version (X.Y.0, raising Y) to PyPI as a full
-# release and deploys the GitHub Pages docs. Manual trigger only, and
-# guarded: it runs only when 'bin/release_tooling/minor.safety' read
-# 'ALLOW' in the commit the button was pressed on; see the 'safety' job.
+# Publishes the next minor version (X.Y.0, raising Y)
+# to PyPI as a full release and deploys the GitHub Pages docs. Manual
+# trigger only, and run from 'main' alone. The release state machine in
+# 'bin/release_tooling/release_state.py' accepts the press only while a
+# release candidate cycle of the minor level is open, and then only when
+# 'bin/release_tooling/minor.safety' read 'ALLOW' in the commit the
+# button was pressed on; see the 'safety' job.
 on:
   workflow_dispatch:
 
 jobs:
   safety:
-    # The guard. It reads 'minor.safety' as committed in the commit the
-    # button was pressed on, locks every safety back to 'STOP', pushes the
-    # lock, and only then fails or lets the test matrix start. A refused
-    # run therefore still leaves every safety locked in the repository,
-    # and an arming is spent by the press of the button whatever the run
-    # does next.
+    # The guard. It refuses a press on any branch but 'main' before it
+    # reads or writes anything. On 'main' it decides the press from VERSION
+    # and, for a press that needs one, from the safety of this button, both
+    # as committed in the commit the button was pressed on; locks every
+    # safety back to 'STOP'; pushes the lock; tests the release tooling;
+    # and only then fails or lets the test matrix start. A refused run
+    # therefore still leaves every safety locked in the repository, and an
+    # arming is spent by the press of the button whatever the run does
+    # next.
     runs-on: ubuntu-latest
     permissions:
       contents: write   # push the locked safeties
     steps:
       # The default checkout is the commit the button was pressed on, so
-      # the state of the safety at that moment decides.
+      # the state of VERSION and of the safety at that moment decides.
       - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Decide and lock
-        run: python bin/release_tooling/safety_check.py minor SAFETY_VERDICT
+        run: python bin/release_tooling/safety_check.py lts-minor SAFETY_VERDICT
       - name: Push the lock
         run: |
           git config user.name "Asger Jon Vistisen"
@@ -34,8 +40,16 @@ jobs:
           git add bin/release_tooling/*.safety
           git diff --cached --quiet || git commit -m "lts-minor: safeties locked, verdict ${SAFETY_VERDICT}"
           git push origin HEAD:${{ github.ref }}
+      - name: Test the release tooling
+        working-directory: bin/release_tooling
+        run: python -B -m unittest discover -s tests -t .
       - name: Enforce the verdict
-        run: test "$SAFETY_VERDICT" = "ALLOW"
+        run: |
+          echo "$SAFETY_VERDICT_MESSAGE"
+          if [ "$SAFETY_VERDICT" != "ALLOW" ]; then
+            echo "::error::$SAFETY_VERDICT_MESSAGE"
+            exit 1
+          fi
 
   test:
     needs: safety
@@ -105,7 +119,7 @@ jobs:
       # Compute the next minor version from VERSION and expose it as
       # VERSION_INFO in the environment for the steps below.
       - name: Resolve next version
-        run: python bin/release_tooling/version_get.py minor VERSION_INFO
+        run: python bin/release_tooling/version_get.py lts-minor VERSION_INFO
 
       # Write VERSION_INFO into pyproject.toml (the build reads its
       # version from there), into src/worktoy/__init__.py (so
@@ -129,7 +143,7 @@ jobs:
       # Only reached if the publish above succeeded: advance the
       # counters in VERSION, then commit VERSION + the stamped files.
       - name: Bump version counters
-        run: python bin/release_tooling/version_bump.py minor
+        run: python bin/release_tooling/version_bump.py lts-minor
 
       - name: Commit version changes
         run: |

@@ -129,6 +129,16 @@ class TestKeeMetaClassApi(KeenumTest):
     self.assertEqual(hash(Hashed), 17)
     self.assertEqual(hash(WeekDay), hash(('WeekDay', 'KeeNum', 'KeeMeta')))
 
+    class Stored(KeeNum):
+      A = Kee[int](1)
+
+      @classmethod
+      def __class_setitem__(cls, key: str, value: int) -> None:
+        type.__setattr__(cls, '__stored__', (key, value))
+
+    Stored['x'] = 1
+    self.assertEqual(type.__getattribute__(Stored, '__stored__'), ('x', 1))
+
   def test_random_attribute_names(self) -> None:
     self.randomWord.size = 5
     words = [*dict.fromkeys(self.randomWord.row)]

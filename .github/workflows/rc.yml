@@ -1,25 +1,33 @@
-# Release candidate: the stabilising button. Publishes the next release
-# candidate (X.Y.Z-rcN) to PyPI as a pre-release. Manual trigger only, and
-# guarded: a release candidate closes the dev window of its version for
-# good, so it runs only when 'bin/release_tooling/rc.safety' read 'ALLOW'
-# in the commit the button was pressed on; see the 'safety' job.
+# Release candidate: the release-candidate button of the micro level.
+# Publishes the next release candidate of the locked micro release
+# (X.Y.Z-rcN) to PyPI as a pre-release. Manual trigger only, and run from
+# 'main' alone. The release state machine in
+# 'bin/release_tooling/release_state.py' decides every press from
+# 'bin/release_tooling/VERSION': the first release candidate, rc0, closes
+# the dev cycle of its level for good and runs only when
+# 'bin/release_tooling/rc.safety' read 'ALLOW' in the commit the
+# button was pressed on, while a later one needs no safety; see the
+# 'safety' job.
 on:
   workflow_dispatch:
 
 jobs:
   safety:
-    # The guard. It reads 'rc.safety' as committed in the commit the
-    # button was pressed on, locks every safety back to 'STOP', pushes the
-    # lock, and only then fails or lets the test matrix start. A refused
-    # run therefore still leaves every safety locked in the repository,
-    # and an arming is spent by the press of the button whatever the run
-    # does next.
+    # The guard. It refuses a press on any branch but 'main' before it
+    # reads or writes anything. On 'main' it decides the press from VERSION
+    # and, for a press that needs one, from the safety of this button, both
+    # as committed in the commit the button was pressed on; locks every
+    # safety back to 'STOP'; pushes the lock; tests the release tooling;
+    # and only then fails or lets the test matrix start. A refused run
+    # therefore still leaves every safety locked in the repository, and an
+    # arming is spent by the press of the button whatever the run does
+    # next.
     runs-on: ubuntu-latest
     permissions:
       contents: write   # push the locked safeties
     steps:
       # The default checkout is the commit the button was pressed on, so
-      # the state of the safety at that moment decides.
+      # the state of VERSION and of the safety at that moment decides.
       - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -34,8 +42,16 @@ jobs:
           git add bin/release_tooling/*.safety
           git diff --cached --quiet || git commit -m "rc: safeties locked, verdict ${SAFETY_VERDICT}"
           git push origin HEAD:${{ github.ref }}
+      - name: Test the release tooling
+        working-directory: bin/release_tooling
+        run: python -B -m unittest discover -s tests -t .
       - name: Enforce the verdict
-        run: test "$SAFETY_VERDICT" = "ALLOW"
+        run: |
+          echo "$SAFETY_VERDICT_MESSAGE"
+          if [ "$SAFETY_VERDICT" != "ALLOW" ]; then
+            echo "::error::$SAFETY_VERDICT_MESSAGE"
+            exit 1
+          fi
 
   test:
     needs: safety

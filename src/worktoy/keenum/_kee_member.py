@@ -70,7 +70,9 @@ class Kee(AttriBox[T]):
     constructor arguments on first access and type-checking it thereafter.
     A flag beside the value records that it was built, since the value
     itself may be 'None', as 'Kee[object](None)' declares. A value
-    written directly is honoured, built or not.
+    written directly is honoured, built or not. The member reads the
+    value once, as the enumeration is created, and keeps it, so a value
+    written into the 'Kee' after that does not reach the member.
     """
     if self.__field_value__ is None and not self.__value_built__:
       if kwargs.get('_recursion', False):

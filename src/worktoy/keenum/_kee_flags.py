@@ -7,14 +7,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..desc import Field
 from ..utilities import textFmt
-from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute.keenum import KeeWriteOnceError, KeeResolveError
 from . import KeeFlag, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, Iterator, Never, Self
+  from typing import Any, Iterator, Never, Optional, Self
 
 
 class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
@@ -26,40 +24,39 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
 
   Cost (read before declaring a large enum)
   -----------------------------------------
-  A KeeFlags class with N single-bit flags materializes 2 ** N
-  members eagerly during class definition, each a Python object built
-  by a call. Measured on one desktop machine under Python 3.14, the
-  class statement took:
 
-      N =  4   -> 16 members          less than a millisecond
-      N =  8   -> 256 members         0.1 seconds
-      N = 12   -> 4096 members        2 seconds
-      N = 14   -> 16,384 members      9 seconds
-      N = 16   -> 65,536 members      50 seconds
+  A KeeFlags class with N single-bit flags materializes 2 ** N
+  members eagerly during class definition, each with its name, the
+  names of its flags and its hash worked out once. Measured on one
+  desktop machine under Python 3.15, the class statement took:
+
+      N =  8   -> 256 members         about a millisecond
+      N = 12   -> 4096 members        about 15 milliseconds
+      N = 16   -> 65,536 members      about 0.3 seconds, and 72 MB
 
   The cost is paid once, at import, and grows four times for every two
-  flags added. For typical use (file permissions, keyboard modifiers,
-  etc.) where N <= 8, this is negligible. Past 12 the class statement
-  takes seconds and the members several MB of memory. For N >= 16 you
-  almost certainly want a plain 'int' bitmask with helper functions,
-  not a KeeFlags enum. A lookup by index or through the operators is
-  one step whatever N is; a lookup by name compares the name with each
-  member's in turn.
+  flags added. Every lookup is one step whatever N is: by index, by
+  name in any case and order, by value when every value hashes, and
+  through the operators.
 
   Member attributes
   -----------------
+
   - 'flags': all single-bit flags declared on the class (mirrors the
     class-level 'flags'; not member-specific).
   - 'highs': the flags that are HIGH for the member.
   - 'lows': the flags that are LOW for the member.
   - 'names': a frozenset of the names of the HIGH flags.
   - 'index' / 'value': the member's bitmask integer (value defaults
-    to the index).
+    to the index). A subclass reimplements '_getValue' to give its
+    members other values; it is read once per member, as the class is
+    created.
   - 'name': the canonical name, the HIGH flag names joined by '_', or
     'NULL' when no flag is HIGH.
 
   Naming and lookup
   -----------------
+
   A combined member's canonical name joins its HIGH flag names in
   declaration order ('FileAccess.READ_EXECUTE', never
   'FileAccess.EXECUTE_READ'), and attribute access resolves only that
@@ -73,6 +70,7 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
 
   Members across a lineage
   ------------------------
+
   A flags class based on another holds the flags of its base first and
   members of its own, so no member object is shared between the two.
   Across the lineage a member is identified by the names of its high
@@ -86,11 +84,12 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   answers through the reflected operator otherwise. Members of
   unrelated flags classes are strangers to each other.
 
-  Like 'KeeNum' members, the members are write-once constants: once
-  'KeeFlagsMeta.__new__' has stamped a member, any attempt to set or
-  delete an attribute on it raises 'KeeWriteOnceError', as does
-  rebinding or deleting the member name on the owning class. A member
-  needing extra attributes should come from a subclass declaring them.
+  Like 'KeeNum' members, the members are write-once constants: any
+  attempt to set or delete an attribute on a member raises
+  'KeeWriteOnceError', as does rebinding or deleting the member name on
+  the owning class. The constructor writes past that with
+  'object.__setattr__'. A member needing extra attributes should come
+  from a subclass declaring them.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -102,105 +101,50 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   __member_dict__: dict[frozenset[str], Self]
 
   #  Private Variables
-  #  '__field_owner__' and '__field_name__' are set on each instance
-  #  by 'KeeFlagsMeta.__new__' at class creation time. Declared here
-  #  with None defaults so fresh instances do not raise AttributeError
-  #  before the metaclass setattr runs.
   __field_owner__ = None
   __field_name__ = None
-  __member_index__ = None
-  __member_value__ = None
-  __frozen_state__ = None
-
-  #  Public Variables
-  index: Field[int] = Field()
-
-  #  Virtual Variables
-  flags: Field[list[KeeFlag]] = Field()
-  lows: Field[Iterator[KeeFlag]] = Field()
-  highs: Field[Iterator[KeeFlag]] = Field()
-  value: Field[Any] = Field()
-  name: Field[str] = Field()
-  names: Field[frozenset[str]] = Field()
+  __member_hash__: Optional[int] = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  @flags.GET
   def _getFlagsFromType(self, ) -> Any:
     """
     The 'KeeFlagsMeta' metaclass provides the helpful 'flags' descriptor
     allowing inspection of all the flags available. The descriptor is then
     available on the subclasses of 'KeeFlags', but *not* on the
-    instances themselves. For example:
-
-    class KeyboardModifier(KeeFlags):
-      ALT = KeeFlag()
-      SHIFT = KeeFlag()
-      CTRL = KeeFlag()
-      META = KeeFlag()
-
-    Then: 'KeyboardModifier.flags' is understood as:
-    KeeFlagsMeta.flags.__get__(KeyboardModifier, KeeFlagsMeta)
-
-    But instances of 'KeyboardModifier' are not able to access the
-    metaclass defined descriptor. Therefore, the 'KeeFlags' class must
-    explicitly mirror it. A potential future feature of 'worktoy' will
-    provide deep metaclass descriptors.
+    instances themselves. Therefore, the 'KeeFlags' class mirrors it.
     """
-    cls = type(self)
-    mcls = type(cls)
-    desc = type.__getattribute__(mcls, 'flags')
-    return desc.__get__(cls, mcls)
+    return type(self).flags
 
-  @value.GET
   def _getValue(self) -> Any:
     """
     The value of a member is what a project reads off it, and what the
     class resolves a member from. The base gives every member its index
-    as its value; a subclass reimplements this getter to give any object
-    from any member, as 'FileAccess' in the tests gives bytes. Values of
-    one immutable type are recommended, not required, and several
-    members may share one value, in which case the lowest-indexed member
-    answers for it.
+    as its value; a subclass reimplements this method to give any object
+    from any member, as 'FileAccess' in the tests gives bytes. It is read
+    once per member, as the class is created. Values of one immutable
+    type are recommended, not required, and several members may share
+    one value, in which case the lowest-indexed member answers for it.
     """
     return self.index
 
-  @lows.GET
   def _getLows(self) -> Iterator[KeeFlag]:
-    if self.__member_index__:
-      for flag in type(self).flags:
-        if self.index & (1 << flag.index):
-          continue
+    index = self.index
+    for flag in type(self).__flag_clones__:
+      if not index & (1 << flag.index):
         yield flag
-    else:
-      yield from type(self).flags
 
-  @highs.GET
   def _getHighs(self) -> Iterator[KeeFlag]:
-    if self.__member_index__:
-      for flag in type(self).flags:
-        if self.index & (1 << flag.index):
-          yield flag
-    else:
-      yield from ()
+    index = self.index
+    for flag in type(self).__flag_clones__:
+      if index & (1 << flag.index):
+        yield flag
 
-  @index.GET
-  def _getIndex(self) -> int:
-    if self.__member_index__ is None:
-      raise MissingVariable(self, '__member_index__', int)
-    if isinstance(self.__member_index__, int):
-      return self.__member_index__
-    raise TypeException('__member_index__', self.__member_index__, int)
-
-  @name.GET
-  def _getName(self) -> str:
-    return '_'.join(f.name for f in self.highs) or 'NULL'
-
-  @names.GET
-  def _getNames(self, ) -> frozenset:
-    return frozenset(f.name for f in self.highs)
+  flags = property(_getFlagsFromType)
+  lows = property(_getLows)
+  highs = property(_getHighs)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -225,15 +169,13 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     except KeeResolveError:
       return NotImplemented
 
-  def __setattr__(self, name: str, value: Any) -> None:
+  def __setattr__(self, name: str, value: Any) -> Never:
     """
-    A member is frozen once 'KeeFlagsMeta.__new__' has stamped it, so
-    '__setattr__' raises 'KeeWriteOnceError' once the freeze flag is
-    set; assignments during construction pass through.
+    A member is frozen once built, so every assignment raises
+    'KeeWriteOnceError'; the constructor writes with
+    'object.__setattr__'.
     """
-    if object.__getattribute__(self, '__frozen_state__'):
-      raise KeeWriteOnceError(self, name)
-    object.__setattr__(self, name, value)
+    raise KeeWriteOnceError(self, name)
 
   def __delattr__(self, name: str) -> Never:
     """
@@ -256,9 +198,7 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   def __reduce__(self) -> tuple:
     """
     A member pickles as a lookup of its canonical name on its class, so
-    it unpickles as the member itself. The default protocol rebuilt a
-    fresh instance from the member's state, a phantom that was not the
-    member, so an 'is' check against it failed.
+    it unpickles as the member itself.
     """
     return getattr, (type(self), self.name)
 
@@ -266,7 +206,7 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     """The NULL member (no flags HIGH) is falsy. Any member with at
     least one flag HIGH is truthy, mirroring the truthiness of the
     underlying bitmask."""
-    return True if self.__member_index__ else False
+    return True if self.index else False
 
   def __iter__(self) -> Iterator[KeeFlag]:
     yield from self.highs
@@ -280,17 +220,17 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   __repr__ = __str__
 
   def __eq__(self, other: Any) -> bool:
-    if not isinstance(type(other), KeeFlagsMeta):
-      return NotImplemented
     cls, otherCls = type(self), type(other)
     if otherCls is cls:
-      return True if self.index == other.index else False
+      return True if self is other else False
+    if not isinstance(otherCls, KeeFlagsMeta):
+      return NotImplemented
     if issubclass(otherCls, cls) or issubclass(cls, otherCls):
       return True if self.names == other.names else False
     return NotImplemented
 
   def __hash__(self, ) -> int:
-    return hash(self.names)
+    return self.__member_hash__
 
   def _asOwn(self, other: Any) -> Any:
     """
@@ -300,38 +240,30 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     class lacks, gives 'None', so the operator answers 'NotImplemented'
     and Python asks the other operand.
     """
+    cls = type(self)
+    if type(other) is cls:
+      return other
     if not isinstance(type(other), KeeFlagsMeta):
       return None
-    return type(self)._fromMember(other)
+    return cls._fromMember(other)
 
   def __or__(self, other: Any) -> Any:
-    other = self._asOwn(other)
-    if other is None:
+    own = self._asOwn(other)
+    if own is None:
       return NotImplemented
-    cls = type(self)
-    highs = (*self.highs, *other.highs,)
-    names = frozenset((f.name for f in highs), )
-    return cls.memberDict[names]
+    return type(self).__member_list__[self.index | own.index]
 
   def __and__(self, other: Any) -> Any:
-    other = self._asOwn(other)
-    if other is None:
+    own = self._asOwn(other)
+    if own is None:
       return NotImplemented
-    cls = type(self)
-    highs = (f for f in self.highs if f in other.highs)
-    names = frozenset((f.name for f in highs), )
-    return cls.memberDict[names]
+    return type(self).__member_list__[self.index & own.index]
 
   def __xor__(self, other: Any) -> Any:
-    other = self._asOwn(other)
-    if other is None:
+    own = self._asOwn(other)
+    if own is None:
       return NotImplemented
-    cls = type(self)
-    ors = self | other
-    ands = self & other
-    highs = (f for f in ors.highs if f not in ands.highs)
-    names = frozenset((*(f.name for f in highs),), )
-    return cls.memberDict[names]
+    return type(self).__member_list__[self.index ^ own.index]
 
   #  The three operators commute, so the reflected forms are the same.
   __ror__ = __or__
@@ -339,14 +271,27 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   __rxor__ = __xor__
 
   def __invert__(self, ) -> Self:
-    cls = type(self)
-    lows = self.lows
-    names = frozenset((f.name for f in lows), )
-    return cls.memberDict[names]
+    members = type(self).__member_list__
+    return members[(len(members) - 1) ^ self.index]
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, index: int) -> None:
-    self.__member_index__ = index
+    """
+    The member of the bit mask 'index' stores its index, the names of its
+    high flags, its canonical name, its hash and its value as plain
+    attributes, with its class and name as '__field_owner__' and
+    '__field_name__'.
+    """
+    object.__setattr__(self, 'index', index)
+    highNames = [flag.name for flag in self.highs]
+    names = frozenset(highNames)
+    name = '_'.join(highNames) or 'NULL'
+    object.__setattr__(self, 'names', names)
+    object.__setattr__(self, 'name', name)
+    object.__setattr__(self, '__member_hash__', hash(names))
+    object.__setattr__(self, '__field_owner__', type(self))
+    object.__setattr__(self, '__field_name__', name)
+    object.__setattr__(self, 'value', self._getValue())

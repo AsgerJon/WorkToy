@@ -107,9 +107,13 @@ class TestKeeMetaResolve(KeenumTest):
     class Loose(KeeNum):
       A = Kee[object]('a')
       B = Kee[object]([1])
+      C = Kee[object](3)
 
     self.assertIs(Loose([1]), Loose.B)
     self.assertIs(Loose('a'), Loose.A)
+    #  A hashable identifier is compared with each value too, once one
+    #  value of the enumeration does not hash.
+    self.assertIs(Loose(3), Loose.C)
     self.assertIs(Loose._resolveFromValue([2], object), NotImplemented)
     self.assertIs(Loose._resolveFromValue('z', object), NotImplemented)
 

@@ -5,74 +5,75 @@ KeeBase provides the base for 'worktoy.keenum' enumerations.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload, TypeVar
+from typing import TYPE_CHECKING, overload
 
-from ..core import Object
-from ..desc import Field
+from ..core import MetaType
 from ..utilities import textFmt
-from ..waitaminute import MissingVariable
 from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
 from . import Kee
 
-T = TypeVar('T')
-
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, Never, Self, Optional, TypeAlias
-
-  MaybeInt: TypeAlias = Optional[int]
-  MaybeStr: TypeAlias = Optional[str]
-  MaybeKee: TypeAlias = Optional[Kee]
-  MaybeBool: TypeAlias = Optional[bool]
+  from typing import Any, Never, Self, Optional
 
 
-class KeeBase(Object, ):
+class KeeBase(metaclass=MetaType):
   """
   An enumeration member is one object, built once as its class is
   created, that a project passes around, compares and keys by: the days
   of a week, the status codes of a protocol. It must know its name, its
   position and its value, be equal to itself alone, hash wherever its
   value hashes, read back as the very object after copying and
-  pickling, and refuse every change once built.
+  pickling, and refuse every change once built. Reading any of that, or
+  hashing the member, happens in loops and at every dictionary lookup,
+  so none of it may be worked out again after the member is built.
 
   Implementation
   --------------
 
   'KeeBase' is the base of every enumeration; 'KeeNum', the root an
-  enumeration subclasses, is built from it by 'KeeMeta'. A member holds
-  the 'Kee' of its declaration and answers 'name', 'index', 'value' and
-  'valueType' through it.
+  enumeration subclasses, is built from it by 'KeeMeta'. The constructor
+  reads the name, the index, the value and the value type off the 'Kee'
+  of the declaration and stores them as plain attributes of the member,
+  together with the 'Kee' itself and the hash. A member is a plain
+  object, not a worktoy 'Object': no box tags it, and reading it off its
+  class runs no descriptor. Setting or deleting an attribute raises
+  'KeeWriteOnceError'; the constructor writes past that with
+  'object.__setattr__'.
 
   Equality is identity: 'MyEnum.A == MyEnum.A' is True; comparison to
   a member of a different KeeNum subclass returns NotImplemented (and
   '==' therefore yields False).
 
-  Hashability tracks the member's value. The hash is computed from
-  the member's qualified name (so distinct members within a class get
-  distinct hashes), but '__hash__' first calls 'hash(self.value)' as
-  a gate:
-
-    - If the value is hashable, the member is hashable and can be
-      used as a dict key, in a set, etc.
-    - If the value is unhashable (a list, dict, mutable instance,
-      etc.), the member is *also* unhashable. Calling 'hash(member)'
-      raises 'TypeError', and the member cannot be used as a dict
-      key or set element. This is intentional: it keeps the
-      member-side hash semantics consistent with the value-side
-      hash semantics that user code might rely on.
-
-  Members declared with unhashable values still work everywhere
+  Hashability tracks the member's value. The hash is computed once, from
+  the name of the class and the name of the member joined by '::' and
+  read as a big-endian integer, so distinct members of a class hash
+  apart. A member whose value is unhashable (a list, a dict, a mutable
+  instance) is unhashable as well: hashing it raises 'TypeError', so a
+  hashed lookup on the member side stays consistent with one on the
+  value side. Members with unhashable values still work everywhere
   hashability is not required: iteration, attribute access, name and
-  index resolution, equality, '__str__', and '__repr__' all behave
-  normally. Only hash-keyed containers refuse them.
+  index resolution, equality, '__str__', and '__repr__'.
 
-  A member is an 'Object', so a box that builds it through its
-  constructor, as 'AttriBox[WeekDay]('MONDAY')' does, tags it with the
-  box, the class and the field name, as a box tags every 'Object' it
-  builds; the last box to build the member leaves its tags. A member
-  given as the lone default of a box is its own copy and stays untagged.
-  The tags change nothing a member promises: equality, hash, text and
-  pickling read the name, and 'instance' answers only during a read of
-  the tagging box.
+  A copy of a member is the member itself, and a member pickles as a
+  lookup of its name on its class.
+
+  Attributes
+  ----------
+
+  name : str
+    The name the class body bound the member to.
+
+  index : int
+    The position of the member among those of its class.
+
+  value : Any
+    The value the 'Kee' built.
+
+  valueType : type
+    The type the 'Kee' declared.
+
+  kee : Kee
+    The declaration of the member.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -80,44 +81,7 @@ class KeeBase(Object, ):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   #  Private Variables
-  __field_value__: Optional[Any] = None
-  __frozen_state__: MaybeBool = None
-  __field_kee__: MaybeKee = None  # The 'Kee' object of this member.
-
-  #  Public Variables
-  index: Field[int] = Field()
-  value: Field[Any] = Field()
-  valueType: Field[type] = Field()
-  kee: Field[Kee] = Field()
-
-  #  Virtual Variables
-  name: Field[str] = Field()
-
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-  @kee.GET
-  def _getKee(self) -> Kee:
-    if self.__field_kee__ is None:
-      raise MissingVariable(self, '__field_kee__', Kee)
-    return self.__field_kee__
-
-  @name.GET
-  def _getName(self) -> str:
-    return self.kee.name
-
-  @index.GET
-  def _getIndex(self) -> int:
-    return self.kee.index
-
-  @value.GET
-  def _getValue(self) -> Any:
-    return self.kee.getValue()
-
-  @valueType.GET
-  def _getValueType(self) -> type:
-    return self.kee.getFieldType()
+  __member_hash__: Optional[int] = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -131,9 +95,21 @@ class KeeBase(Object, ):
   # @formatter:on
 
   def __init__(self, member: Kee) -> None:
-    object.__setattr__(self, '__frozen_state__', False)
-    self.__field_kee__ = member
-    object.__setattr__(self, '__frozen_state__', True)
+    value = member.getValue()
+    object.__setattr__(self, 'kee', member)
+    object.__setattr__(self, 'name', member.name)
+    object.__setattr__(self, 'index', member.index)
+    object.__setattr__(self, 'value', value)
+    object.__setattr__(self, 'valueType', member.getFieldType())
+    object.__setattr__(self, '__member_hash__', self._computeHash(value))
+
+  def _computeHash(self, value: Any) -> Optional[int]:
+    try:
+      hash(value)
+    except TypeError:
+      return None
+    base = str.join('::', (type(self).__name__, self.name,))
+    return hash(int.from_bytes(base.encode(), 'big'))
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -158,15 +134,13 @@ class KeeBase(Object, ):
     except KeeResolveError:
       return NotImplemented
 
-  def __setattr__(self, name: str, value: Any) -> None:
+  def __setattr__(self, name: str, value: Any) -> Never:
     """
-    A member is frozen after construction, so '__setattr__' raises
-    'KeeWriteOnceError' once the freeze flag is set; assignments during
-    construction pass through.
+    A member is frozen once built, so every assignment raises
+    'KeeWriteOnceError'; the constructor writes with
+    'object.__setattr__'.
     """
-    if object.__getattribute__(self, '__frozen_state__'):
-      raise KeeWriteOnceError(self, name)
-    object.__setattr__(self, name, value)
+    raise KeeWriteOnceError(self, name)
 
   def __delattr__(self, name: str) -> Never:
     """
@@ -174,19 +148,6 @@ class KeeBase(Object, ):
     raises 'KeeWriteOnceError' unconditionally.
     """
     raise KeeWriteOnceError(self, name)
-
-  def __set_name__(self, owner: type, name: str, **kw) -> None:
-    """
-    A member is one object shared by every class body that places it, so
-    it records no owner and no name: the placement 'Object.__set_name__'
-    would record would be the last one, and every refusal of a write or
-    a deletion through an instance would name it, whichever class the
-    instance belongs to. The refusals find the placement by identity in
-    the classes of the instance instead. The read, write and deletion of
-    a placed member are those of 'Object': the member reads back, a
-    write raises 'ReadOnlyError' and a deletion 'ProtectedError'.
-    """
-    pass
 
   def __copy__(self) -> Self:
     """A member is a singleton, so a copy is the member itself. Returning
@@ -204,9 +165,7 @@ class KeeBase(Object, ):
   def __reduce__(self) -> tuple:
     """
     A member pickles as a lookup of its name on its class, so it
-    unpickles as the member itself. The default protocol rebuilt a fresh
-    instance from the member's state, a phantom that was not the member
-    and compared unequal to it, since equality is identity.
+    unpickles as the member itself.
     """
     return getattr, (type(self), self.name)
 
@@ -216,19 +175,20 @@ class KeeBase(Object, ):
   __index__ = __int__
 
   def __hash__(self) -> int:
-    """Hash by name, but only when 'value' is itself hashable. Members
-    with unhashable values are themselves unhashable, so that any
-    hashed lookup on the member side remains consistent with hashed
-    lookup on the value side."""
-    try:
-      hash(self.value)
-    except TypeError as typeError:
-      infoSpec = """Enumeration member '%s' is unhashable because its
-      value of type '%s' is unhashable!"""
-      info = infoSpec % (self, type(self.value).__name__)
-      raise TypeError(textFmt(info)) from typeError
-    base = str.join('::', (type(self).__name__, self.name,))
-    return int.from_bytes(base.encode(), 'big')
+    """
+    The hash computed as the member was built, or a 'TypeError' raised
+    from the refusal of the value, when the value is unhashable.
+    """
+    memberHash = self.__member_hash__
+    if memberHash is None:
+      try:
+        hash(self.value)
+      except TypeError as typeError:
+        infoSpec = """Enumeration member '%s' is unhashable because its
+        value of type '%s' is unhashable!"""
+        info = infoSpec % (self, type(self.value).__name__)
+        raise TypeError(textFmt(info)) from typeError
+    return memberHash
 
   def __eq__(self, other: Any) -> bool:
     if type(self) is not type(other):
@@ -236,10 +196,7 @@ class KeeBase(Object, ):
     return True if self is other else False
 
   def __str__(self) -> str:
-    infoSpec = """%s.%s"""
-    clsName = type(self).__name__
-    info = infoSpec % (clsName, self.name)
-    return info
+    return '%s.%s' % (type(self).__name__, self.name)
 
   __repr__ = __str__
 

@@ -114,6 +114,7 @@ class TestKeeFlag(KeenumTest):
     read, write = Permission.flags[:2]
     self.assertEqual(read, Permission.flags[0])
     self.assertNotEqual(read, write)
+    self.assertNotEqual(write, read)
     self.assertIs(read.__eq__(1), NotImplemented)
     self.assertFalse(read == 1)
     self.assertIs(read.__eq__(Extended.flags[0]), NotImplemented)

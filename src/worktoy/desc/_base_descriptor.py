@@ -38,8 +38,8 @@ class BaseDescriptor(Object, Generic[T]):
   --------------
 
   Seven decorators register a method of the owning class: 'preGet' and
-  'onGet' around a read, 'preSet' and 'onSet' around a write,
-  'preDelete' and 'onDelete' around a deletion, and 'setName' when the
+  'onGet' around a 'read', 'preSet' and 'onSet' around a 'write',
+  'preDelete' and 'onDelete' around a 'deletion', and 'setName' when the
   descriptor is placed, for which the method is a classmethod receiving
   the class and the descriptor:
 
@@ -173,12 +173,12 @@ class BaseDescriptor(Object, Generic[T]):
         if isinstance(func, Func):
           return kind, func
     raise TypeException(
-      'callback',
-      callback,
-      Func,
-      classmethod,
-      staticmethod
-      )
+        'callback',
+        callback,
+        Func,
+        classmethod,
+        staticmethod
+    )
 
   @classmethod
   def _wrapCallback(cls, callback: Any) -> Any:
@@ -373,9 +373,9 @@ class BaseDescriptor(Object, Generic[T]):
     cls = type(self)
     new = object.__new__(cls)
     skipped = (
-      '__field_owner__',
-      '__field_name__',
-      '__private_name__',
+        '__field_owner__',
+        '__field_name__',
+        '__private_name__',
     )
     for key, value in vars(self).items():
       if key in skipped:

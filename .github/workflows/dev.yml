@@ -1,33 +1,56 @@
-# Dev: the frequent dev-release button. Publishes the next dev version
-# (X.Y.Z-devN) to PyPI as a pre-release. Manual trigger only. No safety
-# guards it, but like every button it locks every safety before anything
-# else; see the 'safety' job.
+# Dev: the dev-release button of the micro level. Publishes the
+# next dev version of the next micro release (X.Y.Z-devN) to PyPI as a
+# pre-release. Manual trigger only, and run from 'main' alone. The release
+# state machine in 'bin/release_tooling/release_state.py' decides every
+# press from 'bin/release_tooling/VERSION': the press opening a dev cycle,
+# and one climbing to this level from a lower one, run only when
+# 'bin/release_tooling/dev.safety' read 'ALLOW' in the commit the
+# button was pressed on, while a later press of the locked level needs no
+# safety; see the 'safety' job.
 on:
   workflow_dispatch:
 
 jobs:
   safety:
-    # No safety answers to a dev release, but every press of any button
-    # spends every arming: the job locks all four safeties back to 'STOP'
-    # and pushes the lock before the test matrix starts.
+    # The guard. It refuses a press on any branch but 'main' before it
+    # reads or writes anything. On 'main' it decides the press from VERSION
+    # and, for a press that needs one, from the safety of this button, both
+    # as committed in the commit the button was pressed on; locks every
+    # safety back to 'STOP'; pushes the lock; tests the release tooling;
+    # and only then fails or lets the test matrix start. A refused run
+    # therefore still leaves every safety locked in the repository, and an
+    # arming is spent by the press of the button whatever the run does
+    # next.
     runs-on: ubuntu-latest
     permissions:
       contents: write   # push the locked safeties
     steps:
+      # The default checkout is the commit the button was pressed on, so
+      # the state of VERSION and of the safety at that moment decides.
       - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Lock every safety
-        run: python bin/release_tooling/safety_lock.py
+      - name: Decide and lock
+        run: python bin/release_tooling/safety_check.py dev SAFETY_VERDICT
       - name: Push the lock
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
           git add bin/release_tooling/*.safety
-          git diff --cached --quiet || git commit -m "dev: safeties locked"
+          git diff --cached --quiet || git commit -m "dev: safeties locked, verdict ${SAFETY_VERDICT}"
           git push origin HEAD:${{ github.ref }}
+      - name: Test the release tooling
+        working-directory: bin/release_tooling
+        run: python -B -m unittest discover -s tests -t .
+      - name: Enforce the verdict
+        run: |
+          echo "$SAFETY_VERDICT_MESSAGE"
+          if [ "$SAFETY_VERDICT" != "ALLOW" ]; then
+            echo "::error::$SAFETY_VERDICT_MESSAGE"
+            exit 1
+          fi
 
   test:
     needs: safety

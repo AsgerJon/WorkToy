@@ -153,6 +153,73 @@ class TestKeeFlagsMeta(KeenumTest):
     self.assertIn("the identifier 'True'", str(context.exception))
     self.assertIs(Permission._resolveValue(3), Permission.READ_WRITE)
 
+  def test_value_tables(self) -> None:
+    class Buffer(KeeFlags):
+      OPEN = KeeFlag()
+      CLOSE = KeeFlag()
+
+      def _getValue(self) -> bytearray:
+        return bytearray(str(self.index).encode())
+
+    class Parity(KeeFlags):
+      ODD = KeeFlag()
+      BIG = KeeFlag()
+
+      def _getValue(self) -> float:
+        return float(self.index % 2)
+
+    #  Unhashable values are compared with each member in turn.
+    self.assertIs(Buffer(bytearray(b'2')), Buffer.CLOSE)
+    with self.assertRaises(KeeResolveError) as context:
+      Buffer(bytearray(b'9'))
+    self.assertIs(context.exception.keeNum, Buffer)
+    self.assertEqual(context.exception.identifier, bytearray(b'9'))
+    self.assertIn("'Buffer' could not resolve the identifier "
+                  "'bytearray(b'9')'", str(context.exception))
+    #  A value several members share resolves to the lowest index.
+    self.assertIs(Parity(1.0), Parity.ODD)
+    self.assertIs(Parity(0.0), Parity.NULL)
+    #  The scan takes an equal value alone, not one that sorts above the
+    #  identifier, as b'2' sorts above b'15'.
+    with self.assertRaises(KeeResolveError) as context:
+      Buffer(bytearray(b'15'))
+    self.assertIs(context.exception.keeNum, Buffer)
+    self.assertEqual(context.exception.identifier, bytearray(b'15'))
+    self.assertIn("'Buffer' could not resolve the identifier "
+                  "'bytearray(b'15')'", str(context.exception))
+
+    class Gappy(KeeFlags):
+      A = KeeFlag()
+      B = KeeFlag()
+
+      def _getValue(self) -> float:
+        return 0.0 if self.index == 2 else float(self.index)
+
+    #  A value repeated over a member before it does not hide the values
+    #  of the members after it.
+    self.assertIs(Gappy(3.0), Gappy.A_B)
+
+    class Mixed(KeeFlags):
+      OPEN = KeeFlag()
+      CLOSE = KeeFlag()
+
+      def _getValue(self) -> object:
+        if self.index:
+          return str(self.index).encode()
+        return bytearray(b'0')
+
+    #  Once one value does not hash, a hashable identifier is compared
+    #  with each value in turn as well.
+    self.assertIs(Mixed(b'2'), Mixed.CLOSE)
+    #  An unhashable identifier misses the table of hashable values and
+    #  is compared with each member in turn.
+    with self.assertRaises(KeeResolveError) as context:
+      FileAccess(bytearray(b'1'))
+    self.assertIs(context.exception.keeNum, FileAccess)
+    self.assertEqual(context.exception.identifier, bytearray(b'1'))
+    self.assertIn("'FileAccess' could not resolve the identifier "
+                  "'bytearray(b'1')'", str(context.exception))
+
   def test_members_of_the_lineage(self) -> None:
     self.assertIs(Permission(Extended.READ), Permission.READ)
     self.assertIs(Extended(Permission.READ_WRITE), Extended.READ_WRITE)
