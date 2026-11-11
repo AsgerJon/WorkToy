@@ -9,7 +9,7 @@ import pickle
 
 from worktoy.keenum import Kee, KeeNum
 from worktoy.waitaminute import MissingVariable, TypeException
-from worktoy.waitaminute import VariableNotNone
+from worktoy.waitaminute import VariableNotNone, DeprecatedPromise
 from worktoy.waitaminute.keenum import KeeCaseException
 from . import KeenumTest, WeekDay
 
@@ -69,28 +69,64 @@ class TestKee(KeenumTest):
     self.assertEqual(context.exception.expectedTypes, (str,))
     self.assertEqual(str(context.exception),
                      "Missing 'Kee.__num_name__: str'!")
-    with self.assertRaises(MissingVariable) as context:
-      _ = kee.index
+    with self.assertWarns(DeprecatedPromise):
+      with self.assertRaises(MissingVariable) as context:
+        _ = kee.index
     self.assertIs(context.exception.instance, kee)
     self.assertEqual(context.exception.varName, '__num_index__')
     self.assertEqual(context.exception.expectedTypes, (int,))
     self.assertEqual(str(context.exception),
                      "Missing 'Kee.__num_index__: int'!")
     kee.name = 'RED'
-    kee.index = 3
+    with self.assertWarns(DeprecatedPromise):
+      kee.index = 3
     self.assertEqual(kee.name, 'RED')
-    self.assertEqual(kee.index, 3)
-    self.assertEqual(int(kee), 3)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(kee.index, 3)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(int(kee), 3)
     with self.assertRaises(VariableNotNone) as context:
       kee.name = 'BLUE'
     self.assertEqual(context.exception.name, 'name')
     self.assertEqual(context.exception.value, 'RED')
     self.assertIn("'RED' at name 'name'", str(context.exception))
-    with self.assertRaises(VariableNotNone) as context:
+    with self.assertWarns(DeprecatedPromise), \
+        self.assertRaises(VariableNotNone) as context:
       kee.index = 4
     self.assertEqual(context.exception.name, 'index')
     self.assertEqual(context.exception.value, 3)
     self.assertIn("'3' at name 'index'", str(context.exception))
+
+  def test_empty_parentheses_take_the_name(self) -> None:
+    class Tag(str):
+      pass
+
+    class Rgb(KeeNum):
+      RED = Kee[str]()
+      GREEN = Kee[str]('verde')
+      BLUE = Kee[str](object='azul')
+
+    class Labels(KeeNum):
+      HOT = Kee[Tag]()
+
+    class Count(KeeNum):
+      ZERO = Kee[int]()
+
+    self.assertEqual(Rgb.RED.value, 'RED')
+    self.assertEqual(Rgb.GREEN.value, 'verde')
+    self.assertEqual(Rgb.BLUE.value, 'azul')
+    self.assertIs(Rgb('RED'), Rgb.RED)
+    self.assertEqual(Labels.HOT.value, 'HOT')
+    self.assertIs(type(Labels.HOT.value), Tag)
+    self.assertEqual(Count.ZERO.value, 0)
+    unnamed = Kee[str]()
+    with self.assertRaises(MissingVariable) as context:
+      _ = unnamed.value
+    self.assertIs(context.exception.instance, unnamed)
+    self.assertEqual(context.exception.varName, '__num_name__')
+    self.assertEqual(context.exception.expectedTypes, (str,))
+    self.assertEqual(str(context.exception),
+                     "Missing 'Kee.__num_name__: str'!")
 
   def test_name_must_be_upper_case(self) -> None:
     kee = Kee[int](1)
@@ -105,7 +141,8 @@ class TestKee(KeenumTest):
 
   def test_index_must_be_an_int(self) -> None:
     kee = Kee[int](1)
-    with self.assertRaises(TypeException) as context:
+    with self.assertWarns(DeprecatedPromise), \
+        self.assertRaises(TypeException) as context:
       kee.index = '3'
     self.assertEqual(context.exception.varName, 'index')
     self.assertEqual(context.exception.actualObject, '3')
@@ -125,7 +162,8 @@ class TestKee(KeenumTest):
     self.assertIs(context.exception.actualType, int)
     self.assertEqual(context.exception.expectedTypes, (str,))
     self.assertIn("'__num_name__'", str(context.exception))
-    with self.assertRaises(TypeException) as context:
+    with self.assertWarns(DeprecatedPromise), \
+        self.assertRaises(TypeException) as context:
       _ = kee.index
     self.assertEqual(context.exception.varName, '__num_index__')
     self.assertEqual(context.exception.actualObject, 'x')
@@ -153,7 +191,8 @@ class TestKee(KeenumTest):
     self.assertIs(kee.getFieldOwner(), WeekDay)
     self.assertEqual(kee.getFieldName(), 'MONDAY')
     self.assertEqual(kee.name, 'MONDAY')
-    self.assertEqual(kee.index, 0)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(kee.index, 0)
     self.assertEqual(kee.value, 'mandag')
     self.assertIs(kee.getFieldType(), str)
 
@@ -181,23 +220,28 @@ class TestKee(KeenumTest):
   def test_clone(self) -> None:
     kee = Kee[int](4, )
     kee.name = 'FOUR'
-    kee.index = 2
+    with self.assertWarns(DeprecatedPromise):
+      kee.index = 2
     cloned = kee.clone()
     self.assertIsNot(cloned, kee)
     self.assertIs(type(cloned), Kee)
     self.assertIs(cloned.getFieldType(), int)
     self.assertEqual(cloned.getPosArgs(), (4,))
     self.assertEqual(cloned.name, 'FOUR')
-    with self.assertRaises(MissingVariable) as context:
+    with self.assertWarns(DeprecatedPromise), \
+        self.assertRaises(MissingVariable) as context:
       _ = cloned.index
     self.assertIs(context.exception.instance, cloned)
     self.assertEqual(context.exception.varName, '__num_index__')
     self.assertEqual(context.exception.expectedTypes, (int,))
     self.assertEqual(str(context.exception),
                      "Missing 'Kee.__num_index__: int'!")
-    cloned.index = 0
-    self.assertEqual(cloned.index, 0)
-    self.assertEqual(kee.index, 2)
+    with self.assertWarns(DeprecatedPromise):
+      cloned.index = 0
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(cloned.index, 0)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(kee.index, 2)
 
   def test_subclass_of_kee(self) -> None:
     class Loud(Kee):

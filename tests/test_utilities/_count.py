@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from worktoy.utilities import typeCast
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Self
 
 

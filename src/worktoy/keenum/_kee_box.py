@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 
 from . import KeeMeta, KeeFlagsMeta
 from ..desc import AttriBox
-from ..waitaminute import TypeException
+from ..utilities import textFmt
+from ..waitaminute import TypeException, DeprecatedPromise
 from ..waitaminute.keenum import KeeBoxException, \
   KeeBoxValueError, KeeBoxTypeError
 
@@ -20,6 +21,12 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class KeeBox(AttriBox):
   """
+  'KeeBox' is deprecated: it is no longer a promised feature beginning
+  with the next major update, and every subscript of it gives a
+  'DeprecatedPromise' at the line that wrote the subscript. It works
+  as it did. An 'AttriBox' over the enumeration, with the member itself
+  as the default, declares the same field.
+
   A field typed with an enumeration is declared with the member it
   starts as, and a project wants to write that member the way it
   thinks of it: by name, by the arguments of the value it carries, by
@@ -171,8 +178,12 @@ class KeeBox(AttriBox):
     'TypeException' otherwise, before delegating to
     'AttriBox.__class_getitem__'. The restriction simplifies the
     implementation; plain 'AttriBox' performs no such check and accepts
-    every 'type'.
+    every 'type'. Every subscript first gives the deprecation notice of
+    'KeeBox', at the line that wrote the subscript.
     """
+    info = """Declare the field with 'AttriBox' instead, giving the
+    member itself as the default."""
+    DeprecatedPromise(KeeBox, textFmt(info)).warn()
     if isinstance(fieldType, KeeMeta) or isinstance(fieldType, KeeFlagsMeta):
       return super().__class_getitem__(fieldType)
     raise TypeException('fieldType', fieldType, KeeMeta, KeeFlagsMeta)

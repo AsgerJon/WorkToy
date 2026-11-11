@@ -5,7 +5,7 @@ TestKeeFlagsSpace tests 'KeeFlagsSpace' from 'worktoy.keenum'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsSpace, KeeFlagsMeta
+from worktoy.keenum import KeeFlags, Kee, KeeFlagsSpace, KeeFlagsMeta
 from worktoy.mcls import BaseSpace
 from worktoy.waitaminute.keenum import KeeFlagNameError, KeeCaseException
 from worktoy.waitaminute.keenum import KeeFlagDuplicate
@@ -14,11 +14,12 @@ from . import KeenumTest, Permission, Extended
 
 class TestKeeFlagsSpace(KeenumTest):
   """
-  'KeeFlagsSpace' records the flags of one body in order behind the
-  flags of its bases, refuses a name with an underscore, the name
-  'NULL', a name that is not upper case and a repeated or inherited
-  name, and writes the merged flags and the 'getKeeFlags' classmethod
-  into the class, the root excepted. The tests pin each on class
+  'KeeFlagsSpace' records the flags the bases hold, the bases in order,
+  a flag reached through two bases once, and the declarations of one
+  body after them, naming each declaration. It refuses a name with an
+  underscore, the name 'NULL', a name that is not upper case, a name
+  declared twice or declared over an inherited flag, and two different
+  flags of one name from two bases. The tests pin each on class
   statements and by hand.
   """
 
@@ -26,33 +27,20 @@ class TestKeeFlagsSpace(KeenumTest):
     space = Permission.__namespace__
     self.assertIsInstance(space, KeeFlagsSpace)
     self.assertIsInstance(space, BaseSpace)
-    self.assertEqual([*space.__kee_flags__], ['READ', 'WRITE', 'EXEC'])
-    self.assertIsNone(space.__base_flags__)
-    self.assertEqual([*space.getKeeFlags()], ['READ', 'WRITE', 'EXEC'])
+    self.assertEqual([*space.getDeclaredFlags()], ['READ', 'WRITE', 'EXEC'])
+    self.assertIs(space.getDeclaredFlags()['READ'], Permission.READ.kee)
+    self.assertEqual(space.getBaseFlags(), {})
     extended = Extended.__namespace__
-    self.assertEqual([*extended.__kee_flags__], ['OWN'])
-    self.assertEqual([*extended._getBaseFlags()], ['READ', 'WRITE', 'EXEC'])
-    self.assertEqual([*extended.getKeeFlags()],
-                     ['READ', 'WRITE', 'EXEC', 'OWN'])
-    self.assertEqual([*Extended.__kee_flags__], [*extended.getKeeFlags()])
-
-  def test_class_receives_flags_and_getter(self) -> None:
-    self.assertIn('__kee_flags__', Permission.__dict__)
-    self.assertIsInstance(Permission.__dict__['getKeeFlags'], classmethod)
-    self.assertEqual(Permission.getKeeFlags.__name__, 'getKeeFlags')
-    self.assertEqual(Permission.getKeeFlags.__doc__,
-                     'Getter function for the flags dictionary.')
-    cloned = Permission.getKeeFlags()
-    self.assertEqual([f.index for f in cloned.values()], [0, 1, 2])
-    self.assertEqual([f.fieldOwner for f in cloned.values()],
-                     [Permission] * 3)
-    self.assertNotIn('__kee_flags__', KeeFlags.__dict__)
-    self.assertFalse(hasattr(KeeFlags, 'getKeeFlags'))
+    self.assertEqual([*extended.getDeclaredFlags()], ['OWN'])
+    self.assertEqual(extended.getBaseFlags(),
+                     {'READ': Permission.READ, 'WRITE': Permission.WRITE,
+                      'EXEC': Permission.EXEC})
+    self.assertIsNot(space.getDeclaredFlags(), space.getDeclaredFlags())
 
   def test_underscore_refused(self) -> None:
     with self.assertRaises(KeeFlagNameError) as context:
       class Local(KeeFlags):
-        READ_ONLY = KeeFlag()
+        READ_ONLY = Kee[str]()
 
     exception = context.exception
     self.assertEqual(exception.clsName, 'Local')
@@ -62,7 +50,7 @@ class TestKeeFlagsSpace(KeenumTest):
   def test_null_refused(self) -> None:
     with self.assertRaises(KeeFlagNameError) as context:
       class Local(KeeFlags):
-        NULL = KeeFlag()
+        NULL = Kee[str]()
 
     self.assertEqual(context.exception.clsName, 'Local')
     self.assertEqual(context.exception.name, 'NULL')
@@ -73,92 +61,97 @@ class TestKeeFlagsSpace(KeenumTest):
   def test_lower_case_refused(self) -> None:
     with self.assertRaises(KeeCaseException) as context:
       class Local(KeeFlags):
-        Read = KeeFlag()
+        Read = Kee[str]()
 
     self.assertEqual(context.exception.name, 'Read')
     self.assertIn("must have upper case names, but received: 'Read'",
                   str(context.exception))
 
   def test_duplicates_refused(self) -> None:
+    first, second = Kee[int](1), Kee[int](2)
     with self.assertRaises(KeeFlagDuplicate) as context:
       class Local(KeeFlags):
-        READ = KeeFlag(1)
-        READ = KeeFlag(2)
+        READ = first
+        READ = second
 
     exception = context.exception
     self.assertEqual(exception.name, 'READ')
-    self.assertEqual(exception.oldFlag.args, (1,))
-    self.assertEqual(exception.newFlag.args, (2,))
-    self.assertIn("'READ'", str(exception))
+    self.assertIs(exception.oldFlag, first)
+    self.assertIs(exception.newFlag, second)
+    self.assertIn("'READ' already contains flag: '<Kee member: READ>'",
+                  str(exception))
     with self.assertRaises(KeeFlagDuplicate) as context:
       class Again(Permission):
-        WRITE = KeeFlag()
+        WRITE = Kee[str]()
 
     self.assertEqual(context.exception.name, 'WRITE')
-    self.assertIs(context.exception.oldFlag, Permission.flags[1])
-    self.assertEqual(context.exception.newFlag.args, ())
-    self.assertIn("'WRITE' already contains flag: 'Permission.WRITE [1]'",
+    self.assertIs(context.exception.oldFlag, Permission.WRITE)
+    self.assertIsInstance(context.exception.newFlag, Kee)
+    self.assertIn("'WRITE' already contains flag: '%s'" % Permission.WRITE,
                   str(context.exception))
+
+  def test_two_flags_of_one_name_from_two_bases_refused(self) -> None:
+    class Left(KeeFlags):
+      READ = Kee[str]()
+
+    class Right(KeeFlags):
+      READ = Kee[str]()
+
+    with self.assertRaises(KeeFlagDuplicate) as context:
+      KeeFlagsMeta('Both', (Left, Right), {})
+    self.assertEqual(context.exception.name, 'READ')
+    self.assertIs(context.exception.oldFlag, Left.READ)
+    self.assertIs(context.exception.newFlag, Right.READ)
 
   def test_by_hand(self) -> None:
     space = KeeFlagsSpace(KeeFlagsMeta, 'Hand', (Permission,))
-    self.assertEqual([*space._getBaseFlags()], ['READ', 'WRITE', 'EXEC'])
-    flag = KeeFlag()
-    space.addKeeFlag('OWN', flag)
-    self.assertEqual(flag.name, 'OWN')
-    self.assertEqual(flag.fieldName, 'OWN')
-    self.assertEqual([*space.getKeeFlags()],
-                     ['READ', 'WRITE', 'EXEC', 'OWN'])
-    compiled = space.compile()
-    self.assertEqual([*compiled['__kee_flags__']],
-                     ['READ', 'WRITE', 'EXEC', 'OWN'])
-    self.assertIsInstance(compiled['getKeeFlags'], classmethod)
-    late = KeeFlag()
-    space.addBaseFlag('LATE', late)
-    self.assertIs(space._getBaseFlags()['LATE'], late)
+    self.assertEqual([*space.getBaseFlags()], ['READ', 'WRITE', 'EXEC'])
+    kee = Kee[str]()
+    space.addKeeFlag('OWN', kee)
+    self.assertEqual(kee.name, 'OWN')
+    self.assertEqual([*space.getDeclaredFlags()], ['OWN'])
+    space.addBaseFlag(Permission.READ)
+    self.assertEqual([*space.getBaseFlags()], ['READ', 'WRITE', 'EXEC'])
 
   def test_bases_without_flags(self) -> None:
     class Plain:
       flags = ['not', 'flags']
 
     space = KeeFlagsSpace(KeeFlagsMeta, 'Hand', (Plain, KeeFlags))
-    self.assertEqual(space._getBaseFlags(), {})
-    self.assertEqual(space.getKeeFlags(), {})
+    self.assertEqual(space.getBaseFlags(), {})
+    self.assertEqual(space.getDeclaredFlags(), {})
     root = KeeFlagsSpace(KeeFlagsMeta, 'Root', (Permission,), _root=True)
-    self.assertEqual(root._getBaseFlags(), {})
-    compiled = root.compile()
-    self.assertNotIn('__kee_flags__', compiled)
-    self.assertNotIn('getKeeFlags', compiled)
+    self.assertEqual(root.getBaseFlags(), {})
 
   def test_random_flags(self) -> None:
     space = KeeFlagsSpace(KeeFlagsMeta, 'Hand', ())
     self.randomWord.size = 5
     words = [*dict.fromkeys(self.randomWord.row)]
     for word in words:
-      space.addKeeFlag(word.upper(), KeeFlag())
-    self.assertEqual([*space.getKeeFlags()], [w.upper() for w in words])
+      space.addKeeFlag(word.upper(), Kee[str]())
+    self.assertEqual([*space.getDeclaredFlags()], [w.upper() for w in words])
     for word in words:
       with self.subTest(word=word):
         with self.assertRaises(KeeFlagDuplicate) as context:
-          space.addKeeFlag(word.upper(), KeeFlag())
+          space.addKeeFlag(word.upper(), Kee[str]())
         self.assertEqual(context.exception.name, word.upper())
         self.assertIs(context.exception.oldFlag,
-                      space.getKeeFlags()[word.upper()])
-        self.assertEqual(context.exception.newFlag.args, ())
+                      space.getDeclaredFlags()[word.upper()])
+        self.assertIsInstance(context.exception.newFlag, Kee)
         self.assertIn("Enumeration name '%s' already contains flag"
                       % word.upper(), str(context.exception))
 
   def test_names_built_at_run_time_refused(self) -> None:
     space = KeeFlagsSpace(KeeFlagsMeta, 'Hand', ())
     with self.assertRaises(KeeFlagNameError) as context:
-      space.addKeeFlag(str.join('', ['NU', 'LL']), KeeFlag())
+      space.addKeeFlag(str.join('', ['NU', 'LL']), Kee[str]())
     self.assertEqual(context.exception.clsName, 'Hand')
     self.assertEqual(context.exception.name, 'NULL')
     self.assertIn("KeeFlags class 'Hand' declares the flag 'NULL'",
                   str(context.exception))
     self.assertIn('no flag high', str(context.exception))
     with self.assertRaises(KeeFlagNameError) as context:
-      space.addKeeFlag(str.join('', ['A', '_B']), KeeFlag())
+      space.addKeeFlag(str.join('', ['A', '_B']), Kee[str]())
     self.assertEqual(context.exception.clsName, 'Hand')
     self.assertEqual(context.exception.name, 'A_B')
     self.assertIn("KeeFlags class 'Hand' declares the flag 'A_B'",
@@ -172,7 +165,6 @@ class TestKeeFlagsSpace(KeenumTest):
     class Both(Mixin, Permission):
       pass
 
-    self.assertEqual([f.__member_name__ for f in Both.flags],
-                     ['READ', 'WRITE', 'EXEC'])
-    self.assertEqual(Both.READ_WRITE.names, frozenset({'READ', 'WRITE'}))
+    self.assertEqual(Both.flags, Permission.flags)
+    self.assertIs(Both.READ_WRITE, Permission.READ_WRITE)
     self.assertEqual(Both.tag, 'mixin')

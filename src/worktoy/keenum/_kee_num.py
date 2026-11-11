@@ -9,11 +9,17 @@ from typing import TYPE_CHECKING, overload
 
 from ..core import MetaType
 from ..utilities import textFmt
+from ..waitaminute import DeprecatedPromise
 from ..waitaminute.keenum import KeeResolveError, KeeWriteOnceError
 from . import Kee
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Never, Self, Optional
+
+#  The description of the deprecation of the position of a member.
+_POSITION = """The position belongs to the enumeration, not to the member:
+'Day[x]' gives the member at position 'x', and iterating 'Day' gives its
+members in order."""
 
 
 class KeeBase(metaclass=MetaType):
@@ -57,6 +63,12 @@ class KeeBase(metaclass=MetaType):
   A copy of a member is the member itself, and a member pickles as a
   lookup of its name on its class.
 
+  A member is shared by every enumeration based on the one that
+  declared it, and 'owners' gives those classes, in the order they were
+  created, held by strong references. The text of a member is no
+  promise: it currently names its one owner, '<Color>.RED', or the root
+  of its family once several classes hold it, '<KeeNum>.RED'.
+
   Attributes
   ----------
 
@@ -64,7 +76,10 @@ class KeeBase(metaclass=MetaType):
     The name the class body bound the member to.
 
   index : int
-    The position of the member among those of its class.
+    Deprecated: the position of the member among those of the class that
+    declared it. Reading it, 'int(member)' and using the member as an
+    index give a 'DeprecatedPromise', since the position belongs to the
+    enumeration: 'Day[x]' gives the member at a position.
 
   value : Any
     The value the 'Kee' built.
@@ -74,6 +89,9 @@ class KeeBase(metaclass=MetaType):
 
   kee : Kee
     The declaration of the member.
+
+  owners : tuple[type, ...]
+    The enumerations holding the member, in the order they were created.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -82,6 +100,8 @@ class KeeBase(metaclass=MetaType):
 
   #  Private Variables
   __member_hash__: Optional[int] = None
+  __member_index__: Optional[int] = None
+  __member_owners__: Optional[list] = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -98,10 +118,11 @@ class KeeBase(metaclass=MetaType):
     value = member.getValue()
     object.__setattr__(self, 'kee', member)
     object.__setattr__(self, 'name', member.name)
-    object.__setattr__(self, 'index', member.index)
+    object.__setattr__(self, '__member_index__', member._getIndex())
     object.__setattr__(self, 'value', value)
     object.__setattr__(self, 'valueType', member.getFieldType())
     object.__setattr__(self, '__member_hash__', self._computeHash(value))
+    object.__setattr__(self, '__member_owners__', [])
 
   def _computeHash(self, value: Any) -> Optional[int]:
     try:
@@ -110,6 +131,32 @@ class KeeBase(metaclass=MetaType):
       return None
     base = str.join('::', (type(self).__name__, self.name,))
     return hash(int.from_bytes(base.encode(), 'big'))
+
+  def _readIndex(self) -> int:
+    """
+    The 'index' of a member is deprecated: the position belongs to the
+    enumeration, which answers 'Day[x]', not to the member. A read still
+    gives the position in the class that declared the member, with a
+    'DeprecatedPromise' at the line that read it.
+    """
+    info = textFmt(_POSITION)
+    DeprecatedPromise('worktoy.keenum.KeeBase.index', info).warn()
+    return self.__member_index__
+
+  index = property(_readIndex)
+
+  def _getOwners(self) -> tuple[type, ...]:
+    return (*self.__member_owners__,)
+
+  owners = property(_getOwners)
+
+  def _addOwner(self, cls: type) -> None:
+    """
+    'KeeMeta._createMembers' records each enumeration holding the member
+    as it binds it. The list is changed in place, which the frozen member
+    allows, since nothing is assigned.
+    """
+    self.__member_owners__.append(cls)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -170,9 +217,22 @@ class KeeBase(metaclass=MetaType):
     return getattr, (type(self), self.name)
 
   def __int__(self) -> int:
-    return self.index
+    """
+    'int(member)' gives the deprecated position, with a
+    'DeprecatedPromise'; see '_readIndex'.
+    """
+    info = textFmt(_POSITION)
+    DeprecatedPromise('worktoy.keenum.KeeBase.__int__', info).warn()
+    return self.__member_index__
 
-  __index__ = __int__
+  def __index__(self) -> int:
+    """
+    A member used as an index, as in 'items[member]', gives the
+    deprecated position, with a 'DeprecatedPromise'; see '_readIndex'.
+    """
+    info = textFmt(_POSITION)
+    DeprecatedPromise('worktoy.keenum.KeeBase.__index__', info).warn()
+    return self.__member_index__
 
   def __hash__(self) -> int:
     """
@@ -196,7 +256,15 @@ class KeeBase(metaclass=MetaType):
     return True if self is other else False
 
   def __str__(self) -> str:
-    return '%s.%s' % (type(self).__name__, self.name)
+    """
+    The text names the one enumeration holding the member, or the root
+    of its family once several do. It is no promise.
+    """
+    owners = self.__member_owners__
+    if len(owners) == 1:
+      return '<%s>.%s' % (owners[0].__name__, self.name)
+    root = type(type(self)).keeNum
+    return '<%s>.%s' % (root.__name__, self.name)
 
   __repr__ = __str__
 

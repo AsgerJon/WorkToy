@@ -13,6 +13,9 @@ of their own.
 Private, importable but not intended for public use:
 
 - Fraction
+- Till
+- ShopRisk
+- ring
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -20,6 +23,8 @@ from __future__ import annotations
 
 from ._waitaminute_test import WaitaminuteTest
 from ._fraction import Fraction
+from ._till import Till
+from ._shop import ShopRisk, ring
 
 __all__ = [
   'WaitaminuteTest',

@@ -17,20 +17,21 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class KeeFlagDuplicate(WorkToyException, Exception):
   """
-  Raised on a flag name collision in a 'KeeFlags' enumeration: either a
-  class body that declares the same 'KeeFlag' name twice, or a subclass
-  that redeclares a flag name it already inherits. The 'KeeFlags'
-  counterpart to 'KeeDuplicate'; neither family allows redeclaring an
-  inherited name.
+  Raised on a flag name collision in a 'KeeFlags' enumeration: a class
+  body that declares the same flag name twice, a subclass that declares
+  a flag name it already inherits, or two bases holding two different
+  flags of one name. The 'KeeFlags' counterpart to 'KeeDuplicate';
+  neither family allows redeclaring an inherited name.
 
   Attributes
   ----------
   name : str
     The flag name that was declared more than once.
-  oldFlag : KeeFlag
-    The flag already registered under that name.
-  newFlag : KeeFlag
-    The flag whose duplicate registration was rejected.
+  oldFlag : Any
+    What holds the name already: the declaration, a 'Kee' or a
+    'KeeFlag', of a flag of the body, or the flag member of a base.
+  newFlag : Any
+    The declaration, or the flag member of a base, refused at the name.
   """
 
   __slots__ = ('name', 'oldFlag', 'newFlag',)

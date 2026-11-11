@@ -9,7 +9,7 @@ import typing
 from typing import TYPE_CHECKING
 
 from ..utilities import textFmt, maybe
-from ..waitaminute import MissingVariable, TypeException
+from ..waitaminute import MissingVariable, TypeException, DeprecatedPromise
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Tuple, Self, Iterator, Never
@@ -19,13 +19,16 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 class KeeFlag:
   """
   KeeFlag declares one single-bit flag inside a 'KeeFlags' class body.
+  It is deprecated: each 'KeeFlag' made gives a 'DeprecatedPromise' at
+  the line that made it, and declares its flag as it did. A 'Kee'
+  declares a flag instead, as 'READ = Kee[str]()'.
+
   Despite the name it is not itself an enumeration; the 'KeeFlags'
   metaclass reads the declared flags and builds the members, one per
-  combination of flags (including the all-low 'NULL' member).
-
-  Please note that the actual instances of this class are *not* the
-  members of the enumeration. 'KeeFlags' manages a container of these.
-  Then the members are created as wrappers on these instances.
+  combination of flags, the flag itself among them. The 'KeeFlag' is the
+  declaration of a flag, kept on the member as its 'kee', and receives
+  the class that built the flag as its owner and the bit of the flag as
+  its index.
 
   Where the 'Kee' class allows the novel syntactic sugar of 'Kee[int](1)',
   'KeeFlag' requires the owning 'KeeFlags' class to specify the type of the
@@ -178,6 +181,9 @@ class KeeFlag:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def __init__(self, *args, **kwargs) -> None:
+    info = """Declare the flag with 'Kee' instead, as 'READ =
+    Kee[str]()'."""
+    DeprecatedPromise(KeeFlag, textFmt(info)).warn()
     self.__pos_args__ = args
     self.__key_args__ = kwargs
 
@@ -187,8 +193,9 @@ class KeeFlag:
     carrying over its constructor arguments, name, and index (the index
     overridable via the argument).
     """
-    cls = type(self)
-    cloned = cls(*self.args, **self.kwargs)
+    cloned = object.__new__(type(self))
+    cloned.__pos_args__ = self.__pos_args__
+    cloned.__key_args__ = self.__key_args__
     cloned.__field_owner__ = owner
     cloned.__field_name__ = self.__field_name__
     cloned.__member_index__ = maybe(index, self.__member_index__)
@@ -200,14 +207,14 @@ class KeeFlag:
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   if TYPE_CHECKING:  # pragma: no cover, no mutate
-    @typing.overload
+    @typing.overload  # pragma: no mutate
     def __or__(self, other: Self) -> Self: ...
 
-    @typing.overload
+    @typing.overload  # pragma: no mutate
     def __and__(self, other: Self) -> Self: ...
 
-    @typing.overload
+    @typing.overload  # pragma: no mutate
     def __xor__(self, other: Self) -> Self: ...
 
-    @typing.overload
+    @typing.overload  # pragma: no mutate
     def __invert__(self) -> Self: ...

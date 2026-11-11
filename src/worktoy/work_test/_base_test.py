@@ -5,7 +5,9 @@ BaseTest is the 'unittest.TestCase' subclass shared by the worktoy tests.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import gc
 import os
+import sys
 import traceback
 from unittest import TestCase
 from typing import TYPE_CHECKING
@@ -87,7 +89,10 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   'tearDown' reads it without building one and fails the test once,
   with 'FAIL [label]: message' or 'ERROR [label]: repr' per recorded
   block, each followed by the traceback of what the block raised.
-  'exceptions' yields the common builtin exception classes. 'argReport'
+  'tearDownClass' unloads the module of the test class and runs the
+  garbage collector after its tests, for the reason its docstring
+  gives. 'exceptions' yields the common builtin exception classes.
+  'argReport'
   puts each argument on a line of its own as '<type: value>'.
   'assertIsNotSubclass' and 'assertIsNotInstance' are the negative
   assertions under the names the suite uses; below Python 3.14 the
@@ -201,6 +206,31 @@ class BaseTest(_Temp, metaclass=BaseMeta):
         type(exception), exception, exception.__traceback__,
     )
     return str.join('', lines).rstrip()
+
+  @classmethod
+  def tearDownClass(cls) -> None:
+    """
+    Unloads the test module and runs the garbage collector to evict
+    the class object before the next test class is built.
+
+    This is here because 'unittest' pins every test class it discovers
+    for the entire run via 'TestLoader' and 'TestResult', and that
+    pinning causes real, observable metaclass context leakage between
+    otherwise-independent test classes. Run TestA and TestB in
+    isolation: both pass. Run them in sequence: TestB inherits stale
+    descriptor state, mismatched owners, or cached registry entries
+    that 'unittest' has refused to release. Popping the module from
+    sys.modules and forcing a GC pass drops the refcount on the
+    outgoing class so its metaclass finalizers actually fire before
+    the next class's body executes. The bug only exists in the
+    intersection of two innocent tests, which is why this looks
+    paranoid until you have spent a weekend debugging it.
+
+    Blame: 'unittest'. The metaclass machinery is fine.
+    """
+    super().tearDownClass()
+    sys.modules.pop(cls.__module__, None)
+    gc.collect()
 
   def tearDown(self, ) -> None:
     """

@@ -10,7 +10,7 @@ from collections.abc import Callable
 
 from worktoy.keenum import KeeMeta, KeeNum, Kee, KeeSpace
 from worktoy.mcls import BaseObject
-from worktoy.waitaminute import TypeException
+from worktoy.waitaminute import TypeException, DeprecatedPromise
 from worktoy.waitaminute.desc import SharedDescriptor
 from . import KeenumTest, WeekDay, Shade, Bag
 
@@ -75,22 +75,19 @@ class TestKeeMetaBuild(KeenumTest):
     self.assertEqual(Objected.tag, 'boxed')
     self.assertIs(Mixed.MONDAY, WeekDay.MONDAY)
 
-  def test_several_enumeration_bases_refused(self) -> None:
+  def test_several_enumeration_bases(self) -> None:
     class Left(KeeNum):
       A = Kee[int](1)
 
     class Right(KeeNum):
       B = Kee[int](2)
 
-    with self.assertRaises(ValueError) as context:
-      class Both(Left, Right):
-        pass
+    class Both(Left, Right):
+      pass
 
-    self.assertIn('multiple bases', str(context.exception))
-    self.assertIn("instances of 'KeeMeta'", str(context.exception))
-    self.assertIn('received 2', str(context.exception))
-    self.assertIn('Left', str(context.exception))
-    self.assertIn('Right', str(context.exception))
+    self.assertEqual([*Both], [Left.A, Right.B])
+    self.assertIs(Both.base, Left)
+    self.assertEqual(Both.mroNum, (Left, Right))
 
   def test_no_enumeration_base_refused(self) -> None:
     with self.assertRaises(ValueError) as context:
@@ -117,7 +114,8 @@ class TestKeeMetaBuild(KeenumTest):
     self.assertIn("'KeeSpace'", str(context.exception))
 
   def test_members_built_in_order(self) -> None:
-    self.assertEqual([m.index for m in WeekDay], [*range(7)])
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual([m.index for m in WeekDay], [*range(7)])
     self.assertEqual(WeekDay.members, (*WeekDay,))
     self.assertIs(type(WeekDay.members), tuple)
     for member in WeekDay:
@@ -135,7 +133,8 @@ class TestKeeMetaBuild(KeenumTest):
 
     self.assertEqual(Base.COLOR, 'plain')
     self.assertEqual(Sub.COLOR.value, 2)
-    self.assertEqual(Sub.COLOR.index, 1)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(Sub.COLOR.index, 1)
     self.assertIsNone(Sub._getInheritedMember('COLOR'))
     self.assertIs(Sub._getInheritedMember('A'), Base.A)
     self.assertIsNone(Sub._getInheritedMember('absent'))

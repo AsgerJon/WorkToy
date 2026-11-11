@@ -51,8 +51,8 @@ def resolveMRO(*bases: type, **kwargs) -> list[type]:
   >>> class A: pass
   >>> class B(A): pass
   >>> class C(A): pass
-  >>> resolveMRO(B, C)
-  [<class 'B'>, <class 'C'>, <class 'A'>, <class 'object'>]
+  >>> [base.__name__ for base in resolveMRO(B, C)]
+  ['B', 'C', 'A', 'object']
   """
   if not bases:
     return []

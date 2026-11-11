@@ -42,8 +42,10 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
   '__init__' runs the creators in order: '_createSpace', '_createBase',
   '_createMembers', '_createNamedMembers', '_createMemberIds',
-  '_createValuedMembers' and '_validateClassResolve'. '_createMembers'
-  binds the members of the base enumeration, the same objects, and
+  '_createValuedMembers' and '_validateClassResolve'. An enumeration may
+  be based on several enumerations. '_createMembers' binds the members
+  of the base enumerations, the same objects, in the order of the bases,
+  and
   builds one member per new 'Kee' through 'type.__call__', so a call of
   the class never instantiates. The other creators build the tables the
   lookups read: the members by lower-cased name, by 'id' and by value.
@@ -153,9 +155,10 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     The '_createBase' method finds the base enumeration of 'cls'. The
     root of the metaclass, the class its 'keeNum' descriptor builds, is
     its own base, and so is every enumeration that subclasses that root
-    directly. Any other enumeration has the enumeration it subclasses as
-    its base. The root is recognised by identity, never by name, since
-    each subclass of 'KeeMeta' builds a root of its own name.
+    alone. Any other enumeration has as its base the first enumeration
+    it subclasses other than the root; it may subclass several. The
+    root is recognised by identity, never by name, since each subclass
+    of 'KeeMeta' builds a root of its own name.
     """
     mcls = type(cls)
     root = mcls.keeNum
@@ -164,24 +167,19 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       return
     space = cls._getSpace()
     bases = [b for b in space.__base_classes__ if isinstance(b, mcls)]
-    if len(bases) != 1:
-      if bases:
-        infoSpec = """Enumerating classes that are instances of '%s'
-        may not have multiple bases, but received %d:<br><tab>%s"""
-        mclsName = mcls.__name__
-        bases = space.__base_classes__
-        baseStr = '<br><tab>'.join(b.__name__ for b in bases)
-        info = infoSpec % (mclsName, len(bases), baseStr)
-      else:
-        infoSpec = """An enumeration of '%s' must be based on '%s.keeNum',
-        its root, or on an enumeration based on it, but '%s' has the
-        bases: (%s)."""
-        given = ', '.join(b.__name__ for b in space.__base_classes__)
-        mclsName = mcls.__name__
-        info = infoSpec % (mclsName, mclsName, cls.__name__, given)
+    if not bases:
+      infoSpec = """An enumeration of '%s' must be based on '%s.keeNum',
+      its root, or on an enumeration based on it, but '%s' has the
+      bases: (%s)."""
+      given = ', '.join(b.__name__ for b in space.__base_classes__)
+      mclsName = mcls.__name__
+      info = infoSpec % (mclsName, mclsName, cls.__name__, given)
       raise ValueError(textFmt(info))
-    base = bases[0]
-    type.__setattr__(cls, '__base_class__', cls if base is root else base)
+    for base in bases:
+      if base is not root:
+        type.__setattr__(cls, '__base_class__', base)
+        return
+    type.__setattr__(cls, '__base_class__', cls)
 
   def _getBase(cls, **kwargs) -> KeeMeta:
     if cls.__base_class__ is None:
@@ -192,22 +190,31 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     return cls.__base_class__
 
   def _getMroNum(cls, ) -> tuple[KeeMeta, ...]:
-    base = cls._getBase()
-    return () if base is cls else (base, *base.mroNum,)
+    """
+    The 'mroNum' getter gives the enumerations 'cls' is based on, in its
+    resolution order, the root of its metaclass left out.
+    """
+    mcls = type(cls)
+    root = mcls.keeNum
+    out = []
+    for base in cls.__mro__[1:]:
+      if isinstance(base, mcls) and base is not root:
+        out.append(base)
+    return (*out,)
 
   def _createMembers(cls, ) -> None:
     """
     The '_createMembers' method builds the members, in the order the
-    namespace registered them. A member the base enumeration already has
+    namespace registered them. A member a base enumeration already has
     under the name is the same member here, with the 'Kee' and the index
-    it has there; anything else the base holds under the name, such as a
-    plain class attribute or a member of some other enumeration, gives
-    way to a new member. The 'Kee' of a new member is placed on the
-    enumeration first, as a box is placed on its class, which refuses a
-    'Kee' declared without parentheses or declared in another
-    enumeration already, and then receives its index, the position of
-    the member. Each member is built by 'type.__call__', past the call of
-    the class, which resolves.
+    it has there; anything else a base holds under the name, such as a
+    plain class attribute, gives way to a new member. The 'Kee' of a new
+    member is placed on the enumeration first, as a box is placed on its
+    class, which refuses a 'Kee' declared without parentheses or
+    declared in another enumeration already, and then receives its
+    index, the position of the member. Each member is built by
+    'type.__call__', past the call of the class, which resolves, and
+    each member, inherited or new, records the class among its owners.
     """
     type.__setattr__(cls, '__allow_instantiation__', True)
     registry = []
@@ -216,8 +223,9 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
       member = cls._getInheritedMember(key)
       if member is None:
         kee.__set_name__(cls, key)
-        kee.index = index
+        kee._setIndex(index)
         member = type.__call__(cls, kee)
+      member._addOwner(cls)
       type.__setattr__(cls, key, member)
       registry.append(member)
     type.__setattr__(cls, '__registered_members__', (*registry,))
@@ -225,16 +233,15 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
   def _getInheritedMember(cls, key: str) -> Any:
     """
-    The '_getInheritedMember' method returns the member of the base
-    enumeration named 'key', or None when the base holds no member of
-    that name.
+    The '_getInheritedMember' method returns the member named 'key' of
+    the base enumerations, or None when no base holds a member of that
+    name. The namespace gathered them from every base as it was made.
     """
-    base = cls._getBase()
+    inherited = cls._getSpace().__inherited_members__
     try:
-      member = type.__getattribute__(base, key)
-    except AttributeError:
+      return inherited[key]
+    except KeyError:
       return None
-    return member if isinstance(member, base) else None
 
   def _getMembers(cls, **kwargs) -> tuple[Any, ...]:
     if cls.__registered_members__ is None:
@@ -449,12 +456,11 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
 
   def __contains__(cls, identifier: Any) -> bool:
     """
-    The '__contains__' method reports membership by identity: 'x in cls'
-    is True only when 'x' is an instance of 'cls', that is, one of its
-    members.
+    The '__contains__' method reports membership by identity, as the
+    instance check does: 'x in cls' is True when 'x' is one of the members
+    of 'cls', or a member of a subclass of it, which holds for an
+    enumeration without members of its own as well.
     """
-    if not cls.__registered_members__:
-      return False
     return cls._holds(identifier)
 
   def __instancecheck__(cls, instance: Any) -> bool:

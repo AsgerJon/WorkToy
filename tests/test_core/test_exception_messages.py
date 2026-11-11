@@ -10,6 +10,7 @@ from worktoy.core import Object
 from worktoy.core.control_flow import ControlSpace, MetaFlow, ControlFlow
 from worktoy.core.sentinels import THIS
 from worktoy.waitaminute import MissingVariable, VariableNotNone
+from worktoy.waitaminute import DeprecatedPromise
 from worktoy.waitaminute import control_flow as flowErrors
 from worktoy.waitaminute.desc import RecursiveRead, WithoutException
 from worktoy.waitaminute.meta import ControlClassError, DuplicateSentinel
@@ -123,9 +124,12 @@ class TestExceptionMessages(CoreTest):
     self.assertEqual(repr(exception), str(exception))
 
   def test_moved_names_of_control_flow_errors(self) -> None:
-    self.assertIs(flowErrors.ControlClassError, ControlClassError)
-    self.assertIs(flowErrors.ControlSpace, ControlSpace)
-    self.assertIs(flowErrors.MetaFlow, MetaFlow)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertIs(flowErrors.ControlClassError, ControlClassError)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertIs(flowErrors.ControlSpace, ControlSpace)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertIs(flowErrors.MetaFlow, MetaFlow)
     with self.assertRaises(AttributeError) as context:
       _ = flowErrors.nothing
     text = str(context.exception)

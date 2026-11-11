@@ -44,8 +44,9 @@ def textFmt(*args, **kwargs) -> str:
   --------
   >>> textFmt('many    spaces   here')
   'many spaces here'
-  >>> textFmt('paragraph<br><tab>indented line')
-  'paragraph\\n  indented line'
+  >>> print(textFmt('paragraph<br><tab>indented line'))
+  paragraph
+    indented line
   """
   if not args:
     return ''

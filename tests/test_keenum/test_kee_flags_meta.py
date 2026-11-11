@@ -5,20 +5,26 @@ TestKeeFlagsMeta tests 'KeeFlagsMeta' from 'worktoy.keenum'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsMeta, KeeFlagsSpace
+from worktoy.keenum import KeeFlags, Kee, KeeFlagsMeta, KeeFlagsSpace
+from worktoy.keenum import _kee_flags_meta
 from worktoy.waitaminute.keenum import KeeResolveError, KeeWriteOnceError
+from worktoy.waitaminute.keenum import KeeTypeException
 from worktoy.waitaminute.meta import ShadowedClassHook
 from . import KeenumTest, Permission, Extended, FileAccess
 
 
 class TestKeeFlagsMeta(KeenumTest):
   """
-  'KeeFlagsMeta' builds one member per combination of the flags, keeps
-  them in a list and a dictionary keyed by the names of the high flags,
-  resolves a member from a member of the lineage, a name in any case
-  and order, an index, a value or several identifiers, and takes over
-  calling, length, iteration, membership and the attributes of the
-  class. The tests pin each on the fixtures of the folder.
+  'KeeFlagsMeta' gives a flags class its flags, the bases' first, and
+  one member per combination of them, in the order of the bit masks of
+  the class. A member another class built already for the same flags,
+  'NULL' among them, is that very member. The class keeps its members
+  in a list and a dictionary keyed by the names of the high flags,
+  resolves a member from a member, a name in any case and order, a
+  position, a value or several identifiers, answers 'in' and
+  'isinstance' by identity, and takes over calling, length, iteration,
+  membership, the instance check and the attributes of the class. The
+  tests pin each on the fixtures and on local classes.
   """
 
   def test_members_built(self) -> None:
@@ -28,7 +34,6 @@ class TestKeeFlagsMeta(KeenumTest):
     expected = ['NULL', 'READ', 'WRITE', 'READ_WRITE', 'EXEC', 'READ_EXEC',
                 'WRITE_EXEC', 'READ_WRITE_EXEC']
     self.assertEqual(names, expected)
-    self.assertEqual([m.index for m in Permission], [*range(8)])
     self.assertEqual(Permission.memberList, [*Permission])
     self.assertIs(Permission.memberDict[frozenset(('READ', 'EXEC'))],
                   Permission.READ_EXEC)
@@ -36,38 +41,116 @@ class TestKeeFlagsMeta(KeenumTest):
     for member in Permission:
       with self.subTest(member=member.name):
         self.assertIs(Permission.__dict__[member.name], member)
-        self.assertIs(member.__field_owner__, Permission)
-        self.assertEqual(member.__field_name__, member.name)
+    self.assertEqual([*Extended][:8], [*Permission])
 
-  def test_flags_cloned_once(self) -> None:
+  def test_flags(self) -> None:
     flags = Permission.flags
-    self.assertEqual([f.name for f in flags], ['READ', 'WRITE', 'EXEC'])
-    self.assertEqual([f.index for f in flags], [0, 1, 2])
+    self.assertEqual(flags, [Permission.READ, Permission.WRITE,
+                             Permission.EXEC])
     self.assertIsNot(flags, Permission.flags)
-    self.assertEqual(flags, Permission.flags)
-    self.assertIs(flags[0], Permission.flags[0])
-    self.assertIs(Permission.__dict__['__flag_clones__'][0], flags[0])
-    self.assertEqual([f.name for f in Extended.flags],
-                     ['READ', 'WRITE', 'EXEC', 'OWN'])
-    self.assertIsNot(Extended.flags[0], Permission.flags[0])
-
-  def test_value_type(self) -> None:
-    self.assertIs(Permission.valueType, int)
-    self.assertIs(FileAccess.valueType, bytes)
+    self.assertEqual(Extended.flags, [*flags, Extended.OWN])
+    self.assertEqual(KeeFlags.flags, [])
 
   def test_root(self) -> None:
     self.assertIs(KeeFlagsMeta.__kee_class__, KeeFlags)
     self.assertIs(type(KeeFlags), KeeFlagsMeta)
-    self.assertNotIn('__member_list__', KeeFlags.__dict__)
+    self.assertEqual([*KeeFlags], [KeeFlags.NULL])
+    self.assertEqual(len(KeeFlags), 1)
     self.assertEqual(KeeFlags.__keyword_arguments__, {'_root': True})
     self.assertIsInstance(KeeFlagsMeta.__prepare__('A', ()), KeeFlagsSpace)
+    with self.assertRaises(TypeError) as context:
+      _ = KeeFlags.valueType
+    self.assertEqual(str(context.exception),
+                     "Flags class 'KeeFlags' has no flags, so it has no "
+                     "'valueType'.")
+
+  def test_value_type(self) -> None:
+    self.assertIs(Permission.valueType, str)
+    self.assertIs(FileAccess.valueType, bytes)
+
+  def test_flags_share_the_value_type(self) -> None:
+    combinations = _kee_flags_meta._COMBINATIONS
+    before = len(combinations)
+    with self.assertRaises(KeeTypeException) as context:
+      class Mixed(KeeFlags):
+        ONE = Kee[int](1)
+        RED = Kee[str]()
+
+    #  A refused class enters none of its flags among the members.
+    self.assertEqual(len(combinations), before)
+    self.assertEqual(context.exception.name, 'RED')
+    self.assertEqual(context.exception.value, 'RED')
+    self.assertEqual(context.exception.expectedTypes, (int,))
+    self.assertEqual(str(context.exception), str.join(' ', """Member 'RED'
+      has value 'RED' of type 'str', but expected the value to be an
+      instance of 'int'!""".split()))
+
+    class Number(KeeFlags):
+      ONE = Kee[int](1)
+
+    class Word(KeeFlags):
+      RED = Kee[str]()
+
+    with self.assertRaises(KeeTypeException) as context:
+      KeeFlagsMeta('Both', (Number, Word), {})
+    self.assertEqual(context.exception.name, 'RED')
+    self.assertEqual(context.exception.value, 'RED')
+    self.assertEqual(context.exception.expectedTypes, (int,))
+
+    class Halves(KeeFlags):
+      HALF = Kee[str]()
+
+      def _getValue(self) -> float:
+        return 0.5 * len(self.names)
+
+    with self.assertRaises(KeeTypeException) as context:
+      class Wholes(Halves):
+        WHOLE = Kee[str]()
+
+        def _getValue(self) -> int:
+          return len(self.names)
+
+    self.assertEqual(context.exception.name, 'WHOLE')
+    self.assertEqual(context.exception.value, 1)
+    self.assertEqual(context.exception.expectedTypes, (float,))
+
+  def test_null_and_combinations_are_exempt(self) -> None:
+    class Numbered(KeeFlags):
+      ONE = Kee[int](1)
+      TWO = Kee[int](2)
+
+    self.assertIs(Numbered.valueType, int)
+    self.assertEqual(Numbered.ONE_TWO.value, 'ONE_TWO')
+    self.assertEqual(Numbered.NULL.value, 'NULL')
+    self.assertEqual(FileAccess.NULL.value, 'NULL')
 
   def test_built_by_call(self) -> None:
-    Local = KeeFlagsMeta('Local', (Permission,), {'OWN': KeeFlag()})
+    Local = KeeFlagsMeta('Local', (Permission,), {'OWN': Kee[str]()})
     self.assertEqual(len(Local), 16)
-    self.assertEqual(Local.READ_OWN.index, 9)
-    self.assertEqual([f.name for f in Local.flags],
-                     ['READ', 'WRITE', 'EXEC', 'OWN'])
+    self.assertIs(Local[9], Local.READ_OWN)
+    self.assertEqual(Local.flags, [*Permission.flags, Local.OWN])
+
+  def test_several_bases(self) -> None:
+    class User(KeeFlags):
+      READ = Kee[str]()
+
+    class Admin(KeeFlags):
+      WRITE = Kee[str]()
+
+    class Both(User, Admin):
+      EXEC = Kee[str]()
+
+    self.assertEqual(Both.flags, [User.READ, Admin.WRITE, Both.EXEC])
+    self.assertEqual(len(Both), 8)
+    self.assertIs(Both[1], User.READ)
+    self.assertIs(Both[2], Admin.WRITE)
+    self.assertIs(Both.NULL, KeeFlags.NULL)
+
+    class Diamond(Both, User):
+      pass
+
+    self.assertEqual(Diamond.flags, Both.flags)
+    self.assertIs(Diamond.READ_WRITE_EXEC, Both.READ_WRITE_EXEC)
 
   def test_attributes_of_the_class(self) -> None:
     with self.assertRaises(KeeWriteOnceError) as context:
@@ -75,14 +158,14 @@ class TestKeeFlagsMeta(KeenumTest):
     self.assertIs(context.exception.member, Permission.READ)
     self.assertIs(context.exception.keeNum, Permission)
     self.assertEqual(context.exception.attribute, 'READ')
-    self.assertIn("'READ' of member 'Permission.READ [1]'",
+    self.assertIn("'READ' of member '%s'" % Permission.READ,
                   str(context.exception))
     with self.assertRaises(KeeWriteOnceError) as context:
       del Permission.NULL
     self.assertIs(context.exception.member, Permission.NULL)
-    self.assertIs(context.exception.keeNum, Permission)
+    self.assertIs(context.exception.keeNum, KeeFlags)
     self.assertEqual(context.exception.attribute, 'NULL')
-    self.assertIn("'NULL' of member 'Permission.NULL [0]'",
+    self.assertIn("'NULL' of member '<KeeFlags>.NULL'",
                   str(context.exception))
     Permission.note = 'free'
     self.assertEqual(Permission.__dict__['note'], 'free')
@@ -132,127 +215,127 @@ class TestKeeFlagsMeta(KeenumTest):
     self.assertIn("'nothing'", str(context.exception))
 
   def test_values(self) -> None:
-    self.assertIs(FileAccess(b'2'), FileAccess.CLOSE)
-    self.assertIs(FileAccess[b'0'], FileAccess.NULL)
-    self.assertIs(FileAccess._resolveValue(b'3'), FileAccess.OPEN_CLOSE)
+    self.assertIs(FileAccess(b'CLOSE'), FileAccess.CLOSE)
+    self.assertIs(FileAccess['NULL'], FileAccess.NULL)
+    self.assertIs(FileAccess._resolveValue(b'OPEN_CLOSE'),
+                  FileAccess.OPEN_CLOSE)
+    self.assertIs(Permission._resolveValue('READ_WRITE'),
+                  Permission.READ_WRITE)
     with self.assertRaises(KeeResolveError) as context:
-      FileAccess(b'9')
+      FileAccess(b'NOTHING')
     self.assertIs(context.exception.keeNum, FileAccess)
-    self.assertEqual(context.exception.identifier, b'9')
-    self.assertIn("'FileAccess' could not resolve the identifier 'b'9''",
-                  str(context.exception))
-    with self.assertRaises(KeeResolveError) as context:
-      FileAccess('9')
-    self.assertIs(context.exception.keeNum, FileAccess)
-    self.assertEqual(context.exception.identifier, '9')
-    self.assertIn("the identifier '9'", str(context.exception))
+    self.assertEqual(context.exception.identifier, b'NOTHING')
+    self.assertIn("'FileAccess' could not resolve the identifier "
+                  "'b'NOTHING''", str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       FileAccess._resolveValue(True)
     self.assertIs(context.exception.keeNum, FileAccess)
     self.assertIs(context.exception.identifier, True)
     self.assertIn("the identifier 'True'", str(context.exception))
-    self.assertIs(Permission._resolveValue(3), Permission.READ_WRITE)
+
+    class Numbered(KeeFlags):
+      ONE = Kee[int](1)
+      TWO = Kee[int](2)
+
+    self.assertIs(Numbered._resolveValue(2), Numbered.TWO)
+    #  'True' hashes as 1 and finds 'ONE' in the table, but a 'bool' is no
+    #  value of an 'int' flag, and no member holds a 'bool'.
+    with self.assertRaises(KeeResolveError) as context:
+      Numbered._resolveValue(True)
+    self.assertIs(context.exception.keeNum, Numbered)
+    self.assertIs(context.exception.identifier, True)
+    self.assertIn("'Numbered' could not resolve the identifier 'True'",
+                  str(context.exception))
 
   def test_value_tables(self) -> None:
     class Buffer(KeeFlags):
-      OPEN = KeeFlag()
-      CLOSE = KeeFlag()
+      OPEN = Kee[str]()
+      CLOSE = Kee[str]()
 
       def _getValue(self) -> bytearray:
-        return bytearray(str(self.index).encode())
+        return bytearray(self.name.encode())
 
     class Parity(KeeFlags):
-      ODD = KeeFlag()
-      BIG = KeeFlag()
+      ODD = Kee[str]()
+      BIG = Kee[str]()
 
       def _getValue(self) -> float:
-        return float(self.index % 2)
+        return float(len(self.names) % 2)
 
     #  Unhashable values are compared with each member in turn.
-    self.assertIs(Buffer(bytearray(b'2')), Buffer.CLOSE)
+    self.assertIs(Buffer(bytearray(b'CLOSE')), Buffer.CLOSE)
     with self.assertRaises(KeeResolveError) as context:
-      Buffer(bytearray(b'9'))
+      Buffer(bytearray(b'NOTHING'))
     self.assertIs(context.exception.keeNum, Buffer)
-    self.assertEqual(context.exception.identifier, bytearray(b'9'))
+    self.assertEqual(context.exception.identifier, bytearray(b'NOTHING'))
     self.assertIn("'Buffer' could not resolve the identifier "
-                  "'bytearray(b'9')'", str(context.exception))
-    #  A value several members share resolves to the lowest index.
+                  "'bytearray(b'NOTHING')'", str(context.exception))
+    #  A value several members share resolves to the first in the class.
     self.assertIs(Parity(1.0), Parity.ODD)
-    self.assertIs(Parity(0.0), Parity.NULL)
-    #  The scan takes an equal value alone, not one that sorts above the
-    #  identifier, as b'2' sorts above b'15'.
-    with self.assertRaises(KeeResolveError) as context:
-      Buffer(bytearray(b'15'))
-    self.assertIs(context.exception.keeNum, Buffer)
-    self.assertEqual(context.exception.identifier, bytearray(b'15'))
-    self.assertIn("'Buffer' could not resolve the identifier "
-                  "'bytearray(b'15')'", str(context.exception))
+    self.assertIs(Parity(0.0), Parity.ODD_BIG)
 
     class Gappy(KeeFlags):
-      A = KeeFlag()
-      B = KeeFlag()
+      A = Kee[str]()
+      B = Kee[str]()
 
       def _getValue(self) -> float:
-        return 0.0 if self.index == 2 else float(self.index)
+        return 0.0 if self.name == 'B' else float(len(self.name))
 
     #  A value repeated over a member before it does not hide the values
     #  of the members after it.
     self.assertIs(Gappy(3.0), Gappy.A_B)
 
     class Mixed(KeeFlags):
-      OPEN = KeeFlag()
-      CLOSE = KeeFlag()
+      OPEN = Kee[str]()
+      CLOSE = Kee[str]()
 
       def _getValue(self) -> object:
-        if self.index:
-          return str(self.index).encode()
-        return bytearray(b'0')
+        if len(self.names) > 1:
+          return bytearray(self.name.encode())
+        return self.name.encode()
 
     #  Once one value does not hash, a hashable identifier is compared
     #  with each value in turn as well.
-    self.assertIs(Mixed(b'2'), Mixed.CLOSE)
+    self.assertIs(Mixed(b'CLOSE'), Mixed.CLOSE)
+    self.assertIs(Mixed(bytearray(b'OPEN_CLOSE')), Mixed.OPEN_CLOSE)
     #  An unhashable identifier misses the table of hashable values and
     #  is compared with each member in turn.
     with self.assertRaises(KeeResolveError) as context:
-      FileAccess(bytearray(b'1'))
+      FileAccess(bytearray(b'OPEN'))
     self.assertIs(context.exception.keeNum, FileAccess)
-    self.assertEqual(context.exception.identifier, bytearray(b'1'))
+    self.assertEqual(context.exception.identifier, bytearray(b'OPEN'))
     self.assertIn("'FileAccess' could not resolve the identifier "
-                  "'bytearray(b'1')'", str(context.exception))
+                  "'bytearray(b'OPEN')'", str(context.exception))
 
-  def test_members_of_the_lineage(self) -> None:
+  def test_members_of_related_classes(self) -> None:
     self.assertIs(Permission(Extended.READ), Permission.READ)
-    self.assertIs(Extended(Permission.READ_WRITE), Extended.READ_WRITE)
-    self.assertIsNot(Extended.READ, Permission.READ)
-    self.assertIs(Permission._fromMember(Permission.EXEC), Permission.EXEC)
-    self.assertIs(Permission._fromMember(Extended.EXEC), Permission.EXEC)
-    self.assertIsNone(Permission._fromMember(Extended.OWN))
-    self.assertIsNone(Permission._fromMember(FileAccess.OPEN))
-    with self.assertRaises(KeeResolveError) as context:
-      Permission(Extended.OWN)
-    self.assertIs(context.exception.keeNum, Permission)
-    self.assertIs(context.exception.identifier, Extended.OWN)
-    self.assertIn("'Permission' could not resolve the identifier "
-                  "'Extended.OWN [8]'", str(context.exception))
+    self.assertIs(Extended(Permission.READ_WRITE), Permission.READ_WRITE)
+    #  A member of a subclass belongs to the class, as 'isinstance' has it.
+    self.assertIs(Permission(Extended.OWN), Extended.OWN)
     with self.assertRaises(KeeResolveError) as context:
       Permission[FileAccess.OPEN]
     self.assertIs(context.exception.keeNum, Permission)
     self.assertIs(context.exception.identifier, FileAccess.OPEN)
-    self.assertIn("the identifier 'FileAccess.OPEN [1]'",
+    self.assertIn("the identifier '%s'" % FileAccess.OPEN,
                   str(context.exception))
 
-  def test_contains(self) -> None:
+  def test_contains_and_instance_check(self) -> None:
     self.assertIn(Permission.READ, Permission)
-    self.assertIn(Extended.READ_WRITE, Permission)
-    self.assertNotIn(Extended.OWN, Permission)
     self.assertIn(Permission.READ, Extended)
+    self.assertIn(Extended.OWN, Permission)
+    self.assertIn(Permission.NULL, FileAccess)
     self.assertNotIn(FileAccess.OPEN, Permission)
+    self.assertNotIn(Permission.READ, FileAccess)
     self.assertNotIn('READ', Permission)
     self.assertNotIn(1, Permission)
-    self.assertNotIn(Permission.READ, FileAccess)
+    self.assertIsInstance(Permission.READ, Extended)
+    self.assertIsInstance(Permission.NULL, Permission)
+    self.assertIsInstance(Extended.OWN, Permission)
+    self.assertNotIsInstance(FileAccess.OPEN, Permission)
+    self.assertNotIsInstance('READ', Permission)
 
   def test_iteration_and_length(self) -> None:
-    self.assertEqual([m.index for m in Extended], [*range(16)])
+    self.assertEqual([*Extended], Extended.memberList)
     self.assertEqual(len(FileAccess), 4)
     self.assertTrue(Permission)
 
@@ -262,7 +345,8 @@ class TestKeeFlagsMeta(KeenumTest):
 
   def test_taken_over_operations_refuse_hooks(self) -> None:
     for hook in ('__class_len__', '__class_call__', '__class_iter__',
-                 '__class_contains__', '__class_setattr__'):
+                 '__class_contains__', '__class_setattr__',
+                 '__class_instancecheck__'):
       with self.subTest(hook=hook):
         with self.assertRaises(ShadowedClassHook) as context:
           KeeFlagsMeta('Bad', (KeeFlags,), {hook: classmethod(len)})
@@ -278,7 +362,7 @@ class TestKeeFlagsMeta(KeenumTest):
 
   def test_other_hooks_work(self) -> None:
     class Shown(KeeFlags):
-      READ = KeeFlag()
+      READ = Kee[str]()
 
       @classmethod
       def __class_str__(cls) -> str:
@@ -290,16 +374,17 @@ class TestKeeFlagsMeta(KeenumTest):
   def test_random_flags_classes(self) -> None:
     self.randomWord.size = 4
     words = [*dict.fromkeys(self.randomWord.row)]
-    space = {w.upper(): KeeFlag() for w in words}
+    space = {w.upper(): Kee[str]() for w in words}
     Local = KeeFlagsMeta('Local', (KeeFlags,), space)
     self.assertEqual(len(Local), 2 ** len(words))
     for index, word in enumerate(words):
       with self.subTest(word=word):
         member = Local(word)
-        self.assertEqual(member.index, 1 << index)
+        self.assertIs(Local[1 << index], member)
         self.assertEqual(member.names, frozenset((word.upper(),)))
+        self.assertEqual(member.value, word.upper())
 
-  def test_index_past_the_end_and_values_of_another_type(self) -> None:
+  def test_index_past_the_end(self) -> None:
     with self.assertRaises(KeeResolveError) as context:
       _ = Permission[len(Permission)]
     self.assertIs(context.exception.keeNum, Permission)
@@ -307,26 +392,15 @@ class TestKeeFlagsMeta(KeenumTest):
     self.assertIn("'Permission' could not resolve the identifier '8'",
                   str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
-      _ = Permission[99]
-    self.assertIs(context.exception.keeNum, Permission)
-    self.assertEqual(context.exception.identifier, 99)
-    self.assertIn("the identifier '99'", str(context.exception))
-    with self.assertRaises(KeeResolveError) as context:
       Permission._resolveIndex(99)
     self.assertIs(context.exception.keeNum, Permission)
     self.assertEqual(context.exception.identifier, 99)
     self.assertIn("the identifier '99'", str(context.exception))
 
-    class Scaled(FileAccess):
-      def _getValue(self) -> float:
-        return self.index * 1.5
-
-    self.assertEqual([m.value for m in Scaled][:3], [0.0, 1.5, 3.0])
-    self.assertIs(Scaled(1.5), Scaled.memberList[1])
-    self.assertIs(Scaled(3.0), Scaled.memberList[2])
+  def test_union_beyond_the_class_refused(self) -> None:
     with self.assertRaises(KeeResolveError) as context:
-      Scaled(2.0)
-    self.assertIs(context.exception.keeNum, Scaled)
-    self.assertEqual(context.exception.identifier, 2.0)
-    self.assertIn("'Scaled' could not resolve the identifier '2.0'",
+      Permission(Extended.OWN, 'read')
+    self.assertIs(context.exception.keeNum, Permission)
+    self.assertEqual(context.exception.identifier, (Extended.OWN, 'read'))
+    self.assertIn("'Permission' could not resolve the identifier",
                   str(context.exception))

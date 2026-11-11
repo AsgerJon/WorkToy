@@ -5,17 +5,18 @@ Extended is 'Permission' with one flag more.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.keenum import KeeFlag
+from worktoy.keenum import Kee
 
 from . import Permission
 
 
 class Extended(Permission):
   """
-  A flags class based on another keeps the flags of its base first and
-  builds members of its own. 'Extended' adds 'OWN' behind the three
-  flags of 'Permission', so it has sixteen members, and its 'READ' is
-  equal to the 'READ' of 'Permission' without being the same object.
+  A flags class based on another holds the flags of its base first and
+  shares the members of its base, the very objects. 'Extended' adds
+  'OWN' behind the three flags of 'Permission', so it holds sixteen
+  members, eight of them those of 'Permission', and builds the eight
+  holding 'OWN'.
   """
 
-  OWN = KeeFlag()
+  OWN = Kee[str]()

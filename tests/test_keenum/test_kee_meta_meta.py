@@ -57,6 +57,12 @@ class TestKeeMetaMeta(KeenumTest):
     self.assertIs(Font.base, Font)
     self.assertIsInstance(Font.ARIAL, root)
     self.assertEqual(str(Font), "<TempoMetaNum 'Font': 1 member>")
+    self.assertEqual(str(Font.ARIAL), '<Font>.ARIAL')
+
+    class Bold(Font):
+      pass
+
+    self.assertEqual(str(Font.ARIAL), '<TempoMetaNum>.ARIAL')
 
   def test_descriptor_through_the_class(self) -> None:
     self.assertIs(type(KeeMetaMeta.__dict__['keeNum']).__name__, 'Field')

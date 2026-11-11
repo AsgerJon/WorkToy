@@ -62,10 +62,13 @@ def wordWrap(width: int, *textLines: str, **kwargs) -> str:
 
   Examples
   --------
-  >>> wordWrap(12, 'lorem ipsum dolor sit amet')
-  'lorem ipsum\\ndolor sit\\namet'
-  >>> wordWrap(20, 'first half <br> second half')
-  'first half\\nsecond half'
+  >>> print(wordWrap(12, 'lorem ipsum dolor sit amet'))
+  lorem ipsum
+  dolor sit
+  amet
+  >>> print(wordWrap(20, 'first half <br> second half'))
+  first half
+  second half
   """
   if not isinstance(width, int):
     raise _typeException('width', width, int)

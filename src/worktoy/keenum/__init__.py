@@ -3,10 +3,12 @@ The 'worktoy.keenum' package builds two enumeration systems on the
 metaclass and descriptor machinery from 'worktoy.mcls' and
 'worktoy.desc'. 'KeeNum' is the value enumeration: 'Kee' members declared
 in the class body are collected by a space hook and frozen into typed
-members by 'KeeMeta'. 'KeeFlags' is the bitmask-flag enumeration: each
-'KeeFlag' is one bit, and 'KeeFlagsMeta' materializes every combination as
-a member. 'KeeBox' adapts either system for use as an 'AttriBox' field
-type.
+members by 'KeeMeta'. 'KeeFlags' is the bitmask-flag enumeration: its
+flags are declared with 'Kee' as well, each one bit, and 'KeeFlagsMeta'
+gives the class every combination of them as a member. In both systems
+an enumeration may be based on several, and holds the very members of
+its bases. 'KeeBox', deprecated, adapts either system for use as an
+'AttriBox' field type.
 
 KeeNum machinery:
 

@@ -5,8 +5,12 @@ TestBaseTest tests 'BaseTest' from 'worktoy.work_test'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import gc
 import os
+import sys
 import unittest
+import weakref
+from types import ModuleType
 from unittest import TestCase
 
 from worktoy.desc import AttriBox, Field
@@ -35,14 +39,15 @@ class TestBaseTest(WorkTestTest):
   every Python supported. The tests pin the samplers as per-instance
   boxes, the seeding of all six and its refusal before any is seeded,
   the exceptions, the report with its cut and its two keywords, the
-  assertions in both directions, and the verdicts of 'tearDown' as a
-  plain 'unittest.TestResult' records them for a case built for it.
+  assertions in both directions, the verdicts of 'tearDown' as a
+  plain 'unittest.TestResult' records them for a case built for it, and
+  'tearDownClass' unloading the module of a test class after its tests.
   """
 
   def test_shape(self) -> None:
     self.assertIsSubclass(BaseTest, TestCase)
     self.assertIs(type(BaseTest), BaseMeta)
-    self.assertNotIn('tearDownClass', vars(BaseTest))
+    self.assertIn('tearDownClass', vars(BaseTest))
     self.assertIn('tearDown', vars(BaseTest))
     for name, _ in SAMPLERS:
       with self.subTest(name=name):
@@ -176,6 +181,47 @@ class TestBaseTest(WorkTestTest):
     self.assertIn("raise KeyError('two')", text)
     self.assertNotIn('x=3', text)
     self.assertEqual(text.count('Traceback (most recent call last)'), 3)
+
+  def test_tear_down_class_unloads_module(self) -> None:
+    name = 'worktoy_unloaded_test_module'
+    sys.modules[name] = ModuleType(name)
+    self.addCleanup(sys.modules.pop, name, None)
+
+    class Case(BaseTest):
+      def test_pass(self) -> None:
+        self.assertEqual(1, 1)
+
+    Case.__module__ = name
+    result = unittest.TestResult()
+    unittest.TestLoader().loadTestsFromTestCase(Case).run(result)
+    self.assertTrue(result.wasSuccessful())
+    self.assertEqual(result.testsRun, 1)
+    self.assertNotIn(name, sys.modules)
+
+  def test_tear_down_class_collects_garbage(self) -> None:
+    name = 'worktoy_collected_test_module'
+    sys.modules[name] = ModuleType(name)
+    self.addCleanup(sys.modules.pop, name, None)
+    #  With automatic collection off, only 'tearDownClass' can collect.
+    self.addCleanup(gc.enable if gc.isenabled() else gc.disable)
+    gc.disable()
+
+    class Node:
+      pass
+
+    class Case(BaseTest):
+      def test_pass(self) -> None:
+        self.assertEqual(1, 1)
+
+    Case.__module__ = name
+    node = Node()
+    node.loop = node
+    ref = weakref.ref(node)
+    del node
+    self.assertIsNotNone(ref())
+    unittest.TestLoader().loadTestsFromTestCase(Case).run(
+        unittest.TestResult())
+    self.assertIsNone(ref())
 
   def test_tear_down_builds_no_accumulator(self) -> None:
     class Case(BaseTest):

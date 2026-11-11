@@ -5,19 +5,22 @@ TestKeeFlagsHook tests 'KeeFlagsHook' from 'worktoy.keenum'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import warnings
+
 from worktoy.keenum import KeeFlags, KeeFlag, KeeFlagsSpace, KeeFlagsMeta
-from worktoy.keenum import KeeFlagsHook
+from worktoy.keenum import KeeFlagsHook, Kee
+from worktoy.waitaminute import DeprecatedPromise
 from worktoy.waitaminute.keenum import KeeMemberNameError
 from . import KeenumTest, Permission
 
 
 class TestKeeFlagsHook(KeenumTest):
   """
-  'KeeFlagsHook' takes every 'KeeFlag' from the class body for the
-  namespace's record and leaves every other binding alone; a body name
-  that a combined member takes is refused as the class is created. The
-  tests pin the claim, the plain bindings, the refusal and the hook by
-  hand.
+  'KeeFlagsHook' takes every 'Kee', and every deprecated 'KeeFlag', from
+  the class body for the namespace's record and leaves every other
+  binding alone; a body name that a member takes is refused as the class
+  is created. The tests pin the claim, the plain bindings, the refusal
+  and the hook by hand.
   """
 
   def test_flags_claimed(self) -> None:
@@ -25,14 +28,14 @@ class TestKeeFlagsHook(KeenumTest):
     for name in ('READ', 'WRITE', 'EXEC'):
       with self.subTest(name=name):
         self.assertFalse(dict.__contains__(space, name))
-        self.assertIsInstance(space[name], KeeFlag)
+        self.assertIsInstance(space[name], Kee)
     self.assertIsInstance(KeeFlagsSpace.classGetHooks()[-1], KeeFlagsHook)
     self.assertIs(KeeFlagsSpace.__dict__['keeFlagsHook'],
                   KeeFlagsSpace.classGetHooks()[-1])
 
   def test_plain_bindings_kept(self) -> None:
     class Local(KeeFlags):
-      READ = KeeFlag()
+      READ = Kee[str]()
       label = 'plain'
 
       def describe(self) -> str:
@@ -44,8 +47,8 @@ class TestKeeFlagsHook(KeenumTest):
   def test_member_name_bound_plainly_refused(self) -> None:
     with self.assertRaises(KeeMemberNameError) as context:
       class Local(KeeFlags):
-        READ = KeeFlag()
-        WRITE = KeeFlag()
+        READ = Kee[str]()
+        WRITE = Kee[str]()
         READ_WRITE = 'rw'
 
     self.assertEqual(context.exception.clsName, 'Local')
@@ -55,7 +58,7 @@ class TestKeeFlagsHook(KeenumTest):
     with self.assertRaises(KeeMemberNameError) as context:
       class Nulled(KeeFlags):
         NULL = 0
-        READ = KeeFlag()
+        READ = Kee[str]()
 
     self.assertEqual(context.exception.clsName, 'Nulled')
     self.assertEqual(context.exception.memberName, 'NULL')
@@ -66,9 +69,12 @@ class TestKeeFlagsHook(KeenumTest):
     space = KeeFlagsSpace(KeeFlagsMeta, 'Hand', ())
     hook = KeeFlagsSpace.__dict__['keeFlagsHook'].__get__(space,
                                                            KeeFlagsSpace)
-    self.assertTrue(hook.setItemPhase('READ', KeeFlag()))
+    self.assertTrue(hook.setItemPhase('READ', Kee[str]()))
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore', DeprecatedPromise)
+      self.assertTrue(hook.setItemPhase('WRITE', KeeFlag()))
     self.assertFalse(hook.setItemPhase('label', 'plain'))
-    self.assertEqual([*space.getKeeFlags()], ['READ'])
+    self.assertEqual([*space.getDeclaredFlags()], ['READ', 'WRITE'])
 
   def test_random_plain_names_pass(self) -> None:
     space = KeeFlagsSpace(KeeFlagsMeta, 'Hand', ())

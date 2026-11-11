@@ -42,7 +42,8 @@ class SubclassException(WorkToyException, TypeError):
   >>> try:
   ...   fraction = Fraction(69, '420')  # type: ignore[arg-type]
   ... except SubclassException as subclassException:
-  ...   print(subclassException)
+  ...   print(subclassException.subClass.__name__)
+  str
   """
 
   __slots__ = ('subClass', 'baseClass')

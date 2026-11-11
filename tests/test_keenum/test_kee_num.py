@@ -6,6 +6,7 @@ TestKeeNum tests 'KeeNum' from 'worktoy.keenum' end to end.
 from __future__ import annotations
 
 from worktoy.keenum import KeeNum, KeeBase, KeeMeta, Kee
+from worktoy.waitaminute import DeprecatedPromise
 from . import KeenumTest, WeekDay
 
 
@@ -30,7 +31,8 @@ class TestKeeNum(KeenumTest):
     names = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY',
              'SATURDAY', 'SUNDAY']
     self.assertEqual([m.name for m in WeekDay], names)
-    self.assertEqual([m.index for m in WeekDay], [*range(7)])
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual([m.index for m in WeekDay], [*range(7)])
     self.assertIs(WeekDay.MONDAY.valueType, str)
     self.assertEqual(WeekDay.language, 'danish')
     self.assertNotIn('language', [m.name for m in WeekDay])
@@ -48,8 +50,10 @@ class TestKeeNum(KeenumTest):
 
     self.assertIs(Sub.MONDAY, WeekDay.MONDAY)
     self.assertIs(Deep.HOLIDAY, Sub.HOLIDAY)
-    self.assertEqual(Sub.HOLIDAY.index, 7)
-    self.assertEqual(Deep.LEAVE.index, 8)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(Sub.HOLIDAY.index, 7)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(Deep.LEAVE.index, 8)
     self.assertEqual(len(WeekDay), 7)
     self.assertEqual(len(Sub), 8)
     self.assertEqual(len(Deep), 9)

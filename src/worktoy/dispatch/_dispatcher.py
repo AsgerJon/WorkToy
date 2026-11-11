@@ -223,10 +223,13 @@ class Dispatcher(Object):
      signatures, most recent first.
   3. A cast of each argument that is not an instance, where a number
      class takes only a narrower number, 'int' to 'float' to 'complex',
-     and every other class casts as 'typeCast' allows; farthest class
-     first, so a subclass never redirects a call its parent handled
-     through such a cast: the concrete signatures, the flexible
-     declarations, then the variadic signatures.
+     and every other class casts as 'typeCast' allows: the concrete
+     signatures, then the flexible declarations, then the variadic
+     signatures, each kind farthest class first. A subclass therefore
+     never redirects a call its parent handled through a cast to a
+     signature of the same kind, but a concrete signature of a subclass
+     takes a call its parent handled through a cast to a flexible or a
+     variadic one.
   4. The same with every cast 'typeCast' allows, narrowing included, as
      '2.0' to the 'int' '2'.
   5. The fallback, if any, else 'DispatchException'.
@@ -444,7 +447,10 @@ class Dispatcher(Object):
   ) -> SigFuncList:
     """
     Adding a signature in a subclass must never redirect a call its parent
-    already handled through a cast of the same tier.
+    already handled through a cast of the same tier to a signature of the
+    same kind. The cast pass tries the concrete signatures before the
+    flexible and the variadic ones, so this order holds within one kind
+    of signature only.
 
     Implementation
     --------------
@@ -715,10 +721,11 @@ class Dispatcher(Object):
     def matchCasts(args: tuple, cast: Callable) -> Any:
       """The function, and the arguments in the order it takes them, of
       the registration accepting 'args' when 'cast' is applied to each
-      argument that is not an instance, farthest class first; within a
-      class the concrete signatures in registration order, then the
-      flexible declarations, then the variadic ones, the most recent
-      first. None when none accepts the call."""
+      argument that is not an instance: the concrete signatures, then the
+      flexible declarations, then the variadic ones, each kind farthest
+      class first, and within a class the concrete and flexible ones in
+      registration order, the variadic ones most recent first. None when
+      none accepts the call."""
       for sig, func in castFuncs:
         if len(args) != len(sig):
           continue

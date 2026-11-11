@@ -210,7 +210,7 @@ etc/docs_build/
 /bin/dev_tooling/mutation/runs/
 /archive/
 /archive/
-/commit_message.txt
+/archive/commit_message.txt
 
 #  Announcement drafts stay local, never committed.
 /reddit_post*.md

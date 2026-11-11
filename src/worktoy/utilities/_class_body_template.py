@@ -1,12 +1,19 @@
-"""Personal scaffolding the author copy-pastes from.
+"""
+'ClassBodyTemplate' is the layout of a class body used across the
+'worktoy' codebase: the section banners, 'NAMESPACE', 'GETTERS',
+'SETTERS', 'Python API', 'CONSTRUCTORS', 'DOMAIN SPECIFIC' and the
+rest, in the order the library writes them. A reader who has found the
+getters of one 'worktoy' class knows where to look in every other, and
+that is worth more than any single banner.
 
-Holds the section-banner layout used throughout 'worktoy', in two
-forms. 'ClassBodyTemplate' is a plain string of just the banners;
-'_SomeClass' is a parallel empty class with the same banners in
-place. Neither is part of the public API in any meaningful sense;
-they live here because the author writes new class files by
-copy-pasting one or the other and prefers to keep that scaffolding
-visible inside the package rather than in a scratch file."""
+The template is a convenience and not a requirement. A new class may
+start from a paste of it, keep the sections its body fills and drop
+the empty ones, or ignore it altogether; nothing reads the template,
+and no class is checked against it. A convention that has to be
+enforced has already lost the argument, and this one is a paste away.
+'_SomeClass', beside it, holds the same layout as an empty class, for
+those who would rather copy code than a string.
+"""
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations

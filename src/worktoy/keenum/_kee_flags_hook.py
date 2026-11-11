@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..mcls.space_hooks import AbstractSpaceHook
-from . import KeeFlag
+from . import KeeFlag, Kee
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
@@ -16,18 +16,19 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class KeeFlagsHook(AbstractSpaceHook):
   """
-  A flags class body binds its flags as ordinary names, 'READ =
-  KeeFlag()', yet the class must hold members, not flags, at those
-  names. The flags must therefore reach the namespace's record and
-  never its dictionary.
+  A flags class body declares its flags as ordinary names, 'READ =
+  Kee[str]()', yet the class must hold members at those names, the
+  flags themselves among them. The declarations must therefore reach the
+  namespace's record and never its dictionary.
 
   Implementation
   --------------
 
-  'setItemPhase' hands every 'KeeFlag' to 'addKeeFlag' of the namespace
-  and claims the binding; every other binding is left to the namespace.
-  A body name colliding with a member name is refused as the class is
-  created, since the combined names exist only then.
+  'setItemPhase' hands every 'Kee', and every deprecated 'KeeFlag', to
+  'addKeeFlag' of the namespace and claims the binding; every other
+  binding is left to the namespace. A body name colliding with a member
+  name is refused as the class is created, since the combined names
+  exist only then.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -35,7 +36,7 @@ class KeeFlagsHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def setItemPhase(self, key: str, val: Any, old: Any = None, ) -> bool:
-    if isinstance(val, KeeFlag):
+    if isinstance(val, (Kee, KeeFlag)):
       self.space.addKeeFlag(key, val)
       return True
     return False

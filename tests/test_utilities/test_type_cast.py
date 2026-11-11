@@ -12,7 +12,7 @@ from worktoy.waitaminute.dispatch import TypeCastException, UnboundCastHook
 from . import UtilitiesTest, Count, Inherits, Loose, Static, Refuser
 from . import Foreign, Suspicious
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any
 
 

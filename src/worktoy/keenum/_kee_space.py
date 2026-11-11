@@ -13,7 +13,7 @@ from ..waitaminute.keenum import KeeNameConflict
 from . import KeeSpaceHook, Kee
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Dict, TypeAlias
+  from typing import Any, Dict, TypeAlias
 
   Members: TypeAlias = Dict[str, Kee]
   Bases: TypeAlias = tuple[type, ...]
@@ -38,17 +38,23 @@ class KeeSpace(BaseSpace):
   otherwise with 'KeeNameConflict', a name that is not upper case
   through the 'Kee' setter, and a value type other than the first
   member's through 'typeGuard', then records the member. The
-  constructor registers a clone of every member of each base that is an
-  enumeration, so the names and the value type are inherited before the
-  body runs. 'postCompile' writes the pinned value type into the class
-  dictionary as '__member_type__'; 'KeeMeta' reads the members off the
-  namespace as the class is created.
+  constructor registers a clone of every member of every base that is
+  an enumeration, the bases in order, so the names and the value type
+  are inherited before the body runs. A member reached through two
+  bases, as in a diamond, is one member; two different members under
+  one name raise 'KeeDuplicate', and bases of different value types
+  'KeeTypeException'. 'postCompile' writes the pinned value type into
+  the class dictionary as '__member_type__'; 'KeeMeta' reads the
+  members off the namespace as the class is created.
 
   Attributes
   ----------
 
   __enumeration_members__ : dict
     The 'Kee' of each member by name, inherited clones first.
+
+  __inherited_members__ : dict
+    The member objects of the bases by name, in the order of the bases.
 
   __member_type__ : type or None
     The value type pinned by the first member, or 'None' before any.
@@ -63,6 +69,7 @@ class KeeSpace(BaseSpace):
 
   #  Private Variables
   __enumeration_members__ = None
+  __inherited_members__ = None
   __member_type__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -117,6 +124,7 @@ class KeeSpace(BaseSpace):
 
   def __init__(self, mcls: type, name: str, bases: Bases, **kwargs) -> None:
     self.__enumeration_members__ = dict()
+    self.__inherited_members__ = dict()
     super().__init__(mcls, name, bases, **kwargs)
     for base in bases:
       try:
@@ -130,16 +138,29 @@ class KeeSpace(BaseSpace):
         #  - The base is a worktoy class that is no enumeration, as a
         #    'BaseObject' mixin
         continue
-      self.__member_type__ = space.__member_type__
-      for key, val in space.__enumeration_members__.items():
-        if key in self.__enumeration_members__:
-          oldMember = self.__enumeration_members__[key]
-          raise KeeDuplicate(key, oldMember, val)
-        #  The inherited member is registered as a clone, so the base's
-        #  'Kee', placed on the base, is never handed to this body: the
-        #  class takes the base's member object itself as it is created,
-        #  and the clone serves the name checks alone.
-        self.addNum(key, val.clone())
+      for member in type.__getattribute__(base, '__registered_members__'):
+        self._inheritMember(member)
+
+  def _inheritMember(self, member: Any) -> None:
+    """
+    The '_inheritMember' method records one member of a base. A member
+    the namespace holds already under its name is the same member,
+    reached through another base, unless it is another object, which is
+    refused with 'KeeDuplicate'. The member's 'Kee' is registered as a
+    clone, so the base's 'Kee', placed on the base, is never handed to
+    this body: the class takes the member object itself as it is
+    created, and the clone serves the name and type checks alone.
+    """
+    name = member.name
+    inherited = self.__inherited_members__
+    if name in inherited:
+      if inherited[name] is member:
+        #  This branch is reached by the following:
+        #  - A diamond: two bases hold the member of a common ancestor
+        return
+      raise KeeDuplicate(name, inherited[name].kee, member.kee)
+    inherited[name] = member
+    self.addNum(name, member.kee.clone())
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  DOMAIN SPECIFIC  # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -8,88 +8,112 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..utilities import textFmt
+from ..waitaminute import DeprecatedPromise
 from ..waitaminute.keenum import KeeWriteOnceError, KeeResolveError
-from . import KeeFlag, KeeFlagsMeta
+from . import Kee, KeeFlagsMeta
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, Iterator, Never, Optional, Self
+  from typing import Any, Callable, Iterator, Never, Optional, Self
+
+#  The description of the deprecation of the bit mask of a member.
+_MASK = """The bit mask belongs to the class, not to the member: 'Flags[x]'
+gives the member of mask 'x', and iterating 'Flags' gives its members in
+the order of their masks."""
 
 
 class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   """
-  Base class for bitmask-flag enumerations. Each KeeFlags subclass
-  declares 'KeeFlag()' fields in its body, one per single-bit flag;
-  the metaclass then materializes every combination of those flags as
-  a concrete member at class-creation time.
+  Base class for bitmask-flag enumerations. A subclass declares its
+  flags in its body with 'Kee', as 'READ = Kee[str]()', and the
+  metaclass gives the class one member per combination of its flags.
+
+    class UserPermission(KeeFlags):
+      READ = Kee[str]()
+      EXEC = Kee[str]()
+
+    class AdminPermission(KeeFlags):
+      WRITE = Kee[str]()
+      DEL = Kee[str]()
+
+    class Permission(UserPermission, AdminPermission):
+      pass
+
+  Every member is a combination of flags. A flag is the combination of
+  itself, and 'NULL', which this root builds, is the one member that
+  combines none, inherited by every flags class.
 
   Cost (read before declaring a large enum)
   -----------------------------------------
 
-  A KeeFlags class with N single-bit flags materializes 2 ** N
-  members eagerly during class definition, each with its name, the
-  names of its flags and its hash worked out once. Measured on one
-  desktop machine under Python 3.15, the class statement took:
+  A flags class with N flags holds 2 ** N members and builds those no
+  other class built for the same flags, each with its name, the names of
+  its flags and its hash worked out once. Measured on one desktop
+  machine under Python 3.15, the class statement of a class of fresh
+  flags took:
 
       N =  8   -> 256 members         about a millisecond
       N = 12   -> 4096 members        about 15 milliseconds
       N = 16   -> 65,536 members      about 0.3 seconds, and 72 MB
 
   The cost is paid once, at import, and grows four times for every two
-  flags added. Every lookup is one step whatever N is: by index, by
-  name in any case and order, by value when every value hashes, and
-  through the operators.
+  flags added. Every lookup is one step whatever N is: by mask, by name
+  in any case and order, by value when every value hashes, and through
+  the operators.
+
+  Members shared along the lineage
+  --------------------------------
+
+  A flags class holds the flags of its bases first, in the order of the
+  bases, and its own after them. One member stands for each set of flags
+  in the whole process, so a class holds the very members of its bases,
+  'Extended.READ is Permission.READ', and a combination of flags of two
+  bases is built by the first class combining them and bound by every
+  later one. A member belongs to the class that built it: its 'flags'
+  are those of that class, its 'lows' the flags of that class that are
+  low in it, and its value comes from the '_getValue' of that class.
 
   Member attributes
   -----------------
 
-  - 'flags': all single-bit flags declared on the class (mirrors the
-    class-level 'flags'; not member-specific).
-  - 'highs': the flags that are HIGH for the member.
-  - 'lows': the flags that are LOW for the member.
-  - 'names': a frozenset of the names of the HIGH flags.
-  - 'index' / 'value': the member's bitmask integer (value defaults
-    to the index). A subclass reimplements '_getValue' to give its
-    members other values; it is read once per member, as the class is
-    created.
-  - 'name': the canonical name, the HIGH flag names joined by '_', or
-    'NULL' when no flag is HIGH.
+  - 'name': the flag names joined by '_' in the order of the class that
+    built it, or 'NULL'. A class binds each member at the name joining
+    its flags in its own order.
+  - 'names': a frozenset of the names of the high flags.
+  - 'highs': the flags that are high in the member, the flag members
+    themselves; iterating a member gives them.
+  - 'lows': the flags of the class that built the member that are low.
+  - 'flags': the flags of the class that built the member.
+  - 'value': the value of a flag declared with a 'Kee' is that of the
+    'Kee', so 'Kee[str]()' gives the name; every other member is valued
+    by its name. A subclass reimplements '_getValue' to give the members
+    it builds other values; it is read once per member, after the class
+    has its flags. 'valueType' is the type of the value of the first
+    flag of the class, and no combination may contain a member whose
+    value is not an instance of it: every flag of a class shares the
+    type, while the value of a combination is free, and 'NULL' is
+    exempt, since it contains no member.
+  - 'kee': the declaration of a flag, or None for any other member.
+  - 'owners': the flags classes holding the member, in order of
+    creation.
+  - 'index': deprecated, the bit mask of the member in the class that
+    built it.
 
-  Naming and lookup
-  -----------------
-
-  A combined member's canonical name joins its HIGH flag names in
-  declaration order ('FileAccess.READ_EXECUTE', never
-  'FileAccess.EXECUTE_READ'), and attribute access resolves only that
-  canonical name. Subscripting and calling are order- and
-  case-insensitive: 'cls["EXECUTE_READ"]', 'cls["execute_read"]', and
-  'cls["READ", "EXECUTE"]' all resolve to the same member, a repeated name
-  collapses, and an unknown name raises 'KeeResolveError', as an unknown
-  index or value does and as a 'KeeNum' miss does. Since '_' joins the
-  flag names in a canonical name, a flag name may not contain '_' itself;
-  declaring one raises 'KeeFlagNameError' in the class body.
-
-  Members across a lineage
-  ------------------------
-
-  A flags class based on another holds the flags of its base first and
-  members of its own, so no member object is shared between the two.
-  Across the lineage a member is identified by the names of its high
-  flags: a member of the base or of the subclass is equal to the member
-  here with the same flags and hashes alike, resolves through a call, a
-  subscript or 'typeCast' to this class's own member when this class
-  holds every one of its flags, and is refused with 'KeeResolveError'
-  otherwise, is in the class exactly when such a member exists, and
-  takes part in the operators, where the class of the left operand
-  answers when it holds every flag and the class of the right one
-  answers through the reflected operator otherwise. Members of
-  unrelated flags classes are strangers to each other.
+  Equality is identity, and a member hashes by the names of its flags.
+  '|', '&' and '^' give the member of the resulting set of flags, and
+  refuse with 'TypeError' when no class holds that set. '~member' is the
+  member whose flags are the lows of 'member'; '~NULL' raises
+  'ZeroDivisionError', since there is no universal combination to invert
+  to. 'NULL' is falsy and every other member truthy.
 
   Like 'KeeNum' members, the members are write-once constants: any
   attempt to set or delete an attribute on a member raises
   'KeeWriteOnceError', as does rebinding or deleting the member name on
   the owning class. The constructor writes past that with
-  'object.__setattr__'. A member needing extra attributes should come
-  from a subclass declaring them.
+  'object.__setattr__'. A copy of a member is the member, and a member
+  pickles as a lookup of its name on the class that built it. The text
+  of a member is no promise: it currently names its one owner,
+  '<Permission>.READ', or the root once several classes hold it,
+  '<KeeFlags>.READ'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -99,52 +123,68 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   #  Class Variables (type hints)
   __member_list__: list[Self]
   __member_dict__: dict[frozenset[str], Self]
+  __flag_order__: tuple[Self, ...]
 
   #  Private Variables
   __field_owner__ = None
   __field_name__ = None
   __member_hash__: Optional[int] = None
+  __member_flags__: tuple = ()
+  __member_index__: Optional[int] = None
+  __member_owners__: Optional[list] = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def _getFlagsFromType(self, ) -> Any:
+  def _getFlagsFromType(self, ) -> list[Self]:
     """
-    The 'KeeFlagsMeta' metaclass provides the helpful 'flags' descriptor
-    allowing inspection of all the flags available. The descriptor is then
-    available on the subclasses of 'KeeFlags', but *not* on the
-    instances themselves. Therefore, the 'KeeFlags' class mirrors it.
+    The 'flags' of a member are those of the class that built it, which
+    the metaclass gives the class as 'flags'.
     """
     return type(self).flags
 
   def _getValue(self) -> Any:
     """
     The value of a member is what a project reads off it, and what the
-    class resolves a member from. The base gives every member its index
-    as its value; a subclass reimplements this method to give any object
-    from any member, as 'FileAccess' in the tests gives bytes. It is read
-    once per member, as the class is created. Values of one immutable
-    type are recommended, not required, and several members may share
-    one value, in which case the lowest-indexed member answers for it.
+    class resolves a member from. A flag declared with a 'Kee' is valued
+    as the 'Kee' is, so 'Kee[str]()' gives the name, and every other
+    member is valued by its name. A subclass reimplements this method to
+    give the members it builds any other object; it is read once per
+    member, after the class has its flags. Several members may share one
+    value, in which case the lowest-indexed member answers for it.
     """
-    return self.index
+    if isinstance(self.kee, Kee):
+      return self.kee.getValue()
+    return self.name
 
-  def _getLows(self) -> Iterator[KeeFlag]:
-    index = self.index
-    for flag in type(self).__flag_clones__:
-      if not index & (1 << flag.index):
+  def _getHighs(self) -> Iterator[Self]:
+    yield from self.__member_flags__
+
+  def _getLows(self) -> Iterator[Self]:
+    highs = self.__member_flags__
+    for flag in type(self).__flag_order__:
+      if not any(flag is high for high in highs):
         yield flag
 
-  def _getHighs(self) -> Iterator[KeeFlag]:
-    index = self.index
-    for flag in type(self).__flag_clones__:
-      if index & (1 << flag.index):
-        yield flag
+  def _readIndex(self) -> int:
+    """
+    The 'index' of a member is deprecated: the bit mask belongs to the
+    class, which answers 'Flags[x]', not to the member. A read still
+    gives the mask in the class that built the member, with a
+    'DeprecatedPromise' at the line that read it.
+    """
+    DeprecatedPromise('worktoy.keenum.KeeFlags.index', textFmt(_MASK)).warn()
+    return self.__member_index__
+
+  def _getOwners(self) -> tuple[type, ...]:
+    return (*self.__member_owners__,)
 
   flags = property(_getFlagsFromType)
   lows = property(_getLows)
   highs = property(_getHighs)
+  index = property(_readIndex)
+  owners = property(_getOwners)
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  Python API   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -155,7 +195,7 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
     """
     The '__cast_as__' hook lets 'typeCast' resolve a value to the member
     it identifies, as calling the class does: a member passes, a name in
-    any case and order, a tuple of names, an index or a value resolves,
+    any case and order, a tuple of names, a mask or a value resolves,
     and one the class cannot resolve is declined with 'NotImplemented',
     so 'typeCast' raises its own refusal and an 'AttriBox' over the
     class, or an overload naming it, refuses it as any value it cannot
@@ -197,73 +237,56 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
 
   def __reduce__(self) -> tuple:
     """
-    A member pickles as a lookup of its canonical name on its class, so
-    it unpickles as the member itself.
+    A member pickles as a lookup of its name on the class that built it,
+    so it unpickles as the member itself.
     """
     return getattr, (type(self), self.name)
 
   def __bool__(self) -> bool:
-    """The NULL member (no flags HIGH) is falsy. Any member with at
-    least one flag HIGH is truthy, mirroring the truthiness of the
-    underlying bitmask."""
-    return True if self.index else False
+    """'NULL', which combines no flags, is falsy. Every other member is
+    truthy, mirroring the truthiness of the underlying bitmask."""
+    return True if self.__member_flags__ else False
 
-  def __iter__(self) -> Iterator[KeeFlag]:
+  def __iter__(self) -> Iterator[Self]:
     yield from self.highs
 
   def __str__(self, ) -> str:
-    infoSpec = """%s.%s [%d]"""
-    clsName = type(self).__name__
-    info = infoSpec % (clsName, self.name, self.index)
-    return textFmt(info)
+    """
+    The text names the one class holding the member, or the root once
+    several do. It is no promise.
+    """
+    owners = self.__member_owners__
+    if len(owners) == 1:
+      return '<%s>.%s' % (owners[0].__name__, self.name)
+    root = type(type(self)).__kee_class__
+    return '<%s>.%s' % (root.__name__, self.name)
 
   __repr__ = __str__
-
-  def __eq__(self, other: Any) -> bool:
-    cls, otherCls = type(self), type(other)
-    if otherCls is cls:
-      return True if self is other else False
-    if not isinstance(otherCls, KeeFlagsMeta):
-      return NotImplemented
-    if issubclass(otherCls, cls) or issubclass(cls, otherCls):
-      return True if self.names == other.names else False
-    return NotImplemented
 
   def __hash__(self, ) -> int:
     return self.__member_hash__
 
-  def _asOwn(self, other: Any) -> Any:
+  def _combine(self, other: Any, merge: Callable) -> Any:
     """
-    An operator takes a member of this class or of a related one, and
-    works on the member of this class with the other's flags; anything
-    else, a member of an unrelated class or a member with a flag this
-    class lacks, gives 'None', so the operator answers 'NotImplemented'
-    and Python asks the other operand.
+    The operators work on the flags of the two members alone, so neither
+    class has a say: the result is the member of the resulting set of
+    flags, whichever class built it, or 'NotImplemented' when 'other' is
+    no flags member or no class holds that set.
     """
-    cls = type(self)
-    if type(other) is cls:
-      return other
     if not isinstance(type(other), KeeFlagsMeta):
-      return None
-    return cls._fromMember(other)
+      return NotImplemented
+    mine = frozenset(self.__member_flags__)
+    theirs = frozenset(other.__member_flags__)
+    return KeeFlagsMeta._findCombination(merge(mine, theirs))
 
   def __or__(self, other: Any) -> Any:
-    own = self._asOwn(other)
-    if own is None:
-      return NotImplemented
-    return type(self).__member_list__[self.index | own.index]
+    return self._combine(other, frozenset.union)
 
   def __and__(self, other: Any) -> Any:
-    own = self._asOwn(other)
-    if own is None:
-      return NotImplemented
-    return type(self).__member_list__[self.index & own.index]
+    return self._combine(other, frozenset.intersection)
 
   def __xor__(self, other: Any) -> Any:
-    own = self._asOwn(other)
-    if own is None:
-      return NotImplemented
-    return type(self).__member_list__[self.index ^ own.index]
+    return self._combine(other, frozenset.symmetric_difference)
 
   #  The three operators commute, so the reflected forms are the same.
   __ror__ = __or__
@@ -271,27 +294,75 @@ class KeeFlags(metaclass=KeeFlagsMeta, _root=True):
   __rxor__ = __xor__
 
   def __invert__(self, ) -> Self:
-    members = type(self).__member_list__
-    return members[(len(members) - 1) ^ self.index]
+    """
+    The inverse of a member is the member whose flags are its lows, the
+    flags of the class that built it that are low in it. 'NULL' combines
+    no flags and belongs to no class with flags, so it has no inverse.
+    """
+    if not self.__member_flags__:
+      info = """'NULL' combines no flags, and there is no universal
+      combination for it to invert to."""
+      raise ZeroDivisionError(textFmt(info))
+    return KeeFlagsMeta._findCombination(frozenset(self.lows))
+
+  def __int__(self) -> int:
+    """
+    'int(member)' gives the deprecated bit mask, with a
+    'DeprecatedPromise'; see '_readIndex'.
+    """
+    info = textFmt(_MASK)
+    DeprecatedPromise('worktoy.keenum.KeeFlags.__int__', info).warn()
+    return self.__member_index__
+
+  def __index__(self) -> int:
+    """
+    A member used as an index gives the deprecated bit mask, with a
+    'DeprecatedPromise'; see '_readIndex'.
+    """
+    info = textFmt(_MASK)
+    DeprecatedPromise('worktoy.keenum.KeeFlags.__index__', info).warn()
+    return self.__member_index__
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-  def __init__(self, index: int) -> None:
+  def __init__(self, highs: tuple, mask: int, kee: Any = None) -> None:
     """
-    The member of the bit mask 'index' stores its index, the names of its
-    high flags, its canonical name, its hash and its value as plain
-    attributes, with its class and name as '__field_owner__' and
-    '__field_name__'.
+    A member stores its high flags, its bit mask in the class building
+    it, its canonical name, the names of its flags, its hash and its
+    declaration as plain attributes. A flag, given its declaration, is
+    the combination of itself and takes the name of the declaration. The
+    value is settled by the metaclass through '_settleValue' once the
+    class has its flags.
     """
-    object.__setattr__(self, 'index', index)
-    highNames = [flag.name for flag in self.highs]
-    names = frozenset(highNames)
-    name = '_'.join(highNames) or 'NULL'
-    object.__setattr__(self, 'names', names)
+    if kee is None:
+      name = str.join('_', [flag.name for flag in highs]) or 'NULL'
+    else:
+      name = kee.name
+      highs = (self,)
     object.__setattr__(self, 'name', name)
+    object.__setattr__(self, 'kee', kee)
+    object.__setattr__(self, '__member_flags__', highs)
+    object.__setattr__(self, '__member_index__', mask)
+    object.__setattr__(self, '__member_owners__', [])
+    names = frozenset(flag.name for flag in highs)
+    object.__setattr__(self, 'names', names)
     object.__setattr__(self, '__member_hash__', hash(names))
     object.__setattr__(self, '__field_owner__', type(self))
     object.__setattr__(self, '__field_name__', name)
+
+  def _settleValue(self) -> None:
+    """
+    The metaclass reads the value once, after the class building the
+    member has all its flags, since a '_getValue' may read the lows.
+    """
     object.__setattr__(self, 'value', self._getValue())
+
+  def _addOwner(self, cls: type) -> None:
+    """
+    The metaclass records each flags class holding the member as it binds
+    it. The list is changed in place, which the frozen member allows,
+    since nothing is assigned.
+    """
+    self.__member_owners__.append(cls)

@@ -13,6 +13,7 @@ from worktoy.core import Object
 from worktoy.desc import AttriBox
 from worktoy.keenum import KeeBase, KeeNum, Kee
 from worktoy.utilities import typeCast
+from worktoy.waitaminute import DeprecatedPromise
 from worktoy.waitaminute.dispatch import TypeCastException
 from worktoy.waitaminute.keenum import KeeWriteOnceError
 from . import KeenumTest, WeekDay, Bag
@@ -34,13 +35,16 @@ class TestKeeBase(KeenumTest):
     self.assertIsInstance(member, KeeBase)
     self.assertNotIsInstance(member, Object)
     self.assertEqual(member.name, 'WEDNESDAY')
-    self.assertEqual(member.index, 2)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(member.index, 2)
     self.assertEqual(member.value, 'onsdag')
     self.assertIs(member.valueType, str)
     self.assertIs(member.kee, WeekDay.__namespace__.__enumeration_members__
                   ['WEDNESDAY'])
-    self.assertEqual(int(member), 2)
-    self.assertEqual(['a', 'b', 'c'][member], 'c')
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(int(member), 2)
+    with self.assertWarns(DeprecatedPromise):
+      self.assertEqual(['a', 'b', 'c'][member], 'c')
 
   def test_frozen(self) -> None:
     member = WeekDay.MONDAY
@@ -51,7 +55,7 @@ class TestKeeBase(KeenumTest):
     self.assertIs(exception.keeNum, WeekDay)
     self.assertEqual(exception.attribute, 'extra')
     self.assertIn("'extra'", str(exception))
-    self.assertIn("'WeekDay.MONDAY' in 'WeekDay'", str(exception))
+    self.assertIn("'%s' in 'WeekDay'" % member, str(exception))
     with self.assertRaises(KeeWriteOnceError) as context:
       del member.extra
     self.assertIs(context.exception.member, member)
@@ -84,12 +88,12 @@ class TestKeeBase(KeenumTest):
     with self.assertRaises(TypeError) as context:
       hash(Bag.FEW)
     self.assertIn('unhashable', str(context.exception))
-    self.assertIn("'Bag.FEW'", str(context.exception))
+    self.assertIn("'%s'" % Bag.FEW, str(context.exception))
     self.assertIsInstance(context.exception.__cause__, TypeError)
     with self.assertRaises(TypeError) as context:
       _ = {Bag.FEW: 1}
     self.assertIn('unhashable', str(context.exception))
-    self.assertIn("'Bag.FEW'", str(context.exception))
+    self.assertIn("'%s'" % Bag.FEW, str(context.exception))
 
   def test_copies_are_the_member(self) -> None:
     self.assertIs(copy.copy(WeekDay.FRIDAY), WeekDay.FRIDAY)
@@ -103,10 +107,25 @@ class TestKeeBase(KeenumTest):
         self.assertIs(pickle.loads(pickle.dumps(member)), member)
     self.assertIs(pickle.loads(pickle.dumps(Bag.SAME)), Bag.SAME)
 
-  def test_text(self) -> None:
-    self.assertEqual(str(WeekDay.SATURDAY), 'WeekDay.SATURDAY')
-    self.assertEqual(repr(WeekDay.SATURDAY), 'WeekDay.SATURDAY')
-    self.assertEqual('%s' % Bag.MANY, 'Bag.MANY')
+  def test_owners_and_text(self) -> None:
+    class Rgb(KeeNum):
+      RED = Kee[str]()
+
+    self.assertEqual(Rgb.RED.owners, (Rgb,))
+    self.assertEqual(str(Rgb.RED), '<Rgb>.RED')
+    self.assertEqual(repr(Rgb.RED), '<Rgb>.RED')
+
+    class Warm(Rgb):
+      ORANGE = Kee[str]()
+
+    class Hot(Rgb):
+      pass
+
+    self.assertEqual(Rgb.RED.owners, (Rgb, Warm, Hot))
+    self.assertEqual(Warm.ORANGE.owners, (Warm,))
+    self.assertEqual(str(Rgb.RED), '<KeeNum>.RED')
+    self.assertEqual('%s' % Warm.ORANGE, '<Warm>.ORANGE')
+    self.assertIs(type(Rgb.RED.owners), tuple)
 
   def test_placed_in_a_class_body(self) -> None:
     class Holder:
@@ -156,7 +175,7 @@ class TestKeeBase(KeenumTest):
     self.assertNotIn('__field_box__', Local.A.__dict__)
     self.assertNotIn('__field_name__', Local.A.__dict__)
     self.assertNotIn('__field_box__', Local.B.__dict__)
-    self.assertEqual(str(Local.A), 'Local.A')
+    self.assertEqual(str(Local.A), '<Local>.A')
     self.assertIs(pickle.loads(pickle.dumps(Local.A.name)), 'A')
 
   def test_random_members(self) -> None:
@@ -167,7 +186,7 @@ class TestKeeBase(KeenumTest):
     for index, word in enumerate(words):
       member = getattr(Local, word.upper())
       with self.subTest(word=word):
-        self.assertEqual(member.index, index)
+        self.assertIs(Local[index], member)
         self.assertEqual(member.value, word)
-        self.assertEqual(str(member), 'Local.%s' % word.upper())
+        self.assertEqual(str(member), '<Local>.%s' % word.upper())
         self.assertIs(copy.copy(member), member)

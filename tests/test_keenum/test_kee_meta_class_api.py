@@ -35,7 +35,7 @@ class TestKeeMetaClassApi(KeenumTest):
     self.assertIs(context.exception.member, WeekDay.MONDAY)
     self.assertIs(context.exception.keeNum, WeekDay)
     self.assertEqual(context.exception.attribute, 'MONDAY')
-    self.assertIn("'MONDAY' of member 'WeekDay.MONDAY' in 'WeekDay'",
+    self.assertIn("'MONDAY' of member '%s' in 'WeekDay'" % WeekDay.MONDAY,
                   str(context.exception))
     with self.assertRaises(KeeWriteOnceError) as context:
       del WeekDay.MONDAY
@@ -72,6 +72,22 @@ class TestKeeMetaClassApi(KeenumTest):
       pass
 
     self.assertNotIn(WeekDay.MONDAY, Empty)
+
+  def test_contains_member_of_subclass(self) -> None:
+    class Sub(WeekDay):
+      HOLIDAY = Kee[str]('fridag')
+
+    class Shape(KeeNum):
+      pass
+
+    class Polygon(Shape):
+      TRIANGLE = Kee[int](3)
+
+    self.assertIn(Sub.HOLIDAY, WeekDay)
+    self.assertIn(Polygon.TRIANGLE, Shape)
+    self.assertIn(Polygon.TRIANGLE, KeeNum)
+    self.assertNotIn(WeekDay.MONDAY, Shape)
+    self.assertNotIn('TRIANGLE', Shape)
 
   def test_instance_and_subclass_checks(self) -> None:
     class Sub(WeekDay):

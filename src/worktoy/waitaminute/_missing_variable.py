@@ -56,7 +56,8 @@ class MissingVariable(WorkToyException, AttributeError):
   ...   decorated = Decorate()
   ...   decorated()
   ... except MissingVariable as missingVariable:
-  ...   print(missingVariable)
+  ...   print(missingVariable.varName)
+  __wrapped__
   """
 
   __slots__ = ('instance', 'varName', 'expectedTypes')

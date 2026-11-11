@@ -10,12 +10,17 @@ from typing import TYPE_CHECKING, TypeVar
 from ..desc import Field, AttriBox
 from ..utilities import textFmt
 from ..waitaminute import VariableNotNone, MissingVariable, TypeException
+from ..waitaminute import DeprecatedPromise
 from ..waitaminute.keenum import KeeCaseException
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Self
 
 T = TypeVar('T')
+
+#  The description of the deprecation of the position of a 'Kee'.
+_POSITION = """The position belongs to the enumeration, not to the
+declaration of a member: 'Day[x]' gives the member at position 'x'."""
 
 
 class Kee(AttriBox[T]):
@@ -34,8 +39,10 @@ class Kee(AttriBox[T]):
       class attribute.
     - value: The value of the member. Values are not required to be
       unique across members of the same enumeration.
-    - index: The position of the member, equal to the number of members
-      declared before it.
+    - index: Deprecated. The position of the member, equal to the number
+      of members declared before it; reading or writing it, and
+      'int(kee)', give a 'DeprecatedPromise', since the position belongs
+      to the enumeration.
 
   'Kee' may be used directly or further subclassed. KeeNum classes are
   created by the KeeMeta metaclass, which defines class-level behavior;
@@ -69,7 +76,11 @@ class Kee(AttriBox[T]):
     'AttriBox' lazy instantiation mechanism, building it from the captured
     constructor arguments on first access and type-checking it thereafter.
     A flag beside the value records that it was built, since the value
-    itself may be 'None', as 'Kee[object](None)' declares. A value
+    itself may be 'None', as 'Kee[object](None)' declares. A 'Kee' of
+    'str', or of a subclass of it, declared with empty parentheses takes
+    its name as the value, 'RED = Kee[str]()' holding 'RED'; any other
+    type builds its value from empty parentheses as its constructor
+    does, so 'Kee[int]()' holds 0. A value
     written directly is honoured, built or not. The member reads the
     value once, as the enumeration is created, and keeps it, so a value
     written into the 'Kee' after that does not reach the member.
@@ -79,6 +90,11 @@ class Kee(AttriBox[T]):
         raise RecursionError
       args = self.getPosArgs()
       keyArgs = self.getKeyArgs()
+      if not args and not keyArgs and issubclass(self.getFieldType(), str):
+        #  This branch is reached by the following:
+        #  - A 'Kee' of a text type declared with empty parentheses, as
+        #    'RED = Kee[str]()', whose value is its name
+        args = (self._getName(),)
       self.__field_value__ = self._resolve(*args, **keyArgs)
       self.__value_built__ = True
       return self.getValue(_recursion=True)  # pragma: no mutate
@@ -97,8 +113,17 @@ class Kee(AttriBox[T]):
     raise TypeException('__num_name__', self.__num_name__, str)
 
   @index.GET
+  def _readIndex(self) -> int:
+    """
+    The public 'index' is deprecated: a read gives the position with a
+    'DeprecatedPromise' at the line that read it. The library reads it
+    through '_getIndex'.
+    """
+    DeprecatedPromise('worktoy.keenum.Kee.index', textFmt(_POSITION)).warn()
+    return self._getIndex()
+
   def _getIndex(self) -> int:
-    """Set by 'KeeSpace.addNum' when the enumeration is created."""
+    """Set by 'KeeMeta._createMembers' when the enumeration is created."""
     if self.__num_index__ is None:
       raise MissingVariable(self, '__num_index__', int)
     if isinstance(self.__num_index__, int):
@@ -123,6 +148,15 @@ class Kee(AttriBox[T]):
     self.__num_name__ = name
 
   @index.SET
+  def _writeIndex(self, index: int) -> None:
+    """
+    The public 'index' is deprecated: a write sets the position with a
+    'DeprecatedPromise' at the line that wrote it. The library writes it
+    through '_setIndex'.
+    """
+    DeprecatedPromise('worktoy.keenum.Kee.index', textFmt(_POSITION)).warn()
+    self._setIndex(index)
+
   def _setIndex(self, index: int) -> None:
     if not isinstance(index, int):
       raise TypeException('index', index, int)
@@ -156,7 +190,12 @@ class Kee(AttriBox[T]):
     raise TypeError(textFmt(info))
 
   def __int__(self, ) -> int:
-    return self.index
+    """
+    'int(kee)' gives the deprecated position, with a 'DeprecatedPromise'.
+    """
+    info = textFmt(_POSITION)
+    DeprecatedPromise('worktoy.keenum.Kee.__int__', info).warn()
+    return self._getIndex()
 
   def __reduce__(self) -> tuple:
     """
