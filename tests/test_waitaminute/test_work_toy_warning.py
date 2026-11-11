@@ -19,6 +19,9 @@ from worktoy.waitaminute import WorkToyWarning, RiskWarning, TypeException
 from . import WaitaminuteTest, Till, ShopRisk, ring
 
 HERE = sys._getframe().f_code.co_filename
+#  The name of this folder as a package: 'tests.test_waitaminute' under
+#  pytest, 'test_waitaminute' when 'unittest' discovers from 'tests'.
+HOME = __name__.rsplit('.', 1)[0]
 SHOP = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_shop')
 
 
@@ -181,11 +184,10 @@ class TestWorkToyWarning(WaitaminuteTest):
     self.assertEqual(nameOf(textFmt), 'worktoy.utilities.textFmt')
     self.assertEqual(nameOf(Arrangement.applyTo),
       'worktoy.utilities.combinatorics.Arrangement.applyTo')
-    self.assertEqual(nameOf(Till.recount),
-      'tests.test_waitaminute.Till.recount')
+    self.assertEqual(nameOf(Till.recount), '%s.Till.recount' % HOME)
     self.assertEqual(Till().recount(), 0)
     #  A placed descriptor is named after its owner and its field.
-    self.assertEqual(nameOf(Till.cash), 'tests.test_waitaminute.Till.cash')
+    self.assertEqual(nameOf(Till.cash), '%s.Till.cash' % HOME)
     #  Anything else is shown as it shows itself.
     self.assertEqual(nameOf(3), '3')
     self.assertEqual(nameOf(str.join), repr(str.join))

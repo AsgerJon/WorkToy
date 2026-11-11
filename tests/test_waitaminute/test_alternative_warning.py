@@ -12,6 +12,9 @@ from worktoy.waitaminute import WorkToyWarning, AlternativeWarning
 from . import WaitaminuteTest, Till
 
 HERE = sys._getframe().f_code.co_filename
+#  The name of this folder as a package: 'tests.test_waitaminute' under
+#  pytest, 'test_waitaminute' when 'unittest' discovers from 'tests'.
+HOME = __name__.rsplit('.', 1)[0]
 
 
 class TestAlternativeWarning(WaitaminuteTest):
@@ -35,9 +38,9 @@ class TestAlternativeWarning(WaitaminuteTest):
     self.assertIs(warning.behaviour, Till.recount)
     self.assertIs(warning.alternative, Till.cash)
     self.assertEqual(warning.reason, reason)
-    expected = """Although 'tests.test_waitaminute.Till.recount' is
-    promised to function, use 'tests.test_waitaminute.Till.cash'
-    instead, because the till already keeps the sum!"""
+    expected = """Although '%s.Till.recount' is promised to function,
+    use '%s.Till.cash' instead, because the till already keeps the
+    sum!""" % (HOME, HOME)
     self.assertEqual(str(warning), str.join(' ', expected.split()))
     self.assertEqual(repr(warning), str(warning))
 

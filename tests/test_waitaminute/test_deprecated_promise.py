@@ -13,6 +13,9 @@ from worktoy.waitaminute import WorkToyWarning, DeprecatedPromise
 from . import WaitaminuteTest, Till
 
 HERE = sys._getframe().f_code.co_filename
+#  The name of this folder as a package: 'tests.test_waitaminute' under
+#  pytest, 'test_waitaminute' when 'unittest' discovers from 'tests'.
+HOME = __name__.rsplit('.', 1)[0]
 
 
 class TestDeprecatedPromise(WaitaminuteTest):
@@ -37,9 +40,9 @@ class TestDeprecatedPromise(WaitaminuteTest):
     warning = DeprecatedPromise(Till.recount, info)
     self.assertIs(warning.feature, Till.recount)
     self.assertEqual(warning.description, info)
-    expected = """Deprecation alert: 'tests.test_waitaminute.Till.recount'
-    is no longer a promised feature beginning with the next major
-    update. Use 'Till.cash' instead."""
+    expected = """Deprecation alert: '%s.Till.recount' is no longer a
+    promised feature beginning with the next major update. Use
+    'Till.cash' instead.""" % HOME
     self.assertEqual(str(warning), str.join(' ', expected.split()))
     self.assertEqual(repr(warning), str(warning))
 
