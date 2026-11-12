@@ -34,21 +34,22 @@ class TestBaseTest(WorkTestTest):
   """
   'BaseTest' is the base every test of the suite is based on: six
   samplers of its own per test, 'subTest' recording every block and
-  'tearDown' failing the test once with every record, the common
+  the report failing the test once with every record, the common
   exceptions, a report of arguments, and the subclass assertions on
   every Python supported. The tests pin the samplers as per-instance
   boxes, the seeding of all six and its refusal before any is seeded,
   the exceptions, the report with its cut and its two keywords, the
-  assertions in both directions, the verdicts of 'tearDown' as a
+  assertions in both directions, the verdicts of the report as a
   plain 'unittest.TestResult' records them for a case built for it, and
   'tearDownClass' unloading the module of a test class after its tests.
   """
 
   def test_shape(self) -> None:
     self.assertIsSubclass(BaseTest, TestCase)
-    self.assertIs(type(BaseTest), BaseMeta)
+    self.assertIsInstance(BaseTest, BaseMeta)
     self.assertIn('tearDownClass', vars(BaseTest))
-    self.assertIn('tearDown', vars(BaseTest))
+    self.assertIn('_reportSubTests', vars(BaseTest))
+    self.assertNotIn('tearDown', vars(BaseTest))
     for name, _ in SAMPLERS:
       with self.subTest(name=name):
         self.assertIsInstance(BaseTest.__dict__[name], AttriBox)
@@ -146,7 +147,7 @@ class TestBaseTest(WorkTestTest):
     with self.assertRaises(AssertionError):
       self.assertIsNotSubclass(bool, int)
 
-  def test_tear_down_verdicts(self) -> None:
+  def test_report_verdicts(self) -> None:
     class Case(BaseTest):
       def test_pass(self) -> None:
         with self.subTest(x=1):
@@ -223,16 +224,16 @@ class TestBaseTest(WorkTestTest):
         unittest.TestResult())
     self.assertIsNone(ref())
 
-  def test_tear_down_builds_no_accumulator(self) -> None:
+  def test_report_builds_no_accumulator(self) -> None:
     class Case(BaseTest):
       def test_nothing(self) -> None:
-        """Never runs: the case is built for its tearDown alone."""
+        """Never runs: the case is built for its report alone."""
 
     case = Case('test_nothing')
-    case.tearDown()
+    case._reportSubTests()
     self.assertNotIn('__sub_test__', case.__dict__)
     _ = case.subTest
-    case.tearDown()
+    case._reportSubTests()
     self.assertIn('__sub_test__', case.__dict__)
 
   def test_format_raised(self) -> None:

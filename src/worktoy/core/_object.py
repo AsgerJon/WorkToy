@@ -103,12 +103,13 @@ class Object(metaclass=MetaType):
   Implementation
   --------------
 
-  Each 'Object' keeps a stack of '(instance, owner)' frames in
-  '__call_chain__'. '__get__', '__set__' and '__delete__' push a frame,
-  call 'hookPreGet', 'hookOnGet', 'hookPreSet', 'hookOnSet',
-  'hookPreDelete' or 'hookOnDelete' around '__instance_get__',
-  '__instance_set__' or '__instance_delete__', and pop the frame in a
-  'finally' block. 'self.instance' and 'self.owner' read the top frame.
+  Each 'Object' has a stack of '(instance, owner)' frames in each thread,
+  of which '__call_chain__' gives a copy. '__get__', '__set__' and
+  '__delete__' push a frame, call 'hookPreGet', 'hookOnGet',
+  'hookPreSet', 'hookOnSet', 'hookPreDelete' or 'hookOnDelete' around
+  '__instance_get__', '__instance_set__' or '__instance_delete__', and
+  pop the frame in a 'finally' block. 'self.instance' and 'self.owner'
+  read the top frame.
   The constructor keeps its arguments, which 'getPosArgs' and
   'getKeyArgs' return with 'THIS', 'OWNER' and 'DESC' replaced. The
   defaults of the three '__instance_*__' methods return the descriptor,
@@ -901,7 +902,8 @@ class Object(metaclass=MetaType):
   def _deletedGuard(self, instance: Any, value: Any, ) -> Any:
     if value is DELETED:
       if self.__field_name__ is None:
-        raise MissingVariable(instance, '__field_name__', str)
+        #  The descriptor is the one without a name, not the instance.
+        raise MissingVariable(self, '__field_name__', str)
       raise MissingVariable(instance, self.__field_name__, object)
     return value
 

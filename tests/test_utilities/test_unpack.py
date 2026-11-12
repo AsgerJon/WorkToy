@@ -5,9 +5,13 @@ TestUnpack tests 'unpack' from 'worktoy.utilities'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import sys
+
 from worktoy.utilities import unpack
-from worktoy.waitaminute import UnpackException
+from worktoy.waitaminute import UnpackException, RedundantKeyword
 from . import UtilitiesTest, Refusing
+
+HERE = sys._getframe().f_code.co_filename
 
 
 class TestUnpack(UtilitiesTest):
@@ -17,7 +21,8 @@ class TestUnpack(UtilitiesTest):
   in any nesting of lists and tuples alike. Text stays whole, an object
   that claims to iterate and refuses stays whole, a container holding
   itself stays whole, and the strict default refuses a call in which
-  nothing iterated. The tests pin each of these and the shallow mode.
+  nothing iterated. The tests pin each of these, the shallow mode, and
+  the warning given for a keyword that is no option.
   """
 
   def test_docstring_examples(self) -> None:
@@ -43,7 +48,7 @@ class TestUnpack(UtilitiesTest):
     with self.assertRaises(UnpackException) as context:
       unpack('abc')
     self.assertEqual(context.exception.posArgs, ('abc',))
-    self.assertIn('from:\n  abc\n', str(context.exception))
+    self.assertIn("from:\n  'abc'\n", str(context.exception))
     self.assertEqual(unpack('abc', strict=False), ('abc',))
     out = unpack(b'ab', bytearray(b'c'), [0])
     self.assertEqual(out, (b'ab', bytearray(b'c'), 0))
@@ -95,3 +100,22 @@ class TestUnpack(UtilitiesTest):
   def test_result_is_tuple(self) -> None:
     self.assertIs(type(unpack([1])), tuple)
     self.assertIs(type(unpack(1, strict=False)), tuple)
+
+  def test_unknown_keyword_warned(self) -> None:
+    expected = """'worktoy.utilities.unpack' received the keyword
+    'shalow', which it does not read, and went on without it! It reads:
+    'shallow', 'strict'."""
+    with self.assertWarns(RedundantKeyword) as context:
+      line = sys._getframe().f_lineno + 1
+      items = unpack([1, [2, 3]], shalow=True)
+    self.assertEqual(items, (1, 2, 3))
+    warning = context.warning
+    self.assertIs(warning.receiver, unpack)
+    self.assertEqual(warning.keyword, 'shalow')
+    self.assertEqual(warning.options, ('shallow', 'strict'))
+    self.assertEqual(str(warning), str.join(' ', expected.split()))
+    self.assertEqual(context.filename, HERE)
+    self.assertEqual(context.lineno, line)
+    with self.assertWarns(RedundantKeyword):
+      items = unpack(shalow=True, strict=False)
+    self.assertEqual(items, ())

@@ -57,13 +57,13 @@ class TestKeeMetaResolve(KeenumTest):
       Shade[99]
     self.assertIs(context.exception.keeNum, Shade)
     self.assertEqual(context.exception.identifier, 99)
-    self.assertIn("'Shade' could not resolve the identifier '99'",
+    self.assertIn("'Shade' could not resolve the identifier 99",
                   str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       Shade(2)
     self.assertIs(context.exception.keeNum, Shade)
     self.assertEqual(context.exception.identifier, 2)
-    self.assertIn("the identifier '2'", str(context.exception))
+    self.assertIn('the identifier 2 to', str(context.exception))
 
   def test_bool_is_no_identifier_of_ints(self) -> None:
     class Bits(KeeNum):
@@ -74,13 +74,13 @@ class TestKeeMetaResolve(KeenumTest):
       Bits(True)
     self.assertIs(context.exception.keeNum, Bits)
     self.assertIs(context.exception.identifier, True)
-    self.assertIn("'Bits' could not resolve the identifier 'True'",
+    self.assertIn("'Bits' could not resolve the identifier True",
                   str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       Bits[False]
     self.assertIs(context.exception.keeNum, Bits)
     self.assertIs(context.exception.identifier, False)
-    self.assertIn("the identifier 'False'", str(context.exception))
+    self.assertIn('the identifier False to', str(context.exception))
     self.assertIs(Bits._resolveFromValue(True, int), NotImplemented)
     self.assertIs(Bits(0), Bits.ZERO)
     self.assertIs(Bits[1], Bits.ONE)
@@ -93,7 +93,7 @@ class TestKeeMetaResolve(KeenumTest):
       Shade(0.5)
     self.assertIs(context.exception.keeNum, Shade)
     self.assertEqual(context.exception.identifier, 0.5)
-    self.assertIn("'Shade' could not resolve the identifier '0.5'",
+    self.assertIn("'Shade' could not resolve the identifier 0.5",
                   str(context.exception))
     self.assertIs(Shade('mid'), Shade.MID)
     self.assertIs(Shade.__class_resolve__(0.5), NotImplemented)
@@ -127,7 +127,7 @@ class TestKeeMetaResolve(KeenumTest):
       Hashed([1])
     self.assertIs(context.exception.keeNum, Hashed)
     self.assertEqual(context.exception.identifier, [1])
-    self.assertIn("'Hashed' could not resolve the identifier '[1]'",
+    self.assertIn("'Hashed' could not resolve the identifier [1]",
                   str(context.exception))
     self.assertIs(Hashed(2), Hashed.B)
 
@@ -145,12 +145,12 @@ class TestKeeMetaResolve(KeenumTest):
       Empty[0]
     self.assertIs(context.exception.keeNum, Empty)
     self.assertEqual(context.exception.identifier, 0)
-    self.assertIn("the identifier '0'", str(context.exception))
+    self.assertIn('the identifier 0 to', str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       Empty.fromValue(1)
     self.assertIs(context.exception.keeNum, Empty)
     self.assertEqual(context.exception.identifier, 1)
-    self.assertIn("the identifier '1'", str(context.exception))
+    self.assertIn('the identifier 1 to', str(context.exception))
 
   def test_call_takes_one_identifier(self) -> None:
     spec = 'WeekDay() takes exactly one argument, the identifier of a '
@@ -201,11 +201,11 @@ class TestKeeMetaResolve(KeenumTest):
       _ = Shade[True]
     self.assertIs(context.exception.keeNum, Shade)
     self.assertIs(context.exception.identifier, True)
-    self.assertIn("'Shade' could not resolve the identifier 'True'",
+    self.assertIn("'Shade' could not resolve the identifier True",
                   str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       _ = Shade[False]
     self.assertIs(context.exception.keeNum, Shade)
     self.assertIs(context.exception.identifier, False)
-    self.assertIn("the identifier 'False'", str(context.exception))
+    self.assertIn('the identifier False to', str(context.exception))
     self.assertIs(Shade[1], Shade.MID)

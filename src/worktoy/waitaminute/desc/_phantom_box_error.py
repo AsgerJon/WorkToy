@@ -1,6 +1,7 @@
 """
 PhantomBoxError is raised when a class-body subscript produced a type
-alias instead of a box, and the resulting attribute is read.
+alias instead of a box: when the alias is called, when it is bound in a
+class body, and when an attribute holding it is read.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen

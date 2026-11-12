@@ -69,6 +69,14 @@ class TestEZSpace(EzdataTest):
         self.assertIs(context.exception.space, space)
         self.assertIn("EZData class 'B', the name '%s' is reserved" % name,
                       str(context.exception))
+    #  The text passes through 'textFmt', as every message does: a run
+    #  of spaces in a quoted name comes out as one.
+    space = EZSpace(EZMeta, 'Wide  Gap', ())
+    with self.assertRaises(ReservedFieldError) as context:
+      space.registerEZField('asDict', EZField[int](1))
+    self.assertIn("EZData class 'Wide Gap', the name 'asDict' is reserved",
+                  str(context.exception))
+    self.assertEqual(context.exception.msg, str(context.exception))
 
   def test_duplicate_field_refused(self) -> None:
     with self.assertRaises(DuplicateError) as context:

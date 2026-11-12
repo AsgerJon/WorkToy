@@ -17,6 +17,15 @@ def textFmt(*args, **kwargs) -> str:
   of a '<br>', then expands '<br>' to a newline and '<tab>' to
   one indentation step.
 
+  The whole text is treated alike, a value written into it before the
+  call included: 'textFmt(spec % value)' collapses the whitespace
+  inside 'value' and expands a '<br>' or '<tab>' found in it. Every
+  exception and warning in 'worktoy.waitaminute' words its message
+  that way, so a value quoted in a message is shown tidied, not as it
+  is. The texts '{{NEWLINE}}' and '{{TAB}}' are reserved: they stand
+  in for the two tokens while the whitespace is collapsed, and a text
+  that already holds them has them replaced as the tokens are.
+
   Parameters
   ----------
   *args : Any
@@ -40,6 +49,12 @@ def textFmt(*args, **kwargs) -> str:
       The formatted string. Empty if no non-empty arguments were
       provided.
 
+  Warns
+  -----
+  RedundantKeyword
+      If a keyword other than the four above is given, such as a
+      misspelled one. The keyword is not read.
+
   Examples
   --------
   >>> textFmt('many    spaces   here')
@@ -48,6 +63,11 @@ def textFmt(*args, **kwargs) -> str:
   paragraph
     indented line
   """
+  options = ('newLineToken', 'tabToken', 'newLineSymbol', 'indentSymbol')
+  for key in kwargs:
+    if key not in options:
+      from ..waitaminute import RedundantKeyword
+      RedundantKeyword(textFmt, key, *options).warn()
   if not args:
     return ''
   words = []

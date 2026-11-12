@@ -4,6 +4,237 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
+## [1.2.0] - 2026 November 12
+
+This release was rushed. It was moved up to this day because of a silent
+defect in `BaseTest`: a test could be counted as passed while one of its
+`subTest` blocks had failed. The defect is in 1.0.0 and 1.1.0 as well,
+and it was found on 12 November, while the whole source was read against
+its documentation. The same read turned up the other corrections of this
+release, none of them of that weight, and they are released with the fix
+together with the work that was finished since 1.1.0. Rushed does not
+mean unchecked: every change of behaviour was made test first, the suite
+passes with every statement and branch covered, and every line changed
+since the last development build was mutation tested, with two gaps in
+the tests found and closed that way.
+
+### A failed `subTest` block is reported whatever `tearDown` does
+
+`BaseTest` swallows what a `with self.subTest(...):` block raises and
+records it, so that the other blocks of the test still run, and fails
+the test afterwards with every record. That report ran in
+`BaseTest.tearDown`. A test class that defined a `tearDown` of its own
+without handing on to the base, which is the ordinary way to write one,
+since the `tearDown` of `unittest.TestCase` does nothing, never ran the
+report: a test with a failed block was counted as passed, and nothing
+said so. Plain `unittest` reports such a block.
+
+    class TestForgets(BaseTest):
+
+      def tearDown(self) -> None:
+        pass
+
+      def test_block(self) -> None:
+        with self.subTest(n=1):
+          self.assertEqual(1, 2)  # passed in 1.0.0 and 1.1.0
+
+The report now runs from `doCleanups`, which `unittest` calls after
+every test whatever the test class does in `tearDown`, and at the end of
+`debug`, which runs a test without collecting errors. `BaseTest` is
+built by a new metaclass, `TestMeta`, in a new namespace, `TestSpace`.
+The metaclass puts the library's own `doCleanups` and `debug` into every
+test class before its body runs, and the namespace refuses the line of a
+class body that binds either name, with `ReservedName`. A `tearDown` now
+runs to its end before the report; `BaseTest` no longer defines one, and
+a call of `BaseTest.tearDown` reaches `unittest.TestCase.tearDown`.
+
+After the update a test based on `BaseTest` that passed only because of
+this defect fails, with the labelled report of its blocks. A test class
+that defines `doCleanups`, or binds the name `debug`, a flag
+`debug = True` included, is refused when it is created.
+
+### worktoy warns
+
+`worktoy.waitaminute` holds a family of warnings beside the exceptions.
+`WorkToyWarning` is the common base, and its `warn` method is the one
+place a warning is given: it walks out of the library and gives the
+warning at the line the user wrote, so no call counts a `stacklevel`. A
+warning is given as an exception is raised, `RiskWarning('price',
+price, 'a till that pays the customer').warn()`, and like
+`TypeException` it is handed the things it is about and words the
+sentence itself. `DeprecatedPromise` is the deprecation notice, a
+`FutureWarning`, since Python hides a `DeprecationWarning` from
+everyone but the author of the file that runs. `RiskWarning` and
+`AlternativeWarning` say that something promised is risky, or has a
+better way beside it, and `RedundantKeyword` says that a function
+received a keyword it does not read. A project built upon worktoy gives
+warnings of its own by subclassing them in a package of its own, and
+the warning then lands on the line of that project's user.
+
+### A keyword a helper does not read is warned about
+
+`joinWords`, `unpack`, `textFmt`, `stringList`, `wordWrap` and
+`resolveMRO` take their options as keywords and read the names they
+know. A misspelled option, as in `joinWords('tea', 'coffee',
+seperator='or')`, was dropped without a word, and the helper ran on its
+default. Each of the six now gives a `RedundantKeyword` for a keyword
+that is none of its options, at the line of the caller, and goes on as
+before: the result of the call is unchanged.
+
+### A message shows a value by its `repr`
+
+Where a message of `worktoy.waitaminute` showed a value it mostly used
+`str`, inside quote marks of its own. The string `'12'`, the number `12`
+and a `Decimal` of 12 then read the same, and an empty string showed as
+nothing. A value now goes into a message by its `repr`, without quote
+marks around it, and a `repr` longer than 50 characters is cut:
+
+    Unable to cast value '12' to type 'int'!
+    Unable to cast value Decimal('12') to type 'int'!
+    Unable to cast value '' to type 'int'!
+
+Sixteen message classes changed, `TypeCastException`, `TypeException`,
+`ProtectedError`, `ReadOnlyError`, `WriteOnceError` and
+`KeeResolveError` among them; `TypeException` no longer doubles the
+quote marks of a string. Names keep their quote marks. The text of
+`WithoutException` and of `ReservedFieldError` passes through `textFmt`
+as every other message does, and the docstring of `textFmt` says what
+that does to a value quoted in a message: runs of whitespace in it are
+collapsed. A test that compares the text of a message may have to
+follow.
+
+### A `__cast_as__` hook may be an overloaded classmethod
+
+A class says how a value becomes one of its instances in a classmethod
+`__cast_as__`, and may write that hook once for each type it converts
+from, with `@classmethod` above `@overload(...)`. `typeCast` refused
+such a hook with `UnboundCastHook`, saying `@classmethod` was missing,
+because an overloaded name is held in the class as a `Dispatcher`. It
+takes the hook now; a value that none of the overloads accepts is
+refused with `TypeCastException`, as a value the hook answers with
+`NotImplemented` is, and an overloaded hook that is no classmethod is
+refused as before.
+
+### `typeCast` refuses a number of no family for `bool`
+
+The casts to `int` and `float` take the builtin numbers only and refuse
+a `Decimal` or a `Fraction`. The cast to `bool` took any number equal to
+0 or 1, so `typeCast(bool, Decimal(1))` gave `True`. It refuses such a
+number now, as the other casts do and as the written promise says.
+
+### An `EZData` field may be named `self` or `argCount`
+
+A field of one of those names could not be given by keyword: the
+generated `__init__` and `replace` failed with a `TypeError` about
+multiple values for an argument, since the name met a parameter of the
+generated code. Both names work now, as they do in `dataclasses`.
+
+### Smaller corrections
+
+- `ProtectedError` leaves the old value out of its message when it was
+  handed none. It said `with value: 'None'` before, whatever the value
+  was.
+- A control-flow signal class may not bind `args`, the one plain name
+  `Exception` holds as data; such a class carried state, which a signal
+  is not to do.
+- Reading a deleted value through a descriptor that was never placed on
+  a class names the descriptor as the one without a name, where it named
+  the instance read.
+- `EZField[OWNER]`, a sentinel as the field type, is refused in the
+  words of a field type, where the message spoke of an overload
+  signature.
+- Docstrings that said something other than the code were corrected:
+  where `Object` keeps its frames, which defaults of `AbstractMetaclass`
+  hand over with `super()`, the context of a `HookException`, what
+  `KeeFlag`, `Kee`, `KeeWriteOnceError` and `PhantomBoxError` cover,
+  when `hasCastRule` raises, `TypeException` on `None`, which draws of a
+  sampler are checked, when two `EZData` classes are congruent, and who
+  raises `SkipSet`.
+- Imports and type aliases that nothing used were removed.
+
+### A read through an `AttriBox` of a stored value builds no frame
+
+By far the most reads through an `AttriBox` are of a value already
+stored, through a box with no read callback. Such a read now returns the
+value without building the frame and running the hook phases, which
+nothing would use: about 0.2 microseconds where it took about 2.1,
+measured on a point with two float attributes on Python 3.15.2. The
+first read of an instance, a deleted value, a box with a read callback
+and a subclass that overrides a read hook take the full read as before,
+and every read gives the value it gave.
+
+### The enumerations answer from tables built once
+
+A member of a `KeeNum` or a `KeeFlags` class is found, hashed and
+combined from tables the class builds once. Measured on Python 3.15
+against 1.1.0: a member as a dictionary key is looked up in about 0.1
+microseconds where it took about 20, and `a ^ b` on two flags takes
+about 0.6 microseconds where it took about 220. A class of 16 flags is
+built in about a second; in 1.1.0 a class of 12 flags took about three.
+
+Breaking: a member of an enumeration is no longer an `Object`. No box
+tags a member, and a member bound in the body of another class is an
+ordinary class attribute, which an instance may shadow.
+
+### An enumeration may be based on several enumerations
+
+A `KeeNum` or `KeeFlags` class may list several enumerations as bases.
+It holds the very members of its bases; a member reached through two
+bases is one member, and two members under one name, or bases of
+different value types, are refused. `KeeFlags` is rebuilt the way
+`KeeNum` works: every member is a combination of flags, one member
+stands for each set of flags in the process, and the root `KeeFlags`
+builds `NULL`. Members carry `owners`, the classes holding them, and
+`Kee[str]()` takes the name of the member as its value.
+
+Breaking: the default `value` of a `KeeFlags` member, the identity of
+the members of a flags subclass, and `~NULL`, as listed below.
+
+### Promises taken back in `KeeFlags`
+
+Four things promised in 1.1.0 contradicted other promises and are no
+longer true. They are written up in `promises/confessions`.
+
+- The default `value` of a flags member was its bit mask. Equal members
+  of related flags classes held different values.
+- A flags subclass held members of its own for the flags of its base.
+  It holds the very members of its base now, as a `KeeNum` subclass
+  does; they were equal before and are the same object now.
+- `~` of `NULL` gave the member with every flag. `NULL` is one member
+  shared by every flags class and cannot say whose flags it lacks;
+  `~NULL` raises `ZeroDivisionError`.
+- An enumeration iterated in index order. It iterates in the order
+  declared, the members of its bases first.
+
+### Deprecated: `KeeBox`, `KeeFlag`, the `index` of a member, the old control-flow path
+
+Each works as it did through the 1.x releases, gives a
+`DeprecatedPromise` at the line that uses it, and is no longer promised
+from the next major update.
+
+- `KeeBox`. An `AttriBox` over the enumeration declares the same field.
+  The parentheses of a `KeeBox` read a lone number as a position while
+  assignment reads the same number as a value.
+- `KeeFlag`. Flags are declared with `Kee`, as the members of a `KeeNum`
+  are.
+- `index` on a member of `KeeNum` and of `KeeFlags`, and with it
+  `int(member)`, a member used as an index, and `Kee.index`. A member
+  is one object shared by its enumeration and every subclass of it, so
+  it can carry one index where two classes may hold it at two
+  positions. The position belongs to the class, which answers `Day[x]`.
+- The names of `worktoy.waitaminute.control_flow`. The signals live in
+  `worktoy.core.control_flow`, and `ControlClassError` in
+  `worktoy.waitaminute.meta`.
+
+### The promises of the library are written down
+
+The repository holds the promises of worktoy as tests, in `promises/`:
+389 of them, grouped by package, each class saying in its docstring what
+is promised and where the promise comes from. The four promises taken
+back are in `promises/confessions`, and the four that end at the next
+major update in `promises/deprecations`. `manual/` shows each package by
+example.
+
 ## [1.1.0] - 2026 November 7
 
 ### Descriptors and namespace hooks keep their state per thread

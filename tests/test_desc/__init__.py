@@ -18,6 +18,7 @@ Private, importable but not intended for public use:
 - Circle
 - Particle
 - Config
+- CountingBox
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -33,6 +34,7 @@ from ._shrunk import Shrunk
 from ._circle import Circle
 from ._particle import Particle
 from ._config import Config
+from ._counting_box import CountingBox
 
 __all__ = [
   'DescTest',

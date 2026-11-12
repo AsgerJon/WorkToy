@@ -15,7 +15,7 @@ from . import WaitaminuteTest
 class TestWaitaminutePackage(WaitaminuteTest):
   """
   The package exports the common base, six cross-cutting exceptions,
-  the common base of the warnings with the three warnings, and six
+  the common base of the warnings with the four warnings, and six
   subpackages, one per layer that raises. Every exported warning lists
   'WorkToyWarning' first and the builtin category it keeps second, as
   the exceptions do with theirs. Every exported exception
@@ -30,8 +30,8 @@ class TestWaitaminutePackage(WaitaminuteTest):
       'WorkToyException', 'TypeException', 'UncheckableType',
       'VariableNotNone', 'UnpackException', 'SubclassException',
       'MissingVariable', 'WorkToyWarning', 'DeprecatedPromise',
-      'RiskWarning', 'AlternativeWarning', 'desc', 'meta', 'dispatch',
-      'keenum', 'ezdata', 'control_flow',
+      'RiskWarning', 'AlternativeWarning', 'RedundantKeyword', 'desc',
+      'meta', 'dispatch', 'keenum', 'ezdata', 'control_flow',
     ]
     self.assertEqual(waitaminute.__all__, expected)
     for name in expected:
@@ -58,6 +58,7 @@ class TestWaitaminutePackage(WaitaminuteTest):
     builtins = {
       'DeprecatedPromise': FutureWarning, 'RiskWarning': RuntimeWarning,
       'AlternativeWarning': UserWarning,
+      'RedundantKeyword': UserWarning,
     }
     for name, builtin in builtins.items():
       with self.subTest(name=name):

@@ -16,7 +16,6 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import TypeAlias, Any, Iterator, Optional
 
   Values: TypeAlias = tuple[Any, ...]
-  MaybeValues: TypeAlias = Optional[Values]
   Indices: TypeAlias = tuple[int, ...]
   MaybeIndices: TypeAlias = Optional[Indices]
   Items: TypeAlias = tuple[T, ...]

@@ -6,14 +6,6 @@ index.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, TypeAlias
-
-  SlotInts: TypeAlias = dict[Any, tuple[int, ...]]
-  SlotMap: TypeAlias = dict[Any, int]
-
 _NO_MATCH = 'No assignment gives every slot a distinct index'
 
 

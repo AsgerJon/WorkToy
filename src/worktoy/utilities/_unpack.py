@@ -73,6 +73,12 @@ def unpack(*args, **kwargs) -> tuple[Any, ...]:
   UnpackException
       If 'strict' is True and no iterable was supplied.
 
+  Warns
+  -----
+  RedundantKeyword
+      If a keyword other than 'shallow' or 'strict' is given, such as a
+      misspelled one. The keyword is not read.
+
   Examples
   --------
   >>> unpack([1, 2], (3, [4, 5]))
@@ -82,6 +88,11 @@ def unpack(*args, **kwargs) -> tuple[Any, ...]:
   >>> unpack('abc', [1, 2])
   ('abc', 1, 2)
   """
+  options = ('shallow', 'strict')
+  for key in kwargs:
+    if key not in options:
+      from worktoy.waitaminute import RedundantKeyword
+      RedundantKeyword(unpack, key, *options).warn()
   if not args:
     if kwargs.get('strict', True):
       from worktoy.waitaminute import UnpackException

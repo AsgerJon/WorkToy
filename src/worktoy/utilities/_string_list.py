@@ -31,6 +31,12 @@ def stringList(*args: str, **kwargs) -> list[str]:
   TypeException
       If 'separator' is not a 'str', 'list', or 'tuple'.
 
+  Warns
+  -----
+  RedundantKeyword
+      If a keyword other than 'separator' is given, such as a misspelled
+      one. The keyword is not read.
+
   Examples
   --------
   >>> stringList('a, b, c')
@@ -38,6 +44,11 @@ def stringList(*args: str, **kwargs) -> list[str]:
   >>> stringList('a;b,c', separator=[',', ';'])
   ['a', 'b', 'c']
   """
+  options = ('separator',)
+  for key in kwargs:
+    if key not in options:
+      from ..waitaminute import RedundantKeyword
+      RedundantKeyword(stringList, key, *options).warn()
   sep = kwargs.get('separator', ', ')
   if isinstance(sep, str):
     out = []

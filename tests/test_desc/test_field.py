@@ -5,7 +5,7 @@ TestField tests 'Field' from 'worktoy.desc'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.desc import Field, AttriBox
+from worktoy.desc import Field
 from worktoy.dispatch import isFlex
 from worktoy.waitaminute import MissingVariable, TypeException
 from worktoy.waitaminute.desc import AccessError, ReadOnlyError
@@ -67,7 +67,7 @@ class TestField(DescTest):
     self.assertIs(context.exception.instance, circle)
     self.assertEqual(context.exception.newVal, 5.0)
     self.assertIn("'Circle.area'", str(context.exception))
-    self.assertIn("'5.0'", str(context.exception))
+    self.assertIn('new value: 5.0!', str(context.exception))
 
   def test_no_deleter_reports_old_value(self) -> None:
     circle = Circle()
@@ -77,7 +77,7 @@ class TestField(DescTest):
     self.assertIs(context.exception.instance, circle)
     self.assertIs(context.exception.desc, Circle.__dict__['area'])
     self.assertIn("'Circle.area'", str(context.exception))
-    self.assertIn("'3.0'", str(context.exception))
+    self.assertIn('with value: 3.0', str(context.exception))
 
   def test_deletion_survives_a_raising_getter(self) -> None:
     class Owner:
@@ -92,8 +92,8 @@ class TestField(DescTest):
     self.assertIsNone(context.exception.oldVal)
     self.assertIs(context.exception.desc, Owner.__dict__['f'])
     self.assertIsInstance(context.exception.instance, Owner)
-    self.assertIn("'Owner.f'", str(context.exception))
-    self.assertIn("'None'", str(context.exception))
+    expected = "Attempted to delete protected attribute 'Owner.f'"
+    self.assertEqual(str(context.exception), expected)
     with self.assertRaises(ValueError) as context:
       _ = Owner().f
     self.assertEqual(str(context.exception), 'not ready')

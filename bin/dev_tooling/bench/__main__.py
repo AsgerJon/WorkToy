@@ -1,11 +1,17 @@
-"""Entry point: run the cohort through every operation and print the
-ratio table. Invoke with './bench.sh' or 'python -m bench'.
+"""Entry point: run the benchmarks and print their tables. Invoke with
+'./bench.sh' or 'python -m bench', from 'bin/dev_tooling'.
+
+  python -m bench                 every benchmark
+  python -m bench dispatching     the named ones, in the order given
+  python -m bench --list          the names
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import importlib
 import os
+import platform
 import sys
 
 #  Put the src layout on the path before importing worktoy-backed
@@ -29,54 +35,43 @@ _SRC = os.path.join(_repoRoot(_HERE), 'src')
 if _SRC not in sys.path:
   sys.path.insert(0, _SRC)
 
-from bench._harness import measure, formatTable  # noqa: E402
-
-#  Label -> subject class name in 'bench._subjects'. Display order.
-COHORT = {
-  'plain'    : 'PlainPoint',
-  'slots'    : 'SlotsPoint',
-  'dataclass': 'DataPoint',
-  'ezdata'   : 'EZPoint',
-  'attribox' : 'BoxPoint',
-  'field'    : 'FieldPoint',
-  'fastbox'  : 'FastPoint',
+#  Name -> what it measures. Display and running order. Each name is a
+#  file of this folder with a 'run' function returning its tables.
+BENCHES = {
+  'points'      : 'a point of two attributes, seven ways',
+  'dispatching' : 'a call of an overloaded method',
+  'enumerations': 'members, flags and a field over an enumeration',
+  'creation'    : 'the class statement',
+  'startup'     : 'the import',
 }
 
-OPS = ('construct', 'read', 'write')
 
-#  Ratios are taken against the plainest hand-written class, matching
-#  the 'versus a normal Python class' framing.
-BASELINE = 'plain'
-
-
-def stmtFor(op: str) -> str:
-  """Return the timed statement for the given operation."""
-  return {
-    'construct': 'Cls(1.0, 2.0)',
-    'read'     : 'p.x',
-    'write'    : 'p.x = 1.0',
-  }[op]
+def _header() -> str:
+  """One line naming the library and the interpreter measured."""
+  import worktoy
+  return 'worktoy %s on Python %s' % (
+    worktoy.__version__, platform.python_version())
 
 
-def setupFor(clsName: str, op: str) -> str:
-  """Return the timeit setup: import the subject, and for read/write
-  build the instance the statement operates on."""
-  lines = ['from bench._subjects import %s as Cls' % clsName]
-  if op in ('read', 'write'):
-    lines.append('p = Cls(1.0, 2.0)')
-  return '\n'.join(lines)
-
-
-def main() -> int:
-  """Time every (implementation, operation) pair and print the table."""
-  cells = {}
-  for label, clsName in COHORT.items():
-    for op in OPS:
-      cells[(label, op)] = measure(stmtFor(op), setupFor(clsName, op))
-  rows = [*COHORT.keys()]
-  print(formatTable(rows, [*OPS], cells, BASELINE))
+def main(*names) -> int:
+  """Run the named benchmarks, every one when none is named."""
+  if '--list' in names:
+    for name, what in BENCHES.items():
+      print('%-13s %s' % (name, what))
+    return 0
+  unknown = [name for name in names if name not in BENCHES]
+  if unknown:
+    print('No benchmark named: %s' % ', '.join(unknown))
+    print('The names: %s' % ', '.join(BENCHES))
+    return 1
+  print(_header())
+  print()
+  for name in names or BENCHES:
+    module = importlib.import_module('bench.%s' % name)
+    print(module.run())
+    sys.stdout.flush()
   return 0
 
 
 if __name__ == '__main__':
-  sys.exit(main())
+  sys.exit(main(*sys.argv[1:]))

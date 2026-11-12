@@ -30,9 +30,9 @@ class VariableNotNone(WorkToyException, Exception):
     Exception.__init__(self, )
 
   def __str__(self, ) -> str:
-    infoSpec = """Unexpected value: '%s' at name '%s' expected to be 
+    infoSpec = """Unexpected value: %s at name '%s' expected to be 
     None!"""
-    valueStr = textFmt(str(self.value), )
+    valueStr = self._reprOf(self.value)
     name = self.name
     return textFmt(infoSpec % (valueStr, name), )
 

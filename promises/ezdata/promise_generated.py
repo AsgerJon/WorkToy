@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
-from worktoy.ezdata import EZData, EZField
+from worktoy.ezdata import EZData
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.ezdata import ExtraPositionalException
 from worktoy.waitaminute.ezdata import ExtraKeywordException

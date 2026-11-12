@@ -65,6 +65,16 @@ class TestExceptionMessages(UtilitiesTest):
     self.assertEqual(protected.oldVal, 'old')
     self.assertIn("'Owner.d'", str(protected))
     self.assertIn("'old'", str(protected))
+    expected = """Attempted to delete protected attribute 'Owner.d' with
+    value: 'old'"""
+    self.assertEqual(str(protected), str.join(' ', expected.split()))
+    self.assertEqual(repr(protected), str(protected))
+    #  Without the old value the message says nothing of a value.
+    unknown = ProtectedError(owner, desc)
+    self.assertIsNone(unknown.oldVal)
+    expected = "Attempted to delete protected attribute 'Owner.d'"
+    self.assertEqual(str(unknown), expected)
+    self.assertEqual(repr(unknown), str(unknown))
     readOnly = ReadOnlyError(owner, desc, 'new')
     self.assertIs(readOnly.instance, owner)
     self.assertIs(readOnly.desc, desc)

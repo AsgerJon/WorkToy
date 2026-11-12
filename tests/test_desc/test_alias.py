@@ -112,7 +112,7 @@ class TestAlias(DescTest):
     self.assertIs(context.exception.alias, alias)
     self.assertEqual(context.exception.realName, 'v')
     self.assertEqual(context.exception.found, 1)
-    self.assertIn("'Holder.a' stands for 'v', which holds '1'",
+    self.assertIn("'Holder.a' stands for 'v', which holds 1 of type 'int'",
                   str(context.exception))
     with self.assertRaises((NotADescriptor, RuntimeError)) as context:
       class Bad:

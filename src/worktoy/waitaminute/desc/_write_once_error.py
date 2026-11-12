@@ -40,12 +40,12 @@ class WriteOnceError(WorkToyException, TypeError):
 
   def __str__(self) -> str:
     infoSpec = """Attempted to overwrite write-once attribute at '%s.%s' 
-    having existing value: '%s' with new value: '%s'!"""
+    having existing value: %s with new value: %s!"""
     owner = getattr(self.desc, '__field_owner__', object())  # no __name__
     ownerName = getattr(owner, '__name__', 'Unknown')
     fieldName = getattr(self.desc, '__field_name__', 'Unknown')
-    oldStr = str(self.oldValue)
-    newStr = str(self.newValue)
+    oldStr = self._reprOf(self.oldValue)
+    newStr = self._reprOf(self.newValue)
     info = infoSpec % (ownerName, fieldName, oldStr, newStr)
     return textFmt(info)
 

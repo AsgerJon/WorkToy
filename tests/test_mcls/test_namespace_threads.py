@@ -15,7 +15,7 @@ from worktoy.mcls import BaseObject
 from . import MclsTest, SlowSpaceHook, SlowMeta
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, Callable
+  from typing import Callable
 
 #  Threads building classes at once, and class statements run by each.
 _THREADS = 8

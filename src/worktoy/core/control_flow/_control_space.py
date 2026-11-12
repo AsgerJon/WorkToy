@@ -34,10 +34,11 @@ class ControlSpace(dict):
 
   'MetaFlow.__prepare__' creates the namespace. '__setitem__' admits the
   names in '__white_list__' ('__str__', '__repr__' and the names the
-  interpreter writes, such as '__classcell__'), and any name 'Exception'
-  holds as an attribute that is not callable, such as '__module__',
-  '__qualname__' and '__doc__'. Every other name raises
-  'ControlClassError'. The body of the root signal, declared with
+  interpreter writes, such as '__classcell__'), and any dunder name
+  'Exception' holds as an attribute that is not callable, such as
+  '__module__', '__qualname__' and '__doc__'. Every other name raises
+  'ControlClassError', 'args' among them, which 'Exception' holds as
+  data and which would be state. The body of the root signal, declared with
   '_root=True', is not checked. 'MetaType' writes '__namespace__' into
   the class past '__setitem__', as for every class it builds.
 
@@ -92,5 +93,9 @@ class ControlSpace(dict):
         raise ControlClassError(self, key)
       else:
         if callable(existing):
+          raise ControlClassError(self, key)
+        if not (key.startswith('__') and key.endswith('__')):
+          #  This branch is reached by the following:
+          #  - 'args', the one plain name 'Exception' holds as data
           raise ControlClassError(self, key)
     return dict.__setitem__(self, key, value)

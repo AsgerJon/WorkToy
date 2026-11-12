@@ -18,8 +18,10 @@ promised. 'WorkToyWarning' is their common base and the one place a
 warning is given, at the line the user wrote. 'DeprecatedPromise' is
 the deprecation notice, a 'FutureWarning'; 'RiskWarning' and
 'AlternativeWarning' say that something promised is risky, or has a
-better way beside it. All four are offered to the projects built upon
-'worktoy', which give warnings of their own through them.
+better way beside it; 'RedundantKeyword' says that a function received
+a keyword it does not read and went on without it. All five are
+offered to the projects built upon 'worktoy', which give warnings of
+their own through them.
 
 The 'control_flow' subpackage is a thin re-export kept for the 1.x
 releases: the control-flow signals moved to 'worktoy.core.control_flow',
@@ -41,6 +43,7 @@ from ._work_toy_warning import WorkToyWarning
 from ._deprecated_promise import DeprecatedPromise
 from ._risk_warning import RiskWarning
 from ._alternative_warning import AlternativeWarning
+from ._redundant_keyword import RedundantKeyword
 from . import desc
 from . import meta
 from . import dispatch
@@ -60,6 +63,7 @@ __all__ = [
   'DeprecatedPromise',
   'RiskWarning',
   'AlternativeWarning',
+  'RedundantKeyword',
   'desc',
   'meta',
   'dispatch',

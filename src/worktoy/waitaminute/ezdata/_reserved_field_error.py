@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import textFmt
 from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
@@ -51,6 +52,7 @@ class ReservedFieldError(WorkToyException, SyntaxError):
     reserved = ', '.join(
         repr(n) for n in self.space.__reserved_ez_names__
     )
-    return infoSpec % (clsName, self.fieldName, reserved)
+    info = infoSpec % (clsName, self.fieldName, reserved)
+    return textFmt(info)
 
   __repr__ = __str__

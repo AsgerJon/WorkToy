@@ -6,9 +6,13 @@ TestTextFmt tests 'textFmt' from 'worktoy.utilities'.
 from __future__ import annotations
 
 import os
+import sys
 
 from worktoy.utilities import textFmt
+from worktoy.waitaminute import RedundantKeyword
 from . import UtilitiesTest
+
+HERE = sys._getframe().f_code.co_filename
 
 
 class TestTextFmt(UtilitiesTest):
@@ -17,8 +21,9 @@ class TestTextFmt(UtilitiesTest):
   literal and still come out as one line, with '<br>' and '<tab>' the
   only way to ask for a line break or an indent. The tests pin the
   collapse of whitespace, the two tokens, the spaces dropped next to a
-  break, the custom tokens and symbols, and what becomes of arguments
-  that are empty or no strings.
+  break, the custom tokens and symbols, what becomes of arguments that
+  are empty or no strings, and the warning given for a keyword that is
+  no option.
   """
 
   def test_no_arguments(self) -> None:
@@ -66,3 +71,23 @@ class TestTextFmt(UtilitiesTest):
 
   def test_default_tokens_literal_under_custom(self) -> None:
     self.assertEqual(textFmt('a<br>b', newLineToken='|'), 'a<br>b')
+
+  def test_unknown_keyword_warned(self) -> None:
+    expected = """'worktoy.utilities.textFmt' received the keyword
+    'newLineTokn', which it does not read, and went on without it! It
+    reads: 'newLineToken', 'tabToken', 'newLineSymbol', 'indentSymbol'."""
+    options = ('newLineToken', 'tabToken', 'newLineSymbol', 'indentSymbol')
+    with self.assertWarns(RedundantKeyword) as context:
+      line = sys._getframe().f_lineno + 1
+      text = textFmt('a<br>b', newLineTokn='|')
+    self.assertEqual(text, 'a%sb' % os.linesep)
+    warning = context.warning
+    self.assertIs(warning.receiver, textFmt)
+    self.assertEqual(warning.keyword, 'newLineTokn')
+    self.assertEqual(warning.options, options)
+    self.assertEqual(str(warning), str.join(' ', expected.split()))
+    self.assertEqual(context.filename, HERE)
+    self.assertEqual(context.lineno, line)
+    with self.assertWarns(RedundantKeyword):
+      text = textFmt(newLineTokn='|')
+    self.assertEqual(text, '')

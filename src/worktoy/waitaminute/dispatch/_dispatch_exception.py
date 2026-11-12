@@ -15,7 +15,6 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Optional, TypeAlias, Union
 
   Args: TypeAlias = tuple[Any, ...]
-  Excs: TypeAlias = tuple[Exception, ...]
 
   from worktoy.dispatch import Dispatcher
   from worktoy.dispatch import overload
@@ -65,7 +64,7 @@ class DispatchException(WorkToyException, TypeError):
     owner = self.dispatch.__field_owner__
     name = '%s.%s' % (owner.__name__, self.dispatch.__field_name__)
     received = '<br><tab><tab>'.join(
-        '<%s %s>' % (type(a).__name__, repr(a)) for a in self.posArgs
+        '<%s %s>' % (type(a).__name__, self._reprOf(a)) for a in self.posArgs
     ) or '(none)'
     argSig = str(TypeSig.fromArgs(*self.posArgs))
     #  A variadic declaration shows as itself, not as the concrete

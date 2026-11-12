@@ -91,10 +91,11 @@ class TestObjectRead(CoreTest):
     self.assertIs(desc._deletedGuard(target, agreeable), agreeable)
     with self.assertRaises(MissingVariable) as context:
       desc._deletedGuard(target, DELETED)
+    #  It is the descriptor that lacks a name, not the instance read.
     self.assertEqual(context.exception.varName, '__field_name__')
-    self.assertIs(context.exception.instance, target)
+    self.assertIs(context.exception.instance, desc)
     self.assertEqual(context.exception.expectedTypes, (str,))
-    self.assertIn("'object.__field_name__: str'", str(context.exception))
+    self.assertIn("'Object.__field_name__: str'", str(context.exception))
     desc.__set_name__(object, 'named')
     with self.assertRaises(MissingVariable) as context:
       desc._deletedGuard(target, DELETED)

@@ -89,6 +89,7 @@ class TestKeeFlag(KeenumTest):
     self.assertEqual(read.name, 'READ')
     self.assertEqual(read.index, 0)
     self.assertEqual(int(read), 0)
+    self.assertEqual(['first', 'second'][read], 'first')
     self.assertEqual(['a', 'b', 'c'][Local.EXEC.kee], 'c')
     self.assertEqual(str(read), 'Local.READ [0]')
     self.assertEqual(repr(read), 'Local.READ [0]: KeeFlag()')

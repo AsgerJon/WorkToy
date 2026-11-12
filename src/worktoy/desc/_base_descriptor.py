@@ -19,9 +19,7 @@ T = TypeVar('T', )
 F = TypeVar('F', bound=Callable[..., Any])
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import TypeAlias, Self, Union, Optional
-
-  Keys: TypeAlias = tuple[str, ...]
+  from typing import Self, Union, Optional
 
 
 class BaseDescriptor(Object, Generic[T]):

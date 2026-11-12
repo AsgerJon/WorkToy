@@ -28,8 +28,9 @@ class SubTest(TestCase):
   block at its first failure and reports each block to the runner;
   'SubTest' instead swallows what a block raises, records it with the
   block's label, lets the test method run to its end, and leaves it to
-  'BaseTest.tearDown' to fail the test once with every record and its
-  traceback. 'BaseTest' hosts it as the 'subTest' descriptor, so a test
+  'BaseTest', among the cleanups of the test, to fail the test once with
+  every record and its traceback, whatever the test class does in
+  'tearDown'. 'BaseTest' hosts it as the 'subTest' descriptor, so a test
   writes 'with self.subTest(target=x):' as it would with 'unittest'.
 
   Implementation
@@ -50,7 +51,7 @@ class SubTest(TestCase):
   'fails', 'errors' and 'passed' are tuples, 'failLabels' and
   'errorLabels' the labels alongside the first two, 'current' the
   chained label of the block in progress, and the sub-test is true
-  when anything failed or errored. 'BaseTest.tearDown' reads the
+  when anything failed or errored. 'BaseTest._reportSubTests' reads the
   records through the descriptor without building one.
   """
 

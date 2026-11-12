@@ -54,14 +54,99 @@ def measure(stmt: str, setup: str, **kwargs) -> float:
   return best / number
 
 
+def measureOnce(stmt: str, setup: str, **kwargs) -> float:
+  """Return the time in seconds of one execution of 'stmt', for work
+  that cannot be repeated in a loop, such as building a class whose
+  parts the library keeps for the life of the process.
+
+  The setup runs afresh before every execution, and the minimum is
+  kept, as in 'measure'.
+
+  Parameters
+  ----------
+  stmt : str
+      The operation to time, executed once after each setup.
+  setup : str
+      Code run before every execution.
+  **kwargs
+      repeat : int, optional
+          Number of executions; the minimum is kept. Defaults to 5.
+
+  Returns
+  -------
+  float
+      Best-case seconds for a single execution of 'stmt'.
+  """
+  repeat = kwargs.get('repeat', 5)
+  return min(Timer(stmt, setup).repeat(repeat, 1))
+
+
+def formatTime(seconds: float) -> str:
+  """Render a time in the unit that keeps it readable: nanoseconds
+  below a microsecond, microseconds below a millisecond, else
+  milliseconds."""
+  if seconds < 1e-6:
+    return '%8.1f ns' % (seconds * 1e9)
+  if seconds < 1e-3:
+    return '%8.2f us' % (seconds * 1e6)
+  return '%8.2f ms' % (seconds * 1e3)
+
+
+def runGrid(title: str, rows: list, cols: list, baseline: str,
+    **kwargs) -> str:
+  """Time a grid of statements and render it under a title.
+
+  Parameters
+  ----------
+  title : str
+      The heading printed above the table.
+  rows : list
+      One '(label, setup, stmts)' per implementation, where 'stmts'
+      maps a column name to the statement timed for it. A column a row
+      leaves out stays blank. Rows sharing a label are one row of the
+      table, which is how a row gets a setup of its own for a column.
+  cols : list of str
+      Column names, in display order.
+  baseline : str
+      The row label every ratio is taken against.
+  **kwargs
+      once : bool, optional
+          Time each statement with 'measureOnce' instead of 'measure'.
+          Defaults to False.
+
+  Returns
+  -------
+  str
+      The title, an underline and the table.
+  """
+  once = kwargs.get('once', False)
+  cells = {}
+  for label, setup, stmts in rows:
+    for col in cols:
+      if col not in stmts:
+        continue
+      if once:
+        cells[(label, col)] = measureOnce(stmts[col], setup)
+      else:
+        cells[(label, col)] = measure(stmts[col], setup)
+  labels = []
+  for label, _, _ in rows:
+    if label not in labels:
+      labels.append(label)
+  table = formatTable(labels, cols, cells, baseline)
+  return '\n'.join([title, '=' * len(title), table, ''])
+
+
 def formatTable(
     rows: list[str], cols: list[str], cells: Cells,
     baseline: str
     ) -> str:
   """Render the timing grid as a fixed-width table.
 
-  Each cell shows nanoseconds and the ratio against the baseline row
-  for that column. The baseline row itself shows a ratio of 1.
+  Each cell shows the time and the ratio against the baseline row for
+  that column. The baseline row itself shows a ratio of 1. A cell that
+  was not measured stays blank, and a column the baseline row leaves
+  out shows times without ratios.
 
   Parameters
   ----------
@@ -80,7 +165,7 @@ def formatTable(
       The assembled, newline-joined table.
   """
   labelWidth = max(len(r) for r in [*rows, 'impl'])
-  cellWidth = 20
+  cellWidth = 22
   out = []
   header = 'impl'.ljust(labelWidth)
   for col in cols:
@@ -90,10 +175,15 @@ def formatTable(
   for row in rows:
     line = row.ljust(labelWidth)
     for col in cols:
+      if (row, col) not in cells:
+        line = '%s  %s' % (line, ''.center(cellWidth))
+        continue
       seconds = cells[(row, col)]
-      ratio = seconds / cells[(baseline, col)]
-      ns = seconds * 1e9
-      cell = '%8.1f ns  x%5.1f' % (ns, ratio)
+      if (baseline, col) in cells:
+        ratio = seconds / cells[(baseline, col)]
+        cell = '%s  x%6.1f' % (formatTime(seconds), ratio)
+      else:
+        cell = formatTime(seconds)
       line = '%s  %s' % (line, cell.center(cellWidth))
     out.append(line)
   out.append('')

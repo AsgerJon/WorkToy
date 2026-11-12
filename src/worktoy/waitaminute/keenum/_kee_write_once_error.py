@@ -1,6 +1,7 @@
 """
-KeeWriteOnceError is raised on an attempt to modify a 'KeeNum' member
-after initialization.
+KeeWriteOnceError is raised on an attempt to modify a member of a
+'KeeNum' or 'KeeFlags' class after initialization, or to rebind or
+delete the name of a member on the class.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -17,13 +18,14 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 class KeeWriteOnceError(WorkToyException, AttributeError):
   """
   KeeWriteOnceError provides a custom exception raised to indicate attempt
-  to modify a KeeNum enumeration member. All such members are write-once,
-  disallowing any and all modifications after initialization.
+  to modify a member of a 'KeeNum' enumeration or of a 'KeeFlags' class.
+  All such members are write-once, disallowing any and all modifications
+  after initialization. The same exception refuses rebinding or deleting
+  the name of a member on a class of either kind.
 
-  Note: Subclasses of Kee may implement 'value' with lazy evaluation,
-  setting it upon first access, after which it becomes immutable.
-  This implementation detail is invisible to KeeNum users; all
-  enumeration members appear strictly write-once.
+  Note: A member reads its 'value' from its declaration once, as it is
+  built, and nothing sets it at a later access; all enumeration members
+  are strictly write-once.
   """
 
   __slots__ = ('keeNum', 'member', 'attribute')

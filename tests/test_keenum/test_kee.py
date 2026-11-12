@@ -95,7 +95,8 @@ class TestKee(KeenumTest):
       kee.index = 4
     self.assertEqual(context.exception.name, 'index')
     self.assertEqual(context.exception.value, 3)
-    self.assertIn("'3' at name 'index'", str(context.exception))
+    self.assertIn("Unexpected value: 3 at name 'index'",
+                  str(context.exception))
 
   def test_empty_parentheses_take_the_name(self) -> None:
     class Tag(str):

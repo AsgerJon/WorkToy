@@ -74,7 +74,7 @@ class TestFastBoxDeclare(DescTest):
     self.assertIs(context.exception.type_, int)
     self.assertEqual(context.exception.arg, 1.5)
     self.assertEqual(str(context.exception),
-                     "Unable to cast value '1.5' to type 'int'!")
+                     "Unable to cast value 1.5 to type 'int'!")
     with self.assertRaises(TypeError) as context:
       FastBox[int](key=1)
     self.assertIn("'FastBox[int]' takes one value", str(context.exception))

@@ -11,14 +11,10 @@ from . import SpaceDesc
 from ...core import Object, MetaType
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, Callable, TypeAlias, Type, Union, Optional
+  from typing import Any, TypeAlias, Union, Optional
   from .. import AbstractMetaclass
   from .. import AbstractNamespace as ASpace
 
-  AccessorHook = Callable[[ASpace, str, Any], Any]
-  CompileHook = Callable[[ASpace, dict], dict]
-  Space: TypeAlias = Type[ASpace]
-  Desc: TypeAlias = Union[ASpace, SpaceDesc]
   MaybeSpace: TypeAlias = Optional[ASpace]
   Meta: TypeAlias = Union[MetaType, AbstractMetaclass, type]
   from .. import AbstractNamespace

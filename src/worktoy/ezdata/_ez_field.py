@@ -8,7 +8,7 @@ from __future__ import annotations
 from copy import deepcopy, Error
 from typing import TYPE_CHECKING, TypeVar, Generic
 
-from ..core.sentinels import THIS
+from ..core.sentinels import THIS, SentinelMeta
 from ..desc import Field
 from ..dispatch import TypeSig
 from ..mcls import BaseObject
@@ -419,7 +419,7 @@ class EZField(BaseObject, Generic[T]):
       A new EZField carrying 'type_' as its field type. The
       returned instance must subsequently be called to bind
       construction arguments before it is used as a class-body
-      field; otherwise 'EZSpace.registerEZField' raises
+      field; otherwise 'EZHook._assertCompleteField' raises
       'IncompleteFieldException' at class-body time.
 
     Raises
@@ -443,6 +443,12 @@ class EZField(BaseObject, Generic[T]):
     if not issubclass(type(type_), type):
       raise TypeException('fieldType', type_, type)
     declaration = '%s[%s]' % (cls.__name__, type_.__name__)
+    if isinstance(type_, SentinelMeta) and type_ is not THIS:
+      infoSpec = """The subscript '%s' names a sentinel as the field
+      type. A sentinel stands for a meaning, such as the enclosing class,
+      and is no type of value a field could hold; the field type is the
+      class of the values the field holds."""
+      raise TypeError(textFmt(infoSpec % declaration))
     TypeSig.validateTypes(type_, variadic=False, declaration=declaration)
     if type_ is THIS:
       infoSpec = """The subscript '%s' names 'THIS', the class being

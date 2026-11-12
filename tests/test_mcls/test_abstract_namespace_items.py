@@ -83,7 +83,7 @@ class TestAbstractNamespaceItems(MclsTest):
     self.assertEqual(context.exception.errorValue, 3)
     self.assertIsInstance(context.exception.initialException, ValueError)
     self.assertEqual(context.exception.itemKey, 'forbidden')
-    self.assertIn("Value: '3'", str(context.exception))
+    self.assertIn('Value: 3,', str(context.exception))
 
   def test_unknown_deletion_refused(self) -> None:
     with self.assertRaises(KeyError) as context:

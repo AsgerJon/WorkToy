@@ -35,7 +35,7 @@ class UnpackException(WorkToyException, ValueError):
     infoSpec = """'unpack' found no iterable argument from:<br><tab>%s<br>
     and is running in strict mode (default). Change this by setting keyword
     argument 'strict' to False."""
-    argStr = '<br><tab>'.join([str(arg) for arg in self.posArgs])
+    argStr = '<br><tab>'.join([self._reprOf(arg) for arg in self.posArgs])
     info = infoSpec % argStr
     return textFmt(info)
 

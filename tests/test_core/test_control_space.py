@@ -53,7 +53,10 @@ class TestControlSpace(CoreTest):
 
   def test_other_names_refused(self) -> None:
     space = ControlSpace(MetaFlow, 'Sig', (ControlFlow,))
-    names = ('method', 'value', '__init__', 'with_traceback', '__slots__')
+    #  'args' is the one plain name 'Exception' holds as data: bound in
+    #  a signal body it would be state the signal carries.
+    names = ('method', 'value', '__init__', 'with_traceback', '__slots__',
+             'args')
     for name in names:
       with self.subTest(name=name):
         with self.assertRaises(ControlClassError) as context:

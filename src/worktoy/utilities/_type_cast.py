@@ -6,7 +6,6 @@ lossy or implicit conversion.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from numbers import Number
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
@@ -56,10 +55,11 @@ def _castByteArray(arg: Any) -> bytearray:
 
 
 def _castBool(arg: Any) -> bool:
-  """Only a number is compared with 0 and 1. Comparing anything else
-  would ask its own '__eq__', which may answer 'True' to anything or
-  raise."""
-  if isinstance(arg, Number) and arg in (True, False, 0, 1):
+  """Only a number of the family is compared with 0 and 1. Comparing
+  anything else would ask its own '__eq__', which may answer 'True' to
+  anything or raise, and a number of no family, such as a 'Decimal',
+  converts to no builtin."""
+  if isinstance(arg, _NUMBERS) and arg in (True, False, 0, 1):
     return bool(arg)
   raise _exc(bool, arg)
 
@@ -132,19 +132,48 @@ def _familyHandler(target: type) -> Optional[Callable[[Any], Any]]:
   return None
 
 
+def _bindOverloadedHook(hook: Any, target: type) -> Callable[[Any], Any]:
+  """An overloaded '__cast_as__' bound to 'target'. A value none of its
+  overloads accepts is one the hook does not convert, so the dispatch
+  failure of the hook itself is answered with 'NotImplemented', as a
+  hook written by hand answers. A dispatch failure raised from inside
+  an overload belongs to another overloaded call, and propagates as any
+  error of a hook does."""
+  bound = hook.__get__(None, target)
+
+  def castAs(arg: Any) -> Any:
+    from worktoy.waitaminute.dispatch import DispatchException
+    try:
+      return bound(arg)
+    except DispatchException as dispatchException:
+      if dispatchException.dispatch is hook:
+        return NotImplemented
+      raise dispatchException
+
+  return castAs
+
+
 def _findCastHook(target: type) -> Optional[Callable[[Any], Any]]:
   """The '__cast_as__' of 'target' bound to it, or None when no class
   along its resolution order defines one. The hook must be a classmethod,
-  since it is called on the class to make an instance; one defined as a
-  plain function or a staticmethod raises 'UnboundCastHook' here, where
-  it would otherwise run with the value bound as 'self' or fail one frame
-  deeper with a misleading 'TypeError'."""
+  plain or overloaded, since it is called on the class to make an
+  instance; one defined as a plain function or a staticmethod, overloaded
+  or not, raises 'UnboundCastHook' here, where it would otherwise run
+  with the value bound as 'self' or fail one frame deeper with a
+  misleading 'TypeError'."""
   for klass in getattr(target, '__mro__', ()):
     hook = vars(klass).get('__cast_as__', None)
     if hook is None:
       continue
     if isinstance(hook, classmethod):
       return hook.__get__(None, target)
+    #  An overloaded hook is a 'Dispatcher' in the class. 'utilities'
+    #  loads before 'dispatch' and does not import it, so the dispatcher
+    #  is known by 'getMethodKind', which says what it stands for.
+    getMethodKind = getattr(hook, 'getMethodKind', None)
+    if getMethodKind is not None:
+      if getMethodKind() is classmethod:
+        return _bindOverloadedHook(hook, target)
     from worktoy.waitaminute.dispatch import UnboundCastHook
     raise UnboundCastHook(klass.__name__, target.__name__)
   return None
@@ -169,7 +198,10 @@ def hasCastRule(target: type) -> bool:
   Raises
   ------
   UnboundCastHook
-      If 'target' defines '__cast_as__' without '@classmethod'.
+      If 'target' defines '__cast_as__' without '@classmethod', unless
+      'target' is a subclass of a family builtin: for such a class the
+      answer is True before the hook is looked at, and 'typeCast' raises
+      the exception when asked to cast.
   """
   if _familyHandler(target) is not None:
     return True
@@ -196,8 +228,8 @@ def typeCast(target: type, arg: Any) -> Any:
     an integral 'float' or a real integral 'complex'; a 'float' from an
     'int' it represents exactly or from a real 'complex'; a 'complex'
     from an 'int' a float holds exactly or from a 'float'; a 'bool' from
-    a number equal to 0 or 1, without asking the '__eq__' of anything
-    that is not a number. An 'int' too large for a 'float' is refused
+    a number of these four equal to 0 or 1, without asking the '__eq__'
+    of anything else. An 'int' too large for a 'float' is refused
     with the 'OverflowError' chained. No string is ever parsed.
   - Text: 'str', 'bytes' and 'bytearray' convert among the three as
     UTF-8, with undecodable bytes and unencodable text refused. Nothing
@@ -218,6 +250,9 @@ def typeCast(target: type, arg: Any) -> Any:
 
     Bound to 'cls', the hook builds a subclass when looked up on one. A
     '__cast_as__' that is not a classmethod raises 'UnboundCastHook'.
+    The classmethod may be overloaded, one definition for each type it
+    converts from; a value none of the overloads accepts is refused, as
+    one answered with 'NotImplemented' is.
 
   No constructor is ever called on 'arg'. Containers, 'slice', 'type' and
   every class without the hook accept their own instances and nothing

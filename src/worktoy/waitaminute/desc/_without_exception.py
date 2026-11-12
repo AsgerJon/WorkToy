@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...utilities import textFmt
 from .. import WorkToyException
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
@@ -40,7 +41,9 @@ class WithoutException(WorkToyException, RuntimeError):
     #  answers, falling back to the name of the descriptor class.
     owner = self.desc.getFieldOwner()
     if owner is None:
-      return infoSpec % ('NO-OWNER', 'NO-FIELD')
-    return infoSpec % (owner.__name__, self.desc.getFieldName())
+      info = infoSpec % ('NO-OWNER', 'NO-FIELD')
+      return textFmt(info)
+    info = infoSpec % (owner.__name__, self.desc.getFieldName())
+    return textFmt(info)
 
   __repr__ = __str__

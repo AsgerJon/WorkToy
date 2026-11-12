@@ -20,9 +20,9 @@ class TypeException(WorkToyException, TypeError):
   most widely raised exception in 'worktoy', used wherever a value reaches
   a type-checked boundary as the wrong type.
 
-  It should NOT be raised when the object is 'None' rather than the
-  expected type; that case indicates absence and belongs to
-  'MissingVariable'.
+  It is raised for 'None' as for any other object of the wrong type: a
+  value that was given and is 'None' is a wrong value. A variable that
+  was never set is the other case, and belongs to 'MissingVariable'.
 
   Attributes
   ----------
@@ -48,14 +48,12 @@ class TypeException(WorkToyException, TypeError):
 
   def __str__(self) -> str:
     infoSpec = """Expected object at name '%s' to be an instance of %s, 
-    but received object: '%s' of type '%s'!"""
+    but received object: %s of type '%s'!"""
     #  A 'typing' alias, such as 'typing.Callable' before Python 3.10,
     #  has no '__name__' and renders as itself.
     typeNames = [getattr(t, '__name__', str(t)) for t in self.expectedTypes]
     typeStr = joinWords(*["""'%s'""" % name for name in typeNames], sep='or')
-    objStr = repr(self.actualObject)
-    if len(objStr) > 50:
-      objStr = """%s...""" % objStr[:47]
+    objStr = self._reprOf(self.actualObject)
     clsType = type(self.actualObject).__name__
     info = infoSpec % (self.varName, typeStr, objStr, clsType)
     return textFmt(info)

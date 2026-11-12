@@ -22,7 +22,6 @@ from . import TypeSig, PermuterMethod, CallMeMaybe
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Callable, Never, TypeAlias, Optional, Self
-  from . import Dispatcher
 
   Method: TypeAlias = Callable[[Any, ...], Any]
   SigFuncList: TypeAlias = list[tuple[TypeSig, Method]]

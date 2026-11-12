@@ -13,7 +13,7 @@ from ..waitaminute.meta import HookException, DuplicateHook, ClaimedName
 from .space_hooks import NamespaceHook, ReservedNamespaceHook
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, TypeAlias, Iterator, Union, Self, Optional
+  from typing import Any, TypeAlias, Iterator, Self, Optional
   from .space_hooks import AbstractSpaceHook
   from . import AbstractMetaclass as AMeta
 
@@ -21,7 +21,6 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
   Bases: TypeAlias = tuple[Self, ...]
   Hooks: TypeAlias = list[AbstractSpaceHook]
   MROSpace: TypeAlias = dict[str, list[Any]]
-  TypeName: TypeAlias = Union[str, type]
 
 
 class AbstractNamespace(dict):
@@ -369,7 +368,8 @@ class AbstractNamespace(dict):
       The body never bound the name.
 
     HookException
-      A hook raised; the original is its cause.
+      A hook raised; the original is its context, and is kept at
+      'initialException'.
     """
     #  The miss is kept apart from the value, which a class body may well
     #  bind to a 'KeyError' of its own.

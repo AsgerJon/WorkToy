@@ -61,7 +61,7 @@ class TestQuickDesc(UtilitiesTest):
     self.assertIs(context.exception.desc, QuickOwner.value)
     self.assertEqual(context.exception.newVal, 69)
     self.assertIn("'QuickOwner.value'", str(context.exception))
-    self.assertIn("'69'", str(context.exception))
+    self.assertIn('new value: 69!', str(context.exception))
     self.assertEqual(owner.value, 42)
 
   def test_delete_refused(self) -> None:
@@ -71,8 +71,8 @@ class TestQuickDesc(UtilitiesTest):
     self.assertIs(context.exception.instance, owner)
     self.assertIs(context.exception.desc, QuickOwner.value)
     self.assertIsNone(context.exception.oldVal)
-    self.assertIn("'QuickOwner.value'", str(context.exception))
-    self.assertIn("'None'", str(context.exception))
+    expected = "Attempted to delete protected attribute 'QuickOwner.value'"
+    self.assertEqual(str(context.exception), expected)
     self.assertEqual(owner.value, 42)
 
   def test_key_equal_to_name_refused(self) -> None:

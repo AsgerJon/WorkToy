@@ -65,8 +65,10 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
   keyword or by assignment, which seeds that generator, so two samplers
   seeded alike draw alike whatever else draws in between. 'item', 'row'
   and 'table' draw one value, a row of 'colCount' values and a table of
-  'rowCount' rows, each value checked against 'valueType'; calling the
-  sampler draws one value and iterating it yields 'rowCount' rows. The
+  'rowCount' rows; 'row', and 'table' through it, check each value
+  against 'valueType', while 'item' and a call of the sampler hand out
+  what '_getItem' gives as it is. Iterating the sampler yields
+  'rowCount' rows. The
   two hooks are abstract, and 'SamplerMeta' refuses a sampler without
   both.
 

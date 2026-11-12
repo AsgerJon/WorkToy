@@ -14,11 +14,7 @@ from ..waitaminute.meta import UnboundClassHook
 from . import Kee
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, Type, TypeAlias, Callable
-  from . import KeeMeta
-
-  __INIT__: TypeAlias = Callable[[KeeMeta, Kee], None]
-  __GET__: TypeAlias = Callable[[KeeMeta, KeeMeta, Type[KeeMeta]], Any]
+  from typing import Any
 
 
 class KeeSpaceHook(AbstractSpaceHook):

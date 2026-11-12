@@ -1,5 +1,6 @@
 """
-Kee is the descriptor that declares a member of a 'KeeNum' enumeration.
+Kee is the descriptor that declares a member of a 'KeeNum' enumeration or
+a flag of a 'KeeFlags' class.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -25,7 +26,8 @@ declaration of a member: 'Day[x]' gives the member at position 'x'."""
 
 class Kee(AttriBox[T]):
   """
-  Kee is the descriptor that declares a member of a KeeNum enumeration.
+  Kee is the descriptor that declares a member of a KeeNum enumeration, or
+  a flag of a 'KeeFlags' class.
 
   Each 'Kee' instance placed in the class body of a KeeNum subclass
   contributes one member, with the following defining properties:
@@ -48,6 +50,13 @@ class Kee(AttriBox[T]):
   created by the KeeMeta metaclass, which defines class-level behavior;
   'Kee' defines how individual members are admitted into the
   enumeration.
+
+  Placed in the class body of a 'KeeFlags' subclass instead, as
+  'READ = Kee[str]()', a 'Kee' declares one flag, and the class builds a
+  member for every combination of its flags. 'KeeFlagsHook' claims such
+  a 'Kee', 'KeeFlagsSpace.addKeeFlag' names it and
+  'KeeFlagsMeta._createFlags' places it on the class; it receives no
+  index.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -175,9 +184,12 @@ class Kee(AttriBox[T]):
     it; 'KeeMeta._createMembers' calls it instead, with the enumeration
     as owner, once the class exists, and the placement of a box runs: a
     'Kee' declared without parentheses, or placed on another enumeration
-    already, is refused there. The interpreter reaches this method only
-    for a 'Kee' in the body of a class not built by 'KeeMeta', which is
-    refused with a 'TypeError' saying where a 'Kee' belongs.
+    already, is refused there. A 'Kee' in a 'KeeFlags' body is claimed by
+    'KeeFlagsHook' and placed by 'KeeFlagsMeta._createFlags', which calls
+    'AttriBox.__set_name__' and so passes this method by. The interpreter
+    reaches this method only for a 'Kee' in the body of a class built by
+    neither metaclass, which is refused with a 'TypeError' saying where a
+    'Kee' belongs.
     """
     #  Local import: 'KeeMeta' loads after this file in the package.
     from . import KeeMeta

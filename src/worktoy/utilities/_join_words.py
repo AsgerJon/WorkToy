@@ -32,6 +32,12 @@ def joinWords(*words, **kwargs) -> str:
   str
       The joined phrase, or '' for an empty input.
 
+  Warns
+  -----
+  RedundantKeyword
+      If a keyword other than 'sep' is given, such as a misspelled one.
+      The keyword is not read.
+
   Examples
   --------
   >>> joinWords('apples', 'pears')
@@ -43,6 +49,11 @@ def joinWords(*words, **kwargs) -> str:
   >>> joinWords('Tom', ['Dick', 'Harry'])
   'Tom, Dick and Harry'
   """
+  options = ('sep',)
+  for key in kwargs:
+    if key not in options:
+      from ..waitaminute import RedundantKeyword
+      RedundantKeyword(joinWords, key, *options).warn()
   sep = kwargs.get('sep', 'and')
   words = unpack(*words, strict=False)
   if not words:

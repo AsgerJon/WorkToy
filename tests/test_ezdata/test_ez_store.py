@@ -6,7 +6,7 @@ TestEZStore tests 'EZStore' from 'worktoy.ezdata'.
 from __future__ import annotations
 
 from worktoy.desc import Alias
-from worktoy.ezdata import EZData, EZStore
+from worktoy.ezdata import EZStore
 from worktoy.waitaminute import MissingVariable
 from worktoy.waitaminute.desc import ReadOnlyError, ProtectedError
 from . import EzdataTest, Labelled, Point2D

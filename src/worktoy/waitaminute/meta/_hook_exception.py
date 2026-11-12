@@ -1,6 +1,7 @@
 """
 HookException wraps an exception raised by a namespace hook, so it is not
-mistaken for the 'KeyError' the metacall system uses as a signal.
+mistaken for the 'KeyError' by which a namespace tells the interpreter
+that the class body never bound a name.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -19,10 +20,12 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 class HookException(WorkToyException, Exception):
   """
   HookException wraps any exception raised by a namespace hook so it cannot
-  be mistaken for the 'KeyError' that the metacall system uses as a control
-  signal during '__getitem__'. 'AbstractNamespace' catches an exception
-  raised by the 'getItemPhase' of a hook and raises this one in its place,
-  which keeps the original at 'initialException' and as its context:
+  be mistaken for the 'KeyError' that the interpreter reads as a control
+  signal during '__getitem__': the class body never bound the name, which
+  is then looked for among the global names. 'AbstractNamespace' catches
+  an exception raised by the 'getItemPhase' of a hook and raises this one
+  in its place, which keeps the original at 'initialException' and as its
+  context:
 
       try:
         hook.getItemPhase(key, val)
@@ -67,11 +70,11 @@ class HookException(WorkToyException, Exception):
     Exception.__init__(self, )
 
   def __str__(self) -> str:
-    spec = """HookException raised from %s! Key: '%s', Value: '%s', 
+    spec = """HookException raised from %s! Key: '%s', Value: %s, 
     Hook: '%s'! Initial exception: %s"""
     info = spec % (
-      self.namespaceObject, self.itemKey, self.errorValue,
-      self.hookFunction, self.initialException,
+      self.namespaceObject, self.itemKey, self._reprOf(self.errorValue),
+      self.hookFunction, self._reprOf(self.initialException),
     )
     return textFmt(info)
 

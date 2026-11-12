@@ -46,10 +46,10 @@ class KeeResolveError(WorkToyException, Exception):
     self.identifier = identifier
 
   def __str__(self, ) -> str:
-    infoSpec = """Enumeration '%s' could not resolve the identifier '%s'
+    infoSpec = """Enumeration '%s' could not resolve the identifier %s
     to any of its members!"""
     clsName = self.keeNum.__name__
-    identifier = str(self.identifier)
+    identifier = self._reprOf(self.identifier)
     info = infoSpec % (clsName, identifier)
     return textFmt(info)
 

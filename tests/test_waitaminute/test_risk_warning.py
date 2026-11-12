@@ -33,7 +33,7 @@ class TestRiskWarning(WaitaminuteTest):
     self.assertEqual(warning.varName, 'price')
     self.assertEqual(warning.actualObject, -5)
     self.assertEqual(warning.risk, 'a till that pays the customer')
-    expected = """Received object at name 'price': '-5' of type 'int'.
+    expected = """Received object at name 'price': -5 of type 'int'.
     This is promised to function correctly, but risks a till that pays
     the customer!"""
     self.assertEqual(str(warning), str.join(' ', expected.split()))
@@ -42,13 +42,13 @@ class TestRiskWarning(WaitaminuteTest):
   def test_long_object_is_cut(self) -> None:
     fits = 'x' * 48  # shown in 50 characters, quotes included
     warning = RiskWarning('note', fits, 'a full page')
-    self.assertIn("""'%s' of type 'str'""" % repr(fits), str(warning))
+    self.assertIn(""": %s of type 'str'""" % repr(fits), str(warning))
     long = 'x' * 49  # shown in 51 characters
     warning = RiskWarning('note', long, 'a full page')
     self.assertIs(warning.actualObject, long)
     cut = """%s...""" % repr(long)[:47]
     self.assertEqual(len(cut), 50)
-    self.assertIn("""'%s' of type 'str'""" % cut, str(warning))
+    self.assertIn(""": %s of type 'str'""" % cut, str(warning))
     self.assertNotIn(repr(long), str(warning))
 
   def test_given_as_a_runtime_warning(self) -> None:

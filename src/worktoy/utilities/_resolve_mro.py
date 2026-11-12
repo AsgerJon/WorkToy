@@ -46,6 +46,12 @@ def resolveMRO(*bases: type, **kwargs) -> list[type]:
       reachable when '_initialIterationCount' is set close to
       or above the total length of the input lists.
 
+  Warns
+  -----
+  RedundantKeyword
+      If a keyword other than '_initialIterationCount' is given. The
+      keyword is not read.
+
   Examples
   --------
   >>> class A: pass
@@ -54,6 +60,11 @@ def resolveMRO(*bases: type, **kwargs) -> list[type]:
   >>> [base.__name__ for base in resolveMRO(B, C)]
   ['B', 'C', 'A', 'object']
   """
+  options = ('_initialIterationCount',)
+  for key in kwargs:
+    if key not in options:
+      from ..waitaminute import RedundantKeyword
+      RedundantKeyword(resolveMRO, key, *options).warn()
   if not bases:
     return []
   if len(bases) == 1:

@@ -31,7 +31,8 @@ class ProtectedError(DescriptorException, AttributeError):
   desc : Any
     The protected descriptor that rejected the deletion.
   oldVal : Any
-    The value held before the deletion attempt, if known.
+    The value held before the deletion attempt, if known, and 'None'
+    otherwise. The message names the value only when it is not 'None'.
   """
 
   __slots__ = ('instance', 'desc', 'oldVal')
@@ -47,9 +48,17 @@ class ProtectedError(DescriptorException, AttributeError):
     desc = self.desc
     ownerName = type(self.instance).__name__
     fieldName = self._fieldName(self.instance, desc)
+    if oldValue is None:
+      #  This branch is reached by the following:
+      #  - A descriptor that refuses the deletion without the old value
+      #  - 'Object.__delete__' failing to read the old value
+      #  - An old value that is 'None'
+      infoSpec = """Attempted to delete protected attribute '%s.%s'"""
+      info = infoSpec % (ownerName, fieldName)
+      return textFmt(info)
     infoSpec = """Attempted to delete protected attribute '%s.%s'
-      with value: '%s'"""
-    info = infoSpec % (ownerName, fieldName, str(oldValue))
+      with value: %s"""
+    info = infoSpec % (ownerName, fieldName, self._reprOf(oldValue))
     return textFmt(info)
 
   __repr__ = __str__

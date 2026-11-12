@@ -32,8 +32,8 @@ class TestFixBox(DescTest):
     self.assertEqual(context.exception.oldValue, 9000)
     self.assertEqual(context.exception.newValue, 9001)
     self.assertIn("'Config.port'", str(context.exception))
-    self.assertIn("'9000'", str(context.exception))
-    self.assertIn("'9001'", str(context.exception))
+    self.assertIn('existing value: 9000 with new value: 9001!',
+                  str(context.exception))
     self.assertEqual(config.port, 9000)
     self.assertEqual(Config.attempts, [9000, 9001])
 

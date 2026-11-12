@@ -13,9 +13,8 @@ from ..waitaminute.keenum import KeeNameConflict
 from . import KeeSpaceHook, Kee
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Any, Dict, TypeAlias
+  from typing import Any, TypeAlias
 
-  Members: TypeAlias = Dict[str, Kee]
   Bases: TypeAlias = tuple[type, ...]
 
 

@@ -12,29 +12,16 @@ import traceback
 from unittest import TestCase
 from typing import TYPE_CHECKING
 
-from . import SubTest
+from . import SubTest, TestMeta
 from .samplers import FloatSampler, IntSampler, GaussianSampler
 from .samplers import SymbolicSampler, WordSampler, LoremSampler
 from ..desc import Field, AttriBox
-from ..mcls import BaseMeta
 from ..utilities import textFmt
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import TypeAlias, Iterator, Optional
-
-  from ..desc import SymbolicName
-
-  MaybeStr: TypeAlias = Optional[str]
-
-  StrTuple: TypeAlias = tuple[str, ...]
-  MaybeStrTuple: TypeAlias = Optional[StrTuple]
-
-  IntTuple: TypeAlias = tuple[int, ...]
-  IntTuples: TypeAlias = tuple[IntTuple, ...]
+  from typing import TypeAlias, Iterator
 
   TypicalExceptions: TypeAlias = Iterator[type[Exception]]
-  ExcType: TypeAlias = type[BaseException]
-  SymbolicNames: TypeAlias = tuple[SymbolicName, ...]
 
 #  Python 3.14 added 'assertIsSubclass' and 'assertNotIsSubclass' to
 #  'unittest.TestCase'; the versions back to 3.7 get them from the shim.
@@ -54,7 +41,7 @@ else:  # version >= 3.14
   _Temp = TestCase
 
 
-class BaseTest(_Temp, metaclass=BaseMeta):
+class BaseTest(_Temp, metaclass=TestMeta):
   """
   Every test of the suite wants the same things ready: random data of
   the usual kinds that belongs to that test alone, a sub-test block that
@@ -78,17 +65,21 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   Implementation
   --------------
 
-  'BaseTest' is a 'unittest.TestCase' built by 'BaseMeta', so a test
-  body runs through the namespace of a worktoy class. The six samplers,
+  'BaseTest' is a 'unittest.TestCase' built by 'TestMeta', which is a
+  'BaseMeta', so a test body runs through the namespace of a worktoy
+  class. The six samplers,
   'randomInteger' and the rest, are 'AttriBox'es, so 'unittest' building
   one instance of a test class per test method gives each test samplers
   of its own, built at the first read, and a sampler narrowed or seeded
   in 'setUp' keeps its settings for that test alone; 'seedSamplers'
   seeds all six with one seed. 'subTest' is the
   'SubTest' descriptor, which builds one accumulator per test instance;
-  'tearDown' reads it without building one and fails the test once,
-  with 'FAIL [label]: message' or 'ERROR [label]: repr' per recorded
-  block, each followed by the traceback of what the block raised.
+  '_reportSubTests' reads it without building one and fails the test
+  once, with 'FAIL [label]: message' or 'ERROR [label]: repr' per
+  recorded block, each followed by the traceback of what the block
+  raised. 'TestMeta' has it run among the cleanups of every test and at
+  the end of 'debug', so a 'tearDown' of a test class need not hand on
+  for it.
   'tearDownClass' unloads the module of the test class and runs the
   garbage collector after its tests, for the reason its docstring
   gives. 'exceptions' yields the common builtin exception classes.
@@ -232,14 +223,16 @@ class BaseTest(_Temp, metaclass=BaseMeta):
     sys.modules.pop(cls.__module__, None)
     gc.collect()
 
-  def tearDown(self, ) -> None:
+  def _reportSubTests(self, ) -> None:
     """
-    The 'tearDown' method runs the super call, then peeks at any sub-test
-    recorded on this instance through the 'subTest' descriptor and fails
-    the test if that sub-test holds any fails or errors, naming each
-    with its label and the traceback of what it raised.
+    The '_reportSubTests' method peeks at any sub-test recorded on this
+    instance through the 'subTest' descriptor and fails the test if that
+    sub-test holds any fails or errors, naming each with its label and
+    the traceback of what it raised. The records it reports are dropped
+    from the instance first, so a second call reports nothing twice.
+    'TestMeta' registers the method as a cleanup of every test, and
+    calls it at the end of 'debug'.
     """
-    super().tearDown()
     cls = type(self)
     try:
       sub = cls.subTest.__get__(self, cls, _recursion=True)
@@ -254,4 +247,5 @@ class BaseTest(_Temp, metaclass=BaseMeta):
     for label, error in zip(sub.errorLabels, sub.errors):
       lines.append('ERROR [%s]: %r' % (label, error))
       lines.append(self._formatRaised(error))
+    delattr(self, cls.subTest.__private_name__)
     self.fail(str.join('\n', lines))

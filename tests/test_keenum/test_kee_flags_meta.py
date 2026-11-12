@@ -206,7 +206,7 @@ class TestKeeFlagsMeta(KeenumTest):
           Permission[identifier]
         self.assertIs(context.exception.keeNum, Permission)
         self.assertEqual(context.exception.identifier, identifier)
-        self.assertIn("'Permission' could not resolve the identifier '%s'"
+        self.assertIn("'Permission' could not resolve the identifier %r"
                       % (identifier,), str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       Permission('read', 'nothing')
@@ -226,12 +226,12 @@ class TestKeeFlagsMeta(KeenumTest):
     self.assertIs(context.exception.keeNum, FileAccess)
     self.assertEqual(context.exception.identifier, b'NOTHING')
     self.assertIn("'FileAccess' could not resolve the identifier "
-                  "'b'NOTHING''", str(context.exception))
+                  "b'NOTHING'", str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       FileAccess._resolveValue(True)
     self.assertIs(context.exception.keeNum, FileAccess)
     self.assertIs(context.exception.identifier, True)
-    self.assertIn("the identifier 'True'", str(context.exception))
+    self.assertIn('the identifier True to', str(context.exception))
 
     class Numbered(KeeFlags):
       ONE = Kee[int](1)
@@ -244,7 +244,7 @@ class TestKeeFlagsMeta(KeenumTest):
       Numbered._resolveValue(True)
     self.assertIs(context.exception.keeNum, Numbered)
     self.assertIs(context.exception.identifier, True)
-    self.assertIn("'Numbered' could not resolve the identifier 'True'",
+    self.assertIn("'Numbered' could not resolve the identifier True",
                   str(context.exception))
 
   def test_value_tables(self) -> None:
@@ -269,7 +269,7 @@ class TestKeeFlagsMeta(KeenumTest):
     self.assertIs(context.exception.keeNum, Buffer)
     self.assertEqual(context.exception.identifier, bytearray(b'NOTHING'))
     self.assertIn("'Buffer' could not resolve the identifier "
-                  "'bytearray(b'NOTHING')'", str(context.exception))
+                  "bytearray(b'NOTHING')", str(context.exception))
     #  A value several members share resolves to the first in the class.
     self.assertIs(Parity(1.0), Parity.ODD)
     self.assertIs(Parity(0.0), Parity.ODD_BIG)
@@ -305,7 +305,7 @@ class TestKeeFlagsMeta(KeenumTest):
     self.assertIs(context.exception.keeNum, FileAccess)
     self.assertEqual(context.exception.identifier, bytearray(b'OPEN'))
     self.assertIn("'FileAccess' could not resolve the identifier "
-                  "'bytearray(b'OPEN')'", str(context.exception))
+                  "bytearray(b'OPEN')", str(context.exception))
 
   def test_members_of_related_classes(self) -> None:
     self.assertIs(Permission(Extended.READ), Permission.READ)
@@ -316,7 +316,7 @@ class TestKeeFlagsMeta(KeenumTest):
       Permission[FileAccess.OPEN]
     self.assertIs(context.exception.keeNum, Permission)
     self.assertIs(context.exception.identifier, FileAccess.OPEN)
-    self.assertIn("the identifier '%s'" % FileAccess.OPEN,
+    self.assertIn("the identifier %r" % FileAccess.OPEN,
                   str(context.exception))
 
   def test_contains_and_instance_check(self) -> None:
@@ -389,13 +389,13 @@ class TestKeeFlagsMeta(KeenumTest):
       _ = Permission[len(Permission)]
     self.assertIs(context.exception.keeNum, Permission)
     self.assertEqual(context.exception.identifier, len(Permission))
-    self.assertIn("'Permission' could not resolve the identifier '8'",
+    self.assertIn("'Permission' could not resolve the identifier 8",
                   str(context.exception))
     with self.assertRaises(KeeResolveError) as context:
       Permission._resolveIndex(99)
     self.assertIs(context.exception.keeNum, Permission)
     self.assertEqual(context.exception.identifier, 99)
-    self.assertIn("the identifier '99'", str(context.exception))
+    self.assertIn('the identifier 99 to', str(context.exception))
 
   def test_union_beyond_the_class_refused(self) -> None:
     with self.assertRaises(KeeResolveError) as context:

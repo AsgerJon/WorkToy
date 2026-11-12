@@ -14,10 +14,9 @@ from ..utilities import maybe
 from ..waitaminute.ezdata import DuplicateError, ReservedFieldError
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import Optional, TypeAlias, Type
+  from typing import Optional, TypeAlias
   from . import EZMeta, EZField
 
-  Meta: TypeAlias = Type[EZMeta]
   Bases: TypeAlias = tuple[EZMeta, ...]
 
 

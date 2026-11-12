@@ -44,7 +44,7 @@ class NotADescriptor(WorkToyException, TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    spec = """The name '%s.%s' stands for '%s', which holds '%s' of type
+    spec = """The name '%s.%s' stands for '%s', which holds %s of type
     '%s' rather than a descriptor. An alias names a descriptor such as an
     'AttriBox'; a plain value takes a second name by assignment."""
     try:
@@ -56,9 +56,7 @@ class NotADescriptor(WorkToyException, TypeError):
       aliasName = object.__getattribute__(self.alias, '__field_name__')
     except AttributeError:
       aliasName = 'alias'
-    foundStr = repr(self.found)
-    if len(foundStr) > 50:
-      foundStr = '%s...' % foundStr[:47]
+    foundStr = self._reprOf(self.found)
     names = (
       ownerName, aliasName, self.realName, foundStr,
       type(self.found).__name__,

@@ -5,7 +5,6 @@ EZMeta is the metaclass behind 'EZData'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ..desc import Field
@@ -18,7 +17,6 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
   from . import EZMeta
 
-  AsTypeSig: TypeAlias = Callable[..., TypeSig]
   Bases: TypeAlias = tuple[EZMeta, ...]
 
 
@@ -32,8 +30,10 @@ class EZMeta(BaseMeta):
   for structural equality between EZData classes that declare
   the same field-type signature.
 
-  Two classes are 'congruent' when their field-type tuples
-  compare equal under 'TypeSig.__eq__'. The generated '__eq__'
+  Two classes are 'congruent' when one is based on the other and
+  their field-type tuples compare equal under 'TypeSig.__eq__'; two
+  unrelated classes of the same field types are not. The generated
+  '__eq__'
   on EZData instances uses 'isCongruent' to admit cross-class
   equality, so a 'FrozenComplex(EZComplex)' instance can
   compare equal to its non-frozen parent's instances.

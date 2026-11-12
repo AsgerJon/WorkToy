@@ -31,7 +31,7 @@ class TestObjectWrite(CoreTest):
     self.assertIs(context.exception.desc, Owner.d)
     self.assertEqual(context.exception.newVal, 5)
     self.assertIn("'Owner.d'", str(context.exception))
-    self.assertIn("'5'", str(context.exception))
+    self.assertIn('new value: 5!', str(context.exception))
     self.assertFalse(Owner.d.hasContext())
     self.assertIs(owner.d, Owner.d)
 

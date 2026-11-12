@@ -44,13 +44,13 @@ class KeeTypeException(WorkToyException, TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """Member '%s' has value '%s' of type '%s', but expected
+    infoSpec = """Member '%s' has value %s of type '%s', but expected
     the value to be an instance of %s!"""
     name = self.name
     typeNames = [getattr(t, '__name__', str(t)) for t in self.expectedTypes]
     from ...utilities import joinWords, textFmt
     typeStr = joinWords(*["""'%s'""" % n for n in typeNames], sep='or')
-    value = str(self.value)
+    value = self._reprOf(self.value)
     valueType = type(self.value).__name__
     info = infoSpec % (name, value, valueType, typeStr)
     return textFmt(info)

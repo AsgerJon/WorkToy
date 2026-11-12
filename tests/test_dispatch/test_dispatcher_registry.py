@@ -230,7 +230,7 @@ class TestDispatcherRegistry(DispatchTest):
     self.assertIs(context.exception.oldValue, staticmethod)
     self.assertIsNone(context.exception.newValue)
     self.assertIn("'staticmethod'", str(context.exception))
-    self.assertIn("'None'", str(context.exception))
+    self.assertIn('with new value: None!', str(context.exception))
 
   def test_adapt_to_kind(self) -> None:
     plain = Dispatcher()
@@ -259,7 +259,7 @@ class TestDispatcherRegistry(DispatchTest):
     self.assertIs(context.exception.instance, owner)
     self.assertEqual(context.exception.newVal, 5)
     self.assertIn("'Owner.d'", str(context.exception))
-    self.assertIn("'5'", str(context.exception))
+    self.assertIn('new value: 5!', str(context.exception))
     with self.assertRaises(ProtectedError) as context:
       del owner.d
     self.assertIs(context.exception.instance, owner)

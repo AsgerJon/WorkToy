@@ -98,6 +98,10 @@ class AttriBox(BaseDescriptor[T]):
 
   __storage_name__ : str or None
     The cached key in the instance dictionary.
+
+  __reads_plainly__ : bool or None
+    Whether the read hooks and the fetch are those of 'AttriBox', settled
+    at the first read through an instance and 'None' until then.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -107,6 +111,7 @@ class AttriBox(BaseDescriptor[T]):
   #  Private Variables
   __field_type__: Optional[type] = None
   __storage_name__: Optional[str] = None  # kept by '_getStorageName'
+  __reads_plainly__: Optional[bool] = None  # kept by '_settleReadsPlainly'
 
   #  Public Variables
   fieldType: Field[type] = Field()
@@ -470,10 +475,41 @@ class AttriBox(BaseDescriptor[T]):
   def __get__(self, instance: Any, owner: type) -> T: ...
   # @formatter:on
 
+  def _settleReadsPlainly(self, ) -> None:
+    """
+    The '_settleReadsPlainly' method settles, once for the box, whether a
+    read through it runs no code but that of 'AttriBox': 'hookPreGet',
+    'hookOnGet' and '__instance_get__' are looked up on the class of the
+    box, and '__reads_plainly__' is True when all three are those of
+    'AttriBox', False when a subclass overrides one.
+    """
+    cls = type(self)
+    plain = True
+    for name in ('hookPreGet', 'hookOnGet', '__instance_get__'):
+      if getattr(cls, name) is not getattr(AttriBox, name):
+        plain = False
+    object.__setattr__(self, '__reads_plainly__', plain)
+
   def __get__(self, instance: Any, owner: type) -> Union[Self, T]:
     """
     Read through the class, the box must give itself, for inspection or
-    for registering callbacks; read through an instance, the value.
+    for registering callbacks; read through an instance, the value. By
+    far the most reads are of a value already stored, through a box with
+    no read callback, and such a read runs no code of the builder: it
+    has no use for the frame or for the hook phases, which cost many
+    times the read itself, and must not pay for them.
+
+    Implementation
+    --------------
+
+    When no read callback is registered and the hooks and the fetch are
+    those of 'AttriBox', the stored value is taken from the instance and
+    returned, unless it is 'DELETED'. Every other read is the full read
+    of 'Object.__get__': the first read of an instance, which builds the
+    value, a deleted value, and a storage name that is no name, each of
+    which is refused or handled there as before. The callbacks are
+    looked at on every read, since one may be registered after reads
+    were made.
 
     Raises
     ------
@@ -482,9 +518,24 @@ class AttriBox(BaseDescriptor[T]):
       The box has no field type or no name, as a box installed with
       'setattr' after the class was created.
     """
-    if instance is not None:
-      if self.__field_type__ is None:
-        raise MissingVariable(self, '__field_type__', type)
+    if instance is None:
+      return super().__get__(instance, owner)
+    if self.__field_type__ is None:
+      raise MissingVariable(self, '__field_type__', type)
+    if not (self.__pre_get_keys__ or self.__on_get_keys__):
+      if self.__reads_plainly__ is None:
+        self._settleReadsPlainly()
+      if self.__reads_plainly__:
+        try:
+          value = object.__getattribute__(instance, self.__storage_name__)
+        except (AttributeError, TypeError):
+          #  This branch is reached by the following:
+          #  - The first read of an instance, which has no value yet
+          #  - A storage name not yet made, or one that is no 'str'
+          pass
+        else:
+          if value is not DELETED:
+            return value
     return super().__get__(instance, owner)
 
   def __copy__(self) -> Self:

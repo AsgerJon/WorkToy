@@ -89,6 +89,14 @@ class TestExceptionMessages(CoreTest):
     self.assertIn('NO-OWNER', str(loose))
     self.assertIn('NO-FIELD', str(loose))
     self.assertEqual(repr(loose), str(loose))
+    expected = "Context-less call detected for descriptor at 'Owner.d'!"
+    self.assertEqual(str(placed), expected)
+    #  The text passes through 'textFmt', as every message does: a run
+    #  of spaces in a quoted name comes out as one.
+    gapped = type('Wide  Gap', (), dict(d=Object()))
+    wide = WithoutException(gapped.__dict__['d'])
+    expected = "Context-less call detected for descriptor at 'Wide Gap.d'!"
+    self.assertEqual(str(wide), expected)
 
   def test_control_class_error(self) -> None:
     space = ControlSpace(MetaFlow, 'Sig', (ControlFlow,))

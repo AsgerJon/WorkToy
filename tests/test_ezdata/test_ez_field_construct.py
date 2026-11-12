@@ -86,7 +86,7 @@ class TestEZFieldConstruct(EzdataTest):
     self.assertEqual(context.exception.actualObject, (1, 2, 3))
     self.assertIs(context.exception.actualType, tuple)
     self.assertEqual(context.exception.expectedTypes, (int,))
-    self.assertIn("received object: '(1, 2, 3)' of type 'tuple'",
+    self.assertIn("received object: (1, 2, 3) of type 'tuple'",
                   str(context.exception))
 
   def test_constructor_returning_something_else(self) -> None:

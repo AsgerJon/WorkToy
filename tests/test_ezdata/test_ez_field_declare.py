@@ -10,7 +10,7 @@ import sys
 from typing import Generic, TypeVar
 from unittest import skipIf
 
-from worktoy.core.sentinels import THIS, ARGS
+from worktoy.core.sentinels import THIS, ARGS, OWNER
 from worktoy.ezdata import EZField
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import MissingVariable, TypeException
@@ -173,7 +173,7 @@ class TestEZFieldDeclare(EzdataTest):
         self.assertEqual(context.exception.expectedTypes, (expected,))
         self.assertIn("'%s' to be an instance of '%s'"
                       % (slot, expected.__name__), str(context.exception))
-        self.assertIn("received object: '1.5' of type 'float'",
+        self.assertIn("received object: 1.5 of type 'float'",
                       str(context.exception))
 
   def test_refused_outside_a_dataclass_body(self) -> None:
@@ -217,10 +217,18 @@ class TestEZFieldDeclare(EzdataTest):
         self.assertEqual(repr(field), 'EZField[str](%r, %r)' % (word, n))
 
   def test_variadic_and_this_refused_in_words(self) -> None:
-    with self.assertRaises(TypeError) as context:
-      _ = EZField[ARGS]
-    self.assertIn("The entry at position 0 of the signature is the "
-                  "sentinel 'ARGS'", str(context.exception))
+    #  A sentinel is refused in the words of a field type, not in those
+    #  of an overload signature.
+    spec = """The subscript 'EZField[%s]' names a sentinel as the field
+    type. A sentinel stands for a meaning, such as the enclosing class,
+    and is no type of value a field could hold; the field type is the
+    class of the values the field holds."""
+    for sentinel in (ARGS, OWNER):
+      with self.subTest(sentinel=sentinel.__name__):
+        expected = str.join(' ', (spec % sentinel.__name__).split())
+        with self.assertRaises(TypeError) as context:
+          _ = EZField[sentinel]
+        self.assertEqual(str(context.exception), expected)
     with self.assertRaises(TypeError) as context:
       _ = EZField[THIS]
     self.assertIn('EZField[THIS]', str(context.exception))

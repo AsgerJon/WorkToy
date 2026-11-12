@@ -51,7 +51,7 @@ class RiskWarning(WorkToyWarning, RuntimeWarning):
     self.risk = risk
 
   def __str__(self) -> str:
-    infoSpec = """Received object at name '%s': '%s' of type '%s'. This
+    infoSpec = """Received object at name '%s': %s of type '%s'. This
     is promised to function correctly, but risks %s!"""
     objStr = repr(self.actualObject)
     if len(objStr) > 50:

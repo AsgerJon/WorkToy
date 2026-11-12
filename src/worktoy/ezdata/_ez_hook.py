@@ -30,7 +30,6 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
   INIT: TypeAlias = Callable[..., None]
   ITER: TypeAlias = Callable[..., Iterator]
-  BOOL: TypeAlias = Callable[..., bool]
   SETATTR: TypeAlias = Callable[..., None]
 
 
@@ -632,8 +631,8 @@ class EZHook(AbstractSpaceHook):
     instance '__dict__', where one defining neither yields to it.
     """
     valueType = type(value)
-    hasSet = hasattr(valueType, '__set__')
-    hasDelete = hasattr(valueType, '__delete__')
+    hasSet = EZHook._typeDefines(valueType, '__set__')
+    hasDelete = EZHook._typeDefines(valueType, '__delete__')
     return True if hasSet or hasDelete else False
 
   @classmethod
@@ -849,17 +848,23 @@ class EZHook(AbstractSpaceHook):
     def _assignField(self: Any, key: str, val: Any, type_: type) -> None:
       object.__setattr__(self, key, castField(key, val, type_))
 
-    def _refuseUnknown(self: Any, **kwargs) -> None:
+    #  The helpers take the keywords of the caller as one argument, and
+    #  the receiver of '__init__' is not named 'self': a field named as
+    #  a parameter of these functions, 'self' or 'argCount', must be
+    #  free to arrive as a keyword, as 'dataclasses' arranges for a field
+    #  named 'self'.
+
+    def _refuseUnknown(self: Any, kwargs: dict) -> None:
       for key in kwargs:
         if key not in fieldNames:
           raise ExtraKeywordException(type(self), key, *fieldNames)
 
-    def _refuseRepeated(self: Any, argCount: int, **kwargs) -> None:
+    def _refuseRepeated(self: Any, argCount: int, kwargs: dict) -> None:
       for key in fieldNames[:argCount]:
         if key in kwargs:
           raise RepeatedFieldException(type(self), key)
 
-    def _applyKwargs(self: Any, **kwargs) -> None:
+    def _applyKwargs(self: Any, kwargs: dict) -> None:
       for key, type_, _ in specs:
         if key in kwargs:
           _assignField(self, key, kwargs[key], type_)
@@ -876,14 +881,15 @@ class EZHook(AbstractSpaceHook):
         if key not in values:
           object.__setattr__(self, key, makeDefault())
 
-    def __init__(self: Any, *args, **kwargs) -> None:
+    def __init__(__ez_self__: Any, *args, **kwargs) -> None:
+      self = __ez_self__
       if not self.__kw_only__:
         _applyArgs(self, *args)
       elif args:
         raise KwargsOnlyException(type(self), len(args))
-      _refuseUnknown(self, **kwargs)
-      _refuseRepeated(self, len(args), **kwargs)
-      _applyKwargs(self, **kwargs)
+      _refuseUnknown(self, kwargs)
+      _refuseRepeated(self, len(args), kwargs)
+      _applyKwargs(self, kwargs)
       _applyDefaults(self)
       try:
         postInit = type.__getattribute__(type(self), '__post_init__')
@@ -1002,7 +1008,10 @@ class EZHook(AbstractSpaceHook):
       construction.
     """
 
-    def replace(self: Any, **changes) -> Any:
+    #  The receiver is not named 'self', so a field of that name may be
+    #  among the changes.
+    def replace(__ez_self__: Any, **changes) -> Any:
+      self = __ez_self__
       return type(self)(**{**self.asDict(), **changes})
 
     return replace

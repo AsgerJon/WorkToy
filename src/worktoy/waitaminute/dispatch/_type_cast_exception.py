@@ -36,9 +36,9 @@ class TypeCastException(WorkToyException, TypeError):
     TypeError.__init__(self, )
 
   def __str__(self) -> str:
-    infoSpec = """Unable to cast value '%s' to type '%s'!"""
+    infoSpec = """Unable to cast value %s to type '%s'!"""
     typeStr = self.type_.__name__
-    argStr = str(self.arg)
+    argStr = self._reprOf(self.arg)
     info = infoSpec % (argStr, typeStr)
     from ...utilities import textFmt
     return textFmt(info)

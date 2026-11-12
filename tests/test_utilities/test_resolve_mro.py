@@ -5,8 +5,13 @@ TestResolveMRO tests 'resolveMRO' from 'worktoy.utilities'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import sys
+
 from worktoy.utilities import resolveMRO
+from worktoy.waitaminute import RedundantKeyword
 from . import UtilitiesTest
+
+HERE = sys._getframe().f_code.co_filename
 
 
 class TestResolveMRO(UtilitiesTest):
@@ -15,8 +20,9 @@ class TestResolveMRO(UtilitiesTest):
   bases would have, without creating the class, so a metaclass can
   reason about the bases before building. The tests pin that the result
   agrees with the order Python gives a class of those bases, the two
-  trivial inputs, the refusal of bases that admit no order, and the
-  bailout of the merge loop.
+  trivial inputs, the refusal of bases that admit no order, the bailout
+  of the merge loop, and the warning given for a keyword that is no
+  option.
   """
 
   @staticmethod
@@ -77,3 +83,22 @@ class TestResolveMRO(UtilitiesTest):
         resolveMRO(B, C, _initialIterationCount=total - 4),
         [B, C, A, object],
     )
+
+  def test_unknown_keyword_warned(self) -> None:
+    A, B, C = self._diamond()
+    expected = """'worktoy.utilities.resolveMRO' received the keyword
+    'strict', which it does not read, and went on without it! It reads:
+    '_initialIterationCount'."""
+    for bases in ((), (A,), (B, C)):
+      with self.subTest(bases=len(bases)):
+        with self.assertWarns(RedundantKeyword) as context:
+          line = sys._getframe().f_lineno + 1
+          order = resolveMRO(*bases, strict=True)
+        self.assertEqual(order, resolveMRO(*bases))
+        warning = context.warning
+        self.assertIs(warning.receiver, resolveMRO)
+        self.assertEqual(warning.keyword, 'strict')
+        self.assertEqual(warning.options, ('_initialIterationCount',))
+        self.assertEqual(str(warning), str.join(' ', expected.split()))
+        self.assertEqual(context.filename, HERE)
+        self.assertEqual(context.lineno, line)

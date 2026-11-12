@@ -44,11 +44,11 @@ class ReadOnlyError(DescriptorException, AttributeError):
 
   def __str__(self, ) -> str:
     infoSpec = """Attempted to overwrite read-only attribute '%s' with 
-    new value: '%s'!"""
+    new value: %s!"""
     ownerName = type(self.instance).__name__
     fieldName = self._fieldName(self.instance, self.desc)
     fieldId = '%s.%s' % (ownerName, fieldName)
-    newValue = str(self.newVal)
+    newValue = self._reprOf(self.newVal)
     info = infoSpec % (fieldId, newValue)
     return textFmt(info)
 

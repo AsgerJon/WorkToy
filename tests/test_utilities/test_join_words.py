@@ -5,9 +5,14 @@ TestJoinWords tests 'joinWords' from 'worktoy.utilities'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import sys
+
 from worktoy.utilities import joinWords
+from worktoy.waitaminute import RedundantKeyword
 from worktoy.work_test.samplers import WordSampler
 from . import UtilitiesTest
+
+HERE = sys._getframe().f_code.co_filename
 
 
 class TestJoinWords(UtilitiesTest):
@@ -15,8 +20,9 @@ class TestJoinWords(UtilitiesTest):
   'joinWords' turns words into the phrase a message would use, 'a, b
   and c', with the connector before the last word replaceable and any
   lists or tuples among the arguments flattened first. The tests pin
-  the four lengths the phrase can have, the connector, the flattening
-  and that words which are no strings are rendered with 'str'.
+  the four lengths the phrase can have, the connector, the flattening,
+  that words which are no strings are rendered with 'str', and the
+  warning given for a keyword that is no option.
   """
 
   def test_no_words(self) -> None:
@@ -60,3 +66,22 @@ class TestJoinWords(UtilitiesTest):
         self.assertEqual(phrase.count(', '), n - 2)
         self.assertTrue(phrase.endswith(' and %s' % words[-1]))
         self.assertTrue(phrase.startswith('%s, ' % words[0]))
+
+  def test_unknown_keyword_warned(self) -> None:
+    expected = """'worktoy.utilities.joinWords' received the keyword
+    'seperator', which it does not read, and went on without it! It
+    reads: 'sep'."""
+    with self.assertWarns(RedundantKeyword) as context:
+      line = sys._getframe().f_lineno + 1
+      phrase = joinWords('tea', 'coffee', seperator='or')
+    self.assertEqual(phrase, 'tea and coffee')
+    warning = context.warning
+    self.assertIs(warning.receiver, joinWords)
+    self.assertEqual(warning.keyword, 'seperator')
+    self.assertEqual(warning.options, ('sep',))
+    self.assertEqual(str(warning), str.join(' ', expected.split()))
+    self.assertEqual(context.filename, HERE)
+    self.assertEqual(context.lineno, line)
+    with self.assertWarns(RedundantKeyword):
+      phrase = joinWords(seperator='or')
+    self.assertEqual(phrase, joinWords())

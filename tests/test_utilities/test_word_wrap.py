@@ -6,11 +6,14 @@ TestWordWrap tests 'wordWrap' from 'worktoy.utilities'.
 from __future__ import annotations
 
 import os
+import sys
 
 from worktoy.utilities import wordWrap
-from worktoy.waitaminute import TypeException
+from worktoy.waitaminute import TypeException, RedundantKeyword
 from worktoy.work_test.samplers import WordSampler
 from . import UtilitiesTest
+
+HERE = sys._getframe().f_code.co_filename
 
 
 class TestWordWrap(UtilitiesTest):
@@ -19,8 +22,9 @@ class TestWordWrap(UtilitiesTest):
   that would push it past the width or at a break token, and leaves a
   word longer than the width on a line of its own. The tests pin the
   docstring examples, the exact fit, the long word, the token in any
-  case and under another spelling, the refusals, and that every line
-  of a random text fits unless it is a single long word.
+  case and under another spelling, the refusals, the warning given for
+  a keyword that is no option, and that every line of a random text
+  fits unless it is a single long word.
   """
 
   def test_docstring_examples(self) -> None:
@@ -107,3 +111,22 @@ class TestWordWrap(UtilitiesTest):
         self.assertEqual(' '.join(wrapped.split()), ' '.join(words))
         for line in lines:
           self.assertTrue(len(line) <= width or ' ' not in line)
+
+  def test_unknown_keyword_warned(self) -> None:
+    expected = """'worktoy.utilities.wordWrap' received the keyword
+    'newline', which it does not read, and went on without it! It reads:
+    'newLine'."""
+    with self.assertWarns(RedundantKeyword) as context:
+      line = sys._getframe().f_lineno + 1
+      text = wordWrap(20, 'first half | second half', newline='|')
+    self.assertEqual(text, 'first half | second%shalf' % os.linesep)
+    warning = context.warning
+    self.assertIs(warning.receiver, wordWrap)
+    self.assertEqual(warning.keyword, 'newline')
+    self.assertEqual(warning.options, ('newLine',))
+    self.assertEqual(str(warning), str.join(' ', expected.split()))
+    self.assertEqual(context.filename, HERE)
+    self.assertEqual(context.lineno, line)
+    with self.assertWarns(RedundantKeyword):
+      text = wordWrap(20, newline='|')
+    self.assertEqual(text, '')

@@ -12,8 +12,9 @@ identity, which is why the two families sit side by side in 'core'.
   one root class.
 - ControlSpace: the namespace object 'MetaFlow' prepares for a signal.
 - ControlFlow: the root signal every other signal is based on.
-- SkipSet: the one signal the library raises itself, from a
-  descriptor's 'hookPreSet', telling 'Object.__set__' to skip the write.
+- SkipSet: the one signal the library provides beside the root, for a
+  descriptor's 'hookPreSet' to raise, telling 'Object.__set__' to skip
+  the write. The library catches it and raises it nowhere itself.
 
 The refusal of an attribute in a signal's class body, 'ControlClassError',
 is an error and lives in 'worktoy.waitaminute.meta' with the other

@@ -5,6 +5,8 @@ TestTypeCast tests 'typeCast' and 'hasCastRule' from 'worktoy.utilities'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+from decimal import Decimal
+from fractions import Fraction
 from typing import TYPE_CHECKING
 
 from worktoy.utilities import typeCast, hasCastRule
@@ -98,6 +100,22 @@ class TestTypeCast(UtilitiesTest):
     for value in (2, -1, 0.5, 1.5, 2j, 'True', '1', None, [1]):
       with self.subTest(value=value):
         self.assertRefused(bool, value)
+
+  def test_bool_takes_the_family_only(self) -> None:
+    class Level(int):
+      pass
+
+    self.assertIs(typeCast(bool, Level(1)), True)
+    self.assertIs(typeCast(bool, Level(0)), False)
+    self.assertRefused(bool, Level(2))
+    #  A number of no family equals 0 or 1 and is refused all the same,
+    #  as it is for 'int' and 'float'.
+    for value in (Decimal(0), Decimal(1), Fraction(0), Fraction(1)):
+      with self.subTest(value=value):
+        self.assertIn(value, (0, 1))
+        self.assertRefused(bool, value)
+        self.assertRefused(int, value)
+        self.assertRefused(float, value)
 
   def test_bool_never_asks_eq(self) -> None:
     suspicious = Suspicious()

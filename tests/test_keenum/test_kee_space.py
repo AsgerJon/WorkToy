@@ -119,7 +119,7 @@ class TestKeeSpace(KeenumTest):
     self.assertEqual(context.exception.name, 'B')
     self.assertIs(context.exception.value, True)
     self.assertEqual(context.exception.expectedTypes, (int,))
-    self.assertIn("'B' has value 'True' of type 'bool'",
+    self.assertIn("'B' has value True of type 'bool'",
                   str(context.exception))
 
     class Fine(Base):

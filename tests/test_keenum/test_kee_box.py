@@ -161,7 +161,7 @@ class TestKeeBox(KeenumTest):
     self.assertIs(context.exception.num, Shade)
     self.assertIs(context.exception.value, True)
     self.assertIn("'Holder.noBool: Shade'", str(context.exception))
-    self.assertIn("'True'", str(context.exception))
+    self.assertIn('correct type: True,', str(context.exception))
     with self.assertRaises(KeeBoxValueError) as context:
       _ = holder.noName
     self.assertIs(context.exception.desc, Holder.__dict__['noName'])
@@ -181,7 +181,7 @@ class TestKeeBox(KeenumTest):
     self.assertIs(context.exception.num, Tone)
     self.assertEqual(context.exception.value, complex(7, 7))
     self.assertIn("'Holder.noMatch: Tone'", str(context.exception))
-    self.assertIn("'(7+7j)'", str(context.exception))
+    self.assertIn('correct type: (7+7j),', str(context.exception))
 
   def test_class_resolve_order(self) -> None:
     class Holder(BaseObject):
@@ -288,11 +288,11 @@ class TestKeeBox(KeenumTest):
     self.assertIs(context.exception.desc, Owner.__dict__['negative'])
     self.assertIs(context.exception.num, Shade)
     self.assertEqual(context.exception.value, -1)
-    self.assertIn("'-1'", str(context.exception))
+    self.assertIn('correct type: -1,', str(context.exception))
     with self.assertRaises(KeeBoxValueError) as context:
       _ = owner.past
     self.assertIs(context.exception.desc, Owner.__dict__['past'])
     self.assertIs(context.exception.num, Shade)
     self.assertEqual(context.exception.value, 3)
-    self.assertIn("'3'", str(context.exception))
+    self.assertIn('correct type: 3,', str(context.exception))
     self.assertIs(owner.built, WeekDay.FRIDAY)

@@ -60,6 +60,12 @@ def wordWrap(width: int, *textLines: str, **kwargs) -> str:
   ValueError
       If 'width' is zero or negative.
 
+  Warns
+  -----
+  RedundantKeyword
+      If a keyword other than 'newLine' is given, such as a misspelled
+      one. The keyword is not read.
+
   Examples
   --------
   >>> print(wordWrap(12, 'lorem ipsum dolor sit amet'))
@@ -70,6 +76,11 @@ def wordWrap(width: int, *textLines: str, **kwargs) -> str:
   first half
   second half
   """
+  options = ('newLine',)
+  for key in kwargs:
+    if key not in options:
+      from ..waitaminute import RedundantKeyword
+      RedundantKeyword(wordWrap, key, *options).warn()
   if not isinstance(width, int):
     raise _typeException('width', width, int)
   if width < 1:

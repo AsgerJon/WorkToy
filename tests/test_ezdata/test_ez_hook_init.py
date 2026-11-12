@@ -22,7 +22,9 @@ class TestEZHookInit(EzdataTest):
   arguments, fills the rest from the defaults and calls
   '__post_init__'. The generated '__setattr__' casts or refuses, and
   the generated '__delattr__' keeps every field. The tests pin each
-  route on both a mutable and a frozen class.
+  route on both a mutable and a frozen class, and that a field named
+  'self' or 'argCount', as a parameter of the generated code is,
+  arrives by keyword like any other.
   """
 
   def test_construction(self) -> None:
@@ -188,3 +190,34 @@ class TestEZHookInit(EzdataTest):
         point = Point2D()
         point.x = n
         self.assertEqual(point.x, float(n))
+
+  def test_field_named_like_a_parameter(self) -> None:
+    class Call(EZData):
+      name = ''
+      argCount = 0
+
+    self.assertEqual(Call(name='f', argCount=3).asTuple(), ('f', 3))
+    self.assertEqual(Call('f', 3).replace(name='g').asTuple(), ('g', 3))
+    self.assertEqual(Call('f', 3).replace(argCount=5).asTuple(), ('f', 5))
+    with self.assertRaises(RepeatedFieldException) as context:
+      Call('f', 3, argCount=4)
+    self.assertEqual(context.exception.fieldName, 'argCount')
+    expected = """EZData class 'Call' received the field 'argCount' both
+    by position and by keyword."""
+    self.assertEqual(str(context.exception),
+                     str.join(' ', expected.split()))
+
+    class Links(EZData):
+      self = ''
+      related = ''
+
+    links = Links(self='/a', related='/b')
+    self.assertEqual(links.asTuple(), ('/a', '/b'))
+    self.assertEqual(links.replace(self='/c').asTuple(), ('/c', '/b'))
+    self.assertEqual(Links('/a').replace(related='/d').asTuple(),
+                     ('/a', '/d'))
+
+    class Strict(EZData, kwOnly=True):
+      argCount = 0
+
+    self.assertEqual(Strict(argCount=2).asTuple(), (2,))

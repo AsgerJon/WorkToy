@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from worktoy.core import Object
 from worktoy.ezdata import EZData, EZHook, EZStore
+from worktoy.mcls import BaseMeta
 from . import EzdataTest, Point2D, Labelled, Reporter
 
 
@@ -40,6 +41,16 @@ class TestEZHookStore(EzdataTest):
     self.assertFalse(EZHook._isDataDescriptor(GetOnly()))
     self.assertFalse(EZHook._isDataDescriptor(EZStore('x')))
     self.assertFalse(EZHook._isDataDescriptor(5))
+
+    class Loose(metaclass=BaseMeta):
+      @classmethod
+      def __class_getattr__(cls, name: str) -> str:
+        return 'made up'
+
+    #  A class hook answers 'hasattr' for any name; the decision looks
+    #  past it, at what the class defines.
+    self.assertTrue(hasattr(Loose, '__set__'))
+    self.assertFalse(EZHook._isDataDescriptor(Loose()))
     SetOnly().__set__(None, 1)
     DelOnly().__delete__(None)
     self.assertEqual(GetOnly().__get__(None, GetOnly), 1)

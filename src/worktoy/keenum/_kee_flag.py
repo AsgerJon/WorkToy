@@ -31,11 +31,12 @@ class KeeFlag:
   its index.
 
   Where the 'Kee' class allows the novel syntactic sugar of 'Kee[int](1)',
-  'KeeFlag' requires the owning 'KeeFlags' class to specify the type of the
-  'value' of each member. While duplicate 'name' attributes between members
-  are disallowed, duplicate 'value' attributes are allowed. Please note
-  however that when retrieving members by value, the member having the
-  lowest index is used.
+  a 'KeeFlag' names neither the type nor the value: its flag is valued by
+  its name, and the owning 'KeeFlags' class holds every flag to the type
+  of the 'value' of its first flag. While duplicate 'name' attributes
+  between members are disallowed, duplicate 'value' attributes are
+  allowed. Please note however that when retrieving members by value, the
+  member having the lowest index is used.
 
   The flags are read for every member as the class is created, so their
   attributes are builtin properties over the private values, not worktoy
@@ -47,7 +48,8 @@ class KeeFlag:
   - name: The flag's name, set from the class-body assignment by
     'KeeFlagsSpace.addKeeFlag'.
   - index: The flag's bit index, the number of flags declared before
-    it. Assigned by the metaclass before the 'KeeFlags' class exists.
+    it. Assigned by 'KeeFlagsMeta._createFlags' once the 'KeeFlags'
+    class exists.
   - args: Positional arguments passed to the 'KeeFlag()' constructor.
   - kwargs: Keyword arguments passed to the 'KeeFlag()' constructor.
   """
@@ -120,9 +122,9 @@ class KeeFlag:
     """
     A 'KeeFlag' in a 'KeeFlags' body is claimed by 'KeeFlagsHook' before
     the namespace stores it, so the interpreter never calls this method
-    for it; the flag's owner is written by 'KeeFlag.clone' as the class
-    is assembled. The interpreter reaches this method only for a
-    'KeeFlag' in the body of a class not built by 'KeeFlagsMeta', which
+    for it; the flag's owner is written by 'KeeFlagsMeta._createFlags'
+    once the class exists. The interpreter reaches this method only for
+    a 'KeeFlag' in the body of a class not built by 'KeeFlagsMeta', which
     is refused with a 'TypeError' saying where a 'KeeFlag' belongs.
     """
     infoSpec = """A 'KeeFlag' declares a flag of a flags enumeration and
@@ -174,7 +176,8 @@ class KeeFlag:
   def __hash__(self, ) -> int:
     return hash((self.__field_owner__, self.__field_name__, self.index))
 
-  __index__ = _getIndex
+  def __index__(self, ) -> int:
+    return self._getIndex()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

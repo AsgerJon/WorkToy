@@ -24,7 +24,6 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
   Method: TypeAlias = Callable[..., Any]
   Decorator: TypeAlias = Callable[[Method], Any]
-  Order: TypeAlias = tuple[int, ...]
 
 
 class overload:  # NOQA

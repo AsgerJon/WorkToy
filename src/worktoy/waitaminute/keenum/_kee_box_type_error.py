@@ -50,7 +50,7 @@ class KeeBoxTypeError(WorkToyException, TypeError):
     valueTypeName = getattr(valueType, '__name__', str(valueType))
     argSpec = """<%s: %s>"""
     argTypes = (*(type(arg).__name__ for arg in self.posArgs),)
-    argStrs = (*(repr(arg) for arg in self.posArgs),)
+    argStrs = (*(self._reprOf(arg) for arg in self.posArgs),)
     argInfos = (*(argSpec % (t, s) for s, t in zip(argStrs, argTypes)),)
     argInfo = '<br><tab>'.join(argInfos)
     info = infoSpec % (desc, numName, valueTypeName, argInfo)

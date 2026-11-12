@@ -33,7 +33,7 @@ class KeeBoxValueError(WorkToyException, ValueError):
 
   def __str__(self, ) -> str:
     infoSpec = """The '%s' descriptor with field enumeration: '%s', 
-    having value type: '%s', received value of correct type: '%s', 
+    having value type: '%s', received value of correct type: %s, 
     which does not match the 'value' of any member of the '%s' 
     enumeration!"""
     descSpec = """%s.%s: %s"""
@@ -46,7 +46,7 @@ class KeeBoxValueError(WorkToyException, ValueError):
     numName = getattr(self.num, '__name__', str(self.num))
     valueType = getattr(self.num, 'valueType', None)
     valueTypeName = getattr(valueType, '__name__', str(valueType))
-    value = repr(self.value)
+    value = self._reprOf(self.value)
     info = infoSpec % (desc, numName, valueTypeName, value, numName)
     from ...utilities import textFmt
     return textFmt(info, )

@@ -1,9 +1,12 @@
 """
 The 'worktoy.desc' package provides the base descriptor classes. It
 introduces the descriptor-context: during an access the active
-'(instance, owner)' pair is recorded on the descriptor, so accessor
-hooks can read the current instance and owner instead of receiving
-them as arguments.
+'(instance, owner)' pair is recorded for the descriptor, in the thread
+making the access, so accessor hooks can read the current instance and
+owner instead of receiving them as arguments. A read that runs no code
+but that of 'AttriBox' makes no record: with no read callback
+registered and none of 'hookPreGet', 'hookOnGet' and '__instance_get__'
+overridden, a value already stored is returned as it is.
 
 Accessed through the owning class, a descriptor returns itself.
 Accessed through an instance, it runs the accessor appropriate for

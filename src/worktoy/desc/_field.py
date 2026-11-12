@@ -18,16 +18,7 @@ T = TypeVar('T')
 F = TypeVar('F', bound=Callable[..., Any])
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
-  from typing import TypeAlias, Optional
   from typing import Self
-
-  MaybeStr: TypeAlias = Optional[str]
-
-  StrTuple: TypeAlias = tuple[str, ...]
-  MaybeStrTuple: TypeAlias = Optional[StrTuple]
-
-  CallMeMaybe: TypeAlias = Callable[..., Any]
-  MaybeBool: TypeAlias = Optional[bool]
 
 
 class Field(BaseDescriptor[T]):

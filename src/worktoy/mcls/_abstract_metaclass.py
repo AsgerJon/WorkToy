@@ -58,8 +58,12 @@ class AbstractMetaclass(MetaType, metaclass=MetaType):
   classes stays identity; '__class_eq__', '__class_ne__' and a
   class-level '__getitem__' are deliberately not offered, and a
   subscript of a class goes to its '__class_getitem__' as in plain
-  Python. The defaults hand over with 'super()', so a metaclass based on
-  'MetaType' mixed in beside this one takes part.
+  Python. The defaults of '__call__', '__instancecheck__',
+  '__subclasscheck__', '__str__', '__repr__', '__setattr__' and
+  '__delattr__' hand over with 'super()', so a metaclass based on
+  'MetaType' mixed in beside this one takes part in those. The defaults
+  of the other operations answer themselves and reach no metaclass
+  listed after this one.
 
   Python expects one of two behaviours from an object that iterates: an
   iterable, whose '__iter__' returns a fresh iterator at every call and

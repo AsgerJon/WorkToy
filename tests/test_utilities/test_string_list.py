@@ -5,9 +5,13 @@ TestStringList tests 'stringList' from 'worktoy.utilities'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
+import sys
+
 from worktoy.utilities import stringList
-from worktoy.waitaminute import TypeException
+from worktoy.waitaminute import TypeException, RedundantKeyword
 from . import UtilitiesTest
+
+HERE = sys._getframe().f_code.co_filename
 
 
 class TestStringList(UtilitiesTest):
@@ -16,7 +20,8 @@ class TestStringList(UtilitiesTest):
   pieces, with several separators applied one after another when a
   list or tuple of them is given. The tests pin the docstring examples,
   the stripping and dropping of empty pieces, the sequence of
-  separators, and the refusal of any other separator type.
+  separators, the refusal of any other separator type, and the warning
+  given for a keyword that is no option.
   """
 
   def test_docstring_examples(self) -> None:
@@ -61,3 +66,22 @@ class TestStringList(UtilitiesTest):
     self.assertEqual(context.exception.expectedTypes, (str, list, tuple))
     self.assertIn("'separator'", str(context.exception))
     self.assertIn("'str', 'list' or 'tuple'", str(context.exception))
+
+  def test_unknown_keyword_warned(self) -> None:
+    expected = """'worktoy.utilities.stringList' received the keyword
+    'seperator', which it does not read, and went on without it! It
+    reads: 'separator'."""
+    with self.assertWarns(RedundantKeyword) as context:
+      line = sys._getframe().f_lineno + 1
+      pieces = stringList('a;b', seperator=';')
+    self.assertEqual(pieces, ['a;b'])
+    warning = context.warning
+    self.assertIs(warning.receiver, stringList)
+    self.assertEqual(warning.keyword, 'seperator')
+    self.assertEqual(warning.options, ('separator',))
+    self.assertEqual(str(warning), str.join(' ', expected.split()))
+    self.assertEqual(context.filename, HERE)
+    self.assertEqual(context.lineno, line)
+    with self.assertWarns(RedundantKeyword):
+      pieces = stringList(seperator=';')
+    self.assertEqual(pieces, [])

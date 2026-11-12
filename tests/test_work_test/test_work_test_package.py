@@ -21,10 +21,11 @@ from . import WorkTestTest
 
 class TestWorkTestPackage(WorkTestTest):
   """
-  The package exports the samplers, 'SubTest', 'BaseTest', the worked
-  example 'ComplexMixin' and its bank 'ComplexTest', and the samplers
-  subpackage exports its text, its metaclass, its base and the six
-  samplers. 'BaseTest' is a 'unittest.TestCase' built by 'BaseMeta',
+  The package exports the samplers, 'SubTest', 'TestSpace', 'TestMeta',
+  'BaseTest', the worked example 'ComplexMixin' and its bank
+  'ComplexTest', and the samplers subpackage exports its text, its
+  metaclass, its base and the six samplers. 'BaseTest' is a
+  'unittest.TestCase' built by 'TestMeta' in a 'TestSpace',
   'SubTest' is a 'TestCase' and no 'BaseTest', the bank is no test case
   at all, and every sampler is a 'BaseObject' built by 'SamplerMeta'.
   The package is a leaf that imports no other leaf, so a project may
@@ -34,8 +35,8 @@ class TestWorkTestPackage(WorkTestTest):
   """
 
   def test_exports(self) -> None:
-    expected = ['samplers', 'SubTest', 'BaseTest', 'ComplexMixin',
-                'ComplexTest']
+    expected = ['samplers', 'SubTest', 'TestSpace', 'TestMeta',
+                'BaseTest', 'ComplexMixin', 'ComplexTest']
     self.assertEqual(work_test.__all__, expected)
     for name in expected:
       with self.subTest(name=name):
@@ -52,7 +53,10 @@ class TestWorkTestPackage(WorkTestTest):
 
   def test_layering(self) -> None:
     self.assertIsSubclass(BaseTest, TestCase)
-    self.assertIs(type(BaseTest), BaseMeta)
+    #  Read through the package: bound here under its own name, pytest
+    #  would take 'TestMeta' for a test class and warn.
+    self.assertIs(type(BaseTest), work_test.TestMeta)
+    self.assertIsSubclass(work_test.TestMeta, BaseMeta)
     self.assertIsSubclass(SubTest, TestCase)
     self.assertIsNotSubclass(SubTest, BaseTest)
     self.assertIsNotSubclass(ComplexTest, TestCase)
