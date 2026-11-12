@@ -189,8 +189,8 @@ Operating rules
 When the report is complete
 ---------------------------
 
-Only then open archive/handoff_full_state_20261106_182458.md and the
-memory files, and read the settled items once more. Where a finding is
+Only then open archive/notes/handoff_full_state_20261106_182458.md and
+the memory files, and read the settled items once more. Where a finding is
 already decided by a settled item, or already recorded there, mark it
 "withdrawn: settled" or "known" under its heading. Do not delete it.
 Fill in the summary. Print the summary and the path of the report.

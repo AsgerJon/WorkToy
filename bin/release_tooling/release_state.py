@@ -3,6 +3,13 @@ release_state holds the release state machine of worktoy: the nine
 release buttons, the three states 'VERSION' can be in, and what a press
 of each button does in each state. 'version_get.py', 'version_bump.py'
 and 'safety_check.py' import it, so every press is decided in one place.
+
+Known limitation: the tooling publishes one line of releases. Every
+button runs on 'main' alone, and every press names its version from the
+one 'VERSION' file, so a micro update cannot be published on an older
+line, as a 1.1.1 once 1.2.0 is released. This remains unimplemented by
+decision (2026-11-12): it will not be necessary for a long time, and it
+would bring a lot of complexity.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
