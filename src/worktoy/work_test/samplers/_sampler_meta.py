@@ -14,10 +14,11 @@ from ...mcls import BaseMeta
 class SamplerMeta(BaseMeta, ABCMeta):
   """
   A sampler must supply a value type and a single-sample recipe, and a
-  sampler that leaves either out must be refused when it is built, not
-  at its first row. 'abc.ABC' cannot stand beside 'BaseObject', since
-  'ABCMeta' is outside the 'MetaType' family and Python refuses the
-  metaclass conflict, so the samplers need one metaclass that is both.
+  sampler class that leaves either out must give no sampler at all: the
+  mistake must show where the sampler is created, not at its first row.
+  'abc.ABC' cannot stand beside 'BaseObject', since 'ABCMeta' is outside
+  the 'MetaType' family and Python refuses the metaclass conflict, so
+  the samplers need one metaclass that is both.
 
   Implementation
   --------------
@@ -26,6 +27,7 @@ class SamplerMeta(BaseMeta, ABCMeta):
   the way the 'mcls' package documents for a metaclass of another
   library. 'BaseMeta' answers first along the resolution order, so a
   sampler body keeps its overloads and class hooks, and 'ABCMeta'
-  collects the methods marked with 'abstractmethod' and refuses a class
-  that leaves one of them abstract. 'BaseSampler' is built by it.
+  collects the methods marked with 'abstractmethod'. A class that
+  leaves one of them abstract is created all the same, and calling it
+  raises 'TypeError' naming the method. 'BaseSampler' is built by it.
   """

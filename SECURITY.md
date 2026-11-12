@@ -7,11 +7,19 @@ supported at the maintainer's discretion and are marked "End-of-Life"
 once they stop receiving fixes. Pre-1.0 releases were alpha software and
 receive nothing.
 
-| Version | Status                |
-| ------- | --------------------- |
-| 1.1.x   | Supported (LTS)       |
-| 1.0.x   | End-of-Life           |
-| < 1.0   | Not supported (alpha) |
+| Version | Status                                             |
+| ------- | -------------------------------------------------- |
+| 1.2.x   | Supported (LTS), from 1.2.1                        |
+| 1.2.0   | Breaking behaviour in `work_test`; update to 1.2.1 |
+| 1.1.x   | End-of-Life                                        |
+| 1.0.x   | End-of-Life                                        |
+| < 1.0   | Not supported (alpha)                              |
+
+1.2.0 is flagged for breaking code that worked in 1.1.0, not for a
+security fault. A test base built on `BaseTest` by a metaclass of its
+own was no longer created, and a test class could no longer write a
+`doCleanups` or a `debug` of its own. 1.2.1 restores all three; the
+changelog has the details.
 
 ## Reporting a vulnerability
 

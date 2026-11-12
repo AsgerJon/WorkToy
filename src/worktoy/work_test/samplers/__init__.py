@@ -3,8 +3,8 @@ The 'worktoy.work_test.samplers' package provides random sample-data
 generators for the test suite. 'BaseSampler' defines the shared shape, a
 value type plus a single-sample recipe sized into items, rows, and
 tables, with a generator and a seed of its own; each concrete sampler
-fills in one data type. 'SamplerMeta' builds them, so a sampler without
-both hooks is refused.
+fills in one data type. 'SamplerMeta' builds them, so a sampler class
+that leaves either hook out cannot be instantiated.
 
 - LOREM_WORDS, randomWord, loremSentence
 - SamplerMeta

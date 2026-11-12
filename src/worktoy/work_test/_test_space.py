@@ -1,6 +1,6 @@
 """
-TestSpace is the namespace a test class body runs in. It keeps the names
-'doCleanups' and 'debug' for the library.
+TestSpace is the namespace 'TestMeta' prepares for a test class. It
+keeps the names 'doCleanups' and 'debug' for the library.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -17,14 +17,15 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class TestSpace(BaseSpace):
   """
-  A test base built by 'TestMeta' has chosen that its test classes do
-  not replace 'doCleanups' or 'debug', the two places from which
-  'BaseTest' reports the failed 'subTest' blocks of a test, and the
-  place to say so is the line of the class body that tries: the builder
-  is then shown that line, not the end of a class statement. TestSpace
-  is the namespace 'TestMeta' prepares for a test class. It lets
-  'TestMeta' bind the two names before the class body runs and refuses
-  every binding of either by the class body.
+  A test base built by 'TestMeta' has chosen that the bodies of its
+  test classes do not bind 'doCleanups' or 'debug', two of the places
+  from which 'BaseTest' reports the failed 'subTest' blocks of a test,
+  each test method being the third. The place to say so is the line of
+  the class body that tries: the builder is then shown that line, not
+  the end of a class statement. TestSpace is the namespace 'TestMeta'
+  prepares for a test class. It lets 'TestMeta' bind the two names
+  before the class body runs and refuses every binding of either by
+  the class body.
 
     class StrictTest(BaseTest, metaclass=TestMeta):
       pass

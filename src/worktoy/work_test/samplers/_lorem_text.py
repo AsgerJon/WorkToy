@@ -47,9 +47,15 @@ _UP_TO_LENGTH: dict[int, tuple[str, ...]] = {
 
 def _choose(words: tuple[str, ...], generator: Optional[Random]) -> str:
   """
-  The '_choose' function draws one of 'words' from 'generator', a
-  'random.Random', or from the state of the 'random' module when no
-  generator is given.
+  A sampler draws from a generator of its own, so that its seed repeats
+  its words, while a caller with no generator draws as 'random.choice'
+  does.
+
+  Implementation
+  --------------
+
+  One of 'words' is drawn from 'generator', a 'random.Random', or from
+  Python's own 'random' when none is given.
   """
   if generator is None:
     return random.choice(words)
@@ -58,20 +64,60 @@ def _choose(words: tuple[str, ...], generator: Optional[Random]) -> str:
 
 def randomWord(generator: Optional[Random] = None) -> str:
   """
-  The 'randomWord' function returns one word drawn uniformly from
-  'LOREM_WORDS', from 'generator' when one is given and from the state
-  of the 'random' module otherwise.
+  A test that needs a short string wants a real word rather than random
+  letters, and a seeded sampler asking for one must get the same word
+  again.
+
+  Implementation
+  --------------
+
+  One word of 'LOREM_WORDS' is drawn, each as likely as any other, from
+  'generator' when one is given and from Python's own 'random'
+  otherwise.
+
+  Parameters
+  ----------
+
+  generator : random.Random, optional
+    The generator to draw from.
+
+  Returns
+  -------
+
+  str
+    The word.
   """
   return _choose(LOREM_WORDS, generator)
 
 
 def _fittingWord(room: int, generator: Optional[Random] = None) -> str:
   """
-  The '_fittingWord' function returns a word that keeps a sentence
-  closable within 'room' characters: a word of exactly 'room' letters
-  when the vocabulary has one, which closes the body, and otherwise a
-  word short enough to leave a space and at least one letter of room
-  after it.
+  A sentence of an exact length is built word by word, and each word
+  must leave the rest closable: after it either nothing is left, or
+  room for a space and at least one more letter.
+
+  Implementation
+  --------------
+
+  With room for no more than the longest word, a word of exactly that
+  many letters is drawn, which closes the body; the vocabulary holds a
+  word of every length for that. With more room, a word of at most two
+  letters fewer than the room is drawn.
+
+  Parameters
+  ----------
+
+  room : int
+    The letters left in the body of the sentence.
+
+  generator : random.Random, optional
+    The generator to draw from.
+
+  Returns
+  -------
+
+  str
+    The word.
   """
   if room <= _LONGEST:
     return _choose(_OF_LENGTH[room], generator)
@@ -80,12 +126,39 @@ def _fittingWord(room: int, generator: Optional[Random] = None) -> str:
 
 def loremSentence(charCount: int, generator: Optional[Random] = None) -> str:
   """
-  The 'loremSentence' function returns a sentence of exactly 'charCount'
-  characters: words from 'LOREM_WORDS' joined by single spaces, the first
-  letter capitalised and a period closing it, drawn from 'generator' when
-  one is given and from the state of the 'random' module otherwise. A
-  count of one gives the period alone. A count below one is refused with
-  'ValueError'.
+  A test of anything that lays out, wraps or cuts text wants text of a
+  length it chooses to the character, which still reads as a sentence.
+
+  Implementation
+  --------------
+
+  Words of 'LOREM_WORDS' are joined by single spaces, each chosen by
+  '_fittingWord' so that the last one ends the body one character short
+  of the count; the first letter is capitalised and a period closes the
+  sentence. A count of one gives the period alone. The words are drawn
+  from 'generator' when one is given and from Python's own 'random'
+  otherwise.
+
+  Parameters
+  ----------
+
+  charCount : int
+    The length of the sentence, period included.
+
+  generator : random.Random, optional
+    The generator to draw from.
+
+  Returns
+  -------
+
+  str
+    The sentence.
+
+  Raises
+  ------
+
+  ValueError
+    'charCount' is below one.
   """
   if charCount < 1:
     infoSpec = """A sentence needs at least one character, but %d were

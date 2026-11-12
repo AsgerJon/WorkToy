@@ -5,9 +5,7 @@ BaseTest is the 'unittest.TestCase' subclass shared by the worktoy tests.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import gc
 import os
-import sys
 import traceback
 from functools import wraps
 from inspect import iscoroutinefunction
@@ -35,11 +33,9 @@ try:
 except AttributeError:  # pragma: no cover, no mutate
   class _Temp(TestCase):
     def assertIsSubclass(self, cls: type, base: type, msg=None) -> None:
-      """Asserts that 'cls' is a subclass of 'base'."""
       self.assertTrue(issubclass(cls, base), msg)
 
     def assertNotIsSubclass(self, cls: type, base: type, msg=None) -> None:
-      """Asserts that 'cls' is not a subclass of 'base'."""
       self.assertFalse(issubclass(cls, base), msg)
 else:  # version >= 3.14
   _Temp = TestCase
@@ -200,19 +196,16 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   one instance of a test class per test method gives each test samplers
   of its own, built at the first read, and a sampler narrowed or seeded
   in 'setUp' keeps its settings for that test alone; 'seedSamplers'
-  seeds all six with one seed. 'subTest' is the
-  'SubTest' descriptor, which builds one accumulator per test instance;
-  '_reportSubTests' reads it without building one and fails the test
-  once, with 'FAIL [label]: message' or 'ERROR [label]: repr' per
-  recorded block, each followed by the traceback of what the block
-  raised. '__class_init__' gives every test class test methods that run
-  it as they end, and a 'doCleanups' and a 'debug' that run it for what
-  a 'tearDown' or a cleanup recorded, so a 'tearDown', a 'doCleanups',
-  a 'debug' or a 'run' of a test class need not hand on for it.
-  'tearDownClass' unloads the module of the test class and runs the
-  garbage collector after its tests, for the reason its docstring
-  gives. 'exceptions' yields the common builtin exception classes.
-  'argReport'
+  seeds all six with one seed. 'subTest' is the 'SubTest' descriptor,
+  which builds one accumulator per test instance; '_reportSubTests'
+  reads it without building one and fails the test once, with
+  'FAIL [label]: message' or 'ERROR [label]: repr' per recorded block,
+  each followed by the traceback of what the block raised.
+  '__class_init__' gives every test class test methods that run it as
+  they end, and a 'doCleanups' and a 'debug' that run it for what a
+  'tearDown' or a cleanup recorded, so a 'tearDown', a 'doCleanups', a
+  'debug' or a 'run' of a test class need not hand on for it.
+  'exceptions' yields the common builtin exception classes. 'argReport'
   puts each argument on a line of its own as '<type: value>'.
   'assertIsNotSubclass' and 'assertIsNotInstance' are the negative
   assertions under the names the suite uses; below Python 3.14 the
@@ -267,12 +260,39 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   @classmethod
   def argReport(cls, *args, **kwargs) -> str:
     """
-    The 'argReport' method builds a string report of the given arguments,
-    used in the test cases to provide informative error messages when a
-    test fails. The report puts each argument on a line of its own as
-    '<type: value>'. A line of 48 characters or more, a limit the 'chars'
-    keyword replaces, is cut to three characters fewer and closed with an
-    ellipsis; the 'newLine' keyword replaces the line separator.
+    A failing assertion on several values is read best with each value
+    on a line of its own, named by its type and short enough to take in
+    at a glance, and a test should not have to build such a message by
+    hand.
+
+    Implementation
+    --------------
+
+    Each positional argument becomes '<type: value>', the value as 'str'
+    gives it. A line as long as the limit or longer is cut to three
+    characters fewer and closed with an ellipsis, so it is as long as
+    the limit. The lines are joined by the line separator, each after
+    the first indented by two spaces. The text passes through 'textFmt',
+    so a run of whitespace inside a value shows as one space, and a
+    '<br>' or a '<tab>' in a value is expanded.
+
+    Parameters
+    ----------
+
+    *args
+      The values to report.
+
+    **kwargs
+      chars : int, optional
+        The limit of a line. Defaults to 48.
+      newLine : str, optional
+        The line separator. Defaults to 'os.linesep'.
+
+    Returns
+    -------
+
+    str
+      The report, empty when no argument is given.
     """
     if 'chars' in kwargs:
       lineLength: int = kwargs['chars']
@@ -299,10 +319,31 @@ class BaseTest(_Temp, metaclass=BaseMeta):
 
   def seedSamplers(self, seed: int) -> None:
     """
-    The 'seedSamplers' method seeds the six samplers of this test with
-    one seed, so a test reruns with the same draws by calling it in its
-    'setUp'. A seed that is no 'int' is refused by the first sampler
-    with 'TypeException' before any sampler is seeded.
+    A test drawing random data must be able to draw the same data again,
+    at the next run and on another machine, or a failure seen once
+    cannot be looked at twice. The test has six samplers, and one line
+    should seed them all.
+
+    Implementation
+    --------------
+
+    The seed is assigned to 'seed' of each of the six samplers,
+    'randomInteger' first, which seeds the generator of that sampler. A
+    test calling the method in its 'setUp' repeats its draws at every
+    run.
+
+    Parameters
+    ----------
+
+    seed : int
+      The seed every sampler receives.
+
+    Raises
+    ------
+
+    TypeException
+      'seed' is no 'int'. The first sampler refuses it, so none is
+      seeded.
     """
     samplers = (
         self.randomInteger,
@@ -318,39 +359,32 @@ class BaseTest(_Temp, metaclass=BaseMeta):
   @staticmethod
   def _formatRaised(exception: BaseException) -> str:
     """
-    The '_formatRaised' method renders the traceback of a recorded
-    exception as the interpreter would, so the report of a sub-test
-    block names the line that raised.
+    A failed block is caught where it happens, and its report must still
+    name the line that raised, as the traceback of an uncaught exception
+    does.
+
+    Implementation
+    --------------
+
+    'traceback.format_exception' renders the exception with the
+    traceback it carries, and the trailing whitespace is dropped.
+
+    Parameters
+    ----------
+
+    exception : BaseException
+      What a block raised.
+
+    Returns
+    -------
+
+    str
+      The traceback as the interpreter prints it.
     """
     lines = traceback.format_exception(
         type(exception), exception, exception.__traceback__,
     )
     return str.join('', lines).rstrip()
-
-  @classmethod
-  def tearDownClass(cls) -> None:
-    """
-    Unloads the test module and runs the garbage collector to evict
-    the class object before the next test class is built.
-
-    This is here because 'unittest' pins every test class it discovers
-    for the entire run via 'TestLoader' and 'TestResult', and that
-    pinning causes real, observable metaclass context leakage between
-    otherwise-independent test classes. Run TestA and TestB in
-    isolation: both pass. Run them in sequence: TestB inherits stale
-    descriptor state, mismatched owners, or cached registry entries
-    that 'unittest' has refused to release. Popping the module from
-    sys.modules and forcing a GC pass drops the refcount on the
-    outgoing class so its metaclass finalizers actually fire before
-    the next class's body executes. The bug only exists in the
-    intersection of two innocent tests, which is why this looks
-    paranoid until you have spent a weekend debugging it.
-
-    Blame: 'unittest'. The metaclass machinery is fine.
-    """
-    super().tearDownClass()
-    sys.modules.pop(cls.__module__, None)
-    gc.collect()
 
   @classmethod
   def __class_init__(cls, name: str, bases: tuple, space, **kw) -> None:
@@ -423,14 +457,35 @@ class BaseTest(_Temp, metaclass=BaseMeta):
 
   def _reportSubTests(self, ) -> None:
     """
-    The '_reportSubTests' method peeks at any sub-test recorded on this
-    instance through the 'subTest' descriptor and fails the test if that
-    sub-test holds any fails or errors, naming each with its label and
-    the traceback of what it raised. The records it reports are dropped
-    from the instance first, so a second call reports nothing twice.
-    Every test method a test class is given calls the method as it
-    ends, the 'doCleanups' registers it as the last cleanup of the test,
-    and the 'debug' calls it at its end; see '__class_init__'.
+    A failed 'subTest' block is swallowed where it happens, so that the
+    rest of the test runs, and the test must still fail for it
+    afterwards. One failure must carry every block recorded since the
+    last report, and tell of each what is needed to find it: its label,
+    what it raised and the line that raised it. A test that recorded
+    nothing, or never opened a block, must pass through untouched. And
+    since the report is asked for at more than one moment of a test,
+    nothing may be reported twice.
+
+    Implementation
+    --------------
+
+    The accumulator is read through the 'subTest' descriptor in the way
+    that builds none, and a test without one returns at once, as does
+    one whose accumulator holds no fail and no error. Otherwise the
+    message gets 'FAIL [label]: message' for each fail and
+    'ERROR [label]: repr' for each error, each followed by its traceback
+    from '_formatRaised'; the accumulator is removed from the instance,
+    and 'fail' raises the message. Every test method a test class is
+    given calls this method as it ends, the 'doCleanups' it is given
+    runs it after the cleanups of the test, and the 'debug' it is given
+    calls it at its end; '__class_init__' gives the class the three.
+
+    Raises
+    ------
+
+    AssertionError
+      A block failed or raised since the last report. The exception is
+      the 'failureException' of the test.
     """
     cls = type(self)
     try:

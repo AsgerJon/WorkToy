@@ -70,9 +70,27 @@ class IntSampler(BaseSampler):
 
   def _setBounds(self, low: Any, high: Any) -> None:
     """
-    The '_setBounds' method writes the two bounds as a pair, each cast
-    by its box, and orders the pair once both are stored; while it
-    writes, '_orderBounds' stands down.
+    Two bounds given together must be ordered against each other, never
+    one of them against the bound the other is about to replace. Writing
+    300 and 400 over the range from 0 to 255 one bound at a time would
+    find the new lower bound above the old upper one, swap the two, and
+    end at 255 and 400.
+
+    Implementation
+    --------------
+
+    Both bounds are written, each cast by its box, while
+    '__bounds_pending__' makes '_orderBounds' stand down, and
+    '_orderBounds' orders the pair once both are stored.
+
+    Parameters
+    ----------
+
+    low : Any
+      The one bound.
+
+    high : Any
+      The other bound.
     """
     self.__bounds_pending__ = True
     try:
@@ -84,8 +102,22 @@ class IntSampler(BaseSampler):
 
   def _applySettings(self, settings: Settings) -> None:
     """
-    The '_applySettings' method writes both bounds as a pair when the
-    keywords name both, and hands the rest to the base.
+    Two bounds given by keyword belong together as two given by position
+    do, and must be written as a pair.
+
+    Implementation
+    --------------
+
+    When the settings hold both bounds, the two are taken out and
+    written through '_setBounds'. The rest, a lone bound included, goes
+    to 'BaseSampler._applySettings'.
+
+    Parameters
+    ----------
+
+    settings : Settings
+      A 'dict[str, Any]' from the name of each setting found to its
+      value.
     """
     if 'minVal' in settings and 'maxVal' in settings:
       self._setBounds(settings.pop('minVal'), settings.pop('maxVal'))
@@ -99,8 +131,16 @@ class IntSampler(BaseSampler):
   @maxVal.onSet
   def _orderBounds(self, *args) -> None:
     """
-    The '_orderBounds' notifier swaps the bounds when the upper one has
-    fallen below the lower one.
+    A test names a range by its two ends and should not have to care
+    which it wrote first, and a bound assigned later must not leave the
+    range empty.
+
+    Implementation
+    --------------
+
+    The method is the 'onSet' notifier of both boxes. Unless
+    '_setBounds' is writing a pair, an upper bound found below the lower
+    one makes it write the two swapped, through '_setBounds'.
     """
     if self.__bounds_pending__:
       #  This branch is reached by the following:

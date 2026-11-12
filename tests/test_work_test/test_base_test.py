@@ -5,11 +5,9 @@ TestBaseTest tests 'BaseTest' from 'worktoy.work_test'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-import gc
 import os
 import sys
 import unittest
-import weakref
 from types import ModuleType
 from unittest import TestCase
 
@@ -41,13 +39,14 @@ class TestBaseTest(WorkTestTest):
   the exceptions, the report with its cut and its two keywords, the
   assertions in both directions, the verdicts of the report as a
   plain 'unittest.TestResult' records them for a case built for it, and
-  'tearDownClass' unloading the module of a test class after its tests.
+  the class teardown left to 'unittest', so that the file of a test
+  class stays in 'sys.modules' and its 'tearDownModule' runs.
   """
 
   def test_shape(self) -> None:
     self.assertIsSubclass(BaseTest, TestCase)
     self.assertIsInstance(BaseTest, BaseMeta)
-    self.assertIn('tearDownClass', vars(BaseTest))
+    self.assertNotIn('tearDownClass', vars(BaseTest))
     self.assertIn('_reportSubTests', vars(BaseTest))
     self.assertNotIn('tearDown', vars(BaseTest))
     for name, _ in SAMPLERS:
@@ -183,46 +182,28 @@ class TestBaseTest(WorkTestTest):
     self.assertNotIn('x=3', text)
     self.assertEqual(text.count('Traceback (most recent call last)'), 3)
 
-  def test_tear_down_class_unloads_module(self) -> None:
-    name = 'worktoy_unloaded_test_module'
-    sys.modules[name] = ModuleType(name)
+  def test_module_fixtures_run_beside_a_test_class(self) -> None:
+    name = 'worktoy_fixture_test_module'
+    module = ModuleType(name)
+    log = []
+    module.setUpModule = lambda: log.append('setUpModule')
+    module.tearDownModule = lambda: log.append('tearDownModule')
+    sys.modules[name] = module
     self.addCleanup(sys.modules.pop, name, None)
 
     class Case(BaseTest):
       def test_pass(self) -> None:
-        self.assertEqual(1, 1)
+        log.append('test')
 
     Case.__module__ = name
     result = unittest.TestResult()
     unittest.TestLoader().loadTestsFromTestCase(Case).run(result)
     self.assertTrue(result.wasSuccessful())
     self.assertEqual(result.testsRun, 1)
-    self.assertNotIn(name, sys.modules)
-
-  def test_tear_down_class_collects_garbage(self) -> None:
-    name = 'worktoy_collected_test_module'
-    sys.modules[name] = ModuleType(name)
-    self.addCleanup(sys.modules.pop, name, None)
-    #  With automatic collection off, only 'tearDownClass' can collect.
-    self.addCleanup(gc.enable if gc.isenabled() else gc.disable)
-    gc.disable()
-
-    class Node:
-      pass
-
-    class Case(BaseTest):
-      def test_pass(self) -> None:
-        self.assertEqual(1, 1)
-
-    Case.__module__ = name
-    node = Node()
-    node.loop = node
-    ref = weakref.ref(node)
-    del node
-    self.assertIsNotNone(ref())
-    unittest.TestLoader().loadTestsFromTestCase(Case).run(
-        unittest.TestResult())
-    self.assertIsNone(ref())
+    #  'unittest' looks the file of the class up in 'sys.modules' for its
+    #  'tearDownModule', after the 'tearDownClass' of the class has run.
+    self.assertEqual(log, ['setUpModule', 'test', 'tearDownModule'])
+    self.assertIs(sys.modules.get(name), module)
 
   def test_report_builds_no_accumulator(self) -> None:
     class Case(BaseTest):

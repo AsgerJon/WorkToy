@@ -30,11 +30,10 @@ class SymbolicSampler(BaseSampler):
 
   'wordCount' is an 'AttriBox[int]' with the synonyms 'numWords',
   'num_words' and 'word_count' for the keyword constructor ('count' is
-  the row count, as on every sampler);
-  a 'preSet' notifier refuses a count below one with 'ValueError'. The
-  one-argument constructor takes the count. Each value is a
-  'SymbolicName' of 'wordCount' words from 'randomWord' drawing from
-  'self.random'.
+  the row count, as on every sampler); a 'preSet' notifier refuses a
+  count below one with 'ValueError'. The one-argument constructor takes
+  the count. Each value is a 'SymbolicName' of 'wordCount' words from
+  'randomWord' drawing from 'self.random'.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

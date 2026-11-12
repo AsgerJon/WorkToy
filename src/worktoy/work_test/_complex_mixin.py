@@ -140,10 +140,33 @@ class ComplexMixin:
   @classmethod
   def _resolveOther(cls, other: Any) -> Union[NotImpType, Self]:
     """
-    The '_resolveOther' method coerces 'other' to an instance of 'cls',
-    accepting another instance, a real number, a builtin complex, or any
-    iterable or single value the constructor admits, and returning
-    'NotImplemented' when none of those work.
+    Every operator of the mixin takes its other operand in several
+    shapes, and must defer to that operand, as Python expects of an
+    operator, when it can make nothing of the value. One place decides
+    what counts as an operand, so the operators agree.
+
+    Implementation
+    --------------
+
+    An instance of the class is returned as it is. A real number and a
+    'complex' give their parts. A string goes to the constructor, which
+    parses it as 'complex' does. Any other value is unpacked as the
+    parts when it can be iterated, and handed to the constructor whole
+    when it cannot. A value the constructor refuses with 'TypeError' or
+    'ValueError' gives 'NotImplemented'.
+
+    Parameters
+    ----------
+
+    other : Any
+      The other operand.
+
+    Returns
+    -------
+
+    Self or NotImplemented
+      An instance of the class holding the parts of 'other', or
+      'NotImplemented' when 'other' is no operand.
     """
     if isinstance(other, cls):
       return other
@@ -172,8 +195,20 @@ class ComplexMixin:
 
   def conjugate(self) -> Self:
     """
-    The 'conjugate' method returns the complex conjugate as a new
-    instance.
+    'complex' offers its conjugate as a method, and a class standing for
+    a complex number is expected to offer the same.
+
+    Implementation
+    --------------
+
+    A new instance of the class holds the same real part and the
+    negated imaginary part, as the '~' operator gives.
+
+    Returns
+    -------
+
+    Self
+      The conjugate.
     """
     cls = type(self)
     out = cls(self.REAL, -self.IMAG)

@@ -4,6 +4,159 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
+## [1.2.1] - 2026 November 12
+
+This release repairs 1.2.0. In making every failed `subTest` block
+count, 1.2.0 broke three things that worked in 1.1.0: a test base built
+by a metaclass of its own could no longer be based on `BaseTest`, and a
+test class could no longer write a `doCleanups` or a `debug` of its
+own. All three work again, and a failed block is still reported. The
+release also carries a concentrated pass over `worktoy.ezdata`, which
+changes behaviour in the places listed below, one of them a promise
+taken back. Every change of behaviour was made test first. The suite
+passes on every Python from 3.7 to 3.15, with every statement and
+branch covered on 3.15, and every file whose code changed since 1.2.0
+was mutation tested after its last change.
+
+### A test base may bring a metaclass of its own again
+
+In 1.2.0 `BaseTest` was built by a new metaclass, `TestMeta`, in a
+namespace that refused the line of a class body binding `doCleanups` or
+`debug`. A test base built by a metaclass of its own, based on
+`BaseMeta`, then met a metaclass conflict and was not created at all,
+and a test class overriding `doCleanups` or `debug` and handing on,
+which is ordinary `unittest`, was refused.
+
+    class OwnMeta(BaseMeta):
+      pass
+
+    class AppTest(BaseTest, metaclass=OwnMeta):  # TypeError in 1.2.0
+      pass
+
+`BaseTest` is built by `BaseMeta` again. The report of the failed
+blocks comes from the class hook `__class_init__`, which runs for every
+test class under any metaclass based on `BaseMeta`. Each test method
+reports as it ends, and the class is given a `doCleanups` and a `debug`
+that report, built around the ones it would use otherwise. So a failed
+block still fails its test whatever the class does in `tearDown`,
+`doCleanups`, `debug` or `run`. A test base that writes a
+`__class_init__` of its own hands on to the one of `BaseTest`.
+`TestMeta` and `TestSpace` remain for a test base that chooses them, and
+under them a class body binding `doCleanups` or `debug` is still
+refused.
+
+Different from 1.2.0, and to know:
+
+- A failed block in a test marked `unittest.expectedFailure` is that
+  expected failure.
+- A test with failed blocks both in its method and in `tearDown` or a
+  cleanup fails twice, once for each report.
+- A failing test shows one frame more in its traceback, the line that
+  calls the test method.
+
+### `BaseTest` leaves the class teardown to `unittest`
+
+`BaseTest.tearDownClass` took the file of the test class out of
+`sys.modules` after its tests and ran the garbage collector. 1.1.0
+removed it. 1.2.0 brought it back, and its changelog did not say so.
+
+`unittest` looks the file of a test class up in `sys.modules` after the
+class has torn down. So under `python -m unittest` the `tearDownModule`
+of a file holding a `BaseTest` class never ran, nor any function given
+to `addModuleCleanup`, and the run said OK. A second test class of the
+same file ran with its file unloaded, so pickling a class of that file
+failed there. Under pytest `tearDownModule` ran, since pytest takes the
+function when it collects the file.
+
+`BaseTest` has no `tearDownClass` of its own now. A class that a test
+builds is freed when Python collects garbage, as under a plain
+`unittest.TestCase`, and no longer before the next test class runs. A
+test that must not see what an earlier test class built calls
+`gc.collect()` itself.
+
+### A name in an `EZData` body is a field or something else, not both
+
+A class body that binds a method, a descriptor or an overload at the
+name of a field of the class, declared in the body or inherited, is
+refused with `DuplicateError`, and so is a field bound at the name of a
+method or a descriptor of the body.
+
+    class Shape(EZData):
+      area = 0.0
+
+      def area(self) -> float:  # refused here, with 'DuplicateError'
+        ...
+
+Such a class was created before, and then hid the method behind the
+value of the field, could not be instantiated, or gave every instance
+the default of the field whatever it was given. A subclass may still
+declare an inherited field again as a field, with another default or
+type.
+
+### A promise taken back: equality across two orders of the fields
+
+1.2.0 promised that two `EZData` instances are equal when their values
+are and they are of one lineage. For a subclass holding its fields in
+another order than the class it is compared with, as a class based on
+two dataclasses declaring the same names in opposite orders does, that
+sentence read two ways, by position and by name, and each reading made
+the other false. Two classes whose fields come in different orders are
+no longer congruent, and their instances are not equal. A class and a
+subclass holding the same fields in the same order are equal over equal
+values as before. The promise is written up in `promises/confessions`.
+
+### A subclass of `EZField` takes options of its own
+
+The parentheses of `Sub[T](...)` reach the `__init__` of a subclass of
+`EZField`, as those of a subclass of `AttriBox` do, so a field class of
+a project may take options beside the default. The field a subclass of
+the dataclass inherits keeps the class and the options of the field it
+comes from. A field that belongs to a class refuses new arguments with
+a `TypeError`, as a placed box does.
+
+### `EZData` instances are made, written and compared faster
+
+No answer changed but the one named last. Measured on Python 3.15, a
+dataclass of two floats:
+
+- An instance is made in about 1.4 microseconds, where 1.2.0 took about
+  2.2. The constructor skips its keyword passes when no keyword is
+  given and stores a value of exactly the field type without the cast.
+- An assignment takes about 190 nanoseconds, where it took about 250.
+- A comparison between an instance and one of a frozen subclass takes
+  about 2 microseconds, where it took about 29.
+- A class without a `__post_init__` no longer pays for a failed lookup
+  at every construction. The price: `hasattr(cls, '__post_init__')` is
+  true on every dataclass now, with `None` as the value for a class
+  that has none.
+
+### Smaller corrections
+
+- `replace` of an `EZData` class reads the fields themselves, so a class
+  writing its own `asDict` keeps a working `replace`.
+- A subclass of `EZHook` declared in a subclass of `EZSpace` acts in
+  place of the hook that namespace inherits, which makes the extra
+  spellings of the class keywords the docstring spoke of reachable.
+- A default of a field that cannot be built says so, with a
+  `TypeError` naming the field, where it reported a wrong value nobody
+  gave, with a `TypeException`.
+- `fields` shows the object it refuses by its `repr`, and
+  `ReservedFieldError` says that a method may be written at a reserved
+  name and only a field is refused.
+- The docstrings of `worktoy.ezdata` and of `worktoy.work_test` say
+  what the code does and open with the need the code answers. Among the
+  sentences corrected: `EZField[T](...)` is named the recommended way
+  to declare a field; a sampler class that leaves a hook out is
+  created and cannot be instantiated; the `seed` of a sampler is no box
+  and takes an `int` alone; `TestSpace` is the namespace of `TestMeta`,
+  not of every test class.
+- The manual chapter on `ezdata` and two promise docstrings were
+  corrected where they said other than the code does. They said that
+  every field has a default and named `__post_init__` among the
+  generated methods, and neither is so. They now say how the default of
+  a field is made from a lone value, and that `__match_args__` is empty
+  for a keyword-only class.
+
 ## [1.2.0] - 2026 November 12
 
 This release was rushed. It was moved up to this day because of a silent

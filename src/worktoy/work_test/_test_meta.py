@@ -1,7 +1,6 @@
 """
-TestMeta is a metaclass a test base may choose. It keeps 'doCleanups'
-and 'debug', from which the failed 'subTest' blocks are reported, out of
-the reach of a test class.
+TestMeta is a metaclass a test base may choose. Under it, a class body
+that binds 'doCleanups' or 'debug' is refused at that line.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -19,23 +18,16 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class TestMeta(BaseMeta):
   """
-  A failed 'subTest' block of a 'BaseTest' is swallowed and recorded, so
-  something must run after every test and fail it with the records, or
-  a failed block passes for a success. 'unittest' offers 'tearDown' for
-  what runs after a test, but a test class overrides 'tearDown' as a
-  matter of course, and the override need not hand on. 'unittest' also
-  runs 'doCleanups' after every test, whatever the test class did with
-  'tearDown', and a test class has no reason to touch it; a test run
-  with 'debug', which collects no errors, skips 'doCleanups' and ends in
-  'debug' itself. 'BaseTest' sees to the report in both places for every
-  test class, and builds it around a 'doCleanups' or a 'debug' the class
-  writes itself. A test base that would rather have such a class body
-  refused at its line chooses TestMeta as its metaclass: it puts the
-  library's own 'doCleanups' and 'debug' into the namespace of every
-  class it builds, before the class body runs, and the namespace
-  refuses a class body that binds either name. 'BaseTest' itself is not
-  built by it, so that a test base may bring any metaclass based on
-  'BaseMeta'.
+  'BaseTest' reports the failed 'subTest' blocks of a test from three
+  places: each test method as it ends, 'doCleanups' after the cleanups
+  of the test, and 'debug' at its end. It gives every test class a
+  'doCleanups' and a 'debug' that report, built around the ones the
+  class writes itself when it writes any, so a class that writes its
+  own loses no report. A test base may still prefer that the bodies of
+  its test classes leave the two names alone, and that a body binding
+  one is refused at that line. TestMeta is the metaclass such a base
+  chooses. 'BaseTest' itself is not built by it, so that a test base
+  may bring any metaclass based on 'BaseMeta'.
 
     class StrictTest(BaseTest, metaclass=TestMeta):
       pass
@@ -50,29 +42,43 @@ class TestMeta(BaseMeta):
 
   '__prepare__' returns a 'TestSpace' in which 'doCleanups' and 'debug'
   are bound already, to the functions '_doCleanupsFactory' and
-  '_debugFactory' make, so every class holds the two methods in its own
-  '__dict__' and no base ahead of it in the resolution order is found
-  first. 'doCleanups' registers 'BaseTest._reportSubTests' with
-  'addCleanup' and calls 'TestCase.doCleanups': an exception raised in
-  'doCleanups' itself would leave 'TestCase.run', where one raised by a
-  registered cleanup is collected as a failure of the test. Registered
-  last, the report runs first, before the cleanups of the test. 'debug'
-  calls 'TestCase.debug' and then the report, whose exception leaves
-  'debug' as any exception of the test does.
+  '_debugFactory' make, and which refuses a class body binding either
+  name. The 'doCleanups' placed registers 'BaseTest._reportSubTests'
+  with 'addCleanup' and calls 'TestCase.doCleanups': an exception
+  raised in 'doCleanups' itself would leave 'TestCase.run', where one
+  raised by a registered cleanup is collected as a failure of the test.
+  Registered last, the report runs first, before the cleanups of the
+  test. The 'debug' placed calls 'TestCase.debug' and then the report,
+  whose exception leaves 'debug' as any exception of the test does.
+  'BaseTest.__class_init__' builds its own 'doCleanups' and 'debug'
+  around the two, as around any a class body binds, so those are what
+  the class holds in its '__dict__', and the report runs once more
+  after the cleanups of the test, for a block that failed inside one.
+  Only the class body is refused: a name assigned on the class after
+  the class statement is not.
   """
 
   @staticmethod
   def _doCleanupsFactory() -> Callable:
     """
-    The '_doCleanupsFactory' method makes the 'doCleanups' of one test
-    class.
+    Every class 'TestMeta' builds must find a 'doCleanups' of the
+    library in its namespace before its body runs.
+
+    Implementation
+    --------------
+
+    A new function is made at each call, so each class holds one of its
+    own. It registers 'BaseTest._reportSubTests' as a cleanup, the last,
+    and returns what 'TestCase.doCleanups' returns.
+
+    Returns
+    -------
+
+    Callable
+      Called as '(self)': the 'doCleanups' of one test class.
     """
 
     def doCleanups(self: Any) -> bool:
-      """
-      Registers the report of the 'subTest' blocks as the last cleanup,
-      then runs the cleanups as 'TestCase.doCleanups' does.
-      """
       self.addCleanup(self._reportSubTests)
       return TestCase.doCleanups(self)
 
@@ -81,14 +87,24 @@ class TestMeta(BaseMeta):
   @staticmethod
   def _debugFactory() -> Callable:
     """
-    The '_debugFactory' method makes the 'debug' of one test class.
+    Every class 'TestMeta' builds must find a 'debug' of the library in
+    its namespace before its body runs, as it finds a 'doCleanups'.
+
+    Implementation
+    --------------
+
+    A new function is made at each call, so each class holds one of its
+    own. It calls 'TestCase.debug', which collects no errors and runs no
+    'doCleanups', and then 'BaseTest._reportSubTests'.
+
+    Returns
+    -------
+
+    Callable
+      Called as '(self)': the 'debug' of one test class.
     """
 
     def debug(self: Any) -> None:
-      """
-      Runs the test as 'TestCase.debug' does, which collects no errors
-      and runs no 'doCleanups', then the report of the 'subTest' blocks.
-      """
       TestCase.debug(self)
       self._reportSubTests()
 

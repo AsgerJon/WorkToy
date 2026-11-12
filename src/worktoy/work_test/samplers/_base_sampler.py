@@ -48,29 +48,30 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
   Implementation
   --------------
 
-  The settings are boxes. 'colCount' and 'rowCount', one each unless
-  set, size a row and a table, with 'width', 'size', 'height' and
-  'count' as aliases and as keywords, and a count below one is refused
-  with 'ValueError'; a subclass declares its own settings the same way.
-  The keyword constructor takes every setting by the synonyms
-  '__key_groups__' lists, merged along the resolution order so that a
-  subclass adds its own groups, writes the first synonym present of
-  each through its box, which casts what converts without loss and
-  refuses the rest with 'TypeException' naming the setting, and refuses
-  a keyword that names no setting with the 'TypeError' Python raises
-  for an unexpected keyword argument. '_applySettings' receives the
-  values found, so a subclass holding a pair of settings may write them
-  together. Every draw goes to 'random', a 'random.Random' built for
-  each sampler apart; 'seed' is 'None' until an 'int' is given, by
-  keyword or by assignment, which seeds that generator, so two samplers
-  seeded alike draw alike whatever else draws in between. 'item', 'row'
-  and 'table' draw one value, a row of 'colCount' values and a table of
-  'rowCount' rows; 'row', and 'table' through it, check each value
-  against 'valueType', while 'item' and a call of the sampler hand out
-  what '_getItem' gives as it is. Iterating the sampler yields
-  'rowCount' rows. The
-  two hooks are abstract, and 'SamplerMeta' refuses a sampler without
-  both.
+  The settings are boxes, apart from 'seed'. 'colCount' and 'rowCount',
+  one each unless set, size a row and a table, with 'width', 'size',
+  'height' and 'count' as aliases and as keywords, and a count below
+  one is refused with 'ValueError'; a subclass declares its own
+  settings the same way. The keyword constructor takes every setting
+  by the synonyms '__key_groups__' lists, merged along the resolution
+  order so that a subclass adds its own groups, assigns the first
+  synonym present of each, and refuses a keyword that names no setting
+  with the 'TypeError' Python raises for an unexpected keyword
+  argument. A box casts the value assigned when it converts without
+  loss and refuses it otherwise with 'TypeException' naming the
+  setting. '_applySettings' receives the values found, so a subclass
+  holding a pair of settings may write them together. Every draw goes
+  to 'random', a 'random.Random' built for each sampler apart. 'seed'
+  is a field over the seed last given, 'None' until an 'int' is given,
+  by keyword or by assignment, which seeds that generator, so two
+  samplers seeded alike draw alike whatever else draws in between; it
+  takes an 'int' alone and casts nothing. 'item', 'row' and 'table'
+  draw one value, a row of 'colCount' values and a table of 'rowCount'
+  rows; 'row', and 'table' through it, check each value against
+  'valueType', while 'item' and a call of the sampler hand out what
+  '_getItem' gives as it is. Iterating the sampler yields 'rowCount'
+  rows. The two hooks are abstract, and a class that leaves either out
+  cannot be instantiated.
 
   Attributes
   ----------
@@ -134,10 +135,24 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
   @classmethod
   def _getKeyGroups(cls) -> KeyGroups:
     """
-    The '_getKeyGroups' method returns the synonyms of every setting the
-    class and its bases declare in '__key_groups__', the nearest class
-    answering for a setting declared more than once, so a subclass may
-    redeclare the synonyms of a setting it inherits.
+    A sampler class declares the settings it adds and inherits the rest,
+    so the keyword constructor needs the synonyms of every setting along
+    the resolution order, and a subclass must be able to give a setting
+    it inherits other synonyms.
+
+    Implementation
+    --------------
+
+    '__key_groups__' is read from the own dictionary of each class
+    along the resolution order, and the nearest class declaring a
+    setting answers for it.
+
+    Returns
+    -------
+
+    KeyGroups
+      A 'dict[str, tuple[str, ...]]' from each setting to its synonyms,
+      the settings of the nearest class first.
     """
     out = dict()
     for base in cls.__mro__:
@@ -181,19 +196,59 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
   @overload()
   def __init__(self, **kwargs) -> None:
     """
-    The keyword constructor sets each setting from the first of its
-    synonyms present, through its box, so an 'int' bound suits a float
-    sampler and a lossy value is refused with 'TypeException' naming the
-    setting. A keyword naming no setting raises the 'TypeError' Python
-    raises for an unexpected keyword argument.
+    A sampler is sized, narrowed and seeded in the expression that
+    creates it, each setting under whichever of its usual names the test
+    writes, and a name that is no setting, most often a misspelled one,
+    must not pass in silence.
+
+    Implementation
+    --------------
+
+    A keyword naming no setting is refused first, as Python refuses an
+    unexpected keyword argument. Each setting then takes the first of
+    its synonyms present, by assignment. A box casts what converts
+    without loss, so an 'int' bound suits a float sampler, and refuses a
+    lossy value with 'TypeException' naming the setting; 'seed' takes an
+    'int' alone.
+
+    Parameters
+    ----------
+
+    **kwargs
+      The settings, each under any of its synonyms.
+
+    Raises
+    ------
+
+    TypeError
+      A keyword names no setting.
+
+    TypeException
+      A setting refuses its value.
+
+    ValueError
+      A count is below one.
     """
     self._refuseUnknown(**kwargs)
     self._applySettings(self._collectSettings(**kwargs))
 
   def _refuseUnknown(self, **kwargs) -> None:
     """
-    The '_refuseUnknown' method raises 'TypeError' for a keyword that is
-    none of the synonyms of any setting, such as a misspelled one.
+    A keyword the sampler does not know, most often a misspelled
+    setting, must not pass in silence: the test would run on a default
+    it believes it replaced.
+
+    Implementation
+    --------------
+
+    A keyword among the synonyms of no setting raises, worded as Python
+    words an unexpected keyword argument.
+
+    Raises
+    ------
+
+    TypeError
+      A keyword names no setting.
     """
     groups = self._getKeyGroups()
     accepted = [key for keys in groups.values() for key in keys]
@@ -204,9 +259,23 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
 
   def _collectSettings(self, **kwargs) -> Settings:
     """
-    The '_collectSettings' method returns the value of each setting from
-    the first of its synonyms present in the keywords, by the name of
-    the setting.
+    A setting may be written under several names, and the constructor
+    needs each setting once, under its own name, whichever synonym the
+    caller used.
+
+    Implementation
+    --------------
+
+    For each setting the synonyms are tried in the order
+    '__key_groups__' lists them, and the first one present gives the
+    value; a further synonym of the same setting is passed over.
+
+    Returns
+    -------
+
+    Settings
+      A 'dict[str, Any]' from the name of each setting found to its
+      value.
     """
     out = dict()
     for name, keys in self._getKeyGroups().items():
@@ -218,10 +287,25 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
 
   def _applySettings(self, settings: Settings) -> None:
     """
-    The '_applySettings' method writes each setting found through its
-    box, which casts or refuses the value. A subclass holding a pair of
-    settings that belong together overrides it to write the pair at
-    once and hands the rest on.
+    The settings found among the keywords must reach the sampler, and a
+    subclass whose settings belong together, as two bounds do, must be
+    able to write them in one step, so that neither is checked against
+    a value of the other that is about to be replaced.
+
+    Implementation
+    --------------
+
+    Each setting is assigned under its own name: a box casts or refuses
+    the value, and 'seed' takes an 'int' alone. A subclass holding such
+    a pair reimplements the method, takes the pair out of the settings,
+    writes it, and hands the rest on to this one.
+
+    Parameters
+    ----------
+
+    settings : Settings
+      A 'dict[str, Any]' from the name of each setting found to its
+      value.
     """
     for name, value in settings.items():
       setattr(self, name, value)
@@ -248,6 +332,7 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
 
     Returns
     -------
+
     Any
       A single sample value of the type specified by the '_getValueType'
       method.
@@ -260,16 +345,27 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
   @row.GET
   def _getRow(self, ) -> Row:
     """
-    The 'row' getter generates a tuple of 'n' sample values, with 'n'
-    given by the 'self.colCount' variable. Subclasses reimplementing this
-    are responsible for ensuring that the correct number of sample values
-    are included in the generated tuple.
+    A test often wants several values at once, and wants to trust that
+    every one of them is of the type the sampler names.
+
+    Implementation
+    --------------
+
+    'colCount' values are drawn through '_getItem', and each is checked
+    against 'valueType'. A subclass reimplementing the method sees to
+    the number of values, and to their type, itself.
 
     Returns
     -------
+
     Row
-      A tuple of sample values of the type specified by the '_getValueType'
-      method.
+      A 'tuple[Any, ...]' of 'colCount' values.
+
+    Raises
+    ------
+
+    TypeException
+      '_getItem' gave a value that is no instance of 'valueType'.
     """
     out = []
     for _ in range(self.colCount):
@@ -282,17 +378,21 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
   @table.GET
   def _getTable(self, ) -> Table:
     """
-    The 'table' getter generates 'N' tuples each with 'n' sample values,
-    where 'N' and 'n' are given by the 'self.rowCount' and 'self.colCount'
-    variables respectively. Subclasses reimplementing this are
-    responsible for ensuring that the correct number of tuples and sample
-    values are included in the generated tuples.
+    A test of anything laid out in rows wants a whole table of values
+    from one read.
+
+    Implementation
+    --------------
+
+    'rowCount' rows are drawn through '_getRow'. A subclass
+    reimplementing the method sees to the number of rows itself.
 
     Returns
     -------
+
     Table
-      A tuple of tuples of sample values of the type specified by the
-      '_getValueType' method.
+      A 'tuple[tuple[Any, ...], ...]' of 'rowCount' rows, each of
+      'colCount' values.
     """
     out = []
     while len(out) < self.rowCount:
@@ -305,14 +405,32 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
 
   def __call__(self, ) -> Any:
     """
-    Calling a sampler draws a single sample value through '_getItem'.
+    A sampler handed over where a function of no arguments is expected,
+    as a factory of values, must give one value at each call.
+
+    Implementation
+    --------------
+
+    The call returns what '_getItem' gives, unchecked, as 'item' does.
     """
     return self._getItem()
 
   def __iter__(self) -> Iterator[Any]:
     """
-    Yields exactly 'self.rowCount' rows. Each yielded value is a row
-    tuple produced by '_getRow', not a single sample value.
+    A loop over a sampler must end, so iterating one is a loop over a
+    table of its rows, not over values without end.
+
+    Implementation
+    --------------
+
+    'rowCount' is read once, as the iteration starts, and that many rows
+    are yielded, each drawn by '_getRow' when the loop asks for it.
+
+    Yields
+    ------
+
+    Row
+      A 'tuple[Any, ...]' of 'colCount' values.
     """
     _c = int(self.rowCount)
     while _c:
@@ -327,9 +445,15 @@ class BaseSampler(BaseObject, metaclass=SamplerMeta):
 
   def __repr__(self, ) -> str:
     """
-    The 'repr' of a sampler names every setting of its key groups with
-    its value, as 'IntSampler(minVal=0, maxVal=255, colCount=1,
-    rowCount=1, seed=None)'.
+    A sampler shown in a failure message should say how it is set, so
+    that the data of the failing test can be drawn again.
+
+    Implementation
+    --------------
+
+    Every setting of the key groups is named with its value, the
+    settings of the nearest class first, as 'IntSampler(minVal=0,
+    maxVal=255, colCount=1, rowCount=1, seed=None)'.
     """
     parts = []
     for name in self._getKeyGroups():

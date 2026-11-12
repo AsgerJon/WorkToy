@@ -30,8 +30,8 @@ class SubTest(TestCase):
   block's label, lets the test method run to its end, and leaves it to
   'BaseTest' to fail the test there with every record and its traceback,
   whatever the test class does in 'tearDown' or 'doCleanups'. 'BaseTest'
-  hosts it as the 'subTest' descriptor, so a test
-  writes 'with self.subTest(target=x):' as it would with 'unittest'.
+  hosts it as the 'subTest' descriptor, so a test writes
+  'with self.subTest(target=x):' as it would with 'unittest'.
 
   Implementation
   --------------
@@ -66,8 +66,10 @@ class SubTest(TestCase):
   __fallback_current__: str = '<sub test>'
 
   #  Private Variables
-  __field_name__: Optional[str] = None  # should be '_subTest'
-  __field_owner__: Optional[Type[BaseTest]] = None  # should be 'BaseTest'
+  #  The descriptor holds the name 'BaseTest' places it at and 'BaseTest'
+  #  itself; an accumulator holds '__sub_test__' and its test class.
+  __field_name__: Optional[str] = None
+  __field_owner__: Optional[Type[BaseTest]] = None
   __current_tests__: Optional[tuple[str, ...]] = None
   __test_fails__: Optional[tuple[AssertionError, ...]] = None
   __test_errors__: Optional[tuple[Exception, ...]] = None
@@ -179,16 +181,30 @@ class SubTest(TestCase):
 
   def _addFail(self, fail: AssertionError) -> None:
     """
-    The '_addFail' method records a fail under the label of the block in
-    progress, '<sub test>' outside any block.
+    The report names each failed block, so a fail must be kept together
+    with the label of the block that raised it.
+
+    Implementation
+    --------------
+
+    The fail joins 'fails', and the chained label of the block in
+    progress joins 'failLabels' at the same position, '<sub test>' when
+    no block is open.
     """
     self.__test_fails__ = (*self.fails, fail)
     self.__fail_labels__ = (*self.failLabels, self.current)
 
   def _addError(self, error: Exception) -> None:
     """
-    The '_addError' method records an error under the label of the block
-    in progress, '<sub test>' outside any block.
+    An error is kept with the label of its block as a fail is, and apart
+    from the fails, since the report tells an assertion that failed from
+    an exception nobody expected.
+
+    Implementation
+    --------------
+
+    The error joins 'errors', and the chained label of the block in
+    progress joins 'errorLabels' at the same position.
     """
     self.__test_errors__ = (*self.errors, error)
     self.__error_labels__ = (*self.errorLabels, self.current)

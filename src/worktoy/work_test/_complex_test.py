@@ -32,7 +32,7 @@ class ComplexTest:
   --------------
 
   'ComplexTest' has no base of its own, so no loader collects the bank
-  itself and no test module importing it pays twenty-five skipped
+  itself and no test file importing it pays twenty-five skipped
   tests; the assertions and 'subTest' come from the test case listed
   after it. The twenty-five test methods are each a loop over 'targets'
   with one block of 'subTest' per target labelled by the target's name,
