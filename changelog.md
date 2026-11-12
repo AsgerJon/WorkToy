@@ -16,7 +16,9 @@ together with the work that was finished since 1.1.0. Rushed does not
 mean unchecked: every change of behaviour was made test first, the suite
 passes with every statement and branch covered, and every line changed
 since the last development build was mutation tested, with two gaps in
-the tests found and closed that way.
+the tests found and closed that way. The release is the same code as
+its only release candidate, 1.2.0-rc0, which was published the same
+day; nothing but the version stamp differs.
 
 ### A failed `subTest` block is reported whatever `tearDown` does
 
