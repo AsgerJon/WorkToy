@@ -11,7 +11,7 @@ from typing import Generic, TypeVar
 from unittest import skipIf
 
 from worktoy.core.sentinels import THIS, ARGS, OWNER
-from worktoy.ezdata import EZField
+from worktoy.ezdata import EZData, EZField
 from worktoy.mcls import BaseObject
 from worktoy.waitaminute import MissingVariable, TypeException
 from worktoy.waitaminute import UncheckableType
@@ -112,6 +112,23 @@ class TestEZFieldDeclare(EzdataTest):
     self.assertEqual(str(context.exception),
                      "Missing 'EZField.__field_type__: type'!")
 
+  def test_field_of_a_class_takes_no_new_arguments(self) -> None:
+    class Point(EZData):
+      x = EZField[float](0.0)
+
+    field = Point.__ez_fields__['x']
+    with self.assertRaises(TypeError) as context:
+      field(5.0)
+    self.assertEqual(str(context.exception), "The field at 'Point.x' took "
+                     "the arguments of its default as its class was "
+                     "created, and cannot take new ones.")
+    self.assertEqual(field.posArgs, (0.0,))
+    self.assertEqual(field.defaultValue, 0.0)
+    self.assertEqual(Point().x, 0.0)
+    clone = field.clone()
+    self.assertIs(clone(5.0), clone)
+    self.assertEqual(clone.posArgs, (5.0,))
+
   def test_from_value(self) -> None:
     field = EZField.fromValue(2.5)
     self.assertIs(field.fieldType, float)
@@ -141,6 +158,18 @@ class TestEZFieldDeclare(EzdataTest):
         self.assertEqual(context.exception.expectedTypes, (type,))
         self.assertEqual(str(context.exception),
                          "Missing 'EZField.__field_owner__: type'!")
+
+  def test_clone_takes_no_cached_private_name(self) -> None:
+    class Pair(EZData):
+      first = EZField[int](1)
+      first.getPrivateName()
+      second = first
+
+    first = Pair.__ez_fields__['first']
+    second = Pair.__ez_fields__['second']
+    self.assertEqual(first.getPrivateName(), '__first__')
+    self.assertEqual(second.getPrivateName(), '__second__')
+    self.assertNotIn('__private_name__', vars(first.clone()))
 
   def test_bound_getters(self) -> None:
     field = Circle.__ez_fields__['radius']

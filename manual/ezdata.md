@@ -68,15 +68,16 @@ EZField[str]()`.
 - A field takes the type of its value exactly: `x = 0` declares an
   `int` field, which then refuses `0.5`. Write `x = 0.0` for a float.
 - A bare `None` has no type, and raises `IncompleteFieldException`.
-  There is no optional field: every field holds a value of its type, and
-  every field has a default.
+  There is no optional field: every field holds a value of its type.
 - `EZField[THIS]`, a field of the class's own type, raises `TypeError`,
   since no value of the class exists while its body runs.
 
 A default is built anew for each instance, so no two instances share a
-mutable default. For a number or a text field the default converts as
-`typeCast` converts, so `EZField[int]('7')` is refused; for any other
-type the type is called with the arguments, so
+mutable default. A lone value that already is of the field's type is
+copied. A lone value of another type converts as `typeCast` converts
+when the field's type is a number or a text, a subclass of one, or a
+class with a `__cast_as__` hook, so `EZField[int]('7')` is refused. In
+every other case the type is called with the arguments, so
 `EZField[list]('abc')` holds `['a', 'b', 'c']`.
 
 
@@ -140,11 +141,12 @@ a balance cannot be negative
   `EZData` stays an instance.
 - `replace` gives a new instance with some values changed, running
   `__post_init__` again.
-- `__match_args__` lists the fields, so `match` works on Python 3.10
-  and later.
+- `__match_args__` lists the fields, and is empty for a keyword-only
+  class, so `match` works on Python 3.10 and later.
 - Two instances are equal when their values are and they are of one
-  lineage: a class and its subclasses, a frozen subclass included. An
-  instance of a sibling class, or a tuple, is never equal.
+  lineage, holding the same fields in the same order: a class and its
+  subclasses, a frozen subclass included. An instance of a sibling
+  class, or a tuple, is never equal.
 - An instance is not hashable unless its class is frozen.
 - Assigning a field converts as the constructor does. Deleting a field
   raises `AttributeError`.
@@ -216,7 +218,7 @@ the fields of all of them.
 - `EZField(1)` without a type, and `EZField[int]` without parentheses,
   raise `IncompleteFieldException`.
 - A field bound twice raises `DuplicateError`.
-- A field named after a generated method, as `replace`, `asDict` or
+- A field at a name kept for a method, as `replace`, `asDict` or
   `__post_init__`, raises `ReservedFieldError`.
 - A body defining a method `EZData` writes itself, as `__init__`,
   `__eq__` or `__setattr__`, raises `ReservedMethodError`, and one

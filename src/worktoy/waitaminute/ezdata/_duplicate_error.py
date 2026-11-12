@@ -1,6 +1,6 @@
 """
-DuplicateError is raised when an 'EZData' class body assigns the same
-field name twice.
+DuplicateError is raised when an 'EZData' class body binds a name twice
+and one of the two bindings is a field.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -17,15 +17,21 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class DuplicateError(WorkToyException, SyntaxError):
   """
-  DuplicateError is raised when an EZData class body assigns the same
-  field name a second time, so that one of the two declarations would
-  replace the other without a word. It subclasses 'SyntaxError', as
-  every refusal of a class-body line in worktoy does.
+  DuplicateError is raised when an EZData class body binds a name it
+  bound before and one of the two bindings is a field: a field bound a
+  second time, a field bound at the name of a method or a descriptor of
+  the body, or a method or a descriptor bound at the name of a field.
+  One of the two declarations would otherwise replace or hide the other
+  without a word. A body binding a method, a descriptor or an overload at
+  the name of a field the class inherits shows that name bound once, so
+  for it the message adds that the name is an inherited field. It
+  subclasses 'SyntaxError', as every refusal of a class-body line in
+  worktoy does.
 
   Attributes
   ----------
   fieldName : str
-    The field name the class body assigned a second time.
+    The name the class body bound a second time.
   space : EZSpace
     The namespace under construction; carries the class name.
   """
@@ -43,6 +49,18 @@ class DuplicateError(WorkToyException, SyntaxError):
     infoSpec = """In the class body of 'EZData' class '%s', the already 
     existing attribute name '%s' was attempted to be defined again!"""
     clsName = self.space.getClassName()
-    return textFmt(infoSpec % (clsName, self.fieldName))
+    info = infoSpec % (clsName, self.fieldName)
+    inherited = self.fieldName in self.space.getBaseFields()
+    declared = self.fieldName in self.space.getEZFields()
+    if inherited and not declared:
+      #  This branch is reached by the following:
+      #  - The body binds a method, a descriptor or an overload at the
+      #    name of a field the class inherits and does not declare again,
+      #    so the body itself shows the name bound once
+      infoSpec = """%s '%s' is a field the class inherits, and the name
+      of a field can only be declared again as a field."""
+      info = infoSpec % (info, self.fieldName)
+    #  The rest of the method is reached by every refusal.
+    return textFmt(info)
 
   __repr__ = __str__

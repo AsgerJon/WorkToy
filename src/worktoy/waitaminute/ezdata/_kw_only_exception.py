@@ -16,6 +16,13 @@ class KwargsOnlyException(WorkToyException, TypeError):
   synonym such as 'keywordOnly' or 'kw_only') is called with positional
   arguments. Such a subclass accepts only keyword arguments at
   construction.
+
+  Attributes
+  ----------
+  cls : type
+    The class that received the positional arguments.
+  argCount : int
+    The number of positional arguments it received.
   """
 
   __slots__ = ('cls', 'argCount')

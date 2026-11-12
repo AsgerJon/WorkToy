@@ -44,3 +44,16 @@ class TestFields(EzdataTest):
                       "but received", str(context.exception))
         self.assertIn("of type '%s'." % type(other).__name__,
                       str(context.exception))
+
+  def test_refusal_shows_the_value_by_its_repr(self) -> None:
+    with self.assertRaises(TypeError) as context:
+      fields(5)
+    self.assertIn("but received: 5 of type 'int'.", str(context.exception))
+    with self.assertRaises(TypeError) as context:
+      fields('5')
+    self.assertIn("but received: '5' of type 'str'.",
+                  str(context.exception))
+    with self.assertRaises(TypeError) as context:
+      fields('x' * 60)
+    self.assertIn("but received: '%s... of type 'str'." % ('x' * 46),
+                  str(context.exception))

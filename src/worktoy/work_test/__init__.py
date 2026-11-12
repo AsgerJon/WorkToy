@@ -2,10 +2,11 @@
 The 'worktoy.work_test' package provides the testing support shared across
 the worktoy suite. 'BaseTest' is the 'unittest.TestCase' subclass every
 test class is based on, wiring in the random-data samplers and the
-'SubTest' accumulator. 'TestMeta' is its metaclass and 'TestSpace' the
-namespace of a test class; together they see to it that the failed
-blocks of a test are reported whatever the test class does in
-'tearDown'. 'ComplexMixin' and 'ComplexTest' are a worked
+'SubTest' accumulator, and seeing to it that the failed blocks of a test
+are reported whatever the test class does in 'tearDown', 'doCleanups'
+or 'debug'. 'TestMeta' and its namespace 'TestSpace' are a metaclass a
+test base may choose, under which a class body that binds 'doCleanups'
+or 'debug' is refused. 'ComplexMixin' and 'ComplexTest' are a worked
 example: a complex-number mixin and the parametrized test bank that runs
 one dunder suite against any number of its implementations.
 

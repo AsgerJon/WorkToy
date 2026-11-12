@@ -17,15 +17,19 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class TestSpace(BaseSpace):
   """
-  A test class must not replace 'doCleanups' or 'debug', the two places
-  from which 'BaseTest' reports the failed 'subTest' blocks of a test,
-  and the place to say so is the line of the class body that tries: the
-  builder is then shown that line, not the end of a class statement.
-  TestSpace is the namespace 'TestMeta' prepares for a test class. It
-  lets 'TestMeta' bind the two names before the class body runs and
-  refuses every binding of either by the class body.
+  A test base built by 'TestMeta' has chosen that its test classes do
+  not replace 'doCleanups' or 'debug', the two places from which
+  'BaseTest' reports the failed 'subTest' blocks of a test, and the
+  place to say so is the line of the class body that tries: the builder
+  is then shown that line, not the end of a class statement. TestSpace
+  is the namespace 'TestMeta' prepares for a test class. It lets
+  'TestMeta' bind the two names before the class body runs and refuses
+  every binding of either by the class body.
 
-    class TestDice(BaseTest):
+    class StrictTest(BaseTest, metaclass=TestMeta):
+      pass
+
+    class TestDice(StrictTest):
 
       def doCleanups(self) -> None:  # refused here, with 'ReservedName'
         self.table.close()

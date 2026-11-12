@@ -27,15 +27,14 @@ class PromiseDetails(TestCase):
   subclass may give an inherited field a new default. 'EZField[THIS]'
   raises 'TypeError'. A name the generated methods use, as 'replace',
   is no field name and raises 'ReservedFieldError'. A body may write its
-  own '__repr__'. An instance
-  unpacks as its values, is false without fields, and equals no tuple
-  and no instance of a sibling class; an attribute that is no field
-  stays out of its values and equality. 'replace' runs '__post_init__'
-  again, and 'asDict' keeps a nested 'EZData' as it is. A subclass of a
-  frozen class declares 'frozen=True' itself, or raises 'TypeError', and
-  '__post_init__' cannot assign to a frozen instance. Copies keep the
-  values. Source: the docstrings of 'EZData', 'EZField', 'EZSpace' and
-  'EZHook', and the 1.1.0 changelog.
+  own '__repr__'. An instance unpacks as its values, is false without
+  fields, and equals no tuple and no instance of a sibling class; an
+  attribute that is no field stays out of its values and equality.
+  'replace' runs '__post_init__' again, and 'asDict' keeps a nested
+  'EZData' as it is. A subclass of a frozen class declares 'frozen=True'
+  itself, or raises 'TypeError', and '__post_init__' cannot assign to a
+  frozen instance. Copies keep the values. Source: the docstrings of
+  'EZData', 'EZField', 'EZSpace' and 'EZHook', and the 1.1.0 changelog.
   """
 
   def test_what_is_a_field(self) -> None:

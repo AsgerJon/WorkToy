@@ -62,10 +62,41 @@ class EZStore:
 
   def __get__(self, instance: Any, owner: type) -> Any:
     """
-    Read through the class, the store returns itself. Read through an
-    instance, which Python does only when the instance holds no value
-    under the field name, it raises 'MissingVariable': the instance never
-    received one, as an instance made by '__new__' alone.
+    A field whose name a data descriptor further along the resolution order
+    would take over must still be read from the instance, and an instance
+    holding no value under the name must fail as a missing attribute does,
+    not answer with what that descriptor gives.
+
+    Implementation
+    --------------
+
+    Through the class, the store returns itself. Python reads the store
+    through an instance only when the instance holds no value under the
+    field name, and that read raises 'MissingVariable': the instance never
+    received one, as an instance made by '__new__' alone. An 'Alias' of the
+    field calls this method itself, for an instance that does hold a value,
+    and receives that value.
+
+    Parameters
+    ----------
+
+    instance : Any
+      The instance read through, or 'None'.
+
+    owner : type
+      The class read through.
+
+    Returns
+    -------
+
+    Any
+      The store through the class, the value of the instance otherwise.
+
+    Raises
+    ------
+
+    MissingVariable
+      The instance holds no value under the field name.
     """
     if instance is None:
       return self

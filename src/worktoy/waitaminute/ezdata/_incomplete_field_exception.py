@@ -30,8 +30,12 @@ class IncompleteFieldException(WorkToyException, SyntaxError):
   fieldName : str
     The name of the offending field in the class body.
   missing : str
-    A short description of what is missing from the field, such as
-    'the field type' or 'the construction arguments'.
+    A short description of what is missing from the field. 'EZHook'
+    passes one of four: 'no field type was set', 'no construction
+    arguments were given', 'a bare None default cannot infer a field
+    type' and, for a field of a subclass of 'EZField', the second of
+    these with the '__init__' of the subclass named as the other
+    possible cause.
   """
 
   __slots__ = ('clsName', 'fieldName', 'missing')

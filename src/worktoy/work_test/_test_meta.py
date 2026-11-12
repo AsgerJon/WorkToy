@@ -1,7 +1,7 @@
 """
-TestMeta is the metaclass of 'BaseTest'. It keeps 'doCleanups' and
-'debug', from which the failed 'subTest' blocks are reported, out of the
-reach of a test class.
+TestMeta is a metaclass a test base may choose. It keeps 'doCleanups'
+and 'debug', from which the failed 'subTest' blocks are reported, out of
+the reach of a test class.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -27,15 +27,23 @@ class TestMeta(BaseMeta):
   runs 'doCleanups' after every test, whatever the test class did with
   'tearDown', and a test class has no reason to touch it; a test run
   with 'debug', which collects no errors, skips 'doCleanups' and ends in
-  'debug' itself. TestMeta is the metaclass of 'BaseTest': it puts the
+  'debug' itself. 'BaseTest' sees to the report in both places for every
+  test class, and builds it around a 'doCleanups' or a 'debug' the class
+  writes itself. A test base that would rather have such a class body
+  refused at its line chooses TestMeta as its metaclass: it puts the
   library's own 'doCleanups' and 'debug' into the namespace of every
   class it builds, before the class body runs, and the namespace
-  refuses a class body that binds either name.
+  refuses a class body that binds either name. 'BaseTest' itself is not
+  built by it, so that a test base may bring any metaclass based on
+  'BaseMeta'.
 
-    class TestDice(BaseTest):
+    class StrictTest(BaseTest, metaclass=TestMeta):
+      pass
 
-      def tearDown(self) -> None:
-        self.table.close()  # the report needs no hand-on
+    class TestDice(StrictTest):
+
+      def doCleanups(self) -> None:  # refused here, with 'ReservedName'
+        self.table.close()
 
   Implementation
   --------------

@@ -9,7 +9,8 @@ it is based on, is declared 'ordered'.
 Public surface:
 
 - 'EZData' : the base class users subclass to declare a dataclass.
-- 'EZField' : the per-field descriptor; spell as 'EZField[T](...)'.
+- 'EZField' : the declaration of one attribute; spell as
+  'EZField[T](...)'.
 - 'fields(obj)' : free function returning the EZField tuple for a
   class or instance, mirroring 'dataclasses.fields'.
 - 'EZMeta', 'EZSpace', 'EZHook' : the metaclass, namespace, and

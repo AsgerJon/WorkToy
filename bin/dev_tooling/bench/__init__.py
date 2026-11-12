@@ -19,8 +19,9 @@ lumped into one ratio.
 Each benchmark is a file with a 'run' function and its subjects beside
 it in a private file: 'points' (the 2D point), 'dispatching' (a call of
 an overloaded method), 'enumerations' (members, flags and a field over
-an enumeration, beside 'enum'), 'creation' (the class statement) and
-'startup' (the import).
+an enumeration, beside 'enum'), 'ezdata' (a dataclass at work, beside
+'dataclasses' and beside classes of 'AttriBox' and 'FixBox' fields),
+'creation' (the class statement) and 'startup' (the import).
 'python -m bench --list' names them, and 'python -m bench <name>' runs
 the ones named. 'attribute_ladder.py' is an older script of its own.
 """

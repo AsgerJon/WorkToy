@@ -59,6 +59,10 @@ class TestEZSpace(EzdataTest):
     self.assertEqual(exception.space.getClassName(), 'A')
     self.assertIn("EZData class 'A', the name 'asDict' is reserved",
                   str(exception))
+    self.assertIn("is reserved for a method of the class and cannot be "
+                  "used as a field name", str(exception))
+    self.assertIn("A method may be written at these names; only a field "
+                  "is refused.", str(exception))
     self.assertIn("'replace'", str(exception))
     space = EZSpace(EZMeta, 'B', ())
     for name in EZSpace.__reserved_ez_names__:
@@ -89,6 +93,7 @@ class TestEZSpace(EzdataTest):
     self.assertEqual(exception.space.getClassName(), 'A')
     self.assertIn("class 'A', the already existing attribute name 'x'",
                   str(exception))
+    self.assertNotIn('inherits', str(exception))
     space = EZSpace(EZMeta, 'B', ())
     space.registerEZField('x', EZField[int](1))
     with self.assertRaises(DuplicateError) as context:
@@ -97,6 +102,38 @@ class TestEZSpace(EzdataTest):
     self.assertIs(context.exception.space, space)
     self.assertIn("class 'B', the already existing attribute name 'x'",
                   str(context.exception))
+
+  def test_field_at_a_name_the_body_holds_refused(self) -> None:
+    with self.assertRaises(DuplicateError) as context:
+      class A(EZData):
+        def x(self) -> None:
+          """Never called: the field bound at its name is refused."""
+
+        x = 1
+
+    exception = context.exception
+    self.assertEqual(exception.fieldName, 'x')
+    self.assertEqual(exception.space.getClassName(), 'A')
+    self.assertIn("class 'A', the already existing attribute name 'x'",
+                  str(exception))
+    with self.assertRaises(DuplicateError) as context:
+      class B(EZData):
+        y = property(len)
+        y = EZField[int](1)
+
+    self.assertEqual(context.exception.fieldName, 'y')
+    self.assertEqual(context.exception.space.getClassName(), 'B')
+    self.assertIn("class 'B', the already existing attribute name 'y'",
+                  str(context.exception))
+    space = EZSpace(EZMeta, 'C', ())
+    space['size'] = len
+    with self.assertRaises(DuplicateError) as context:
+      space.registerEZField('size', EZField[int](1))
+    self.assertEqual(context.exception.fieldName, 'size')
+    self.assertIs(context.exception.space, space)
+    self.assertIn("class 'C', the already existing attribute name 'size'",
+                  str(context.exception))
+    self.assertEqual(space.getEZFields(), {})
 
   def test_field_bound_before_is_cloned(self) -> None:
     class A(EZData):

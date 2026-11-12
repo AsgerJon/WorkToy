@@ -26,12 +26,16 @@ class PromiseGenerated(TestCase):
   'RepeatedFieldException', all 'TypeError's. '__post_init__', if
   defined, runs after. Iteration gives the values, 'len' the number of
   fields, 'asDict' and 'asTuple' the values, 'replace' a new instance
-  with some changed, and '__match_args__' the field names. Two instances
-  of one lineage with equal values are equal, a frozen subclass and its
-  parent included; an instance that is not frozen is not hashable.
-  Assigning a field converts as '__init__' does; deleting a field raises
-  'AttributeError', while other attributes come and go. Source: the
-  docstrings of 'EZData', 'EZMeta' and 'EZHook'.
+  with some changed, and '__match_args__' the field names, none for a
+  keyword-only class. Two instances of one lineage with equal values are
+  equal, a frozen subclass and its parent included; an instance that is
+  not frozen is not hashable. Assigning a field converts as '__init__'
+  does; deleting a field raises 'AttributeError', while other attributes
+  come and go. Source: the docstrings of 'EZData', 'EZMeta' and 'EZHook'.
+
+  Taken back in the update after 1.2.0, with its reason in
+  'promises/confessions': equality between a class and a subclass that
+  holds its fields in another order.
   """
 
   def makePoint(self) -> type:
@@ -90,6 +94,11 @@ class PromiseGenerated(TestCase):
     self.assertEqual(tuple(moved), (1.0, 5.0))
     self.assertEqual(tuple(point), (1.0, 2.0))
     self.assertEqual(Point.__match_args__, ('x', 'y'))
+
+    class Config(EZData, kwOnly=True):
+      port = 80
+
+    self.assertEqual(Config.__match_args__, ())
 
   def test_equality(self) -> None:
     Point = self.makePoint()

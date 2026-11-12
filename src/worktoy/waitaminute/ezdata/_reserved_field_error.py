@@ -1,6 +1,6 @@
 """
 ReservedFieldError is raised when an 'EZData' class body declares a field
-at a name reserved for a generated method.
+at a name reserved for a method of the class.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -17,11 +17,14 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class ReservedFieldError(WorkToyException, SyntaxError):
   """
-  ReservedFieldError is raised when an EZData class body declares an
-  EZField at a name that EZData reserves for one of its generated
-  methods. Method overrides at these names remain allowed; only EZField
-  declarations are rejected. It subclasses 'SyntaxError', as every
-  refusal of a class-body line in worktoy does.
+  ReservedFieldError is raised when an EZData class body declares a
+  field, an 'EZField' or a plain value, at a name that EZData reserves
+  for a method of the class: the six it generates where the class has
+  none of its own, 'asDict', 'asTuple', 'replace', '__field_pairs__',
+  '__repr__' and '__str__', and '__post_init__', which it calls and the
+  class writes. A method may be written at each of these names; only a
+  field is refused. It subclasses 'SyntaxError', as every refusal of a
+  class-body line in worktoy does.
 
   Attributes
   ----------
@@ -42,12 +45,10 @@ class ReservedFieldError(WorkToyException, SyntaxError):
     self.msg = str(self)
 
   def __str__(self) -> str:
-    infoSpec = (
-      "In the class body of EZData class '%s', the name '%s' is "
-      "reserved for a generated method and cannot be used as a "
-      "field name. Reserved names: %s. Method overrides at these "
-      "names are allowed; only EZField declarations are rejected."
-    )
+    infoSpec = """In the class body of EZData class '%s', the name '%s'
+    is reserved for a method of the class and cannot be used as a field
+    name. Reserved names: %s. A method may be written at these names;
+    only a field is refused."""
     clsName = self.space.getClassName()
     reserved = ', '.join(
         repr(n) for n in self.space.__reserved_ez_names__

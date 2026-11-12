@@ -41,6 +41,7 @@ BENCHES = {
   'points'      : 'a point of two attributes, seven ways',
   'dispatching' : 'a call of an overloaded method',
   'enumerations': 'members, flags and a field over an enumeration',
+  'ezdata'      : 'a dataclass at work, beside dataclasses and boxes',
   'creation'    : 'the class statement',
   'startup'     : 'the import',
 }

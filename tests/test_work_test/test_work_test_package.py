@@ -53,9 +53,9 @@ class TestWorkTestPackage(WorkTestTest):
 
   def test_layering(self) -> None:
     self.assertIsSubclass(BaseTest, TestCase)
+    self.assertIs(type(BaseTest), BaseMeta)
     #  Read through the package: bound here under its own name, pytest
     #  would take 'TestMeta' for a test class and warn.
-    self.assertIs(type(BaseTest), work_test.TestMeta)
     self.assertIsSubclass(work_test.TestMeta, BaseMeta)
     self.assertIsSubclass(SubTest, TestCase)
     self.assertIsNotSubclass(SubTest, BaseTest)

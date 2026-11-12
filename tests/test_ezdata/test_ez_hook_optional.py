@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from worktoy.core import Object
 from worktoy.dispatch import overload, Dispatcher
-from worktoy.ezdata import EZData, EZHook
+from worktoy.ezdata import EZData, EZField, EZHook
 from . import EzdataTest, Point2D, Circle, Labelled, Reporter
 
 
@@ -39,6 +39,25 @@ class TestEZHookOptional(EzdataTest):
     self.assertNotIn('asDict', A.__ez_generated__)
     self.assertNotIn('asTuple', A.__ez_generated__)
     self.assertIn('replace', A.__ez_generated__)
+
+  def test_replace_reads_the_fields_past_an_own_as_dict(self) -> None:
+    class Wrapped(EZData):
+      inner = EZField[Point2D]()
+      scale = 1.0
+
+      def asDict(self) -> dict:
+        nested = self.inner.asDict()
+        return {'inner': nested, 'scale': self.scale, 'extra': True}
+
+    wrapped = Wrapped(Point2D(1, 2), 3)
+    self.assertEqual(wrapped.asDict()['inner'], {'x': 1.0, 'y': 2.0})
+    self.assertIn('replace', Wrapped.__ez_generated__)
+    grown = wrapped.replace(scale=5)
+    self.assertIsNot(grown, wrapped)
+    self.assertEqual(grown.scale, 5.0)
+    self.assertIs(grown.inner, wrapped.inner)
+    self.assertEqual(wrapped.scale, 3.0)
+    self.assertEqual(wrapped.replace().asTuple(), wrapped.asTuple())
 
   def test_plain_base_wins(self) -> None:
     self.assertIs(Labelled.__dict__['asDict'], Reporter.__dict__['asDict'])

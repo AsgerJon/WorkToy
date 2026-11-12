@@ -13,7 +13,7 @@ from worktoy.ezdata import EZData, EZField, EZMeta, EZSpace, EZHook
 from worktoy.waitaminute.ezdata import ReservedMethodError
 from worktoy.waitaminute.ezdata import ReservedAttributeError
 from worktoy.waitaminute.ezdata import IncompleteFieldException
-from worktoy.waitaminute.ezdata import ClassFieldError
+from worktoy.waitaminute.ezdata import ClassFieldError, DuplicateError
 from . import EzdataTest, Point2D, Peek
 
 
@@ -246,6 +246,130 @@ class TestEZHookBody(EzdataTest):
     self.assertIsInstance(A.__dict__['delOnly'], DelOnly)
     a.setOnly = 5
     self.assertEqual(a.__dict__['held'], 5)
+
+  def test_method_or_descriptor_at_a_field_name_refused(self) -> None:
+    with self.assertRaises(DuplicateError) as context:
+      class A(EZData):
+        x = 1
+
+        def x(self) -> None:
+          """Never bound: the line binding it is refused."""
+
+    exception = context.exception
+    self.assertEqual(exception.fieldName, 'x')
+    self.assertEqual(exception.space.getClassName(), 'A')
+    self.assertIn("class 'A', the already existing attribute name 'x'",
+                  str(exception))
+    self.assertNotIn('inherits', str(exception))
+    with self.assertRaises(DuplicateError) as context:
+      class B(EZData):
+        y = EZField[int](1)
+        y = property(len)
+
+    self.assertEqual(context.exception.fieldName, 'y')
+    self.assertEqual(context.exception.space.getClassName(), 'B')
+    self.assertIn("class 'B', the already existing attribute name 'y'",
+                  str(context.exception))
+    with self.assertRaises(DuplicateError) as context:
+      class C(EZData):
+        z = 1
+        z = AttriBox[int](2)
+
+    self.assertEqual(context.exception.fieldName, 'z')
+    self.assertEqual(context.exception.space.getClassName(), 'C')
+    self.assertIn("class 'C', the already existing attribute name 'z'",
+                  str(context.exception))
+    space = EZSpace(EZMeta, 'D', ())
+    hook = EZSpace.__dict__['ezHook'].__get__(space, EZSpace)
+    self.assertTrue(hook.setItemPhase('n', 1))
+    for value in (len, property(), staticmethod(len), Alias('m')):
+      with self.subTest(value=type(value).__name__):
+        with self.assertRaises(DuplicateError) as context:
+          hook.setItemPhase('n', value)
+        self.assertEqual(context.exception.fieldName, 'n')
+        self.assertIs(context.exception.space, space)
+        self.assertIn("class 'D', the already existing attribute name 'n'",
+                      str(context.exception))
+    #  At a name that is no field, the same values stay as they did.
+    self.assertFalse(hook.setItemPhase('f', len))
+    self.assertFalse(hook.setItemPhase('p', property()))
+    self.assertEqual([*space.getEZFields()], ['n'])
+
+  def test_method_or_descriptor_at_an_inherited_field_name_refused(
+      self,
+  ) -> None:
+    with self.assertRaises(DuplicateError) as context:
+      class A(Point2D):
+        x = property(len, setattr)
+
+    exception = context.exception
+    self.assertEqual(exception.fieldName, 'x')
+    self.assertEqual(exception.space.getClassName(), 'A')
+    self.assertIn("class 'A', the already existing attribute name 'x'",
+                  str(exception))
+    self.assertIn("'x' is a field the class inherits, and the name of a "
+                  "field can only be declared again as a field.",
+                  str(exception))
+    self.assertEqual(exception.msg, str(exception))
+    with self.assertRaises(DuplicateError) as context:
+      class B(Point2D):
+        def y(self) -> None:
+          """Never bound: the line binding it is refused."""
+
+    self.assertEqual(context.exception.fieldName, 'y')
+    self.assertEqual(context.exception.space.getClassName(), 'B')
+    self.assertIn("class 'B', the already existing attribute name 'y'",
+                  str(context.exception))
+    self.assertIn("'y' is a field the class inherits",
+                  str(context.exception))
+    #  A body that declares the inherited field again and then binds
+    #  something else at it bound the name twice itself.
+    with self.assertRaises(DuplicateError) as context:
+      class D(Point2D):
+        x = 1.0
+        x = property(len)
+
+    self.assertEqual(context.exception.fieldName, 'x')
+    self.assertEqual(context.exception.space.getClassName(), 'D')
+    self.assertIn("class 'D', the already existing attribute name 'x'",
+                  str(context.exception))
+    self.assertNotIn('inherits', str(context.exception))
+    space = EZSpace(EZMeta, 'C', (Point2D,))
+    hook = EZSpace.__dict__['ezHook'].__get__(space, EZSpace)
+    self.assertEqual([*space.getEZFields()], [])
+    with self.assertRaises(DuplicateError) as context:
+      hook.setItemPhase('x', len)
+    self.assertEqual(context.exception.fieldName, 'x')
+    self.assertIs(context.exception.space, space)
+    self.assertIn("class 'C', the already existing attribute name 'x'",
+                  str(context.exception))
+    self.assertIn("'x' is a field the class inherits",
+                  str(context.exception))
+    #  A name no class of the line declares as a field stays free.
+    self.assertFalse(hook.setItemPhase('z', len))
+
+  def test_overload_at_an_inherited_field_name_refused(self) -> None:
+    with self.assertRaises(DuplicateError) as context:
+      class A(Point2D):
+        @overload(int)
+        def x(self, n: int) -> None:
+          """Claimed by the overload hook, refused as the class is made."""
+
+    exception = context.exception
+    self.assertEqual(exception.fieldName, 'x')
+    self.assertEqual(exception.space.getClassName(), 'A')
+    self.assertIn("class 'A', the already existing attribute name 'x'",
+                  str(exception))
+    self.assertIn("'x' is a field the class inherits",
+                  str(exception))
+
+    class B(Point2D):
+      @overload(int)
+      def scale(self, n: int) -> float:
+        return self.x * n
+
+    self.assertIsInstance(B.__dict__['scale'], Dispatcher)
+    self.assertEqual(B(2, 3).scale(3), 6.0)
 
   def test_descriptor_helpers(self) -> None:
     class GetOnly:

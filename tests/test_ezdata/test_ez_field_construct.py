@@ -24,6 +24,16 @@ class TestEZFieldConstruct(EzdataTest):
   '_construct', the two helpers, and 'defaultValue' building afresh.
   """
 
+  @staticmethod
+  def unbuiltText(name: str, typeName: str) -> str:
+    """The refusal of a default the constructor would not build."""
+    spec = """The default of the field '%s' could not be built: '%s'
+    refused the call the declaration describes. Declare the field with
+    arguments '%s' accepts, as 'EZField[%s](...)', or give the field a
+    value when the instance is made."""
+    info = spec % (name, typeName, typeName, typeName)
+    return str.join(' ', info.split())
+
   def test_lone_instance_is_copied(self) -> None:
     seed = [1, [2]]
     field = EZField[list](seed)
@@ -80,14 +90,28 @@ class TestEZFieldConstruct(EzdataTest):
                      {'b': 2, 'c': 3})
     self.assertEqual(EZField[list]().defaultValue, [])
     self.assertEqual(EZField[int]().defaultValue, 0)
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(TypeError) as context:
       _ = EZField[int](1, 2, 3).defaultValue
-    self.assertEqual(context.exception.varName, 'defaultValue')
-    self.assertEqual(context.exception.actualObject, (1, 2, 3))
-    self.assertIs(context.exception.actualType, tuple)
-    self.assertEqual(context.exception.expectedTypes, (int,))
-    self.assertIn("received object: (1, 2, 3) of type 'tuple'",
-                  str(context.exception))
+    self.assertIs(type(context.exception), TypeError)
+    self.assertEqual(str(context.exception),
+                     self.unbuiltText('defaultValue', 'int'))
+    self.assertIsInstance(context.exception.__cause__, TypeError)
+    with self.assertRaises(TypeError) as context:
+      _ = EZField[int]('!', 10).defaultValue
+    self.assertIs(type(context.exception), TypeError)
+    self.assertEqual(str(context.exception),
+                     self.unbuiltText('defaultValue', 'int'))
+    self.assertIsInstance(context.exception.__cause__, ValueError)
+
+  def test_keyword_beside_one_value_is_a_call(self) -> None:
+    #  One value and a keyword are the arguments of a call, not a lone
+    #  value, so the refusal does not report the value as of a wrong type.
+    with self.assertRaises(TypeError) as context:
+      _ = EZField[float](1.0, digits=2).defaultValue
+    self.assertIs(type(context.exception), TypeError)
+    self.assertEqual(str(context.exception),
+                     self.unbuiltText('defaultValue', 'float'))
+    self.assertIsInstance(context.exception.__cause__, TypeError)
 
   def test_constructor_returning_something_else(self) -> None:
     class Weird:
@@ -166,12 +190,10 @@ class TestEZFieldConstruct(EzdataTest):
     class Owner(EZData):
       need = EZField[Needy]()
 
-    with self.assertRaises(TypeException) as context:
+    with self.assertRaises(TypeError) as context:
       Owner()
-    self.assertEqual(context.exception.actualObject, ())
-    self.assertIs(context.exception.actualType, tuple)
-    self.assertEqual(context.exception.varName, 'need')
-    self.assertEqual(context.exception.expectedTypes, (Needy,))
-    self.assertIn("'need' to be an instance of 'Needy'",
-                  str(context.exception))
+    self.assertIs(type(context.exception), TypeError)
+    self.assertEqual(str(context.exception),
+                     self.unbuiltText('need', 'Needy'))
+    self.assertIsInstance(context.exception.__cause__, TypeError)
     self.assertEqual(Owner(Needy(1)).need.n, 1)

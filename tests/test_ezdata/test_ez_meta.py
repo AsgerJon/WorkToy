@@ -84,6 +84,70 @@ class TestEZMeta(EzdataTest):
     self.assertFalse(Vector.isCongruent(5))
     self.assertFalse(Vector.isCongruent(Vector(1, 2)))
 
+  def test_congruence_asks_for_the_names_in_order(self) -> None:
+    class Size(EZData):
+      width = 0
+      height = 0
+
+    class Turned(EZData):
+      height = 0
+      width = 0
+
+    class Both(Size, Turned):
+      """Takes the order of its fields from 'Turned', the farther base."""
+
+    self.assertEqual([*Both.__ez_fields__], ['height', 'width'])
+    self.assertEqual(Size.sig, Both.sig)
+    self.assertFalse(Size.isCongruent(Both))
+    self.assertFalse(Both.isCongruent(Size))
+    self.assertTrue(Both.isCongruent(Turned))
+    self.assertTrue(Turned.isCongruent(Both))
+    self.assertFalse(Size(1, 2) == Both(1, 2))
+    self.assertFalse(Both(1, 2) == Size(1, 2))
+    self.assertTrue(Both(1, 2) == Turned(1, 2))
+    self.assertTrue(Turned(1, 2) == Both(1, 2))
+
+  def test_congruence_asks_for_the_types_behind_equal_names(self) -> None:
+    class Counted(EZData):
+      amount = 0
+      note = ''
+
+    class Weighed(Counted):
+      amount = 0.0
+
+    self.assertEqual([*Weighed.__ez_fields__], [*Counted.__ez_fields__])
+    self.assertNotEqual(Counted.sig, Weighed.sig)
+    self.assertFalse(Counted.isCongruent(Weighed))
+    self.assertFalse(Weighed.isCongruent(Counted))
+    self.assertFalse(Counted(1, 'a') == Weighed(1.0, 'a'))
+    self.assertFalse(Weighed(1.0, 'a') == Counted(1, 'a'))
+
+  def test_congruence_knows_a_field_type_by_identity(self) -> None:
+    class Agreeing(type):
+      """A metaclass whose classes answer '==' with 'True' to anything."""
+
+      def __eq__(cls, other: object) -> bool:
+        return True
+
+      __hash__ = type.__hash__
+
+    class Loose(metaclass=Agreeing):
+      """A class that claims to equal every other."""
+
+    class Held(EZData):
+      item = EZField[Loose]()
+      note = ''
+
+    class Retyped(Held):
+      item = 0
+
+    self.assertTrue(Loose == int)
+    self.assertFalse(int != Loose)
+    self.assertEqual([*Retyped.__ez_fields__], [*Held.__ez_fields__])
+    self.assertFalse(Held.isCongruent(Retyped))
+    self.assertFalse(Retyped.isCongruent(Held))
+    self.assertFalse(Held() == Retyped())
+
   def test_collection_hooks_kept_by_the_metaclass(self) -> None:
     for name in ('__class_iter__', '__class_len__', '__class_contains__'):
       with self.subTest(name=name):

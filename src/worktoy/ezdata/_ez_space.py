@@ -22,44 +22,54 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class EZSpace(BaseSpace):
   """
-  EZSpace is the namespace returned by 'EZMeta.__prepare__'. It
-  collects the class body, separates own fields from inherited
-  fields (cloned from parent EZData classes), and guards the
-  reserved names that the generated method protocol claims for
-  'asDict', 'asTuple', 'replace', '__post_init__', and the
-  display dunders.
+  The body of a dataclass runs in a namespace, and that namespace must
+  keep the fields the body declares apart from the rest of the body, know
+  the fields the class inherits, and refuse at its line a field that
+  takes a name the dataclass needs for itself or a name the body bound
+  before. A project building a dataclass base of its own must be able to
+  keep further names from a body.
 
-  Subclasses of EZSpace can extend '__reserved_ez_names__' to
-  reserve additional names; the guard in 'registerEZField'
-  consults that tuple unmodified. The same holds for
-  '__reserved_ez_methods__' and '__reserved_ez_attributes__', consulted
-  by 'EZHook.setItemPhase'.
+  Implementation
+  --------------
+
+  'EZMeta.__prepare__' returns an 'EZSpace'. Its hook, 'ezHook', claims
+  the fields and hands them to 'registerEZField'. '__init__' gathers the
+  fields of the bases, as clones, and 'getFields' merges both in the
+  order the constructor takes them. Three tuples hold the names kept
+  from a body. The hook reads each of them unmodified, so a subclass of
+  'EZSpace' extends them to keep further names.
 
   Attributes
   ----------
+
   ezHook : EZHook
-    The space hook that drives EZField interception and code
-    generation for the class under construction.
+    The hook that takes the fields of the class body and generates the
+    methods of the class.
+
   __reserved_ez_names__ : tuple[str, ...]
-    Names claimed by the generated method protocol that may not
-    be used as EZField names. Method overrides at these names
-    are still allowed; only EZField declarations are rejected.
+    The names of the methods EZData generates where a class has none of
+    its own, 'asDict', 'asTuple', 'replace', '__field_pairs__',
+    '__repr__' and '__str__', and '__post_init__'. A field may not take
+    one of them and raises 'ReservedFieldError'; a method may be written
+    at each.
+
   __reserved_ez_methods__ : tuple[str, ...]
-    Names of generated methods that EZData keeps for itself, the ones
-    installed after the class body is merged, which a class-body
-    definition could not replace anyway. A class body binding one of
-    them raises 'ReservedMethodError', whatever the value, and so does a
-    class body overloading one of them, as the class is created. A plain
-    base may define them, and the generated methods take precedence.
+    The names of the generated methods EZData keeps for itself, the ones
+    installed after the class body is merged, which a definition in the
+    body could not replace anyway. A class body binding one of them
+    raises 'ReservedMethodError', whatever the value, and so does a class
+    body overloading one of them, as the class is created. A plain base
+    may define them, and the generated methods take precedence.
+
   __reserved_ez_attributes__ : tuple[str, ...]
-    Names of the attributes EZData keeps for itself: those it sets on
+    The names of the attributes EZData keeps for itself: those it sets on
     every class, the fields and the options the class keywords resolve
     to, and '__key_args__', under which 'Object' keeps the keyword
-    arguments of its constructor. A class body binding one of them
-    raises 'ReservedAttributeError', whatever the value, where the binding
-    would otherwise become a field of that name. '__slots__' is refused
-    before this namespace sees it, by 'NamespaceHook' with
-    'SlotsRefused', as in every worktoy class body.
+    arguments of its constructor. A class body binding one of them raises
+    'ReservedAttributeError', whatever the value, where the binding would
+    otherwise become a field of that name. '__slots__' is refused before
+    this namespace sees it, by 'NamespaceHook' with 'SlotsRefused', as in
+    every worktoy class body.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -109,44 +119,61 @@ class EZSpace(BaseSpace):
 
   def getEZFields(self, ) -> dict[str, EZField]:
     """
-    The 'getEZFields' method returns the mapping of own (non-inherited)
-    field names to 'EZField' instances, in declaration order, empty when
-    no own fields have been registered yet.
+    The fields a class body declares itself must be told from the ones the
+    class inherits: a subclass gathers the own fields of each base, and a
+    name bound twice in one body is refused.
+
+    Implementation
+    --------------
+
+    The mapping from name to field, in declaration order, empty before any
+    field is registered.
 
     Returns
     -------
+
     dict[str, EZField]
-      The own-field mapping, in declaration order.
+      The own fields of the class body.
     """
     return maybe(self.__ez_fields__, dict())
 
   def getBaseFields(self, ) -> dict[str, EZField]:
     """
-    The 'getBaseFields' method returns the mapping of inherited field
-    names to their cloned 'EZField' instances, populated during
-    '__init__' by walking the parent classes. Each entry is a clone of
-    the parent's field, so subsequent owner binding on the subclass does
-    not mutate the parent's namespace.
+    The fields a class inherits must be objects of its own, so that binding
+    them to the subclass leaves the fields of the bases as they were.
+
+    Implementation
+    --------------
+
+    '__init__' fills the mapping with clones while walking the classes the
+    class is based on, from the most general to the most specific.
 
     Returns
     -------
+
     dict[str, EZField]
-      The inherited-field mapping, in MRO-respecting order.
+      The inherited fields, each a clone.
     """
     return maybe(self.__base_fields__, dict())
 
   def getFields(self, ) -> dict[str, EZField]:
     """
-    The 'getFields' method returns the merged mapping of base fields
-    followed by own fields, in declaration order. Own-field entries
-    overwrite same-named inherited entries, so a subclass redeclaring a
-    parent's field wins. The result is what 'EZHook' compiles into
-    '__ez_fields__', '__match_args__', and the generated '__init__'.
+    The constructor, the iteration and '__match_args__' of a class all need
+    one ordered list of its fields: the inherited ones first, then its own,
+    a field the body declares again taking the place of the inherited one.
+
+    Implementation
+    --------------
+
+    A new dict of the base fields overlaid with the own ones. 'EZHook'
+    compiles it into '__ez_fields__', '__match_args__' and the generated
+    '__init__'.
 
     Returns
     -------
+
     dict[str, EZField]
-      The merged base + own mapping, in declaration order.
+      Every field of the class, in declaration order.
     """
     baseFields = self.getBaseFields()
     ezFields = self.getEZFields()
@@ -163,33 +190,54 @@ class EZSpace(BaseSpace):
 
   def registerEZField(self, key: str, field: EZField, ) -> None:
     """
-    The 'registerEZField' method binds an own field at the given
-    attribute name. It is called from 'EZHook.setItemPhase' when the
-    class body assigns either an 'EZField' instance or a bare value that
-    gets wrapped through 'EZField.fromValue'. It stores 'field' in
-    '__ez_fields__' and sets its '__field_name__' for later
-    introspection.
+    A field the class body binds must be taken for the class under its
+    name, unless the name is one the dataclass needs for a method, or one
+    the body bound before: two declarations at one name would leave one of
+    them lost without a word. A field object bound before, to another name
+    or in another class, must not end up shared between the two.
+
+    Implementation
+    --------------
+
+    'EZHook.setItemPhase' calls this method for an 'EZField' and for a
+    plain value wrapped by 'EZField.fromValue'. A reserved name raises
+    'ReservedFieldError'. A name the body bound before raises
+    'DuplicateError': one registered as a field, or one the namespace
+    itself stores, which is where a method or a descriptor of the body is
+    kept, since the hook claims every field. A field already carrying a
+    name is cloned first, which keeps the second binding independent of
+    the first. The field takes the name and is stored among the own
+    fields.
 
     Parameters
     ----------
+
     key : str
-      The attribute name the field is being bound to.
+      The name the field is bound to.
+
     field : EZField
-      The EZField instance to register as an own field.
+      The field.
 
     Raises
     ------
+
     ReservedFieldError
-      If 'key' is one of the names reserved by the generated
-      method protocol ('asDict', 'asTuple', 'replace',
-      '__post_init__', '__repr__', '__str__', '__field_pairs__').
+      'key' is one of the names of '__reserved_ez_names__': 'asDict',
+      'asTuple', 'replace', '__post_init__', '__repr__', '__str__' or
+      '__field_pairs__'.
+
     DuplicateError
-      If 'key' has already been registered as an own field on
-      this namespace; a single class body may not assign the
+      'key' is registered as an own field already, or the body bound it
+      to a method or a descriptor before; one class body may not bind the
       same name twice.
     """
     if key in self.__reserved_ez_names__:
       raise ReservedFieldError(key, self)
+    if dict.__contains__(self, key):
+      #  This branch is reached by the following:
+      #  - The body bound the name before to a method or a descriptor,
+      #    which the namespace stored, and now binds a field at it
+      raise DuplicateError(key, self)
     existing = self.getEZFields()
     if key not in existing:
       if field.__field_name__ is not None:
@@ -206,23 +254,29 @@ class EZSpace(BaseSpace):
 
   def registerBaseField(self, key: str, field: EZField, ) -> None:
     """
-    The 'registerBaseField' method binds an inherited field at the given
-    attribute name. It is called from this namespace's '__init__' while
-    walking the method resolution order. The parent's 'EZField' is
-    cloned so any later owner binding on the subclass leaves the
-    parent's namespace untouched. Registering a name again replaces the
-    field but keeps the position the name first took. Since '__init__'
-    registers the classes from the far end of the method resolution
-    order, the farthest class decides the position of a field and the
-    nearest class decides the field itself.
+    An inherited field must be the subclass's own object. Where several
+    classes along the resolution order declare one name, the nearest must
+    decide the field, as attribute lookup would find it, while the field
+    keeps the place the most general class gave it, the order 'dataclasses'
+    uses.
+
+    Implementation
+    --------------
+
+    The field is cloned, named and stored. Registering a name again
+    replaces the field and keeps the position the name first took.
+    '__init__' registers the classes from the far end of the resolution
+    order, so the farthest class decides the position of a field and the
+    nearest class the field itself.
 
     Parameters
     ----------
+
     key : str
-      The attribute name the inherited field is being bound to.
+      The name of the inherited field.
+
     field : EZField
-      The parent's EZField to clone and register on this
-      namespace.
+      The field of the base, which is cloned.
     """
     existing = self.getBaseFields()
     cloned = field.clone()
@@ -236,31 +290,38 @@ class EZSpace(BaseSpace):
 
   def __init__(self, mcls: AMeta, name: str, bases: Bases, **kw) -> None:
     """
-    The '__init__' method builds the namespace for an 'EZData' subclass
-    under construction. After 'BaseSpace.__init__' sets up the standard
-    namespace machinery, it walks the method resolution order of the
-    class under construction from the far end, and registers the fields
-    each 'EZData' class declared in its own body as inherited base
-    fields. The fields therefore run from the most general class to the
-    most specific, the order 'dataclasses' uses, and every base keeps
-    the relative order of its own fields. When several classes declare
-    the same name, the one nearest in the method resolution order
-    decides the field, just as attribute lookup would find it.
+    Before the body runs, the namespace must know the fields the class
+    inherits: every dataclass along its resolution order contributes the
+    fields of its own body. They must run from the most general class to
+    the most specific, the order 'dataclasses' uses, each base keeping the
+    order of its own fields.
+
+    Implementation
+    --------------
+
+    After 'BaseSpace.__init__' has set the namespace up, the lookup order
+    is walked from the far end, and each class whose namespace is an
+    'EZSpace' has the fields of its own body registered as base fields. A
+    base built by no worktoy metaclass, as 'object' or a plain mixin,
+    carries no namespace and declares no field. When several classes
+    declare one name, the nearest decides the field; see
+    'registerBaseField'.
 
     Parameters
     ----------
+
     mcls : type
-      The metaclass building the class (always 'EZMeta' or a
-      subclass).
+      The metaclass building the class, 'EZMeta' or a subclass.
+
     name : str
-      The name of the class under construction.
+      The name of the class.
+
     bases : Bases
-      Spells out to 'tuple[EZMeta, ...]'. The base classes
-      passed in the 'class Foo(...)' declaration.
+      A 'tuple[EZMeta, ...]' of the bases of the class statement.
+
     **kw
-      Class keyword arguments, including the 'frozen', 'ordered',
-      and 'kwOnly' build-option synonyms consumed later by
-      'EZHook.postCompilePhase'.
+      The class keywords, among them the spellings of 'frozen', 'ordered'
+      and 'kwOnly' that 'EZHook.postCompilePhase' reads later.
     """
     BaseSpace.__init__(self, mcls, name, bases, **kw)
     for base in reversed(self._getLookupOrder()):

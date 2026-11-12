@@ -6,7 +6,8 @@ of a dataclass built by 'EZHook' from 'worktoy.ezdata'.
 #  Copyright (c) 2026 Asger Jon Vistisen
 from __future__ import annotations
 
-from worktoy.ezdata import EZData
+from worktoy.ezdata import EZData, EZField, EZMeta, EZSpace
+from worktoy.mcls import BaseMeta
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.ezdata import ExtraPositionalException
 from worktoy.waitaminute.ezdata import ExtraKeywordException
@@ -128,6 +129,62 @@ class TestEZHookInit(EzdataTest):
     self.assertEqual(Sub(3, 1).length, 2)
     self.assertEqual(Point2D().__dict__, {'x': 0.0, 'y': 0.0})
 
+  def test_class_without_a_post_init_reads_none(self) -> None:
+    #  The lookup of the hook lands on the metaclass for a class without
+    #  one, and raises nothing.
+    self.assertIsNone(vars(EZMeta)['__post_init__'])
+    self.assertIsNone(type.__getattribute__(Point2D, '__post_init__'))
+    self.assertNotIn('__post_init__', vars(Point2D))
+    self.assertFalse(hasattr(Point2D(), '__post_init__'))
+    self.assertIs(type.__getattribute__(Span, '__post_init__'),
+                  vars(Span)['__post_init__'])
+
+  def test_post_init_found_wherever_it_sits(self) -> None:
+    seen = []
+
+    class Late(EZData):
+      x = 0
+
+    Late(1)
+    Late.__post_init__ = lambda self: seen.append(self.x)
+    Late(2)
+    self.assertEqual(seen, [2])
+
+    class Noting:
+      def __post_init__(self) -> None:
+        seen.append('mixin')
+
+    class After(EZData, Noting):
+      x = 0
+
+    After()
+    self.assertEqual(seen, [2, 'mixin'])
+
+  def test_post_init_under_a_metaclass_of_another_kind(self) -> None:
+    #  A metaclass that is no 'EZMeta' holds no 'None' for the lookup of
+    #  the hook to land on; the constructor must do without it.
+    class Bare(BaseMeta):
+      @classmethod
+      def __prepare__(mcls, name: str, bases: tuple, **kw) -> EZSpace:
+        return EZSpace(mcls, name, bases, **kw)
+
+    class Loner(metaclass=Bare):
+      x = 0
+      y = 0
+
+    self.assertNotIsInstance(Loner, EZMeta)
+    with self.assertRaises(AttributeError):
+      type.__getattribute__(Loner, '__post_init__')
+    self.assertEqual(Loner(1, y=2).asDict(), dict(x=1, y=2))
+    seen = []
+
+    class Hooked(Loner):
+      def __post_init__(self) -> None:
+        seen.append(self.x)
+
+    Hooked(3)
+    self.assertEqual(seen, [3])
+
   def test_class_attribute_of_a_mixin_is_no_value(self) -> None:
     self.assertEqual(Labelled().count, 1)
     self.assertEqual(Labelled(count=5).count, 5)
@@ -148,6 +205,45 @@ class TestEZHookInit(EzdataTest):
     self.assertEqual(point.y, 0.0)
     point.note = 'free'
     self.assertEqual(point.__dict__['note'], 'free')
+
+  def test_only_the_field_type_itself_is_stored_uncast(self) -> None:
+    class Agreeing(type):
+      """A metaclass whose classes answer '==' with 'True' to anything."""
+
+      def __eq__(cls, other: object) -> bool:
+        return True
+
+      __hash__ = type.__hash__
+
+    class Loose(metaclass=Agreeing):
+      """A class that claims to equal every other."""
+
+    class Holder(EZData):
+      item = EZField[Loose]()
+
+    self.assertTrue(Loose == int)
+    self.assertFalse(int != Loose)
+    loose = Loose()
+    self.assertIs(Holder(loose).item, loose)
+    self.assertIs(Holder(item=loose).item, loose)
+    with self.assertRaises(TypeException) as context:
+      Holder(5)
+    self.assertEqual(context.exception.varName, 'item')
+    self.assertEqual(context.exception.actualObject, 5)
+    self.assertEqual(context.exception.expectedTypes, (Loose,))
+    self.assertIn("'item' to be an instance of 'Loose'",
+                  str(context.exception))
+    holder = Holder()
+    holder.item = loose
+    self.assertIs(holder.item, loose)
+    with self.assertRaises(TypeException) as context:
+      holder.item = 5
+    self.assertEqual(context.exception.varName, 'item')
+    self.assertEqual(context.exception.actualObject, 5)
+    self.assertEqual(context.exception.expectedTypes, (Loose,))
+    self.assertIn("'item' to be an instance of 'Loose'",
+                  str(context.exception))
+    self.assertIs(holder.item, loose)
 
   def test_frozen_refuses_assignment(self) -> None:
     circle = Circle(radius=2.0)

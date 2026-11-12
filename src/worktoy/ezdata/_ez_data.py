@@ -16,45 +16,54 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class EZData(Object, metaclass=EZMeta):
   """
-  EZData is the base class users subclass to declare a worktoy
-  dataclass. Subclasses place their fields in the class body as
-  'EZField[T](...)' instances, or as bare values whose type becomes
-  the field type, optionally pass build-option keywords
-  ('frozen=True', 'ordered=True', 'kwOnly=True' or any of their
-  synonyms), and optionally define '__post_init__' for validation or
-  derived state. An annotation alone, 'x: int' with no value, declares
-  no field: the fields are what the body binds.
+  A builder often wants a class that is mostly data: a few typed
+  attributes with defaults, a constructor taking them, equality by value,
+  a readable text and conversions to a dict and a tuple. Writing those by
+  hand for every class is the work a dataclass removes. Unlike a standard
+  dataclass, every value must be held to the type of its field, as the
+  constructor runs and at every assignment after, and a mistake in the
+  declaration must fail on the class statement.
 
-  In return the class receives auto-generated '__init__',
-  '__iter__', '__len__', '__eq__', '__setattr__', '__delattr__',
-  'asDict', 'asTuple', 'replace', '__match_args__', and the display
-  dunders. The '__len__' gives the number of fields, which '__iter__'
-  yields. The '__setattr__' casts every field assignment the way
-  '__init__' does, or refuses it on a frozen class, which additionally
-  receives '__hash__'. The '__delattr__' refuses deleting a field, since
-  every field holds a value of its declared type, and lets any other
-  attribute go; on a frozen class it refuses every deletion. A class
-  body defining '__init__', '__iter__', '__len__', '__eq__', '__hash__',
-  an ordering method, '__setattr__' or '__delattr__', plainly or with
-  '@overload', raises
-  'ReservedMethodError', while a plain base, one not
-  built by 'EZMeta', may define them, as a mixin written against the
-  same protocol does, and the generated methods take precedence over
-  them. A class body binding an attribute EZData sets on every class
-  itself, such as '__kw_only__', raises 'ReservedAttributeError'. The
-  optional names '__field_pairs__', 'asDict', 'asTuple', 'replace',
-  '__repr__', '__str__' and '__match_args__' are generated only where
-  neither the class body nor a base, EZData or plain, supplies one: the
-  class body's own wins, then the first one written by hand along the
-  bases. '__post_init__' is the hook for validation and derived state.
-  Every field therefore holds an instance of its field type, though not
-  necessarily of exactly that type: a 'bool' given to an 'int' field
-  stays a 'bool'. Ordered classes receive the four comparison dunders.
-  Several EZData classes with fields may be combined as bases. See
-  'EZHook.postCompilePhase' for the full generation contract.
+  Implementation
+  --------------
 
-  Example
-  -------
+  A subclass places its fields in the class body as 'EZField[T](...)'
+  instances, or as bare values whose type becomes the field type,
+  optionally passes the class keywords 'frozen=True', 'ordered=True' or
+  'kwOnly=True', or any of their synonyms, and optionally defines
+  '__post_init__' for validation or derived state. An annotation alone,
+  'x: int' with no value, declares no field: the fields are what the
+  body binds.
+
+  In return the class receives generated '__init__', '__iter__',
+  '__len__', '__eq__', '__setattr__', '__delattr__', 'asDict', 'asTuple',
+  'replace', '__match_args__' and the display dunders. The '__len__'
+  gives the number of fields, which '__iter__' yields. The '__setattr__'
+  casts every field assignment the way '__init__' does, or refuses it on
+  a frozen class, which additionally receives '__hash__'. Every field
+  therefore holds an instance of its field type, though not necessarily
+  of exactly that type: a 'bool' given to an 'int' field stays a 'bool'.
+  The '__delattr__' refuses deleting a field, since every field holds a
+  value of its declared type, and lets any other attribute go; on a
+  frozen class it refuses every deletion. A class body defining
+  '__init__', '__iter__', '__len__', '__eq__', '__hash__', an ordering
+  method, '__setattr__' or '__delattr__', plainly or with '@overload',
+  raises 'ReservedMethodError', while a plain base, one not built by
+  'EZMeta', may define them, as a mixin written against the same protocol
+  does, and the generated methods take precedence over them. A class body
+  binding an attribute EZData sets on every class itself, such as
+  '__kw_only__', raises 'ReservedAttributeError'. The optional names
+  '__field_pairs__', 'asDict', 'asTuple', 'replace', '__repr__',
+  '__str__' and '__match_args__' are generated only where neither the
+  class body nor a base, EZData or plain, supplies one: the class body's
+  own wins, then the first one written by hand along the bases. Ordered
+  classes receive the four comparison dunders. Several EZData classes
+  with fields may be combined as bases. See 'EZHook.postCompilePhase' for
+  the full generation contract.
+
+  Examples
+  --------
+
       class Point2D(EZData):
         x = EZField[float](0.0)
         y = EZField[float](0.0)
