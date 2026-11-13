@@ -1,4 +1,8 @@
-Final review of worktoy before the 1.1.0 release candidate.
+Final review of worktoy before a release candidate.
+
+I name the version under review when I start the session, and what has
+been verified already. Where this prompt says [VERSION], read that
+version.
 
 This session reads every package of worktoy and reports what would
 embarrass a release candidate: a promise the code does not keep, an
@@ -6,21 +10,22 @@ error path that misleads, code that is dead, or a line that breaks the
 rules the project holds itself to. It changes nothing. I decide what
 gets fixed, after reading the report.
 
-Begin by reading research_rules.txt, currently at
-archive/research_rules.txt. It holds the settled and the deferred
-items: the decisions already made about worktoy. Reading it spoils
-nothing. One override: its Scope lines say the leaf packages are out
-of scope and that a failing leaf test is removed rather than fixed.
-That was true during the core refurbishment. Since 2026-11-05 every
-leaf has been reworked and tested to the same standard, and the
-candidate ships all of them, so this review covers every package
-alike. Read docstring_format.md, beside it, for the docstring voice.
+Begin by reading research_rules.txt, at tmp/research_rules.txt. It
+holds the settled and the deferred items: the decisions already made
+about worktoy. Reading it spoils nothing. One override: its Scope lines
+say the leaf packages are out of scope and that a failing leaf test is
+removed rather than fixed. That was true during the core refurbishment.
+Since 2026-11-05 every leaf has been reworked and tested to the same
+standard, and a candidate ships all of them, so this review covers
+every package alike. Read docstring_format.md, beside it, for the
+docstring voice.
 
 Avoid spoilers. Until the report is complete, do not open the memory
-files listed in MEMORY.md, the hand-offs, anything under archive/
-other than the two files named above, or anything under
-bin/dev_tooling/review/archive/. Work from the code, the tests and
-research_rules.txt alone.
+files listed in MEMORY.md, the hand-offs, the planned items under
+bin/dev_tooling/planning/, anything under tmp/ other than the two
+files named above, or anything under bin/dev_tooling/review/archive/.
+Work from the code, the tests, the promises and research_rules.txt
+alone.
 
 To show that you understand the instructions, print a description of
 how you understand them before you begin.
@@ -55,8 +60,11 @@ before writing about it.
 1. Promises against behaviour. The docs of worktoy are the source
    files themselves, rendered verbatim, so every docstring is a
    promise. So are the member lists of the __init__ docstrings, the
-   prose of README.md, and every entry of the [1.1.0] section of
-   changelog.md that touches the package. Each claim that a few lines
+   prose of README.md, every entry of the [VERSION] section of
+   changelog.md that touches the package, the files of the package
+   under promises/, and its chapter under manual/. A promise taken
+   back is written up under promises/confessions; hold the changelog
+   against it. Each claim that a few lines
    of code can check gets a probe, run for real. A claim the code does
    not keep is a finding. Do not decide the direction of the fix:
    present the wording change and the code change as labelled options.
@@ -94,15 +102,15 @@ before writing about it.
 6. The mechanical sweep, one block in the report, with the commands:
 
      awk 'length > 77 {print FILENAME": "FNR}' src/worktoy/*/*.py \
-       src/worktoy/*/*/*.py tests/*/*.py
-     grep -rn $'\xe2\x80\x94' src tests README.md CONTRIBUTING.md \
-       changelog.md
-     grep -rn '``' src                      # double backticks
-     grep -rLn 'Apache-2.0 license' --include='*.py' src tests
+       src/worktoy/*/*/*.py tests/*/*.py promises/*/*.py manual/*.md
+     grep -rn $'\xe2\x80\x94' src tests promises manual README.md \
+       CONTRIBUTING.md changelog.md
+     grep -rn '``' src promises             # double backticks
+     grep -rLn 'Apache-2.0 license' --include='*.py' src tests promises
      grep -rn '# pragma' src tests          # each one justified?
      grep -rn '^ *pass$' src tests          # a body that never runs
                                             # carries a docstring
-     find src tests -name __pycache__       # must be empty
+     find src tests promises -name __pycache__   # must be empty
 
 Judgement
 ---------
@@ -129,6 +137,11 @@ items are known; do not raise them as new.
   follows literally from what a line asked for, is expected.
 - Never propose documenting or testing a usage the library has not
   promised. A finding names a mismatch; it adds no promise.
+- What __str__ and __repr__ give is implementation, never a promise.
+- A numeric extreme, as an int too large for a float, is no finding.
+  Neither is an exception that fails to pickle or copy.
+- A guard against a mistake made outside worktoy is never proposed for
+  removal.
 - A gate is exact or it refuses; only numeric widening is allowed.
   FastBox is strict by design. Thread and task safety is deferred as a
   whole. The wording of an exception the interpreter composes is not
@@ -156,7 +169,7 @@ Every entry begins with one of:
 - Critical
 
 For this review, Critical and Major block the candidate; Minor and
-Cosmetic are fixed before 1.1.0 or later, as I decide. A review where
+Cosmetic are fixed before [VERSION] or later, as I decide. A review where
 nothing rises above No Concern is an acceptable result. Do not raise
 items to fill the list, and do not hold back an item because the code
 was called clean before.
@@ -172,25 +185,26 @@ options labelled when there is more than one.
 Operating rules
 ---------------
 
-- Python: ~/miniforge3/envs/worktoy_env/bin/python for everything
-  measured; ~/miniforge3/envs/base_3_7 to base_3_14 only to show a
-  version difference. Always PYTHONDONTWRITEBYTECODE=1 and -B. No
+- Python: ~/miniforge3/envs/worktoy_env/bin/python (3.15) for
+  everything measured; ~/miniforge3/envs/base_3_7 to base_3_14 only to
+  show a version difference. Always PYTHONDONTWRITEBYTECODE=1 and -B. No
   __pycache__ may appear under src or tests.
-- Do not modify src, tests, docs, the workflows, the version files or
-  the changelog. The report is the deliverable.
+- Do not modify src, tests, promises, manual, docs, the workflows,
+  the version files or the changelog. The report is the deliverable.
 - Do not run git. Do not spawn sub-agents. No em-dash anywhere, the
   report included.
-- Already verified tonight, do not redo: the wheel and sdist on PyPI
-  match src; the suite passes against the wheel on 3.15 and 3.7; the
-  rc coverage command holds at 100 percent; warnings as errors are
-  clean on all nine interpreters; the README code blocks run; every
-  package was swept with cosmic-ray.
+- Do not redo what I name as verified when I start the session, as
+  the build on PyPI matching src, the suite and the promises passing
+  on every interpreter, the coverage, or the mutation sweep of the
+  code changed since the last release. If I name nothing, ask once
+  which of these stand before spending time on them.
 
 When the report is complete
 ---------------------------
 
-Only then open archive/notes/handoff_full_state_20261106_182458.md and
-the memory files, and read the settled items once more. Where a finding is
-already decided by a settled item, or already recorded there, mark it
+Only then open the memory files, the newest hand-off and research
+notes under tmp/notes/, and bin/dev_tooling/planning/planned_items.md,
+and read the settled items once more. Where a finding is already
+decided by a settled item, or already recorded in one of those, mark it
 "withdrawn: settled" or "known" under its heading. Do not delete it.
 Fill in the summary. Print the summary and the path of the report.

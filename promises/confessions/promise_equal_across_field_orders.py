@@ -17,7 +17,7 @@ class ConfessedEqualAcrossFieldOrders(TestCase):
   Promised in 1.2.0: two 'EZData' instances are equal when their values
   are and they are of one lineage, a class and its subclasses.
 
-  Taken back in the update after 1.2.0, for a subclass holding its
+  Taken back in 1.2.1, for a subclass holding its
   fields in another order than the class it is compared with, as a class
   based on two dataclasses that declare the same names in opposite
   orders does. The promise read two ways there, and the two contradict

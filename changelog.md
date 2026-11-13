@@ -4,7 +4,7 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
-## [1.2.1] - 2026 November 12
+## [1.2.1] - 2026 November 13
 
 This release repairs 1.2.0. In making every failed `subTest` block
 count, 1.2.0 broke three things that worked in 1.1.0: a test base built
@@ -76,10 +76,12 @@ test that must not see what an earlier test class built calls
 
 ### A name in an `EZData` body is a field or something else, not both
 
-A class body that binds a method, a descriptor or an overload at the
-name of a field of the class, declared in the body or inherited, is
-refused with `DuplicateError`, and so is a field bound at the name of a
-method or a descriptor of the body.
+A class body that binds a method or a descriptor at the name of a field
+of the class, declared in the body or inherited, is refused with
+`DuplicateError`, and so is a field bound at the name of a method or a
+descriptor of the body. An overload at the name of an inherited field
+is refused the same way; one at the name of a field of the same body
+was refused already, with `OverloadConflict`.
 
     class Shape(EZData):
       area = 0.0

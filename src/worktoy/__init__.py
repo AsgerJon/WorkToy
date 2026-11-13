@@ -1,7 +1,7 @@
 """
 The 'worktoy' package adds runtime type enforcement, declarative
 attributes, function overloading, and custom-metaclass infrastructure on
-top of stock Python. It targets Python 3.7 through 3.14.
+top of stock Python. It targets Python 3.7 through 3.15.
 
 The package is layered: each package depends only on the packages listed
 before it, and the import order below is the canonical dependency order.

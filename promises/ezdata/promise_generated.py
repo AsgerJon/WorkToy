@@ -33,7 +33,7 @@ class PromiseGenerated(TestCase):
   does; deleting a field raises 'AttributeError', while other attributes
   come and go. Source: the docstrings of 'EZData', 'EZMeta' and 'EZHook'.
 
-  Taken back in the update after 1.2.0, with its reason in
+  Taken back in 1.2.1, with its reason in
   'promises/confessions': equality between a class and a subclass that
   holds its fields in another order.
   """

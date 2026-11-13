@@ -1,0 +1,111 @@
+Research of the worktoy source.
+
+This session reads the source of worktoy until it understands it, and
+writes down what it found. It changes nothing in the repository. It
+comes before a review, before development, and at the start of every
+session that works on worktoy, and again after every compaction of the
+context.
+
+I name the packages to research when I start the session. If I name
+none, they are the central non-leaf packages.
+
+Begin by reading research_rules.txt, at tmp/research_rules.txt. It
+holds the decisions already made about worktoy, the settled and the
+deferred items. The research describes a settled item as the code has
+it and does not question it.
+
+Avoid spoilers. Apart from research_rules.txt, do this research from
+the code alone. Before and during the research, do not open the
+auto-memory files: do not follow the MEMORY.md index the session shows
+you at the start into the files it lists. Do not read earlier
+research_notes_*, review_notes_*, status_* or handoff_* files, the
+planned items under bin/dev_tooling/planning/, or anything under
+bin/dev_tooling/review/archive/. Their findings would decide what you
+look for before you have read the code.
+
+To show that you understand the instructions, print a description of
+how you understand them before you begin.
+
+The notes
+---------
+
+Create tmp/notes/research_notes_[TIMESTAMP].md before reading the
+first source file. It is the only file the session creates or changes.
+
+What to read
+------------
+
+The central non-leaf packages are always read, in order of dependency:
+
+1. core
+2. dispatch
+3. desc
+4. mcls
+
+Within each package, follow the import order in its __init__.py, and
+read the sub-packages it imports as part of it.
+
+The support packages are utilities and waitaminute, the custom
+exceptions and warnings. They are inspected as they are referenced
+during the read of the other packages, unless I name them, in which
+case they are read whole like any other.
+
+A leaf package, keenum, ezdata, lorem_ipsum or work_test, is read
+whole when I name it, after the four above, since every leaf rests on
+them.
+
+Read every line of each file yourself. Do not skim, grep, summarize
+from headers, or delegate to sub-agents. If a read is truncated,
+continue with the offset until the end of the file.
+
+Reading is not understanding
+----------------------------
+
+A file that has been read is not yet a file that is understood. For
+each package:
+
+- Print the builtin base of every exception and warning the package
+  raises. Never assume one: whether a refusal is a TypeError, an
+  AttributeError or a SyntaxError decides what catches it.
+- Write down what you expect a piece of code to do before you run it:
+  the result, or the exception and its type.
+- Run it in a small probe, inline (python -c) or from a file in the
+  scratchpad of the session, never from a file inside the repository.
+- Record every expectation that was wrong, with what happened instead.
+  Those are where the understanding was missing. A research in which
+  every expectation held says so, with the number of expectations.
+
+Entries
+-------
+
+For each item inspected, a class, a function or a file, add an entry
+to the notes describing the item and how it works with the rest of the
+packages read. Refer to code as path:line, with the lines themselves
+quoted beside the explanation. Append each entry as soon as the item
+has been inspected, before moving on to the next. Each package ends
+with the list of its files read in full; count them with find, so that
+none is missed.
+
+The research describes. It does not judge, rate or propose: what looks
+wrong is written down as what the code does and what was expected, and
+left for the review.
+
+If you resume after an interruption, read the notes of this session
+and continue with the first item that has no entry.
+
+Operating rules
+---------------
+
+- Python: ~/miniforge3/envs/worktoy_env/bin/python (3.15) for every
+  probe; ~/miniforge3/envs/base_3_7 to base_3_14 only to show a
+  version difference. Always PYTHONDONTWRITEBYTECODE=1 and -B. No
+  __pycache__ may appear under src or tests.
+- Do not modify any file other than the notes.
+- Do not run git. Do not spawn sub-agents. No em-dash anywhere, the
+  notes included.
+
+When the research is complete
+-----------------------------
+
+Print the path of the notes, the number of files read for each package,
+and the expectations that were wrong.

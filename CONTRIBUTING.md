@@ -92,25 +92,53 @@ later versions of Python *cannot* be backported this way. This is why
 ## Testing and Coverage
 
 A point of pride for *worktoy* is the 100% branch coverage of the test
-suite. This requirement is non-negotiable. The CI-pipeline contains a
-measurement of the coverage that is authoritative, but included in the
-repository is the `bin/dev_tooling/coverage_test.sh` script that reliably
-achieves the
-same results as the CI-pipeline. It does rely on the previously mentioned
-development dependencies. It runs all the tests in the `tests` directory
-and if all pass, the script opens the HTML report in the system browser.
+suite. This requirement is non-negotiable. Every release workflow runs
+the suite on each supported Python, from 3.7 to 3.15, and measures the
+coverage on 3.15, refusing to publish below 100%. That measurement is
+authoritative, but included in the repository is the
+`bin/dev_tooling/coverage_test.sh` script that reliably achieves the
+same results. It does rely on the previously mentioned development
+dependencies. It runs all the tests in the `tests` directory and if all
+pass, the script opens the HTML report in the system browser.
 
 Running tests without measuring coverage is substantially faster and is
 frequently desirable during development when designing the tests
-themselves. For this purpose, two Python functions are available from the
-`bin/dev_tooling/yolo_dev.py` module: `runTests`, which runs all the tests
-found and puts
-results in the terminal. A related function, `runTest`, allows running a
-single test by passing the test class to it.
+themselves. The suite is plain `unittest`, so with `src` on the path, or
+*worktoy* installed in the environment, it runs from the repository root
+with:
 
-Besides the test runners, the `yolo_dev.py` module also provides the
-`yolo` function which runs any passed functions including relevant
+```terminaloutput
+python -m unittest discover -s tests -t .
+```
+
+Two Python functions do the same from the `bin/dev_tooling/yolo_dev.py`
+file: `runTests`, which runs all the tests found and puts results in
+the terminal, and `runTest`, which runs a single test by passing the
+test class to it. Besides the test runners, `yolo_dev.py` also provides
+the `yolo` function which runs any passed functions including relevant
 information such as identifying the running Python environment.
+`profile_tests.py`, beside it, runs `runTests` under `cProfile` and
+saves the profile to `tmp`, with a time stamp in the name of the file.
+
+Every test class is based on `BaseTest` from `worktoy.work_test`,
+directly or through a base local to its folder. A test of a refusal
+asserts the message of the exception as well as its type.
+
+### Promises and the Manual
+
+Beside `tests` stand two further bodies of checked text. The `promises`
+directory states what the library owes the projects built upon it, one
+behaviour per file, each written as a test. A change of behaviour is
+held against them first: a promise is kept for every release of a major
+version, and one that has to be taken back is written up in
+`promises/confessions`. The `manual` directory holds one chapter per
+package, and every example in it is a doctest. Both run from the
+repository root:
+
+```terminaloutput
+python -m unittest discover -s promises -t . -p "promise_*.py"
+python -m doctest manual/*.md
+```
 
 ### Mutation Testing Before a Release
 
@@ -133,8 +161,100 @@ count), then `cosmic-ray baseline` and `cosmic-ray exec`. Each
 survivor is read, not trusted: an equivalent mutant is accepted only
 with a written reason, as a typing stub, an `is` turned into `==` on a
 class or a sentinel, or a shortcut whose removal gives the same answer.
-The sessions, their dumps and the survivor lists with their reasons go
-in `bin/dev_tooling/mutation/runs/`, which is not committed.
+A sweep leaves its sessions and dumps in
+`bin/dev_tooling/mutation/runs/`, which is not committed. Once the
+survivors and the equivalents with their reasons are written down
+there, the sessions, dumps and logs are removed; the written lists
+stay.
+
+## Releases
+
+A release is published by pressing a button, never by hand. There are
+nine buttons, one GitHub workflow each, named level first and kind
+second: `micro-dev`, `micro-rc` and `micro-lts`, and the same three for
+`minor` and `major`. A workflow starts only when its button is pressed.
+No workflow runs on a push or on a pull request.
+
+The file `bin/release_tooling/VERSION` holds the state the buttons
+read, and `release_state.py` beside it decides what a press does. A
+`dev` press opens a cycle of development builds, or publishes the next
+build of the open one. The `rc` press of the same level closes that
+cycle with a release candidate, and the `lts` press publishes the
+release, which needs at least one release candidate before it. A press
+that makes no sense in the present state is refused in the first job of
+its workflow.
+
+The presses that change the kind of cycle need a safety: the press that
+opens a cycle, the first release candidate, and the release. The safety
+of a button is the file `<button>.safety` beside `VERSION`. It is armed
+by replacing its one word `STOP` with `ALLOW` and committing, right
+before the press, and every press locks all nine again.
+
+Before it publishes, a workflow runs the suite on every supported
+Python and measures the coverage. It stamps the version into
+`pyproject.toml`, `src/worktoy/__init__.py` and the heading of
+`README.md`, so none of the three is edited by hand, and neither is
+`VERSION`.
+
+The buttons run on `main` alone, and every press names its version from
+the one `VERSION` file. The tooling therefore publishes one line of
+releases: a 1.1.1 cannot be published once 1.2.0 is out. The tooling has
+tests of its own:
+
+```terminaloutput
+cd bin/release_tooling
+python -m unittest discover -s tests -t .
+```
+
+The changelog covers the stable releases. Development builds and
+release candidates are not logged on their own; their changes are rolled
+into the release they lead up to.
+
+## Planned Work
+
+Planned work is kept as items in
+`bin/dev_tooling/planning/planned_items.md`: one item for each piece of
+work, from the first idea until it is released or rejected, and one for
+each release. Every item is written by the template in
+`item_template.md`, beside it, so that each answers the same questions.
+
+- The title says what is to be done, verb first, as
+  `Optimize attribute access on worktoy classes`.
+- The description says what the item is and why it is wanted.
+- `Status` says where the item stands. An idea is at `CONCEPTION`.
+  Once described it is `UNDECIDED`, `REJECTED`, or `PENDING` when
+  something has to happen first. An item nothing stands in the way of
+  is `READY`, then `UNDERWAY` while it is built, and `DEV`, `RC` and
+  `LTS` as the release buttons publish it.
+- `Level` is the kind of release the item needs: `micro` for a repair,
+  a correction, speed or text, `minor` for something new, `major` when
+  something promised is removed or changed.
+- `Scale` says how much work it is: `small`, `medium` or `large`.
+- `Release` names the release that carries the item, `Next` says what
+  has to happen next and who does it, and `History` holds one dated
+  line for every change of status.
+
+A release is an item as well, and the items it carries move with it. A
+rejected item stays in the file with its reason, so that it is not
+proposed again.
+
+## Reviews
+
+`bin/dev_tooling/review` holds the prompts given to an AI session that
+reads the source: `research_prompt.txt` for reading the packages until
+they are understood, and `final_review_rc_prompt.txt` for the review
+before a release candidate. `review_policy.md` says how the two fit
+together, and the reports of earlier reviews are under `archive`.
+
+## Other Tooling
+
+- `bin/dev_tooling/bench.sh` runs the micro-benchmarks in
+  `bin/dev_tooling/bench`, which compare *worktoy* classes with plain,
+  slotted and dataclass baselines.
+- `bin/dev_tooling/yeet_cache.sh` lists every `__pycache__` directory
+  and removes them once confirmed.
+- `tmp` at the repository root is ignored by git. Scratch output, notes
+  and abandoned work go there.
 
 ## Documentation
 
