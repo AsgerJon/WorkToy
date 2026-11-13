@@ -24,7 +24,7 @@
 #  Every other press is refused in the first job of its workflow.
 MAJOR=1
 MINOR=2
-MICRO=1
-RC=1
-DEV=4
-LEVEL=micro
+MICRO=2
+RC=0
+DEV=0
+LEVEL=none
