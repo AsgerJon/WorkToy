@@ -48,7 +48,7 @@ and the enclosing class is left without the decoration.
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
-__version__ = '1.2.1-dev3'
+__version__ = '1.2.1-rc0'
 
 from . import utilities
 from . import waitaminute
