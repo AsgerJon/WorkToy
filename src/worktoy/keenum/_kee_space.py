@@ -32,16 +32,20 @@ class KeeSpace(BaseSpace):
   --------------
 
   'KeeSpace' is a 'BaseSpace' with one hook of its own, 'KeeSpaceHook',
-  which hands every 'Kee' bound in the body to 'addNum'. 'addNum'
-  refuses a repeated name with 'KeeDuplicate', a 'Kee' already named
-  otherwise with 'KeeNameConflict', a name that is not upper case
-  through the 'Kee' setter, and a value type other than the first
-  member's through 'typeGuard', then records the member. The
+  which holds the name of every 'Kee' bound in the body to upper case,
+  unless 'strictCase=False' holds for the class, refuses a name that
+  'getNumsIgnoringCase' finds on record in any case, refuses a name a
+  base or the metaclass holds where the upper-case rule does not hold,
+  and hands the 'Kee' to 'addNum'. 'addNum' refuses a repeated name with
+  'KeeDuplicate', a 'Kee' already named otherwise with
+  'KeeNameConflict', and a value type other than the first member's
+  through 'typeGuard', then records the member. The
   constructor registers a clone of every member of every base that is
   an enumeration, the bases in order, so the names and the value type
   are inherited before the body runs. A member reached through two
   bases, as in a diamond, is one member; two different members under
-  one name raise 'KeeDuplicate', and bases of different value types
+  one name, or under names that differ only by case, raise
+  'KeeDuplicate', and bases of different value types
   'KeeTypeException'. 'postCompile' writes the pinned value type into
   the class dictionary as '__member_type__'; 'KeeMeta' reads the
   members off the namespace as the class is created.
@@ -85,7 +89,7 @@ class KeeSpace(BaseSpace):
     """
     if name in self.__enumeration_members__:
       oldMember = self.__enumeration_members__[name]
-      raise KeeDuplicate(name, oldMember, member)
+      raise KeeDuplicate(self.getClassName(), name, oldMember, member)
     try:
       oldName = member.name
     except AttributeError:
@@ -102,6 +106,40 @@ class KeeSpace(BaseSpace):
     or inherited, is registered under 'name'.
     """
     return True if name in self.__enumeration_members__ else False
+
+  def getNumsIgnoringCase(self, name: str) -> tuple[Kee, ...]:
+    """
+    A lookup by name ignores case, so two members whose names differ by
+    case alone could not be told apart. Before a member is recorded, it
+    must therefore be known whether another one has its name already, in
+    any case.
+
+    Implementation
+    --------------
+
+    The names on record are compared lower-cased, as the table of names
+    of the finished class is keyed.
+
+    Parameters
+    ----------
+
+    name : str
+      The name asked about.
+
+    Returns
+    -------
+
+    tuple[Kee, ...]
+      The 'Kee' objects on record, declared in this body or inherited,
+      under a name equal to 'name' when case is ignored; empty when there
+      is none.
+    """
+    lowered = name.lower()
+    out = []
+    for held, member in self.__enumeration_members__.items():
+      if held.lower() == lowered:
+        out.append(member)
+    return (*out,)
 
   def typeGuard(self, member: Kee) -> Kee:
     """
@@ -145,19 +183,28 @@ class KeeSpace(BaseSpace):
     The '_inheritMember' method records one member of a base. A member
     the namespace holds already under its name is the same member,
     reached through another base, unless it is another object, which is
-    refused with 'KeeDuplicate'. The member's 'Kee' is registered as a
-    clone, so the base's 'Kee', placed on the base, is never handed to
-    this body: the class takes the member object itself as it is
-    created, and the clone serves the name and type checks alone.
+    refused with 'KeeDuplicate'. So is a member whose name differs by
+    case alone from that of a member another base gave, since a lookup
+    by name could not tell the two apart. The member's 'Kee' is
+    registered as a clone, so the base's 'Kee', placed on the base, is
+    never handed to this body: the class takes the member object itself
+    as it is created, and the clone serves the name and type checks
+    alone.
     """
     name = member.name
+    clsName = self.getClassName()
     inherited = self.__inherited_members__
     if name in inherited:
       if inherited[name] is member:
         #  This branch is reached by the following:
         #  - A diamond: two bases hold the member of a common ancestor
         return
-      raise KeeDuplicate(name, inherited[name].kee, member.kee)
+      raise KeeDuplicate(clsName, name, inherited[name].kee, member.kee)
+    for held in self.getNumsIgnoringCase(name):
+      #  This loop is entered by the following:
+      #  - Another base gave a member whose name differs by case alone
+      oldKee = inherited[held.name].kee
+      raise KeeDuplicate(clsName, name, oldKee, member.kee)
     inherited[name] = member
     self.addNum(name, member.kee.clone())
 

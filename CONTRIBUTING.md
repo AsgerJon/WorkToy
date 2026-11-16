@@ -212,11 +212,14 @@ into the release they lead up to.
 
 ## Planned Work
 
-Planned work is kept as items in
-`bin/dev_tooling/planning/planned_items.md`: one item for each piece of
-work, from the first idea until it is released or rejected, and one for
-each release. Every item is written by the template in
-`item_template.md`, beside it, so that each answers the same questions.
+Planned work is kept as items in `bin/dev_tooling/planning`: one item
+for each piece of work, from the first idea until it is released or
+rejected, and one for each release. The items lie in one file for each
+status, as `undecided.md` and `ready.md`, and an item that changes its
+status moves to the file of the new one. `planned_items.md` lists the
+files and what is to be known about each area. Every item is written
+by the template in `item_template.md`, so that each answers the same
+questions.
 
 - The title says what is to be done, verb first, as
   `Optimize attribute access on worktoy classes`.
@@ -235,7 +238,7 @@ each release. Every item is written by the template in
   line for every change of status.
 
 A release is an item as well, and the items it carries move with it. A
-rejected item stays in the file with its reason, so that it is not
+rejected item stays in `rejected.md` with its reason, so that it is not
 proposed again.
 
 ## Reviews

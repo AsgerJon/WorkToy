@@ -80,12 +80,53 @@ class TestKeeMetaBases(KeenumTest):
     with self.assertRaises(KeeDuplicate) as context:
       type(Left)('Both', (Left, Right), {})
 
+    self.assertEqual(context.exception.clsName, 'Both')
     self.assertEqual(context.exception.name, 'X')
     self.assertIs(context.exception.oldMember, Left.X.kee)
     self.assertIs(context.exception.newMember, Right.X.kee)
     self.assertEqual(str(context.exception), str.join(' ', """Enumeration
-      name 'X' already contains member: '<Kee member: X>', but attempted
-      to add duplicate member: '<Kee member: X>'!""".split()))
+      'Both' already contains member: '<Kee member: X>', and cannot take
+      another member named 'X'! The names of the members of an
+      enumeration must differ by more than their case, since a lookup by
+      name ignores case.""".split()))
+
+  def test_names_differing_by_case_refused(self) -> None:
+    class Left(KeeNum, strictCase=False):
+      mw = Kee[int](1)
+
+    class Right(KeeNum):
+      MW = Kee[int](2)
+
+    for keywords in (dict(), dict(strictCase=False)):
+      with self.subTest(keywords=keywords):
+        with self.assertRaises(KeeDuplicate) as context:
+          type(Left)('Both', (Left, Right), {}, **keywords)
+
+        self.assertEqual(context.exception.clsName, 'Both')
+        self.assertEqual(context.exception.name, 'MW')
+        self.assertIs(context.exception.oldMember, Left.mw.kee)
+        self.assertIs(context.exception.newMember, Right.MW.kee)
+        self.assertIn("Enumeration 'Both' already contains member: "
+                      "'<Kee member: mw>', and cannot take another "
+                      "member named 'MW'!", str(context.exception))
+        self.assertIn('must differ by more than their case',
+                      str(context.exception))
+
+  def test_one_member_in_another_case_through_two_bases(self) -> None:
+    class Top(KeeNum, strictCase=False):
+      mw = Kee[int](1)
+
+    class Left(Top):
+      pass
+
+    class Right(Top):
+      pass
+
+    class Both(Left, Right):
+      pass
+
+    self.assertEqual([*Both], [Top.mw])
+    self.assertIs(Both('MW'), Top.mw)
 
   def test_value_types_must_agree(self) -> None:
     class Number(KeeNum):

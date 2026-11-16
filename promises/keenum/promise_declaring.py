@@ -9,6 +9,7 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.keenum import KeeNum, Kee
+from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.keenum import KeeCaseException, KeeDuplicate
 from worktoy.waitaminute.keenum import KeeTypeException, KeeMemberNameError
 from worktoy.waitaminute.meta import ShadowedClassHook
@@ -32,6 +33,17 @@ class PromiseDeclaring(TestCase):
   the enumeration owns, as '__class_len__', 'ShadowedClassHook'. Source:
   the docstrings of 'Kee', 'KeeSpace', 'KeeSpaceHook' and 'KeeMeta', and
   the 1.1.0 changelog.
+
+  The class keyword 'strictCase=False' on the class statement, as in
+  'class Unit(KeeNum, strictCase=False)', lets the body of that class
+  name its members in any case. 'strictCase=True' is the rule above
+  spelled out, and a 'strictCase' that is no 'bool' raises
+  'TypeException', whether or not the body declares a member. Whatever
+  their case, two members may not differ by the case of their names
+  alone, since a lookup by name ignores case: the second raises
+  'KeeDuplicate', holding the name of the enumeration, the name refused
+  and both declarations. Promised from the update after 1.2.1. Source:
+  the docstrings of 'KeeSpaceHook' and 'KeeDuplicate'.
 
   Deprecated in 1.2.0, with its reason in 'promises/deprecations':
   'index' on a member.
@@ -97,6 +109,43 @@ class PromiseDeclaring(TestCase):
         A = 3
     self.assertEqual(context.exception.clsName, 'Overwritten')
     self.assertEqual(context.exception.memberName, 'A')
+
+  def test_any_case_by_keyword(self) -> None:
+    class Unit(KeeNum, strictCase=False):
+      mm = Kee[float](0.001)
+      Cm = Kee[float](0.01)
+      KM = Kee[float](1000.0)
+
+    self.assertEqual([m.name for m in Unit], ['mm', 'Cm', 'KM'])
+    self.assertEqual(Unit.mm.value, 0.001)
+    with self.assertRaises(KeeCaseException) as context:
+      class Strict(KeeNum, strictCase=True):
+        small = Kee[int](1)
+    self.assertEqual(context.exception.name, 'small')
+    with self.assertRaises(TypeException) as context:
+      class Vague(KeeNum, strictCase='no'):
+        A = Kee[int](1)
+    self.assertEqual(context.exception.varName, 'strictCase')
+    self.assertEqual(context.exception.actualObject, 'no')
+    self.assertIs(context.exception.actualType, str)
+    self.assertEqual(context.exception.expectedTypes, (bool,))
+    with self.assertRaises(TypeException) as context:
+      class Empty(KeeNum, strictCase='no'):
+        pass
+    self.assertEqual(context.exception.varName, 'strictCase')
+    self.assertEqual(context.exception.actualObject, 'no')
+    self.assertIs(context.exception.actualType, str)
+    self.assertEqual(context.exception.expectedTypes, (bool,))
+
+  def test_names_differ_by_more_than_case(self) -> None:
+    with self.assertRaises(KeeDuplicate) as context:
+      class Power(KeeNum, strictCase=False):
+        mW = Kee[float](0.001)
+        MW = Kee[float](1000000.0)
+    self.assertEqual(context.exception.clsName, 'Power')
+    self.assertEqual(context.exception.name, 'MW')
+    self.assertEqual(context.exception.oldMember.name, 'mW')
+    self.assertIsInstance(context.exception.newMember, Kee)
 
   def test_misplaced_kee(self) -> None:
     for case in ('bare', 'plain class'):

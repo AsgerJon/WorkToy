@@ -208,12 +208,13 @@ class KeeMeta(BaseMeta, metaclass=KeeMetaMeta):
     namespace registered them. A member a base enumeration already has
     under the name is the same member here, with the 'Kee' and the index
     it has there; anything else a base holds under the name, such as a
-    plain class attribute, gives way to a new member. The 'Kee' of a new
-    member is placed on the enumeration first, as a box is placed on its
-    class, which refuses a 'Kee' declared without parentheses or
-    declared in another enumeration already, and then receives its
-    index, the position of the member. Each member is built by
-    'type.__call__', past the call of the class, which resolves, and
+    plain class attribute, gives way to a new member, which
+    'KeeSpaceHook' admits only where the upper-case rule holds. The
+    'Kee' of a new member is placed on the enumeration first, as a box
+    is placed on its class, which refuses a 'Kee' declared without
+    parentheses or declared in another enumeration already, and then
+    receives its index, the position of the member. Each member is built
+    by 'type.__call__', past the call of the class, which resolves, and
     each member, inherited or new, records the class among its owners.
     """
     type.__setattr__(cls, '__allow_instantiation__', True)

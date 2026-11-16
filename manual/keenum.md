@@ -48,12 +48,59 @@ True
   `Kee[int]()` holds `0` and `Kee[int]('3')` holds `3`.
 - Every value has the type of the first member; a second type raises
   `KeeTypeException`.
-- Member names are upper case; another name raises `KeeCaseException`.
+- Member names are upper case; another name raises `KeeCaseException`,
+  unless the class statement says `strictCase=False`, shown below.
 - Values need not be unique. Anything in the body that is no `Kee`,
   a method or a plain value, stays an ordinary class attribute, and a
   method is a method of every member.
 - A name declared twice raises `KeeDuplicate`, and a plain value at a
   member's name `KeeMemberNameError`.
+
+A class whose members are named in another case says so on its own
+class statement, with the class keyword `strictCase=False`:
+
+```
+>>> class Header(KeeNum, strictCase=False):
+...   Accept = Kee[str]('Accept')
+...   contentType = Kee[str]('Content-Type')
+>>> [header.name for header in Header]
+['Accept', 'contentType']
+>>> Header.contentType.value
+'Content-Type'
+
+```
+
+`strictCase` takes a `bool`, and `strictCase=True` is the rule as it
+stands without the keyword. Any other value raises `TypeException`,
+whether or not the body declares a member:
+
+```
+>>> from worktoy.waitaminute import TypeException
+>>> try:
+...   class Vague(KeeNum, strictCase='no'):
+...     pass
+... except TypeException as refusal:
+...   print(refusal.varName)
+strictCase
+
+```
+
+Whatever their case, two members may not differ by the case of their
+names alone, since a lookup by name ignores case and could not tell
+them apart. The second raises `KeeDuplicate`, as a name declared twice
+does:
+
+```
+>>> from worktoy.waitaminute.keenum import KeeDuplicate
+>>> try:
+...   class Power(KeeNum, strictCase=False):
+...     mW = Kee[float](0.001)
+...     MW = Kee[float](1000000.0)
+... except KeeDuplicate as duplicate:
+...   print(duplicate.clsName, duplicate.name)
+Power MW
+
+```
 
 Coming from Python's `enum`, mind the differences: a lookup by call
 takes names as well as values, a subscript takes positions, a miss

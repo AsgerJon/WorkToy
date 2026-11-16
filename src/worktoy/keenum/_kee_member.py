@@ -12,7 +12,6 @@ from ..desc import Field, AttriBox
 from ..utilities import textFmt
 from ..waitaminute import VariableNotNone, MissingVariable, TypeException
 from ..waitaminute import DeprecatedPromise
-from ..waitaminute.keenum import KeeCaseException
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
   from typing import Any, Self
@@ -34,11 +33,15 @@ class Kee(AttriBox[T]):
 
     - name: The name of the member, taken from the class-body
       assignment by 'KeeSpace.addNum'. Names must be unique within an
-      enumeration and must be uppercase. The uppercase rule is
-      enforced: assigning a 'Kee' to a non-uppercase name (lowercase or
-      mixed case) raises 'KeeCaseException' when the class is created. A
-      non-'Kee' class-body entry is unaffected and stays an ordinary
-      class attribute.
+      enumeration, differing by more than their case, and must be
+      uppercase. The uppercase rule is
+      enforced by 'KeeSpaceHook': binding a 'Kee' to a non-uppercase
+      name (lowercase or mixed case) raises 'KeeCaseException' at that
+      line of the class body, unless the class statement, or that of a
+      class it is based on, says 'strictCase=False'; the name may then
+      not be one a base or the metaclass holds already, as 'members' or
+      'space', which raises 'ReservedName'. A non-'Kee' class-body entry
+      is unaffected and stays an ordinary class attribute.
     - value: The value of the member. Values are not required to be
       unique across members of the same enumeration.
     - index: Deprecated. The position of the member, equal to the number
@@ -150,8 +153,6 @@ class Kee(AttriBox[T]):
 
   @name.SET
   def _setName(self, name: str) -> None:
-    if not name.isupper():
-      raise KeeCaseException(name)
     if self.__num_name__ is not None:
       raise VariableNotNone('name', self.__num_name__)
     self.__num_name__ = name

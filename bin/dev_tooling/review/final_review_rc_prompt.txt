@@ -203,7 +203,7 @@ When the report is complete
 ---------------------------
 
 Only then open the memory files, the newest hand-off and research
-notes under tmp/notes/, and bin/dev_tooling/planning/planned_items.md,
+notes under tmp/notes/, and the files under bin/dev_tooling/planning/,
 and read the settled items once more. Where a finding is already
 decided by a settled item, or already recorded in one of those, mark it
 "withdrawn: settled" or "known" under its heading. Do not delete it.

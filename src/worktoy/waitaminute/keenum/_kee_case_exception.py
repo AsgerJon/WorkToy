@@ -13,7 +13,9 @@ class KeeCaseException(WorkToyException, ValueError):
   """
   Raised when the name of a 'KeeNum' member or of a 'KeeFlags' flag is
   not upper case (the check is 'name.isupper()'); lowercase or mixed-case
-  names are rejected. Lookups by call or subscript ignore case.
+  names are rejected, except in a 'KeeNum' class whose class statement,
+  or that of a class it is based on, says 'strictCase=False'. Lookups by
+  call or subscript ignore case.
 
   Attributes
   ----------

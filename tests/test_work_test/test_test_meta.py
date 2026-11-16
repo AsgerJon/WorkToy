@@ -88,7 +88,7 @@ class TestTestMeta(WorkTestTest):
       class Case(Strict):
         reached.append('before')
         debug = True
-        reached.append('after')  # pragma: no cover
+        reached.append('after')  # pragma: no cover, no mutate
 
     self.assertEqual(context.exception.resName, 'debug')
     expected = "Attempted to use reserved name: 'debug'!"
@@ -105,7 +105,7 @@ class TestTestMeta(WorkTestTest):
         def doCleanups(self) -> None:
           """Never runs: the line that binds it is refused."""
 
-        reached.append('after')  # pragma: no cover
+        reached.append('after')  # pragma: no cover, no mutate
 
     self.assertEqual(context.exception.resName, 'doCleanups')
     expected = "Attempted to use reserved name: 'doCleanups'!"

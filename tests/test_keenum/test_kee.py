@@ -10,7 +10,6 @@ import pickle
 from worktoy.keenum import Kee, KeeNum
 from worktoy.waitaminute import MissingVariable, TypeException
 from worktoy.waitaminute import VariableNotNone, DeprecatedPromise
-from worktoy.waitaminute.keenum import KeeCaseException
 from . import KeenumTest, WeekDay
 
 
@@ -128,17 +127,6 @@ class TestKee(KeenumTest):
     self.assertEqual(context.exception.expectedTypes, (str,))
     self.assertEqual(str(context.exception),
                      "Missing 'Kee.__num_name__: str'!")
-
-  def test_name_must_be_upper_case(self) -> None:
-    kee = Kee[int](1)
-    for name in ('red', 'Red', 'rED', 'red_one'):
-      with self.subTest(name=name):
-        with self.assertRaises(KeeCaseException) as context:
-          kee.name = name
-        self.assertEqual(context.exception.name, name)
-        self.assertIn(name, str(context.exception))
-    kee.name = 'RED_ONE'
-    self.assertEqual(kee.name, 'RED_ONE')
 
   def test_index_must_be_an_int(self) -> None:
     kee = Kee[int](1)

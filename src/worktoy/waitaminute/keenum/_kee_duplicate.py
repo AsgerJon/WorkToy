@@ -1,6 +1,6 @@
 """
 KeeDuplicate is raised when a 'KeeNum' class body declares two members
-under the same name.
+under the same name, or under names that differ only by case.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -23,30 +23,43 @@ class KeeDuplicate(WorkToyException, Exception):
   not allowed). This is a name collision, not a value collision; duplicate
   values are allowed.
 
+  Two names that differ only by case collide as well, since a lookup by
+  name ignores case and could not tell their members apart: 'MW' beside
+  'mW' in a class declared with 'strictCase=False', a subclass adding
+  'MW' to an inherited 'mw', or two bases holding such a pair.
+
+  The refusal comes while the class body runs, or before it, so the
+  enumeration does not exist yet and is given by its name.
+
   Attributes
   ----------
+  clsName : str
+    The name of the enumeration class under construction.
   name : str
-    The member name declared more than once.
+    The member name that was refused.
   oldMember : Kee
-    The member already registered under 'name'.
+    The member already registered under 'name', or under a name that
+    differs from it by case alone.
   newMember : Kee
     The member whose registration was rejected.
   """
 
-  __slots__ = ('name', 'oldMember', 'newMember',)
+  __slots__ = ('clsName', 'name', 'oldMember', 'newMember',)
 
-  def __init__(self, name: str, *members: Kee) -> None:
+  def __init__(self, clsName: str, name: str, *members: Kee) -> None:
+    self.clsName = clsName
     self.name = name
     self.oldMember = members[0]
     self.newMember = members[1]
     Exception.__init__(self, )
 
   def __str__(self, ) -> str:
-    infoSpec = """Enumeration name '%s' already contains member: '%s', 
-    but attempted to add duplicate member: '%s'!"""
+    infoSpec = """Enumeration '%s' already contains member: '%s', and
+    cannot take another member named '%s'! The names of the members of an
+    enumeration must differ by more than their case, since a lookup by
+    name ignores case."""
     oldStr = str(self.oldMember)
-    newStr = str(self.newMember)
-    info = infoSpec % (self.name, oldStr, newStr,)
+    info = infoSpec % (self.clsName, oldStr, self.name,)
     return textFmt(info)
 
   __repr__ = __str__

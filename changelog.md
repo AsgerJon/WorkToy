@@ -4,6 +4,63 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
+## [Unreleased]
+
+What has changed since 1.2.1 and is in no release yet. The files the
+change below touched were mutation tested after it, and then the whole
+of `worktoy.keenum`; the tests written with the change kill every
+mutant of its lines.
+
+### A `KeeNum` class may name its members in any case
+
+The members of an enumeration are constants, and their names are upper
+case: a `Kee` bound at any other name raises `KeeCaseException`. A class
+that needs names in another case now says so on its own class
+statement, with the class keyword `strictCase=False`:
+
+    class Header(KeeNum, strictCase=False):
+      Accept = Kee[str]('Accept')
+      contentType = Kee[str]('Content-Type')
+
+Without the keyword nothing changes, and `strictCase=True` is that rule
+spelled out. The keyword takes a `bool` alone: any other value raises
+`TypeException` before the body of the class runs, whether or not the
+body declares a member. A subclass takes the choice of its base: a
+class statement without the keyword follows the nearest class along its
+resolution order that gave it, and `strictCase=True` on a subclass
+takes the upper-case rule back for the members that subclass adds. The
+keyword is read by `KeeNum` classes only: the flags of a `KeeFlags`
+class are upper case as before.
+
+Whatever their case, the names of the members of one enumeration differ
+by more than case. A lookup by name ignores case and could not tell
+`mW` from `MW`, so the second of such a pair raises `KeeDuplicate` at
+its line, as a name declared twice does. A subclass adding `MW` to an
+inherited `mw` raises it as well, and so does a class based on two
+enumerations that hold such a pair between them.
+
+The upper-case rule is also what keeps the name of a member apart from
+the other names of its class, none of which is upper case. A class that
+gives the rule up may therefore not name a member as something a base
+or the metaclass holds already: `space`, `members`, `base`,
+`valueType`, `fromValue`, `mro`, `owners`, `index`, a method of a base,
+and the like. Such a member raises `ReservedName` at its line; it would
+otherwise fail on a property of the metaclass, or take the place of
+that name on the class without a word. `name` and `value` are free,
+since each member holds them and the class does not.
+
+Different from 1.2.1, and to know:
+
+- The check is made by the namespace hook of the enumeration,
+  `KeeSpaceHook`, at the line binding the member, where the name setter
+  of `Kee` made it. A `Kee` named by hand, which nothing promises, is
+  therefore no longer held to upper case.
+- A lookup by name ignores case as before, in a call, a subscript and
+  attribute access alike.
+- `KeeDuplicate` holds the name of the enumeration as `clsName`, takes
+  it as its first argument, and names the enumeration in its message.
+  It keeps `name`, `oldMember` and `newMember`.
+
 ## [1.2.1] - 2026 November 13
 
 This release repairs 1.2.0. In making every failed `subTest` block

@@ -16,8 +16,11 @@ class ReservedName(WorkToyException, SyntaxError):
   interpreter or the metaclass system reserves and populates automatically,
   such as '__dict__', '__module__', '__qualname__', or '__match_args__'.
   The guard fires only on reassignment, so deferred initialisation of such
-  a name is still allowed. It subclasses 'SyntaxError', as the other
-  refusals of a class-body line do.
+  a name is still allowed. It is raised as well for a name a class of
+  the library keeps for itself: a 'Kee' bound, in an enumeration that
+  gave up the upper-case rule with 'strictCase=False', at a name a base
+  or the metaclass holds already, as 'members' or 'space'. It subclasses
+  'SyntaxError', as the other refusals of a class-body line do.
 
   Attributes
   ----------

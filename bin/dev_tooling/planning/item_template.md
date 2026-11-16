@@ -1,17 +1,19 @@
 # The template of a planned item
 
-Planned work on worktoy is kept as items in `planned_items.md`, beside
-this file: one item for each piece of work, from the first idea until
-it is released or rejected, and one for each release. Every item is
-written by the template
+Planned work on worktoy is kept as items in the files beside this one:
+one item for each piece of work, from the first idea until it is
+released or rejected, and one for each release. There is one file for
+each status, as `conception.md` and `undecided.md`, and
+`planned_items.md` lists them. Every item is written by the template
 below, so that each answers the same questions: what it is, where it
 stands, which kind of release it needs, how much work it is, what has
 to happen next, and when it moved.
 
 ## The template
 
-Copy the block into the section of the part of worktoy it belongs to,
-and fill it in. The horizontal line belongs to the block: it stands
+Copy the block into the file of its status, under the heading of the
+area of worktoy it belongs to, and fill it in. A new item starts in
+`conception.md`. The horizontal line belongs to the block: it stands
 above the name of every item, with an empty line on each side of it.
 
 ```text
@@ -45,7 +47,11 @@ not a bare topic, which does not say what is wanted.
 
 ## Status
 
-An item has one status at a time. The statuses come in this order:
+An item has one status at a time, and lies in the file of that
+status. When the status changes, the whole item is moved to the file
+of the new one, with a new line in its `History`, and the counts in
+`planned_items.md` are brought up to date. The statuses come in this
+order:
 
 ```text
 CONCEPTION
@@ -138,12 +144,19 @@ from. The last line tells when the item last moved.
 
 ## Keeping the file
 
-- A `REJECTED` item stays in the file.
-- An item that reached `LTS` stays until the release after it, and is
-  then taken out; the changelog holds it from there.
+- Each status has its file, named for it in lower case, as `ready.md`
+  for `READY`. A file without items says so and stays.
+- Within a file the items stand under the heading of their area, as
+  `## ezdata`. A heading is written when its first item arrives and
+  goes when its last one leaves. What is to be known about an area as
+  a whole is said once, in `planned_items.md`.
+- A `REJECTED` item stays in `rejected.md`.
+- An item that reached `LTS` stays in `lts.md` until the release after
+  it, and is then taken out; the changelog holds it from there.
 - An item of level `none` is taken out when it is done.
-- To list every item with its status:
+- To list every item with its file:
 
   ```text
-  grep -n -e "^### " -e "^- Status:" planned_items.md
+  grep -n "^### " conception.md undecided.md rejected.md pending.md \
+    ready.md underway.md dev.md rc.md lts.md
   ```

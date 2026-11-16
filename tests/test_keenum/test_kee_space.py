@@ -55,10 +55,13 @@ class TestKeeSpace(KeenumTest):
         A = Kee[int](2)
 
     exception = context.exception
+    self.assertEqual(exception.clsName, 'Local')
     self.assertEqual(exception.name, 'A')
     self.assertEqual(exception.oldMember.getPosArgs(), (1,))
     self.assertEqual(exception.newMember.getPosArgs(), (2,))
-    self.assertIn("'A'", str(exception))
+    self.assertIn("Enumeration 'Local' already contains member: "
+                  "'<Kee member: A>', and cannot take another member "
+                  "named 'A'!", str(exception))
 
   def test_inherited_name_refused(self) -> None:
     class Base(KeeNum):
@@ -68,11 +71,12 @@ class TestKeeSpace(KeenumTest):
       class Sub(Base):
         A = Kee[int](2)
 
+    self.assertEqual(context.exception.clsName, 'Sub')
     self.assertEqual(context.exception.name, 'A')
     self.assertIsNot(context.exception.oldMember, Base.A.kee)
     self.assertEqual(context.exception.oldMember.name, 'A')
     self.assertEqual(context.exception.newMember.getPosArgs(), (2,))
-    self.assertIn("Enumeration name 'A' already contains member",
+    self.assertIn("Enumeration 'Sub' already contains member",
                   str(context.exception))
 
   def test_name_conflict_refused(self) -> None:
@@ -158,11 +162,69 @@ class TestKeeSpace(KeenumTest):
 
     with self.assertRaises(KeeDuplicate) as context:
       KeeSpace(KeeMeta, 'Hand', (Left, Right))
+    self.assertEqual(context.exception.clsName, 'Hand')
     self.assertEqual(context.exception.name, 'A')
     self.assertEqual(context.exception.oldMember.getPosArgs(), (1,))
     self.assertEqual(context.exception.newMember.getPosArgs(), (2,))
-    self.assertIn("Enumeration name 'A' already contains member",
+    self.assertIn("Enumeration 'Hand' already contains member",
                   str(context.exception))
+
+  def test_two_bases_with_names_differing_by_case_refused(self) -> None:
+    class Left(KeeNum, strictCase=False):
+      mw = Kee[int](1)
+
+    class Right(KeeNum):
+      MW = Kee[int](2)
+
+    with self.assertRaises(KeeDuplicate) as context:
+      KeeSpace(KeeMeta, 'Hand', (Left, Right))
+    self.assertEqual(context.exception.clsName, 'Hand')
+    self.assertEqual(context.exception.name, 'MW')
+    self.assertIs(context.exception.oldMember, Left.mw.kee)
+    self.assertIs(context.exception.newMember, Right.MW.kee)
+    self.assertEqual(str(context.exception), str.join(' ', """Enumeration
+      'Hand' already contains member: '<Kee member: mw>', and cannot take
+      another member named 'MW'! The names of the members of an
+      enumeration must differ by more than their case, since a lookup by
+      name ignores case.""".split()))
+    with self.assertRaises(KeeDuplicate) as context:
+      KeeSpace(KeeMeta, 'Hand', (Right, Left))
+    self.assertEqual(context.exception.clsName, 'Hand')
+    self.assertEqual(context.exception.name, 'mw')
+    self.assertIs(context.exception.oldMember, Right.MW.kee)
+    self.assertIs(context.exception.newMember, Left.mw.kee)
+    self.assertIn("Enumeration 'Hand' already contains member: "
+                  "'<Kee member: MW>', and cannot take another member "
+                  "named 'mw'!", str(context.exception))
+
+  def test_duplicate_by_hand(self) -> None:
+    space = KeeSpace(KeeMeta, 'Hand', ())
+    first, second = Kee[int](1), Kee[int](2)
+    space.addNum('A', first)
+    with self.assertRaises(KeeDuplicate) as context:
+      space.addNum('A', second)
+    self.assertEqual(context.exception.clsName, 'Hand')
+    self.assertEqual(context.exception.name, 'A')
+    self.assertIs(context.exception.oldMember, first)
+    self.assertIs(context.exception.newMember, second)
+    self.assertIn("Enumeration 'Hand' already contains member: "
+                  "'<Kee member: A>', and cannot take another member "
+                  "named 'A'!", str(context.exception))
+    self.assertIs(space.__enumeration_members__['A'], first)
+
+  def test_nums_ignoring_case(self) -> None:
+    space = KeeSpace(KeeMeta, 'Hand', ())
+    self.assertEqual(space.getNumsIgnoringCase('mW'), ())
+    first, second = Kee[int](1), Kee[int](2)
+    space.addNum('mW', first)
+    space.addNum('kW', second)
+    for name in ('mW', 'MW', 'mw', 'Mw'):
+      with self.subTest(name=name):
+        self.assertEqual(space.getNumsIgnoringCase(name), (first,))
+    self.assertEqual(space.getNumsIgnoringCase('KW'), (second,))
+    for name in ('A', 'lW', 'W', 'mW_', 'm', ''):
+      with self.subTest(name=name):
+        self.assertEqual(space.getNumsIgnoringCase(name), ())
 
   def test_random_members(self) -> None:
     space = KeeSpace(KeeMeta, 'Hand', ())
