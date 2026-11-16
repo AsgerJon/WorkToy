@@ -56,8 +56,8 @@ True
 - A name declared twice raises `KeeDuplicate`, and a plain value at a
   member's name `KeeMemberNameError`.
 
-A class whose members are named in another case says so on its own
-class statement, with the class keyword `strictCase=False`:
+From 1.2.2, a class whose members are named in another case says so on
+its class statement, with the class keyword `strictCase=False`:
 
 ```
 >>> class Header(KeeNum, strictCase=False):
@@ -99,6 +99,37 @@ does:
 ... except KeeDuplicate as duplicate:
 ...   print(duplicate.clsName, duplicate.name)
 Power MW
+
+```
+
+The upper-case rule is also what keeps a member apart from the other
+names of its class. A class that gives the rule up may therefore not
+name a member as something a base or the metaclass holds already, as
+`members`, `valueType` or a method of a base. Such a member raises
+`ReservedName`:
+
+```
+>>> from worktoy.waitaminute.meta import ReservedName
+>>> try:
+...   class Role(KeeNum, strictCase=False):
+...     guests = Kee[int](1)
+...     members = Kee[int](2)
+... except ReservedName as reserved:
+...   print(reserved.resName)
+members
+
+```
+
+A subclass takes the choice of its base, and says `strictCase=True` to
+take the upper-case rule back for the members it adds:
+
+```
+>>> class Metric(KeeNum, strictCase=False):
+...   mm = Kee[float](0.001)
+>>> class Imperial(Metric):
+...   inch = Kee[float](0.0254)
+>>> [unit.name for unit in Imperial]
+['mm', 'inch']
 
 ```
 

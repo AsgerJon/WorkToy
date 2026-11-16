@@ -4,12 +4,16 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
-## [Unreleased]
+## [1.2.2] - 2026 November 16
 
-What has changed since 1.2.1 and is in no release yet. The files the
-change below touched were mutation tested after it, and then the whole
-of `worktoy.keenum`; the tests written with the change kill every
-mutant of its lines.
+This release lets a `KeeNum` class name its members in any case, with a
+class keyword of its own, and brings the three rules the keyword needs.
+Without the keyword an enumeration behaves as it did in 1.2.1; what
+differs is listed at the end of the section. Every change of behaviour
+was made test first. The suite passes on every Python from 3.7 to
+3.15, with every statement and branch covered on 3.15, and every file
+whose code changed since 1.2.1 was mutation tested after its last
+change, and then the whole of `worktoy.keenum`.
 
 ### A `KeeNum` class may name its members in any case
 

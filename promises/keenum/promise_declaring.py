@@ -12,7 +12,7 @@ from worktoy.keenum import KeeNum, Kee
 from worktoy.waitaminute import TypeException
 from worktoy.waitaminute.keenum import KeeCaseException, KeeDuplicate
 from worktoy.waitaminute.keenum import KeeTypeException, KeeMemberNameError
-from worktoy.waitaminute.meta import ShadowedClassHook
+from worktoy.waitaminute.meta import ShadowedClassHook, ReservedName
 
 
 class PromiseDeclaring(TestCase):
@@ -36,14 +36,18 @@ class PromiseDeclaring(TestCase):
 
   The class keyword 'strictCase=False' on the class statement, as in
   'class Unit(KeeNum, strictCase=False)', lets the body of that class
-  name its members in any case. 'strictCase=True' is the rule above
-  spelled out, and a 'strictCase' that is no 'bool' raises
+  name its members in any case, and a subclass takes the choice of its
+  base unless it says 'strictCase=True' itself. 'strictCase=True' is the
+  rule above spelled out, and a 'strictCase' that is no 'bool' raises
   'TypeException', whether or not the body declares a member. Whatever
   their case, two members may not differ by the case of their names
   alone, since a lookup by name ignores case: the second raises
   'KeeDuplicate', holding the name of the enumeration, the name refused
-  and both declarations. Promised from the update after 1.2.1. Source:
-  the docstrings of 'KeeSpaceHook' and 'KeeDuplicate'.
+  and both declarations. A class that names its members in any case may
+  not name one as something a base or the metaclass holds already, as
+  'members' or a method of a base: such a member raises 'ReservedName',
+  a 'SyntaxError' holding the name. Promised from 1.2.2. Source: the
+  docstrings of 'KeeSpaceHook' and 'KeeDuplicate'.
 
   Deprecated in 1.2.0, with its reason in 'promises/deprecations':
   'index' on a member.
@@ -146,6 +150,38 @@ class PromiseDeclaring(TestCase):
     self.assertEqual(context.exception.name, 'MW')
     self.assertEqual(context.exception.oldMember.name, 'mW')
     self.assertIsInstance(context.exception.newMember, Kee)
+
+  def test_keyword_inherited(self) -> None:
+    class Metric(KeeNum, strictCase=False):
+      mm = Kee[float](0.001)
+
+    class Imperial(Metric):
+      inch = Kee[float](0.0254)
+
+    self.assertEqual([m.name for m in Imperial], ['mm', 'inch'])
+    with self.assertRaises(KeeCaseException) as context:
+      class Strict(Metric, strictCase=True):
+        ft = Kee[float](0.3048)
+    self.assertEqual(context.exception.name, 'ft')
+
+  def test_names_of_the_class_refused(self) -> None:
+    with self.assertRaises(ReservedName) as context:
+      class Role(KeeNum, strictCase=False):
+        guests = Kee[int](1)
+        members = Kee[int](2)
+    self.assertIsInstance(context.exception, SyntaxError)
+    self.assertEqual(context.exception.resName, 'members')
+
+    class Unit(KeeNum, strictCase=False):
+      mm = Kee[float](0.001)
+
+      def describe(self) -> str:
+        return self.name
+
+    with self.assertRaises(ReservedName) as context:
+      class Imperial(Unit):
+        describe = Kee[float](1.0)
+    self.assertEqual(context.exception.resName, 'describe')
 
   def test_misplaced_kee(self) -> None:
     for case in ('bare', 'plain class'):
