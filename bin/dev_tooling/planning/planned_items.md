@@ -19,8 +19,8 @@ file of the new one.
 | `PENDING` | [pending.md](pending.md) | 6 |
 | `READY` | [ready.md](ready.md) | 2 |
 | `UNDERWAY` | [underway.md](underway.md) | 0 |
-| `DEV` | [dev.md](dev.md) | 4 |
-| `RC` | [rc.md](rc.md) | 0 |
+| `DEV` | [dev.md](dev.md) | 0 |
+| `RC` | [rc.md](rc.md) | 4 |
 | `LTS` | [lts.md](lts.md) | 9 |
 
 To list every item with its file:
@@ -46,9 +46,9 @@ Items: 1 at `READY`, 9 at `LTS`.
 ### The release of 1.2.2
 
 The release itself is an item, and so is each thing it carries: the
-three items under keenum that stand at `DEV`.
+three items under keenum that stand at `RC`.
 
-Items: 1 at `DEV`.
+Items: 1 at `RC`.
 
 ### The speed of the core
 
@@ -75,7 +75,7 @@ Items: 1 at `CONCEPTION`, 3 at `UNDECIDED`, 2 at `PENDING`.
 
 ### keenum
 
-Items: 3 at `UNDECIDED`, 1 at `PENDING`, 1 at `REJECTED`, 3 at `DEV`.
+Items: 3 at `UNDECIDED`, 1 at `PENDING`, 1 at `REJECTED`, 3 at `RC`.
 
 ### ezdata
 
