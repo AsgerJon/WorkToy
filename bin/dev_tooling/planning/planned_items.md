@@ -20,8 +20,8 @@ file of the new one.
 | `READY` | [ready.md](ready.md) | 2 |
 | `UNDERWAY` | [underway.md](underway.md) | 0 |
 | `DEV` | [dev.md](dev.md) | 0 |
-| `RC` | [rc.md](rc.md) | 4 |
-| `LTS` | [lts.md](lts.md) | 9 |
+| `RC` | [rc.md](rc.md) | 0 |
+| `LTS` | [lts.md](lts.md) | 4 |
 
 To list every item with its file:
 
@@ -37,18 +37,18 @@ to be known about an area as a whole is said here, once.
 
 ### The release of 1.2.1
 
-The release itself is an item. So is each thing it carries: one item for
-each heading of its section in `changelog.md`, and one for the edits
-made by hand before it.
+Released on 2026-11-13. Its items left `lts.md` when 1.2.2 was
+released, and `changelog.md` holds them from there. One item about it
+is still open.
 
-Items: 1 at `READY`, 9 at `LTS`.
+Items: 1 at `READY`.
 
 ### The release of 1.2.2
 
 The release itself is an item, and so is each thing it carries: the
-three items under keenum that stand at `RC`.
+three items under keenum that stand at `LTS`. Released on 2026-11-16.
 
-Items: 1 at `RC`.
+Items: 1 at `LTS`.
 
 ### The speed of the core
 
@@ -75,7 +75,7 @@ Items: 1 at `CONCEPTION`, 3 at `UNDECIDED`, 2 at `PENDING`.
 
 ### keenum
 
-Items: 3 at `UNDECIDED`, 1 at `PENDING`, 1 at `REJECTED`, 3 at `RC`.
+Items: 3 at `UNDECIDED`, 1 at `PENDING`, 1 at `REJECTED`, 3 at `LTS`.
 
 ### ezdata
 

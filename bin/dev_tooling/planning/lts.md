@@ -1,6 +1,6 @@
 # Planned work: `LTS`
 
-Brought up to date: 2026-11-13.
+Brought up to date: 2026-11-16.
 
 The items of planned work that stand at `LTS`: released. An item stays
 here until the release after its own, and is then taken out; the
@@ -11,201 +11,136 @@ The items are written by `item_template.md`, beside this file, and
 changes its status is moved, whole, to the file of the new one, under
 the heading of its area.
 
-## The release of 1.2.1
+## The release of 1.2.2
 
 ---
 
-### Release 1.2.1
+### Release 1.2.2
 
-The micro release that repairs what 1.2.0 broke: a test base built on
-`BaseTest` by a metaclass of its own could no longer be created, and a
-test class could no longer write a `doCleanups` or a `debug` of its
-own. By the author's decision it carries everything else in the tree
-as well. Released on 2026-11-13, after four dev builds and one
-release candidate. The release differs from the candidate in the
-version stamp alone and passes on every Python from 3.7 to 3.15.
-
-- Status: LTS
-- Level: micro
-- Scale: medium
-- Release: 1.2.1
-- Next: nothing
-- History:
-  - 2026-11-12 CONCEPTION. The report on what 1.2.0 broke.
-  - 2026-11-12 UNDERWAY. The repair built; the author decided that the
-    release carries everything in the tree.
-  - 2026-11-12 DEV. Builds `1.2.1.dev0` and `1.2.1.dev1`.
-  - 2026-11-13 DEV. Build `1.2.1.dev2`, checked against the tree.
-  - 2026-11-13 DEV. Build `1.2.1.dev3`, with the hand edits, checked
-    against the tree.
-  - 2026-11-13 RC. Candidate `1.2.1rc0`, checked against the tree.
-  - 2026-11-13 LTS. Released as `1.2.1`, checked from PyPI.
-
----
-
-### Let a test base bring a metaclass of its own again
-
-1.2.0 made `TestMeta` the metaclass of `BaseTest` and refused the names
-`doCleanups` and `debug` in every test class. A test base built by a
-metaclass of its own could no longer be created, and a test class could
-no longer write either method. `BaseTest` is built by `BaseMeta` again
-and reports the failed `subTest` blocks from `__class_init__`.
-
-- Status: LTS
-- Level: micro
-- Scale: medium
-- Release: 1.2.1
-- Next: nothing
-- History:
-  - 2026-11-12 CONCEPTION. The report on what 1.2.0 broke.
-  - 2026-11-12 UNDERWAY. Built the same day, on the author's decision.
-  - 2026-11-12 DEV. In build `1.2.1.dev0`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
-
----
-
-### Remove `BaseTest.tearDownClass`
-
-`BaseTest.tearDownClass` took the file of the test class out of
-`sys.modules` and ran the garbage collector, which kept
-`tearDownModule` from running under `unittest`. The method is removed,
-and is not to come back.
+The micro release that lets a `KeeNum` class name its members in any
+case, with the class keyword `strictCase`, and brings the rules the
+keyword needs: names differing only by case are refused, a class
+without the upper-case rule may not name a member as something a base
+or the metaclass holds already, and a subclass takes the choice of its
+base. `KeeDuplicate` holds the name of the enumeration. It carries the
+three items under keenum below. Released on 2026-11-16, after one dev
+build and one release candidate. The release differs from the
+candidate in the version stamp alone and passes on every Python from
+3.7 to 3.15.
 
 - Status: LTS
 - Level: micro
 - Scale: small
-- Release: 1.2.1
+- Release: 1.2.2
 - Next: nothing
 - History:
-  - 2026-11-12 CONCEPTION. Found while the package was read.
-  - 2026-11-12 UNDERWAY. Removed on the author's word.
-  - 2026-11-12 DEV. In build `1.2.1.dev1`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
+  - 2026-11-15 UNDERWAY. The keyword built, on the author's word.
+  - 2026-11-16 DEV. Build `1.2.2.dev0`, by `micro-dev`, checked from
+    PyPI against the tree.
+  - 2026-11-16 DEV. The texts made ready for the release: the
+    changelog section, the promise, the manual and the token ledger.
+  - 2026-11-16 RC. Candidate `1.2.2rc0`, by `micro-rc`, checked from
+    PyPI: the code of `1.2.2.dev0` with another version stamp.
+  - 2026-11-16 LTS. Released as `1.2.2`, by `micro-lts`, checked from
+    PyPI: the code of the candidate with another version stamp.
+
+## keenum
 
 ---
 
-### Refuse a name bound as a field and as something else
+### Let a `KeeNum` class name its members in any case
 
-One body binding a name as a field and as a method, a descriptor or an
-overload is refused, and so is a method or a descriptor at the name of
-an inherited field.
+The names of the members of an enumeration are held to upper case, so
+a class whose members are named otherwise, as the names of another
+system are, could not be an enumeration. The class statement may now
+give the class keyword `strictCase=False`, and the body of that class
+then names its members in any case. Without the keyword nothing
+changes. The check moved from the name setter of `Kee` into the
+namespace hook, which can read the keywords of the class statement. The
+keyword is promised in `promises/keenum` and shown in the manual.
 
 - Status: LTS
 - Level: micro
 - Scale: small
-- Release: 1.2.1
+- Release: 1.2.2
 - Next: nothing
 - History:
-  - 2026-11-12 CONCEPTION. Found reading `ezdata` against the core.
-  - 2026-11-12 UNDERWAY. Built, and kept on the author's ruling.
-  - 2026-11-12 DEV. In build `1.2.1.dev0`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
+  - 2026-11-15 CONCEPTION. The author's: a keyword that lets a class
+    escape the upper-case rule takes no promise back.
+  - 2026-11-15 UNDERWAY. Built, with its tests.
+  - 2026-11-16 UNDERWAY. Mutation tested, promised on the author's
+    word, and written into the manual and the changelog.
+  - 2026-11-16 UNDERWAY. The keyword is held to a `bool` as the
+    namespace is created, so a body without members is checked as well.
+  - 2026-11-16 UNDERWAY. On the author's word a subclass takes the
+    choice of its base: a class statement without the keyword follows
+    the nearest class along its resolution order that gave it.
+  - 2026-11-16 DEV. Published in `1.2.2.dev0`. The author carries it
+    in the micro cycle of 1.2.2, so its level reads micro, though the
+    template calls something new minor.
+  - 2026-11-16 RC. Published in `1.2.2rc0`.
+  - 2026-11-16 LTS. Released in `1.2.2`.
 
 ---
 
-### Take back equality across different field orders
+### Refuse members whose names differ only by case
 
-Two classes whose fields come in different orders were equal by
-position, which contradicted equality by name. They are no longer
-equal, and the promise is confessed in `promises/confessions`.
+Under `strictCase=False` one class could hold members whose names
+differed only by case, as `mW` and `MW`. A lookup by name ignores case
+and reads a table keyed by the lower-cased name, in which the two
+shared one entry: `Power('mW')`, `Power['mW']` and a box given `'mW'`
+all answered `MW`, the member declared last. The second of such a pair
+is now refused with `KeeDuplicate` at its line, as a name declared
+twice is, and so are a subclass adding `MW` to an inherited `mw` and
+two bases holding such a pair. `KeeDuplicate` holds the name of the
+enumeration and names it in its message. The changelog, the promise
+and the manual say so.
 
 - Status: LTS
 - Level: micro
 - Scale: small
-- Release: 1.2.1
+- Release: 1.2.2
 - Next: nothing
 - History:
-  - 2026-11-12 UNDECIDED. Every repair made one promise false.
-  - 2026-11-12 UNDERWAY. The author decided to take the promise back.
-  - 2026-11-12 DEV. In build `1.2.1.dev0`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
+  - 2026-11-16 UNDECIDED. Found while the keyword was mutation tested.
+  - 2026-11-16 UNDERWAY. Decided by the author: such a pair is
+    refused. Built, tests first, and mutation tested.
+  - 2026-11-16 UNDERWAY. On the author's word the refusal is promised
+    and shown in the manual, and `KeeDuplicate` takes the name of the
+    class.
+  - 2026-11-16 DEV. Published in `1.2.2.dev0`.
+  - 2026-11-16 RC. Published in `1.2.2rc0`.
+  - 2026-11-16 LTS. Released in `1.2.2`.
 
 ---
 
-### Let a subclass of `EZField` take options of its own
+### Refuse a member named as something its class uses
 
-The parentheses of `EZField[T](...)` reach the `__init__` of a
-subclass, as those of a box do, and a field called again after its
-class exists is refused.
+The upper-case rule kept the name of a member apart from every name the
+enumeration class, its bases and its metaclass use, none of which is
+upper case. Under `strictCase=False` nothing did: a member named
+`space` or `members` made the class statement fail on a property of
+the metaclass, with Python's "property 'space' of 'KeeMeta' object has
+no setter", and a member named `fromValue`, `mro` or `owners`, or as a
+method of a base, took the place of that name on the class without a
+word. Where the upper-case rule does not hold, a member at a name a
+base or the metaclass holds now raises `ReservedName` at its line.
+`index` is among those names for as long as the deprecated accessor
+lives. `name` and `value` are free, since each member holds them and
+the class does not. A class that keeps the upper-case rule is as it
+was. The changelog, the promise and the manual say so.
 
 - Status: LTS
 - Level: micro
 - Scale: small
-- Release: 1.2.1
+- Release: 1.2.2
 - Next: nothing
 - History:
-  - 2026-11-12 UNDECIDED. Nothing promised a subclass of `EZField`.
-  - 2026-11-12 UNDERWAY. The author decided for it.
-  - 2026-11-12 DEV. In build `1.2.1.dev0`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
-
----
-
-### Optimize creation, assignment and comparison of `EZData` instances
-
-An instance is made in 1377 ns where 1.2.0 takes 2162 ns, and an
-assignment takes 191 ns where it took 250 ns. The `__post_init__` a
-class does not have is answered from the metaclass.
-
-- Status: LTS
-- Level: micro
-- Scale: medium
-- Release: 1.2.1
-- Next: nothing
-- History:
-  - 2026-11-12 CONCEPTION. Measured during the read of `ezdata`.
-  - 2026-11-12 UNDERWAY. The part that changes no answer first, then
-    the `__post_init__` lookup on the author's decision.
-  - 2026-11-12 DEV. In build `1.2.1.dev0`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
-
----
-
-### Make the smaller corrections of 1.2.1
-
-`replace` no longer goes through `asDict`. A subclass of `EZHook`
-declared in a subclass of `EZSpace` acts in place of the inherited
-hook. A default that cannot be built says so with a `TypeError`. The
-docstrings of `ezdata` and `work_test` say what the code does.
-
-- Status: LTS
-- Level: micro
-- Scale: small
-- Release: 1.2.1
-- Next: nothing
-- History:
-  - 2026-11-12 CONCEPTION. Found reading `ezdata` and `work_test`.
-  - 2026-11-12 UNDERWAY. Each held against the promises first.
-  - 2026-11-12 DEV. In builds `1.2.1.dev0` and `1.2.1.dev1`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
-
----
-
-### Make the hand edits before 1.2.1 is released
-
-The header of the changelog section carried the date it was written.
-Two promise docstrings said "the update after 1.2.0" where the version
-belongs. Reading the whole source against the changelog entry found
-two more: a sentence of the entry naming the wrong exception for an
-overload at the name of a field of the same body, and the docstring of
-the package naming Python 3.14 as the newest it targets.
-
-- Status: LTS
-- Level: micro
-- Scale: small
-- Release: 1.2.1
-- Next: nothing
-- History:
-  - 2026-11-12 PENDING. Known since the changelog section was written.
-  - 2026-11-13 READY. The author gave the word: "all five".
-  - 2026-11-13 UNDERWAY. All five made and staged, in no build yet.
-  - 2026-11-13 DEV. In build `1.2.1.dev3`.
-  - 2026-11-13 RC. In the candidate `1.2.1rc0`.
-  - 2026-11-13 LTS. Released in `1.2.1`.
+  - 2026-11-16 UNDECIDED. Found while the work on the keyword was
+    finished, by naming a member after each name of the class.
+  - 2026-11-16 UNDERWAY. Decided by the author: such members are
+    banned. Built, tests first, and mutation tested.
+  - 2026-11-16 DEV. Published in `1.2.2.dev0`. On the author's word the
+    refusal is promised and shown in the manual.
+  - 2026-11-16 RC. Published in `1.2.2rc0`.
+  - 2026-11-16 LTS. Released in `1.2.2`.
