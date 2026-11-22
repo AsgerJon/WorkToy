@@ -305,7 +305,13 @@ class Dispatcher(Object):
   given by 'setClassDispatcher', which holds the classmethods and the
   staticmethods, and hands a read through the class on to it. A bound
   method is therefore not considered through the class, nor a
-  staticmethod through an instance.
+  staticmethod through an instance. Where no overload of the name is a
+  bound method, only its fallback or its finalizer, the first holds the
+  staticmethods as well, so a fallback takes no call away from an
+  overload. Each of the two holds a fallback of
+  its own: the one reached through an instance the instance bound
+  fallback of the name, and the one reached through the class its class
+  bound fallback.
 
   Attributes
   ----------
@@ -1333,6 +1339,15 @@ class Dispatcher(Object):
     """
     A call that no signature accepts, by class, by length or by cast, may
     need a function of its own instead of an error.
+
+    Implementation
+    --------------
+
+    A dispatcher holds one fallback. A name holding bound methods beside
+    another kind has two dispatchers and so two fallbacks, apart: the
+    dispatcher reached through an instance holds the instance bound
+    fallback, and the one reached through the class the class bound
+    fallback.
 
     Parameters
     ----------

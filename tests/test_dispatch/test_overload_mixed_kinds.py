@@ -515,6 +515,297 @@ class TestOverloadMixedKinds(DispatchTest):
     self._assertRefused(onClass, lambda: Split.run(None), None)
     self.assertEqual(calls, [('s',), (None,)])
 
+  def _assertTwoFallbacks(self, cls: type) -> None:
+    """Asserts that 'cls' holds an instance bound and a class bound
+    fallback at 'bar', each reached its own way, beside a bound and a
+    static overload of 'int'."""
+    foo = cls()
+    self.assertEqual(cls.bar(69), ('staticBar', 69))
+    self.assertEqual(foo.bar(420), ('boundBar', 420))
+    self.assertEqual(foo.bar('x'), ('boundFallback', foo, ('x',)))
+    self.assertEqual(cls.bar('x'), ('staticFallback', ('x',)))
+    self.assertEqual(foo.bar(), ('boundFallback', foo, ()))
+    self.assertEqual(cls.bar(), ('staticFallback', ()))
+    self.assertEqual(cls.bar(foo, 'x'), ('staticFallback', (foo, 'x')))
+    space = cls.__namespace__
+    kinds = space.collectFunctionKinds('bar')
+    declared = space.getFallbacks()['bar']
+    self.assertEqual(len(declared), 2)
+    self.assertEqual(space.collectFallbacks('bar'), declared)
+    self.assertIs(space.collectFallback('bar'), declared[0])
+    byKind = {space._kindIn(kinds, func): func for func in declared}
+    self.assertEqual({*byKind}, {None, staticmethod})
+    onInstance = cls.__dict__['bar']
+    onClass = onInstance.getClassDispatcher()
+    self.assertIs(onInstance._getFallbackFunction(), byKind[None])
+    held = onClass._getFallbackFunction()
+    self.assertIs(held.__wrapped__, byKind[staticmethod])
+
+  def test_two_fallbacks(self) -> None:
+    class Foo(BaseObject):
+      @staticmethod
+      @overload(int)
+      def bar(value: int) -> tuple:
+        return 'staticBar', value
+
+      @overload(int)
+      def bar(self, value: int) -> tuple:
+        return 'boundBar', value
+
+      @overload.fallback
+      def bar(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+      @staticmethod
+      @overload.fallback
+      def bar(*args) -> tuple:
+        return 'staticFallback', args
+
+    self._assertTwoFallbacks(Foo)
+
+  def test_two_fallbacks_static_one_first(self) -> None:
+    class Foo(BaseObject):
+      @staticmethod
+      @overload.fallback
+      def bar(*args) -> tuple:
+        return 'staticFallback', args
+
+      @overload.fallback
+      def bar(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+      @overload(int)
+      def bar(self, value: int) -> tuple:
+        return 'boundBar', value
+
+      @staticmethod
+      @overload(int)
+      def bar(value: int) -> tuple:
+        return 'staticBar', value
+
+    self._assertTwoFallbacks(Foo)
+
+  def test_two_fallbacks_alone(self) -> None:
+    class Bare(BaseObject):
+      @overload.fallback
+      def run(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+      @staticmethod
+      @overload.fallback
+      def run(*args) -> tuple:
+        return 'staticFallback', args
+
+    bare = Bare()
+    self.assertEqual(bare.run(1), ('boundFallback', bare, (1,)))
+    self.assertEqual(Bare.run(1), ('staticFallback', (1,)))
+    self.assertIsNone(Bare.__dict__['run'].getMethodKind())
+    onClass = Bare.__dict__['run'].getClassDispatcher()
+    self.assertIs(onClass.getMethodKind(), staticmethod)
+
+  def test_two_fallbacks_beside_all_three_kinds(self) -> None:
+    class Trio(BaseObject):
+      @overload(int)
+      def run(self, n: int) -> tuple:
+        return 'bound', self, n
+
+      @classmethod
+      @overload(str)
+      def run(cls, s: str) -> tuple:
+        return 'class', cls, s
+
+      @staticmethod
+      @overload(bytes)
+      def run(b: bytes) -> tuple:
+        return 'static', b
+
+      @overload.fallback
+      def run(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+      @staticmethod
+      @overload.fallback
+      def run(*args) -> tuple:
+        return 'staticFallback', args
+
+    trio = Trio()
+    self.assertEqual(trio.run(1), ('bound', trio, 1))
+    self.assertEqual(trio.run('s'), ('class', Trio, 's'))
+    self.assertEqual(Trio.run('s'), ('class', Trio, 's'))
+    self.assertEqual(Trio.run(b'b'), ('static', b'b'))
+    self.assertEqual(trio.run(None), ('boundFallback', trio, (None,)))
+    self.assertEqual(Trio.run(None), ('staticFallback', (None,)))
+    self.assertEqual(Trio.run(1.5), ('staticFallback', (1.5,)))
+
+  def test_two_fallbacks_that_meet(self) -> None:
+    pairs = (
+      (None, None),
+      (None, classmethod),
+      (classmethod, None),
+      (staticmethod, classmethod),
+      (classmethod, staticmethod),
+      (staticmethod, staticmethod),
+      (classmethod, classmethod),
+    )
+    for firstKind, secondKind in pairs:
+      with self.subTest(first=firstKind, second=secondKind):
+        first = self._declareFallback(firstKind, _static)
+        second = self._declareFallback(secondKind, _class)
+        with self.assertRaises(DuplicateSignature) as context:
+          class Twice(BaseObject):
+            run = first
+            run = second
+        exception = context.exception
+        self.assertEqual(exception.sig, 'fallback')
+        self.assertIs(exception.existing, _static)
+        self.assertIs(exception.duplicate, _class)
+        self.assertIn('fallback function', str(exception))
+
+  @staticmethod
+  def _declareFallback(kind: object, func: object) -> object:
+    """Returns 'func' declared as the fallback of a name, as the kind of
+    method 'kind': 'classmethod', 'staticmethod', or 'None' for a bound
+    method."""
+    record = overload.fallback(func)
+    if kind is None:
+      return record
+    return kind(record)
+
+  def test_static_overload_with_bound_fallback(self) -> None:
+    class Foo(BaseObject):
+      @staticmethod
+      @overload(int)
+      def bar(value: int) -> tuple:
+        return 'staticBar', value
+
+      @overload.fallback
+      def bar(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+    foo = Foo()
+    onInstance = Foo.__dict__['bar']
+    onClass = onInstance.getClassDispatcher()
+    self.assertIsNone(onInstance.getMethodKind())
+    self.assertIs(onClass.getMethodKind(), staticmethod)
+    self.assertEqual(Foo.bar(69), ('staticBar', 69))
+    self.assertEqual(foo.bar(69), ('staticBar', 69))
+    self.assertEqual(foo.bar('x'), ('boundFallback', foo, ('x',)))
+    self._assertRefused(onClass, lambda: Foo.bar('x'), 'x')
+
+  def test_static_overload_with_two_fallbacks(self) -> None:
+    class Foo(BaseObject):
+      @staticmethod
+      @overload(int)
+      def bar(value: int) -> tuple:
+        return 'staticBar', value
+
+      @overload.fallback
+      def bar(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+      @staticmethod
+      @overload.fallback
+      def bar(*args) -> tuple:
+        return 'staticFallback', args
+
+    foo = Foo()
+    self.assertEqual(Foo.bar(69), ('staticBar', 69))
+    self.assertEqual(foo.bar(69), ('staticBar', 69))
+    self.assertEqual(foo.bar('x'), ('boundFallback', foo, ('x',)))
+    self.assertEqual(Foo.bar('x'), ('staticFallback', ('x',)))
+
+  def test_no_bound_overload_with_bound_fallback(self) -> None:
+    class Trio(BaseObject):
+      @classmethod
+      @overload(str)
+      def run(cls, s: str) -> tuple:
+        return 'class', cls, s
+
+      @staticmethod
+      @overload(bytes)
+      def run(b: bytes) -> tuple:
+        return 'static', b
+
+      @staticmethod
+      @overload.flex(int, float)
+      def run(n: int, x: float) -> tuple:
+        return 'flex', n, x
+
+      @staticmethod
+      @overload(int, ARGS[int])
+      def run(*numbers) -> tuple:
+        return 'variadic', numbers
+
+      @overload.fallback
+      def run(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+    trio = Trio()
+    onClass = Trio.__dict__['run'].getClassDispatcher()
+    self.assertEqual(trio.run('s'), ('class', Trio, 's'))
+    self.assertEqual(trio.run(b'b'), ('static', b'b'))
+    self.assertEqual(trio.run(1.5, 2), ('flex', 2, 1.5))
+    self.assertEqual(trio.run(1, 2, 3), ('variadic', (1, 2, 3)))
+    self.assertEqual(trio.run(None), ('boundFallback', trio, (None,)))
+    self.assertEqual(Trio.run('s'), ('class', Trio, 's'))
+    self.assertEqual(Trio.run(b'b'), ('static', b'b'))
+    self.assertEqual(Trio.run(1.5, 2), ('flex', 2, 1.5))
+    self.assertEqual(Trio.run(1, 2, 3), ('variadic', (1, 2, 3)))
+    self._assertRefused(onClass, lambda: Trio.run(None), None)
+
+  def test_static_overload_with_bound_finalizer(self) -> None:
+    calls = []
+
+    class Foo(BaseObject):
+      @staticmethod
+      @overload(int)
+      def bar(value: int) -> tuple:
+        return 'staticBar', value
+
+      @staticmethod
+      @overload.fallback
+      def bar(*args) -> tuple:
+        return 'staticFallback', args
+
+      @overload.finalize
+      def bar(self, *args) -> None:
+        calls.append((self, args))
+
+    foo = Foo()
+    self.assertEqual(Foo.bar(69), ('staticBar', 69))
+    self.assertEqual(Foo.bar('x'), ('staticFallback', ('x',)))
+    self.assertEqual(calls, [])
+    self.assertEqual(foo.bar(69), ('staticBar', 69))
+    self.assertEqual(calls, [(foo, (69,))])
+    self.assertEqual(foo.bar('x'), ('staticFallback', ('x',)))
+    self.assertEqual(calls, [(foo, (69,)), (foo, ('x',))])
+
+  def test_static_finalizer_with_bound_fallback(self) -> None:
+    calls = []
+
+    class Foo(BaseObject):
+      @staticmethod
+      @overload(int)
+      def bar(value: int) -> tuple:
+        return 'staticBar', value
+
+      @overload.fallback
+      def bar(self, *args) -> tuple:
+        return 'boundFallback', self, args
+
+      @staticmethod
+      @overload.finalize
+      def bar(*args) -> None:
+        calls.append(args)
+
+    foo = Foo()
+    self.assertEqual(foo.bar(69), ('staticBar', 69))
+    self.assertEqual(calls, [(69,)])
+    self.assertEqual(foo.bar('x'), ('boundFallback', foo, ('x',)))
+    self.assertEqual(calls, [(69,), ('x',)])
+    self.assertEqual(Foo.bar(69), ('staticBar', 69))
+    self.assertEqual(calls, [(69,), ('x',), (69,)])
+
   def test_this_on_both_sides(self) -> None:
     class Node(BaseObject):
       @overload(THIS)

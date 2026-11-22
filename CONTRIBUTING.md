@@ -131,13 +131,18 @@ directory states what the library owes the projects built upon it, one
 behaviour per file, each written as a test. A change of behaviour is
 held against them first: a promise is kept for every release of a major
 version, and one that has to be taken back is written up in
-`promises/confessions`. The `manual` directory holds one chapter per
-package, and every example in it is a doctest. Both run from the
-repository root:
+`design/confessions`. A refusal, in `design/refusals`, says that a
+certain mistake raises and names the exception it raises as of a stated
+version, without promising that exception. A refusal may be relaxed in
+any release, and relaxing one is not a deprecation. The single file
+`design/manual.md` holds the design in prose: its first part explains
+promises, refusals, deprecations and confessions, and a part for each
+package follows, what works and what is refused described together,
+every example a doctest. Both run from the repository root:
 
 ```terminaloutput
-python -m unittest discover -s promises -t . -p "promise_*.py"
-python -m doctest manual/*.md
+python -m unittest discover -s design -t . -p "promise_*.py"
+python -m doctest design/manual.md
 ```
 
 ### Mutation Testing Before a Release

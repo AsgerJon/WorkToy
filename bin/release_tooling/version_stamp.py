@@ -22,6 +22,8 @@ from __future__ import annotations
 import sys
 import os
 
+import manual_stamp
+
 README_PREFIX = '# worktoy v'
 
 
@@ -194,7 +196,9 @@ def _readmeHeading(versionStr: str) -> str:
 def _stampAll(versionStr: str) -> None:
   """
   This function stamps the given version string into 'pyproject.toml',
-  'src/worktoy/__init__.py' and 'README.md'.
+  'src/worktoy/__init__.py' and 'README.md', and then refreshes the copy
+  of the README at the top of 'design/manual.md', which begins with the
+  README word for word.
 
   Parameters
   ----------
@@ -209,6 +213,7 @@ def _stampAll(versionStr: str) -> None:
   _stampPrefix(pyprojectPath, 'version', 'version = "%s"' % versionStr)
   _stampPrefix(packagePath, '__version__', "__version__ = '%s'" % versionStr)
   _stampPrefix(readmePath, README_PREFIX, _readmeHeading(versionStr))
+  manual_stamp.stampManual(root)
 
 
 def main(*args: str, ) -> int:

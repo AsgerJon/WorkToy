@@ -46,8 +46,15 @@ class LoadSpaceHook(AbstractSpaceHook):
   the classmethods, reached through an instance, which keeps one of the
   classmethods and the staticmethods, reached through the class. A bound
   method is thus not considered through the class, nor a staticmethod
-  through an instance. Any other name takes one dispatcher holding every
-  function.
+  through an instance. Where no overload of the name is a bound method,
+  only its fallback or its finalizer, the dispatcher reached through an
+  instance holds the staticmethods as well, so a fallback takes no call
+  away from an overload. Any other name takes one dispatcher holding
+  every function. The fallbacks of a name are two, apart: the dispatcher
+  reached through an instance takes the instance bound fallback, and the
+  one reached through the class the class bound fallback. A fallback
+  declared as a bound method is the first, one declared as a
+  staticmethod the second, and one declared as a classmethod both.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -247,8 +254,11 @@ class LoadSpaceHook(AbstractSpaceHook):
     """
     One name may hold bound methods, classmethods and staticmethods. A
     bound method needs an instance, so it is not considered through the
-    class, and where a name has bound methods its staticmethods are not
-    considered through an instance. A classmethod is reached both ways.
+    class, and where a name has a bound overload its staticmethods are
+    not considered through an instance. A classmethod is reached both
+    ways. A fallback or a finalizer is no overload: declaring one as a
+    bound method must take no call away from an overload that accepts
+    it.
 
     Implementation
     --------------
@@ -257,8 +267,10 @@ class LoadSpaceHook(AbstractSpaceHook):
     dispatchers, each built by '_buildSide': one of the bound methods and
     the classmethods, which is returned and reached through an instance,
     and one of the classmethods and the staticmethods, which the first
-    keeps for a read through the class. Any other name takes one
-    dispatcher of every function.
+    keeps for a read through the class. Where the bound methods of the
+    name are its fallback or its finalizer alone, the first holds the
+    staticmethods as well. Any other name takes one dispatcher of every
+    function.
 
     Parameters
     ----------
@@ -277,7 +289,7 @@ class LoadSpaceHook(AbstractSpaceHook):
       self.space.collectOverloads(name),
       self.space.collectFlexes(name),
       self.space.collectVariadics(name),
-      self.space.collectFallback(name),
+      self.space.collectFallbacks(name),
       self.space.collectFinalizer(name),
     )
     members = self._getMembers(*gathered)
@@ -287,24 +299,36 @@ class LoadSpaceHook(AbstractSpaceHook):
     memberKinds = [self.space._kindIn(kinds, func) for func in members]
     bound = any(kind is None for kind in memberKinds)
     other = any(kind is not None for kind in memberKinds)
+    every = (None, classmethod, staticmethod)
     if bound and other:
       #  This branch is reached by the following:
       #  - The name holds bound methods beside classmethods or
       #    staticmethods
-      onInstance = self._buildSide(gathered, kinds, (None, classmethod))
+      overloads = self._getMembers(*gathered[:3], [], None)
+      overloadKinds = [self.space._kindIn(kinds, func) for func in overloads]
+      if any(kind is None for kind in overloadKinds):
+        #  This branch is reached by the following:
+        #  - An overload of the name is a bound method, so its
+        #    staticmethods are not considered through an instance
+        throughInstance = (None, classmethod)
+      else:
+        #  This branch is reached by the following:
+        #  - Only the fallback or the finalizer of the name is a bound
+        #    method, which takes no call away from an overload
+        throughInstance = every
+      onInstance = self._buildSide(gathered, kinds, throughInstance)
       onClass = self._buildSide(gathered, kinds, (classmethod, staticmethod))
       onInstance.setClassDispatcher(onClass)
       return onInstance
-    every = (None, classmethod, staticmethod)
     return self._buildSide(gathered, kinds, every)
 
   @staticmethod
   def _getMembers(*gathered) -> list:
-    sigFuncs, flexes, variadics, fallback, finalizer = gathered
+    sigFuncs, flexes, variadics, fallbacks, finalizer = gathered
     out = [func for _, func, __ in (*sigFuncs, *flexes, *variadics)]
-    for role in (fallback, finalizer):
-      if role is not None:
-        out.append(role)
+    out.extend(fallbacks)
+    if finalizer is not None:
+      out.append(finalizer)
     return out
 
   def _buildSide(
@@ -326,7 +350,12 @@ class LoadSpaceHook(AbstractSpaceHook):
     staticmethod. The functions of another kind than that are named to it
     by 'setFunctionKind' before any is registered, and the functions of
     the accepted kinds are registered with their distances, the fallback
-    and the finalizer included.
+    of an accepted kind and the finalizer included: the instance bound
+    fallback for the dispatcher reached through an instance, the class
+    bound fallback for the one reached through the class. A dispatcher
+    holding a fallback declared as a bound method leaves a static one to
+    the dispatcher reached through the class. A namespace handing out two
+    fallbacks for one of them is refused by the dispatcher.
 
     Parameters
     ----------
@@ -334,8 +363,8 @@ class LoadSpaceHook(AbstractSpaceHook):
     gathered : tuple
       What the namespace gathered at the name: the concrete, the flexible
       and the variadic registrations, each a list of signature, function
-      and distance, then the fallback and the finalizer, each a function
-      or 'None'.
+      and distance, then the fallbacks, a list of functions, and the
+      finalizer, a function or 'None'.
 
     kinds : list
       A 'list[tuple[Callable, Any]]' of each function at the name with
@@ -362,12 +391,21 @@ class LoadSpaceHook(AbstractSpaceHook):
     sigFuncs = [entry for entry in gathered[0] if taken(entry[1])]
     flexes = [entry for entry in gathered[1] if taken(entry[1])]
     variadics = [entry for entry in gathered[2] if taken(entry[1])]
-    #  A fallback or a finalizer the name does not have is 'None' here,
-    #  and stays 'None' whichever way the test falls.
-    fallback = gathered[3] if taken(gathered[3]) else None
+    fallbacks = [func for func in gathered[3] if taken(func)]
+    if any(kindOf(func) is None for func in fallbacks):
+      #  This branch is reached by the following:
+      #  - The dispatcher holds the instance bound fallback of the name,
+      #    so a static one beside it is left to the dispatcher reached
+      #    through the class
+      fallbacks = [
+        f for f in fallbacks
+        if kindOf(f) is classmethod or kindOf(f) is None
+      ]
+    #  A finalizer the name does not have is 'None' here, and stays 'None'
+    #  whichever way the test falls.
     finalizer = gathered[4] if taken(gathered[4]) else None
     members = self._getMembers(
-        sigFuncs, flexes, variadics, fallback, finalizer,
+        sigFuncs, flexes, variadics, fallbacks, finalizer,
     )
     memberKinds = [kindOf(func) for func in members]
     if any(kind is None for kind in memberKinds):
@@ -389,7 +427,7 @@ class LoadSpaceHook(AbstractSpaceHook):
       dispatcher.addFlexSigFunc(sig, func, distance)
     for sig, func, distance in variadics:
       dispatcher.addVariadicSigFunc(sig, func, distance)
-    if fallback is not None:
+    for fallback in fallbacks:
       dispatcher.setFallbackFunction(fallback)
     if finalizer is not None:
       dispatcher.setFinalizerFunction(finalizer)

@@ -132,13 +132,17 @@ class TestBaseSpaceRegistry(MclsTest):
   def test_fallback_and_finalizer(self) -> None:
     self.space.addFallback('f', _first)
     self.space.addFallback('f', _first)
-    self.assertEqual(self.space.getFallbacks(), {'f': _first})
+    self.assertEqual(self.space.getFallbacks(), {'f': [_first]})
     with self.assertRaises(DuplicateSignature) as context:
       self.space.addFallback('f', _second)
     self.assertEqual(context.exception.sig, 'fallback')
     self.assertIs(context.exception.existing, _first)
     self.assertIs(context.exception.duplicate, _second)
     self.assertIn('fallback function', str(context.exception))
+    self.assertEqual(self.space.getFallbacks(), {'f': [_first]})
+    self.assertIs(self.space.collectFallback('f'), _first)
+    self.assertEqual(self.space.collectFallbacks('f'), [_first])
+    self.assertEqual(self.space.collectFallbacks('absent'), [])
     self.space.addFinalizer('g', _first)
     self.space.addFinalizer('g', _first)
     self.assertEqual(self.space.getFinalizers(), {'g': _first})
@@ -224,6 +228,50 @@ class TestBaseSpaceRegistry(MclsTest):
     self.assertTrue(meet(staticmethod, classmethod))
     self.assertTrue(meet(staticmethod, staticmethod))
     self.assertTrue(meet(classmethod, classmethod))
+
+  def test_fallbacks_of_kinds_that_never_meet(self) -> None:
+    self.space.addFunctionKind('f', staticmethod, _first)
+    self.space.addFunctionKind('f', None, _second)
+    self.space.addFunctionKind('f', classmethod, _third)
+    self.space.addFallback('f', _first)
+    self.space.addFallback('f', _second)
+    self.space.addFallback('f', _second)
+    self.space.addFallback('f', _first)
+    self.assertEqual(self.space.getFallbacks(), {'f': [_first, _second]})
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addFallback('f', _third)
+    self.assertEqual(context.exception.sig, 'fallback')
+    self.assertIs(context.exception.existing, _first)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('fallback function', str(context.exception))
+    self.assertEqual(self.space.getFallbacks(), {'f': [_first, _second]})
+    self.assertIs(self.space.collectFallback('f'), _first)
+    self.assertEqual(self.space.collectFallbacks('f'), [_first, _second])
+    self.assertTrue(self.space.hasOverloads('f'))
+    self.assertEqual(self.space.getOverloadNames(), ['f'])
+
+  def test_fallback_of_a_kind_that_meets_either(self) -> None:
+    self.space.addFunctionKind('f', classmethod, _third)
+    self.space.addFunctionKind('f', None, _second)
+    self.space.addFunctionKind('g', None, _second)
+    self.space.addFunctionKind('g', classmethod, _third)
+    self.space.addFallback('f', _third)
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addFallback('f', _second)
+    self.assertEqual(context.exception.sig, 'fallback')
+    self.assertIs(context.exception.existing, _third)
+    self.assertIs(context.exception.duplicate, _second)
+    self.assertIn('fallback function', str(context.exception))
+    self.space.addFallback('g', _second)
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addFallback('g', _third)
+    self.assertEqual(context.exception.sig, 'fallback')
+    self.assertIs(context.exception.existing, _second)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('fallback function', str(context.exception))
+    self.assertEqual(
+        self.space.getFallbacks(), {'f': [_third], 'g': [_second]},
+    )
 
   def test_same_signature_of_kinds_that_never_meet(self) -> None:
     self.space.addFunctionKind('f', staticmethod, _first)

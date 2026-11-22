@@ -22,6 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
   SigFuncList: TypeAlias = list[SigFunc]
   OverloadMap: TypeAlias = dict[str, SigFuncList]
   FuncMap: TypeAlias = dict[str, Callable[..., Any]]
+  FuncListMap: TypeAlias = dict[str, list[Callable[..., Any]]]
   Collected: TypeAlias = tuple[TypeSig, Callable[..., Any], int]
   CollectedList: TypeAlias = list[Collected]
   Claim: TypeAlias = tuple[overload, str]
@@ -55,19 +56,29 @@ class BaseSpace(AbstractNamespace):
   kind. A bound method is reached through an instance and a staticmethod
   through the class, so the two never answer one call and may share a
   signature; any other two functions of one signature at a name would
-  leave dispatch undecided. A base declaring the name as kinds none of
-  which the nearer classes declare is hidden as a plain definition is.
+  leave dispatch undecided. The fallbacks of a name are two, apart: the
+  instance bound fallback takes a call through an instance that nothing
+  accepts, and the class bound fallback takes such a call through the
+  class. A fallback declared as a bound method is instance bound, one
+  declared as a staticmethod is class bound, and one declared as a
+  classmethod is both, so a name may hold a bound fallback and a static
+  one, and any other two would leave it undecided which one takes a
+  call. A base declaring the name as kinds none of which the nearer
+  classes declare is hidden as a plain definition is.
 
   Implementation
   --------------
 
   'loadSpaceHook' records the declarations of the body through
   'addOverload', 'addVariadic', 'addFallback' and 'addFinalizer'; one body
-  may not declare one signature, fallback or finalizer twice for
-  different functions. 'collectOverloads', 'collectVariadics',
-  'collectFallback' and 'collectFinalizer' gather the declarations of the
-  body and of the 'BaseSpace' namespaces of the bases, with distances, 0
-  for the body. 'addMethodKind' records the kinds each name is declared
+  may not declare one signature or finalizer twice for different
+  functions, nor two fallbacks that one call could reach.
+  'collectOverloads', 'collectVariadics', 'collectFallbacks' and
+  'collectFinalizer' gather the declarations of the body and of the
+  'BaseSpace' namespaces of the bases, with distances, 0 for the body;
+  'collectFallback' gives the nearest fallback alone, and
+  'collectFallbacks' begins with it. 'addMethodKind' records the kinds
+  each name is declared
   as and 'addFunctionKind' the kind of each function, and
   '_getInheritedSpaces' passes over a base sharing no kind with the
   nearer classes as it passes over a plain definition.
@@ -89,7 +100,7 @@ class BaseSpace(AbstractNamespace):
   __overload_map__: Optional[OverloadMap] = None
   __variadic_overload_map__: Optional[OverloadMap] = None
   __flex_overload_map__: Optional[OverloadMap] = None
-  __fallback_map__: Optional[FuncMap] = None
+  __fallback_map__: Optional[FuncListMap] = None
   __finalizer_map__: Optional[FuncMap] = None
   __plain_names__: Optional[tuple[str, ...]] = None
   __claimed_overloads__: Optional[tuple[Claim, ...]] = None
@@ -142,17 +153,40 @@ class BaseSpace(AbstractNamespace):
     """
     return maybe(self.__flex_overload_map__, dict())
 
-  def getFallbacks(self) -> FuncMap:
+  def getFallbacks(self) -> FuncListMap:
     """
-    The fallbacks this class body declared itself, by name.
+    The dispatchers of the class and of its subclasses need the fallbacks
+    this class body declared itself. A name may hold an instance bound
+    fallback and a class bound one together, so each name has a list.
 
     Returns
     -------
 
-    FuncMap
-      A 'dict[str, Callable]'.
+    FuncListMap
+      A 'dict[str, list[Callable]]', in declaration order.
     """
     return maybe(self.__fallback_map__, dict())
+
+  def _getDeclaredFallbacks(self, name: str) -> list:
+    """
+    A name the body declared no fallback at has none, which needs an
+    answer of its own beside the names that have.
+
+    Returns
+    -------
+
+    list
+      The fallbacks the body declared at the name, in declaration order,
+      or an empty list when it declared none.
+    """
+    try:
+      declared = self.getFallbacks()[name]
+    except KeyError:
+      #  This branch is reached by the following:
+      #  - The body declared no fallback at the name
+      return []
+    else:
+      return declared
 
   def getFinalizers(self, ) -> FuncMap:
     """
@@ -760,8 +794,18 @@ class BaseSpace(AbstractNamespace):
 
   def collectFallback(self, name: str) -> Optional[Callable]:
     """
-    The dispatcher of a name needs the fallback of the nearest class
-    declaring one, up to the first plain definition.
+    The fallbacks of a name begin with that of the nearest class
+    declaring one, up to the first plain definition, and a namespace class
+    of a project may hand out a fallback of its own for a name by
+    reimplementing this method.
+
+    Implementation
+    --------------
+
+    The body and the namespaces from '_getInheritedSpaces' are asked in
+    order, and the fallback the first of them declared first is returned.
+    'collectFallbacks' begins with it and adds the instance bound or the
+    class bound fallback the name still lacks, when one is declared.
 
     Parameters
     ----------
@@ -776,10 +820,63 @@ class BaseSpace(AbstractNamespace):
       The fallback, or 'None'.
     """
     for space in (self, *self._getInheritedSpaces(name)):
-      fallback = space.getFallbacks().get(name, None)
-      if fallback is not None:
+      for fallback in space._getDeclaredFallbacks(name):
         return fallback
     return None
+
+  def collectFallbacks(self, name: str) -> list:
+    """
+    A name holding bound methods beside staticmethods is reached two
+    ways, through an instance and through the class, and a call nothing
+    accepts may need a fallback either way. The fallbacks of a name are
+    therefore two, apart: the instance bound fallback, for the calls
+    through an instance, and the class bound fallback, for the calls
+    through the class. A fallback declared as a bound method is instance
+    bound and one declared as a staticmethod is class bound, so the two
+    never answer one call and a name may hold both; one declared as a
+    classmethod is both, and stands alone. A subclass may add the one its
+    bases lack, and a fallback it declares replaces an inherited one that
+    the same call could reach. A namespace class of a project that hands
+    out a fallback of its own by reimplementing 'collectFallback' must
+    still be asked.
+
+    Implementation
+    --------------
+
+    The fallback 'collectFallback' gives comes first. The fallbacks of
+    the body and of the namespaces from '_getInheritedSpaces' follow in
+    order, each kept unless one call can reach both it and a fallback
+    gathered already, as '_mayMeet' tells by their kinds. The kinds are
+    those 'collectFunctionKinds' gives, where a function recorded nowhere
+    is a bound method.
+
+    Parameters
+    ----------
+
+    name : str
+      The name.
+
+    Returns
+    -------
+
+    list
+      The fallbacks of the name, nearest first: none, one, or the
+      instance bound fallback and the class bound one.
+    """
+    out = []
+    nearest = self.collectFallback(name)
+    if nearest is not None:
+      out.append(nearest)
+    kinds = self.collectFunctionKinds(name)
+    for space in (self, *self._getInheritedSpaces(name)):
+      for fallback in space._getDeclaredFallbacks(name):
+        own = self._kindIn(kinds, fallback)
+        for held in out:
+          if self._mayMeet(self._kindIn(kinds, held), own):
+            break
+        else:
+          out.append(fallback)
+    return out
 
   def collectFinalizer(self, name: str) -> Optional[Callable]:
     """
@@ -1031,8 +1128,21 @@ class BaseSpace(AbstractNamespace):
 
   def addFallback(self, name: str, func: Callable) -> None:
     """
-    One body may declare one fallback per name; a subclass may replace an
-    inherited one, which is not on record here.
+    Two fallbacks at one name leave it undecided which takes a call
+    nothing accepts, unless no call can reach both. A fallback declared
+    as a bound method is the instance bound fallback of its name, reached
+    through an instance, and one declared as a staticmethod the class
+    bound fallback, reached through the class, so a body may declare
+    those two at one name; one declared as a classmethod is both. A
+    subclass may replace an inherited fallback, which is not on record
+    here.
+
+    Implementation
+    --------------
+
+    The kind of each function is the one 'addFunctionKind' recorded for
+    it, which 'LoadSpaceHook' records before it registers the fallback; a
+    function recorded nowhere is a bound method.
 
     Parameters
     ----------
@@ -1047,13 +1157,22 @@ class BaseSpace(AbstractNamespace):
     ------
 
     DuplicateSignature
-      The body declared a different fallback at the name already.
+      The body declared a different fallback at the name already, unless
+      the two are a bound method and a staticmethod, which no call
+      reaches together.
     """
+    kinds = self._gatherFunctionKinds((self,), name)
+    own = self._kindIn(kinds, func)
     existing = self.getFallbacks()
-    oldFunc = existing.get(name, None)
-    if oldFunc is not None and oldFunc is not func:
-      raise DuplicateSignature('fallback', oldFunc, func)
-    existing[name] = func
+    held = self._getDeclaredFallbacks(name)
+    for oldFunc in held:
+      if oldFunc is func:
+        break
+      if self._mayMeet(self._kindIn(kinds, oldFunc), own):
+        raise DuplicateSignature('fallback', oldFunc, func)
+    else:
+      held.append(func)
+    existing[name] = held
     self.__fallback_map__ = existing
 
   def addFinalizer(self, name: str, func: Callable) -> None:

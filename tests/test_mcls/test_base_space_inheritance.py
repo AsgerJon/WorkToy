@@ -251,10 +251,16 @@ class TestBaseSpaceInheritance(MclsTest):
       def f(self, *args) -> str:
         return 'c-fallback'
 
+    self.assertEqual(len(A.__namespace__.getFallbacks()['f']), 1)
+    self.assertEqual(len(C.__namespace__.getFallbacks()['f']), 1)
     self.assertIs(B.__namespace__.collectFallback('f'),
-                  A.__namespace__.getFallbacks()['f'])
+                  A.__namespace__.getFallbacks()['f'][0])
     self.assertIs(C.__namespace__.collectFallback('f'),
-                  C.__namespace__.getFallbacks()['f'])
+                  C.__namespace__.getFallbacks()['f'][0])
+    self.assertEqual(B.__namespace__.collectFallbacks('f'),
+                     A.__namespace__.getFallbacks()['f'])
+    self.assertEqual(C.__namespace__.collectFallbacks('f'),
+                     C.__namespace__.getFallbacks()['f'])
     self.assertIs(C.__namespace__.collectFinalizer('f'),
                   A.__namespace__.getFinalizers()['f'])
     self.assertIsNone(C.__namespace__.collectFinalizer('absent'))

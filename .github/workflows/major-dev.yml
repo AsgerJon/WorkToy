@@ -145,7 +145,7 @@ jobs:
         run: |
           git config user.name "Asger Jon Vistisen"
           git config user.email "asgerjon2@gmail.com"
-          git add bin/release_tooling/VERSION pyproject.toml src/worktoy/__init__.py README.md
+          git add bin/release_tooling/VERSION pyproject.toml src/worktoy/__init__.py README.md design/manual.md
           git commit -m "dev ${{ env.VERSION_INFO }}"
           git push origin HEAD:${{ github.ref }}
 

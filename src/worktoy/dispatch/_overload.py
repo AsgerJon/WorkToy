@@ -77,11 +77,15 @@ class overload:  # NOQA
   classmethods and the staticmethods are reached through the class, the
   bound methods and the classmethods through an instance, and a
   staticmethod is not considered through an instance where the name has
-  a bound method. A subclass declaring an overload at a name it inherits
-  keeps the inherited overloads and adds its own, an equal signature
-  replacing the inherited one. A subclass overloading the name only as
-  kinds of method the inherited declarations are not overrides it as a
-  plain definition does, hiding the inherited overloads.
+  a bound overload. The fallbacks of a name are two, apart: the instance
+  bound fallback, declared as a bound method, takes a call through an
+  instance that nothing accepts, and the class bound fallback, declared
+  as a staticmethod, takes such a call through the class; one declared
+  as a classmethod is both. A subclass declaring an overload at a name
+  it inherits keeps the inherited overloads and adds its own, an equal
+  signature replacing the inherited one. A subclass overloading the name
+  only as kinds of method the inherited declarations are not overrides
+  it as a plain definition does, hiding the inherited overloads.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -507,7 +511,32 @@ class overload:  # NOQA
   def fallback(cls, func) -> Self:
     """
     A call no declaration of the name accepts may need a function of its
-    own instead of an error.
+    own instead of an error. A name holding bound methods beside
+    staticmethods is reached two ways, through an instance and through
+    the class, and may need such a function for each way.
+
+    Implementation
+    --------------
+
+    The function is recorded as a fallback of its name, as the kind of
+    method the stack declares it. The fallbacks of a name are two, apart:
+
+    - The instance bound fallback takes a call through an instance that
+      nothing accepts. A fallback declared as a bound method is instance
+      bound, and receives the instance.
+    - The class bound fallback takes such a call through the class. A
+      fallback declared as a staticmethod is class bound, and receives
+      the arguments alone.
+
+    A fallback declared as a classmethod is both at once, receiving the
+    class either way, so it stands alone at its name. A name may thus
+    hold one bound fallback and one static fallback, and any other two
+    are refused with 'DuplicateSignature' as the class body binds the
+    second. At a name holding no bound overload the staticmethods are
+    tried through an instance as well, and so is its class bound
+    fallback, unless the name has an instance bound fallback, which then
+    takes those calls. A fallback thus takes no call away from an
+    overload that accepts it.
 
     Parameters
     ----------

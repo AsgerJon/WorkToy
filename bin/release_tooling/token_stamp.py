@@ -22,6 +22,8 @@ import sys
 import os
 import json
 
+import manual_stamp
+
 STATS_FILE = 'token_stats.json'
 
 TOKENS_PREFIX = '[![Tokens]'
@@ -223,6 +225,8 @@ def _stampBadge(label: str) -> None:
   This function replaces the 'README.md' line beginning with '[![Tokens]'
   with a freshly built badge carrying 'label'. A README without such a
   line is an error, since the badge is expected to already be present.
+  The copy of the README at the top of 'design/manual.md' is refreshed
+  afterwards, since the manual begins with the README word for word.
 
   Parameters
   ----------
@@ -239,6 +243,7 @@ def _stampBadge(label: str) -> None:
     infoSpec = """Found no line starting with '%s' in 'README.md'!"""
     raise RuntimeError(infoSpec % TOKENS_PREFIX)
   _writeLines(readmePath, lines)
+  manual_stamp.stampManual(_root())
 
 
 def main(*args: str) -> int:
