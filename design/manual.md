@@ -1055,7 +1055,7 @@ taking several kinds of argument, or a staticmethod. Write
 
 ```
 
-From the update after 1.2.2, one name may hold bound methods,
+From 1.2.3, one name may hold bound methods,
 classmethods and staticmethods together. Through the class the
 classmethods and the staticmethods are tried. Through an instance the
 bound methods and the classmethods are tried. The overload that matches

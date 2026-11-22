@@ -22,7 +22,7 @@ class PromiseOverloadClasses(TestCase):
   '@overload' or below it. Within one class an exact match of the classes
   wins; otherwise the first declaration, in the order written, that accepts
   the arguments as instances wins, so the more specific signature is declared
-  first. From the update after 1.2.2, one name may hold bound methods,
+  first. From 1.2.3, one name may hold bound methods,
   classmethods and staticmethods together. Through the class the classmethods
   and the staticmethods are tried, and a bound method is not considered.
   Through an instance the bound methods and the classmethods are tried, and a
