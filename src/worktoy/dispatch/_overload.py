@@ -71,14 +71,17 @@ class overload:  # NOQA
   raises 'MixedMethodKind'.
   The namespace of a 'BaseObject' class claims every 'overload' object,
   so the namespace never stores one, and 'LoadSpaceHook' builds the
-  'Dispatcher' of each name, refusing a body that declares one name as
-  two kinds of method; see 'Dispatcher' for how calls are matched, and
-  for why the most specific signature is declared first. A subclass
-  declaring an overload at a name it inherits keeps the inherited
-  overloads and adds its own, an equal signature replacing the inherited
-  one. A subclass overloading the name as another kind of method
-  overrides it as a plain definition does, hiding the inherited
-  overloads.
+  'Dispatcher' of each name; see 'Dispatcher' for how calls are matched,
+  and for why the most specific signature is declared first. One name
+  may hold bound methods, classmethods and staticmethods together: the
+  classmethods and the staticmethods are reached through the class, the
+  bound methods and the classmethods through an instance, and a
+  staticmethod is not considered through an instance where the name has
+  a bound method. A subclass declaring an overload at a name it inherits
+  keeps the inherited overloads and adds its own, an equal signature
+  replacing the inherited one. A subclass overloading the name only as
+  kinds of method the inherited declarations are not overrides it as a
+  plain definition does, hiding the inherited overloads.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

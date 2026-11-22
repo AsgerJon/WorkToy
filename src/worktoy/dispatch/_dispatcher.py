@@ -63,6 +63,40 @@ def _dropReceiver(func: Method) -> Method:
   return dropped
 
 
+def _passClass(func: Method) -> Method:
+  """
+  A dispatcher reached through an instance passes that instance ahead of
+  the arguments of every call. A classmethod at a name that also holds
+  bound methods is reached that way too, and must receive the class of
+  the instance, as a classmethod read through an instance does.
+
+  Implementation
+  --------------
+
+  The wrapper takes the instance by position and calls the function with
+  its class in that place; 'functools.wraps' copies the name, docstring
+  and attributes.
+
+  Parameters
+  ----------
+
+  func : Method
+    A 'Callable[..., Any]' taking the class first.
+
+  Returns
+  -------
+
+  Method
+    A function taking the instance first and passing on its class.
+  """
+
+  @wraps(func)
+  def classed(receiver: Any, *args, **kwargs) -> Any:
+    return func(type(receiver), *args, **kwargs)
+
+  return classed
+
+
 def _uniformType(types: tuple) -> Optional[type]:
   first = types[0]
   for type_ in types:
@@ -260,6 +294,19 @@ class Dispatcher(Object):
   function, the fallback and the finalizer behind '_dropReceiver', and a
   'PermuterMethod' over the wrapped function.
 
+  One name may hold bound methods, classmethods and staticmethods
+  together. A dispatcher still binds one receiver, the instance or the
+  class, and 'setFunctionKind' names the functions of another kind than
+  its own: a staticmethod is registered behind '_dropReceiver', and a
+  classmethod in a dispatcher of bound methods behind '_passClass'. A
+  name holding bound methods beside another kind takes two dispatchers.
+  The one in the class dictionary holds the bound methods and the
+  classmethods, and is reached through an instance. It keeps the second,
+  given by 'setClassDispatcher', which holds the classmethods and the
+  staticmethods, and hands a read through the class on to it. A bound
+  method is therefore not considered through the class, nor a
+  staticmethod through an instance.
+
   Attributes
   ----------
 
@@ -293,6 +340,13 @@ class Dispatcher(Object):
   __method_kind__ = None
   #  The '_dropReceiver' wrapper of each function, for a staticmethod.
   __static_adapters__ = None
+  #  The '_passClass' wrapper of each function, for a classmethod reached
+  #  through an instance.
+  __class_adapters__ = None
+  #  The functions of another kind than the dispatcher, each with its kind.
+  __function_kinds__ = None
+  #  The dispatcher a read through the class is handed on to.
+  __class_dispatcher__ = None
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  GETTERS  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -563,6 +617,26 @@ class Dispatcher(Object):
       'classmethod' or 'staticmethod', or 'None' for an instance method.
     """
     return self.__method_kind__
+
+  def _getFunctionKind(self, func: Any) -> Any:
+    for held, kind in maybe(self.__function_kinds__, []):
+      if held is func:
+        return kind
+    return self.__method_kind__
+
+  def getClassDispatcher(self) -> Optional[Self]:
+    """
+    Code holding the dispatcher of a name with bound methods beside
+    another kind may need the dispatcher that answers through the class.
+
+    Returns
+    -------
+
+    Dispatcher or None
+      The dispatcher a read through the class is handed on to, or 'None'
+      when this dispatcher answers such a read itself.
+    """
+    return self.__class_dispatcher__
 
   def _hasRegistrations(self) -> bool:
     registries = (
@@ -943,22 +1017,93 @@ class Dispatcher(Object):
     self.__method_kind__ = kind
     self.__compiled_func__ = None
 
+  def setFunctionKind(self, kind: Any, *funcs) -> None:
+    """
+    One name may hold bound methods, classmethods and staticmethods
+    together, while a dispatcher binds one receiver for every call. The
+    functions of another kind than the dispatcher must be named before
+    they are registered, since a function is wrapped for its kind as it
+    is registered.
+
+    Implementation
+    --------------
+
+    Each function is recorded with the kind, as it will be registered, a
+    'PermuterMethod' of a flexible declaration included, and found again
+    by identity. The compiled dispatch function is cleared.
+
+    Parameters
+    ----------
+
+    kind : Any
+      'classmethod' or 'staticmethod'.
+
+    *funcs
+      The functions of that kind.
+
+    Raises
+    ------
+
+    TypeError
+      'kind' is neither of the two.
+
+    WriteOnceError
+      A function, a fallback or a finalizer is registered already.
+    """
+    if kind is not classmethod and kind is not staticmethod:
+      infoSpec = """The kind of a function named apart from its
+      dispatcher is 'classmethod' or 'staticmethod', not '%s'."""
+      raise TypeError(textFmt(infoSpec % (kind,)))
+    existing = maybe(self.__function_kinds__, [])
+    if self._hasRegistrations():
+      raise WriteOnceError(self, existing, (kind, *funcs))
+    self.__function_kinds__ = [*existing, *((func, kind) for func in funcs)]
+    self.__compiled_func__ = None
+
+  def setClassDispatcher(self, dispatcher: Self) -> None:
+    """
+    A name holding bound methods beside classmethods or staticmethods is
+    two things: through an instance it is the bound methods and the
+    classmethods, through the class the classmethods and the
+    staticmethods. Each is a dispatcher of its own, and the one the class
+    holds must know the other.
+
+    Parameters
+    ----------
+
+    dispatcher : Dispatcher
+      The dispatcher a read through the class is handed on to.
+
+    Raises
+    ------
+
+    TypeException
+      'dispatcher' is not a 'Dispatcher'.
+    """
+    if not isinstance(dispatcher, Dispatcher):
+      raise TypeException('dispatcher', dispatcher, Dispatcher)
+    self.__class_dispatcher__ = dispatcher
+
   def _adaptToKind(self, func: Method) -> Method:
     """
     The dispatch function passes a receiver ahead of the arguments of every
-    call, and a staticmethod takes none, so each function of a dispatcher
-    standing for a staticmethod must be called without it. A function
+    call: the instance, or the class for a dispatcher standing for a
+    classmethod or a staticmethod. A staticmethod takes none, so it must
+    be called without it, and a classmethod in a dispatcher of bound
+    methods must be given the class of the instance. A function
     registered under several signatures must still be one function to the
     checks comparing registrations.
 
     Implementation
     --------------
 
-    For a staticmethod, a function is wrapped by '_dropReceiver', the
-    wrapper kept in '__static_adapters__' under the function; a
+    The kind of a function is the one 'setFunctionKind' named for it, or
+    else that of the dispatcher. A staticmethod is wrapped by
+    '_dropReceiver', and a classmethod in a dispatcher of bound methods
+    by '_passClass', each wrapper kept under the function; a
     'PermuterMethod' is rebuilt over the wrapped function with the same
     arrangement, so it still reorders the arguments after the receiver.
-    For the other kinds the function is returned as it is.
+    Any other function is returned as it is.
 
     Parameters
     ----------
@@ -972,11 +1117,21 @@ class Dispatcher(Object):
     Method
       What the dispatcher registers.
     """
-    if self.__method_kind__ is not staticmethod:
+    kind = self._getFunctionKind(func)
+    if kind is staticmethod:
+      wrap = self._dropFor
+    elif kind is classmethod and self.__method_kind__ is None:
+      wrap = self._classFor
+    else:
+      #  This branch is reached by the following:
+      #  - A bound method
+      #  - A classmethod in a dispatcher that binds the class
       return func
     if isinstance(func, PermuterMethod):
-      inner = self._adaptToKind(func.__wrapped__)
-      return PermuterMethod(inner, func.arrangement)
+      return PermuterMethod(wrap(func.__wrapped__), func.arrangement)
+    return wrap(func)
+
+  def _dropFor(self, func: Method) -> Method:
     adapters = self.__static_adapters__
     if adapters is None:
       adapters = dict()
@@ -987,6 +1142,20 @@ class Dispatcher(Object):
       #  This branch is reached by the following:
       #  - The first registration of the function on this dispatcher
       adapted = _dropReceiver(func)
+      adapters[func] = adapted
+    return adapted
+
+  def _classFor(self, func: Method) -> Method:
+    adapters = self.__class_adapters__
+    if adapters is None:
+      adapters = dict()
+      self.__class_adapters__ = adapters
+    try:
+      adapted = adapters[func]
+    except KeyError:
+      #  This branch is reached by the following:
+      #  - The first registration of the function on this dispatcher
+      adapted = _passClass(func)
       adapters[func] = adapted
     return adapted
 
@@ -1254,8 +1423,9 @@ class Dispatcher(Object):
     Through the class the compiled function is returned, through an
     instance a new 'MethodType' of it on every read. A classmethod or a
     staticmethod gives a new 'MethodType' bound to the class, read through
-    either. A dispatcher no class body placed, as one installed with
-    'setattr', has no name to compile with.
+    either. A dispatcher keeping a second one for the class hands a read
+    through the class on to it. A dispatcher no class body placed, as one
+    installed with 'setattr', has no name to compile with.
 
     Parameters
     ----------
@@ -1282,9 +1452,16 @@ class Dispatcher(Object):
       owner = type(instance)
     if self.__method_kind__ is not None:
       return MethodType(self._getCachedFunction(), owner)
-    if instance is None:
+    if instance is not None:
+      return MethodType(self._getCachedFunction(), instance)
+    onClass = self.__class_dispatcher__
+    if onClass is None:
+      #  This branch is reached by the following:
+      #  - Every function at the name is a bound method
       return self._getCachedFunction()
-    return MethodType(self._getCachedFunction(), instance)
+    #  The rest of the method is reached by the following:
+    #  - The name holds bound methods beside classmethods or staticmethods
+    return onClass.__get__(None, owner)
 
   def __set__(self, instance: Any, value: Any, **kwargs) -> Never:
     """
@@ -1334,6 +1511,10 @@ class Dispatcher(Object):
     """
     self.swapAllTHIS(owner)
     Object.__set_name__(self, owner, name, **kwargs)
+    onClass = self.__class_dispatcher__
+    if onClass is not None:
+      #  The dispatcher answering through the class is placed with this one.
+      onClass.__set_name__(owner, name, **kwargs)
 
   def __str__(self, ) -> str:
     owner = self.getFieldOwner()
@@ -1426,6 +1607,11 @@ class Dispatcher(Object):
     newLoad.__method_kind__ = self.__method_kind__
     #  The wrappers of a staticmethod stay one per function on the copy.
     newLoad.__static_adapters__ = self.__static_adapters__
+    newLoad.__class_adapters__ = self.__class_adapters__
+    newLoad.__function_kinds__ = self.__function_kinds__
+    onClass = self.__class_dispatcher__
+    if onClass is not None:
+      newLoad.__class_dispatcher__ = onClass.clone()
     return newLoad
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -1452,6 +1638,9 @@ class Dispatcher(Object):
     for sig, func in self._getVariadicFuncs():
       sig.restoreTHIS()
     self.__compiled_func__ = None
+    onClass = self.__class_dispatcher__
+    if onClass is not None:
+      onClass.restoreTHIS()
 
   def swapAllTHIS(self, thisType: type) -> None:
     """

@@ -3,8 +3,8 @@ during class creation by the metaclass machinery in 'worktoy.mcls' (and
 the primitive metaclasses in 'worktoy.core'). They cover near-miss dunder
 names, illegal '__del__', reserved names, hook conflicts, a name both
 overloaded and defined plainly in one class body, an 'overload' object
-bound twice in one class body, an overloaded name declared as two kinds
-of method, the deletion of a name a hook claimed, a class hook a
+bound twice in one class body, one overloaded function declared as two
+kinds of method, the deletion of a name a hook claimed, a class hook a
 metaclass takes over, '__slots__' in the body of a worktoy class, a
 second sentinel at a taken name, illegal instantiation, and a disallowed
 attribute in the class body of a control-flow signal.

@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 from ..dispatch import TypeSig, Dispatcher
 from ..utilities import maybe
 from ..waitaminute.dispatch import DuplicateSignature
-from ..waitaminute.meta import MixedMethodKind
 from . import AbstractNamespace
 from .space_hooks import LoadSpaceHook
 
@@ -51,10 +50,13 @@ class BaseSpace(AbstractNamespace):
   it: once a class overloads a name, a plain method it inherits there
   takes no part in its dispatch. Each gathered
   declaration must carry how far from the class it comes, which decides
-  the order of dispatch. An overloaded name is one kind of method, an
-  instance method, a classmethod or a staticmethod: one body may not
-  declare it as two, and a base declaring it as another kind than the
-  nearer classes is hidden as a plain definition is.
+  the order of dispatch. An overloaded name may hold bound methods,
+  classmethods and staticmethods together, each function keeping its
+  kind. A bound method is reached through an instance and a staticmethod
+  through the class, so the two never answer one call and may share a
+  signature; any other two functions of one signature at a name would
+  leave dispatch undecided. A base declaring the name as kinds none of
+  which the nearer classes declare is hidden as a plain definition is.
 
   Implementation
   --------------
@@ -65,12 +67,14 @@ class BaseSpace(AbstractNamespace):
   different functions. 'collectOverloads', 'collectVariadics',
   'collectFallback' and 'collectFinalizer' gather the declarations of the
   body and of the 'BaseSpace' namespaces of the bases, with distances, 0
-  for the body. 'addMethodKind' records the kind each name is declared
-  as, refusing a second kind with 'MixedMethodKind', and
-  '_getInheritedSpaces' passes over a base of another kind as it passes
-  over a plain definition, so
-  'collectMethodKind' gives the kind of the nearest class declaring the
-  name. They are kept in lists rather than dictionaries keyed by
+  for the body. 'addMethodKind' records the kinds each name is declared
+  as and 'addFunctionKind' the kind of each function, and
+  '_getInheritedSpaces' passes over a base sharing no kind with the
+  nearer classes as it passes over a plain definition.
+  'collectFunctionKinds' gathers the kind of every function at a name,
+  from which 'LoadSpaceHook' builds the dispatchers, and
+  'collectMethodKind' gives the first kind of the nearest class declaring
+  the name. They are kept in lists rather than dictionaries keyed by
   signature, since a signature holding 'THIS' hashes differently once its
   class exists. The signature objects are shared with the dispatchers
   built from them, those of subclasses included, so nothing changes them
@@ -89,7 +93,8 @@ class BaseSpace(AbstractNamespace):
   __finalizer_map__: Optional[FuncMap] = None
   __plain_names__: Optional[tuple[str, ...]] = None
   __claimed_overloads__: Optional[tuple[Claim, ...]] = None
-  __method_kinds__: Optional[dict[str, Any]] = None
+  __method_kinds__: Optional[dict[str, tuple]] = None
+  __function_kinds__: Optional[dict[str, list]] = None
 
   #  Public Variables
   loadSpaceHook = LoadSpaceHook()
@@ -161,19 +166,36 @@ class BaseSpace(AbstractNamespace):
     """
     return maybe(self.__finalizer_map__, dict())
 
-  def getMethodKinds(self) -> dict[str, Any]:
+  def getMethodKinds(self) -> dict[str, tuple]:
     """
-    The dispatchers of the class and of its subclasses need the kind of
+    The dispatchers of the class and of its subclasses need the kinds of
     method this class body declared each overloaded name as.
 
     Returns
     -------
 
-    dict[str, Any]
-      From each name to 'classmethod', 'staticmethod', or 'None' for an
+    dict[str, tuple]
+      From each name to the kinds declared at it, in the order first
+      declared, each 'classmethod', 'staticmethod', or 'None' for an
       instance method.
     """
     return maybe(self.__method_kinds__, dict())
+
+  def getFunctionKinds(self) -> dict[str, list]:
+    """
+    One name may hold bound methods, classmethods and staticmethods, so
+    the dispatchers built for it need the kind of each function.
+
+    Returns
+    -------
+
+    dict[str, list]
+      From each name to a 'list[tuple[Callable, Any]]' of each function
+      this class body declared at it, as the body handed it over, with
+      its kind: 'classmethod', 'staticmethod', or 'None' for an instance
+      method.
+    """
+    return maybe(self.__function_kinds__, dict())
 
   def _getDeclaredKind(self, name: str) -> tuple:
     """
@@ -184,16 +206,16 @@ class BaseSpace(AbstractNamespace):
     -------
 
     tuple
-      The kind in a one-element tuple, or an empty tuple when the body
-      declared nothing at the name.
+      The kinds the body declared the name as, in the order first
+      declared, or an empty tuple when it declared nothing at the name.
     """
     kinds = self.getMethodKinds()
     try:
-      kind = kinds[name]
+      declared = kinds[name]
     except KeyError:
       return ()
     else:
-      return (kind,)
+      return declared
 
   def getPlainNames(self, ) -> tuple[str, ...]:
     """
@@ -325,8 +347,8 @@ class BaseSpace(AbstractNamespace):
       The name.
 
     kind : tuple
-      The kind the nearer classes declare, in a one-element tuple, or an
-      empty tuple when none of them declares the name.
+      The kinds the nearer classes declare, or an empty tuple when none
+      of them declares the name.
 
     Returns
     -------
@@ -340,7 +362,15 @@ class BaseSpace(AbstractNamespace):
     if space is None:
       return False
     found = space._getDeclaredKind(name)
-    return True if kind and found and found[0] is not kind[0] else False
+    if not kind or not found:
+      return False
+    for one in found:
+      if any(one is other for other in kind):
+        #  This branch is reached by the following:
+        #  - The class declares the name as a kind the nearer classes
+        #    declare as well
+        return False
+    return True
 
   def _isReachedAlong(
       self,
@@ -445,8 +475,7 @@ class BaseSpace(AbstractNamespace):
         #    of the new class, and no base gathered before inherits this one
         #    past such a class
         continue
-      if not kind:
-        kind = space._getDeclaredKind(name)
+      kind = self._joinKinds(kind, space._getDeclaredKind(name))
       out.append(space)
       routes.append([*cls.__mro__[1:]])
     return out
@@ -486,14 +515,82 @@ class BaseSpace(AbstractNamespace):
     return out
 
   @staticmethod
+  def _joinKinds(first: tuple, second: tuple) -> tuple:
+    out = [*first]
+    for kind in second:
+      if not any(kind is other for other in out):
+        out.append(kind)
+    return (*out,)
+
+  @staticmethod
+  def _mayMeet(first: Any, second: Any) -> bool:
+    """
+    Two functions of one signature at a name leave dispatch undecided only
+    if one call can reach both. A bound method is reached through an
+    instance and a staticmethod through the class, so those two never
+    meet; a classmethod is reached both ways and meets either.
+
+    Parameters
+    ----------
+
+    first : Any
+      The kind of one function: 'classmethod', 'staticmethod', or 'None'
+      for an instance method.
+
+    second : Any
+      The kind of the other.
+
+    Returns
+    -------
+
+    bool
+      Whether one call can reach functions of both kinds.
+    """
+    kinds = (first, second)
+    bound = any(kind is None for kind in kinds)
+    static = any(kind is staticmethod for kind in kinds)
+    return False if bound and static else True
+
+  @staticmethod
+  def _kindIn(kinds: list, func: Any) -> Any:
+    """
+    The kind of a function is looked up among the recorded ones by
+    identity; one recorded nowhere is an instance method, as a function
+    registered by hand is.
+
+    Parameters
+    ----------
+
+    kinds : list
+      A 'list[tuple[Callable, Any]]' of functions with their kinds.
+
+    func : Any
+      The function asked about.
+
+    Returns
+    -------
+
+    Any
+      'classmethod', 'staticmethod', or 'None' for an instance method.
+    """
+    for held, kind in kinds:
+      if held is func:
+        return kind
+    return None
+
   def _mergeSigFuncs(
+      self,
       collected: CollectedList,
       more: SigFuncList,
       distance: int,
+      kinds: list,
   ) -> None:
     for sig, func in more:
-      for existing, _, __ in collected:
-        if existing == sig:
+      own = self._kindIn(kinds, func)
+      for existing, held, __ in collected:
+        if existing != sig:
+          continue
+        if self._mayMeet(self._kindIn(kinds, held), own):
           break
       else:
         collected.append((sig, func, distance,))
@@ -525,9 +622,10 @@ class BaseSpace(AbstractNamespace):
     """
     out = []
     spaces = (self, *self._getInheritedSpaces(name))
+    kinds = self._gatherFunctionKinds(spaces, name)
     for distance, space in enumerate(spaces):
       sigFuncs = space.getOverloads().get(name, [])
-      self._mergeSigFuncs(out, sigFuncs, distance)
+      self._mergeSigFuncs(out, sigFuncs, distance, kinds)
     return out
 
   def collectVariadics(self, name: str) -> CollectedList:
@@ -548,9 +646,10 @@ class BaseSpace(AbstractNamespace):
     """
     out = []
     spaces = (self, *self._getInheritedSpaces(name))
+    kinds = self._gatherFunctionKinds(spaces, name)
     for distance, space in enumerate(spaces):
       sigFuncs = space.getVariadics().get(name, [])
-      self._mergeSigFuncs(out, sigFuncs, distance)
+      self._mergeSigFuncs(out, sigFuncs, distance, kinds)
     return out
 
   def collectFlexes(self, name: str) -> CollectedList:
@@ -573,11 +672,15 @@ class BaseSpace(AbstractNamespace):
     """
     out = []
     spaces = (self, *self._getInheritedSpaces(name))
+    kinds = self._gatherFunctionKinds(spaces, name)
     for distance, space in enumerate(spaces):
       for sig, func in space.getFlexes().get(name, []):
         bag = sig.getBag()
-        for existing, _, __ in out:
-          if existing.getBag() == bag:
+        own = self._kindIn(kinds, func)
+        for existing, held, __ in out:
+          if existing.getBag() != bag:
+            continue
+          if self._mayMeet(self._kindIn(kinds, held), own):
             break
         else:
           out.append((sig, func, distance,))
@@ -611,6 +714,49 @@ class BaseSpace(AbstractNamespace):
       if found:
         return found[0]
     return None
+
+  @staticmethod
+  def _gatherFunctionKinds(spaces: tuple, name: str) -> list:
+    out = []
+    for space in spaces:
+      try:
+        recorded = space.getFunctionKinds()[name]
+      except KeyError:
+        #  This branch is reached by the following:
+        #  - The class body recorded no kind at the name, as one whose
+        #    declarations were registered by hand
+        continue
+      out.extend(recorded)
+    return out
+
+  def collectFunctionKinds(self, name: str) -> list:
+    """
+    The dispatchers of a name are built by the kind of each function, its
+    own and the inherited ones: the bound methods are reached through an
+    instance, the staticmethods through the class and the classmethods
+    both ways.
+
+    Implementation
+    --------------
+
+    The body and the namespaces from '_getInheritedSpaces' are asked in
+    order.
+
+    Parameters
+    ----------
+
+    name : str
+      The name.
+
+    Returns
+    -------
+
+    list
+      A 'list[tuple[Callable, Any]]' of each function recorded at the
+      name with its kind, nearest class first.
+    """
+    spaces = (self, *self._getInheritedSpaces(name))
+    return self._gatherFunctionKinds(spaces, name)
 
   def collectFallback(self, name: str) -> Optional[Callable]:
     """
@@ -683,19 +829,26 @@ class BaseSpace(AbstractNamespace):
 
     DuplicateSignature
       An equal signature is declared for a different function, or a
-      flexible declaration of the same classes is.
+      flexible declaration of the same classes is, unless the two are a
+      bound method and a staticmethod, which no call reaches together.
     """
+    kinds = self._gatherFunctionKinds((self,), name)
+    own = self._kindIn(kinds, func)
     bag = sig.getBag()
     for flexSig, flexFunc in self.getFlexes().get(name, []):
-      if flexSig.getBag() == bag and flexFunc is not func:
+      if flexSig.getBag() != bag or flexFunc is func:
+        continue
+      if self._mayMeet(self._kindIn(kinds, flexFunc), own):
         raise DuplicateSignature(sig, flexFunc, func)
     existing = self.getOverloads()
     sigFuncs = existing.get(name, [])
     for oldSig, oldFunc in sigFuncs:
-      if oldSig == sig:
-        if oldFunc is not func:
-          raise DuplicateSignature(sig, oldFunc, func)
+      if oldSig != sig:
+        continue
+      if oldFunc is func:
         break
+      if self._mayMeet(self._kindIn(kinds, oldFunc), own):
+        raise DuplicateSignature(sig, oldFunc, func)
     else:
       sigFuncs.append((sig, func,))
     existing[name] = sigFuncs
@@ -726,19 +879,26 @@ class BaseSpace(AbstractNamespace):
 
     DuplicateSignature
       The same classes are declared for a different function, flexibly or
-      as one order.
+      as one order, unless the two are a bound method and a staticmethod,
+      which no call reaches together.
     """
+    kinds = self._gatherFunctionKinds((self,), name)
+    own = self._kindIn(kinds, func)
     bag = sig.getBag()
     for oldSig, oldFunc in self.getOverloads().get(name, []):
-      if oldSig.getBag() == bag and oldFunc is not func:
+      if oldSig.getBag() != bag or oldFunc is func:
+        continue
+      if self._mayMeet(self._kindIn(kinds, oldFunc), own):
         raise DuplicateSignature(sig, oldFunc, func)
     existing = self.getFlexes()
     flexes = existing.get(name, [])
     for oldSig, oldFunc in flexes:
-      if oldSig.getBag() == bag:
-        if oldFunc is not func:
-          raise DuplicateSignature(sig, oldFunc, func)
+      if oldSig.getBag() != bag:
+        continue
+      if oldFunc is func:
         break
+      if self._mayMeet(self._kindIn(kinds, oldFunc), own):
+        raise DuplicateSignature(sig, oldFunc, func)
     else:
       flexes.append((sig, func,))
     existing[name] = flexes
@@ -766,15 +926,21 @@ class BaseSpace(AbstractNamespace):
     ------
 
     DuplicateSignature
-      An equal signature is declared for a different function.
+      An equal signature is declared for a different function, unless the
+      two are a bound method and a staticmethod, which no call reaches
+      together.
     """
+    kinds = self._gatherFunctionKinds((self,), name)
+    own = self._kindIn(kinds, func)
     existing = self.getVariadics()
     sigFuncs = existing.get(name, [])
     for oldSig, oldFunc in sigFuncs:
-      if oldSig == sig:
-        if oldFunc is not func:
-          raise DuplicateSignature(sig, oldFunc, func)
+      if oldSig != sig:
+        continue
+      if oldFunc is func:
         break
+      if self._mayMeet(self._kindIn(kinds, oldFunc), own):
+        raise DuplicateSignature(sig, oldFunc, func)
     else:
       sigFuncs.append((sig, func,))
     existing[name] = sigFuncs
@@ -782,9 +948,34 @@ class BaseSpace(AbstractNamespace):
 
   def addMethodKind(self, name: str, kind: Any) -> None:
     """
-    One dispatcher stands at an overloaded name and passes one receiver
-    to every function, so one body declares the name as one kind of
-    method.
+    One name may be declared as several kinds of method, and which kinds
+    a body declares decides what the class inherits at the name: a base
+    sharing no kind with the nearer classes is hidden.
+
+    Parameters
+    ----------
+
+    name : str
+      The name.
+
+    kind : Any
+      'classmethod', 'staticmethod', or 'None' for an instance method.
+    """
+    kinds = self.getMethodKinds()
+    kinds[name] = self._joinKinds(self._getDeclaredKind(name), (kind,))
+    self.__method_kinds__ = kinds
+
+  def addFunctionKind(self, name: str, kind: Any, *funcs) -> None:
+    """
+    'LoadSpaceHook' records the kind of each function a body declares at
+    an overloaded name, since the dispatchers of the name are built by
+    kind.
+
+    Implementation
+    --------------
+
+    Each function is recorded once, compared by identity, with the kind
+    of its first record.
 
     Parameters
     ----------
@@ -795,21 +986,23 @@ class BaseSpace(AbstractNamespace):
     kind : Any
       'classmethod', 'staticmethod', or 'None' for an instance method.
 
-    Raises
-    ------
-
-    MixedMethodKind
-      The body declared the name as another kind already.
+    *funcs
+      The functions as the body handed them over, a 'PermuterMethod' of
+      a flexible declaration included.
     """
-    kinds = self.getMethodKinds()
+    existing = self.getFunctionKinds()
     try:
-      existing = kinds[name]
+      recorded = existing[name]
     except KeyError:
-      kinds[name] = kind
-      self.__method_kinds__ = kinds
-    else:
-      if existing is not kind:
-        raise MixedMethodKind(self.getClassName(), name, (existing, kind))
+      #  This branch is reached by the following:
+      #  - The first function the body declares at the name
+      recorded = []
+    for func in funcs:
+      if any(func is held for held, _ in recorded):
+        continue
+      recorded.append((func, kind))
+    existing[name] = recorded
+    self.__function_kinds__ = existing
 
   def addPlainName(self, name: str) -> None:
     """

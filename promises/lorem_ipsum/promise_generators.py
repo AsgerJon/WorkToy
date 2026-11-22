@@ -92,6 +92,7 @@ class PromiseGenerators(TestCase):
     self.assertEqual(str(Paragraph(200)), first)
 
   def test_is_first_flip(self) -> None:
+    random.seed(7)
     paragraph = Paragraph(150)
     self.assertTrue(str(paragraph).startswith('Lorem ipsum'))
     paragraph.isFirst = False

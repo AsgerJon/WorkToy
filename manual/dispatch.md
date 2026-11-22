@@ -274,8 +274,49 @@ taking several kinds of argument, or a staticmethod. Write
 
 ```
 
-All the declarations of one name are one kind of method; a name
-declared as two kinds raises `MixedMethodKind`.
+From the update after 1.2.2, one name may hold bound methods,
+classmethods and staticmethods together. Through the class the
+classmethods and the staticmethods are tried. Through an instance the
+bound methods and the classmethods are tried. The overload that matches
+receives the instance if it is bound, the class if it is a classmethod,
+and neither if it is static:
+
+```
+>>> class File(BaseObject):
+...   @overload()
+...   def exists(self):
+...     return 'this file'
+...   @staticmethod
+...   @overload(str)
+...   def exists(name):
+...     return 'the file ' + name
+>>> File().exists(), File.exists('notes')
+('this file', 'the file notes')
+
+```
+
+A staticmethod is not considered through an instance where the name has
+a bound method, nor a bound method through the class, so a bound method
+and a staticmethod at one name may have the same signature:
+
+```
+>>> try:
+...   File().exists('notes')
+... except DispatchException:
+...   print('refused')
+refused
+>>> class Foo(BaseObject):
+...   @staticmethod
+...   @overload(int)
+...   def bar(value):
+...     return 'static'
+...   @overload(int)
+...   def bar(self, value):
+...     return 'bound'
+>>> Foo.bar(69), Foo().bar(420)
+('static', 'bound')
+
+```
 
 A subclass overloading a name it inherits keeps the inherited
 declarations and adds its own, and a declaration of an equal signature

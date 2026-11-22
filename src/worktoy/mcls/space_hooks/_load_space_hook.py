@@ -32,16 +32,22 @@ class LoadSpaceHook(AbstractSpaceHook):
   stores one, and records its signatures, as copies, its fallback and its
   finalizer on the namespace. A record under '@classmethod' or
   '@staticmethod' is taken out and claimed the same way, and the kind of
-  method each binding declares is recorded; a second kind at one name, or
-  both kinds in one stack, raises 'MixedMethodKind'. A plain binding at
+  method each binding declares is recorded, for the name and for each
+  function; one stack declaring both a classmethod and a staticmethod
+  raises 'MixedMethodKind'. A plain binding at
   an overloaded name, or an overload at a plainly bound one, raises
   'OverloadConflict'; binding one 'overload' object twice in a body, as
   '__radd__ = __add__', raises 'ReboundOverload'. 'postCompilePhase'
   builds a 'Dispatcher' for every
   overloaded name of the body or of a base, unless the body defines the
-  name plainly, and writes it into the dictionary, of the kind of method
-  the nearest class declaring the name made it. Every class thus has
-  dispatchers of its own.
+  name plainly, and writes it into the dictionary. Every class thus has
+  dispatchers of its own. A name holding bound methods beside
+  classmethods or staticmethods takes two: one of the bound methods and
+  the classmethods, reached through an instance, which keeps one of the
+  classmethods and the staticmethods, reached through the class. A bound
+  method is thus not considered through the class, nor a staticmethod
+  through an instance. Any other name takes one dispatcher holding every
+  function.
   """
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -90,8 +96,7 @@ class LoadSpaceHook(AbstractSpaceHook):
       The 'overload' object is bound a second time in the body.
 
     MixedMethodKind
-      The body declared the name as another kind of method already, or the
-      binding is decorated as both a classmethod and a staticmethod.
+      The binding is decorated as both a classmethod and a staticmethod.
     """
     kinds, record = overload.peelMethodKinds(val)
     if not isinstance(record, overload):
@@ -105,7 +110,11 @@ class LoadSpaceHook(AbstractSpaceHook):
     claimedName = self.space.getClaimedName(val)
     if claimedName is not None:
       raise ReboundOverload(self.space.getClassName(), claimedName, key)
-    self.space.addMethodKind(key, self._getMethodKind(key, kinds, val))
+    kind = self._getMethodKind(key, kinds, val)
+    self.space.addMethodKind(key, kind)
+    #  Before the registrations below, which ask for the kind of a function
+    #  to tell whether two of one signature can meet.
+    self.space.addFunctionKind(key, kind, *self._getFunctions(val))
     self.space.addClaimedName(val, key)
     #  A stack of decorators may give one 'overload' every role at once.
     if val.isFallback():
@@ -154,6 +163,35 @@ class LoadSpaceHook(AbstractSpaceHook):
       stack = (*kinds, recordKind)
     className = self.space.getClassName()
     return overload.agreeMethodKind(stack, key, className)
+
+  @staticmethod
+  def _getFunctions(record: overload) -> list:
+    """
+    A record hands its function to the namespace under every role it
+    declares, and the namespace keeps the kind of each.
+
+    Parameters
+    ----------
+
+    record : overload
+      The record.
+
+    Returns
+    -------
+
+    list
+      Every function the record hands over: those of its concrete,
+      flexible and variadic signatures, a 'PermuterMethod' of a flexible
+      declaration included, its fallback and its finalizer.
+    """
+    out = [func for _, func in record]
+    out += [func for _, func in record.getFlexes()]
+    out += [func for _, func in record.getVariadics()]
+    if record.isFallback():
+      out.append(record.getFallback())
+    if record.isFinalizer():
+      out.append(record.getFinalizer())
+    return out
 
   def delItemPhase(self, key: str, val: Any = None, ) -> bool:
     """
@@ -206,15 +244,145 @@ class LoadSpaceHook(AbstractSpaceHook):
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   def _buildDispatcher(self, name: str) -> Optional[Dispatcher]:
-    sigFuncs = self.space.collectOverloads(name)
-    flexes = self.space.collectFlexes(name)
-    variadics = self.space.collectVariadics(name)
-    fallback = self.space.collectFallback(name)
-    finalizer = self.space.collectFinalizer(name)
-    if not (sigFuncs or flexes or variadics or fallback or finalizer):
+    """
+    One name may hold bound methods, classmethods and staticmethods. A
+    bound method needs an instance, so it is not considered through the
+    class, and where a name has bound methods its staticmethods are not
+    considered through an instance. A classmethod is reached both ways.
+
+    Implementation
+    --------------
+
+    A name holding bound methods beside another kind takes two
+    dispatchers, each built by '_buildSide': one of the bound methods and
+    the classmethods, which is returned and reached through an instance,
+    and one of the classmethods and the staticmethods, which the first
+    keeps for a read through the class. Any other name takes one
+    dispatcher of every function.
+
+    Parameters
+    ----------
+
+    name : str
+      The overloaded name.
+
+    Returns
+    -------
+
+    Dispatcher or None
+      The dispatcher for the class dictionary, or 'None' when nothing is
+      declared at the name that the class inherits.
+    """
+    gathered = (
+      self.space.collectOverloads(name),
+      self.space.collectFlexes(name),
+      self.space.collectVariadics(name),
+      self.space.collectFallback(name),
+      self.space.collectFinalizer(name),
+    )
+    members = self._getMembers(*gathered)
+    if not members:
       return None
+    kinds = self.space.collectFunctionKinds(name)
+    memberKinds = [self.space._kindIn(kinds, func) for func in members]
+    bound = any(kind is None for kind in memberKinds)
+    other = any(kind is not None for kind in memberKinds)
+    if bound and other:
+      #  This branch is reached by the following:
+      #  - The name holds bound methods beside classmethods or
+      #    staticmethods
+      onInstance = self._buildSide(gathered, kinds, (None, classmethod))
+      onClass = self._buildSide(gathered, kinds, (classmethod, staticmethod))
+      onInstance.setClassDispatcher(onClass)
+      return onInstance
+    every = (None, classmethod, staticmethod)
+    return self._buildSide(gathered, kinds, every)
+
+  @staticmethod
+  def _getMembers(*gathered) -> list:
+    sigFuncs, flexes, variadics, fallback, finalizer = gathered
+    out = [func for _, func, __ in (*sigFuncs, *flexes, *variadics)]
+    for role in (fallback, finalizer):
+      if role is not None:
+        out.append(role)
+    return out
+
+  def _buildSide(
+      self,
+      gathered: tuple,
+      kinds: list,
+      accepted: tuple,
+  ) -> Dispatcher:
+    """
+    A dispatcher holds the functions of a name that one way of reaching
+    it considers, and binds one receiver for them all: the instance when
+    a bound method is among them, else the class.
+
+    Implementation
+    --------------
+
+    The dispatcher stands for an instance method when it holds a bound
+    method, else for a classmethod when it holds one, else for a
+    staticmethod. The functions of another kind than that are named to it
+    by 'setFunctionKind' before any is registered, and the functions of
+    the accepted kinds are registered with their distances, the fallback
+    and the finalizer included.
+
+    Parameters
+    ----------
+
+    gathered : tuple
+      What the namespace gathered at the name: the concrete, the flexible
+      and the variadic registrations, each a list of signature, function
+      and distance, then the fallback and the finalizer, each a function
+      or 'None'.
+
+    kinds : list
+      A 'list[tuple[Callable, Any]]' of each function at the name with
+      its kind.
+
+    accepted : tuple
+      The kinds the dispatcher holds, each 'classmethod', 'staticmethod',
+      or 'None' for an instance method.
+
+    Returns
+    -------
+
+    Dispatcher
+      The dispatcher, unplaced.
+    """
+
+    def kindOf(func: Any) -> Any:
+      return self.space._kindIn(kinds, func)
+
+    def taken(func: Any) -> bool:
+      own = kindOf(func)
+      return True if any(own is kind for kind in accepted) else False
+
+    sigFuncs = [entry for entry in gathered[0] if taken(entry[1])]
+    flexes = [entry for entry in gathered[1] if taken(entry[1])]
+    variadics = [entry for entry in gathered[2] if taken(entry[1])]
+    #  A fallback or a finalizer the name does not have is 'None' here,
+    #  and stays 'None' whichever way the test falls.
+    fallback = gathered[3] if taken(gathered[3]) else None
+    finalizer = gathered[4] if taken(gathered[4]) else None
+    members = self._getMembers(
+        sigFuncs, flexes, variadics, fallback, finalizer,
+    )
+    memberKinds = [kindOf(func) for func in members]
+    if any(kind is None for kind in memberKinds):
+      binding = None
+    elif any(kind is classmethod for kind in memberKinds):
+      binding = classmethod
+    else:
+      binding = staticmethod
     dispatcher = Dispatcher()
-    dispatcher.setMethodKind(self.space.collectMethodKind(name))
+    dispatcher.setMethodKind(binding)
+    for kind in (classmethod, staticmethod):
+      if kind is binding:
+        continue
+      named = [func for func in members if kindOf(func) is kind]
+      dispatcher.setFunctionKind(kind, *named)
     for sig, func, distance in sigFuncs:
       dispatcher.addSigFunc(sig, func, distance)
     for sig, func, distance in flexes:

@@ -10,7 +10,6 @@ from worktoy.core.sentinels import ARGS
 from worktoy.dispatch import overload, TypeSig
 from worktoy.mcls import BaseMeta, BaseSpace
 from worktoy.waitaminute.dispatch import DuplicateSignature
-from worktoy.waitaminute.meta import MixedMethodKind
 from . import MclsTest
 
 
@@ -20,6 +19,10 @@ def _first(self, n: int) -> None:
 
 def _second(self, n: int) -> None:
   """The second function registered at a name."""
+
+
+def _third(cls, n: int) -> None:
+  """The third function registered at a name."""
 
 
 class TestBaseSpaceRegistry(MclsTest):
@@ -154,16 +157,128 @@ class TestBaseSpaceRegistry(MclsTest):
     self.space.addMethodKind('f', None)
     self.space.addMethodKind('g', classmethod)
     self.assertEqual(self.space.getMethodKinds(),
-                     {'f': None, 'g': classmethod})
+                     {'f': (None,), 'g': (classmethod,)})
     self.assertEqual(self.space._getDeclaredKind('f'), (None,))
     self.assertEqual(self.space._getDeclaredKind('g'), (classmethod,))
-    with self.assertRaises(MixedMethodKind) as context:
-      self.space.addMethodKind('f', staticmethod)
-    exception = context.exception
-    self.assertEqual(exception.className, 'Hand')
-    self.assertEqual(exception.overloadName, 'f')
-    self.assertEqual(exception.kinds, (None, staticmethod))
-    self.assertIn('instance method', str(exception))
+    self.space.addMethodKind('f', staticmethod)
+    self.space.addMethodKind('f', None)
+    self.space.addMethodKind('g', staticmethod)
+    self.assertEqual(self.space._getDeclaredKind('f'), (None, staticmethod))
+    self.assertEqual(
+        self.space.getMethodKinds(),
+        {'f': (None, staticmethod), 'g': (classmethod, staticmethod)},
+    )
+
+  def test_function_kinds(self) -> None:
+    self.assertEqual(self.space.getFunctionKinds(), {})
+    self.assertEqual(self.space.collectFunctionKinds('f'), [])
+    self.space.addFunctionKind('f', staticmethod, _first)
+    self.space.addFunctionKind('f', None, _second, _second)
+    self.space.addFunctionKind('g', classmethod, _first)
+    recorded = [(_first, staticmethod), (_second, None)]
+    self.assertEqual(
+        self.space.getFunctionKinds(),
+        {'f': recorded, 'g': [(_first, classmethod)]},
+    )
+    self.assertEqual(self.space.collectFunctionKinds('f'), recorded)
+    self.assertEqual(self.space.collectFunctionKinds('absent'), [])
+    self.space.addFunctionKind('k', None, _first)
+    self.space.addFunctionKind('k', staticmethod, _first, _second)
+    self.assertEqual(self.space.getFunctionKinds()['k'],
+                     [(_first, None), (_second, staticmethod)])
+    self.assertIs(self.space._kindIn(recorded, _first), staticmethod)
+    self.assertIsNone(self.space._kindIn(recorded, _second))
+    self.assertIsNone(self.space._kindIn(recorded, _third))
+
+  def test_conflict_behind_another_declaration(self) -> None:
+    wide = TypeSig(int, str, float, bytes)
+    other = TypeSig(int, str, float, bool)
+    turned = TypeSig(bytes, float, str, int)
+    self.space.addFlex('f', other, _first)
+    self.space.addFlex('f', wide, _second)
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addOverload('f', turned, _third)
+    self.assertEqual(context.exception.sig, turned)
+    self.assertIs(context.exception.existing, _second)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('type signature', str(context.exception))
+    self.assertNotIn('f', self.space.getOverloads())
+    self.space.addOverload('g', other, _first)
+    self.space.addOverload('g', wide, _second)
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addFlex('g', turned, _third)
+    self.assertEqual(context.exception.sig, turned)
+    self.assertIs(context.exception.existing, _second)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('type signature', str(context.exception))
+    self.assertNotIn('g', self.space.getFlexes())
+
+  def test_kinds_that_meet(self) -> None:
+    meet = self.space._mayMeet
+    self.assertFalse(meet(None, staticmethod))
+    self.assertFalse(meet(staticmethod, None))
+    self.assertTrue(meet(None, None))
+    self.assertTrue(meet(None, classmethod))
+    self.assertTrue(meet(classmethod, None))
+    self.assertTrue(meet(classmethod, staticmethod))
+    self.assertTrue(meet(staticmethod, classmethod))
+    self.assertTrue(meet(staticmethod, staticmethod))
+    self.assertTrue(meet(classmethod, classmethod))
+
+  def test_same_signature_of_kinds_that_never_meet(self) -> None:
+    self.space.addFunctionKind('f', staticmethod, _first)
+    self.space.addFunctionKind('f', None, _second)
+    self.space.addFunctionKind('f', classmethod, _third)
+    self.space.addOverload('f', TypeSig(int), _first)
+    self.space.addOverload('f', TypeSig(int), _second)
+    self.space.addOverload('f', TypeSig(int), _second)
+    self.assertEqual(self.space.getOverloads()['f'],
+                     [(TypeSig(int), _first), (TypeSig(int), _second)])
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addOverload('f', TypeSig(int), _third)
+    self.assertEqual(context.exception.sig, TypeSig(int))
+    self.assertIs(context.exception.existing, _first)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('type signature', str(context.exception))
+    tail = TypeSig(ARGS[int])
+    self.space.addVariadic('f', tail, _first)
+    self.space.addVariadic('f', tail, _second)
+    self.space.addVariadic('f', tail, _second)
+    self.assertEqual(self.space.getVariadics()['f'],
+                     [(tail, _first), (tail, _second)])
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addVariadic('f', tail, _third)
+    self.assertEqual(context.exception.sig, tail)
+    self.assertIs(context.exception.existing, _first)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('type signature', str(context.exception))
+    wide = TypeSig(int, str, float, bytes)
+    self.space.addFlex('g', wide, _first)
+    self.space.addFunctionKind('g', staticmethod, _first)
+    self.space.addFunctionKind('g', None, _second)
+    self.space.addFunctionKind('g', classmethod, _third)
+    self.space.addFlex('g', TypeSig(bytes, float, str, int), _second)
+    self.space.addFlex('g', wide, _second)
+    self.assertEqual(len(self.space.getFlexes()['g']), 2)
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addFlex('g', wide, _third)
+    self.assertEqual(context.exception.sig, wide)
+    self.assertIs(context.exception.existing, _first)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('type signature', str(context.exception))
+    self.space.addOverload('g', wide, _second)
+    self.space.addFunctionKind('h', staticmethod, _first)
+    self.space.addFunctionKind('h', None, _second)
+    self.space.addOverload('h', wide, _first)
+    self.space.addFlex('h', wide, _second)
+    self.assertEqual(self.space.getOverloads()['h'], [(wide, _first)])
+    self.assertEqual(self.space.getFlexes()['h'], [(wide, _second)])
+    with self.assertRaises(DuplicateSignature) as context:
+      self.space.addOverload('g', wide, _third)
+    self.assertEqual(context.exception.sig, wide)
+    self.assertIs(context.exception.existing, _first)
+    self.assertIs(context.exception.duplicate, _third)
+    self.assertIn('type signature', str(context.exception))
 
   def test_plain_names(self) -> None:
     self.space.addPlainName('p')

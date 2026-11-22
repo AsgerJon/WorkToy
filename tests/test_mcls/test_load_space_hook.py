@@ -42,7 +42,7 @@ class TestLoadSpaceHook(MclsTest):
     self.assertEqual(A().f('s'), 'str')
     sigs = [sig.getRawTypes() for sig, _ in space.getOverloads()['f']]
     self.assertEqual(sigs, [(int,), (str,)])
-    self.assertEqual(space.getMethodKinds(), {'f': None})
+    self.assertEqual(space.getMethodKinds(), {'f': (None,)})
     self.assertNotIn('f', space.getPlainNames())
     self.assertIn('__module__', space.getPlainNames())
 
@@ -139,25 +139,38 @@ class TestLoadSpaceHook(MclsTest):
     self.assertEqual(exception.newName, '__radd__')
     self.assertIn("'__radd__'", str(exception))
 
-  def test_mixed_kinds_refused(self) -> None:
-    with self.assertRaises(MixedMethodKind) as context:
-      class A(BaseObject):
-        @classmethod
-        @overload(int)
-        def f(cls, n: int) -> None:
-          """A classmethod."""
+  def test_kinds_recorded_for_each_function(self) -> None:
+    class A(BaseObject):
+      @classmethod
+      @overload(int)
+      def f(cls, n: int) -> tuple:
+        return cls.__name__, n
 
-        @staticmethod
-        @overload(str)
-        def f(s: str) -> None:
-          """Then a staticmethod."""
+      @staticmethod
+      @overload(str)
+      @overload(bytes)
+      def f(s: str) -> str:
+        return s
 
-    exception = context.exception
-    self.assertEqual(exception.className, 'A')
-    self.assertEqual(exception.overloadName, 'f')
-    self.assertEqual(exception.kinds, (classmethod, staticmethod))
-    self.assertIn("'A.f'", str(exception))
-    self.assertIn("a 'classmethod' and as a 'staticmethod'", str(exception))
+      @overload.flex(float, bool)
+      @overload.fallback
+      def f(self, *args) -> tuple:
+        return 'bound', args
+
+    space = A.__namespace__
+    self.assertEqual(space.getMethodKinds(),
+                     {'f': (classmethod, staticmethod, None)})
+    kinds = [kind for _, kind in space.getFunctionKinds()['f']]
+    self.assertEqual(
+        kinds, [classmethod, staticmethod, None, None, None],
+    )
+    self.assertEqual(A.f(1), ('A', 1))
+    self.assertEqual(A.f('s'), 's')
+    self.assertEqual(A().f(1), ('A', 1))
+    self.assertEqual(A().f(True, 1.5), ('bound', (1.5, True)))
+    self.assertEqual(A().f(None), ('bound', (None,)))
+
+  def test_mixed_kinds_in_one_stack_refused(self) -> None:
     with self.assertRaises(MixedMethodKind) as context:
       class B(BaseObject):
         @staticmethod
@@ -193,7 +206,7 @@ class TestLoadSpaceHook(MclsTest):
     self.assertEqual(A.f('s'), 's')
     self.assertEqual(A.g(1.5), 1.5)
     self.assertEqual(A.__namespace__.getMethodKinds(),
-                     {'f': classmethod, 'g': staticmethod})
+                     {'f': (classmethod,), 'g': (staticmethod,)})
 
   def test_deleted_plain_name_may_be_overloaded(self) -> None:
     class A(BaseObject):

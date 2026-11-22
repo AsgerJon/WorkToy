@@ -1,7 +1,6 @@
 """
-MixedMethodKind is raised when the declarations of one overloaded name
-are not all one kind of method, or when one is decorated as both a
-classmethod and a staticmethod.
+MixedMethodKind is raised when one function declared at an overloaded name
+is decorated as both a classmethod and a staticmethod.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2026 Asger Jon Vistisen
@@ -18,17 +17,15 @@ if TYPE_CHECKING:  # pragma: no cover, no mutate
 
 class MixedMethodKind(WorkToyException, SyntaxError):
   """
-  MixedMethodKind is raised when the declarations of one overloaded name
-  are not all one kind of method. One dispatcher stands at the name, and
-  it passes the instance, the class or nothing ahead of the arguments of
-  every call, so every declaration at the name is an instance method, or
-  every one is decorated '@classmethod', or every one '@staticmethod'. A
-  function decorated as both a classmethod and a staticmethod is refused
-  as well: Python itself gives that stack a different meaning on each
-  version, refusing the call on 3.7 and 3.8, acting as a staticmethod on
-  3.9 to 3.12 and as a classmethod from 3.13. The refusal comes at the
-  declaration breaking the rule, from the decorator for a stack under
-  '@overload' and from the class body otherwise. It subclasses
+  MixedMethodKind is raised when one function declared at an overloaded
+  name is decorated as both a classmethod and a staticmethod. One
+  function is one kind of method, and Python itself gives that stack a
+  different meaning on each version, refusing the call on 3.7 and 3.8,
+  acting as a staticmethod on 3.9 to 3.12 and as a classmethod from 3.13.
+  The refusal comes at the declaration, from the decorator for a stack
+  under '@overload' and from the class body otherwise. Different
+  functions at one name may be of different kinds: bound methods,
+  classmethods and staticmethods share an overloaded name. It subclasses
   'SyntaxError', as the other refusals of a class-body line do.
 
   Attributes
@@ -40,8 +37,7 @@ class MixedMethodKind(WorkToyException, SyntaxError):
     The overloaded name, or the name of the function a decorator refused.
   kinds : tuple
     The two kinds that disagree, each 'classmethod', 'staticmethod' or
-    None for an instance method: the earlier declaration first, or the
-    outer decorator of a stack.
+    None for an instance method: the outer decorator of the stack first.
   """
 
   __slots__ = ('className', 'overloadName', 'kinds',)
@@ -75,9 +71,9 @@ class MixedMethodKind(WorkToyException, SyntaxError):
     info = spec % (
       name, self._describeKind(first), self._describeKind(second),
     )
-    rule = """Every declaration at an overloaded name is an instance
-    method, or every one is decorated '@classmethod', or every one
-    '@staticmethod', and none is decorated as both."""
+    rule = """One function is one kind of method, and none is decorated
+    as both a classmethod and a staticmethod. Functions of different
+    kinds may share an overloaded name."""
     return textFmt(info, rule)
 
   __repr__ = __str__
