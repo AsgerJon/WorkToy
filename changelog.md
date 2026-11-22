@@ -4,6 +4,172 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
+## [1.2.3] - 2026 November 22
+
+This release lets one overloaded name hold bound methods, classmethods
+and staticmethods together, each reached the way its kind is reached,
+with a fallback for each way. It also gathers what worktoy tells the
+projects built on it into one folder of the repository, `design`, where
+a mistake that raises is written as a refusal and no longer as a
+promise. A name whose overloads are all one kind of method behaves as
+it did in 1.2.2; what differs is listed at the end of each part. Every
+change of behaviour was made test first. The suite passes on every
+Python from 3.7 to 3.15, with every statement and branch covered on
+3.15, and every file whose code changed since 1.2.2 was mutation tested
+after its last change.
+
+### One overloaded name may hold several kinds of method
+
+Some names are both a method of an object and a function of its class,
+as `QFile.exists` is in Qt. In 1.2.2 every declaration at one
+overloaded name had to be one kind of method, and a second kind raised
+`MixedMethodKind`. The overloads of one name may now be bound methods,
+classmethods and staticmethods together:
+
+    class File(BaseObject):
+
+      def __init__(self, path: str) -> None:
+        self.path = path
+
+      @overload()
+      def exists(self) -> bool:
+        return os.path.exists(self.path)
+
+      @staticmethod
+      @overload(str)
+      def exists(path: str) -> bool:
+        return os.path.exists(path)
+
+    File('a.txt').exists()   # the bound method
+    File.exists('b.txt')     # the staticmethod
+
+At such a name:
+
+- Through the class, the classmethods and the staticmethods are tried.
+  A bound method is not considered.
+- Through an instance, the bound methods and the classmethods are
+  tried. A staticmethod is not considered where an overload of the name
+  is a bound method.
+- The overload that matches receives the instance if it is a bound
+  method, the class if it is a classmethod, and neither if it is a
+  staticmethod.
+
+So `File('a.txt').exists('b.txt')` raises `DispatchException`, and so
+does `File.exists(file)` for a `file` of that class. A bound method and
+a staticmethod at one name may have the same signature, since no call
+reaches both. Any other two functions of one signature at a name raise
+`DuplicateSignature`, as before.
+
+### A fallback for each way of reaching a name
+
+A name reached two ways may need two fallbacks, and holds them apart:
+
+- The instance bound fallback, declared as a bound method, takes a call
+  through an instance that nothing accepts, and receives the instance.
+- The class bound fallback, declared as a staticmethod, takes such a
+  call through the class, and receives the arguments alone.
+
+Both at one name:
+
+    class Foo(BaseObject):
+
+      @staticmethod
+      @overload(int)
+      def bar(n: int) -> str:
+        return 'static'
+
+      @overload.fallback
+      def bar(self, *args) -> str:
+        return 'instance bound fallback'
+
+      @staticmethod
+      @overload.fallback
+      def bar(*args) -> str:
+        return 'class bound fallback'
+
+    Foo.bar(1)       # 'static'
+    Foo().bar(1)     # 'static'
+    Foo().bar('x')   # 'instance bound fallback'
+    Foo.bar('x')     # 'class bound fallback'
+
+A fallback declared as a classmethod is both at once, receiving the
+class either way, so it stands alone at its name: any two fallbacks
+other than a bound one beside a static one raise `DuplicateSignature`,
+as two fallbacks did in 1.2.2. A fallback or a finalizer is no
+overload. Declared as a bound method, it takes no call away from a
+staticmethod that accepts it, which is why `Foo().bar(1)` above still
+reaches the staticmethod. A subclass may add the fallback its bases
+lack, and a fallback it declares replaces an inherited one that the
+same call could reach.
+
+Different from 1.2.2, and to know:
+
+- `MixedMethodKind` is raised only for one function decorated as both a
+  classmethod and a staticmethod. Its message says so; its slots are as
+  they were.
+- A subclass overloading an inherited name only as kinds of method that
+  none of its bases declares there hides the inherited overloads, as a
+  subclass declaring another kind did in 1.2.2. A subclass sharing a
+  kind with a base keeps what that base declares.
+- A project with a namespace class of its own reads the declarations
+  through `BaseSpace`, and three answers have another shape, none of
+  them promised: `getFallbacks` gives a list of fallbacks for each name
+  where it gave one function, `getMethodKinds` a tuple of kinds where
+  it gave one kind, and the new `collectFallbacks` gives every fallback
+  of a name. `collectFallback` still gives the nearest one, and a
+  namespace class reimplementing it is still asked.
+- `Dispatcher` takes functions of another kind than its own through
+  `setFunctionKind`, and a second dispatcher for the class through
+  `setClassDispatcher`, which `getClassDispatcher` gives back. A
+  dispatcher is still built by the namespace alone.
+
+### The `design` folder: promises, refusals and confessions
+
+The repository holds what worktoy tells the projects built on it as
+tests. The folder that held them, `promises`, is now `design`, and
+holds three kinds of statement and one document:
+
+- `design/promises` holds the promises, one folder for each package,
+  with `waitaminute` and `deprecations`.
+- `design/refusals` is new. A refusal says that a certain mistake
+  raises, and names the exception it raises as of 1.2.3. That the
+  mistake raises is to be expected. Which exception it raises is not
+  promised, and a later release may accept what this one refuses,
+  without that being a deprecation.
+- `design/confessions` holds the promises taken back.
+- `design/manual.md` is the manual, as one file. It begins with the
+  README and goes on from the class the README ends with into a part
+  for each package, what works and what is refused described together,
+  and closes with what may be relied on from one release to the next.
+  The release buttons write the README over its top at every press, so
+  the two stay in step.
+
+What an exception carries once it is raised stays a promise, made by
+the exception itself, in `design/promises/waitaminute`.
+
+The rule for several kinds of method at one name is promised from
+1.2.3, in `design/promises/dispatch`, and the manual shows it. The
+fallback for each way of reaching a name is not yet among the promises.
+
+Different from 1.2.2, and to know:
+
+- In 1.2.2 a promise named the exception a mistake raises, with what it
+  carries at that place. 186 such checks left the promises and are 178
+  refusals now, each in a file named as the promise file it belongs
+  with. Fourteen checks stay in the promises, eleven of them the
+  promise that an exception a project raises in its own callback or
+  hook reaches the caller.
+- The two promises that a second kind of method at one overloaded name
+  raises `MixedMethodKind` are gone with that refusal, and without a
+  confession: lifting a refusal takes no promise back.
+- The tests are run with `python -m unittest discover -s design -t .
+  -p "promise_*.py"`, and the examples of the manual with `python -m
+  doctest design/manual.md`. The ten chapters of `manual/` are joined
+  into that one file.
+- The earlier sections of this changelog name the folders as they were
+  called then: `promises/`, `promises/confessions`,
+  `promises/deprecations` and `manual/`.
+
 ## [1.2.2] - 2026 November 16
 
 This release lets a `KeeNum` class name its members in any case, with a
