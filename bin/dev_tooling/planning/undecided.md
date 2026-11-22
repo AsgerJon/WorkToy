@@ -1,6 +1,6 @@
 # Planned work: `UNDECIDED`
 
-Brought up to date: 2026-11-16.
+Brought up to date: 2026-11-22.
 
 The items of planned work that stand at `UNDECIDED`: described, and the
 author has not decided. `Next` holds the question.
@@ -56,6 +56,30 @@ the class body in the next major version, and warn at most in 1.x.
 - Next: the author says whether it is wanted
 - History:
   - 2026-11-12 UNDECIDED. Proposed in the report.
+
+## Overloads
+
+---
+
+### Settle what a subclass hides by declaring another kind of method
+
+A subclass that declares an inherited overloaded name only as kinds of
+method none of the nearer classes declares there hides what its base
+declares, as a plain definition does. A subclass declaring only a
+fallback of another kind therefore hides the overloads of its base.
+With abstract overloads, a subclass writing only the static signature
+of a name hides the abstract bound ones with the rest, and counts as
+whole.
+
+- Status: UNDECIDED
+- Level: unset
+- Scale: small
+- Release: none
+- Next: the author says whether the rule stays, or a subclass keeps
+  what its bases declare whatever kinds it declares itself
+- History:
+  - 2026-11-22 UNDECIDED. Seen while the two fallbacks were built,
+    and again with the abstract overloads.
 
 ## keenum
 
@@ -257,6 +281,61 @@ and a guard around `__init_subclass__` is ruled out.
 - History:
   - 2026-10-19 UNDECIDED. Listed as the author's open question.
 
+---
+
+### Promise the fallback for each way of reaching a name
+
+1.2.3 lets a name hold an instance bound fallback and a class bound
+one, and the changelog says so. Nothing in `design` promises it, and
+the manual does not show it. The promise of several kinds at one name
+says a staticmethod is not considered through an instance where the
+name has a bound method, which is loose for a name whose only bound
+method is its fallback.
+
+- Status: UNDECIDED
+- Level: micro
+- Scale: small
+- Release: none
+- Next: the author says whether it is promised, and from which version
+- History:
+  - 2026-11-22 UNDECIDED. Left out of the promises when it was built.
+
+---
+
+### Rewrite the package parts of the manual in the voice of the README
+
+The manual opens with the README and goes on from its class. The ten
+parts after that opening, one for each package, read as the chapters
+did before they were joined: written to state what is promised, not to
+answer what a curious reader would ask.
+
+- Status: UNDECIDED
+- Level: micro
+- Scale: large
+- Release: none
+- Next: the author says whether, and with which package to begin
+- History:
+  - 2026-11-22 UNDECIDED. The opening was rewritten on his word; the
+    parts were left as they were.
+
+---
+
+### Point the README to the manual, and settle what the manual repeats
+
+The README does not say that the manual exists. The manual begins with
+the README whole, so it repeats the sections on contributing and the
+license, with two links that do not resolve from inside `design`.
+
+- Status: UNDECIDED
+- Level: micro
+- Scale: small
+- Release: none
+- Next: the author says whether the README points to the manual, and
+  whether the copy ends before the section on contributing
+- History:
+  - 2026-11-22 UNDECIDED. Noted when the README was placed at the top
+    of the manual.
+
 ## Testing and mutation testing
 
 ---
@@ -310,6 +389,23 @@ and the filler value of `Arrangement.inverse`.
 - Next: the author says which go
 - History:
   - 2026-11-06 UNDECIDED. Pointed at by the mutation sweeps.
+
+---
+
+### Sweep `dispatch` and `mcls` whole
+
+The sweeps of 1.2.3 ran over the files whose code changed, each whole.
+The two packages as a whole were last swept on 2026-11-06, before
+several kinds of method, the two fallbacks and the abstract overloads
+changed how their files work together.
+
+- Status: UNDECIDED
+- Level: none
+- Scale: medium
+- Release: none
+- Next: the author says whether both are swept whole before 1.3.0
+- History:
+  - 2026-11-22 UNDECIDED. Left undone in each sweep of 1.2.3.
 
 ## Reviews of the source
 

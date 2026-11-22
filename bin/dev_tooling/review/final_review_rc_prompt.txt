@@ -62,9 +62,11 @@ before writing about it.
    promise. So are the member lists of the __init__ docstrings, the
    prose of README.md, every entry of the [VERSION] section of
    changelog.md that touches the package, the files of the package
-   under promises/, and its chapter under manual/. A promise taken
-   back is written up under promises/confessions; hold the changelog
-   against it. Each claim that a few lines
+   under design/promises/ and design/refusals/, and its part of
+   design/manual.md. A promise taken back is written up under
+   design/confessions; hold the changelog against it. A refusal says
+   that a mistake raises, which is a claim; the exception it names as
+   of a stated version is no promise. Each claim that a few lines
    of code can check gets a probe, run for real. A claim the code does
    not keep is a finding. Do not decide the direction of the fix:
    present the wording change and the code change as labelled options.
@@ -102,15 +104,16 @@ before writing about it.
 6. The mechanical sweep, one block in the report, with the commands:
 
      awk 'length > 77 {print FILENAME": "FNR}' src/worktoy/*/*.py \
-       src/worktoy/*/*/*.py tests/*/*.py promises/*/*.py manual/*.md
-     grep -rn $'\xe2\x80\x94' src tests promises manual README.md \
+       src/worktoy/*/*/*.py tests/*/*.py design/*/*.py \
+       design/*/*/*.py design/manual.md
+     grep -rn $'\xe2\x80\x94' src tests design README.md \
        CONTRIBUTING.md changelog.md
-     grep -rn '``' src promises             # double backticks
-     grep -rLn 'Apache-2.0 license' --include='*.py' src tests promises
+     grep -rn '``' src design               # double backticks
+     grep -rLn 'Apache-2.0 license' --include='*.py' src tests design
      grep -rn '# pragma' src tests          # each one justified?
      grep -rn '^ *pass$' src tests          # a body that never runs
                                             # carries a docstring
-     find src tests promises -name __pycache__   # must be empty
+     find src tests design -name __pycache__     # must be empty
 
 Judgement
 ---------
@@ -189,7 +192,7 @@ Operating rules
   everything measured; ~/miniforge3/envs/base_3_7 to base_3_14 only to
   show a version difference. Always PYTHONDONTWRITEBYTECODE=1 and -B. No
   __pycache__ may appear under src or tests.
-- Do not modify src, tests, promises, manual, docs, the workflows,
+- Do not modify src, tests, design, docs, the workflows,
   the version files or the changelog. The report is the deliverable.
 - Do not run git. Do not spawn sub-agents. No em-dash anywhere, the
   report included.
