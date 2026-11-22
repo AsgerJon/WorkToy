@@ -6,10 +6,10 @@ rolled into the release they lead up to.
 
 ## [1.3.0] - 2026 November 22
 
-This release adds abstract classes. A class built by the new `ABCMeta`
-declares methods with `@abstract`, the classes based on it have to
-write them, and no object is made of a class while anything is left to
-write. An overloaded name is abstract one signature at a time, which
+This release adds abstract classes. A class based on the new
+`ABCObject` declares methods with `@abstract`, the classes based on it
+have to write them, and no object is made of a class while anything is
+left to write. An overloaded name is abstract one signature at a time, which
 Python's `abc` cannot ask for. Everything in this release is new:
 nothing that worked in 1.2.3 behaves differently. It was built test
 first. The suite passes on every Python from 3.7 to 3.15, with every
@@ -20,11 +20,11 @@ since 1.2.3 was mutation tested after its last change.
 
 Some classes exist to be completed: they declare a method without
 having anything to run for it, and every class based on them has to
-write it. Such a class is built by `ABCMeta` of `worktoy.mcls`, and
+write it. Such a class is based on `ABCObject` of `worktoy.mcls`, and
 marks the method with `@abstract` of `worktoy.dispatch`, over a
 function with no body:
 
-    class Model(BaseObject, metaclass=ABCMeta):
+    class Model(ABCObject):
 
       @abstract
       def rowCount(self) -> int: ...
@@ -37,6 +37,9 @@ function with no body:
     Names().rowCount()   # 3
     Model()              # raises MissingImplementation
 
+- `ABCObject` is `BaseObject` built by the metaclass `ABCMeta`, as
+  `BaseObject` is built by `BaseMeta`. A class may name the metaclass
+  itself instead: `class Model(BaseObject, metaclass=ABCMeta)`.
 - A class is abstract for as long as a method it declares or inherits
   is not written. It is never declared abstract.
 - A subclass may write any of the abstract methods or none, and may
@@ -58,7 +61,7 @@ wrote. Here the name is abstract one signature at a time. `@abstract`
 stands at any position among the `@overload` decorators, and the
 signatures go on one function or on several:
 
-    class Source(BaseObject, metaclass=ABCMeta):
+    class Source(ABCObject):
 
       @overload(str, int)
       @abstract
@@ -94,8 +97,8 @@ way to each signature stacked on it.
 ### New names
 
 - `abstract` in `worktoy.dispatch`.
-- `ABCMeta` and `ABCSpace` in `worktoy.mcls`, and `ABCHook` in
-  `worktoy.mcls.space_hooks`.
+- `ABCObject`, `ABCMeta` and `ABCSpace` in `worktoy.mcls`, and `ABCHook`
+  in `worktoy.mcls.space_hooks`.
 - `MissingImplementation` and `WrongImplementation` in
   `worktoy.waitaminute.meta`.
 

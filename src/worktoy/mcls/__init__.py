@@ -30,7 +30,8 @@ The 'ABCMeta' of this package is worktoy's own, and no relative of that
 one. It builds the classes that declare methods with '@abstract' of
 'worktoy.dispatch', holds each subclass to what is declared, one
 signature of an overloaded name at a time, and refuses to make an
-object of a class that still lacks an implementation.
+object of a class that still lacks an implementation. 'ABCObject' is
+the base of such classes, as 'BaseObject' is of the others.
 
 - space_hooks
 - AbstractNamespace
@@ -40,6 +41,7 @@ object of a class that still lacks an implementation.
 - BaseObject
 - ABCSpace
 - ABCMeta
+- ABCObject
 """
 #  Apache-2.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
@@ -53,6 +55,7 @@ from ._base_meta import BaseMeta
 from ._base_object import BaseObject
 from ._abc_space import ABCSpace
 from ._abc_meta import ABCMeta
+from ._abc_object import ABCObject
 
 __all__ = [
   'space_hooks',
@@ -63,4 +66,5 @@ __all__ = [
   'BaseObject',
   'ABCSpace',
   'ABCMeta',
+  'ABCObject',
 ]

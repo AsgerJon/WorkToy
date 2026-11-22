@@ -9,14 +9,16 @@ from __future__ import annotations
 from unittest import TestCase
 
 from worktoy.dispatch import abstract, overload
-from worktoy.mcls import BaseObject, ABCMeta
+from worktoy.mcls import BaseObject, ABCMeta, ABCObject
 
 
 class PromiseAbstractClasses(TestCase):
   """
   From 1.3.0, a class built by 'ABCMeta' declares a method with
   '@abstract' over a function with no body, and the classes based on it
-  have to write that method. A class is abstract for as long as a method
+  have to write that method. 'ABCObject' is 'BaseObject' built by
+  'ABCMeta', so a class based on it is such a class without naming the
+  metaclass. A class is abstract for as long as a method
   it declares or inherits is not written; it is never declared abstract.
   A subclass may write any of the abstract methods or none, and may
   declare abstract methods of its own, so it may be abstract in turn,
@@ -50,6 +52,22 @@ class PromiseAbstractClasses(TestCase):
         return 3
 
     self.assertEqual(Names().describe(), '3 rows')
+
+  def test_based_on_abc_object(self) -> None:
+    class Model(ABCObject):
+      @abstract
+      def rowCount(self) -> int: ...
+
+    class Names(Model):
+      def rowCount(self) -> int:
+        return 3
+
+    self.assertIsInstance(ABCObject, ABCMeta)
+    self.assertIsInstance(Model, ABCMeta)
+    with self.assertRaises(Exception):
+      Model()
+    self.assertEqual(Names().rowCount(), 3)
+    self.assertIsInstance(Names(), BaseObject)
 
   def test_any_or_none_and_more(self) -> None:
     class Model(BaseObject, metaclass=ABCMeta):

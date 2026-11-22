@@ -15,17 +15,18 @@ from . import MclsTest
 class TestMclsPackage(MclsTest):
   """
   The package exports the abstract namespace and metaclass, 'BaseSpace',
-  'BaseMeta', 'BaseObject', 'ABCSpace', 'ABCMeta' and the 'space_hooks'
-  package, and the hooks package exports its eight names. The tests pin
-  the exports and the layering: every metaclass of the package is built
-  by 'MetaType', and 'BaseObject' ends its resolution order as every
-  worktoy class does.
+  'BaseMeta', 'BaseObject', 'ABCSpace', 'ABCMeta', 'ABCObject' and the
+  'space_hooks' package, and the hooks package exports its eight names.
+  The tests pin the exports and the layering: every metaclass of the
+  package is built by 'MetaType', and 'BaseObject' ends its resolution
+  order as every worktoy class does.
   """
 
   def test_exports(self) -> None:
     expected = [
       'space_hooks', 'AbstractNamespace', 'AbstractMetaclass',
       'BaseSpace', 'BaseMeta', 'BaseObject', 'ABCSpace', 'ABCMeta',
+      'ABCObject',
     ]
     self.assertEqual(mcls.__all__, expected)
     for name in expected:

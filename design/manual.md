@@ -1202,7 +1202,7 @@ Contents:
 4. Mistakes caught in the class body
 5. Combining with another library's metaclass
 6. Namespace hooks of your own
-7. Abstract classes: `ABCMeta` and `@abstract`
+7. Abstract classes: `ABCObject` and `@abstract`
 
 
 ### 1. `BaseObject`
@@ -1443,18 +1443,18 @@ it. One hook object serves every class statement of its namespace, so
 it keeps what it learns on `self.space`, never on itself.
 
 
-### 7. Abstract classes: `ABCMeta` and `@abstract`
+### 7. Abstract classes: `ABCObject` and `@abstract`
 
 Some classes exist to be completed. A model of a table knows that it
 has a number of rows without knowing the number; every class based on
-it has to say what it is. Such a class is built by `ABCMeta`, and marks
-each method it leaves to its subclasses with `@abstract`, from the
-dispatch part, over a function with no body:
+it has to say what it is. Such a class is based on `ABCObject`, and
+marks each method it leaves to its subclasses with `@abstract`, from
+the dispatch part, over a function with no body:
 
 ```
->>> from worktoy.mcls import ABCMeta
+>>> from worktoy.mcls import ABCObject, ABCMeta
 >>> from worktoy.dispatch import abstract
->>> class Model(BaseObject, metaclass=ABCMeta):
+>>> class Model(ABCObject):
 ...   @abstract
 ...   def rowCount(self):
 ...     """The number of rows."""
@@ -1467,6 +1467,11 @@ dispatch part, over a function with no body:
 '3 rows'
 
 ```
+
+`ABCObject` is `BaseObject` built by the metaclass `ABCMeta`, as
+`BaseObject` is built by `BaseMeta`, so a class based on it keeps
+everything section 1 gives. A class may name the metaclass itself
+instead, as `Source` does further down.
 
 A class is abstract for as long as a method it declares or inherits is
 not written. It is never declared abstract, and nothing marks the class

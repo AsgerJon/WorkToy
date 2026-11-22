@@ -15,15 +15,15 @@ class PromisePublicNames(TestCase):
   """
   'BaseObject', 'BaseMeta', 'BaseSpace', 'AbstractMetaclass' and
   'AbstractNamespace' import from 'worktoy.mcls', and the namespace
-  hooks from 'worktoy.mcls.space_hooks'. From 1.3.0 'ABCMeta' and
-  'ABCSpace' import from 'worktoy.mcls', and 'ABCHook' from
-  'worktoy.mcls.space_hooks'. Source: '__all__' of both packages.
+  hooks from 'worktoy.mcls.space_hooks'. From 1.3.0 'ABCObject',
+  'ABCMeta' and 'ABCSpace' import from 'worktoy.mcls', and 'ABCHook'
+  from 'worktoy.mcls.space_hooks'. Source: '__all__' of both packages.
   """
 
   def test_mcls(self) -> None:
     names = ('space_hooks', 'AbstractNamespace', 'AbstractMetaclass',
              'BaseSpace', 'BaseMeta', 'BaseObject', 'ABCSpace',
-             'ABCMeta')
+             'ABCMeta', 'ABCObject')
     for name in names:
       with self.subTest(name=name):
         self.assertTrue(hasattr(worktoy.mcls, name))

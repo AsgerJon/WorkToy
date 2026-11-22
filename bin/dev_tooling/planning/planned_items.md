@@ -18,8 +18,8 @@ file of the new one.
 | `REJECTED` | [rejected.md](rejected.md) | 1 |
 | `PENDING` | [pending.md](pending.md) | 6 |
 | `READY` | [ready.md](ready.md) | 2 |
-| `UNDERWAY` | [underway.md](underway.md) | 2 |
-| `DEV` | [dev.md](dev.md) | 0 |
+| `UNDERWAY` | [underway.md](underway.md) | 0 |
+| `DEV` | [dev.md](dev.md) | 2 |
 | `RC` | [rc.md](rc.md) | 0 |
 | `LTS` | [lts.md](lts.md) | 5 |
 
@@ -55,9 +55,10 @@ Items: 1 at `LTS`.
 ### The release of 1.3.0
 
 The next minor release, which the author proposed on 2026-11-22 for
-abstract classes. What it carries is in the tree and in no build.
+abstract classes. `1.3.0-dev0` was published on 2026-11-22, and the
+level of the cycle is locked at minor.
 
-Items: 1 at `UNDERWAY`.
+Items: 1 at `DEV`.
 
 ### Abstract classes
 
@@ -66,7 +67,7 @@ Two builds of 2026-11-22 were rolled back; the author then laid the
 design out one rule at a time, and it was built on those rules. It is
 promised in `design` and has its section of the changelog.
 
-Items: 1 at `UNDERWAY`.
+Items: 1 at `DEV`.
 
 ### The speed of the core
 
