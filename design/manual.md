@@ -1202,6 +1202,7 @@ Contents:
 4. Mistakes caught in the class body
 5. Combining with another library's metaclass
 6. Namespace hooks of your own
+7. Abstract classes: `ABCMeta` and `@abstract`
 
 
 ### 1. `BaseObject`
@@ -1393,7 +1394,8 @@ Shape is abstract
 
 ```
 
-The same pattern serves other libraries' metaclasses.
+The same pattern serves other libraries' metaclasses. worktoy has
+abstract classes of its own, which need no `abc`: section 7.
 
 
 ### 6. Namespace hooks of your own
@@ -1439,6 +1441,156 @@ The hook screens the class declaring the metaclass as well as its
 subclasses, and worktoy's own checks of section 4 keep running beside
 it. One hook object serves every class statement of its namespace, so
 it keeps what it learns on `self.space`, never on itself.
+
+
+### 7. Abstract classes: `ABCMeta` and `@abstract`
+
+Some classes exist to be completed. A model of a table knows that it
+has a number of rows without knowing the number; every class based on
+it has to say what it is. Such a class is built by `ABCMeta`, and marks
+each method it leaves to its subclasses with `@abstract`, from the
+dispatch part, over a function with no body:
+
+```
+>>> from worktoy.mcls import ABCMeta
+>>> from worktoy.dispatch import abstract
+>>> class Model(BaseObject, metaclass=ABCMeta):
+...   @abstract
+...   def rowCount(self):
+...     """The number of rows."""
+...   def describe(self):
+...     return '%d rows' % self.rowCount()
+>>> class Names(Model):
+...   def rowCount(self):
+...     return 3
+>>> Names().describe()
+'3 rows'
+
+```
+
+A class is abstract for as long as a method it declares or inherits is
+not written. It is never declared abstract, and nothing marks the class
+that completes it. Making an object of an abstract class is refused
+with `MissingImplementation`, which says what is left to write:
+
+```
+>>> from worktoy.waitaminute.meta import MissingImplementation
+>>> try:
+...   Model()
+... except MissingImplementation:
+...   print('Model is abstract')
+Model is abstract
+
+```
+
+A subclass may write any of the abstract methods or none, and may
+declare abstract methods of its own, so it may be abstract in turn:
+
+```
+>>> class Table(Model):
+...   @abstract
+...   def columnCount(self):
+...     pass
+>>> class Grid(Table):
+...   def rowCount(self):
+...     return 2
+...   def columnCount(self):
+...     return 5
+>>> Grid().rowCount() * Grid().columnCount()
+10
+>>> try:
+...   Table()
+... except MissingImplementation:
+...   print('Table is abstract')
+Table is abstract
+
+```
+
+What a subclass writes is held to what was declared, as its class is
+created. It is the same kind of method as the abstract one, a bound
+method, a classmethod or a staticmethod, and receives what that one
+declares:
+
+- as many arguments by position, or any number through `*args`. A
+  default plays no part: a parameter counts the same with one or
+  without.
+- `**kwargs`, where the abstract method takes `**kwargs`.
+- each keyword-only parameter of the abstract method, by the same
+  parameter or by `**kwargs`.
+
+Types are not compared. A method that does not fit is refused with
+`WrongImplementation`, at the class statement and not at the first
+call:
+
+```
+>>> from worktoy.waitaminute.meta import WrongImplementation
+>>> try:
+...   class Wrong(Model):
+...     def rowCount(self, parent):
+...       return 0
+... except WrongImplementation:
+...   print('rowCount takes no argument')
+rowCount takes no argument
+
+```
+
+An overloaded name is abstract one signature at a time. `@abstract`
+stands at any position among the `@overload` decorators, and the
+signatures go on one function or on several:
+
+```
+>>> class Source(BaseObject, metaclass=ABCMeta):
+...   @overload(str, int)
+...   @abstract
+...   def data(self, index, role):
+...     pass
+...   @overload(bytes)
+...   @overload(str)
+...   @abstract
+...   def data(self, index):
+...     pass
+
+```
+
+A subclass writes such a name with a plain function at the name, or
+with every one of its signatures. With some of them it stays abstract
+for the rest, which a further subclass may write:
+
+```
+>>> class Loose(Source):
+...   def data(self, *args):
+...     return args
+>>> Loose().data('a', 1)
+('a', 1)
+>>> class Half(Source):
+...   @overload(str)
+...   def data(self, index):
+...     return 'text'
+>>> class Full(Half):
+...   @overload(str, int)
+...   def data(self, index, role):
+...     return 'text and role'
+...   @overload(bytes)
+...   def data(self, index):
+...     return 'bytes'
+>>> full = Full()
+>>> full.data('a'), full.data('a', 1), full.data(b'a')
+('text', 'text and role', 'bytes')
+
+```
+
+Python's own `abc` knows a method by its name alone, so it cannot ask
+for one signature of an overloaded name. A few more things to know:
+
+- A call that reaches an abstract method, as `super().rowCount()` from
+  the method a subclass wrote, does nothing and gives `None`.
+- Once a class has written a method, the declaration holds no further:
+  a class based on it overrides the method as in any class.
+- `@abstract` goes above or below `@classmethod` and `@staticmethod`.
+- A function with a body under `@abstract` is refused with `TypeError`:
+  the body is `...`, `pass` or a docstring alone. `@abstract` in a class
+  that `ABCMeta` did not build is refused with `TypeError` as well,
+  since nothing there would hold a subclass to it.
 
 ## `worktoy.keenum`
 
@@ -3433,11 +3585,12 @@ each imports from its group:
   `OverloadReference` (`SyntaxError`); `PhantomBoxError` and
   `DescriptorException` (`Exception`).
 - `worktoy.waitaminute.meta`, the metaclasses: `IllegalInstantiation`,
-  `DuplicateSentinel`, `ControlClassError` (`TypeError`);
-  `DelException`, `QuestionableSyntax`, `ReservedName`,
+  `MissingImplementation`, `DuplicateSentinel`, `ControlClassError`
+  (`TypeError`); `DelException`, `QuestionableSyntax`, `ReservedName`,
   `UnboundClassHook`, `OverloadConflict`, `ReboundOverload`,
-  `MixedMethodKind`, `ClaimedName`, `ShadowedClassHook`, `SlotsRefused`
-  (`SyntaxError`); `DuplicateHook`, `HookException` (`Exception`).
+  `MixedMethodKind`, `ClaimedName`, `ShadowedClassHook`, `SlotsRefused`,
+  `WrongImplementation` (`SyntaxError`); `DuplicateHook`,
+  `HookException` (`Exception`).
 - `worktoy.waitaminute.dispatch`, the overloads and conversion:
   `BareOverload`, `DispatchException`, `DuplicateSignature`,
   `TypeCastException` (`TypeError`); `UnboundCastHook` (`SyntaxError`).
@@ -3886,7 +4039,7 @@ release of 1.x. That an `int` assigned to a box of `float` is kept as a
 What is refused is a refusal: a certain mistake raises an exception
 where it is made, instead of passing in silence. A refusal names the
 exception it raises as of a stated version: the exceptions this document
-names are the ones raised as of 1.2.3. As of that version, a text
+names are the ones raised as of 1.3.0. As of that version, a text
 assigned to the box above is refused with `TypeException`. A refusal is
 no promise, in two ways.
 

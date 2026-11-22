@@ -67,9 +67,6 @@ A subclass that declares an inherited overloaded name only as kinds of
 method none of the nearer classes declares there hides what its base
 declares, as a plain definition does. A subclass declaring only a
 fallback of another kind therefore hides the overloads of its base.
-With abstract overloads, a subclass writing only the static signature
-of a name hides the abstract bound ones with the rest, and counts as
-whole.
 
 - Status: UNDECIDED
 - Level: unset
@@ -78,8 +75,7 @@ whole.
 - Next: the author says whether the rule stays, or a subclass keeps
   what its bases declare whatever kinds it declares itself
 - History:
-  - 2026-11-22 UNDECIDED. Seen while the two fallbacks were built,
-    and again with the abstract overloads.
+  - 2026-11-22 UNDECIDED. Seen while the two fallbacks were built.
 
 ## keenum
 
@@ -396,8 +392,8 @@ and the filler value of `Arrangement.inverse`.
 
 The sweeps of 1.2.3 ran over the files whose code changed, each whole.
 The two packages as a whole were last swept on 2026-11-06, before
-several kinds of method, the two fallbacks and the abstract overloads
-changed how their files work together.
+several kinds of method and the two fallbacks changed how their files
+work together.
 
 - Status: UNDECIDED
 - Level: none

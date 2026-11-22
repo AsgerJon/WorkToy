@@ -9,6 +9,7 @@ receive nothing.
 
 | Version | Status                                             |
 | ------- | -------------------------------------------------- |
+| 1.3.x   | Supported (LTS)                                    |
 | 1.2.x   | Supported (LTS), from 1.2.1                        |
 | 1.2.0   | Breaking behaviour in `work_test`; update to 1.2.1 |
 | 1.1.x   | End-of-Life                                        |

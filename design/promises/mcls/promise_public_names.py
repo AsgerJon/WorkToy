@@ -15,13 +15,15 @@ class PromisePublicNames(TestCase):
   """
   'BaseObject', 'BaseMeta', 'BaseSpace', 'AbstractMetaclass' and
   'AbstractNamespace' import from 'worktoy.mcls', and the namespace
-  hooks from 'worktoy.mcls.space_hooks'. Source: '__all__' of both
-  packages.
+  hooks from 'worktoy.mcls.space_hooks'. From 1.3.0 'ABCMeta' and
+  'ABCSpace' import from 'worktoy.mcls', and 'ABCHook' from
+  'worktoy.mcls.space_hooks'. Source: '__all__' of both packages.
   """
 
   def test_mcls(self) -> None:
     names = ('space_hooks', 'AbstractNamespace', 'AbstractMetaclass',
-             'BaseSpace', 'BaseMeta', 'BaseObject')
+             'BaseSpace', 'BaseMeta', 'BaseObject', 'ABCSpace',
+             'ABCMeta')
     for name in names:
       with self.subTest(name=name):
         self.assertTrue(hasattr(worktoy.mcls, name))
@@ -29,7 +31,7 @@ class PromisePublicNames(TestCase):
   def test_space_hooks(self) -> None:
     names = ('SpaceDesc', 'ReservedNames', 'AbstractSpaceHook',
              'FlexCallHook', 'ReservedNamespaceHook', 'NamespaceHook',
-             'LoadSpaceHook')
+             'LoadSpaceHook', 'ABCHook')
     for name in names:
       with self.subTest(name=name):
         self.assertTrue(hasattr(worktoy.mcls.space_hooks, name))

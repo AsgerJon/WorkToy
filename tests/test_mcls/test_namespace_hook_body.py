@@ -234,6 +234,45 @@ class TestNamespaceHookBody(MclsTest):
     self.assertEqual(seen, ['A'])
     self.assertEqual(NamespaceHook._getChainedHooks(), ['__class_init__'])
 
+  def test_metaclass_handing_an_operation_on(self) -> None:
+    class Passing(AbstractMetaclass):
+      __chained_hooks__ = ('__class_len__',)
+
+      def __len__(cls) -> int:
+        return super().__len__()
+
+    class Counted(metaclass=Passing):
+      @classmethod
+      def __class_len__(cls) -> int:
+        return 3
+
+    class Handing(SizedMeta):
+      __chained_hooks__ = ('__class_len__',)
+
+      def __len__(cls) -> int:
+        """Hands on, to a metaclass that measures its classes itself."""
+
+    class Deeper(SizedMeta):
+      """Implements nothing itself; 'SizedMeta' still measures."""
+
+    self.assertEqual(len(Counted), 3)
+    self.assertEqual(NamespaceHook._getHandedOn(Passing), ('__class_len__',))
+    self.assertEqual(NamespaceHook._getHandedOn(Deeper), ())
+    for mcls in (Handing, Deeper):
+      with self.subTest(mcls=mcls.__name__):
+        with self.assertRaises(ShadowedClassHook) as context:
+          class A(metaclass=mcls):
+            @classmethod
+            def __class_len__(cls) -> None:
+              """Refused: 'SizedMeta' measures its classes itself."""
+
+        exception = context.exception
+        self.assertEqual(exception.className, 'A')
+        self.assertEqual(exception.hookName, '__class_len__')
+        self.assertEqual(exception.metaclassName, 'SizedMeta')
+        self.assertEqual(exception.methodName, '__len__')
+        self.assertIn("'SizedMeta'", str(exception))
+
   def test_metaclass_behind_abstract_shadows_nothing(self) -> None:
     class Both(AbstractMetaclass, LoudMeta):
       pass

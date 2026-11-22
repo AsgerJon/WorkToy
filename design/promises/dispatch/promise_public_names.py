@@ -14,12 +14,14 @@ class PromisePublicNames(TestCase):
   """
   'overload', 'Dispatcher', 'TypeSig', 'flexCall', 'isFlex',
   'CallMeMaybe', 'Permuter' and 'PermuterMethod' import from
-  'worktoy.dispatch'. Source: '__all__' of the package.
+  'worktoy.dispatch', and from 1.3.0 'abstract' does. Source: '__all__'
+  of the package.
   """
 
   def test_names(self) -> None:
     names = ('flexCall', 'isFlex', 'CallMeMaybe', 'Permuter',
-             'PermuterMethod', 'TypeSig', 'Dispatcher', 'overload')
+             'PermuterMethod', 'TypeSig', 'Dispatcher', 'overload',
+             'abstract')
     for name in names:
       with self.subTest(name=name):
         self.assertTrue(hasattr(worktoy.dispatch, name))

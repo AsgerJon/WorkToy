@@ -16,54 +16,62 @@ the heading of its area.
 
 ### Release 1.3.0
 
-The minor release that lets a class declare abstract methods and
-abstract overloads. The author proposed 1.3 for it on 2026-11-22, and
-released 1.2.3 without it. It carries the item under overloads below.
+The next minor release, which the author proposed on 2026-11-22 for
+abstract classes. It carries the item under abstract classes below.
 
 - Status: UNDERWAY
 - Level: minor
 - Scale: medium
 - Release: 1.3.0
-- Next: the author's word on the open choices of the item it carries,
-  then a Cosmic Ray sweep, then the press of `minor-dev`
+- Next: the author looks the build over and commits it; then the press
+  of `minor-dev`
 - History:
-  - 2026-11-22 UNDERWAY. What it carries is built in the tree and is
-    in no build.
+  - 2026-11-22 UNDERWAY. Filed while a first build of what it carries
+    lay in the tree.
+  - 2026-11-22 CONCEPTION. That build was rolled back on the author's
+    word.
+  - 2026-11-22 UNDERWAY. Built anew on the design the author laid out.
+  - 2026-11-22 UNDERWAY. The changelog section, the table of supported
+    versions and the token ledger were written for it on the author's
+    word.
+  - 2026-11-22 UNDERWAY. The safety of `minor-dev` was armed on the
+    author's word, in the commit that carries the build.
 
-## Overloads
+## Abstract classes
 
 ---
 
-### Let a class declare abstract methods and abstract overloads
+### Let a class be abstract
 
-A class may declare a function it has nothing to run for, which every
-class based on it has to write, as a model of a list has to say how
-many rows it holds. `@abstract`, written directly above the `def`,
-declares it, for a plain method, a classmethod, a staticmethod and the
-signatures of an overloaded name. An overloaded name is abstract one
-signature at a time: each signature stacked on an abstract function is
-one a subclass has to write, by declaring that signature again or by
-defining the name plainly. Making an object of a class that still
-lacks something is refused before `__init__` runs, naming each,
-whatever the class is based on. Python's `abc` cannot do this for an
-overloaded name, whose class holds a dispatcher and no function. No
-call costs more than before: an abstract class is given a
-`__class_call__` that refuses, and a class statement costs about five
-microseconds more.
+A class built by `ABCMeta` of `worktoy.mcls` declares methods with
+`@abstract` of `worktoy.dispatch`, which the classes based on it have
+to write. A class is abstract for as long as it lacks an
+implementation, and is never declared so. A subclass may write any of
+the abstract methods or none, and may declare abstract methods of its
+own. Making an object of an abstract class raises
+`MissingImplementation`. A method written wrongly, as another kind of
+method or one that cannot receive what is declared, raises
+`WrongImplementation` as its class is created. An overloaded name is
+abstract one signature at a time, and is written by a plain function at
+the name or by every one of its signatures, which Python's `abc`
+cannot ask for, since such a name holds a dispatcher in every class.
 
 - Status: UNDERWAY
 - Level: minor
 - Scale: medium
 - Release: 1.3.0
-- Next: the author says where `abstract` is imported from and confirms
-  or overrules the choices made in the build; then a Cosmic Ray sweep
-  over the changed files, the promise and the manual on his word, and
-  the changelog
+- Next: the author looks the build over and confirms or overrules the
+  choices no rule of his decides
 - History:
   - 2026-11-22 CONCEPTION. Asked for by the project wrapping Qt, whose
     abstract names are overloaded, and taken up on the author's word.
-  - 2026-11-22 UNDERWAY. Built, tests first, with a name counted as
-    written once a subclass declared any overload of it.
-  - 2026-11-22 UNDERWAY. Rebuilt to the author's rule the same day:
-    each signature has to be written. The check at every call was
-    replaced by a hook that only an abstract class holds.
+  - 2026-11-22 UNDERWAY. Built twice in a day, before the design was
+    laid out.
+  - 2026-11-22 CONCEPTION. Rolled back on the author's word: the
+    builds went for the nearest solution.
+  - 2026-11-22 UNDERWAY. The author laid the design out one rule at a
+    time, and it was built on those rules, tests first, to full branch
+    coverage and a Cosmic Ray sweep.
+  - 2026-11-22 UNDERWAY. Promised on the author's word: the promises
+    and the refusals in `design`, section 7 of the part on
+    `worktoy.mcls` in the manual, and the changelog.

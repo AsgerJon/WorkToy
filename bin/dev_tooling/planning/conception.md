@@ -1,6 +1,6 @@
 # Planned work: `CONCEPTION`
 
-Brought up to date: 2026-11-13.
+Brought up to date: 2026-11-22.
 
 The items of planned work that stand at `CONCEPTION`: an idea. It is
 named, perhaps measured, and nobody has written what it would take.

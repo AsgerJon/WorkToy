@@ -6,14 +6,18 @@ overloaded and defined plainly in one class body, an 'overload' object
 bound twice in one class body, one overloaded function declared as two
 kinds of method, the deletion of a name a hook claimed, a class hook a
 metaclass takes over, '__slots__' in the body of a worktoy class, a
-second sentinel at a taken name, illegal instantiation, and a disallowed
-attribute in the class body of a control-flow signal.
+second sentinel at a taken name, illegal instantiation, an abstract
+class called while a method it declares is not implemented, a method
+written so that it cannot take what its abstract declaration declares,
+and a disallowed attribute in the class body of a control-flow signal.
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
 from __future__ import annotations
 
 from ._illegal_instantiation import IllegalInstantiation
+from ._missing_implementation import MissingImplementation
+from ._wrong_implementation import WrongImplementation
 from ._hook_exception import HookException
 from ._duplicate_hook import DuplicateHook
 from ._del_exception import DelException
@@ -32,6 +36,8 @@ from ._control_class_error import ControlClassError
 __all__ = [
   'DuplicateHook',
   'IllegalInstantiation',
+  'MissingImplementation',
+  'WrongImplementation',
   'HookException',
   'DelException',
   'QuestionableSyntax',

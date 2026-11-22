@@ -4,6 +4,124 @@ This changelog covers stable releases. Development ('-dev') and release
 candidate ('-rc') builds are not logged on their own; their changes are
 rolled into the release they lead up to.
 
+## [1.3.0] - 2026 November 22
+
+This release adds abstract classes. A class built by the new `ABCMeta`
+declares methods with `@abstract`, the classes based on it have to
+write them, and no object is made of a class while anything is left to
+write. An overloaded name is abstract one signature at a time, which
+Python's `abc` cannot ask for. Everything in this release is new:
+nothing that worked in 1.2.3 behaves differently. It was built test
+first. The suite passes on every Python from 3.7 to 3.15, with every
+statement and branch covered on 3.15, and every file whose code changed
+since 1.2.3 was mutation tested after its last change.
+
+### Abstract classes
+
+Some classes exist to be completed: they declare a method without
+having anything to run for it, and every class based on them has to
+write it. Such a class is built by `ABCMeta` of `worktoy.mcls`, and
+marks the method with `@abstract` of `worktoy.dispatch`, over a
+function with no body:
+
+    class Model(BaseObject, metaclass=ABCMeta):
+
+      @abstract
+      def rowCount(self) -> int: ...
+
+    class Names(Model):
+
+      def rowCount(self) -> int:
+        return 3
+
+    Names().rowCount()   # 3
+    Model()              # raises MissingImplementation
+
+- A class is abstract for as long as a method it declares or inherits
+  is not written. It is never declared abstract.
+- A subclass may write any of the abstract methods or none, and may
+  declare abstract methods of its own, so it may be abstract in turn.
+- Making an object of an abstract class raises `MissingImplementation`,
+  a subclass of `IllegalInstantiation` and so a `TypeError`, naming
+  what is left to write.
+- A call that reaches an abstract method, as through `super()`, does
+  nothing and gives `None`.
+- Once a class has written a method, the declaration holds no further:
+  a class based on it overrides the method as in any class.
+- `@abstract` goes above or below `@classmethod` and `@staticmethod`.
+
+### Abstract overloads
+
+An overloaded name holds a dispatcher in every class, written or not,
+so a check by name cannot tell which of its signatures a subclass
+wrote. Here the name is abstract one signature at a time. `@abstract`
+stands at any position among the `@overload` decorators, and the
+signatures go on one function or on several:
+
+    class Source(BaseObject, metaclass=ABCMeta):
+
+      @overload(str, int)
+      @abstract
+      def data(self, index: str, role: int) -> str: ...
+
+      @overload(bytes)
+      @overload(str)
+      @abstract
+      def data(self, index: object) -> str: ...
+
+A subclass writes such a name with a plain function at the name, or
+with every one of its signatures. With some of them it stays abstract
+for the rest, which a further subclass may write.
+
+### What an implementation is held to
+
+A method left unwritten leaves its class abstract. A method written
+wrongly raises `WrongImplementation`, a `SyntaxError`, as its class is
+created, and not at the first call. An implementation is the same kind
+of method as the abstract one, a bound method, a classmethod or a
+staticmethod, and receives what that one declares:
+
+- as many arguments by position, or any number through `*args`. A
+  default plays no part: a parameter counts the same with one or
+  without.
+- `**kwargs`, where the abstract method takes `**kwargs`.
+- each keyword-only parameter of the abstract method, by the same
+  parameter or by `**kwargs`.
+
+Types are not compared. The function under `@abstract` is held the same
+way to each signature stacked on it.
+
+### New names
+
+- `abstract` in `worktoy.dispatch`.
+- `ABCMeta` and `ABCSpace` in `worktoy.mcls`, and `ABCHook` in
+  `worktoy.mcls.space_hooks`.
+- `MissingImplementation` and `WrongImplementation` in
+  `worktoy.waitaminute.meta`.
+
+The promises and the refusals for all of it are in `design`, and
+section 7 of the part on `worktoy.mcls` in `design/manual.md` shows it
+at work.
+
+### Different from 1.2.3, and to know
+
+- Nothing that worked in 1.2.3 behaves differently.
+- `ABCMeta` is worktoy's own and no relative of Python's `abc.ABCMeta`,
+  which it is named after. A metaclass based on `BaseMeta` and
+  `abc.ABCMeta` works as before.
+- `@abstract` in the body of a class that `ABCMeta` did not build
+  raises `TypeError`, since nothing there would hold a subclass to it.
+- A function with a body under `@abstract` raises `TypeError`, and so
+  does a generator or a coroutine function, so an `async def` is not
+  declared abstract. A fallback and a finalizer are not declared
+  abstract either.
+- A metaclass ahead of `AbstractMetaclass` that implements an operation
+  only to act ahead of it, and hands it on, may now say so by naming the
+  class hook in `__chained_hooks__`, and its classes keep the hook.
+  `ABCMeta` does so for `__class_call__`. A metaclass that says nothing
+  takes the operation over as before, and the hook raises
+  `ShadowedClassHook`.
+
 ## [1.2.3] - 2026 November 22
 
 This release lets one overloaded name hold bound methods, classmethods

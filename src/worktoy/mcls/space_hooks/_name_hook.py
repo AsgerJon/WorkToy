@@ -31,7 +31,8 @@ class NamespaceHook(AbstractSpaceHook):
   '__class_len__' for 'len(cls)', only work as classmethods, and a
   metaclass ahead of 'AbstractMetaclass' in the resolution order that
   implements the operation takes it over for its classes, which then
-  cannot implement the hook. And '__slots__' cannot work in a worktoy
+  cannot implement the hook, unless the metaclass says that it hands
+  the operation on. And '__slots__' cannot work in a worktoy
   class, whose instances always keep a '__dict__'.
   Each of these mistakes must fail at the line making it.
 
@@ -146,19 +147,21 @@ class NamespaceHook(AbstractSpaceHook):
     """
     A metaclass ahead of 'AbstractMetaclass' in the resolution order that
     implements an operation, as 'KeeMeta' implements '__len__', takes the
-    operation over for its classes, whether or not it hands on to
-    'AbstractMetaclass', so a class-level hook of that operation is
-    refused, and the body binding it must be told which metaclass took
-    over. A metaclass behind 'AbstractMetaclass' takes nothing over, since
+    operation over for its classes, so a class-level hook of that
+    operation is refused, and the body binding it must be told which
+    metaclass took over. A metaclass that says it hands the operation
+    on, as 'ABCMeta' says of '__call__', takes nothing over. A metaclass
+    behind 'AbstractMetaclass' takes nothing over either, since
     'AbstractMetaclass' answers first.
 
     Implementation
     --------------
 
     The resolution order of the metaclass up to 'AbstractMetaclass' is
-    searched for a class implementing the operation. 'AbstractMetaclass'
-    is imported inside, since it loads after the hooks its namespace
-    declares.
+    searched for a class implementing the operation that does not name
+    the hook in its '__chained_hooks__'; see '_getHandedOn'.
+    'AbstractMetaclass' is imported inside, since it loads after the
+    hooks its namespace declares.
 
     Parameters
     ----------
@@ -183,9 +186,54 @@ class NamespaceHook(AbstractSpaceHook):
       return None
     operation = self._getOperation(hookName)
     for klass in mro[:mro.index(AbstractMetaclass)]:
-      if operation in klass.__dict__:
-        return klass
+      if operation not in klass.__dict__:
+        continue
+      if hookName in self._getHandedOn(klass):
+        #  This branch is reached by the following:
+        #  - The metaclass implements the operation and says that it hands
+        #    it on, as 'ABCMeta' does for '__call__', so the hook still
+        #    answers
+        continue
+      return klass
     return None
+
+  @staticmethod
+  def _getHandedOn(mcls: type) -> tuple:
+    """
+    A metaclass may implement an operation only to act ahead of it, and
+    then hand it on to 'AbstractMetaclass', which consults the class
+    hook as before. Its classes can implement the hook after all, and
+    only the metaclass knows that it hands on.
+
+    Implementation
+    --------------
+
+    The metaclass says so in '__chained_hooks__', a tuple of hook names,
+    read from its own dictionary: a metaclass based on it that
+    implements the operation anew speaks for itself.
+
+    Parameters
+    ----------
+
+    mcls : type
+      A metaclass implementing an operation.
+
+    Returns
+    -------
+
+    tuple
+      The names of the class hooks the metaclass hands on to, or an
+      empty tuple when it names none.
+    """
+    try:
+      handedOn = mcls.__dict__['__chained_hooks__']
+    except KeyError:
+      #  This branch is reached by the following:
+      #  - The metaclass says nothing of handing on, as 'KeeMeta', whose
+      #    '__call__' finds a member itself
+      return ()
+    else:
+      return handedOn
 
   @staticmethod
   def _isClassHookValue(value: Any) -> bool:

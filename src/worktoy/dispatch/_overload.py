@@ -15,7 +15,7 @@ from ..utilities.combinatorics import Arrangements
 from ..waitaminute import MissingVariable, TypeException
 from ..waitaminute.dispatch import BareOverload
 from ..waitaminute.meta import MixedMethodKind
-from . import TypeSig, PermuterMethod
+from . import TypeSig, PermuterMethod, abstract
 from ._dispatcher import _MAX_EXPANDED_FLEX
 
 if TYPE_CHECKING:  # pragma: no cover, no mutate
@@ -63,7 +63,9 @@ class overload:  # NOQA
   'overload' object recording the function and the signature; it does no
   dispatching. A decorator stacked above another adds its signature to
   the 'overload' below it. The class methods 'flex', 'fallback' and
-  'finalize' declare the other roles the same way. A decorator given a
+  'finalize' declare the other roles the same way. A function declared
+  with '@abstract' is recorded as any other, '@abstract' standing at any
+  position in the stack; see 'abstract'. A decorator given a
   'classmethod' or 'staticmethod' object takes the function out of it and
   keeps its kind; given one over the record of the decorator below, it
   extends that record, which takes the kind. 'LoadSpaceHook' does the
@@ -353,6 +355,85 @@ class overload:  # NOQA
   def _extendLatest(self, sig: TypeSig) -> None:
     self._addSigFunc(sig, self._getLatestFunc())
 
+  @staticmethod
+  def _refuseAbstractRole(role: str, name: str) -> Never:
+    """
+    A fallback takes the calls nothing else accepts, and a finalizer
+    follows every call. Neither is something a class answers some calls
+    with and leaves others to a subclass, so neither is declared
+    abstract: a blank one would swallow every call it is there for.
+
+    Parameters
+    ----------
+
+    role : str
+      'fallback' or 'finalizer'.
+
+    name : str
+      The name of the function.
+
+    Raises
+    ------
+
+    TypeError
+      Always.
+    """
+    infoSpec = """The %s '%s' is declared abstract. A fallback takes the
+    calls nothing else accepts and a finalizer follows every call, so
+    neither is left for a subclass to write."""
+    raise TypeError(textFmt(infoSpec % (role, name)))
+
+  def _makeAbstract(self, factory: Callable) -> None:
+    """
+    '@abstract' may stand above an '@overload' decorator, where it
+    receives this record and not the function. The one function the
+    stack decorates must then become the abstract declaration, under
+    every signature recorded so far, so that the stack means the same
+    whichever position '@abstract' stands at.
+
+    Implementation
+    --------------
+
+    A record is one stack over one function, so every signature it holds
+    is for that function, one order of a flexible declaration through a
+    'PermuterMethod'. 'factory', the 'abstract' class, makes the
+    declaration from the function, refusing one that is not blank, and
+    the declaration takes the place of the function at every signature
+    and as the latest function, which a decorator stacked above
+    registers.
+
+    Parameters
+    ----------
+
+    factory : Callable
+      The 'abstract' class.
+
+    Raises
+    ------
+
+    TypeError
+      The record declares a fallback or a finalizer, or the function has
+      a body.
+
+    TypeException
+      The function is declared abstract already.
+    """
+    name = self._getFunctionName(self._getLatestFunc())
+    if self.isFallback():
+      self._refuseAbstractRole('fallback', name)
+    if self.isFinalizer():
+      self._refuseAbstractRole('finalizer', name)
+    declared = factory(self._getLatestFunc())
+    concrete = self._getSigFuncDict()
+    self.__sig_func_dict__ = {sig: declared for sig in concrete}
+    self.__variadic_sig_func_list__ = [
+      (sig, declared) for sig, _ in self.getVariadics()
+    ]
+    self.__flex_sig_func_list__ = [
+      (sig, declared) for sig, _ in self.getFlexes()
+    ]
+    self.__latest_func__ = declared
+
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   #  CONSTRUCTORS   # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -496,9 +577,15 @@ class overload:  # NOQA
         return self
       for arrangement in Arrangements(*types):
         sig = TypeSig(*arrangement.values)
-        if TYPE_CHECKING:  # pragma: no cover, no mutate
-          assert isinstance(function, FunctionType)
-        load = PermuterMethod(function, arrangement)
+        if isinstance(function, abstract):
+          #  This branch is reached by the following:
+          #  - The function is declared abstract and runs nothing, so no
+          #    order of its arguments needs restoring
+          load = function
+        else:
+          if TYPE_CHECKING:  # pragma: no cover, no mutate
+            assert isinstance(function, FunctionType)
+          load = PermuterMethod(function, arrangement)
         self._addSigFunc(sig, load)
       #  A decorator stacked above registers the function itself, not the
       #  wrapper of the last arrangement.
@@ -551,6 +638,8 @@ class overload:  # NOQA
       The 'overload' of the stack, or a new one.
     """
     self, function = cls._stackOn(func)
+    if isinstance(function, abstract):
+      cls._refuseAbstractRole('fallback', function.__name__)
     self.__fallback_func__ = function
     return self
 
@@ -573,6 +662,8 @@ class overload:  # NOQA
       The 'overload' of the stack, or a new one.
     """
     self, function = cls._stackOn(func)
+    if isinstance(function, abstract):
+      cls._refuseAbstractRole('finalizer', function.__name__)
     self.__finalizer_func__ = function
     return self
 
@@ -658,7 +749,8 @@ class overload:  # NOQA
     --------------
 
     A single entry that is a function, under any 'classmethod' or
-    'staticmethod' layers, or a record of another decorator, is refused.
+    'staticmethod' layers, a function declared abstract, or a record of
+    another decorator, is refused.
 
     Parameters
     ----------
@@ -678,7 +770,7 @@ class overload:  # NOQA
     if len(types) != 1:
       return
     _, entry = cls.peelMethodKinds(types[0])
-    if isinstance(entry, (FunctionType, cls)):
+    if isinstance(entry, (FunctionType, cls, abstract)):
       raise BareOverload(decorator, types[0])
 
   @staticmethod

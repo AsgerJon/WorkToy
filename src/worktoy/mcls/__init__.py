@@ -20,11 +20,17 @@ from '__subclasshook__'. Finally, the metaclass returns the created
 class object.
 
 A class whose metaclass comes from another library takes a metaclass
-combined with one of these. A base built by 'abc.ABCMeta', such as
-'abc.ABC', listed beside 'BaseObject' raises Python's metaclass conflict,
-since 'ABCMeta' is outside the 'MetaType' family; a metaclass based on
-both, as 'class ABCBaseMeta(BaseMeta, ABCMeta)', builds the class, with
-its abstract methods and its overloads.
+combined with one of these. A base built by Python's 'abc.ABCMeta', such
+as 'abc.ABC', listed beside 'BaseObject' raises Python's metaclass
+conflict, since that metaclass is outside the 'MetaType' family; a
+metaclass based on both, as 'class Both(BaseMeta, abc.ABCMeta)', builds
+the class, with the abstract methods of 'abc' and its overloads.
+
+The 'ABCMeta' of this package is worktoy's own, and no relative of that
+one. It builds the classes that declare methods with '@abstract' of
+'worktoy.dispatch', holds each subclass to what is declared, one
+signature of an overloaded name at a time, and refuses to make an
+object of a class that still lacks an implementation.
 
 - space_hooks
 - AbstractNamespace
@@ -32,6 +38,8 @@ its abstract methods and its overloads.
 - BaseSpace
 - BaseMeta
 - BaseObject
+- ABCSpace
+- ABCMeta
 """
 #  Apache-2.0 license
 #  Copyright (c) 2024-2026 Asger Jon Vistisen
@@ -43,6 +51,8 @@ from ._abstract_metaclass import AbstractMetaclass
 from ._base_space import BaseSpace
 from ._base_meta import BaseMeta
 from ._base_object import BaseObject
+from ._abc_space import ABCSpace
+from ._abc_meta import ABCMeta
 
 __all__ = [
   'space_hooks',
@@ -51,4 +61,6 @@ __all__ = [
   'BaseSpace',
   'BaseMeta',
   'BaseObject',
+  'ABCSpace',
+  'ABCMeta',
 ]

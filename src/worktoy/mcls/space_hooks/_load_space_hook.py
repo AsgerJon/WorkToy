@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...dispatch import overload, Dispatcher
+from ...dispatch import overload, abstract, Dispatcher
 from ...waitaminute.meta import OverloadConflict, ReboundOverload
 from . import AbstractSpaceHook
 
@@ -118,10 +118,11 @@ class LoadSpaceHook(AbstractSpaceHook):
     if claimedName is not None:
       raise ReboundOverload(self.space.getClassName(), claimedName, key)
     kind = self._getMethodKind(key, kinds, val)
+    functions = self._getFunctions(val)
     self.space.addMethodKind(key, kind)
     #  Before the registrations below, which ask for the kind of a function
     #  to tell whether two of one signature can meet.
-    self.space.addFunctionKind(key, kind, *self._getFunctions(val))
+    self.space.addFunctionKind(key, kind, *functions)
     self.space.addClaimedName(val, key)
     #  A stack of decorators may give one 'overload' every role at once.
     if val.isFallback():
@@ -138,6 +139,48 @@ class LoadSpaceHook(AbstractSpaceHook):
     for sig, func in val.getVariadics():
       self.space.addVariadic(key, sig(), func)
     return True
+
+  def _requireHosts(self) -> None:
+    """
+    A method declared with '@abstract' is a claim on the classes based on
+    its class, and only the namespace of an abstract class holds them to
+    it, whose space hook says so on each record by setting
+    '__abc_only__'. A record left without it must fail as its class is
+    created. Python asks a record bound plainly, through its
+    '__set_name__', but tells a record under '@classmethod' or
+    '@staticmethod' nothing of the class, nor one a dispatcher holds
+    through '@overload', so those are asked here.
+
+    Implementation
+    --------------
+
+    Once the body has ended, every record the body left at a name, under
+    any 'classmethod' or 'staticmethod' layer, and every record
+    registered under a signature, is asked through
+    'abstract.requireHost'.
+
+    Raises
+    ------
+
+    TypeError
+      No space hook of an abstract class took a record of the body.
+    """
+    mcls = self.space.getMetaclass()
+    className = self.space.getClassName()
+    for key, value in dict.items(self.space):
+      _, inner = overload.peelMethodKinds(value)
+      if isinstance(inner, abstract):
+        inner.requireHost(mcls, className, key)
+    registries = (
+      self.space.getOverloads(),
+      self.space.getFlexes(),
+      self.space.getVariadics(),
+    )
+    for registry in registries:
+      for key, sigFuncs in registry.items():
+        for _, func in sigFuncs:
+          if isinstance(func, abstract):
+            func.requireHost(mcls, className, key)
 
   def _getMethodKind(self, key: str, kinds: tuple, record: overload) -> Any:
     """
@@ -237,7 +280,15 @@ class LoadSpaceHook(AbstractSpaceHook):
 
     dict
       The dictionary with the dispatchers.
+
+    Raises
+    ------
+
+    TypeError
+      The body declares an abstract method, and no space hook of an
+      abstract class took its record; see '_requireHosts'.
     """
+    self._requireHosts()
     for name in self.space.getOverloadNames():
       if dict.__contains__(self.space, name):
         continue

@@ -55,8 +55,16 @@ Items: 1 at `LTS`.
 ### The release of 1.3.0
 
 The next minor release, which the author proposed on 2026-11-22 for
-the abstract overloads. What it carries is in the tree and in no
-build.
+abstract classes. What it carries is in the tree and in no build.
+
+Items: 1 at `UNDERWAY`.
+
+### Abstract classes
+
+A class that declares methods the classes based on it have to write.
+Two builds of 2026-11-22 were rolled back; the author then laid the
+design out one rule at a time, and it was built on those rules. It is
+promised in `design` and has its section of the changelog.
 
 Items: 1 at `UNDERWAY`.
 
@@ -88,7 +96,7 @@ Items: 1 at `CONCEPTION`, 3 at `UNDECIDED`, 2 at `PENDING`.
 What `@overload` declares in a class body, and how the dispatchers of
 a name are built from it, in `worktoy.dispatch` and `worktoy.mcls`.
 
-Items: 1 at `UNDECIDED`, 1 at `UNDERWAY`, 2 at `LTS`.
+Items: 1 at `UNDECIDED`, 2 at `LTS`.
 
 ### keenum
 

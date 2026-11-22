@@ -6,7 +6,8 @@ prepare, set-item, get-item, del-item, pre-compile, post-compile, and
 new-class.
 'AbstractSpaceHook' defines the phase protocol; the concrete hooks each
 handle one job, and 'LoadSpaceHook' is where stacked 'overload'
-declarations are assembled into 'Dispatcher' objects.
+declarations are assembled into 'Dispatcher' objects. 'ABCHook' holds a
+class body to the methods its bases declare with '@abstract'.
 
 - SpaceDesc
 - ReservedNames
@@ -15,6 +16,7 @@ declarations are assembled into 'Dispatcher' objects.
 - ReservedNamespaceHook
 - NamespaceHook
 - LoadSpaceHook
+- ABCHook
 """
 #  Apache-2.0 license
 #  Copyright (c) 2025-2026 Asger Jon Vistisen
@@ -27,6 +29,7 @@ from ._flex_call_hook import FlexCallHook
 from ._reserved_namespace_hook import ReservedNamespaceHook
 from ._name_hook import NamespaceHook
 from ._load_space_hook import LoadSpaceHook
+from ._abc_hook import ABCHook
 
 __all__ = [
   'SpaceDesc',
@@ -36,4 +39,5 @@ __all__ = [
   'ReservedNamespaceHook',
   'NamespaceHook',
   'LoadSpaceHook',
+  'ABCHook',
 ]
