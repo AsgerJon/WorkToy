@@ -20,6 +20,7 @@ to 3.15.
     - ['Trust-Me-Bro'-Typing](#trust-me-bro-typing)
     - [The Python Parsing Situation Is Crazy](#the-python-parsing-situation-is-crazy)
     - ["Show Don't Tell" Is for Stories, not for Code!](#show-dont-tell-is-for-stories-not-for-code)
+    - [Abstract Classes That Check the Homework](#abstract-classes-that-check-the-homework)
     - [Static Discipline](#static-discipline)
 - [Contributing](#contributing)
 - [License](#license)
@@ -256,6 +257,141 @@ class Point(BaseObject):
 The `r` attribute is declared first. Next, the `@r.GET` declares that the
 method implementing the get operation comes next. The structure is
 visible separately from the behaviour.
+
+## Abstract Classes That Check the Homework
+
+Python's `abc` lets a class leave methods for its subclasses to write:
+
+```python
+from abc import ABC, abstractmethod
+
+
+class Model(ABC):
+  @abstractmethod
+  def rowCount(self) -> int:
+    pass
+
+
+class Names(Model):
+  def rowCount(self, parent) -> int:  # one argument too many
+    return 3
+```
+
+`abc` checks names, nothing else. `Names` has something called
+`rowCount`, so `Names()` is created without a word, and the mistake waits
+for the first call: `rowCount() missing 1 required positional argument`,
+far from the class that made it. And `abc` has never heard of overloads,
+so it cannot ask a subclass for one particular signature.
+
+With **worktoy**, the base is `ABCObject` and the decorator is
+`@abstract`:
+
+```python
+from worktoy.mcls import ABCObject
+from worktoy.dispatch import abstract
+
+
+class Model(ABCObject):
+  @abstract
+  def rowCount(self) -> int: ...
+
+
+class Names(Model):  # WrongImplementation, right here
+  def rowCount(self, parent) -> int:
+    return 3
+```
+
+What a subclass writes is held to what was declared, as the class is
+created: the same kind of method, taking what the abstract one takes.
+`Names` fails at its class statement with `WrongImplementation`. Until
+every abstract method is written, making an object is refused with
+`MissingImplementation`, naming what is left to write. A subclass may
+write some of them, all or none, and may declare abstract methods of its
+own.
+
+A base class can also demand particular type signatures of an
+overloaded name, two or more of them, and a subclass has to write every
+one:
+
+```python
+from worktoy.dispatch import overload
+
+
+class Source(ABCObject):
+  @overload(str, int)
+  @abstract
+  def data(self, index: str, role: int) -> object: ...
+
+  @overload(bytes)
+  @abstract
+  def data(self, index: bytes) -> object: ...
+
+
+class Text(Source):
+  @overload(str, int)
+  def data(self, index: str, role: int) -> object:
+    return index * role
+```
+
+`Text` writes `data(str, int)` but not `data(bytes)`, so it is still
+abstract: `Text()` is refused, and a subclass writing `data(bytes)`
+completes it. One plain function at `data` taking `*args` would write
+both signatures at once.
+
+Where this pays off is a family of classes sharing one job. Take the
+`Point` from above. Every transform must accept a `Point`, a pair of
+floats or a complex number:
+
+```python
+class Transform(ABCObject):
+  @overload(Point)
+  @abstract
+  def apply(self, point: Point) -> Point: ...
+
+  @overload(float, float)
+  @abstract
+  def apply(self, x: float, y: float) -> Point: ...
+
+  @abstract  # above '@overload' or below it, either works
+  @overload(complex)
+  def apply(self, z: complex) -> Point: ...
+
+
+class PointTransform(Transform):
+  @overload(float, float)
+  def apply(self, x: float, y: float) -> Point:
+    return self.apply(Point(x, y))
+
+  @overload(complex)
+  def apply(self, z: complex) -> Point:
+    return self.apply(Point(z))
+
+
+class Shift(PointTransform):
+  dx = AttriBox[float](0.0)
+  dy = AttriBox[float](0.0)
+
+  @overload(Point)
+  def apply(self, point: Point) -> Point:
+    return Point(point.x + self.dx, point.y + self.dy)
+```
+
+`Transform` demands three signatures. `PointTransform` writes two of
+them in terms of the third, once and for all, and is still abstract:
+`PointTransform()` is refused, since `apply(Point)` is not implemented.
+A concrete transform then has a single thing left to say, how it moves
+a `Point`, and gets the other two for free:
+
+```python
+shift = Shift()
+shift.dx, shift.dy = 1.0, 2.0
+shift.apply(Point(0.0, 0.0)).y == 2.0
+shift.apply(3.0, 4.0).x == 4.0
+shift.apply(3 + 4j).y == 6.0
+```
+
+`ABCObject` is `BaseObject` built by worktoy's own `ABCMeta`, which is no
+relative of the one in `abc`.
 
 ## Static Discipline
 
@@ -766,8 +902,9 @@ class LoudSpeaker(Speaker):
 ```
 
 The subclass gets an attribute of its own, and the base keeps its own
-as it was; the parent named may be any class above the one holding the
-attribute, and a `Field` takes it as a box does. On 3.7 and 3.8 the
+as it was. The class named in the subscript may be any base of the
+subclass that has the attribute, declared there or inherited, and a
+`Field` takes it as a box does. On 3.7 and 3.8 the
 call form above goes after the method, in the same class body.
 
 Mind the trap: writing `Speaker.volume.onSet` in the subclass body,
@@ -883,15 +1020,22 @@ positional argument to match. Pass optional parameters by keyword.
 The positional arguments are matched in steps, and the first step that
 finds a declaration decides:
 
-1. Their exact classes.
+1. Their exact classes. A declaration of a base takes the call this
+   way only once the class's own declarations, and those of every class
+   between, have declined it as instances, in step 2.
 2. As instances, so a subclass instance matches its base. The class's
-   own declarations come before inherited ones, and within one class
-   the first declaration written that accepts the arguments wins.
-3. A conversion that loses nothing, as `typeCast` of the utilities
-   part allows: an `int` for a `float`, `2.0` for an `int`, and a
-   class with a `__cast_as__` hook converts there too.
-4. The fallback of section 4, if there is one.
-5. Otherwise `DispatchException`, a `TypeError`, holding the dispatcher
+   own declarations come first, then those of each base, nearest first.
+   Within one class they are asked in the order written, those of
+   `overload.flex` over more than three classes after the rest, and
+   those ending in `ARGS` last, the latest written first.
+3. A conversion that widens a number, and no other: an `int` for a
+   `float` or a `complex`, a `float` for a `complex`. A class that is no
+   number converts as `typeCast` of the utilities part allows, a class
+   with a `__cast_as__` hook included.
+4. Every conversion `typeCast` allows, narrowing included: `2.0` for an
+   `int`.
+5. The fallback of section 4, if there is one.
+6. Otherwise `DispatchException`, a `TypeError`, holding the dispatcher
    as `dispatch`, and the arguments as `posArgs` and `keyArgs`.
 
 Step 2 does not look for the most specific declaration. It takes the
@@ -917,9 +1061,26 @@ no declaration names, so step 2 asks each declaration in order, and
 `object` comes first. Reordering the declarations changes the answer,
 so their order is part of what the class means.
 
+A subclass's own declaration comes first even against an exact match it
+inherits:
+
+```
+>>> class Sink(BaseObject):
+...   @overload(int)
+...   def take(self, value):
+...     return 'Sink int'
+>>> class AnySink(Sink):
+...   @overload(object)
+...   def take(self, value):
+...     return 'AnySink object'
+>>> AnySink().take(1)
+'AnySink object'
+
+```
+
 An argument accepted in step 2 arrives as it was passed, so `True`
-reaches an `int` declaration as `True`. One converted in step 3 arrives
-converted:
+reaches an `int` declaration as `True`. One converted in step 3 or 4
+arrives converted:
 
 ```
 >>> class Scale(BaseObject):
@@ -930,6 +1091,47 @@ converted:
 3.0
 
 ```
+
+Step 3 comes before step 4 so that a number keeps its kind where it
+can. `2.0` is neither an `int` nor a `complex`, but widening makes it
+the complex `2+0j`, so the `complex` declaration takes it, although the
+`int` one is written first and would take `2` by narrowing:
+
+```
+>>> class Widen(BaseObject):
+...   @overload(int)
+...   def size(self, value):
+...     return 'int', value
+...   @overload(complex)
+...   def size(self, value):
+...     return 'complex', value
+>>> Widen().size(2.0)
+('complex', (2+0j))
+
+```
+
+In steps 3 and 4 the inherited declarations come first, the farthest
+base first and the class's own last, the opposite of step 2. So a
+subclass never takes over a call its base already took by a conversion:
+
+```
+>>> class Dial(BaseObject):
+...   @overload(float)
+...   def turn(self, value):
+...     return 'Dial float'
+>>> class FineDial(Dial):
+...   @overload(complex)
+...   def turn(self, value):
+...     return 'FineDial complex'
+>>> FineDial().turn(2)
+'Dial float'
+
+```
+
+Within each of the two steps, the signatures of `overload.flex` over
+more than three classes come after all the others, and those ending in
+`ARGS` after those, so there a plain signature of a subclass does come
+before such a signature of its base.
 
 
 ### 4. Several signatures, any order, a tail, a fallback
@@ -1076,9 +1278,10 @@ and neither if it is static:
 
 ```
 
-A staticmethod is not considered through an instance where the name has
-a bound method, nor a bound method through the class, so a bound method
-and a staticmethod at one name may have the same signature:
+A staticmethod is not considered through an instance where an overload
+of the name is a bound method, nor a bound method through the class, so
+a bound method and a staticmethod at one name may have the same
+signature:
 
 ```
 >>> try:
@@ -1325,8 +1528,9 @@ its parent's.
 
 Mind the name. `abc` asks the same method inside `issubclass` and
 expects `True`, `False` or `NotImplemented`. Under a metaclass combined
-with `ABCMeta`, as in section 5, a hook that refuses by raising must
-therefore return `NotImplemented` when it lets a class through.
+with Python's `abc.ABCMeta`, as in section 5, a hook that refuses by
+raising must therefore return `NotImplemented` when it lets a class
+through.
 
 
 ### 4. Mistakes caught in the class body
@@ -1395,7 +1599,9 @@ Shape is abstract
 ```
 
 The same pattern serves other libraries' metaclasses. worktoy has
-abstract classes of its own, which need no `abc`: section 7.
+abstract classes of its own, which need no `abc`, built by a metaclass
+of its own that is also named `ABCMeta`: section 7, which tells the two
+apart.
 
 
 ### 6. Namespace hooks of your own
@@ -1442,6 +1648,50 @@ subclasses, and worktoy's own checks of section 4 keep running beside
 it. One hook object serves every class statement of its namespace, so
 it keeps what it learns on `self.space`, never on itself.
 
+The hooks run in a fixed order: those of the base namespace classes
+first, then those the namespace class declares itself, in the order
+declared. Every phase calls them in that order, and in `setItemPhase`
+the first hook returning `True` ends the round, so the hooks after it
+never see that binding. `TeamSpace` runs its hook last:
+
+```
+>>> [hook.getFieldName() for hook in TeamSpace.classGetHooks()]
+['reservedNameHook', 'nameHook', 'loadSpaceHook', 'noSingleUnderscore']
+
+```
+
+`loadSpaceHook` claims every `@overload` record, so a hook of your own
+never sees an overload binding in `setItemPhase`, and once the body has
+run it comes after the dispatchers are built. A hook declared at a name
+an inherited hook already has is refused with `DuplicateHook`, so an
+inherited hook cannot be replaced, nor moved by declaring it again.
+
+As of 1.3, the one way to change the order is to reimplement the
+classmethod `classGetHooks` on the namespace class, which gives the
+hooks in the order they run. This one puts the team's hook ahead of
+`loadSpaceHook`:
+
+```
+>>> class EarlySpace(BaseSpace):
+...   noSingleUnderscore = NoSingleUnderscore()
+...   @classmethod
+...   def classGetHooks(cls):
+...     own = cls.noSingleUnderscore
+...     hooks = [h for h in super().classGetHooks() if h is not own]
+...     at = hooks.index(BaseSpace.loadSpaceHook)
+...     return [*hooks[:at], own, *hooks[at:]]
+>>> [hook.getFieldName() for hook in EarlySpace.classGetHooks()]
+['reservedNameHook', 'nameHook', 'noSingleUnderscore', 'loadSpaceHook']
+
+```
+
+The namespace class asks `classGetHooks` while its own hooks are being
+registered as well, so the method has to answer before the hook it
+moves is on the list, as the filter above makes sure. A hook placed
+ahead of `loadSpaceHook` that claims an `@overload` record takes it away,
+and that overload then reaches no dispatcher. A later version may offer
+a way to state the order in the namespace class body itself.
+
 
 ### 7. Abstract classes: `ABCObject` and `@abstract`
 
@@ -1472,6 +1722,29 @@ the dispatch part, over a function with no body:
 `BaseObject` is built by `BaseMeta`, so a class based on it keeps
 everything section 1 gives. A class may name the metaclass itself
 instead, as `Source` does further down.
+
+**Not the `ABCMeta` of `abc`.** The metaclass here is
+`worktoy.mcls.ABCMeta`, worktoy's own. It shares its name with Python's
+`abc.ABCMeta` of section 5, and nothing else, and the two hold a
+subclass to very different things:
+
+- `abc.ABCMeta` asks only whether a subclass has something at the name,
+  and only when an object is made. A method written wrongly, taking an
+  argument too many, or a classmethod where a bound method was
+  declared, passes, and the mistake shows, if at all, only when the
+  method is called.
+- worktoy's asks, as each subclass is created, whether a method written
+  is the same kind of method and takes what was declared, and refuses
+  one that is not at its class statement, with `WrongImplementation`.
+- `abc.ABCMeta` knows a method by its name alone, so it cannot ask for
+  one signature of an overloaded name. worktoy's asks for each
+  signature declared, as shown below.
+- worktoy's is `BaseMeta` underneath, so its classes keep everything
+  section 1 gives, where `abc.ABCMeta` beside `BaseObject` takes a
+  combined metaclass of your own, as in section 5.
+
+For a worktoy class, worktoy's is the one to use. A file that needs
+both imports `abc` whole and writes `abc.ABCMeta` for Python's.
 
 A class is abstract for as long as a method it declares or inherits is
 not written. It is never declared abstract, and nothing marks the class
@@ -1584,8 +1857,7 @@ for the rest, which a further subclass may write:
 
 ```
 
-Python's own `abc` knows a method by its name alone, so it cannot ask
-for one signature of an overloaded name. A few more things to know:
+A few more things to know:
 
 - A call that reaches an abstract method, as `super().rowCount()` from
   the method a subclass wrote, does nothing and gives `None`.
@@ -1595,7 +1867,10 @@ for one signature of an overloaded name. A few more things to know:
 - A function with a body under `@abstract` is refused with `TypeError`:
   the body is `...`, `pass` or a docstring alone. `@abstract` in a class
   that `ABCMeta` did not build is refused with `TypeError` as well,
-  since nothing there would hold a subclass to it.
+  since nothing there would hold a subclass to it. A class built by
+  `BaseMeta` refuses every form. A plain Python class has nothing of
+  worktoy to ask with, and Python passes no word to a record under
+  `@classmethod` or `@staticmethod`, so there that form goes unnoticed.
 
 ## `worktoy.keenum`
 
@@ -2739,8 +3014,8 @@ other one runs too, as long as it hands on in turn:
 ```
 
 `Object` is itself built by `MetaType`, so a class mixing an `Object`
-class with one of another metaclass, such as `ABCMeta`, needs a
-metaclass combining the two, as Python always requires.
+class with one of another metaclass, such as Python's `abc.ABCMeta`,
+needs a metaclass combining the two, as Python always requires.
 
 A class `MetaType` builds keeps the namespace its body ran in as
 `__namespace__`, which is where a worktoy metaclass keeps what it
@@ -2769,10 +3044,15 @@ metaclass instead.
 converter, a few text helpers, and some odd jobs. They are yours to use
 as well. This part shows what each one is for and how it behaves.
 
-Three things hold throughout:
+Four things hold throughout:
 
 - Every helper imports from `worktoy.utilities`, and the three
   combinatorial ones from `worktoy.utilities.combinatorics`.
+- A helper taking its options as keywords, as `textFmt`, `joinWords`,
+  `wordWrap`, `stringList`, `unpack` and `resolveMRO` do, gives the
+  warning `RedundantKeyword` for a keyword it does not read, as a
+  misspelled one, and goes on without it. The `waitaminute` part says
+  more of warnings.
 - The names are camelCase. That is worktoy's house style everywhere,
   not a slip.
 - The exceptions come from `worktoy.waitaminute`, worktoy's package of
@@ -3493,10 +3773,11 @@ tuple and a recipe, `Arrangements` takes the items loose.
 ## `worktoy.waitaminute`
 
 `worktoy.waitaminute` holds the exceptions of worktoy, about seventy of
-them. The name is a joke on what an exception says, and it is the only
-name: there is no `worktoy.exceptions`. The other parts say when
-each exception is raised; this one says how to catch them, how to read
-them, and how to raise them yourself.
+them, and its few warnings. The name is a joke on what an exception
+says, and it is the only name: there is no `worktoy.exceptions`. The
+other parts say when each exception is raised; this one says how to
+catch them, how to read them, how to raise them yourself, and what the
+warnings are.
 
 Contents:
 
@@ -3505,6 +3786,7 @@ Contents:
 3. Where each exception lives
 4. Raising them yourself
 5. Exceptions of your own
+6. Warnings
 
 
 ### 1. Catching worktoy's exceptions
@@ -3533,11 +3815,12 @@ Code you already have, catching `TypeError` or `AttributeError`, keeps
 working when worktoy raises one of its own.
 
 `except WorkToyException` catches every exception worktoy defines, but
-not everything worktoy raises. A few small helpers raise a plain
-builtin, as `sliceLen` raises Python's own `ValueError` for a step of
-zero, and the parts say where. The control-flow signals of the core
-part are no `WorkToyException` either, on purpose: they are not
-errors.
+not everything worktoy raises. Some refusals are a plain builtin, as
+`sliceLen` raises Python's own `ValueError` for a step of zero, and a
+box declared without parentheses a plain `TypeError`; the parts say
+where. The control-flow signals of the core part are no
+`WorkToyException` either, on purpose: they are not errors, and nor are
+the warnings of section 6.
 
 A few bases are worth knowing before they surprise you:
 
@@ -3677,6 +3960,81 @@ Do that when your code extends worktoy and should be caught with it.
 An `except WorkToyException` then catches your exceptions too, which is
 the point; for exceptions that have nothing to do with worktoy, a base
 of your own is the better choice.
+
+
+### 6. Warnings
+
+A warning stops nothing: what it warns about is carried out as
+promised. worktoy gives few of them. Each is a `WorkToyWarning` and the
+builtin category it keeps, so Python's warning filters treat it as any
+warning of that category, and one filter on `WorkToyWarning` covers
+them all:
+
+- `DeprecatedPromise`, a `FutureWarning`: a feature that is promised
+  until the next major update and not after it. It is the deprecation
+  notice of the last part.
+- `RedundantKeyword`, a `UserWarning`: a function took its options as
+  keywords and received one it does not read, as a misspelled one, and
+  went on without it.
+- `RiskWarning`, a `RuntimeWarning`: something asked is carried out as
+  promised, but is unwise.
+- `AlternativeWarning`, a `UserWarning`: a promised behaviour has a
+  better way beside it, while staying promised.
+
+worktoy itself gives `DeprecatedPromise`, for the deprecated features
+of the keenum part and the old home of the control-flow signals, and
+`RedundantKeyword`, from the helpers of the utilities part. Each
+warning points at the line you wrote, never at a line inside worktoy,
+and keeps what it is about as attributes:
+
+```
+>>> import warnings
+>>> from worktoy.utilities import joinWords
+>>> from worktoy.waitaminute import RedundantKeyword
+>>> with warnings.catch_warnings(record=True) as notices:
+...   warnings.simplefilter('always')
+...   phrase = joinWords('tea', 'coffee', seperator='or')
+>>> phrase
+'tea and coffee'
+>>> notice = notices[0].message
+>>> isinstance(notice, RedundantKeyword), notice.keyword, notice.options
+(True, 'seperator', ('sep',))
+
+```
+
+The misspelled `seperator` was not read, so the default `'and'` joined
+the words.
+
+`RiskWarning` and `AlternativeWarning` are given nowhere in worktoy:
+they are offered to the projects built upon it. A warning is handed the
+things it is about and words its sentence itself, as `TypeException`
+is handed a name, an object and the types; `warn()` gives it:
+
+```
+>>> from worktoy.waitaminute import RiskWarning, WorkToyWarning
+>>> with warnings.catch_warnings(record=True) as notices:
+...   warnings.simplefilter('always')
+...   RiskWarning('price', -5, 'a till that pays the customer').warn()
+>>> notice = notices[0].message
+>>> isinstance(notice, WorkToyWarning), notice.varName, notice.risk
+(True, 'price', 'a till that pays the customer')
+
+```
+
+`RiskWarning(name, value, risk)` takes the name and the value received
+and what going on with it risks, worded to end "promised to function
+correctly, but risks ...". `AlternativeWarning(behaviour, alternative,
+reason)` takes what was used, what to use instead, and why, worded to
+follow "because". `DeprecatedPromise(feature, description)` takes the
+feature and a description of the one deprecation, and
+`RedundantKeyword(function, keyword, *options)` the function, the
+keyword it does not read, and the ones it does.
+
+A project gives warnings of its own by basing a class on one of these
+in a package of its own. `warn()` then steps over the files of that
+package as well as those of worktoy, and the warning lands on the line
+of the project's user. The wording of a warning, as of an exception,
+is not promised; its attributes are.
 
 ## `worktoy.lorem_ipsum`
 
@@ -4051,10 +4409,10 @@ no promise, in two ways.
 - Which exception is raised is not promised. It is the one raised as of
   the version stated, and may be another in any later release. Each
   refusal among the tests states its own version. When the exception of
-  a refusal changes, the version stated for it changes with it. - A
-  refusal may be relaxed. A later release may accept what an earlier one
-  refused, as a class keyword lifting a rule does, or a rule that turned
-  out stricter than it had to be. Relaxing a refusal is not a
+  a refusal changes, the version stated for it changes with it.
+- A refusal may be relaxed. A later release may accept what an earlier
+  one refused, as a class keyword lifting a rule does, or a rule that
+  turned out stricter than it had to be. Relaxing a refusal is not a
   deprecation: it gives no notice and waits for no major update, since
   nothing that worked stops working when a mistake is no longer refused.
 
@@ -4085,8 +4443,9 @@ people, and its wording is not promised.
 
 A deprecation is a promise that ends at the next major update. Until
 then the feature works as it did, in every release of the major version
-that deprecated it, and gives a deprecation notice where it is used, a
-`FutureWarning`. A deprecation takes a notice and a major update because
+that deprecated it, and gives a deprecation notice where it is used,
+the warning `DeprecatedPromise`, which is a `FutureWarning`. A
+deprecation takes a notice and a major update because
 something that works is going to stop working. That is what sets it
 apart from a refusal being relaxed, where nothing stops working.
 
@@ -4104,15 +4463,20 @@ source:
 
 - `design/promises/<package>` holds the promises of each package, as
   tests, and `design/promises/deprecations` those that end at the next
-  major update. - `design/refusals/<package>` holds its refusals, each
-  with the version its exceptions are stated for. -
-  `design/promises/waitaminute` holds what the exceptions themselves
-  promise. - `design/confessions` holds the confessions. -
-  `design/manual.md`, this document, describes the design of each
+  major update.
+- `design/refusals/<package>` holds its refusals, each with the version
+  its exceptions are stated for.
+- `design/promises/waitaminute` holds what the exceptions themselves
+  promise.
+- `design/confessions` holds the confessions.
+- `design/manual.md`, this document, describes the design of each
   package, what works and what is refused together, with checked
   examples.
 
-Both are checked from the root of the repository:
+The tests and this document are checked from the root of the
+repository:
 
-```terminaloutput python -m unittest discover -s design -t . -p
-"promise_*.py" python -m doctest design/manual.md ```
+```text
+python -m unittest discover -s design -t . -p "promise_*.py"
+python -m doctest design/manual.md
+```

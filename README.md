@@ -20,6 +20,7 @@ to 3.15.
     - ['Trust-Me-Bro'-Typing](#trust-me-bro-typing)
     - [The Python Parsing Situation Is Crazy](#the-python-parsing-situation-is-crazy)
     - ["Show Don't Tell" Is for Stories, not for Code!](#show-dont-tell-is-for-stories-not-for-code)
+    - [Abstract Classes That Check the Homework](#abstract-classes-that-check-the-homework)
     - [Static Discipline](#static-discipline)
 - [Contributing](#contributing)
 - [License](#license)
@@ -256,6 +257,141 @@ class Point(BaseObject):
 The `r` attribute is declared first. Next, the `@r.GET` declares that the
 method implementing the get operation comes next. The structure is
 visible separately from the behaviour.
+
+## Abstract Classes That Check the Homework
+
+Python's `abc` lets a class leave methods for its subclasses to write:
+
+```python
+from abc import ABC, abstractmethod
+
+
+class Model(ABC):
+  @abstractmethod
+  def rowCount(self) -> int:
+    pass
+
+
+class Names(Model):
+  def rowCount(self, parent) -> int:  # one argument too many
+    return 3
+```
+
+`abc` checks names, nothing else. `Names` has something called
+`rowCount`, so `Names()` is created without a word, and the mistake waits
+for the first call: `rowCount() missing 1 required positional argument`,
+far from the class that made it. And `abc` has never heard of overloads,
+so it cannot ask a subclass for one particular signature.
+
+With **worktoy**, the base is `ABCObject` and the decorator is
+`@abstract`:
+
+```python
+from worktoy.mcls import ABCObject
+from worktoy.dispatch import abstract
+
+
+class Model(ABCObject):
+  @abstract
+  def rowCount(self) -> int: ...
+
+
+class Names(Model):  # WrongImplementation, right here
+  def rowCount(self, parent) -> int:
+    return 3
+```
+
+What a subclass writes is held to what was declared, as the class is
+created: the same kind of method, taking what the abstract one takes.
+`Names` fails at its class statement with `WrongImplementation`. Until
+every abstract method is written, making an object is refused with
+`MissingImplementation`, naming what is left to write. A subclass may
+write some of them, all or none, and may declare abstract methods of its
+own.
+
+A base class can also demand particular type signatures of an
+overloaded name, two or more of them, and a subclass has to write every
+one:
+
+```python
+from worktoy.dispatch import overload
+
+
+class Source(ABCObject):
+  @overload(str, int)
+  @abstract
+  def data(self, index: str, role: int) -> object: ...
+
+  @overload(bytes)
+  @abstract
+  def data(self, index: bytes) -> object: ...
+
+
+class Text(Source):
+  @overload(str, int)
+  def data(self, index: str, role: int) -> object:
+    return index * role
+```
+
+`Text` writes `data(str, int)` but not `data(bytes)`, so it is still
+abstract: `Text()` is refused, and a subclass writing `data(bytes)`
+completes it. One plain function at `data` taking `*args` would write
+both signatures at once.
+
+Where this pays off is a family of classes sharing one job. Take the
+`Point` from above. Every transform must accept a `Point`, a pair of
+floats or a complex number:
+
+```python
+class Transform(ABCObject):
+  @overload(Point)
+  @abstract
+  def apply(self, point: Point) -> Point: ...
+
+  @overload(float, float)
+  @abstract
+  def apply(self, x: float, y: float) -> Point: ...
+
+  @abstract  # above '@overload' or below it, either works
+  @overload(complex)
+  def apply(self, z: complex) -> Point: ...
+
+
+class PointTransform(Transform):
+  @overload(float, float)
+  def apply(self, x: float, y: float) -> Point:
+    return self.apply(Point(x, y))
+
+  @overload(complex)
+  def apply(self, z: complex) -> Point:
+    return self.apply(Point(z))
+
+
+class Shift(PointTransform):
+  dx = AttriBox[float](0.0)
+  dy = AttriBox[float](0.0)
+
+  @overload(Point)
+  def apply(self, point: Point) -> Point:
+    return Point(point.x + self.dx, point.y + self.dy)
+```
+
+`Transform` demands three signatures. `PointTransform` writes two of
+them in terms of the third, once and for all, and is still abstract:
+`PointTransform()` is refused, since `apply(Point)` is not implemented.
+A concrete transform then has a single thing left to say, how it moves
+a `Point`, and gets the other two for free:
+
+```python
+shift = Shift()
+shift.dx, shift.dy = 1.0, 2.0
+shift.apply(Point(0.0, 0.0)).y == 2.0
+shift.apply(3.0, 4.0).x == 4.0
+shift.apply(3 + 4j).y == 6.0
+```
+
+`ABCObject` is `BaseObject` built by worktoy's own `ABCMeta`, which is no
+relative of the one in `abc`.
 
 ## Static Discipline
 

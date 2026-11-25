@@ -9,12 +9,14 @@ rolled into the release they lead up to.
 This release adds abstract classes. A class based on the new
 `ABCObject` declares methods with `@abstract`, the classes based on it
 have to write them, and no object is made of a class while anything is
-left to write. An overloaded name is abstract one signature at a time, which
-Python's `abc` cannot ask for. Everything in this release is new:
-nothing that worked in 1.2.3 behaves differently. It was built test
-first. The suite passes on every Python from 3.7 to 3.15, with every
-statement and branch covered on 3.15, and every file whose code changed
-since 1.2.3 was mutation tested after its last change.
+left to write. An overloaded name is abstract one signature at a time,
+which Python's `abc` cannot ask for. It also promises three behaviours
+1.2.3 already had, and sets the manual right where it said otherwise.
+Everything in this release is new: nothing that worked in 1.2.3 behaves
+differently. It was built test first. The suite passes on every Python
+from 3.7 to 3.15, with every statement and branch covered on 3.15, and
+every file whose code changed since 1.2.3 was mutation tested after its
+last change.
 
 ### Abstract classes
 
@@ -106,14 +108,82 @@ The promises and the refusals for all of it are in `design`, and
 section 7 of the part on `worktoy.mcls` in `design/manual.md` shows it
 at work.
 
+### Promised from 1.3.0: behaviour 1.2.3 already had
+
+Three things worked this way in 1.2.3 without being promised. From
+1.3.0 they are, each with its tests in `design` and its place in
+`design/manual.md`.
+
+- The order in which a call of an overloaded method finds its
+  declaration. Exact classes come first, but a class's own declarations
+  take the call as instances before an exact match it inherits.
+  Conversion is two steps: a number is widened first, `int` to `float`
+  to `complex`, and narrowed, as `2.0` to the `int` `2`, only after.
+  In both steps the declarations of the bases are asked before the
+  class's own, so a subclass never takes over a call its base took by a
+  conversion:
+
+      class Widen(BaseObject):
+
+        @overload(int)
+        def size(self, value): ...
+
+        @overload(complex)
+        def size(self, value): ...
+
+      Widen().size(2.0)   # the complex one, with 2+0j
+
+- The order of the namespace hooks. Those of the base namespace classes
+  run first, then those a namespace class declares, in the order
+  declared, and the first hook claiming a binding hides it from the
+  rest; `loadSpaceHook` claims every `@overload` record. A namespace
+  class reimplementing the classmethod `classGetHooks` runs its hooks in
+  the order it gives, which is the one way to run a hook ahead of an
+  inherited one.
+- The warnings of `worktoy.waitaminute`. Each is a `WorkToyWarning` and
+  keeps its builtin category: `DeprecatedPromise` a `FutureWarning`,
+  `RedundantKeyword` and `AlternativeWarning` a `UserWarning`,
+  `RiskWarning` a `RuntimeWarning`. `textFmt`, `joinWords`, `wordWrap`,
+  `stringList`, `unpack` and `resolveMRO` give `RedundantKeyword` for a
+  keyword they do not read and go on without it. `warn()` gives a
+  warning at the line of the user, stepping over worktoy and over the
+  package of a project's own warning class, and every warning keeps
+  what it was given as attributes.
+
+### The manual and the README
+
+- `design/manual.md` tells worktoy's `ABCMeta` from Python's
+  `abc.ABCMeta`, which share a name and nothing else, and writes
+  `abc.ABCMeta` wherever Python's is meant.
+- Its explanation of how an overloaded call finds its declaration said
+  less than the code does, and now gives the order above. A staticmethod
+  is passed over through an instance where an overload of the name is a
+  bound method, not where only its fallback is.
+- A section on warnings joins the part on `worktoy.waitaminute`, and
+  the part on `worktoy.mcls` explains the order of the hooks.
+- Smaller corrections: which class `THIS[...]` may name, that a refusal
+  may be a plain builtin elsewhere than in the small helpers, that
+  `@abstract` under `@classmethod` or `@staticmethod` goes unnoticed in
+  a plain Python class, and three lists and a code block at the end of
+  the manual that rendered broken.
+- `README.md` shows abstract classes, an overloaded name demanding
+  several signatures included, and the manual's copy of it follows.
+
 ### Different from 1.2.3, and to know
 
 - Nothing that worked in 1.2.3 behaves differently.
 - `ABCMeta` is worktoy's own and no relative of Python's `abc.ABCMeta`,
   which it is named after. A metaclass based on `BaseMeta` and
   `abc.ABCMeta` works as before.
+- A namespace class declaring a hook at the name of an inherited hook is
+  refused with `DuplicateHook`, as in 1.2.3, so an inherited hook is
+  neither replaced nor moved that way. It is written as a refusal in
+  `design`, the exception named as of 1.3.0.
 - `@abstract` in the body of a class that `ABCMeta` did not build
   raises `TypeError`, since nothing there would hold a subclass to it.
+  A class built by `BaseMeta` refuses every form; in a plain Python
+  class, `@abstract` under `@classmethod` or `@staticmethod` goes
+  unnoticed, since Python tells such a record nothing.
 - A function with a body under `@abstract` raises `TypeError`, and so
   does a generator or a coroutine function, so an `async def` is not
   declared abstract. A fallback and a finalizer are not declared

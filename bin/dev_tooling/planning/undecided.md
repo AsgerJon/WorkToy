@@ -1,6 +1,6 @@
 # Planned work: `UNDECIDED`
 
-Brought up to date: 2026-11-22.
+Brought up to date: 2026-11-25.
 
 The items of planned work that stand at `UNDECIDED`: described, and the
 author has not decided. `Next` holds the question.
@@ -76,6 +76,38 @@ fallback of another kind therefore hides the overloads of its base.
   what its bases declare whatever kinds it declares itself
 - History:
   - 2026-11-22 UNDECIDED. Seen while the two fallbacks were built.
+
+## Namespace hooks
+
+---
+
+### Let a namespace subclass run a hook ahead of an inherited one
+
+A namespace class runs the hooks of its base namespace classes first
+and its own after, and the first hook claiming a binding hides it from
+the rest, so a subclass cannot run a hook of its own ahead of an
+inherited one, as cutienator needs ahead of `loadSpaceHook`. Until then
+a namespace class reimplements `classGetHooks`, which is no promised
+API. Recommended: the order of the namespace class body is the order
+the hooks run in, an inherited hook placed by binding it, or a clone of
+it, at its own name. It costs `addHook` and `classGetHooks`, and a
+`clone` on `AbstractSpaceHook` if the clone is taken. Turned down:
+reimplementing the namespace methods `loadSpaceHook` calls, as
+`ABCSpace` does, and accepting any hook at an inherited name, which
+would let a body switch off `nameHook`.
+
+- Status: UNDECIDED
+- Level: minor
+- Scale: medium
+- Release: none
+- Next: the author says whether a hook bound again in a subclass body
+  moves to its line, or only marks where new hooks go while the
+  inherited hooks keep their order among themselves
+- History:
+  - 2026-11-25 CONCEPTION. Asked for by cutienator, whose hooks must run
+    before `loadSpaceHook`.
+  - 2026-11-25 UNDECIDED. Laid out with the author; cutienator told to
+    reimplement `classGetHooks` meanwhile.
 
 ## keenum
 

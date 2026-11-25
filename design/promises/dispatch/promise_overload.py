@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from unittest import TestCase
 
+from worktoy.core.sentinels import ARGS
 from worktoy.desc import AttriBox
 from worktoy.dispatch import overload
 from worktoy.mcls import BaseObject
@@ -26,9 +27,24 @@ class PromiseOverload(TestCase):
   'True'. Keywords play no part in the choice and pass to the declaration
   chosen, so a call by keyword alone is matched as a call with no positional
   arguments, and a defaulted parameter passed by position counts as one more
-  positional argument to match. Source: the docstrings of 'overload' and
-  'Dispatcher', and the 1.1.0 changelog entry "Keyword arguments pass through
-  overload dispatch".
+  positional argument to match.
+
+  From 1.3.0 the order of the steps is promised as well. An exact match a
+  class inherits takes the call only once the class's own declarations,
+  and those of every class between, have declined it as instances. As
+  instances, the class's own declarations come first and then each base,
+  nearest first; within one class they are asked in the order written,
+  those of 'overload.flex' over more than three classes after the rest,
+  and those ending in 'ARGS' last, the latest written first. The
+  conversions are two steps: first one that widens a number and no other,
+  an 'int' for a 'float' or a 'complex', a 'float' for a 'complex', any
+  other class converting as 'typeCast' allows; then every conversion
+  'typeCast' allows, narrowing included. In both conversion steps the
+  inherited declarations come first, the farthest base first and the
+  class's own last, and the flexible and the 'ARGS' signatures after every
+  plain one. Source: the docstrings of 'overload' and 'Dispatcher', the
+  1.1.0 changelog entry "Keyword arguments pass through overload
+  dispatch", and section 3 of the dispatch part of 'design/manual.md'.
   """
 
   def test_by_positional_classes(self) -> None:
@@ -120,3 +136,82 @@ class PromiseOverload(TestCase):
         return value
 
     self.assertIs(Counter().count(True), True)
+
+  def test_subclass_first_against_inherited_exact(self) -> None:
+    class Sink(BaseObject):
+      @overload(int)
+      def take(self, value: int) -> str:
+        return 'Sink int'
+
+    class AnySink(Sink):
+      @overload(object)
+      def take(self, value: object) -> str:
+        return 'AnySink object'
+
+    self.assertEqual(AnySink().take(1), 'AnySink object')
+    self.assertEqual(Sink().take(1), 'Sink int')
+
+  def test_args_latest_written_first(self) -> None:
+    class Tally(BaseObject):
+      @overload(int, ARGS[int])
+      def add(self, *values: int) -> str:
+        return 'integers'
+
+      @overload(int, ARGS)
+      def add(self, *values: object) -> str:
+        return 'anything'
+
+    self.assertEqual(Tally().add(1, True), 'anything')
+    self.assertEqual(Tally().add(1, 2), 'integers')
+
+  def test_widening_before_narrowing(self) -> None:
+    class Widen(BaseObject):
+      @overload(int)
+      def size(self, value: int) -> tuple:
+        return 'int', value
+
+      @overload(complex)
+      def size(self, value: complex) -> tuple:
+        return 'complex', value
+
+    self.assertEqual(Widen().size(2.0), ('complex', 2 + 0j))
+    self.assertEqual(Widen().size(7), ('int', 7))
+
+  def test_conversion_asks_bases_first(self) -> None:
+    class Dial(BaseObject):
+      @overload(float)
+      def turn(self, value: float) -> str:
+        return 'Dial float'
+
+    class FineDial(Dial):
+      @overload(complex)
+      def turn(self, value: complex) -> str:
+        return 'FineDial complex'
+
+    self.assertEqual(FineDial().turn(2), 'Dial float')
+
+  def test_subclass_widening_over_base_narrowing(self) -> None:
+    class Counter(BaseObject):
+      @overload(int)
+      def put(self, value: int) -> str:
+        return 'Counter int'
+
+    class Gauge(Counter):
+      @overload(complex)
+      def put(self, value: complex) -> str:
+        return 'Gauge complex'
+
+    self.assertEqual(Gauge().put(2.0), 'Gauge complex')
+
+  def test_plain_before_args_in_conversion(self) -> None:
+    class Series(BaseObject):
+      @overload(float, ARGS[float])
+      def push(self, *values: float) -> str:
+        return 'Series tail'
+
+    class Single(Series):
+      @overload(float)
+      def push(self, value: float) -> str:
+        return 'Single plain'
+
+    self.assertEqual(Single().push(2), 'Single plain')

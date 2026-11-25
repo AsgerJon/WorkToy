@@ -1,6 +1,6 @@
 # Planned work on worktoy
 
-Brought up to date: 2026-11-22.
+Brought up to date: 2026-11-25.
 
 Every piece of planned work is an item, from the first idea until it is
 released or rejected, and so is every release. The items are written by
@@ -14,7 +14,7 @@ file of the new one.
 | status | file | items |
 | --- | --- | ---: |
 | `CONCEPTION` | [conception.md](conception.md) | 13 |
-| `UNDECIDED` | [undecided.md](undecided.md) | 28 |
+| `UNDECIDED` | [undecided.md](undecided.md) | 29 |
 | `REJECTED` | [rejected.md](rejected.md) | 1 |
 | `PENDING` | [pending.md](pending.md) | 6 |
 | `READY` | [ready.md](ready.md) | 2 |
@@ -98,6 +98,13 @@ What `@overload` declares in a class body, and how the dispatchers of
 a name are built from it, in `worktoy.dispatch` and `worktoy.mcls`.
 
 Items: 1 at `UNDECIDED`, 2 at `LTS`.
+
+### Namespace hooks
+
+The hooks a namespace class declares, and the order its namespace runs
+them in, in `worktoy.mcls`.
+
+Items: 1 at `UNDECIDED`.
 
 ### keenum
 
